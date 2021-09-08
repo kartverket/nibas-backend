@@ -6,6 +6,7 @@ stages:
   - build
   - test
   - publish
+  - release
 
 variables:
   FF_GITLAB_REGISTRY_HELPER_IMAGE: 1
@@ -75,7 +76,23 @@ publish:
       echo "${KANIKOCFG}" > /kaniko/.docker/config.json
     - cat /kaniko/.docker/config.json
     - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile $KANIKOPROXYBUILDARGS --destination harbor.statkart.no/nibas/nibas-server-api:$CI_COMMIT_TAG
+  only:
+    refs:
+      - master
+  except:
+    - tags
+  dependencies:
+    - build
 
+release: # Lager en release som samler "evidence" (kildekode etc) på ett sted og sjekker inn en git tag i koderepoet
+  image: registry.gitlab.com/gitlab-org/release-cli
+  stage: release
+  script:
+    - echo "Release stage"
+    - echo $PROJECT_VERSION
+  release:
+    tag_name: $PROJECT_VERSION
+    description: "Nibas Server API"
   only:
     refs:
       - master
