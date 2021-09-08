@@ -78,7 +78,7 @@ publish:
     - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile $KANIKOPROXYBUILDARGS --destination harbor.statkart.no/nibas/nibas-server-api:$PROJECT_VERSION
   only:
     refs:
-      - main
+      - master
   except:
     - tags
   dependencies:
@@ -95,7 +95,7 @@ release: # Lager en release som samler "evidence" (kildekode etc) på ett sted o
     description: "Nibas Server API"
   only:
     refs:
-      - main
+      - master
   except:
     - tags
   dependencies:
