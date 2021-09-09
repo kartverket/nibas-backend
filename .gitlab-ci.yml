@@ -5,8 +5,8 @@ include:
 stages:
   - build
   - test
-#  - publish
-#  - release
+  - publish
+  - release
 
 variables:
   FF_GITLAB_REGISTRY_HELPER_IMAGE: 1
