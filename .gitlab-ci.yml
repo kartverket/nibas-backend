@@ -3,36 +3,37 @@ include:
 
 # Definer alle jobber som må kjøre sekvensielt her, ellers blir de kjørt i parallell
 stages:
-  - build
   - test
-  - publish
-  - release
+#  - build
+#  - test
+#  - publish
+#  - release
 
 variables:
   FF_GITLAB_REGISTRY_HELPER_IMAGE: 1
-build:
-  image: harbor.statkart.no/proxy_cache/library/gradle:jdk11
-  variables:
-    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
-  before_script:
-    - export GRADLE_USER_HOME=`pwd`/.gradle
-  stage: build
-  script:
-    - gradle assemble
-    - echo "PROJECT_VERSION=$MAJOR_VERSION.$MINOR_VERSION.$CI_JOB_ID" > build.env # bruk build-jobbens unike id som utgangspunkt for patch-delen av semver-versjonstagg
-  cache:
-    key: "$CI_COMMIT_REF_SLUG" # cache artefaktet som er bygd slik at vi kan bruke det til å kjøre tester og eventuelt pakke inn i docker-image
-    policy: push
-    paths:
-      - build/
-      - .gradle/
-  artifacts:
-    paths:
-      - build/
-    reports:
-      dotenv: build.env # dette er for å kunne dele variabler mellom byggejobber, i dette tilfellet versjonsnummer
-  except:
-    - tags # ikke kjør denne jobben når man sjekker inn en tag
+#build:
+#  image: harbor.statkart.no/proxy_cache/library/gradle:jdk11
+#  variables:
+#    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+#  before_script:
+#    - export GRADLE_USER_HOME=`pwd`/.gradle
+#  stage: build
+#  script:
+#    - gradle assemble
+#    - echo "PROJECT_VERSION=$MAJOR_VERSION.$MINOR_VERSION.$CI_JOB_ID" > build.env # bruk build-jobbens unike id som utgangspunkt for patch-delen av semver-versjonstagg
+#  cache:
+#    key: "$CI_COMMIT_REF_SLUG" # cache artefaktet som er bygd slik at vi kan bruke det til å kjøre tester og eventuelt pakke inn i docker-image
+#    policy: push
+#    paths:
+#      - build/
+#      - .gradle/
+#  artifacts:
+#    paths:
+#      - build/
+#    reports:
+#      dotenv: build.env # dette er for å kunne dele variabler mellom byggejobber, i dette tilfellet versjonsnummer
+#  except:
+#    - tags # ikke kjør denne jobben når man sjekker inn en tag
 
 
 test:
@@ -58,45 +59,45 @@ test:
   except:
     - tags
 
-publish:
-  stage: publish
-  image:
-    name: gcr.io/kaniko-project/executor:debug
-    entrypoint: [""]
-  script:
-    - mkdir -p /kaniko/.docker
-    - |-
-      KANIKOPROXYBUILDARGS=""
-      KANIKOCFG="{ \"auths\":{\"$HARBOR_URL\":{\"username\":\"$HARBOR_USERNAME\",\"password\":\"$HARBOR_TOKEN\"}}"
-      if [ "x${http_proxy}" != "x" -o "x${https_proxy}" != "x" ]; then
-        KANIKOCFG="${KANIKOCFG}, \"proxies\": { \"default\": { \"httpProxy\": \"${http_proxy}\", \"httpsProxy\": \"${https_proxy}\", \"noProxy\": \"${no_proxy}\"}}"
-        KANIKOPROXYBUILDARGS="--build-arg http_proxy=${http_proxy} --build-arg https_proxy=${https_proxy} --build-arg no_proxy=${no_proxy}"
-      fi
-      KANIKOCFG="${KANIKOCFG} }"
-      echo "${KANIKOCFG}" > /kaniko/.docker/config.json
-    - cat /kaniko/.docker/config.json
-    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile $KANIKOPROXYBUILDARGS --build-arg project_version_arg=$PROJECT_VERSION --destination harbor.statkart.no/nibas/nibas-server-api:$PROJECT_VERSION
-  only:
-    refs:
-      - master
-  except:
-    - tags
-  dependencies:
-    - build
-
-release: # Lager en release som samler "evidence" (kildekode etc) på ett sted og sjekker inn en git tag i koderepoet
-  image: registry.gitlab.com/gitlab-org/release-cli
-  stage: release
-  script:
-    - echo "Release stage"
-    - echo $PROJECT_VERSION
-  release:
-    tag_name: $PROJECT_VERSION
-    description: "Nibas Server API"
-  only:
-    refs:
-      - master
-  except:
-    - tags
-  dependencies:
-    - build
+#publish:
+#  stage: publish
+#  image:
+#    name: gcr.io/kaniko-project/executor:debug
+#    entrypoint: [""]
+#  script:
+#    - mkdir -p /kaniko/.docker
+#    - |-
+#      KANIKOPROXYBUILDARGS=""
+#      KANIKOCFG="{ \"auths\":{\"$HARBOR_URL\":{\"username\":\"$HARBOR_USERNAME\",\"password\":\"$HARBOR_TOKEN\"}}"
+#      if [ "x${http_proxy}" != "x" -o "x${https_proxy}" != "x" ]; then
+#        KANIKOCFG="${KANIKOCFG}, \"proxies\": { \"default\": { \"httpProxy\": \"${http_proxy}\", \"httpsProxy\": \"${https_proxy}\", \"noProxy\": \"${no_proxy}\"}}"
+#        KANIKOPROXYBUILDARGS="--build-arg http_proxy=${http_proxy} --build-arg https_proxy=${https_proxy} --build-arg no_proxy=${no_proxy}"
+#      fi
+#      KANIKOCFG="${KANIKOCFG} }"
+#      echo "${KANIKOCFG}" > /kaniko/.docker/config.json
+#    - cat /kaniko/.docker/config.json
+#    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile $KANIKOPROXYBUILDARGS --build-arg project_version_arg=$PROJECT_VERSION --destination harbor.statkart.no/nibas/nibas-server-api:$PROJECT_VERSION
+#  only:
+#    refs:
+#      - master
+#  except:
+#    - tags
+#  dependencies:
+#    - build
+#
+#release: # Lager en release som samler "evidence" (kildekode etc) på ett sted og sjekker inn en git tag i koderepoet
+#  image: registry.gitlab.com/gitlab-org/release-cli
+#  stage: release
+#  script:
+#    - echo "Release stage"
+#    - echo $PROJECT_VERSION
+#  release:
+#    tag_name: $PROJECT_VERSION
+#    description: "Nibas Server API"
+#  only:
+#    refs:
+#      - master
+#  except:
+#    - tags
+#  dependencies:
+#    - build
