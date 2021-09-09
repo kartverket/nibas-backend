@@ -27,6 +27,8 @@ build:
       - build/
       - .gradle/
   artifacts:
+    paths:
+      - build/libs/*.jar
     reports:
       dotenv: build.env # dette er for å kunne dele variabler mellom byggejobber, i dette tilfellet versjonsnummer
   except:
