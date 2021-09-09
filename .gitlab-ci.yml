@@ -21,7 +21,7 @@ build:
     - gradle assemble
     - echo "PROJECT_VERSION=$MAJOR_VERSION.$MINOR_VERSION.$CI_JOB_ID" > build.env # bruk build-jobbens unike id som utgangspunkt for patch-delen av semver-versjonstagg
   cache:
-    key: "$CI_COMMIT_REF_NAME" # cache artefaktet som er bygd slik at vi kan bruke det til å kjøre tester og eventuelt pakke inn i docker-image
+    key: "$CI_COMMIT_REF_SLUG" # cache artefaktet som er bygd slik at vi kan bruke det til å kjøre tester og eventuelt pakke inn i docker-image
     policy: push
     paths:
       - build/
@@ -46,7 +46,7 @@ test:
     - echo "This is where the testing is done"
     - gradle test # eksempel-templaten bruker check istedenfor test, kan evt vurdere hva dette har å si
   cache:
-    key: "$CI_COMMIT_REF_NAME" # hent ferdigbygd artefakt fra cache
+    key: "$CI_COMMIT_REF_SLUG" # hent ferdigbygd artefakt fra cache
     policy: pull
     paths:
       - build/
