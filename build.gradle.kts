@@ -6,6 +6,7 @@ plugins {
 	kotlin("jvm") version "1.5.21"
 	kotlin("plugin.spring") version "1.5.21"
 	kotlin("plugin.jpa") version "1.5.21"
+	kotlin("plugin.allopen") version "1.4.32"
 }
 
 group = "no.kartverket.nibas"
@@ -20,13 +21,26 @@ repositories {
 }
 
 dependencies {
-	//implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
+	implementation("org.springdoc:springdoc-openapi-webmvc-core:1.5.10")
+	implementation("org.springdoc:springdoc-openapi-kotlin:1.5.10")
+	implementation("org.springdoc:springdoc-openapi-ui:1.5.10")
+	implementation("org.locationtech.jts:jts-core:1.18.2")
+	implementation("org.locationtech.spatial4j:spatial4j:0.8")
+	implementation("org.hibernate:hibernate-spatial:5.5.7.Final")
+	runtimeOnly("org.postgresql:postgresql")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
+}
+
+allOpen {
+	annotation("javax.persistence.Entity")
+	annotation("javax.persistence.Embeddable")
+	annotation("javax.persistence.MappedSuperclass")
 }
 
 tasks.withType<KotlinCompile> {
