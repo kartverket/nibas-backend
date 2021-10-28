@@ -11,7 +11,7 @@ stages:
 variables:
   FF_GITLAB_REGISTRY_HELPER_IMAGE: 1
 build:
-  image: harbor.statkart.no/proxy_cache/library/gradle:jdk11
+  image: harbor-staging.statkart.no/proxy_cache/library/gradle:jdk11
   variables:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   before_script:
@@ -36,7 +36,7 @@ build:
 
 
 test:
-  image: harbor.statkart.no/proxy_cache/library/gradle:jdk11
+  image: harbor-staging.statkart.no/proxy_cache/library/gradle:jdk11
   variables:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   before_script:
@@ -75,7 +75,7 @@ publish:
       KANIKOCFG="${KANIKOCFG} }"
       echo "${KANIKOCFG}" > /kaniko/.docker/config.json
     - cat /kaniko/.docker/config.json
-    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile $KANIKOPROXYBUILDARGS --build-arg project_version_arg=$PROJECT_VERSION --destination harbor.statkart.no/nibas/nibas-server-api:$PROJECT_VERSION
+    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile $KANIKOPROXYBUILDARGS --build-arg project_version_arg=$PROJECT_VERSION --destination harbor-staging.statkart.no/nibas/nibas-server-api:$PROJECT_VERSION
   only:
     refs:
       - master
