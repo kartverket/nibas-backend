@@ -1,4 +1,4 @@
-FROM harbor.statkart.no/proxy_cache/adoptopenjdk/openjdk11:alpine-jre
+FROM harbor-staging.statkart.no/proxy_cache/adoptopenjdk/openjdk11:alpine-jre
 ARG project_version_arg
 ENV PROJECT_VERSION=$project_version_arg
 EXPOSE 8080
