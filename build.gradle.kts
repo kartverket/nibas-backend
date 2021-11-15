@@ -33,6 +33,9 @@ dependencies {
 	implementation("org.locationtech.jts:jts-core:1.18.2")
 	implementation("org.locationtech.spatial4j:spatial4j:0.8")
 	implementation("org.hibernate:hibernate-spatial:5.5.7.Final")
+
+	implementation("org.locationtech.jts.io:jts-io-common:1.18.2")
+
 	runtimeOnly("org.postgresql:postgresql")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
