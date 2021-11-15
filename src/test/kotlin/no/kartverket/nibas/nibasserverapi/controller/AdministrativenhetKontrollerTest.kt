@@ -1,14 +1,14 @@
 package no.kartverket.nibas.nibasserverapi.controller
 
 
-import no.kartverket.nibas.nibasserverapi.api.v1.KommuneApi
+import no.kartverket.nibas.nibasserverapi.api.v1.AdministrativEnhetApi
+import no.kartverket.nibas.nibasserverapi.api.v1.common.AdministrativEnhetType
 import no.kartverket.nibas.nibasserverapi.domain.Kommune
 import no.kartverket.nibas.nibasserverapi.domain.Kommunegrense
-import no.kartverket.nibas.nibasserverapi.service.KommuneService
+import no.kartverket.nibas.nibasserverapi.service.AdministrativEnhetService
 import org.junit.jupiter.api.Test
 import org.locationtech.jts.geom.GeometryFactory
 import org.mockito.Mockito
-import org.mockito.Mockito.any
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.boot.test.mock.mockito.MockBean
@@ -18,32 +18,33 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 
-@WebMvcTest(KommuneApi::class)
-class KommuneKontrollerTest {
+@WebMvcTest(AdministrativEnhetApi::class)
+class AdministrativEnhetKontrollerTest {
 
     @Autowired
     private lateinit var mvc: MockMvc
 
     @MockBean
-    private lateinit var kommuneService: KommuneService
+    private lateinit var administrativenhetService: AdministrativEnhetService
 
     @Test
     fun thatGetOneIsReturning200OkWhenItemIsFound() {
-        Mockito.`when`(kommuneService.hentMedId(any(Int::class.java)))
-            .thenReturn(Kommune(1, "Test", 1, arrayListOf(
-                Kommunegrense(1, "Testgrense", GeometryFactory().createLineString()))))
+        Mockito.`when`(administrativenhetService.hentAdministrativEnhet(1, AdministrativEnhetType.KOMMUNE))
+            .thenReturn(Kommune(1, "Test", "1", setOf(
+                Kommunegrense(1, "Testgrense", GeometryFactory().createLineString()))
+            ))
 
         mvc.perform(
-            get("/v1/kommune/1").contentType(MediaType.APPLICATION_JSON)
+            get("/v1/administrativ-enhet/1?type=kommune").contentType(MediaType.APPLICATION_JSON)
         ).andExpect(status().isOk)
     }
 
     @Test
     fun thatGetOneIsReturning404WheItemIsNotFound() {
-        Mockito.`when`(kommuneService.hentMedId(any(Int::class.java))).thenReturn(null);
+        Mockito.`when`(administrativenhetService.hentAdministrativEnhet(1, AdministrativEnhetType.KOMMUNE)).thenReturn(null)
 
         mvc.perform(
-            get("/v1/kommune/2").contentType(MediaType.APPLICATION_JSON)
+            get("/v1/administrativ-enhet/1?type=kommune").contentType(MediaType.APPLICATION_JSON)
         ).andExpect(status().isNotFound)
     }
 }
