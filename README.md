@@ -15,6 +15,11 @@ Spring Boot applikasjon som serverer informasjon om administrative grenser
 ```
 ./gradlew bootRun --args='--spring.profiles.active=dev'
 ``` 
+* Dersom du får en sertifikat-feilmelding mot vault under oppstart er det trolig relatert til https://stackoverflow.com/questions/60790118/java-kubernetes-client-sslhandshakeexception-extension-5-should-not-be-present - da må vi spesifisere at TLSv1.2 skal benyttes (propertyen TLSversion settes som system propertyen jdk.tls.client.protocols)
+```
+./gradlew bootRun -PTLSversion=TLSv1.2 --args='--spring.profiles.active=dev'
+``` 
+
 
 # Hente docker image fra harbor
 `docker pull harbor.statkart.no/nibas/nibas-server-api:<versjonsnummer>`
