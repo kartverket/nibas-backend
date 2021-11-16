@@ -49,6 +49,10 @@ allOpen {
 	annotation("javax.persistence.MappedSuperclass")
 }
 
+tasks.getByName<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
+   findProperty("TLSversion")?.let { systemProperty("jdk.tls.client.protocols", it) }
+}
+
 tasks.withType<KotlinCompile> {
 	kotlinOptions {
 		freeCompilerArgs = listOf("-Xjsr305=strict")
