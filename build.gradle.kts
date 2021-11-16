@@ -27,13 +27,16 @@ dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
+	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("org.springdoc:springdoc-openapi-webmvc-core:1.5.10")
 	implementation("org.springdoc:springdoc-openapi-kotlin:1.5.10")
 	implementation("org.springdoc:springdoc-openapi-ui:1.5.10")
 	implementation("org.locationtech.jts:jts-core:1.18.2")
 	implementation("org.locationtech.spatial4j:spatial4j:0.8")
 	implementation("org.hibernate:hibernate-spatial:5.5.7.Final")
-
+	implementation("org.springframework.cloud:spring-cloud-starter")
+	implementation("org.springframework.cloud:spring-cloud-starter-vault-config:3.0.4")
+	implementation("org.springframework.cloud:spring-cloud-starter-bootstrap:3.0.4")
 	implementation("org.locationtech.jts.io:jts-io-common:1.18.2")
 
 	runtimeOnly("org.postgresql:postgresql")
