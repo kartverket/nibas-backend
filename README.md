@@ -6,18 +6,15 @@ Spring Boot applikasjon som serverer informasjon om administrative grenser
 `./gradlew assemble`
 
 # Kjøre på lokal maskin
-1. Start opp nibas-db. Se [README.md](https://gitlab.statkart.no/nibas/nibas-db/-/blob/master/README.md) i nibas-db
-2. Kjør Flyway migrering i nibas-db. Se [README.md](https://gitlab.statkart.no/nibas/nibas-db/-/blob/master/README.md) i nibas-db
-3. Finn ip-addressen til nibas-db:
-   ```
-   # Finn container-id til nibas-db
-   docker ps 
-   
-   # Finn ip-addressen til nibas-db
-   docker inspect <container-id> | grep IPAddress
-   ```
-4. Start nibas-server-api:
-`./gradlew bootRun --args='--spring.datasource.url=jdbc:postgresql://localhost:5432/postgres --spring.datasource.username=postgres --spring.datasource.password=<samme-passord-som-db-ble-startet-med>'` 
+* Definer følgende miljøvariable:
+  * VAULT_TOKEN (Logg inn på Vault, og vel "Copy Token" øverst til høyre under profil-menyen)
+* Start opp nibas-db. Se [README.md](https://gitlab.statkart.no/nibas/nibas-db/-/blob/master/README.md) i nibas-db
+* Kjør Flyway migrering i nibas-db. Se [README.md](https://gitlab.statkart.no/nibas/nibas-db/-/blob/master/README.md) i nibas-db
+
+* Start nibas-server-api:
+```
+./gradlew bootRun --args='--spring.profiles.active=dev'
+``` 
 
 # Hente docker image fra harbor
 `docker pull harbor.statkart.no/nibas/nibas-server-api:<versjonsnummer>`
