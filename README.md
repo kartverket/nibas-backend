@@ -9,7 +9,6 @@ Spring Boot applikasjon som serverer informasjon om administrative grenser
 * Definer følgende miljøvariable:
   * VAULT_TOKEN (Logg inn på Vault, og vel "Copy Token" øverst til høyre under profil-menyen)
 * Start opp nibas-db. Se [README.md](https://gitlab.statkart.no/nibas/nibas-db/-/blob/master/README.md) i nibas-db
-* Kjør Flyway migrering i nibas-db. Se [README.md](https://gitlab.statkart.no/nibas/nibas-db/-/blob/master/README.md) i nibas-db
 
 * Start nibas-backend:
 ```
@@ -35,6 +34,16 @@ docker build --build-arg project_version_arg=0.0.1-SNAPSHOT . -t nibas-backend:0
 
 # Starte lokalt docker image
 `docker run -d --name nibas-backend -p 8080:8080 -e DB_USER=postgres -e DB_PASSWORD=<samme-passord-som-db-ble-startet-med> -e DB_CONNECTION_STRING=jdbc:postgresql://<ip-address>:5432/postgres nibas-backend:0.0.1-SNAPSHOT`
+
+# Manuell database migrering
+Databasen migreres ved oppstart av applikasjonen, men dersom du ønsker å gjøre dette manuelt kan det gjøres på følgende måter:
+
+## Migrere lokal database
+`./gradlew -Dflyway.user=nibas -Dflyway.password=<se passord i vault> -Dflyway.url=jdbc:postgresql://localhost:5432/nibas flywayMigrate`
+
+## Starte med tom database (ved lokal testing) - flywayClean
+`./gradlew -Dflyway.user=nibas -Dflyway.password=<se passord i vault> -Dflyway.url=jdbc:postgresql://localhost:5432/nibas flywayClean`
+
 
 # Ressurser
 Gitt att <adresse-til-nibas> = localhost:8080

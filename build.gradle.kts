@@ -7,6 +7,7 @@ plugins {
 	kotlin("plugin.spring") version "1.5.21"
 	kotlin("plugin.jpa") version "1.5.21"
 	kotlin("plugin.allopen") version "1.4.32"
+	id("org.flywaydb.flyway") version "8.0.4"
 }
 
 group = "no.kartverket.nibas"
@@ -39,6 +40,7 @@ dependencies {
 	implementation("org.springframework.cloud:spring-cloud-starter-bootstrap:3.0.4")
 	implementation("org.locationtech.jts.io:jts-io-common:1.18.2")
 
+	runtimeOnly("org.flywaydb:flyway-core:8.0.4")
 	runtimeOnly("org.postgresql:postgresql")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
@@ -66,4 +68,8 @@ tasks.withType<Test> {
 
 tasks.getByName<Jar>("jar") {
 	enabled = false
+}
+
+flyway {
+	schemas = arrayOf("nibas")
 }
