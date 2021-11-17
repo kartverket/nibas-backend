@@ -7,4 +7,4 @@ pluginManagement {
 }
 
 
-rootProject.name = "nibas-server-api"
+rootProject.name = "nibas-backend"

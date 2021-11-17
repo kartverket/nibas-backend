@@ -1,4 +1,4 @@
-# nibas-server-api
+# nibas-backend
 
 Spring Boot applikasjon som serverer informasjon om administrative grenser
 
@@ -11,7 +11,7 @@ Spring Boot applikasjon som serverer informasjon om administrative grenser
 * Start opp nibas-db. Se [README.md](https://gitlab.statkart.no/nibas/nibas-db/-/blob/master/README.md) i nibas-db
 * Kjør Flyway migrering i nibas-db. Se [README.md](https://gitlab.statkart.no/nibas/nibas-db/-/blob/master/README.md) i nibas-db
 
-* Start nibas-server-api:
+* Start nibas-backend:
 ```
 ./gradlew bootRun --args='--spring.profiles.active=dev'
 ``` 
@@ -22,19 +22,19 @@ Spring Boot applikasjon som serverer informasjon om administrative grenser
 
 
 # Hente docker image fra harbor
-`docker pull harbor.statkart.no/nibas/nibas-server-api:<versjonsnummer>`
+`docker pull harbor.statkart.no/nibas/nibas-backend:<versjonsnummer>`
 
 # Starte docker image fra harbor
-`docker run -d --name nibas-server-api -p 8080:8080 -e DB_USER=postgres -e DB_PASSWORD=<samme-passord-som-db-ble-startet-med> -e DB_CONNECTION_STRING=jdbc:postgresql://<ip-address>:5432/postgres harbor.statkart.no/nibas/nibas-server-api:<versjonsnummer>` 
+`docker run -d --name nibas-backend -p 8080:8080 -e DB_USER=postgres -e DB_PASSWORD=<samme-passord-som-db-ble-startet-med> -e DB_CONNECTION_STRING=jdbc:postgresql://<ip-address>:5432/postgres harbor.statkart.no/nibas/nibas-backend:<versjonsnummer>` 
 
 # Bygge lokalt docker image
 ```
 ./gradlew assemble
-docker build --build-arg project_version_arg=0.0.1-SNAPSHOT . -t nibas-server-api:0.0.1-SNAPSHOT
+docker build --build-arg project_version_arg=0.0.1-SNAPSHOT . -t nibas-backend:0.0.1-SNAPSHOT
 ```
 
 # Starte lokalt docker image
-`docker run -d --name nibas-server-api -p 8080:8080 -e DB_USER=postgres -e DB_PASSWORD=<samme-passord-som-db-ble-startet-med> -e DB_CONNECTION_STRING=jdbc:postgresql://<ip-address>:5432/postgres nibas-server-api:0.0.1-SNAPSHOT`
+`docker run -d --name nibas-backend -p 8080:8080 -e DB_USER=postgres -e DB_PASSWORD=<samme-passord-som-db-ble-startet-med> -e DB_CONNECTION_STRING=jdbc:postgresql://<ip-address>:5432/postgres nibas-backend:0.0.1-SNAPSHOT`
 
 # Ressurser
 Gitt att <adresse-til-nibas> = localhost:8080
