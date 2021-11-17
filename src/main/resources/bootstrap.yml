@@ -2,7 +2,7 @@ spring:
   profiles:
     active: prod
   application:
-    name: nibas-server-api
+    name: nibas-backend
   cloud:
     vault:
       config:
@@ -26,7 +26,7 @@ spring:
     vault:
       authentication: kubernetes
       kubernetes:
-        role: nibas-server-api
+        role: nibas-backend # Er en rolle definert hos skip
         kubernetes-path: kubernetes-tz2-test-apps
         service-account-token-file: /var/run/secrets/kubernetes.io/serviceaccount/token
 ---
