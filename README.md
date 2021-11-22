@@ -49,3 +49,31 @@ Databasen migreres ved oppstart av applikasjonen, men dersom du ønsker å gjør
 Gitt att <adresse-til-nibas> = localhost:8080
 * Open API Specification: [http://<adresse-til-nibas>/api-docs](http://localhost:8080/api-docs)
 * Swagger UI: [http://<adresse-til-nibas>/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+
+# Eksempel på deserialisering av en sosi-fil
+
+```kotlin
+// Parse en lokal fil 
+val root = NibasSosiDeserializer().deserialize(FileInputStream(File("fil.sosi")))
+
+// Hent ut detaljer om sosi-filen
+val hode = root.getHode()
+hode.getSosiVersjon()
+hode.getTegnsett()
+
+// Hente alle kurver
+root.getKurver()
+
+// Hente alle flater
+root.getFlater()
+
+// Iterere over alle kurver og hente informasjon
+root.getKurver().forEach { kurve ->
+    println("Kurve: ${kurve.getId()}")
+    kurve.getSosiNo().forEach { no ->
+        no.getKoordinater().forEach { koordinat ->
+            println("Koordinat: ${koordinat.north}, ${koordinat.east}")
+        }
+    }
+}
+```
