@@ -42,6 +42,8 @@ dependencies {
 
 	runtimeOnly("org.flywaydb:flyway-core:8.0.4")
 	runtimeOnly("org.postgresql:postgresql")
+
+	testImplementation("org.jetbrains.kotlin:kotlin-test")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
 
