@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import org.springframework.http.MediaType
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
 @RequestMapping("/v1/feature")
@@ -36,14 +37,14 @@ interface FeatureApi {
         @RequestParam(name = "ider", required = true) ider: List<Int>
     ): FeatureCollection
 
-    @Operation(summary = "Oppdater grensene til en eller flere administrative enheter av gitt type. Returnerer de oppdaterte administrative enhetene som en FeatureCollection")
+    @Operation(summary = "Oppdater grensene til en eller flere administrative enheter av gitt type. 200 ok tilbake dersom alt ok")
     @ApiResponses(
         ApiResponse(
             responseCode = "200",
             description = "Successful operation",
             content = [Content(
                 mediaType = "application/json",
-                schema = Schema(implementation = FeatureCollection::class)
+                schema = Schema(implementation = ResponseEntity::class)
             )]
         ),
         ApiResponse(
@@ -54,8 +55,7 @@ interface FeatureApi {
     @PutMapping("/grenser", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun oppdaterGrenser(
         @RequestParam(name = "type", required = true) type: AdministrativEnhetType,
-        @RequestParam(name = "ider", required = true) ider: List<Int>,
         @RequestBody administratitveEnheter: FeatureCollection
-    ): FeatureCollection
+    ): ResponseEntity<Any>
 }
 
