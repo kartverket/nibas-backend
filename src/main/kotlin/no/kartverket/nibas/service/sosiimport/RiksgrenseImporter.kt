@@ -2,7 +2,10 @@ package no.kartverket.nibas.service.sosiimport
 
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.Riksgrense
-import no.kartverket.nibas.repository.*
+import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.repository.FastsettingstypeRepository
+import no.kartverket.nibas.repository.GrensestatusRepository
+import no.kartverket.nibas.repository.RiksgrenseRepository
 import no.kartverket.nibas.sosi.model.SosiGeometri
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
@@ -10,24 +13,15 @@ import org.springframework.stereotype.Component
 import java.util.logging.Logger
 
 @Component
-class RiksgrenseImporter {
+class RiksgrenseImporter @Autowired constructor(
+    private val riksgrenseRepository: RiksgrenseRepository,
+    private val grensestatusRepository: GrensestatusRepository,
+    private val fastsettingstypeRepository: FastsettingstypeRepository,
+    private val dokumentasjonsreferanseImporter: DokumentasjonsreferanseImporter,
+    private val kodelisteService: KodelisteService
+) {
 
-    val logger = Logger.getLogger(this::class.java.name)
-
-    @Autowired
-    lateinit var riksgrenseRepository: RiksgrenseRepository
-
-    @Autowired
-    lateinit var maalemetodeRepository: MaalemetodeRepository
-
-    @Autowired
-    lateinit var grensestatusRepository: GrensestatusRepository
-
-    @Autowired
-    lateinit var fastsettingstypeRepository: FastsettingstypeRepository
-
-    @Autowired
-    lateinit var dokumentasjonsreferanseImporter: DokumentasjonsreferanseImporter
+    val logger: Logger = Logger.getLogger(this::class.java.name)
 
     fun importSosiRiksgrense(sosiRiksgrense: SosiGeometri): Grense {
         return when (val existing = riksgrenseRepository.findByLokalid(sosiRiksgrense.getIdent()?.getLokalId()!!)) {
@@ -47,18 +41,23 @@ class RiksgrenseImporter {
                 riksgrense.noeyaktighet = sosiRiksgrense.getKvalitet()?.getNoyaktighet()
                 riksgrense.maalemetode = when (val maalemetode = sosiRiksgrense.getKvalitet()?.getMalemetode()) {
                     null -> throw RuntimeException("Maalemetode er påkrevd")
-                    else -> maalemetodeRepository.findByIdOrNull(maalemetode) ?: throw RuntimeException("Ukjent maalemetode")
+                    else -> kodelisteService.getMalemetodeIdByCodeValue(maalemetode)
                 }
                 riksgrense.grensestatus = when (val grenseStatus = sosiRiksgrense.getGrensestatus()) {
                     null -> null
-                    else -> grensestatusRepository.findByIdOrNull(grenseStatus) ?: throw RuntimeException("Ukjent grensestatus")
+                    else -> grensestatusRepository.findByIdOrNull(grenseStatus)
+                        ?: throw RuntimeException("Ukjent grensestatus")
                 }
 
                 riksgrense.fastsettingstype = when (val fastsettingstype = sosiRiksgrense.getFastsettingstype()) {
                     null -> null
-                    else -> fastsettingstypeRepository.findByIdOrNull(fastsettingstype) ?: throw RuntimeException("Ukjent fastsettingstype")
+                    else -> fastsettingstypeRepository.findByIdOrNull(fastsettingstype)
+                        ?: throw RuntimeException("Ukjent fastsettingstype")
                 }
-                riksgrense.grense = SosiGeometryFunctions.sosiKoordinaterToLineString(sosiRiksgrense.getAlleSosiNordOest(), sosiRiksgrense.koordsys)
+                riksgrense.grense = SosiGeometryFunctions.sosiKoordinaterToLineString(
+                    sosiRiksgrense.getAlleSosiNordOest(),
+                    sosiRiksgrense.koordsys
+                )
 
                 riksgrense = riksgrenseRepository.save(riksgrense)
 

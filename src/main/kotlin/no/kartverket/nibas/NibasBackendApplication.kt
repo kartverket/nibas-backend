@@ -2,11 +2,14 @@ package no.kartverket.nibas
 
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.info.Info
+import no.kartverket.nibas.config.NibasBackendConfigProps
 import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
 import java.util.*
 
+@EnableConfigurationProperties(NibasBackendConfigProps::class)
 @SpringBootApplication
 class NibasBackendApplication {
     @Bean

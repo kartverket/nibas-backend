@@ -3,47 +3,36 @@ package no.kartverket.nibas.service
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.domain.*
-import no.kartverket.nibas.api.v1.request.AdministrativEnhet as AdministrativEnhetRequest
-import no.kartverket.nibas.repository.*
+import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.repository.FylkeRepository
+import no.kartverket.nibas.repository.FylkesgrenseRepository
+import no.kartverket.nibas.repository.KommuneRepository
+import no.kartverket.nibas.repository.KommunegrenseRepository
+import no.kartverket.nibas.repository.NasjonRepository
+import no.kartverket.nibas.repository.RiksgrenseRepository
+import no.kartverket.nibas.repository.SpraakkodeRepository
 import no.kartverket.nibas.unwrap
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import no.kartverket.nibas.api.v1.request.AdministrativEnhet as AdministrativEnhetRequest
 
 @Service
 @Transactional
-class AdministrativEnhetService {
-
-    @Autowired
-    lateinit var kommuneRepository: KommuneRepository
-
-    @Autowired
-    lateinit var fylkeRepository: FylkeRepository
-
-    @Autowired
-    lateinit var nasjonRepository: NasjonRepository
-
-    @Autowired
-    lateinit var kommunegrenseRepository: KommunegrenseRepository
-
-    @Autowired
-    lateinit var fylkesgrenseRepository: FylkesgrenseRepository
-
-    @Autowired
-    lateinit var riksgrenseRepository: RiksgrenseRepository
-
-    @Autowired
-    lateinit var spraakkodeRepository: SpraakkodeRepository
-
-    @Autowired
-    lateinit var kommunenummerRepository: KommunenummerRepository
-
-    @Autowired
-    lateinit var fylkesnummerRepository: FylkesnummerRepository
+class AdministrativEnhetService @Autowired constructor(
+    private val kommuneRepository: KommuneRepository,
+    private val fylkeRepository: FylkeRepository,
+    private val nasjonRepository: NasjonRepository,
+    private val kommunegrenseRepository: KommunegrenseRepository,
+    private val fylkesgrenseRepository: FylkesgrenseRepository,
+    private val riksgrenseRepository: RiksgrenseRepository,
+    private val spraakkodeRepository: SpraakkodeRepository,
+    private val kodelisteService: KodelisteService
+) {
 
     fun hentAlleAdministrativeEnheter(type: AdministrativEnhetType): Iterable<AdministrativEnhet> {
-        return when(type) {
+        return when (type) {
             AdministrativEnhetType.KOMMUNE -> kommuneRepository.findAll()
             AdministrativEnhetType.FYLKE -> fylkeRepository.findAll()
             AdministrativEnhetType.NASJON -> nasjonRepository.findAll()
@@ -51,21 +40,26 @@ class AdministrativEnhetService {
     }
 
     fun hentAdministrativEnhet(id: Int, type: AdministrativEnhetType): AdministrativEnhet? {
-        return when(type) {
+        return when (type) {
             AdministrativEnhetType.KOMMUNE -> kommuneRepository.findById(id).unwrap()
             AdministrativEnhetType.FYLKE -> fylkeRepository.findById(id).unwrap()
             AdministrativEnhetType.NASJON -> nasjonRepository.findById(id).unwrap()
         }
     }
-    fun hentAdministrativeEnheterMedId(ids: List<Int>, type: AdministrativEnhetType): MutableIterable<AdministrativEnhet> {
-        return when(type) {
-            AdministrativEnhetType.KOMMUNE ->  kommuneRepository.findAllById(ids)
+
+    fun hentAdministrativeEnheterMedId(
+        ids: List<Int>,
+        type: AdministrativEnhetType
+    ): MutableIterable<AdministrativEnhet> {
+        return when (type) {
+            AdministrativEnhetType.KOMMUNE -> kommuneRepository.findAllById(ids)
             AdministrativEnhetType.FYLKE -> fylkeRepository.findAllById(ids)
             AdministrativEnhetType.NASJON -> nasjonRepository.findAllById(ids)
         }
     }
+
     fun oppdaterGrenser(type: AdministrativEnhetType, oppdaterteGrenseFeatures: MutableList<Feature>) {
-        when(type) {
+        when (type) {
             AdministrativEnhetType.KOMMUNE -> {
                 val kommunegrenser = oppdaterteGrenseFeatures.map { feature ->
                     val eksisterendeGrense = kommunegrenseRepository.findById(feature.properties.id).unwrap()
@@ -93,8 +87,12 @@ class AdministrativEnhetService {
         }
     }
 
-    fun oppdaterAdministrativEnhet(id: Int, oppdatertAdministrativEnhet: AdministrativEnhetRequest): AdministrativEnhet {
-        return when(oppdatertAdministrativEnhet.type) {
+    fun oppdaterAdministrativEnhet(
+        id: Int,
+        oppdatertAdministrativEnhet: AdministrativEnhetRequest
+    ): AdministrativEnhet {
+        val oppdatertAdmEnhetNr = oppdatertAdministrativEnhet.nummer
+        return when (oppdatertAdministrativEnhet.type) {
             AdministrativEnhetType.KOMMUNE -> {
                 val gammelKommune = kommuneRepository.findById(id).unwrap() as Kommune
                 gammelKommune.administrativenhetnavn = oppdatertAdministrativEnhet.navn.map { it ->
@@ -103,7 +101,11 @@ class AdministrativEnhetService {
                     navn.spraak = spraakkodeRepository.findByIdOrNull(it.spraak)
                     navn
                 }.toMutableSet()
-                gammelKommune.kommunenummer = kommunenummerRepository.findByIdOrNull(oppdatertAdministrativEnhet.nummer)
+                if (!kodelisteService.kommunenummerIdExists(oppdatertAdmEnhetNr)) {
+                    throw RuntimeException("Ugyldig innsendt kommunenummerId: $oppdatertAdmEnhetNr")
+                }
+                gammelKommune.kommunenummer = oppdatertAdmEnhetNr
+
                 return kommuneRepository.save(gammelKommune)
             }
             AdministrativEnhetType.FYLKE -> {
@@ -114,7 +116,10 @@ class AdministrativEnhetService {
                     navn.spraak = spraakkodeRepository.findByIdOrNull(it.spraak)
                     navn
                 }.toMutableSet()
-                gammeltFylke.fylkesnummer = fylkesnummerRepository.findByIdOrNull(oppdatertAdministrativEnhet.nummer)
+                if (!kodelisteService.fylkesnummerIdExists(oppdatertAdmEnhetNr)) {
+                    throw RuntimeException("Ugyldig innsendt fylkesnummerId: $oppdatertAdmEnhetNr")
+                }
+                gammeltFylke.fylkesnummer = oppdatertAdmEnhetNr
                 return fylkeRepository.save(gammeltFylke)
             }
             AdministrativEnhetType.NASJON -> nasjonRepository.findById(id).unwrap() as Nasjon

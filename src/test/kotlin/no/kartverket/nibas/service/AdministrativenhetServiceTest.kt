@@ -1,24 +1,15 @@
 package no.kartverket.nibas.service
 
-import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
-import no.kartverket.nibas.api.v1.common.geojson.Feature
-import no.kartverket.nibas.api.v1.common.geojson.FeatureProperties
-import no.kartverket.nibas.api.v1.request.AdministrativEnhet
-import no.kartverket.nibas.api.v1.response.AdministrativEnhetNavn
-import no.kartverket.nibas.api.v1.response.AdministrativEnhet as AdministrativEnhetResponse
-import no.kartverket.nibas.domain.Fylke
-import no.kartverket.nibas.domain.Kommune
-import no.kartverket.nibas.domain.Kommunegrense
-import no.kartverket.nibas.repository.*
-import org.junit.jupiter.api.Test
-import org.locationtech.jts.geom.Coordinate
-import org.locationtech.jts.geom.GeometryFactory
-import org.mockito.ArgumentMatchers
-import org.mockito.Mockito
+import no.kartverket.nibas.repository.FylkeRepository
+import no.kartverket.nibas.repository.FylkesgrenseRepository
+import no.kartverket.nibas.repository.KommuneRepository
+import no.kartverket.nibas.repository.KommunegrenseRepository
+import no.kartverket.nibas.repository.NasjonRepository
+import no.kartverket.nibas.repository.RiksgrenseRepository
+import no.kartverket.nibas.repository.SpraakkodeRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.mock.mockito.MockBean
-import java.util.*
 
 @SpringBootTest(classes = [AdministrativEnhetService::class])
 class AdministrativEnhetServiceTest {
@@ -46,11 +37,6 @@ class AdministrativEnhetServiceTest {
     @MockBean
     lateinit var spraakkodeRepository: SpraakkodeRepository
 
-    @MockBean
-    lateinit var kommunenummerRepository: KommunenummerRepository
-
-    @MockBean
-    lateinit var fylkesnummerRepository: FylkesnummerRepository
 
 //    @Test
 //    fun thatOppdaterKommunegrenserOppdatererLikeGrenserKunEnGang() {

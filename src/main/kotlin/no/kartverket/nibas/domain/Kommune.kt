@@ -1,20 +1,22 @@
 package no.kartverket.nibas.domain
 
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
-import org.hibernate.Hibernate
-import org.locationtech.jts.geom.Point
-import org.locationtech.jts.geom.Polygon
-import java.time.LocalDate
-import java.time.OffsetDateTime
-import javax.persistence.*
+import javax.persistence.Column
+import javax.persistence.Entity
+import javax.persistence.FetchType
+import javax.persistence.JoinColumn
+import javax.persistence.JoinTable
+import javax.persistence.ManyToMany
+import javax.persistence.ManyToOne
+import javax.persistence.OneToMany
+import javax.persistence.Table
 
 @Table(name = "kommune")
 @Entity
 class Kommune : AdministrativEnhet(AdministrativEnhetType.KOMMUNE) {
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "kommunenummer", nullable = false)
-    var kommunenummer: Kommunenummer? = null
+    @Column(name = "kommunenummer", nullable = false)
+    var kommunenummer: String = ""
 
     @Column(name = "samiskforvaltningsomraade", nullable = false)
     var samiskforvaltningsomraade: Boolean? = false

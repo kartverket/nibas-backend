@@ -1,7 +1,14 @@
 package no.kartverket.nibas.service.sosiimport
 
-import no.kartverket.nibas.domain.*
-import no.kartverket.nibas.repository.*
+import no.kartverket.nibas.domain.Avtaltavgrensningslinje
+import no.kartverket.nibas.domain.AvtaltavgrensningslinjeInformasjon
+import no.kartverket.nibas.domain.Grense
+import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.repository.AvtaltAvgrensningslinjeInformasjonRepository
+import no.kartverket.nibas.repository.AvtaltAvgrensningslinjeRepository
+import no.kartverket.nibas.repository.FastsettingstypeRepository
+import no.kartverket.nibas.repository.GrensestatusRepository
+import no.kartverket.nibas.repository.LandKodeRepository
 import no.kartverket.nibas.sosi.model.SosiGeometri
 import no.kartverket.nibas.unwrap
 import org.springframework.beans.factory.annotation.Autowired
@@ -10,33 +17,22 @@ import org.springframework.stereotype.Component
 import java.util.logging.Logger
 
 @Component
-class AvtaltAvgrensningslinjeImporter {
+class AvtaltAvgrensningslinjeImporter @Autowired constructor(
+    private val avtaltAvgrensningslinjeRepository: AvtaltAvgrensningslinjeRepository,
+    private val avtaltAvgrensningslinjeInformasjonRepository: AvtaltAvgrensningslinjeInformasjonRepository,
+    private val landKodeRepository: LandKodeRepository,
+    private val kodelisteService: KodelisteService,
+    private val grensestatusRepository: GrensestatusRepository,
+    private val fastsettingstypeRepository: FastsettingstypeRepository,
+    private val dokumentasjonsreferanseImporter: DokumentasjonsreferanseImporter
 
-    val logger = Logger.getLogger(this::class.java.name)
+) {
 
-    @Autowired
-    lateinit var avtaltAvgrensningslinjeRepository: AvtaltAvgrensningslinjeRepository
-
-    @Autowired
-    lateinit var avtaltAvgrensningslinjeInformasjonRepository: AvtaltAvgrensningslinjeInformasjonRepository
-
-    @Autowired
-    lateinit var landKodeRepository: LandKodeRepository
-
-    @Autowired
-    lateinit var maalemetodeRepository: MaalemetodeRepository
-
-    @Autowired
-    lateinit var grensestatusRepository: GrensestatusRepository
-
-    @Autowired
-    lateinit var fastsettingstypeRepository: FastsettingstypeRepository
-
-    @Autowired
-    lateinit var dokumentasjonsreferanseImporter: DokumentasjonsreferanseImporter
+    val logger: Logger = Logger.getLogger(this::class.java.name)
 
     fun importAvtaltAvgrensningslinje(sosiAvtaltAvgrensningslinje: SosiGeometri): Grense {
-        return when (val existing = avtaltAvgrensningslinjeRepository.findByLokalid(sosiAvtaltAvgrensningslinje.getIdent()?.getLokalId()!!)) {
+        return when (val existing =
+            avtaltAvgrensningslinjeRepository.findByLokalid(sosiAvtaltAvgrensningslinje.getIdent()?.getLokalId()!!)) {
             null -> {
                 val landkoder = sosiAvtaltAvgrensningslinje.getLandkoder().map { landkode ->
                     when (val land = landKodeRepository.findById(landkode).unwrap()) {
@@ -57,21 +53,26 @@ class AvtaltAvgrensningslinjeImporter {
                 avtaltavgrensningslinje.maalemetode =
                     when (val maalemetode = sosiAvtaltAvgrensningslinje.getKvalitet()?.getMalemetode()) {
                         null -> throw RuntimeException("Maalemetode er påkrevd")
-                        else -> maalemetodeRepository.findByIdOrNull(maalemetode) ?: throw RuntimeException("Ukjent maalemetode")
+                        else -> kodelisteService.getMalemetodeIdByCodeValue(maalemetode)
                     }
                 avtaltavgrensningslinje.grensestatus =
                     when (val grenseStatus = sosiAvtaltAvgrensningslinje.getGrensestatus()) {
                         null -> null
-                        else -> grensestatusRepository.findByIdOrNull(grenseStatus) ?: throw RuntimeException("Ukjent grensestatus")
+                        else -> grensestatusRepository.findByIdOrNull(grenseStatus)
+                            ?: throw RuntimeException("Ukjent grensestatus")
                     }
 
                 avtaltavgrensningslinje.fastsettingstype =
                     when (val fastsettingstype = sosiAvtaltAvgrensningslinje.getFastsettingstype()) {
                         null -> null
-                        else -> fastsettingstypeRepository.findByIdOrNull(fastsettingstype) ?: throw RuntimeException("Ukjent fastsettingstype")
+                        else -> fastsettingstypeRepository.findByIdOrNull(fastsettingstype)
+                            ?: throw RuntimeException("Ukjent fastsettingstype")
                     }
 
-                avtaltavgrensningslinje.grense = SosiGeometryFunctions.sosiKoordinaterToLineString(sosiAvtaltAvgrensningslinje.getAlleSosiNordOest(), sosiAvtaltAvgrensningslinje.koordsys)
+                avtaltavgrensningslinje.grense = SosiGeometryFunctions.sosiKoordinaterToLineString(
+                    sosiAvtaltAvgrensningslinje.getAlleSosiNordOest(),
+                    sosiAvtaltAvgrensningslinje.koordsys
+                )
                 avtaltavgrensningslinje = avtaltAvgrensningslinjeRepository.save(avtaltavgrensningslinje)
 
                 if (sosiAvtaltAvgrensningslinje.getInformasjon() != null) {

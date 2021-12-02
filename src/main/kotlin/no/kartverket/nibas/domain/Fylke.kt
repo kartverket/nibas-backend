@@ -1,15 +1,22 @@
 package no.kartverket.nibas.domain
 
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
-import javax.persistence.*
+import javax.persistence.Column
+import javax.persistence.Entity
+import javax.persistence.FetchType
+import javax.persistence.JoinColumn
+import javax.persistence.JoinTable
+import javax.persistence.ManyToMany
+import javax.persistence.ManyToOne
+import javax.persistence.OneToMany
+import javax.persistence.Table
 
 @Table(name = "fylke")
 @Entity
 class Fylke : AdministrativEnhet(AdministrativEnhetType.FYLKE) {
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "fylkesnummer", nullable = false)
-    var fylkesnummer: Fylkesnummer? = null
+    @Column(name = "fylkesnummer", nullable = false)
+    var fylkesnummer: String = ""
 
     @Column(name = "samiskforvaltningsomraade")
     var samiskforvaltningsomraade: Boolean? = null

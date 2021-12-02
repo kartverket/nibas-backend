@@ -1,0 +1,34 @@
+### Gyldige kommunenumre
+GET http://localhost:8080/v1/kodeliste/kommunenumre
+Accept: application/json
+
+### Alle kommunenumre, også historiske
+GET http://localhost:8080/v1/kodeliste/alle-kommunenumre
+Accept: application/json
+
+### Gyldige fylkesnumre
+GET http://localhost:8080/v1/kodeliste/fylkesnumre
+Accept: application/json
+
+### Alle fylkesnumre, også historiske
+GET http://localhost:8080/v1/kodeliste/alle-fylkesnumre
+Accept: application/json
+
+### Målemetode-koder
+GET http://localhost:8080/v1/kodeliste/malemetode-koder
+Accept: application/json
+
+### Målemetoder
+GET http://localhost:8080/v1/kodeliste/malemetoder
+Accept: application/json
+
+### POST Sosi-file for import (legg fila i src/test/resources)
+POST http://localhost:8080/v1/import
+Content-Type: multipart/form-data; boundary=boundary
+Accept: application/json
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="ADM_Enheter_Norge.sos"
+
+< ./ADM_Enheter_Norge.sos
+--boundary

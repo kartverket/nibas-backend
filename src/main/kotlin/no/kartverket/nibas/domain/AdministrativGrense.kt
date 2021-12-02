@@ -1,8 +1,10 @@
 package no.kartverket.nibas.domain
 
-import org.locationtech.jts.geom.LineString
 import java.time.LocalDate
-import javax.persistence.*
+import javax.persistence.Column
+import javax.persistence.JoinColumn
+import javax.persistence.ManyToOne
+import javax.persistence.MappedSuperclass
 
 @MappedSuperclass
 abstract class AdministrativGrense : Grense() {
@@ -34,9 +36,8 @@ abstract class AdministrativGrense : Grense() {
     @Column(name = "tidspunktendring")
     var tidspunktendring: LocalDate? = null
 
-    @ManyToOne
-    @JoinColumn(name = "maalemetode")
-    var maalemetode: Maalemetode? = null
+    @Column(name = "maalemetode")
+    var maalemetode: String? = null
 
     @Column(name = "noeyaktighet")
     var noeyaktighet: Int? = null

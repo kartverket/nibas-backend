@@ -7,81 +7,6 @@ CREATE TABLE identifikasjon (
                                 punktreferanse_fk int)
     WITH (OIDS=FALSE);
 
-CREATE TABLE maalemetode (
-                             identifier text NOT NULL,
-                             description text)
-    WITH (OIDS=FALSE);
-
-INSERT INTO maalemetode (identifier, description) VALUES ('10', 'Terrengmålt: Uspesifisert måleinstrument');
-INSERT INTO maalemetode (identifier, description) VALUES ('11', 'Terrengmålt: Totalstasjon');
-INSERT INTO maalemetode (identifier, description) VALUES ('12', 'Terrengmålt: Teodolitt og el avstandsmåler');
-INSERT INTO maalemetode (identifier, description) VALUES ('13', 'Terrengmålt: Teodolitt og målebånd');
-INSERT INTO maalemetode (identifier, description) VALUES ('14', 'Terrengmålt: Ortogonalmetoden');
-INSERT INTO maalemetode (identifier, description) VALUES ('15', 'Utmål');
-INSERT INTO maalemetode (identifier, description) VALUES ('18', 'Tatt fra plan');
-INSERT INTO maalemetode (identifier, description) VALUES ('19', 'Annet  (denne har ingen mening, bør fjernes?)');
-INSERT INTO maalemetode (identifier, description) VALUES ('20', 'Stereoinstrument');
-INSERT INTO maalemetode (identifier, description) VALUES ('21', 'Aerotriangulert');
-INSERT INTO maalemetode (identifier, description) VALUES ('22', 'Stereoinstrument: Analytisk plotter');
-INSERT INTO maalemetode (identifier, description) VALUES ('23', 'Stereoinstrument: Autograf');
-INSERT INTO maalemetode (identifier, description) VALUES ('24', 'Stereoinstrument: Digitalt');
-INSERT INTO maalemetode (identifier, description) VALUES ('30', 'Scannet fra kart');
-INSERT INTO maalemetode (identifier, description) VALUES ('31', 'Skannet fra kart: Blyantoriginal');
-INSERT INTO maalemetode (identifier, description) VALUES ('32', 'Skannet fra kart: Rissefolie');
-INSERT INTO maalemetode (identifier, description) VALUES ('33', 'Skannet fra kart: Transparent folie, god kvalitet');
-INSERT INTO maalemetode (identifier, description) VALUES ('34', 'Skannet fra kart: Transparent folie, mindre god kvalitet');
-INSERT INTO maalemetode (identifier, description) VALUES ('35', 'Skannet fra kart: Papirkopi');
-INSERT INTO maalemetode (identifier, description) VALUES ('36', 'Flybåren laserscanner');
-INSERT INTO maalemetode (identifier, description) VALUES ('37', 'Bilbåren laser');
-INSERT INTO maalemetode (identifier, description) VALUES ('38', 'Lineær referanse');
-INSERT INTO maalemetode (identifier, description) VALUES ('40', 'Digitaliseringbord: Ortofoto eller flybilde');
-INSERT INTO maalemetode (identifier, description) VALUES ('41', 'Digitaliseringbord: Ortofoto, film');
-INSERT INTO maalemetode (identifier, description) VALUES ('42', 'Digitaliseringbord: Ortofoto, fotokopi');
-INSERT INTO maalemetode (identifier, description) VALUES ('43', 'Digitaliseringbord: Flybilde, film');
-INSERT INTO maalemetode (identifier, description) VALUES ('44', 'Digitaliseringbord: Flybilde, fotokopi');
-INSERT INTO maalemetode (identifier, description) VALUES ('45', 'Digitalisert på skjerm fra ortofoto');
-INSERT INTO maalemetode (identifier, description) VALUES ('46', 'Digitalisert på skjerm fra satellittbilde');
-INSERT INTO maalemetode (identifier, description) VALUES ('47', 'Digitalisert på skjerm fra andre digitale rasterdata');
-INSERT INTO maalemetode (identifier, description) VALUES ('48', 'Digitalisert på skjerm fra tolkning av seismikk');
-INSERT INTO maalemetode (identifier, description) VALUES ('49', 'Vektorisering av laserdata');
-INSERT INTO maalemetode (identifier, description) VALUES ('50', 'Digitaliseringsbord: Kart');
-INSERT INTO maalemetode (identifier, description) VALUES ('51', 'Digitaliseringsbord: Kart, blyantoriginal');
-INSERT INTO maalemetode (identifier, description) VALUES ('52', 'Digitaliseringsbord: Kart, rissefoile');
-INSERT INTO maalemetode (identifier, description) VALUES ('53', 'Digitaliseringsbord: Kart, transparent foile, god kvalitet');
-INSERT INTO maalemetode (identifier, description) VALUES ('54', 'Digitaliseringsbord: Kart, transparent foile, mindre god kvalitet');
-INSERT INTO maalemetode (identifier, description) VALUES ('55', 'Digitaliseringsbord: Kart, papirkopi');
-INSERT INTO maalemetode (identifier, description) VALUES ('56', 'Digitalisert på skjerm fra skannet kart');
-INSERT INTO maalemetode (identifier, description) VALUES ('60', 'Genererte data (interpolasjon)');
-INSERT INTO maalemetode (identifier, description) VALUES ('61', 'Genererte data (interpolasjon): Terrengmodell');
-INSERT INTO maalemetode (identifier, description) VALUES ('62', 'Genererte data (interpolasjon): Vektet middel');
-INSERT INTO maalemetode (identifier, description) VALUES ('63', 'Genererte data: Fra annen geometri');
-INSERT INTO maalemetode (identifier, description) VALUES ('64', 'Genererte data: Generalisering');
-INSERT INTO maalemetode (identifier, description) VALUES ('65', 'Genererte data: Sentralpunkt');
-INSERT INTO maalemetode (identifier, description) VALUES ('66', 'Genererte data: Sammenknytningspunkt, randpunkt');
-INSERT INTO maalemetode (identifier, description) VALUES ('67', 'Koordinater hentet fra GAB');
-INSERT INTO maalemetode (identifier, description) VALUES ('68', 'Koordinater hentet fra JREG');
-INSERT INTO maalemetode (identifier, description) VALUES ('69', 'Beregnet');
-INSERT INTO maalemetode (identifier, description) VALUES ('70', 'Spesielle metoder');
-INSERT INTO maalemetode (identifier, description) VALUES ('71', 'Spesielle metoder: Målt med stikkstang');
-INSERT INTO maalemetode (identifier, description) VALUES ('72', 'Spesielle metoder: Målt med waterstang');
-INSERT INTO maalemetode (identifier, description) VALUES ('73', 'Spesielle metoder: Målt med målehjul');
-INSERT INTO maalemetode (identifier, description) VALUES ('74', 'Spesielle metoder: Målt med stigningsmåler');
-INSERT INTO maalemetode (identifier, description) VALUES ('77', 'Fastsatt punkt');
-INSERT INTO maalemetode (identifier, description) VALUES ('78', 'Fastsatt ved dom eller kongelig resolusjon');
-INSERT INTO maalemetode (identifier, description) VALUES ('79', 'Annet (spesifiseres i filhode) ( bør vel fjernes, blir borte ved overføring mellom systemer)');
-INSERT INTO maalemetode (identifier, description) VALUES ('80', 'Frihåndstegning');
-INSERT INTO maalemetode (identifier, description) VALUES ('81', 'Frihåndstegning på kart');
-INSERT INTO maalemetode (identifier, description) VALUES ('82', 'Frihåndstegning på skjerm');
-INSERT INTO maalemetode (identifier, description) VALUES ('90', 'Treghetsstedfesting');
-INSERT INTO maalemetode (identifier, description) VALUES ('91', 'GNSS: Kodemåling, relative målinger');
-INSERT INTO maalemetode (identifier, description) VALUES ('92', 'GNSS: Kodemåling, enkle målinger');
-INSERT INTO maalemetode (identifier, description) VALUES ('93', 'GNSS: Fasemåling, statisk måling');
-INSERT INTO maalemetode (identifier, description) VALUES ('94', 'GNSS: Fasemåling, andre metoder');
-INSERT INTO maalemetode (identifier, description) VALUES ('95', 'Kombinasjon av GNSS/Treghet');
-INSERT INTO maalemetode (identifier, description) VALUES ('96', 'GNSS: Fasemåling RTK');
-INSERT INTO maalemetode (identifier, description) VALUES ('97', 'GNSS: Fasemåling , float-løsning');
-INSERT INTO maalemetode (identifier, description) VALUES ('99', 'Ukjent målemetode');
-
 CREATE TABLE typeendring (
                              identifier text NOT NULL,
                              description text)
@@ -381,42 +306,6 @@ CREATE TABLE administrativenhetnavn (
                                         nasjon_fk int)
     WITH (OIDS=FALSE);
 
-CREATE TABLE fylkesnummer (
-                              identifier text NOT NULL,
-                              description text)
-    WITH (OIDS=FALSE);
-
-INSERT INTO fylkesnummer (identifier, description) VALUES ('01', 'Østfold (utgått 2020-01-01)');
-INSERT INTO fylkesnummer (identifier, description) VALUES ('02', 'Akershus (utgått 2020-01-01)');
-INSERT INTO fylkesnummer (identifier, description) VALUES ('03', 'Oslo');
-INSERT INTO fylkesnummer (identifier, description) VALUES ('04', 'Hedmark (utgått 2020-01-01)');
-INSERT INTO fylkesnummer (identifier, description) VALUES ('05', 'Oppland (utgått 2020-01-01)');
-INSERT INTO fylkesnummer (identifier, description) VALUES ('06', 'Buskerud (utgått 2020-01-01)');
-INSERT INTO fylkesnummer (identifier, description) VALUES ('07', 'Vestfold (utgått 2020-01-01)');
-INSERT INTO fylkesnummer (identifier, description) VALUES ('08', 'Telemark (utgått 2020-01-01)');
-INSERT INTO fylkesnummer (identifier, description) VALUES ('09', 'Aust-Agder (utgått 2020-01-01)');
-INSERT INTO fylkesnummer (identifier, description) VALUES ('10', 'Vest-Agder (utgått 2020-01-01)');
-INSERT INTO fylkesnummer (identifier, description) VALUES ('11', 'Rogaland');
-INSERT INTO fylkesnummer (identifier, description) VALUES ('12', 'Hordaland (utgått 2020-01-01)');
-INSERT INTO fylkesnummer (identifier, description) VALUES ('13', 'Bergen (utgått)');
-INSERT INTO fylkesnummer (identifier, description) VALUES ('14', 'Sogn og Fjordane (utgått 2020-01-01)');
-INSERT INTO fylkesnummer (identifier, description) VALUES ('15', 'Møre og Romsdal');
-INSERT INTO fylkesnummer (identifier, description) VALUES ('16', 'Sør-Trøndelag (utgått)');
-INSERT INTO fylkesnummer (identifier, description) VALUES ('17', 'Nord-Trøndelag (utgått)');
-INSERT INTO fylkesnummer (identifier, description) VALUES ('18', 'Nordland');
-INSERT INTO fylkesnummer (identifier, description) VALUES ('19', 'Troms - Romsa (utgått 2020-01-01)');
-INSERT INTO fylkesnummer (identifier, description) VALUES ('20', 'Finnmark - Finnmárku (utgått 2020-01-01)');
-INSERT INTO fylkesnummer (identifier, description) VALUES ('21', 'Svalbard');
-INSERT INTO fylkesnummer (identifier, description) VALUES ('22', 'Jan Mayen');
-INSERT INTO fylkesnummer (identifier, description) VALUES ('23', 'Kontinentalsokkelen');
-INSERT INTO fylkesnummer (identifier, description) VALUES ('30', 'Viken');
-INSERT INTO fylkesnummer (identifier, description) VALUES ('34', 'Innlandet');
-INSERT INTO fylkesnummer (identifier, description) VALUES ('38', 'Vestfold og Telemark');
-INSERT INTO fylkesnummer (identifier, description) VALUES ('42', 'Agder');
-INSERT INTO fylkesnummer (identifier, description) VALUES ('46', 'Vestland');
-INSERT INTO fylkesnummer (identifier, description) VALUES ('50', 'Trøndelag – Trööndelage');
-INSERT INTO fylkesnummer (identifier, description) VALUES ('54', 'Troms og Finnmark – Romsa ja Finnmárku – Tromssa ja Finmarkku');
-
 CREATE TABLE grensepunkttypekode (
                                      identifier text NOT NULL,
                                      description text)
@@ -451,781 +340,6 @@ INSERT INTO grensepunkttypekode (identifier, description) VALUES ('63', 'SteinMe
 INSERT INTO grensepunkttypekode (identifier, description) VALUES ('97', 'Ukjent');
 INSERT INTO grensepunkttypekode (identifier, description) VALUES ('56', 'Umerket');
 INSERT INTO grensepunkttypekode (identifier, description) VALUES ('85', 'VegKant');
-
-CREATE TABLE kommunenummer (
-                               identifier text NOT NULL,
-                               description text)
-    WITH (OIDS=FALSE);
-
-INSERT INTO kommunenummer (identifier, description) VALUES ('0101', 'Halden (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0102', 'Sarpsborg (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0103', 'Fredrikstad (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0104', 'Moss (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0105', 'Sarpsborg (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0106', 'Fredrikstad (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0111', 'Hvaler (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0113', 'Borge (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0114', 'Varteig (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0115', 'Skjeberg (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0118', 'Aremark (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0119', 'Marker (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0121', 'Rømskog (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0122', 'Trøgstad (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0123', 'Spydeberg (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0124', 'Askim (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0125', 'Eidsberg (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0127', 'Skiptvet (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0128', 'Rakkestad (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0130', 'Tune (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0131', 'Rolvsøy (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0133', 'Kråkerøy (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0134', 'Onsøy (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0135', 'Råde (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0136', 'Rygge (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0137', 'Våler i Østfold (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0138', 'Hobøl (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0211', 'Vestby (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0213', 'Ski (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0214', 'Ås (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0215', 'Frogn (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0216', 'Nesodden (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0217', 'Oppegård (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0219', 'Bærum (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0220', 'Asker (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0221', 'Aurskog-Høland (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0226', 'Sørum (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0227', 'Fet (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0228', 'Rælingen (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0229', 'Enebakk (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0230', 'Lørenskog (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0231', 'Skedsmo (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0233', 'Nittedal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0234', 'Gjerdrum (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0235', 'Ullensaker (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0236', 'Nes i Akershus (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0237', 'Eidsvoll (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0238', 'Nannestad (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0239', 'Hurdal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0301', 'Oslo');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0401', 'Hamar (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0402', 'Kongsvinger (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0403', 'Hamar (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0412', 'Ringsaker (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0414', 'Vang (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0415', 'Løten (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0417', 'Stange (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0418', 'Nord-Odal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0419', 'Sør-Odal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0420', 'Eidskog (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0423', 'Grue (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0425', 'Åsnes (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0426', 'Våler i Hedmark (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0427', 'Elverum (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0428', 'Trysil (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0429', 'Åmot (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0430', 'Stor-Elvdal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0432', 'Rendalen (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0434', 'Engerdal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0436', 'Tolga (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0437', 'Tynset (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0438', 'Alvdal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0439', 'Folldal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0441', 'Os i Hedmark (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0501', 'Lillehammer (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0502', 'Gjøvik (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0511', 'Dovre (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0512', 'Lesja (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0513', 'Skjåk (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0514', 'Lom (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0515', 'Vågå (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0516', 'Nord-Fron (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0517', 'Sel (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0519', 'Sør-Fron (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0520', 'Ringebu (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0521', 'Øyer (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0522', 'Gausdal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0528', 'Østre Toten (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0529', 'Vestre Toten (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0532', 'Jevnaker (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0533', 'Lunner (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0534', 'Gran (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0536', 'Søndre Land (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0538', 'Nordre Land (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0540', 'Sør-Aurdal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0541', 'Etnedal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0542', 'Nord-Aurdal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0543', 'Vestre Slidre (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0544', 'Øystre Slidre (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0545', 'Vang (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0602', 'Drammen (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0604', 'Kongsberg (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0605', 'Ringerike (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0612', 'Hole (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0615', 'Flå (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0616', 'Nes i Buskerud (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0617', 'Gol (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0618', 'Hemsedal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0619', 'Ål (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0620', 'Hol (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0621', 'Sigdal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0622', 'Krødsherad (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0623', 'Modum (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0624', 'Øvre Eiker (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0625', 'Nedre Eiker (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0626', 'Lier (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0627', 'Røyken (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0628', 'Hurum (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0631', 'Flesberg (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0632', 'Rollag (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0633', 'Nore og Uvdal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0701', 'Horten (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0702', 'Holmestrand (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0703', 'Horten (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0704', 'Tønsberg (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0705', 'Tønsberg (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0706', 'Sandefjord (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0707', 'Larvik (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0708', 'Stavern (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0709', 'Larvik (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0710', 'Sandefjord (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0711', 'Svelvik (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0712', 'Larvik (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0713', 'Sande i Vestfold (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0714', 'Hof (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0715', 'Holmestrand (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0716', 'Re (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0717', 'Borre (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0718', 'Ramnes (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0719', 'Andebu (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0720', 'Stokke (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0721', 'Sem (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0722', 'Nøtterøy (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0723', 'Tjøme (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0725', 'Tjølling (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0726', 'Brunlanes (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0727', 'Hedrum (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0728', 'Lardal (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0729', 'Færder (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0805', 'Porsgrunn (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0806', 'Skien (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0807', 'Notodden (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0811', 'Siljan (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0814', 'Bamble (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0815', 'Kragerø (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0817', 'Drangedal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0819', 'Nome (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0821', 'Bø i Telemark (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0822', 'Sauherad (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0826', 'Tinn (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0827', 'Hjartdal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0828', 'Seljord (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0829', 'Kviteseid (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0830', 'Nissedal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0831', 'Fyresdal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0833', 'Tokke (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0834', 'Vinje (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0901', 'Risør (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0903', 'Arendal (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0904', 'Grimstad (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0906', 'Arendal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0911', 'Gjerstad (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0912', 'Vegårshei (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0914', 'Tvedestrand (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0918', 'Moland (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0919', 'Froland (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0920', 'Øyestad (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0921', 'Tromøy (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0922', 'Hisøy (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0926', 'Lillesand (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0928', 'Birkenes (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0929', 'Åmli (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0935', 'Iveland (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0937', 'Evje og Hornnes (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0938', 'Bygland (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0940', 'Valle (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('0941', 'Bykle (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1001', 'Kristiansand (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1002', 'Mandal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1003', 'Farsund (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1004', 'Flekkefjord (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1014', 'Vennesla (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1017', 'Songdalen (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1018', 'Søgne (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1021', 'Marnardal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1026', 'Åseral (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1027', 'Audnedal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1029', 'Lindesnes (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1032', 'Lyngdal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1034', 'Hægebostad (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1037', 'Kvinesdal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1046', 'Sirdal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1101', 'Eigersund');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1102', 'Sandnes (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1103', 'Stavanger');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1106', 'Haugesund');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1108', 'Sandnes');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1111', 'Sokndal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1112', 'Lund');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1114', 'Bjerkreim');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1119', 'Hå');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1120', 'Klepp');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1121', 'Time');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1122', 'Gjesdal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1124', 'Sola');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1127', 'Randaberg');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1129', 'Forsand (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1130', 'Strand');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1133', 'Hjelmeland');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1134', 'Suldal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1135', 'Sauda');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1141', 'Finnøy (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1142', 'Rennesøy (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1144', 'Kvitsøy');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1145', 'Bokn');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1146', 'Tysvær');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1149', 'Karmøy');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1151', 'Utsira');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1154', 'Vindafjord (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1159', 'Ølen (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1160', 'Vindafjord');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1201', 'Bergen (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1211', 'Etne (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1214', 'Ølen (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1216', 'Sveio (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1219', 'Bømlo (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1221', 'Stord (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1222', 'Fitjar (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1223', 'Tysnes (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1224', 'Kvinnherad (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1227', 'Jondal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1228', 'Odda (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1231', 'Ullensvang (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1232', 'Eidfjord (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1233', 'Ulvik (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1234', 'Granvin (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1235', 'Voss (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1238', 'Kvam (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1241', 'Fusa (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1242', 'Samnanger (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1243', 'Os i Hordaland (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1244', 'Austevoll (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1245', 'Sund (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1246', 'Fjell (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1247', 'Askøy (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1251', 'Vaksdal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1252', 'Modalen (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1253', 'Osterøy (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1256', 'Meland (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1259', 'Øygarden (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1260', 'Radøy (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1263', 'Lindås (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1264', 'Austrheim (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1265', 'Fedje (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1266', 'Masfjorden (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1401', 'Flora (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1411', 'Gulen (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1412', 'Solund (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1413', 'Hyllestad (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1416', 'Høyanger (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1417', 'Vik (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1418', 'Balestrand (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1419', 'Leikanger (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1420', 'Sogndal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1421', 'Aurland (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1422', 'Lærdal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1424', 'Årdal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1426', 'Luster (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1428', 'Askvoll (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1429', 'Fjaler (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1430', 'Gaular (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1431', 'Jølster (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1432', 'Førde (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1433', 'Naustdal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1438', 'Bremanger (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1439', 'Vågsøy (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1441', 'Selje (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1443', 'Eid (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1444', 'Hornindal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1445', 'Gloppen (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1449', 'Stryn (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1502', 'Molde (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1504', 'Ålesund (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1505', 'Kristiansund');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1506', 'Molde');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1507', 'Ålesund');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1511', 'Vanylven');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1514', 'Sande i Møre og Romsdal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1515', 'Herøy i Møre og Romsdal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1516', 'Ulstein');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1517', 'Hareid');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1519', 'Volda (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1520', 'Ørsta');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1523', 'Ørskog (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1524', 'Norddal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1525', 'Stranda');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1526', 'Stordal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1528', 'Sykkylven');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1529', 'Skodje (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1531', 'Sula');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1532', 'Giske');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1534', 'Haram (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1535', 'Vestnes');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1539', 'Rauma');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1543', 'Nesset (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1545', 'Midsund (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1546', 'Sandøy (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1547', 'Aukra');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1548', 'Fræna (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1551', 'Eide (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1554', 'Averøy');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1557', 'Gjemnes');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1560', 'Tingvoll');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1563', 'Sunndal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1566', 'Surnadal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1567', 'Rindal (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1569', 'Aure (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1571', 'Halsa (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1572', 'Tustna (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1573', 'Smøla');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1576', 'Aure');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1577', 'Volda');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1578', 'Fjord');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1579', 'Hustadvika');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1601', 'Trondheim (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1612', 'Hemne (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1613', 'Snillfjord (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1617', 'Hitra (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1620', 'Frøya (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1621', 'Ørland (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1622', 'Agdenes (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1624', 'Rissa (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1627', 'Bjugn (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1630', 'Åfjord (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1632', 'Roan (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1633', 'Osen (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1634', 'Oppdal (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1635', 'Rennebu (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1636', 'Meldal (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1638', 'Orkdal (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1640', 'Røros (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1644', 'Holtålen (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1648', 'Midtre Gauldal (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1653', 'Melhus (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1657', 'Skaun (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1662', 'Klæbu (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1663', 'Malvik (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1664', 'Selbu (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1665', 'Tydal (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1702', 'Steinkjer (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1703', 'Namsos (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1711', 'Meråker (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1714', 'Stjørdal (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1717', 'Frosta (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1718', 'Leksvik (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1719', 'Levanger (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1721', 'Verdal (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1723', 'Mosvik (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1724', 'Verran (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1725', 'Namdalseid (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1729', 'Inderøy (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1736', 'Snåase – Snåsa (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1738', 'Lierne (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1739', 'Raarvihke – Røyrvik (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1740', 'Namsskogan (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1742', 'Grong (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1743', 'Høylandet (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1744', 'Overhalla (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1748', 'Fosnes (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1749', 'Flatanger (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1750', 'Vikna (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1751', 'Nærøy (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1755', 'Leka (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1756', 'Inderøy (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1804', 'Bodø');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1805', 'Narvik (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1806', 'Narvik ');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1811', 'Bindal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1812', 'Sømna');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1813', 'Brønnøy');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1815', 'Vega');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1816', 'Vevelstad');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1818', 'Herøy i Nordland');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1820', 'Alstahaug');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1822', 'Leirfjord');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1824', 'Vefsn');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1825', 'Grane');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1826', 'Aarborte – Hattfjelldal ');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1827', 'Dønna');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1828', 'Nesna');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1832', 'Hemnes');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1833', 'Rana');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1834', 'Lurøy');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1835', 'Træna');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1836', 'Rødøy');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1837', 'Meløy');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1838', 'Gildeskål');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1839', 'Beiarn');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1840', 'Saltdal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1841', 'Fauske – Fuossko');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1842', 'Skjerstad (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1845', 'Sørfold');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1848', 'Steigen');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1849', 'Hamarøy – Hábmer (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1850', 'Divtasvuodna – Tysfjord (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1851', 'Lødingen');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1852', 'Tjeldsund (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1853', 'Evenes');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1854', 'Ballangen (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1856', 'Røst');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1857', 'Værøy');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1859', 'Flakstad');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1860', 'Vestvågøy');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1865', 'Vågan');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1866', 'Hadsel');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1867', 'Bø i Nordland ');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1868', 'Øksnes');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1870', 'Sortland – Suortá');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1871', 'Andøy');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1874', 'Moskenes');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1875', 'Hábmer – Hamarøy');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1901', 'Harstad (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1902', 'Tromsø (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1903', 'Harstad – Hárstták (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1911', 'Kvæfjord (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1913', 'Skånland (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1915', 'Bjarkøy (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1917', 'Ibestad (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1919', 'Gratangen (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1920', 'Loabák – Lavangen (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1922', 'Bardu (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1923', 'Salangen (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1924', 'Målselv (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1925', 'Sørreisa (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1926', 'Dyrøy (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1927', 'Tranøy (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1928', 'Torsken (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1929', 'Berg (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1931', 'Lenvik (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1933', 'Balsfjord (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1936', 'Karlsøy (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1938', 'Lyngen (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1939', 'Storfjord – Omasvuotna – Omasvuono (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1940', 'Gáivuotna – Kåfjord – Kaivuono (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1941', 'Skjervøy (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1942', 'Nordreisa – Ráisa – Raisi  (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('1943', 'Kvænangen (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('2001', 'Hammerfest (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('2002', 'Vardø (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('2003', 'Vadsø (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('2004', 'Hammerfest (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('2011', 'Guovdageaidnu – Kautokeino (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('2012', 'Alta (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('2014', 'Loppa (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('2015', 'Hasvik (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('2016', 'Sørøysund (Utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('2017', 'Kvalsund (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('2018', 'Måsøy (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('2019', 'Nordkapp (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('2020', 'Porsanger – Porsáŋgu – Porsanki (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('2021', 'Kárášjohka – Karasjok  (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('2022', 'Lebesby (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('2023', 'Gamvik (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('2024', 'Berlevåg (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('2025', 'Deatnu – Tana (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('2027', 'Unjárga – Nesseby (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('2028', 'Båtsfjord (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('2030', 'Sør-Varanger (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('2100', 'Svalbard');
-INSERT INTO kommunenummer (identifier, description) VALUES ('2111', 'Spitsbergen (utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('2121', 'Bjørnøya (utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('2131', 'Hopen (utgått)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('2211', 'Jan Mayen');
-INSERT INTO kommunenummer (identifier, description) VALUES ('2311', 'Sokkelen sør for 62 grader Nord
-');
-INSERT INTO kommunenummer (identifier, description) VALUES ('2321', 'Sokkelen nord for 62 grader Nord');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3001', 'Halden');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3002', 'Moss');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3003', 'Sarpsborg');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3004', 'Fredrikstad');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3005', 'Drammen');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3006', 'Kongsberg');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3007', 'Ringerike');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3011', 'Hvaler');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3012', 'Aremark');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3013', 'Marker');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3014', 'Indre Østfold');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3015', 'Skiptvet');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3016', 'Rakkestad');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3017', 'Råde');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3018', 'Våler i Viken');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3019', 'Vestby');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3020', 'Nordre Follo');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3021', 'Ås');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3022', 'Frogn');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3023', 'Nesodden');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3024', 'Bærum');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3025', 'Asker');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3026', 'Aurskog-Høland');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3027', 'Rælingen');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3028', 'Enebakk');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3029', 'Lørenskog');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3030', 'Lillestrøm');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3031', 'Nittedal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3032', 'Gjerdrum');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3033', 'Ullensaker');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3034', 'Nes');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3035', 'Eidsvoll');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3036', 'Nannestad');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3037', 'Hurdal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3038', 'Hole');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3039', 'Flå');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3040', 'Nesbyen');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3041', 'Gol');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3042', 'Hemsedal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3043', 'Ål');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3044', 'Hol');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3045', 'Sigdal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3046', 'Krødsherad');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3047', 'Modum');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3048', 'Øvre Eiker');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3049', 'Lier');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3050', 'Flesberg');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3051', 'Rollag');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3052', 'Nore og Uvdal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3053', 'Jevnaker');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3054', 'Lunner');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3401', 'Kongsvinger');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3403', 'Hamar');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3405', 'Lillehammer');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3407', 'Gjøvik');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3411', 'Ringsaker');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3412', 'Løten');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3413', 'Stange');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3414', 'Nord-Odal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3415', 'Sør-Odal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3416', 'Eidskog');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3417', 'Grue');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3418', 'Åsnes');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3419', 'Våler i Innlandet');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3420', 'Elverum');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3421', 'Trysil');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3422', 'Åmot');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3423', 'Stor-Elvdal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3424', 'Rendalen');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3425', 'Engerdal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3426', 'Tolga');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3427', 'Tynset');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3428', 'Alvdal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3429', 'Folldal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3430', 'Os');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3431', 'Dovre');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3432', 'Lesja');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3433', 'Skjåk');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3434', 'Lom');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3435', 'Vågå');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3436', 'Nord-Fron');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3437', 'Sel');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3438', 'Sør-Fron');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3439', 'Ringebu');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3440', 'Øyer');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3441', 'Gausdal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3442', 'Østre Toten');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3443', 'Vestre Toten');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3446', 'Gran');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3447', 'Søndre Land');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3448', 'Nordre Land');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3449', 'Sør-Aurdal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3450', 'Etnedal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3451', 'Nord-Aurdal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3452', 'Vestre Slidre');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3453', 'Øystre Slidre');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3454', 'Vang');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3801', 'Horten');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3802', 'Holmestrand');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3803', 'Tønsberg');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3804', 'Sandefjord');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3805', 'Larvik');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3806', 'Porsgrunn');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3807', 'Skien');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3808', 'Notodden');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3811', 'Færder');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3812', 'Siljan');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3813', 'Bamble');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3814', 'Kragerø');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3815', 'Drangedal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3816', 'Nome');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3817', 'Midt-Telemark');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3818', 'Tinn');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3819', 'Hjartdal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3820', 'Seljord');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3821', 'Kviteseid');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3822', 'Nissedal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3823', 'Fyresdal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3824', 'Tokke');
-INSERT INTO kommunenummer (identifier, description) VALUES ('3825', 'Vinje');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4201', 'Risør');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4202', 'Grimstad');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4203', 'Arendal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4204', 'Kristiansand');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4205', 'Lindesnes');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4206', 'Farsund');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4207', 'Flekkefjord');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4211', 'Gjerstad');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4212', 'Vegårshei');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4213', 'Tvedestrand');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4214', 'Froland');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4215', 'Lillesand');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4216', 'Birkenes');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4217', 'Åmli');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4218', 'Iveland');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4219', 'Evje og Hornnes');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4220', 'Bygland');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4221', 'Valle');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4222', 'Bykle');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4223', 'Vennesla');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4224', 'Åseral');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4225', 'Lyngdal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4226', 'Hægebostad');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4227', 'Kvinesdal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4228', 'Sirdal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4601', 'Bergen');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4602', 'Kinn');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4611', 'Etne');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4612', 'Sveio');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4613', 'Bømlo');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4614', 'Stord');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4615', 'Fitjar');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4616', 'Tysnes');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4617', 'Kvinnherad');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4618', 'Ullensvang');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4619', 'Eidfjord');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4620', 'Ulvik');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4621', 'Voss');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4622', 'Kvam');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4623', 'Samnanger');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4624', 'Bjørnafjorden');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4625', 'Austevoll');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4626', 'Øygarden');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4627', 'Askøy');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4628', 'Vaksdal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4629', 'Modalen');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4630', 'Osterøy');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4631', 'Alver');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4632', 'Austrheim');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4633', 'Fedje');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4634', 'Masfjorden');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4635', 'Gulen');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4636', 'Solund');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4637', 'Hyllestad');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4638', 'Høyanger');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4639', 'Vik');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4640', 'Sogndal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4641', 'Aurland');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4642', 'Lærdal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4643', 'Årdal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4644', 'Luster');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4645', 'Askvoll');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4646', 'Fjaler');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4647', 'Sunnfjord');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4648', 'Bremanger');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4649', 'Stad');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4650', 'Gloppen');
-INSERT INTO kommunenummer (identifier, description) VALUES ('4651', 'Stryn');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5001', 'Trondheim ');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5004', 'Steinkjer (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5005', 'Namsos (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5006', 'Steinkjer');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5007', 'Namsos – Nåavmesjenjaelmie');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5011', 'Hemne (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5012', 'Snillfjord (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5013', 'Hitra (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5014', 'Frøya');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5015', 'Ørland (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5016', 'Agdenes (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5017', 'Bjugn (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5018', 'Åfjord (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5019', 'Roan (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5020', 'Osen');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5021', 'Oppdal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5022', 'Rennebu');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5023', 'Meldal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5024', 'Orkdal (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5025', 'Røros');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5026', 'Holtålen');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5027', 'Midtre Gauldal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5028', 'Melhus');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5029', 'Skaun');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5030', 'Klæbu (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5031', 'Malvik');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5032', 'Selbu');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5033', 'Tydal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5034', 'Meråker');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5035', 'Stjørdal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5036', 'Frosta');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5037', 'Levanger');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5038', 'Verdal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5039', 'Verran (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5040', 'Namdalseid (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5041', 'Snåase – Snåsa');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5042', 'Lierne');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5043', 'Raarvihke – Røyrvik');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5044', 'Namsskogan');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5045', 'Grong');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5046', 'Høylandet');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5047', 'Overhalla');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5048', 'Fosnes (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5049', 'Flatanger');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5050', 'Vikna (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5051', 'Nærøy (Utgått 2020-01-01)');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5052', 'Leka');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5053', 'Inderøy');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5054', 'Indre Fosen');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5055', 'Heim');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5056', 'Hitra');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5057', 'Ørland');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5058', 'Åfjord');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5059', 'Orkland');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5060', 'Nærøysund');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5061', 'Rindal');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5401', 'Tromsø');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5402', 'Harstad – Hárstták');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5403', 'Alta');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5404', 'Vardø');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5405', 'Vadsø');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5406', 'Hammerfest – Hámmerfeasta');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5411', 'Kvæfjord');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5412', 'Tjeldsund – Dielddanuorri');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5413', 'Ibestad');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5414', 'Gratangen');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5415', 'Loabák – Lavangen');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5416', 'Bardu');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5417', 'Salangen');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5418', 'Målselv');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5419', 'Sørreisa');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5420', 'Dyrøy');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5421', 'Senja');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5422', 'Balsfjord');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5423', 'Karlsøy');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5424', 'Lyngen');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5425', 'Storfjord – Omasvuotna – Omasvuono');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5426', 'Gáivuotna – Kåfjord – Kaivuono');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5427', 'Skjervøy');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5428', 'Nordreisa – Ráisa – Raisi');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5429', 'Kvænangen');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5430', 'Guovdageaidnu – Kautokeino');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5432', 'Loppa');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5433', 'Hasvik');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5434', 'Måsøy');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5435', 'Nordkapp');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5436', 'Porsanger – Porsáŋgu – Porsanki');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5437', 'Kárášjohka – Karasjok');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5438', 'Lebesby');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5439', 'Gamvik');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5440', 'Berlevåg');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5441', 'Deatnu – Tana');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5442', 'Unjárga – Nesseby');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5443', 'Båtsfjord');
-INSERT INTO kommunenummer (identifier, description) VALUES ('5444', 'Sør-Varanger');
 
 CREATE TABLE nivaanummer (
                              identifier text NOT NULL,
@@ -5338,20 +4452,10 @@ CREATE TABLE sektorlokalitet_informasjon (
                                              informasjon text)
     WITH (OIDS=FALSE);
 
-CREATE TABLE sektoromraade_kommunenummer (
-                                             sektoromraade_fk int,
-                                             kommunenummer_fk text)
-    WITH (OIDS=FALSE);
-
 CREATE TABLE sektoromraade_informasjon (
                                            objid serial NOT NULL,
                                            sektoromraade_fk int,
                                            informasjon text)
-    WITH (OIDS=FALSE);
-
-CREATE TABLE bispedoemme_kommunenummer (
-                                           bispedoemme_fk int,
-                                           kommunenummer_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE bispedoemme_informasjon (
@@ -5364,11 +4468,6 @@ CREATE TABLE bispedoemmegrense_informasjon (
                                                objid serial NOT NULL,
                                                bispedoemmegrense_fk int,
                                                informasjon text)
-    WITH (OIDS=FALSE);
-
-CREATE TABLE prosti_kommunenummer (
-                                      prosti_fk int,
-                                      kommunenummer_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE prosti_informasjon (
@@ -5389,11 +4488,6 @@ CREATE TABLE sokn_fellesraad (
                                  fellesraad text)
     WITH (OIDS=FALSE);
 
-CREATE TABLE sokn_kommunenummer (
-                                    sokn_fk int,
-                                    kommunenummer_fk text)
-    WITH (OIDS=FALSE);
-
 CREATE TABLE sokn_informasjon (
                                   objid serial NOT NULL,
                                   sokn_fk int,
@@ -5404,11 +4498,6 @@ CREATE TABLE soknegrense_informasjon (
                                          objid serial NOT NULL,
                                          soknegrense_fk int,
                                          informasjon text)
-    WITH (OIDS=FALSE);
-
-CREATE TABLE postnummeromraade_kommunenummer (
-                                                 postnummeromraade_fk int,
-                                                 kommunenummer_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE postnummeromraade_informasjon (
@@ -5423,11 +4512,6 @@ CREATE TABLE postnummeromraadegrense_informasjon (
                                                      informasjon text)
     WITH (OIDS=FALSE);
 
-CREATE TABLE postomraade_kommunenummer (
-                                           postomraade_fk int,
-                                           kommunenummer_fk text)
-    WITH (OIDS=FALSE);
-
 CREATE TABLE postomraade_informasjon (
                                          objid serial NOT NULL,
                                          postomraade_fk int,
@@ -5440,11 +4524,6 @@ CREATE TABLE postomraadegrense_informasjon (
                                                informasjon text)
     WITH (OIDS=FALSE);
 
-CREATE TABLE postregion_kommunenummer (
-                                          postregion_fk int,
-                                          kommunenummer_fk text)
-    WITH (OIDS=FALSE);
-
 CREATE TABLE postregion_informasjon (
                                         objid serial NOT NULL,
                                         postregion_fk int,
@@ -5455,11 +4534,6 @@ CREATE TABLE postregiongrense_informasjon (
                                               objid serial NOT NULL,
                                               postregiongrense_fk int,
                                               informasjon text)
-    WITH (OIDS=FALSE);
-
-CREATE TABLE postsone_kommunenummer (
-                                        postsone_fk int,
-                                        kommunenummer_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE postsone_informasjon (
@@ -5484,11 +4558,6 @@ CREATE TABLE lovvirkeomraade_miljoeomraade (
                                                miljoeomraade_fk text)
     WITH (OIDS=FALSE);
 
-CREATE TABLE lovvirkeomraade_kommunenummer (
-                                               lovvirkeomraade_fk int,
-                                               kommunenummer_fk text)
-    WITH (OIDS=FALSE);
-
 CREATE TABLE lovvirkeomraade_informasjon (
                                              objid serial NOT NULL,
                                              lovvirkeomraade_fk int,
@@ -5501,11 +4570,6 @@ CREATE TABLE lovvirkeomraade_ansvarligmyndighet (
                                                     ansvarligmyndighet text)
     WITH (OIDS=FALSE);
 
-CREATE TABLE lovvirkeomraadegrense_kommunenummer (
-                                                     lovvirkeomraadegrense_fk int,
-                                                     kommunenummer_fk text)
-    WITH (OIDS=FALSE);
-
 CREATE TABLE lovvirkeomraadegrense_informasjon (
                                                    objid serial NOT NULL,
                                                    lovvirkeomraadegrense_fk int,
@@ -5516,11 +4580,6 @@ CREATE TABLE lovvirkeomraadegrense_ansvarligmyndighet (
                                                           objid serial NOT NULL,
                                                           lovvirkeomraadegrense_fk int,
                                                           ansvarligmyndighet text)
-    WITH (OIDS=FALSE);
-
-CREATE TABLE lovvirkeomraadegrensepunkt_kommunenummer (
-                                                          lovvirkeomraadegrensepunkt_fk int,
-                                                          kommunenummer_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE lovvirkeomraadegrensepunkt_informasjon (
@@ -5988,7 +5047,6 @@ CREATE TABLE yttergrensetilstoetendesone_ansvarligmyndighet (
     WITH (OIDS=FALSE);
 
 ALTER TABLE identifikasjon ADD PRIMARY KEY (objid);
-ALTER TABLE maalemetode ADD PRIMARY KEY (identifier);
 ALTER TABLE typeendring ADD PRIMARY KEY (identifier);
 ALTER TABLE fylke ADD PRIMARY KEY (objid);
 ALTER TABLE fylke_fylkesgrense ADD PRIMARY KEY (fylke_fk, fylkesgrense_fk);
@@ -6018,9 +5076,7 @@ ALTER TABLE stemmekrets_kommunegrense ADD PRIMARY KEY (stemmekrets_fk, kommunegr
 --ALTER TABLE avgrensning_bispedoemme ADD PRIMARY KEY (avgrensning_fk, bispedoemme_fk);
 ALTER TABLE nasjon ADD PRIMARY KEY (objid);
 ALTER TABLE administrativenhetnavn ADD PRIMARY KEY (objid);
-ALTER TABLE fylkesnummer ADD PRIMARY KEY (identifier);
 ALTER TABLE grensepunkttypekode ADD PRIMARY KEY (identifier);
-ALTER TABLE kommunenummer ADD PRIMARY KEY (identifier);
 ALTER TABLE nivaanummer ADD PRIMARY KEY (identifier);
 ALTER TABLE noeyaktighetsklassekode ADD PRIMARY KEY (identifier);
 ALTER TABLE spraakkode ADD PRIMARY KEY (identifier);
@@ -6201,39 +5257,28 @@ ALTER TABLE grunnkrets_informasjon ADD PRIMARY KEY (objid);
 ALTER TABLE grunnkretsgrense_informasjon ADD PRIMARY KEY (objid);
 ALTER TABLE sektorgrense_informasjon ADD PRIMARY KEY (objid);
 ALTER TABLE sektorlokalitet_informasjon ADD PRIMARY KEY (objid);
-ALTER TABLE sektoromraade_kommunenummer ADD PRIMARY KEY (sektoromraade_fk, kommunenummer_fk);
 ALTER TABLE sektoromraade_informasjon ADD PRIMARY KEY (objid);
-ALTER TABLE bispedoemme_kommunenummer ADD PRIMARY KEY (bispedoemme_fk, kommunenummer_fk);
 ALTER TABLE bispedoemme_informasjon ADD PRIMARY KEY (objid);
 ALTER TABLE bispedoemmegrense_informasjon ADD PRIMARY KEY (objid);
-ALTER TABLE prosti_kommunenummer ADD PRIMARY KEY (prosti_fk, kommunenummer_fk);
 ALTER TABLE prosti_informasjon ADD PRIMARY KEY (objid);
 ALTER TABLE prostigrense_informasjon ADD PRIMARY KEY (objid);
 ALTER TABLE sokn_fellesraad ADD PRIMARY KEY (objid);
-ALTER TABLE sokn_kommunenummer ADD PRIMARY KEY (sokn_fk, kommunenummer_fk);
 ALTER TABLE sokn_informasjon ADD PRIMARY KEY (objid);
 ALTER TABLE soknegrense_informasjon ADD PRIMARY KEY (objid);
-ALTER TABLE postnummeromraade_kommunenummer ADD PRIMARY KEY (postnummeromraade_fk, kommunenummer_fk);
 ALTER TABLE postnummeromraade_informasjon ADD PRIMARY KEY (objid);
 ALTER TABLE postnummeromraadegrense_informasjon ADD PRIMARY KEY (objid);
-ALTER TABLE postomraade_kommunenummer ADD PRIMARY KEY (postomraade_fk, kommunenummer_fk);
 ALTER TABLE postomraade_informasjon ADD PRIMARY KEY (objid);
 ALTER TABLE postomraadegrense_informasjon ADD PRIMARY KEY (objid);
-ALTER TABLE postregion_kommunenummer ADD PRIMARY KEY (postregion_fk, kommunenummer_fk);
 ALTER TABLE postregion_informasjon ADD PRIMARY KEY (objid);
 ALTER TABLE postregiongrense_informasjon ADD PRIMARY KEY (objid);
-ALTER TABLE postsone_kommunenummer ADD PRIMARY KEY (postsone_fk, kommunenummer_fk);
 ALTER TABLE postsone_informasjon ADD PRIMARY KEY (objid);
 ALTER TABLE postsonegrense_informasjon ADD PRIMARY KEY (objid);
 ALTER TABLE lovvirkeomraade_sonetype ADD PRIMARY KEY (lovvirkeomraade_fk, sonetype_fk);
 ALTER TABLE lovvirkeomraade_miljoeomraade ADD PRIMARY KEY (lovvirkeomraade_fk, miljoeomraade_fk);
-ALTER TABLE lovvirkeomraade_kommunenummer ADD PRIMARY KEY (lovvirkeomraade_fk, kommunenummer_fk);
 ALTER TABLE lovvirkeomraade_informasjon ADD PRIMARY KEY (objid);
 ALTER TABLE lovvirkeomraade_ansvarligmyndighet ADD PRIMARY KEY (objid);
-ALTER TABLE lovvirkeomraadegrense_kommunenummer ADD PRIMARY KEY (lovvirkeomraadegrense_fk, kommunenummer_fk);
 ALTER TABLE lovvirkeomraadegrense_informasjon ADD PRIMARY KEY (objid);
 ALTER TABLE lovvirkeomraadegrense_ansvarligmyndighet ADD PRIMARY KEY (objid);
-ALTER TABLE lovvirkeomraadegrensepunkt_kommunenummer ADD PRIMARY KEY (lovvirkeomraadegrensepunkt_fk, kommunenummer_fk);
 ALTER TABLE lovvirkeomraadegrensepunkt_informasjon ADD PRIMARY KEY (objid);
 ALTER TABLE dokumentasjonsreferanse_dokumentlink ADD PRIMARY KEY (objid);
 ALTER TABLE dokumentasjonsreferanse_internreferansekartverket ADD PRIMARY KEY (objid);
@@ -6321,12 +5366,10 @@ ALTER TABLE identifikasjon ADD FOREIGN KEY (punktreferanse_fk) REFERENCES punktr
 ALTER TABLE fylke ADD FOREIGN KEY (land) REFERENCES landkode;
 ALTER TABLE fylke ADD FOREIGN KEY (nivaanummer) REFERENCES nivaanummer;
 ALTER TABLE fylke ADD FOREIGN KEY (spraak) REFERENCES spraakkode;
-ALTER TABLE fylke ADD FOREIGN KEY (fylkesnummer) REFERENCES fylkesnummer;
 ALTER TABLE fylke ADD FOREIGN KEY (nasjon_fk) REFERENCES nasjon(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE fylke_fylkesgrense ADD FOREIGN KEY (fylke_fk) REFERENCES fylke(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE fylke_fylkesgrense ADD FOREIGN KEY (fylkesgrense_fk) REFERENCES fylkesgrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE fylkesgrense ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE fylkesgrense ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE fylkesgrense ADD FOREIGN KEY (grensestatus) REFERENCES grensestatus;
 ALTER TABLE fylkesgrense ADD FOREIGN KEY (fastsettingstype) REFERENCES fastsettingstype;
 ALTER TABLE fylkesgrense ADD FOREIGN KEY (foelgerterrengdetalj) REFERENCES terrengdetaljkode;
@@ -6352,7 +5395,6 @@ ALTER TABLE fylkesgrense_grensemerkeland ADD FOREIGN KEY (grensemerkeland_fk) RE
 ALTER TABLE kommune_fylkesgrense ADD FOREIGN KEY (kommune_fk) REFERENCES kommune(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE kommune_fylkesgrense ADD FOREIGN KEY (fylkesgrense_fk) REFERENCES fylkesgrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE grensemerkeland ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE grensemerkeland ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE grensemerkeland ADD FOREIGN KEY (grensemerketype) REFERENCES grensepunkttypekode;
 ALTER TABLE grensemerkeland ADD FOREIGN KEY (land) REFERENCES landkode;
 ALTER TABLE grensemerkeland_kommunegrense ADD FOREIGN KEY (grensemerkeland_fk) REFERENCES grensemerkeland(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
@@ -6360,12 +5402,10 @@ ALTER TABLE grensemerkeland_kommunegrense ADD FOREIGN KEY (kommunegrense_fk) REF
 ALTER TABLE kommune ADD FOREIGN KEY (land) REFERENCES landkode;
 ALTER TABLE kommune ADD FOREIGN KEY (nivaanummer) REFERENCES nivaanummer;
 ALTER TABLE kommune ADD FOREIGN KEY (spraak) REFERENCES spraakkode;
-ALTER TABLE kommune ADD FOREIGN KEY (kommunenummer) REFERENCES kommunenummer;
 ALTER TABLE kommune ADD FOREIGN KEY (fylke_fk) REFERENCES fylke(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE kommune_kommunegrense ADD FOREIGN KEY (kommune_fk) REFERENCES kommune(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE kommune_kommunegrense ADD FOREIGN KEY (kommunegrense_fk) REFERENCES kommunegrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE kommunegrense ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE kommunegrense ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE kommunegrense ADD FOREIGN KEY (grensestatus) REFERENCES grensestatus;
 ALTER TABLE kommunegrense ADD FOREIGN KEY (fastsettingstype) REFERENCES fastsettingstype;
 ALTER TABLE kommunegrense ADD FOREIGN KEY (foelgerterrengdetalj) REFERENCES terrengdetaljkode;
@@ -6394,7 +5434,6 @@ ALTER TABLE administrativenhetnavn ADD FOREIGN KEY (fylke_fk) REFERENCES fylke(o
 ALTER TABLE administrativenhetnavn ADD FOREIGN KEY (kommune_fk) REFERENCES kommune(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE administrativenhetnavn ADD FOREIGN KEY (nasjon_fk) REFERENCES nasjon(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE brytningspunkt ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE brytningspunkt ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE brytningspunkt ADD FOREIGN KEY (underlag) REFERENCES underlag;
 ALTER TABLE riksgrense_grensemerke_vassdragspunkt ADD FOREIGN KEY (riksgrense_fk) REFERENCES riksgrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE riksgrense_grensemerke_vassdragspunkt ADD FOREIGN KEY (grensemerke_vassdragspunkt_fk) REFERENCES vassdragspunkt(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
@@ -6417,27 +5456,21 @@ ALTER TABLE riksgrense_grensemerke_grensestolpe ADD FOREIGN KEY (grensemerke_gre
 ALTER TABLE riksgrense_grensemerke_grenseskilt ADD FOREIGN KEY (riksgrense_fk) REFERENCES riksgrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE riksgrense_grensemerke_grenseskilt ADD FOREIGN KEY (grensemerke_grenseskilt_fk) REFERENCES grenseskilt(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE grenseskilt ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE grenseskilt ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE grenseskilt ADD FOREIGN KEY (underlag) REFERENCES underlag;
 ALTER TABLE grenseskilt ADD FOREIGN KEY (skilttype) REFERENCES skilttype;
 ALTER TABLE grensestolpe ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE grensestolpe ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE grensestolpe ADD FOREIGN KEY (underlag) REFERENCES underlag;
 ALTER TABLE litenutligger ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE litenutligger ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE litenutligger ADD FOREIGN KEY (underlag) REFERENCES underlag;
 ALTER TABLE profilpunkt ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE profilpunkt ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE profilpunkt ADD FOREIGN KEY (underlag) REFERENCES underlag;
 ALTER TABLE riksgrense ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE riksgrense ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE riksgrense ADD FOREIGN KEY (foelgerterrengdetalj) REFERENCES terrengdetaljkode;
 ALTER TABLE riksgrense ADD FOREIGN KEY (grensestatus) REFERENCES grensestatus;
 ALTER TABLE riksgrense ADD FOREIGN KEY (fastsettingstype) REFERENCES fastsettingstype;
 ALTER TABLE avgrensning_prosti ADD FOREIGN KEY (avgrensning_fk) REFERENCES riksgrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 --ALTER TABLE avgrensning_prosti ADD FOREIGN KEY (prosti_fk) REFERENCES prosti(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE riksroeys ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE riksroeys ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE riksroeys ADD FOREIGN KEY (underlag) REFERENCES underlag;
 ALTER TABLE sikringspunkt ADD FOREIGN KEY (sikringspunkttype) REFERENCES sikringspunkttype;
 ALTER TABLE sikringspunkt ADD FOREIGN KEY (materialebolt) REFERENCES materialebolt;
@@ -6446,16 +5479,12 @@ ALTER TABLE sikringspunkt ADD FOREIGN KEY (riksroeys_fk) REFERENCES riksroeys(ob
 ALTER TABLE sikringspunkt ADD FOREIGN KEY (utligger_storutligger_fk) REFERENCES storutligger(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE sikringspunkt ADD FOREIGN KEY (utligger_litenutligger_fk) REFERENCES litenutligger(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE storutligger ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE storutligger ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE storutligger ADD FOREIGN KEY (underlag) REFERENCES underlag;
 ALTER TABLE vassdragspunkt ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE vassdragspunkt ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE vassdragspunkt ADD FOREIGN KEY (underlag) REFERENCES underlag;
 ALTER TABLE viserstein ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE viserstein ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE viserstein ADD FOREIGN KEY (underlag) REFERENCES underlag;
 ALTER TABLE oevrighjelpemerke ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE oevrighjelpemerke ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE oevrighjelpemerke ADD FOREIGN KEY (underlag) REFERENCES underlag;
 ALTER TABLE hjertesteininformasjon ADD FOREIGN KEY (riksroeys_fk) REFERENCES riksroeys(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE naermestegrensemerke ADD FOREIGN KEY (brytningspunkt_fk) REFERENCES brytningspunkt(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
@@ -6494,54 +5523,42 @@ ALTER TABLE vedlikehold ADD FOREIGN KEY (vassdragspunkt_fk) REFERENCES vassdrags
 ALTER TABLE vedlikehold ADD FOREIGN KEY (viserstein_fk) REFERENCES viserstein(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE vedlikehold ADD FOREIGN KEY (oevrighjelpemerke_fk) REFERENCES oevrighjelpemerke(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE delomraade ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE delomraade ADD FOREIGN KEY (kommunenummer) REFERENCES kommunenummer;
 ALTER TABLE delomraade_delomraadegrens ADD FOREIGN KEY (delomraade_fk) REFERENCES delomraade(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE delomraade_delomraadegrens ADD FOREIGN KEY (delomraadegrens_fk) REFERENCES delomraadegrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE delomraadegrense ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE delomraadegrense ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE delomraadegrense ADD FOREIGN KEY (foelgerterrengdetalj) REFERENCES terrengdetaljkode;
 ALTER TABLE delomraadegrense ADD FOREIGN KEY (noeyaktighetsklasse) REFERENCES noeyaktighetsklassekode;
 ALTER TABLE grunnkrets_delomraadegrense ADD FOREIGN KEY (grunnkrets_fk) REFERENCES grunnkrets(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE grunnkrets_delomraadegrense ADD FOREIGN KEY (delomraadegrense_fk) REFERENCES delomraadegrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE grunnkrets ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE grunnkrets ADD FOREIGN KEY (kommunenummer) REFERENCES kommunenummer;
 ALTER TABLE grunnkrets ADD FOREIGN KEY (delomraadeinndeling_fk) REFERENCES delomraade(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE grunnkrets_grunnkretsgrense ADD FOREIGN KEY (grunnkrets_fk) REFERENCES grunnkrets(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE grunnkrets_grunnkretsgrense ADD FOREIGN KEY (grunnkretsgrense_fk) REFERENCES grunnkretsgrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE grunnkretsgrense ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE grunnkretsgrense ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE grunnkretsgrense ADD FOREIGN KEY (foelgerterrengdetalj) REFERENCES terrengdetaljkode;
 ALTER TABLE grunnkretsgrense ADD FOREIGN KEY (noeyaktighetsklasse) REFERENCES noeyaktighetsklassekode;
 ALTER TABLE valgdistriktsgrense ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE valgdistriktsgrense ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE valgdistriktsgrense ADD FOREIGN KEY (foelgerterrengdetalj) REFERENCES terrengdetaljkode;
 ALTER TABLE valgdistriktsgrense ADD FOREIGN KEY (noeyaktighetsklasse) REFERENCES noeyaktighetsklassekode;
 ALTER TABLE stemmekrets_valgdistriktsgrense ADD FOREIGN KEY (stemmekrets_fk) REFERENCES stemmekrets(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE stemmekrets_valgdistriktsgrense ADD FOREIGN KEY (valgdistriktsgrense_fk) REFERENCES valgdistriktsgrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE skolekrets ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE skolekrets ADD FOREIGN KEY (kommunenummer) REFERENCES kommunenummer;
 ALTER TABLE skolekrets_skolekretsgrense ADD FOREIGN KEY (skolekrets_fk) REFERENCES skolekrets(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE skolekrets_skolekretsgrense ADD FOREIGN KEY (skolekretsgrense_fk) REFERENCES skolekretsgrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE skolekretsgrense ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE skolekretsgrense ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE skolekretsgrense ADD FOREIGN KEY (foelgerterrengdetalj) REFERENCES terrengdetaljkode;
 ALTER TABLE skolekretsgrense ADD FOREIGN KEY (noeyaktighetsklasse) REFERENCES noeyaktighetsklassekode;
 ALTER TABLE stemmekrets ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE stemmekrets ADD FOREIGN KEY (fylkesnummer) REFERENCES fylkesnummer;
-ALTER TABLE stemmekrets ADD FOREIGN KEY (kommunenummer) REFERENCES kommunenummer;
 ALTER TABLE stemmekrets_stemmekretsgrense ADD FOREIGN KEY (stemmekrets_fk) REFERENCES stemmekrets(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE stemmekrets_stemmekretsgrense ADD FOREIGN KEY (stemmekretsgrense_fk) REFERENCES stemmekretsgrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE stemmekretsgrense ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE stemmekretsgrense ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE stemmekretsgrense ADD FOREIGN KEY (foelgerterrengdetalj) REFERENCES terrengdetaljkode;
 ALTER TABLE stemmekretsgrense ADD FOREIGN KEY (noeyaktighetsklasse) REFERENCES noeyaktighetsklassekode;
 ALTER TABLE sektorgrense ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE sektorgrense ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE sektorgrense ADD FOREIGN KEY (foelgeradministrativgrense) REFERENCES administrativgrensekode;
 ALTER TABLE sektoromraade_sektorgrense ADD FOREIGN KEY (sektoromraade_fk) REFERENCES sektoromraade(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE sektoromraade_sektorgrense ADD FOREIGN KEY (sektorgrense_fk) REFERENCES sektorgrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE sektorlokalitet ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE sektorlokalitet ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE sektoromraade_sektorlokalitet ADD FOREIGN KEY (sektoromraade_fk) REFERENCES sektoromraade(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE sektoromraade_sektorlokalitet ADD FOREIGN KEY (sektorlokalitet_fk) REFERENCES sektorlokalitet(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE sektoromraade ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
@@ -6551,7 +5568,6 @@ ALTER TABLE bispedoemme ADD FOREIGN KEY (bispedoemmenummer) REFERENCES bispedoem
 ALTER TABLE bispedoemme_avgrensning ADD FOREIGN KEY (bispedoemme_fk) REFERENCES bispedoemme(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE bispedoemme_avgrensning ADD FOREIGN KEY (avgrensning_fk) REFERENCES bispedoemmegrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE bispedoemmegrense ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE bispedoemmegrense ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE bispedoemmegrense ADD FOREIGN KEY (foelgeradministrativgrense) REFERENCES administrativgrensekode;
 ALTER TABLE bispedoemmegrense ADD FOREIGN KEY (noeyaktighetsklasse) REFERENCES noeyaktighetsklassekode;
 ALTER TABLE prosti_avgrensning ADD FOREIGN KEY (prosti_fk) REFERENCES prosti(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
@@ -6564,7 +5580,6 @@ ALTER TABLE prosti ADD FOREIGN KEY (bispedoemme_fk) REFERENCES bispedoemme(objid
 --ALTER TABLE prosti_avgrensning ADD FOREIGN KEY (prosti_fk) REFERENCES prosti(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE prosti_avgrensning ADD FOREIGN KEY (avgrensning_fk) REFERENCES prostigrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE prostigrense ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE prostigrense ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE prostigrense ADD FOREIGN KEY (foelgeradministrativgrense) REFERENCES administrativgrensekode;
 ALTER TABLE prostigrense ADD FOREIGN KEY (noeyaktighetsklasse) REFERENCES noeyaktighetsklassekode;
 --ALTER TABLE sokn_avgrensning ADD FOREIGN KEY (sokn_fk) REFERENCES sokn(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
@@ -6575,7 +5590,6 @@ ALTER TABLE sokn ADD FOREIGN KEY (prosti_fk) REFERENCES prosti(objid) MATCH SIMP
 --ALTER TABLE sokn_avgrensning ADD FOREIGN KEY (sokn_fk) REFERENCES sokn(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE sokn_avgrensning ADD FOREIGN KEY (avgrensning_fk) REFERENCES soknegrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE soknegrense ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE soknegrense ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE soknegrense ADD FOREIGN KEY (foelgeradministrativgrense) REFERENCES administrativgrensekode;
 ALTER TABLE soknegrense ADD FOREIGN KEY (noeyaktighetsklasse) REFERENCES noeyaktighetsklassekode;
 ALTER TABLE postnummeromraade ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
@@ -6589,7 +5603,6 @@ ALTER TABLE postnummeromraade_postomraadegrense ADD FOREIGN KEY (postomraadegren
 ALTER TABLE postnummeromraade_postregiongrense ADD FOREIGN KEY (postnummeromraade_fk) REFERENCES postnummeromraade(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE postnummeromraade_postregiongrense ADD FOREIGN KEY (postregiongrense_fk) REFERENCES postregiongrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE postnummeromraadegrense ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE postnummeromraadegrense ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE postnummeromraadegrense ADD FOREIGN KEY (foelgeradministrativgrense) REFERENCES administrativgrensekode;
 ALTER TABLE postnummeromraadegrense ADD FOREIGN KEY (noeyaktighetsklasse) REFERENCES noeyaktighetsklassekode;
 ALTER TABLE postomraade ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
@@ -6601,7 +5614,6 @@ ALTER TABLE postomraade_postomraadegrense ADD FOREIGN KEY (postomraadegrense_fk)
 ALTER TABLE postomraade_postregiongrense ADD FOREIGN KEY (postomraade_fk) REFERENCES postomraade(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE postomraade_postregiongrense ADD FOREIGN KEY (postregiongrense_fk) REFERENCES postregiongrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE postomraadegrense ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE postomraadegrense ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE postomraadegrense ADD FOREIGN KEY (foelgeradministrativgrense) REFERENCES administrativgrensekode;
 ALTER TABLE postomraadegrense ADD FOREIGN KEY (noeyaktighetsklasse) REFERENCES noeyaktighetsklassekode;
 ALTER TABLE postregion ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
@@ -6611,28 +5623,23 @@ ALTER TABLE postregion_postsonegrense ADD FOREIGN KEY (postsonegrense_fk) REFERE
 ALTER TABLE postregion_postregiongrense ADD FOREIGN KEY (postregion_fk) REFERENCES postregion(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE postregion_postregiongrense ADD FOREIGN KEY (postregiongrense_fk) REFERENCES postregiongrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE postregiongrense ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE postregiongrense ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE postregiongrense ADD FOREIGN KEY (foelgeradministrativgrense) REFERENCES administrativgrensekode;
 ALTER TABLE postregiongrense ADD FOREIGN KEY (noeyaktighetsklasse) REFERENCES noeyaktighetsklassekode;
 ALTER TABLE postsone ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
 ALTER TABLE postsone_postsonegrense ADD FOREIGN KEY (postsone_fk) REFERENCES postsone(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE postsone_postsonegrense ADD FOREIGN KEY (postsonegrense_fk) REFERENCES postsonegrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE postsonegrense ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE postsonegrense ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE postsonegrense ADD FOREIGN KEY (foelgeradministrativgrense) REFERENCES administrativgrensekode;
 ALTER TABLE postsonegrense ADD FOREIGN KEY (noeyaktighetsklasse) REFERENCES noeyaktighetsklassekode;
 ALTER TABLE lovvirkeomraade ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE lovvirkeomraade ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 --ALTER TABLE lovvirkeomraade ADD FOREIGN KEY (spesialisertsonetype) REFERENCES spesialisertsonetype;
 ALTER TABLE lovvirkeomraadegrense ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE lovvirkeomraadegrense ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE lovvirkeomraadegrense ADD FOREIGN KEY (grensestatus) REFERENCES grensestatus;
 ALTER TABLE lovvirkeomraadegrense ADD FOREIGN KEY (fastsettingstype) REFERENCES fastsettingstype;
 ALTER TABLE lovvirkeomraadegrense ADD FOREIGN KEY (foelgeradministrativgrense) REFERENCES administrativgrensekode;
 ALTER TABLE lovvirkeomraadegrense_lovvirkeomraadegrensepunkt ADD FOREIGN KEY (lovvirkeomraadegrense_fk) REFERENCES lovvirkeomraadegrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE lovvirkeomraadegrense_lovvirkeomraadegrensepunkt ADD FOREIGN KEY (lovvirkeomraadegrensepunkt_fk) REFERENCES lovvirkeomraadegrensepunkt(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE lovvirkeomraadegrensepunkt ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE lovvirkeomraadegrensepunkt ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE dokumentasjonsreferanse ADD FOREIGN KEY (fylkesgrense_fk) REFERENCES fylkesgrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE dokumentasjonsreferanse ADD FOREIGN KEY (kommunegrense_fk) REFERENCES kommunegrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE dokumentasjonsreferanse ADD FOREIGN KEY (riksgrense_fk) REFERENCES riksgrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
@@ -6661,7 +5668,6 @@ ALTER TABLE punktreferanse ADD FOREIGN KEY (grenseboeye_fk) REFERENCES grenseboe
 ALTER TABLE punktreferanse ADD FOREIGN KEY (grensepunktsjoe_fk) REFERENCES grensepunktsjoe(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE punktreferanse ADD FOREIGN KEY (sjoeroeys_fk) REFERENCES sjoeroeys(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE avtaltavgrensningslinje ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE avtaltavgrensningslinje ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE avtaltavgrensningslinje ADD FOREIGN KEY (grensestatus) REFERENCES grensestatus;
 ALTER TABLE avtaltavgrensningslinje ADD FOREIGN KEY (fastsettingstype) REFERENCES fastsettingstype;
 ALTER TABLE avtaltavgrensningslinje_grenseboeye ADD FOREIGN KEY (avtaltavgrensningslinje_fk) REFERENCES avtaltavgrensningslinje(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
@@ -6671,7 +5677,6 @@ ALTER TABLE sjoeroeys_avtaltavgrensningslinje ADD FOREIGN KEY (avtaltavgrensning
 ALTER TABLE avtaltavgrensningslinje_grensepunktsjoe ADD FOREIGN KEY (avtaltavgrensningslinje_fk) REFERENCES avtaltavgrensningslinje(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE avtaltavgrensningslinje_grensepunktsjoe ADD FOREIGN KEY (grensepunktsjoe_fk) REFERENCES grensepunktsjoe(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE beregnetmidtlinje ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE beregnetmidtlinje ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE beregnetmidtlinje ADD FOREIGN KEY (grensestatus) REFERENCES grensestatus;
 ALTER TABLE grensepunktsjoe_beregnetmidtlinje ADD FOREIGN KEY (grensepunktsjoe_fk) REFERENCES grensepunktsjoe(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE grensepunktsjoe_beregnetmidtlinje ADD FOREIGN KEY (beregnetmidtlinje_fk) REFERENCES beregnetmidtlinje(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
@@ -6682,16 +5687,13 @@ ALTER TABLE fiskerisone ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
 ALTER TABLE fiskevernsone ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
 --ALTER TABLE fiskevernsone ADD FOREIGN KEY (spesialisertsonetype) REFERENCES spesialisertsonetype;
 ALTER TABLE grense200nautiskemil ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE grense200nautiskemil ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE grense200nautiskemil ADD FOREIGN KEY (grensestatus) REFERENCES grensestatus;
 ALTER TABLE grense200nautiskemil ADD FOREIGN KEY (land) REFERENCES landkode;
 ALTER TABLE grense200nautiskemil ADD FOREIGN KEY (fastsettingstype) REFERENCES fastsettingstype;
 ALTER TABLE grenseboeye ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE grenseboeye ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE grenseboeye ADD FOREIGN KEY (grunnlinje_fk) REFERENCES grunnlinje(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE grenseboeye ADD FOREIGN KEY (riksgrense_fk) REFERENCES riksgrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE grensepunktsjoe ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE grensepunktsjoe ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE sektorlinje_grensepunktsjoe ADD FOREIGN KEY (sektorlinje_fk) REFERENCES sektorlinje(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE sektorlinje_grensepunktsjoe ADD FOREIGN KEY (grensepunktsjoe_fk) REFERENCES grensepunktsjoe(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE grunnlinje_grensepunktsjoe ADD FOREIGN KEY (grunnlinje_fk) REFERENCES grunnlinje(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
@@ -6699,13 +5701,10 @@ ALTER TABLE grunnlinje_grensepunktsjoe ADD FOREIGN KEY (grensepunktsjoe_fk) REFE
 ALTER TABLE graasonegrense_grensepunktsjoe ADD FOREIGN KEY (graasonegrense_fk) REFERENCES graasonegrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE graasonegrense_grensepunktsjoe ADD FOREIGN KEY (grensepunktsjoe_fk) REFERENCES grensepunktsjoe(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE grunnlinje ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE grunnlinje ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE grunnlinje ADD FOREIGN KEY (grensestatus) REFERENCES grensestatus;
 ALTER TABLE grunnlinje ADD FOREIGN KEY (land) REFERENCES landkode;
 ALTER TABLE grunnlinje ADD FOREIGN KEY (fastsettingstype) REFERENCES fastsettingstype;
-ALTER TABLE grunnlinje ADD FOREIGN KEY (kommunenummer) REFERENCES kommunenummer;
 ALTER TABLE graasonegrense ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE graasonegrense ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE graasonegrense ADD FOREIGN KEY (grensestatus) REFERENCES grensestatus;
 ALTER TABLE graasonegrense ADD FOREIGN KEY (fastsettingstype) REFERENCES fastsettingstype;
 ALTER TABLE graasonen ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
@@ -6716,7 +5715,6 @@ ALTER TABLE internasjonaltfarvann ADD FOREIGN KEY (typeendring) REFERENCES typee
 ALTER TABLE kontinentalsokkel ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
 --ALTER TABLE kontinentalsokkel ADD FOREIGN KEY (spesialisertsonetype) REFERENCES spesialisertsonetype;
 ALTER TABLE kystkontur ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE kystkontur ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE kystkontur ADD FOREIGN KEY (kystreferanse) REFERENCES kystreferanse;
 ALTER TABLE kystkontur ADD FOREIGN KEY (kysttype) REFERENCES kysttype;
 ALTER TABLE landindrefarvann ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
@@ -6724,16 +5722,13 @@ ALTER TABLE landindrefarvann ADD FOREIGN KEY (landkode) REFERENCES landkode;
 ALTER TABLE norgesoekonomiskesone ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
 --ALTER TABLE norgesoekonomiskesone ADD FOREIGN KEY (spesialisertsonetype) REFERENCES spesialisertsonetype;
 ALTER TABLE sektorlinje ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE sektorlinje ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE sektorlinje ADD FOREIGN KEY (grensestatus) REFERENCES grensestatus;
 ALTER TABLE sjoeroeys ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE sjoeroeys ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE sjoeterritorium ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
 --ALTER TABLE sjoeterritorium ADD FOREIGN KEY (spesialisertsonetype) REFERENCES spesialisertsonetype;
 ALTER TABLE territorialfarvann ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
 --ALTER TABLE territorialfarvann ADD FOREIGN KEY (spesialisertsonetype) REFERENCES spesialisertsonetype;
 ALTER TABLE territorialgrense ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE territorialgrense ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE territorialgrense ADD FOREIGN KEY (grensestatus) REFERENCES grensestatus;
 ALTER TABLE territorialgrense ADD FOREIGN KEY (land) REFERENCES landkode;
 ALTER TABLE territorialgrense ADD FOREIGN KEY (fastsettingstype) REFERENCES fastsettingstype;
@@ -6743,12 +5738,10 @@ ALTER TABLE tidligereomstridtomraade ADD FOREIGN KEY (typeendring) REFERENCES ty
 ALTER TABLE tilstoetendesone ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
 --ALTER TABLE tilstoetendesone ADD FOREIGN KEY (spesialisertsonetype) REFERENCES spesialisertsonetype;
 ALTER TABLE yttergrensesokkel ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE yttergrensesokkel ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE yttergrensesokkel ADD FOREIGN KEY (grensestatus) REFERENCES grensestatus;
 ALTER TABLE yttergrensesokkel ADD FOREIGN KEY (land) REFERENCES landkode;
 ALTER TABLE yttergrensesokkel ADD FOREIGN KEY (fastsettingstype) REFERENCES fastsettingstype;
 ALTER TABLE yttergrensetilstoetendesone ADD FOREIGN KEY (typeendring) REFERENCES typeendring;
-ALTER TABLE yttergrensetilstoetendesone ADD FOREIGN KEY (maalemetode) REFERENCES maalemetode;
 ALTER TABLE yttergrensetilstoetendesone ADD FOREIGN KEY (grensestatus) REFERENCES grensestatus;
 ALTER TABLE yttergrensetilstoetendesone ADD FOREIGN KEY (land) REFERENCES landkode;
 ALTER TABLE yttergrensetilstoetendesone ADD FOREIGN KEY (fastsettingstype) REFERENCES fastsettingstype;
@@ -6791,52 +5784,30 @@ ALTER TABLE grunnkrets_informasjon ADD FOREIGN KEY (grunnkrets_fk) REFERENCES gr
 ALTER TABLE grunnkretsgrense_informasjon ADD FOREIGN KEY (grunnkretsgrense_fk) REFERENCES grunnkretsgrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE sektorgrense_informasjon ADD FOREIGN KEY (sektorgrense_fk) REFERENCES sektorgrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE sektorlokalitet_informasjon ADD FOREIGN KEY (sektorlokalitet_fk) REFERENCES sektorlokalitet(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE sektoromraade_kommunenummer ADD FOREIGN KEY (sektoromraade_fk) REFERENCES sektoromraade(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE sektoromraade_kommunenummer ADD FOREIGN KEY (kommunenummer_fk) REFERENCES kommunenummer(identifier) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE sektoromraade_informasjon ADD FOREIGN KEY (sektoromraade_fk) REFERENCES sektoromraade(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE bispedoemme_kommunenummer ADD FOREIGN KEY (bispedoemme_fk) REFERENCES bispedoemme(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE bispedoemme_kommunenummer ADD FOREIGN KEY (kommunenummer_fk) REFERENCES kommunenummer(identifier) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE bispedoemme_informasjon ADD FOREIGN KEY (bispedoemme_fk) REFERENCES bispedoemme(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE bispedoemmegrense_informasjon ADD FOREIGN KEY (bispedoemmegrense_fk) REFERENCES bispedoemmegrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE prosti_kommunenummer ADD FOREIGN KEY (prosti_fk) REFERENCES prosti(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE prosti_kommunenummer ADD FOREIGN KEY (kommunenummer_fk) REFERENCES kommunenummer(identifier) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE prosti_informasjon ADD FOREIGN KEY (prosti_fk) REFERENCES prosti(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE prostigrense_informasjon ADD FOREIGN KEY (prostigrense_fk) REFERENCES prostigrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE sokn_fellesraad ADD FOREIGN KEY (sokn_fk) REFERENCES sokn(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE sokn_kommunenummer ADD FOREIGN KEY (sokn_fk) REFERENCES sokn(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE sokn_kommunenummer ADD FOREIGN KEY (kommunenummer_fk) REFERENCES kommunenummer(identifier) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE sokn_informasjon ADD FOREIGN KEY (sokn_fk) REFERENCES sokn(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE soknegrense_informasjon ADD FOREIGN KEY (soknegrense_fk) REFERENCES soknegrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE postnummeromraade_kommunenummer ADD FOREIGN KEY (postnummeromraade_fk) REFERENCES postnummeromraade(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE postnummeromraade_kommunenummer ADD FOREIGN KEY (kommunenummer_fk) REFERENCES kommunenummer(identifier) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE postnummeromraade_informasjon ADD FOREIGN KEY (postnummeromraade_fk) REFERENCES postnummeromraade(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE postnummeromraadegrense_informasjon ADD FOREIGN KEY (postnummeromraadegrense_fk) REFERENCES postnummeromraadegrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE postomraade_kommunenummer ADD FOREIGN KEY (postomraade_fk) REFERENCES postomraade(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE postomraade_kommunenummer ADD FOREIGN KEY (kommunenummer_fk) REFERENCES kommunenummer(identifier) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE postomraade_informasjon ADD FOREIGN KEY (postomraade_fk) REFERENCES postomraade(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE postomraadegrense_informasjon ADD FOREIGN KEY (postomraadegrense_fk) REFERENCES postomraadegrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE postregion_kommunenummer ADD FOREIGN KEY (postregion_fk) REFERENCES postregion(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE postregion_kommunenummer ADD FOREIGN KEY (kommunenummer_fk) REFERENCES kommunenummer(identifier) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE postregion_informasjon ADD FOREIGN KEY (postregion_fk) REFERENCES postregion(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE postregiongrense_informasjon ADD FOREIGN KEY (postregiongrense_fk) REFERENCES postregiongrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE postsone_kommunenummer ADD FOREIGN KEY (postsone_fk) REFERENCES postsone(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE postsone_kommunenummer ADD FOREIGN KEY (kommunenummer_fk) REFERENCES kommunenummer(identifier) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE postsone_informasjon ADD FOREIGN KEY (postsone_fk) REFERENCES postsone(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE postsonegrense_informasjon ADD FOREIGN KEY (postsonegrense_fk) REFERENCES postsonegrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE lovvirkeomraade_sonetype ADD FOREIGN KEY (lovvirkeomraade_fk) REFERENCES lovvirkeomraade(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE lovvirkeomraade_sonetype ADD FOREIGN KEY (sonetype_fk) REFERENCES sonetype(identifier) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE lovvirkeomraade_miljoeomraade ADD FOREIGN KEY (lovvirkeomraade_fk) REFERENCES lovvirkeomraade(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE lovvirkeomraade_miljoeomraade ADD FOREIGN KEY (miljoeomraade_fk) REFERENCES miljoeomraade(identifier) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE lovvirkeomraade_kommunenummer ADD FOREIGN KEY (lovvirkeomraade_fk) REFERENCES lovvirkeomraade(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE lovvirkeomraade_kommunenummer ADD FOREIGN KEY (kommunenummer_fk) REFERENCES kommunenummer(identifier) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE lovvirkeomraade_informasjon ADD FOREIGN KEY (lovvirkeomraade_fk) REFERENCES lovvirkeomraade(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE lovvirkeomraade_ansvarligmyndighet ADD FOREIGN KEY (lovvirkeomraade_fk) REFERENCES lovvirkeomraade(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE lovvirkeomraadegrense_kommunenummer ADD FOREIGN KEY (lovvirkeomraadegrense_fk) REFERENCES lovvirkeomraadegrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE lovvirkeomraadegrense_kommunenummer ADD FOREIGN KEY (kommunenummer_fk) REFERENCES kommunenummer(identifier) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE lovvirkeomraadegrense_informasjon ADD FOREIGN KEY (lovvirkeomraadegrense_fk) REFERENCES lovvirkeomraadegrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE lovvirkeomraadegrense_ansvarligmyndighet ADD FOREIGN KEY (lovvirkeomraadegrense_fk) REFERENCES lovvirkeomraadegrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE lovvirkeomraadegrensepunkt_kommunenummer ADD FOREIGN KEY (lovvirkeomraadegrensepunkt_fk) REFERENCES lovvirkeomraadegrensepunkt(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE lovvirkeomraadegrensepunkt_kommunenummer ADD FOREIGN KEY (kommunenummer_fk) REFERENCES kommunenummer(identifier) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE lovvirkeomraadegrensepunkt_informasjon ADD FOREIGN KEY (lovvirkeomraadegrensepunkt_fk) REFERENCES lovvirkeomraadegrensepunkt(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE dokumentasjonsreferanse_dokumentlink ADD FOREIGN KEY (dokumentasjonsreferanse_fk) REFERENCES dokumentasjonsreferanse(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE dokumentasjonsreferanse_internreferansekartverket ADD FOREIGN KEY (dokumentasjonsreferanse_fk) REFERENCES dokumentasjonsreferanse(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;

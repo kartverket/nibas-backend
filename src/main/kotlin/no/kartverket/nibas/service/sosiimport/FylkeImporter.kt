@@ -1,8 +1,23 @@
 package no.kartverket.nibas.service.sosiimport
 
-import kotlinx.coroutines.*
-import no.kartverket.nibas.domain.*
-import no.kartverket.nibas.repository.*
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import no.kartverket.nibas.domain.Administrativenhetnavn
+import no.kartverket.nibas.domain.Avtaltavgrensningslinje
+import no.kartverket.nibas.domain.Fylke
+import no.kartverket.nibas.domain.FylkeInformasjon
+import no.kartverket.nibas.domain.Fylkesgrense
+import no.kartverket.nibas.domain.Riksgrense
+import no.kartverket.nibas.domain.Territorialgrense
+import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
+import no.kartverket.nibas.repository.FylkeInformasjonRepository
+import no.kartverket.nibas.repository.FylkeRepository
+import no.kartverket.nibas.repository.SpraakkodeRepository
 import no.kartverket.nibas.sosi.model.SosiFlate
 import no.kartverket.nibas.sosi.model.SosiObjekt
 import no.kartverket.nibas.sosi.model.SosiReferanse
@@ -15,38 +30,30 @@ import java.util.logging.Logger
 
 
 @Component
-class FylkeImporter {
+class FylkeImporter @Autowired constructor(
+    private val kodelisteService: KodelisteService,
+    private val fylkeRepository: FylkeRepository,
+    private val fylkeInformasjonRepository: FylkeInformasjonRepository,
+    private val administrativenhetnavnRepository: AdministrativenhetnavnRepository,
+    private val spraakkodeRepository: SpraakkodeRepository,
+    private val grenseImporter: GrenseImporter,
+    private val administrativEnhetImporter: AdministrativEnhetImporter
+) {
 
-    val logger = Logger.getLogger(this::class.java.name)
-
-    @Autowired
-    lateinit var fylkesnummerRepository: FylkesnummerRepository
-
-    @Autowired
-    lateinit var fylkeRepository: FylkeRepository
-
-    @Autowired
-    lateinit var fylkeInformasjonRepository: FylkeInformasjonRepository
-
-    @Autowired
-    lateinit var administrativenhetnavnRepository: AdministrativenhetnavnRepository
-
-    @Autowired
-    lateinit var spraakkodeRepository: SpraakkodeRepository
-
-    @Autowired
-    lateinit var grenseImporter: GrenseImporter
-
-    @Autowired
-    lateinit var administrativEnhetImporter: AdministrativEnhetImporter
+    val logger: Logger = Logger.getLogger(this::class.java.name)
 
     @Transactional
     fun importerSosiFylke(flate: SosiFlate, root: SosiObjekt) {
-        when (fylkeRepository.findByLokalid(flate.getIdent()?.getLokalId()!!)) {
+        val lokalid = flate.getIdent()?.getLokalId()!!
+        when (fylkeRepository.findByLokalid(lokalid)) {
             null -> {
                 var fylke = administrativEnhetImporter.importer(flate) as Fylke
 
-                fylke.fylkesnummer = flate.getFylkesnummer()?.let { fylkesnummerRepository.findByIdOrNull(it) }
+                fylke.fylkesnummer =
+                    kodelisteService.getFylkesnummerIdByCodeValue(
+                        flate.getFylkesnummer()
+                            ?: throw RuntimeException("Fylkesnummer ikke satt i modellen for fylke med flate-id $lokalid")
+                    )
                 fylke.samiskforvaltningsomraade = flate.isSamiskForvaltningsomrade()
 
                 runBlocking {

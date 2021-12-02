@@ -1,8 +1,24 @@
 package no.kartverket.nibas.service.sosiimport
 
-import kotlinx.coroutines.*
-import no.kartverket.nibas.domain.*
-import no.kartverket.nibas.repository.*
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import no.kartverket.nibas.domain.Administrativenhetnavn
+import no.kartverket.nibas.domain.Avtaltavgrensningslinje
+import no.kartverket.nibas.domain.Fylkesgrense
+import no.kartverket.nibas.domain.Kommune
+import no.kartverket.nibas.domain.KommuneInformasjon
+import no.kartverket.nibas.domain.Kommunegrense
+import no.kartverket.nibas.domain.Riksgrense
+import no.kartverket.nibas.domain.Territorialgrense
+import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
+import no.kartverket.nibas.repository.KommuneInformasjonRepository
+import no.kartverket.nibas.repository.KommuneRepository
+import no.kartverket.nibas.repository.SpraakkodeRepository
 import no.kartverket.nibas.sosi.model.SosiFlate
 import no.kartverket.nibas.sosi.model.SosiObjekt
 import no.kartverket.nibas.sosi.model.SosiReferanse
@@ -14,37 +30,29 @@ import org.springframework.transaction.annotation.Transactional
 import java.util.logging.Logger
 
 @Component
-class KommuneImporter {
+class KommuneImporter @Autowired constructor(
+    private val kodelisteService: KodelisteService,
+    private val kommuneInformasjonRepository: KommuneInformasjonRepository,
+    private val kommuneRepository: KommuneRepository,
+    private val administrativenhetnavnRepository: AdministrativenhetnavnRepository,
+    private val spraakkodeRepository: SpraakkodeRepository,
+    private val grenseImporter: GrenseImporter,
+    private val administrativEnhetImporter: AdministrativEnhetImporter
+) {
 
     val logger = Logger.getLogger(this::class.java.name)
 
-    @Autowired
-    lateinit var kommunenummerRepository: KommunenummerRepository
-
-    @Autowired
-    lateinit var kommuneInformasjonRepository: KommuneInformasjonRepository
-
-    @Autowired
-    lateinit var kommuneRepository: KommuneRepository
-
-    @Autowired
-    lateinit var administrativenhetnavnRepository: AdministrativenhetnavnRepository
-
-    @Autowired
-    lateinit var spraakkodeRepository: SpraakkodeRepository
-
-    @Autowired
-    lateinit var grenseImporter: GrenseImporter
-
-    @Autowired
-    lateinit var administrativEnhetImporter: AdministrativEnhetImporter
-
     @Transactional
     fun importerSosiKommune(flate: SosiFlate, root: SosiObjekt) {
-        when (kommuneRepository.findByLokalid(flate.getIdent()?.getLokalId()!!)) {
+        val lokalid = flate.getIdent()?.getLokalId()!!
+        when (kommuneRepository.findByLokalid(lokalid)) {
             null -> {
                 var kommune = administrativEnhetImporter.importer(flate) as Kommune
-                kommune.kommunenummer = flate.getKommunenummer()?.let { kommunenummerRepository.findByIdOrNull(it) }
+                kommune.kommunenummer =
+                    kodelisteService.getKommunenummerIdByCodeValue(
+                        flate.getKommunenummer()
+                            ?: throw RuntimeException("Kommunenummer ikke satt i modellen for kommune med flate-id $lokalid")
+                    )
                 kommune.samiskforvaltningsomraade = flate.isSamiskForvaltningsomrade()
 
                 runBlocking {

@@ -3,7 +3,11 @@ package no.kartverket.nibas.service.sosiimport
 import no.kartverket.nibas.domain.AdministrativGrense
 import no.kartverket.nibas.domain.Fylkesgrense
 import no.kartverket.nibas.domain.Kommunegrense
-import no.kartverket.nibas.repository.*
+import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.repository.FastsettingstypeRepository
+import no.kartverket.nibas.repository.GrensestatusRepository
+import no.kartverket.nibas.repository.NoeyaktighetsklassekodeRepository
+import no.kartverket.nibas.repository.TerrengdetaljkodeRepository
 import no.kartverket.nibas.sosi.common.SosiKoder
 import no.kartverket.nibas.sosi.model.SosiGeometri
 import org.springframework.beans.factory.annotation.Autowired
@@ -11,22 +15,13 @@ import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component
 
 @Component
-class AdministrativGrenseImporter {
-
-    @Autowired
-    lateinit var grensestatusRepository: GrensestatusRepository
-
-    @Autowired
-    lateinit var fastsettingstypeRepository: FastsettingstypeRepository
-
-    @Autowired
-    lateinit var terrengdetaljkodeRepository: TerrengdetaljkodeRepository
-
-    @Autowired
-    lateinit var noeyaktighetsklassekodeRepository: NoeyaktighetsklassekodeRepository
-
-    @Autowired
-    lateinit var maalemetodeRepository: MaalemetodeRepository
+class AdministrativGrenseImporter @Autowired constructor(
+    private val grensestatusRepository: GrensestatusRepository,
+    private val fastsettingstypeRepository: FastsettingstypeRepository,
+    private val terrengdetaljkodeRepository: TerrengdetaljkodeRepository,
+    private val noeyaktighetsklassekodeRepository: NoeyaktighetsklassekodeRepository,
+    private val kodelisteService: KodelisteService
+) {
 
     fun importer(sosiGeometri: SosiGeometri): AdministrativGrense {
         val grense = when (sosiGeometri.getObjType()) {
@@ -47,9 +42,9 @@ class AdministrativGrenseImporter {
         grense.datafangstdato = sosiGeometri.getDatafangstDato()
         grense.omtvistet = sosiGeometri.getOmtvistet()
 
-        grense.maalemetode = when(val maalemetode = sosiGeometri.getKvalitet()?.getMalemetode()) {
+        grense.maalemetode = when (val maalemetode = sosiGeometri.getKvalitet()?.getMalemetode()) {
             null -> null
-            else -> maalemetodeRepository.findByIdOrNull(maalemetode) ?: throw RuntimeException("Ukjent maalemetode")
+            else -> kodelisteService.getMalemetodeIdByCodeValue(maalemetode)
         }
         grense.grensestatus = when (val grenseStatus = sosiGeometri.getGrensestatus()) {
             null -> null
@@ -59,22 +54,27 @@ class AdministrativGrenseImporter {
         grense.fastsettingstype =
             when (val fastsettingstype = sosiGeometri.getFastsettingstype()) {
                 null -> null
-                else -> fastsettingstypeRepository.findByIdOrNull(fastsettingstype) ?: throw RuntimeException("Ukjent fastsettingstype")
+                else -> fastsettingstypeRepository.findByIdOrNull(fastsettingstype)
+                    ?: throw RuntimeException("Ukjent fastsettingstype")
             }
 
         grense.foelgerterrengdetalj =
             when (val foelgerterrengdetalj = sosiGeometri.getFolgerTerrengdetalj()) {
                 null -> null
-                else -> terrengdetaljkodeRepository.findByIdOrNull(foelgerterrengdetalj) ?: throw RuntimeException("Ukjent terrengdetalj")
+                else -> terrengdetaljkodeRepository.findByIdOrNull(foelgerterrengdetalj)
+                    ?: throw RuntimeException("Ukjent terrengdetalj")
             }
 
         grense.noeyaktighetsklasse =
             when (val noeyaktighetsklasse = sosiGeometri.getNoyaktighetsklasse()) {
                 null -> null
-                else -> noeyaktighetsklassekodeRepository.findByIdOrNull(noeyaktighetsklasse) ?: throw RuntimeException("Ukjent nøyaktighetsklasse")
+                else -> noeyaktighetsklassekodeRepository.findByIdOrNull(noeyaktighetsklasse) ?: throw RuntimeException(
+                    "Ukjent nøyaktighetsklasse"
+                )
             }
 
-        grense.grense = SosiGeometryFunctions.sosiKoordinaterToLineString(sosiGeometri.getAlleSosiNordOest(), sosiGeometri.koordsys)
+        grense.grense =
+            SosiGeometryFunctions.sosiKoordinaterToLineString(sosiGeometri.getAlleSosiNordOest(), sosiGeometri.koordsys)
         return grense
     }
 }

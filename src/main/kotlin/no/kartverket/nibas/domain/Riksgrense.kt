@@ -1,8 +1,13 @@
 package no.kartverket.nibas.domain
 
-import org.locationtech.jts.geom.LineString
 import java.time.LocalDate
-import javax.persistence.*
+import javax.persistence.Column
+import javax.persistence.Entity
+import javax.persistence.FetchType
+import javax.persistence.JoinColumn
+import javax.persistence.ManyToOne
+import javax.persistence.OneToMany
+import javax.persistence.Table
 
 @Table(name = "riksgrense")
 @Entity
@@ -44,9 +49,8 @@ class Riksgrense : Grense() {
     @Column(name = "tidspunktendring")
     var tidspunktendring: LocalDate? = null
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "maalemetode", nullable = false)
-    var maalemetode: Maalemetode? = null
+    @Column(name = "maalemetode", nullable = false)
+    var maalemetode: String = ""
 
     @Column(name = "noeyaktighet")
     var noeyaktighet: Int? = null

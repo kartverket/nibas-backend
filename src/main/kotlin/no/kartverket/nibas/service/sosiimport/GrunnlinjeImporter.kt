@@ -1,7 +1,13 @@
 package no.kartverket.nibas.service.sosiimport
 
-import no.kartverket.nibas.domain.*
-import no.kartverket.nibas.repository.*
+import no.kartverket.nibas.domain.Grense
+import no.kartverket.nibas.domain.Grunnlinje
+import no.kartverket.nibas.domain.GrunnlinjeInformasjon
+import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.repository.FastsettingstypeRepository
+import no.kartverket.nibas.repository.GrensestatusRepository
+import no.kartverket.nibas.repository.GrunnlinjeInformasjonRepository
+import no.kartverket.nibas.repository.GrunnlinjeRepository
 import no.kartverket.nibas.sosi.model.SosiGeometri
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
@@ -9,31 +15,16 @@ import org.springframework.stereotype.Component
 import java.util.logging.Logger
 
 @Component
-class GrunnlinjeImporter {
+class GrunnlinjeImporter @Autowired constructor(
+    private val kodelisteService: KodelisteService,
+    private val grensestatusRepository: GrensestatusRepository,
+    private val fastsettingstypeRepository: FastsettingstypeRepository,
+    private val grunnlinjeRepository: GrunnlinjeRepository,
+    private val grunnlinjeInformasjonRepository: GrunnlinjeInformasjonRepository,
+    private val dokumentasjonsreferanseImporter: DokumentasjonsreferanseImporter
+) {
 
     val logger = Logger.getLogger(this::class.java.name)
-
-    @Autowired
-    lateinit var maalemetodeRepository: MaalemetodeRepository
-
-    @Autowired
-    lateinit var grensestatusRepository: GrensestatusRepository
-
-    @Autowired
-    lateinit var fastsettingstypeRepository: FastsettingstypeRepository
-
-    @Autowired
-    lateinit var kommunenummerRepository: KommunenummerRepository
-
-    @Autowired
-    lateinit var grunnlinjeRepository: GrunnlinjeRepository
-
-    @Autowired
-    lateinit var grunnlinjeInformasjonRepository: GrunnlinjeInformasjonRepository
-
-    @Autowired
-    lateinit var dokumentasjonsreferanseImporter: DokumentasjonsreferanseImporter
-
 
     fun importGrunnlinje(sosiGrunnlinje: SosiGeometri): Grense {
         return when (val existing = grunnlinjeRepository.findByLokalid(sosiGrunnlinje.getIdent()?.getLokalId()!!)) {
@@ -50,23 +41,30 @@ class GrunnlinjeImporter {
                 grunnlinje.gyldigfra = sosiGrunnlinje.getGyldigFra()
                 grunnlinje.gyldigtil = sosiGrunnlinje.getGyldigTil()
 
-                grunnlinje.kommunenummer = sosiGrunnlinje.getKommunenummer()?.let { kommunenummerRepository.findByIdOrNull(it) }
+                //Her kan kommunenr være optional
+                grunnlinje.kommunenummer =
+                    sosiGrunnlinje.getKommunenummer()?.let { kodelisteService.getKommunenummerIdByCodeValue(it) }
 
                 grunnlinje.noeyaktighet = sosiGrunnlinje.getKvalitet()?.getNoyaktighet()
                 grunnlinje.maalemetode = when (val maalemetode = sosiGrunnlinje.getKvalitet()?.getMalemetode()) {
                     null -> throw RuntimeException("Maalemetode er påkrevd")
-                    else -> maalemetodeRepository.findByIdOrNull(maalemetode) ?: throw RuntimeException("Ukjent maalemetode")
+                    else -> kodelisteService.getMalemetodeIdByCodeValue(maalemetode)
                 }
                 grunnlinje.grensestatus = when (val grenseStatus = sosiGrunnlinje.getGrensestatus()) {
                     null -> null
-                    else -> grensestatusRepository.findByIdOrNull(grenseStatus) ?: throw RuntimeException("Ukjent grensestatus")
+                    else -> grensestatusRepository.findByIdOrNull(grenseStatus)
+                        ?: throw RuntimeException("Ukjent grensestatus")
                 }
 
                 grunnlinje.fastsettingstype = when (val fastsettingstype = sosiGrunnlinje.getFastsettingstype()) {
                     null -> null
-                    else -> fastsettingstypeRepository.findByIdOrNull(fastsettingstype) ?: throw RuntimeException("Ukjent fastsettingstype")
+                    else -> fastsettingstypeRepository.findByIdOrNull(fastsettingstype)
+                        ?: throw RuntimeException("Ukjent fastsettingstype")
                 }
-                grunnlinje.grense = SosiGeometryFunctions.sosiKoordinaterToLineString(sosiGrunnlinje.getAlleSosiNordOest(), sosiGrunnlinje.koordsys)
+                grunnlinje.grense = SosiGeometryFunctions.sosiKoordinaterToLineString(
+                    sosiGrunnlinje.getAlleSosiNordOest(),
+                    sosiGrunnlinje.koordsys
+                )
                 grunnlinje = grunnlinjeRepository.save(grunnlinje)
 
                 sosiGrunnlinje.getDokumentasjonsReferanse().forEach { sosiDokRef ->
