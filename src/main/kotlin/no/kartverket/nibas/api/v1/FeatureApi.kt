@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -41,11 +42,7 @@ interface FeatureApi {
     @ApiResponses(
         ApiResponse(
             responseCode = "200",
-            description = "Successful operation",
-            content = [Content(
-                mediaType = "application/json",
-                schema = Schema(implementation = ResponseEntity::class)
-            )]
+            description = "Successful operation"
         ),
         ApiResponse(
             responseCode = "400",
@@ -53,9 +50,10 @@ interface FeatureApi {
         )
     )
     @PutMapping("/grenser", produces = [MediaType.APPLICATION_JSON_VALUE])
+    @ResponseStatus(HttpStatus.OK)
     fun oppdaterGrenser(
         @RequestParam(name = "type", required = true) type: AdministrativEnhetType,
         @RequestBody administratitveEnheter: FeatureCollection
-    ): ResponseEntity<Any>
+    )
 }
 

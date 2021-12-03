@@ -47,9 +47,8 @@ class FeatureKontroller : FeatureApiV1 {
     override fun oppdaterGrenser(
         type: AdministrativEnhetType,
         administratitveEnheter: FeatureCollection
-    ): ResponseEntity<Any> {
+    ) {
         administrativenhetService.oppdaterGrenser(type, administratitveEnheter.features)
-        return ResponseEntity.status(200).build()
     }
 
 }
