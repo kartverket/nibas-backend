@@ -57,18 +57,18 @@ class AvtaltAvgrensningslinjeImporter {
                 avtaltavgrensningslinje.maalemetode =
                     when (val maalemetode = sosiAvtaltAvgrensningslinje.getKvalitet()?.getMalemetode()) {
                         null -> throw RuntimeException("Maalemetode er påkrevd")
-                        else -> maalemetodeRepository.findById(maalemetode).orElseThrow()
+                        else -> maalemetodeRepository.findByIdOrNull(maalemetode) ?: throw RuntimeException("Ukjent maalemetode")
                     }
                 avtaltavgrensningslinje.grensestatus =
                     when (val grenseStatus = sosiAvtaltAvgrensningslinje.getGrensestatus()) {
                         null -> null
-                        else -> grensestatusRepository.findByIdOrNull(grenseStatus)
+                        else -> grensestatusRepository.findByIdOrNull(grenseStatus) ?: throw RuntimeException("Ukjent grensestatus")
                     }
 
                 avtaltavgrensningslinje.fastsettingstype =
                     when (val fastsettingstype = sosiAvtaltAvgrensningslinje.getFastsettingstype()) {
                         null -> null
-                        else -> fastsettingstypeRepository.findByIdOrNull(fastsettingstype)
+                        else -> fastsettingstypeRepository.findByIdOrNull(fastsettingstype) ?: throw RuntimeException("Ukjent fastsettingstype")
                     }
 
                 avtaltavgrensningslinje.grense = SosiGeometryFunctions.sosiKoordinaterToLineString(sosiAvtaltAvgrensningslinje.getAlleSosiNordOest(), sosiAvtaltAvgrensningslinje.koordsys)

@@ -1,5 +1,6 @@
 package no.kartverket.nibas.service.sosiimport
 
+import kotlinx.coroutines.*
 import no.kartverket.nibas.domain.*
 import no.kartverket.nibas.repository.*
 import no.kartverket.nibas.sosi.model.SosiFlate
@@ -37,15 +38,32 @@ class NasjonImporter {
 
     @Transactional
     fun importerSosiNasjon(flate: SosiFlate, root: SosiObjekt) {
-        when(nasjonRepository.findByLokalid(flate.getIdent()?.getLokalId()!!)) {
+        when (nasjonRepository.findByLokalid(flate.getIdent()?.getLokalId()!!)) {
             null -> {
                 var nasjon = administrativEnhetImporter.importer(flate) as Nasjon
 
-                val skall: List<LineString> = flate.getSkallRef().map { ref -> importerNasjonRef(ref, nasjon, root) }
-                val hull: List<List<LineString>> =
-                    flate.getHullRef().map { liste -> liste.map { ref -> importerNasjonRef(ref, nasjon, root) } }
+                runBlocking {
+                    withContext(Dispatchers.Default) {
+                        val deferredSkall = flate.getSkallRef().map { ref ->
+                            async {
+                                importerNasjonRef(ref, nasjon, root)
+                            }
+                        }
 
-                nasjon.flate = SosiGeometryFunctions.lagFlate(skall, hull, flate.koordsys)
+                        val deferredHull = flate.getHullRef().map { liste ->
+                            liste.map { ref ->
+                                async {
+                                    importerNasjonRef(ref, nasjon, root)
+                                }
+                            }
+                        }
+
+                        val skall = deferredSkall.awaitAll()
+                        val hull = deferredHull.map { it.awaitAll() }
+                        nasjon.flate = SosiGeometryFunctions.lagFlate(skall, hull, flate.koordsys)
+                    }
+                }
+
                 nasjon = nasjonRepository.save(nasjon)
 
                 if (flate.getInformasjon() != null) {

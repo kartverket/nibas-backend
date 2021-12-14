@@ -55,23 +55,23 @@ class TerritorialgrenseImporter {
                 territorialgrense.maalemetode =
                     when (val maalemetode = sosiTerritorialgrense.getKvalitet()?.getMalemetode()) {
                         null -> throw RuntimeException("Maalemetode er påkrevd")
-                        else -> maalemetodeRepository.findById(maalemetode).orElseThrow()
+                        else -> maalemetodeRepository.findByIdOrNull(maalemetode) ?: throw RuntimeException("Ukjent maalemetode")
                     }
 
                 territorialgrense.grensestatus = when (val grenseStatus = sosiTerritorialgrense.getGrensestatus()) {
                     null -> null
-                    else -> grensestatusRepository.findByIdOrNull(grenseStatus)
+                    else -> grensestatusRepository.findByIdOrNull(grenseStatus) ?: throw RuntimeException("Ukjent grensestatus")
                 }
 
                 territorialgrense.fastsettingstype =
                     when (val fastsettingstype = sosiTerritorialgrense.getFastsettingstype()) {
                         null -> null
-                        else -> fastsettingstypeRepository.findByIdOrNull(fastsettingstype)
+                        else -> fastsettingstypeRepository.findByIdOrNull(fastsettingstype) ?: throw RuntimeException("Ukjent fastsettingstype")
                     }
 
                 territorialgrense.land = when (val landkode = sosiTerritorialgrense.getLandkode()) {
                     null -> null
-                    else -> landKodeRepository.findByIdOrNull(landkode)
+                    else -> landKodeRepository.findByIdOrNull(landkode) ?: throw RuntimeException("Ukjent landkode")
                 }
 
                 territorialgrense.grense = SosiGeometryFunctions.sosiKoordinaterToLineString(sosiTerritorialgrense.getAlleSosiNordOest(), sosiTerritorialgrense.koordsys)

@@ -55,16 +55,16 @@ class GrunnlinjeImporter {
                 grunnlinje.noeyaktighet = sosiGrunnlinje.getKvalitet()?.getNoyaktighet()
                 grunnlinje.maalemetode = when (val maalemetode = sosiGrunnlinje.getKvalitet()?.getMalemetode()) {
                     null -> throw RuntimeException("Maalemetode er påkrevd")
-                    else -> maalemetodeRepository.findById(maalemetode).orElseThrow()
+                    else -> maalemetodeRepository.findByIdOrNull(maalemetode) ?: throw RuntimeException("Ukjent maalemetode")
                 }
                 grunnlinje.grensestatus = when (val grenseStatus = sosiGrunnlinje.getGrensestatus()) {
                     null -> null
-                    else -> grensestatusRepository.findByIdOrNull(grenseStatus)
+                    else -> grensestatusRepository.findByIdOrNull(grenseStatus) ?: throw RuntimeException("Ukjent grensestatus")
                 }
 
                 grunnlinje.fastsettingstype = when (val fastsettingstype = sosiGrunnlinje.getFastsettingstype()) {
                     null -> null
-                    else -> fastsettingstypeRepository.findByIdOrNull(fastsettingstype)
+                    else -> fastsettingstypeRepository.findByIdOrNull(fastsettingstype) ?: throw RuntimeException("Ukjent fastsettingstype")
                 }
                 grunnlinje.grense = SosiGeometryFunctions.sosiKoordinaterToLineString(sosiGrunnlinje.getAlleSosiNordOest(), sosiGrunnlinje.koordsys)
                 grunnlinje = grunnlinjeRepository.save(grunnlinje)

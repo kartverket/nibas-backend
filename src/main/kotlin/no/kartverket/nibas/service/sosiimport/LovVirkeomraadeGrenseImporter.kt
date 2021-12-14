@@ -66,13 +66,13 @@ class LovVirkeomraadeGrenseImporter {
                 lovvirkeomraadegrense.maalemetode =
                     when (val maalemetode = sosiLovvirkeomraadegrense.getKvalitet()?.getMalemetode()) {
                         null -> throw RuntimeException("Maalemetode er påkrevd")
-                        else -> maalemetodeRepository.findById(maalemetode).orElseThrow()
+                        else -> maalemetodeRepository.findByIdOrNull(maalemetode) ?: throw RuntimeException("Ukjent maalemetode")
                     }
 
                 lovvirkeomraadegrense.fastsettingstype =
                     when (val fastsettingstype = sosiLovvirkeomraadegrense.getFastsettingstype()) {
                         null -> null
-                        else -> fastsettingstypeRepository.findByIdOrNull(fastsettingstype)
+                        else -> fastsettingstypeRepository.findByIdOrNull(fastsettingstype) ?: throw RuntimeException("Ukjent fastsettingstype")
                     }
 
                 lovvirkeomraadegrense.grense = SosiGeometryFunctions.sosiKoordinaterToLineString(sosiLovvirkeomraadegrense.getAlleSosiNordOest(), sosiLovvirkeomraadegrense.koordsys)

@@ -47,16 +47,16 @@ class RiksgrenseImporter {
                 riksgrense.noeyaktighet = sosiRiksgrense.getKvalitet()?.getNoyaktighet()
                 riksgrense.maalemetode = when (val maalemetode = sosiRiksgrense.getKvalitet()?.getMalemetode()) {
                     null -> throw RuntimeException("Maalemetode er påkrevd")
-                    else -> maalemetodeRepository.findById(maalemetode).orElseThrow()
+                    else -> maalemetodeRepository.findByIdOrNull(maalemetode) ?: throw RuntimeException("Ukjent maalemetode")
                 }
                 riksgrense.grensestatus = when (val grenseStatus = sosiRiksgrense.getGrensestatus()) {
                     null -> null
-                    else -> grensestatusRepository.findByIdOrNull(grenseStatus)
+                    else -> grensestatusRepository.findByIdOrNull(grenseStatus) ?: throw RuntimeException("Ukjent grensestatus")
                 }
 
                 riksgrense.fastsettingstype = when (val fastsettingstype = sosiRiksgrense.getFastsettingstype()) {
                     null -> null
-                    else -> fastsettingstypeRepository.findByIdOrNull(fastsettingstype)
+                    else -> fastsettingstypeRepository.findByIdOrNull(fastsettingstype) ?: throw RuntimeException("Ukjent fastsettingstype")
                 }
                 riksgrense.grense = SosiGeometryFunctions.sosiKoordinaterToLineString(sosiRiksgrense.getAlleSosiNordOest(), sosiRiksgrense.koordsys)
 

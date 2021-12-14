@@ -1,5 +1,6 @@
 package no.kartverket.nibas.service.sosiimport
 
+import kotlinx.coroutines.*
 import no.kartverket.nibas.domain.*
 import no.kartverket.nibas.repository.*
 import no.kartverket.nibas.sosi.model.SosiFlate
@@ -40,17 +41,34 @@ class KommuneImporter {
 
     @Transactional
     fun importerSosiKommune(flate: SosiFlate, root: SosiObjekt) {
-        when(kommuneRepository.findByLokalid(flate.getIdent()?.getLokalId()!!)) {
+        when (kommuneRepository.findByLokalid(flate.getIdent()?.getLokalId()!!)) {
             null -> {
                 var kommune = administrativEnhetImporter.importer(flate) as Kommune
                 kommune.kommunenummer = flate.getKommunenummer()?.let { kommunenummerRepository.findByIdOrNull(it) }
                 kommune.samiskforvaltningsomraade = flate.isSamiskForvaltningsomrade()
 
-                val skall: List<LineString> = flate.getSkallRef().map { ref -> importerKommuneRef(ref, kommune, root) }
-                val hull: List<List<LineString>> =
-                    flate.getHullRef().map { liste -> liste.map { ref -> importerKommuneRef(ref, kommune, root) } }
+                runBlocking {
+                    withContext(Dispatchers.Default) {
+                        val deferredSkall = flate.getSkallRef().map { ref ->
+                            async {
+                                importerKommuneRef(ref, kommune, root)
+                            }
+                        }
 
-                kommune.flate = SosiGeometryFunctions.lagFlate(skall, hull, flate.koordsys)
+                        val deferredHull = flate.getHullRef().map { liste ->
+                            liste.map { ref ->
+                                async {
+                                    importerKommuneRef(ref, kommune, root)
+                                }
+                            }
+                        }
+
+                        val skall = deferredSkall.awaitAll()
+                        val hull = deferredHull.map { it.awaitAll() }
+                        kommune.flate = SosiGeometryFunctions.lagFlate(skall, hull, flate.koordsys)
+                    }
+                }
+
                 kommune = kommuneRepository.save(kommune)
 
                 if (flate.getInformasjon() != null) {

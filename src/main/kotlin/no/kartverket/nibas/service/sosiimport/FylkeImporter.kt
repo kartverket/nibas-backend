@@ -1,5 +1,6 @@
 package no.kartverket.nibas.service.sosiimport
 
+import kotlinx.coroutines.*
 import no.kartverket.nibas.domain.*
 import no.kartverket.nibas.repository.*
 import no.kartverket.nibas.sosi.model.SosiFlate
@@ -11,6 +12,7 @@ import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import java.util.logging.Logger
+
 
 @Component
 class FylkeImporter {
@@ -47,11 +49,29 @@ class FylkeImporter {
                 fylke.fylkesnummer = flate.getFylkesnummer()?.let { fylkesnummerRepository.findByIdOrNull(it) }
                 fylke.samiskforvaltningsomraade = flate.isSamiskForvaltningsomrade()
 
-                val skall: List<LineString> = flate.getSkallRef().map { ref -> importerFylkeRef(ref, fylke, root) }
-                val hull: List<List<LineString>> =
-                    flate.getHullRef().map { liste -> liste.map { ref -> importerFylkeRef(ref, fylke, root) } }
+                runBlocking {
+                    withContext(Dispatchers.Default) {
+                        val deferredSkall: List<Deferred<LineString>> = flate.getSkallRef().map { ref ->
+                            async {
+                                importerFylkeRef(ref, fylke, root)
+                            }
+                        }
 
-                fylke.flate = SosiGeometryFunctions.lagFlate(skall, hull, flate.koordsys)
+                        val hullDeferred: List<List<Deferred<LineString>>> =
+                            flate.getHullRef().map { liste ->
+                                liste.map { ref ->
+                                    async {
+                                        importerFylkeRef(ref, fylke, root)
+                                    }
+                                }
+                            }
+
+                        val hull = hullDeferred.map { it.awaitAll() }
+                        val skall = deferredSkall.awaitAll()
+                        fylke.flate = SosiGeometryFunctions.lagFlate(skall, hull, flate.koordsys)
+                    }
+                }
+
                 fylke = fylkeRepository.save(fylke)
 
                 if (flate.getInformasjon() != null) {

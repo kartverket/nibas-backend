@@ -49,29 +49,29 @@ class AdministrativGrenseImporter {
 
         grense.maalemetode = when(val maalemetode = sosiGeometri.getKvalitet()?.getMalemetode()) {
             null -> null
-            else -> maalemetodeRepository.findByIdOrNull(maalemetode)
+            else -> maalemetodeRepository.findByIdOrNull(maalemetode) ?: throw RuntimeException("Ukjent maalemetode")
         }
         grense.grensestatus = when (val grenseStatus = sosiGeometri.getGrensestatus()) {
             null -> null
-            else -> grensestatusRepository.findByIdOrNull(grenseStatus)
+            else -> grensestatusRepository.findByIdOrNull(grenseStatus) ?: throw RuntimeException("Ukjent grensestatus")
         }
 
         grense.fastsettingstype =
             when (val fastsettingstype = sosiGeometri.getFastsettingstype()) {
                 null -> null
-                else -> fastsettingstypeRepository.findByIdOrNull(fastsettingstype)
+                else -> fastsettingstypeRepository.findByIdOrNull(fastsettingstype) ?: throw RuntimeException("Ukjent fastsettingstype")
             }
 
         grense.foelgerterrengdetalj =
             when (val foelgerterrengdetalj = sosiGeometri.getFolgerTerrengdetalj()) {
                 null -> null
-                else -> terrengdetaljkodeRepository.findByIdOrNull(foelgerterrengdetalj)
+                else -> terrengdetaljkodeRepository.findByIdOrNull(foelgerterrengdetalj) ?: throw RuntimeException("Ukjent terrengdetalj")
             }
 
         grense.noeyaktighetsklasse =
             when (val noeyaktighetsklasse = sosiGeometri.getNoyaktighetsklasse()) {
                 null -> null
-                else -> noeyaktighetsklassekodeRepository.findByIdOrNull(noeyaktighetsklasse)
+                else -> noeyaktighetsklassekodeRepository.findByIdOrNull(noeyaktighetsklasse) ?: throw RuntimeException("Ukjent nøyaktighetsklasse")
             }
 
         grense.grense = SosiGeometryFunctions.sosiKoordinaterToLineString(sosiGeometri.getAlleSosiNordOest(), sosiGeometri.koordsys)
