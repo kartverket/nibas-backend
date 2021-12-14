@@ -1,0 +1,80 @@
+package no.kartverket.nibas.service.sosiimport
+
+import no.kartverket.nibas.domain.AdministrativGrense
+import no.kartverket.nibas.domain.Fylkesgrense
+import no.kartverket.nibas.domain.Kommunegrense
+import no.kartverket.nibas.repository.*
+import no.kartverket.nibas.sosi.common.SosiKoder
+import no.kartverket.nibas.sosi.model.SosiGeometri
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.data.repository.findByIdOrNull
+import org.springframework.stereotype.Component
+
+@Component
+class AdministrativGrenseImporter {
+
+    @Autowired
+    lateinit var grensestatusRepository: GrensestatusRepository
+
+    @Autowired
+    lateinit var fastsettingstypeRepository: FastsettingstypeRepository
+
+    @Autowired
+    lateinit var terrengdetaljkodeRepository: TerrengdetaljkodeRepository
+
+    @Autowired
+    lateinit var noeyaktighetsklassekodeRepository: NoeyaktighetsklassekodeRepository
+
+    @Autowired
+    lateinit var maalemetodeRepository: MaalemetodeRepository
+
+    fun importer(sosiGeometri: SosiGeometri): AdministrativGrense {
+        val grense = when (sosiGeometri.getObjType()) {
+            SosiKoder.FYLKESGRENSE -> Fylkesgrense()
+            SosiKoder.KOMMUNEGRENSE -> Kommunegrense()
+            else -> throw RuntimeException("Ukjent grensetype for import av administrativ grense")
+        }
+
+        grense.lokalid = sosiGeometri.getIdent()?.getLokalId()
+        grense.navnerom = sosiGeometri.getIdent()?.getNavnerom()
+        grense.versjonid = sosiGeometri.getIdent()?.getVersjonId()
+        grense.oppdateringsdato = sosiGeometri.getOppdateringsdato()
+        grense.datauttaksdato = sosiGeometri.getDataUttaksdato()
+        grense.noeyaktighet = sosiGeometri.getKvalitet()?.getNoyaktighet()
+        grense.opphav = sosiGeometri.getOpphav()
+        grense.gyldigfra = sosiGeometri.getGyldigFra()
+        grense.gyldigtil = sosiGeometri.getGyldigTil()
+        grense.datafangstdato = sosiGeometri.getDatafangstDato()
+        grense.omtvistet = sosiGeometri.getOmtvistet()
+
+        grense.maalemetode = when(val maalemetode = sosiGeometri.getKvalitet()?.getMalemetode()) {
+            null -> null
+            else -> maalemetodeRepository.findByIdOrNull(maalemetode)
+        }
+        grense.grensestatus = when (val grenseStatus = sosiGeometri.getGrensestatus()) {
+            null -> null
+            else -> grensestatusRepository.findByIdOrNull(grenseStatus)
+        }
+
+        grense.fastsettingstype =
+            when (val fastsettingstype = sosiGeometri.getFastsettingstype()) {
+                null -> null
+                else -> fastsettingstypeRepository.findByIdOrNull(fastsettingstype)
+            }
+
+        grense.foelgerterrengdetalj =
+            when (val foelgerterrengdetalj = sosiGeometri.getFolgerTerrengdetalj()) {
+                null -> null
+                else -> terrengdetaljkodeRepository.findByIdOrNull(foelgerterrengdetalj)
+            }
+
+        grense.noeyaktighetsklasse =
+            when (val noeyaktighetsklasse = sosiGeometri.getNoyaktighetsklasse()) {
+                null -> null
+                else -> noeyaktighetsklassekodeRepository.findByIdOrNull(noeyaktighetsklasse)
+            }
+
+        grense.grense = SosiGeometryFunctions.sosiKoordinaterToLineString(sosiGeometri.getAlleSosiNordOest(), sosiGeometri.koordsys)
+        return grense
+    }
+}

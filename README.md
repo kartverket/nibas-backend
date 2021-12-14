@@ -8,6 +8,7 @@ Spring Boot applikasjon som serverer informasjon om administrative grenser
 # Kjøre på lokal maskin
 * Definer følgende miljøvariable:
   * VAULT_TOKEN (Logg inn på Vault, og vel "Copy Token" øverst til høyre under profil-menyen)
+  * NIBAS_SOSI_DEPENDENCY_TOKEN (Finn den på gitlab under nibas-backend/settings/cicd/variables/)
 * Start opp nibas-db. Se [README.md](https://gitlab.statkart.no/nibas/nibas-db/-/blob/master/README.md) i nibas-db
 
 * Start nibas-backend:
@@ -24,7 +25,7 @@ Spring Boot applikasjon som serverer informasjon om administrative grenser
 `docker pull harbor.statkart.no/nibas/nibas-backend:<versjonsnummer>`
 
 # Starte docker image fra harbor
-`docker run -d --name nibas-backend -p 8080:8080 -e DB_USER=postgres -e DB_PASSWORD=<samme-passord-som-db-ble-startet-med> -e DB_CONNECTION_STRING=jdbc:postgresql://<ip-address>:5432/postgres harbor.statkart.no/nibas/nibas-backend:<versjonsnummer>` 
+`docker run -d --name nibas-backend -p 8080:8080 -e SPRING_PROFILES_ACTIVE=dev -e VAULT_TOKEN=<Logg inn på Vault, og vel "Copy Token" øverst til høyre under profil-menyen> harbor.statkart.no/nibas/nibas-backend:<versjonsnummer>` 
 
 # Bygge lokalt docker image
 ```

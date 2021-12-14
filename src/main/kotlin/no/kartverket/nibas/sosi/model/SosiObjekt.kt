@@ -10,12 +10,14 @@ open class SosiObjekt(
     val verdier: MutableList<SosiVerdi> = ArrayList(),
     var barn: MutableList<SosiObjekt> = ArrayList(),
     var forelder: SosiObjekt? = null,
+    var koordsys: String? = null
 ) {
 
     companion object {
         val SOSI_DATOFORMAT = DateTimeFormatter.ofPattern("yyyyMMdd")
     }
 
+    fun getVerdierAvBarn(type: String): List<String> = barn.filter { it.type == type }.flatMap { it.verdier }.map { it.verdi }
     fun getVerdiAvBarn(type: String): String? = barn.find{ it.type == type}?.verdier?.getOrNull(0)?.verdi
     fun getKurver(): List<SosiKurve> = barn.filter { it is SosiKurve }.map { it as SosiKurve }
     fun getFlater(): List<SosiFlate> = barn.filter { it is SosiFlate }.map { it as SosiFlate }
@@ -33,6 +35,14 @@ open class SosiObjekt(
         return this
     }
 
+    fun setKoordsysPaAlleBarn(koordsys: String?): SosiObjekt {
+        barn.forEach {
+            it.koordsys = koordsys
+            it.setKoordsysPaAlleBarn(koordsys)
+        }
+        return this
+    }
+
     fun debug(out: PrintStream) {
         when (niva) {
             0 -> out.print("")
@@ -44,5 +54,12 @@ open class SosiObjekt(
 
         out.print("$niva - ${type} - ${verdier.map { v -> v.verdi }}\n")
         barn.forEach { it.debug(out) }
+    }
+
+    /**
+     * Finner NIVÅ 1 - objekt med gitt id
+     */
+    fun getObjektMedId(objId: String): SosiGeometri? {
+        return barn.find { it is SosiGeometri && it.getId() == objId } as? SosiGeometri
     }
 }

@@ -2,12 +2,12 @@ package no.kartverket.nibas.service
 
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.Feature
-import no.kartverket.nibas.api.v1.fromAdministrativEnhetRequest
 import no.kartverket.nibas.domain.*
 import no.kartverket.nibas.api.v1.request.AdministrativEnhet as AdministrativEnhetRequest
 import no.kartverket.nibas.repository.*
 import no.kartverket.nibas.unwrap
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -22,15 +22,31 @@ class AdministrativEnhetService {
     lateinit var fylkeRepository: FylkeRepository
 
     @Autowired
+    lateinit var nasjonRepository: NasjonRepository
+
+    @Autowired
     lateinit var kommunegrenseRepository: KommunegrenseRepository
 
     @Autowired
     lateinit var fylkesgrenseRepository: FylkesgrenseRepository
 
+    @Autowired
+    lateinit var riksgrenseRepository: RiksgrenseRepository
+
+    @Autowired
+    lateinit var spraakkodeRepository: SpraakkodeRepository
+
+    @Autowired
+    lateinit var kommunenummerRepository: KommunenummerRepository
+
+    @Autowired
+    lateinit var fylkesnummerRepository: FylkesnummerRepository
+
     fun hentAlleAdministrativeEnheter(type: AdministrativEnhetType): Iterable<AdministrativEnhet> {
         return when(type) {
             AdministrativEnhetType.KOMMUNE -> kommuneRepository.findAll()
             AdministrativEnhetType.FYLKE -> fylkeRepository.findAll()
+            AdministrativEnhetType.NASJON -> nasjonRepository.findAll()
         }
     }
 
@@ -38,41 +54,70 @@ class AdministrativEnhetService {
         return when(type) {
             AdministrativEnhetType.KOMMUNE -> kommuneRepository.findById(id).unwrap()
             AdministrativEnhetType.FYLKE -> fylkeRepository.findById(id).unwrap()
+            AdministrativEnhetType.NASJON -> nasjonRepository.findById(id).unwrap()
         }
     }
     fun hentAdministrativeEnheterMedId(ids: List<Int>, type: AdministrativEnhetType): MutableIterable<AdministrativEnhet> {
         return when(type) {
             AdministrativEnhetType.KOMMUNE ->  kommuneRepository.findAllById(ids)
             AdministrativEnhetType.FYLKE -> fylkeRepository.findAllById(ids)
+            AdministrativEnhetType.NASJON -> nasjonRepository.findAllById(ids)
         }
     }
     fun oppdaterGrenser(type: AdministrativEnhetType, oppdaterteGrenseFeatures: MutableList<Feature>) {
         when(type) {
             AdministrativEnhetType.KOMMUNE -> {
-                val kommunegrenser = oppdaterteGrenseFeatures.map { Kommunegrense(it.properties.id, it.properties.navn, it.geometry) }.toSet()
+                val kommunegrenser = oppdaterteGrenseFeatures.map { feature ->
+                    val eksisterendeGrense = kommunegrenseRepository.findById(feature.properties.id).unwrap()
+                    eksisterendeGrense?.grense = feature.geometry
+                    eksisterendeGrense
+                }.toSet()
                 kommunegrenseRepository.saveAll(kommunegrenser)
             }
             AdministrativEnhetType.FYLKE -> {
-                val fylkesgrenser = oppdaterteGrenseFeatures.map { Fylkesgrense(it.properties.id, it.properties.navn, it.geometry) }.toSet()
+                val fylkesgrenser = oppdaterteGrenseFeatures.map { feature ->
+                    val eksisterendeGrense = fylkesgrenseRepository.findById(feature.properties.id).unwrap()
+                    eksisterendeGrense?.grense = feature.geometry
+                    eksisterendeGrense
+                }.toSet()
                 fylkesgrenseRepository.saveAll(fylkesgrenser)
+            }
+            AdministrativEnhetType.NASJON -> {
+                val riksgrenser = oppdaterteGrenseFeatures.map { feature ->
+                    val eksisterendeGrense = riksgrenseRepository.findById(feature.properties.id).unwrap()
+                    eksisterendeGrense?.grense = feature.geometry
+                    eksisterendeGrense
+                }.toSet()
+                riksgrenseRepository.saveAll(riksgrenser)
             }
         }
     }
 
     fun oppdaterAdministrativEnhet(id: Int, oppdatertAdministrativEnhet: AdministrativEnhetRequest): AdministrativEnhet {
-        when(oppdatertAdministrativEnhet.type) {
+        return when(oppdatertAdministrativEnhet.type) {
             AdministrativEnhetType.KOMMUNE -> {
-                val kommune = fromAdministrativEnhetRequest(id, oppdatertAdministrativEnhet) as Kommune
                 val gammelKommune = kommuneRepository.findById(id).unwrap() as Kommune
-                val nyKommune = kommune.copy(grenser = gammelKommune.grenser)
-                return kommuneRepository.save(nyKommune)
+                gammelKommune.administrativenhetnavn = oppdatertAdministrativEnhet.navn.map { it ->
+                    val navn = Administrativenhetnavn()
+                    navn.navn = it.navn
+                    navn.spraak = spraakkodeRepository.findByIdOrNull(it.spraak)
+                    navn
+                }.toMutableSet()
+                gammelKommune.kommunenummer = kommunenummerRepository.findByIdOrNull(oppdatertAdministrativEnhet.nummer)
+                return kommuneRepository.save(gammelKommune)
             }
             AdministrativEnhetType.FYLKE -> {
-                val fylke = fromAdministrativEnhetRequest(id, oppdatertAdministrativEnhet) as Fylke
                 val gammeltFylke = fylkeRepository.findById(id).unwrap() as Fylke
-                val nyttFylke = fylke.copy(grenser = gammeltFylke.grenser)
-                return fylkeRepository.save(nyttFylke)
+                gammeltFylke.administrativenhetnavn = oppdatertAdministrativEnhet.navn.map { it ->
+                    val navn = Administrativenhetnavn()
+                    navn.navn = it.navn
+                    navn.spraak = spraakkodeRepository.findByIdOrNull(it.spraak)
+                    navn
+                }.toMutableSet()
+                gammeltFylke.fylkesnummer = fylkesnummerRepository.findByIdOrNull(oppdatertAdministrativEnhet.nummer)
+                return fylkeRepository.save(gammeltFylke)
             }
+            AdministrativEnhetType.NASJON -> nasjonRepository.findById(id).unwrap() as Nasjon
         }
     }
 }

@@ -3,13 +3,13 @@ package no.kartverket.nibas.controller
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
 import no.kartverket.nibas.api.v1.response.AdministrativEnhet
 import no.kartverket.nibas.api.v1.toAdministrativEnhetResponse
-import no.kartverket.nibas.api.v1.request.AdministrativEnhet as AdministrativEnhetRequest
-import no.kartverket.nibas.api.v1.AdministrativEnhetApi as AdministrativEnhetApiV1
 import no.kartverket.nibas.service.AdministrativEnhetService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
+import no.kartverket.nibas.api.v1.AdministrativEnhetApi as AdministrativEnhetApiV1
+import no.kartverket.nibas.api.v1.request.AdministrativEnhet as AdministrativEnhetRequest
 
 @RestController
 class AdministrativEnhetKontroller : AdministrativEnhetApiV1 {
@@ -19,7 +19,9 @@ class AdministrativEnhetKontroller : AdministrativEnhetApiV1 {
 
     override fun hentAlle(
         type: AdministrativEnhetType
-    ): Iterable<AdministrativEnhet> = administrativenhetService.hentAlleAdministrativeEnheter(type).map { toAdministrativEnhetResponse(it, type) }
+    ): Iterable<AdministrativEnhet> {
+        return administrativenhetService.hentAlleAdministrativeEnheter(type).map { toAdministrativEnhetResponse(it, type) }
+    }
 
     override fun hentEn(id: Int, type: AdministrativEnhetType): AdministrativEnhet {
         return when (val administrativenhet = administrativenhetService.hentAdministrativEnhet(id, type)) {

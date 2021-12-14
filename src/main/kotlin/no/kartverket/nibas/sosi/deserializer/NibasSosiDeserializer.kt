@@ -29,7 +29,10 @@ class NibasSosiDeserializer {
             forrige = denne
         }
 
-        return root.fjernBarnUtenVerdierEllerBarn()
+        val kunMedVerdier = root.fjernBarnUtenVerdierEllerBarn()
+        val koordsys = kunMedVerdier.getHode()?.getTranspar()?.getKoordSys()
+        return kunMedVerdier.setKoordsysPaAlleBarn(koordsys)
+
     }
 
     fun finnForelder(forrige: SosiObjekt?, barn: SosiObjekt): SosiObjekt? {

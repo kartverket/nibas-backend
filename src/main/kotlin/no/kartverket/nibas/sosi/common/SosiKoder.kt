@@ -17,9 +17,12 @@ class SosiKoder {
         val RETTSKILDETITTEL = "RETTSKILDETITTEL"
         val RETTSKILDEID = "RETTSKILDEID"
         val GYLDIGFRA = "GYLDIGFRA"
+        val GYLDIGTIL = "GYLDIGTIL"
+        val SLUTTDATO = "SLUTTDATO"
         val SAMISKFORVALTNINGSOMRADE = "SAMISKFORVALTNINGSOMRÅDE"
         val SPRAK = "SPRÅK"
         val NAVN = "NAVN"
+        val REKKEFOLGE = "REKKEFØLGE"
         val FYLKESNUMMER = "FYLKESNUMMER"
         val IDENT = "IDENT"
         val VERSJONID = "VERSJONID"
@@ -53,5 +56,16 @@ class SosiKoder {
         val MIN_NO = "MIN-NØ"
         val SOSI_NIVA = "SOSI-NIVÅ"
 
+        val KOMMUNEGRENSE = "Kommunegrense"
+        val FYLKESGRENSE = "Fylkesgrense"
+        val TERRITORIALGRENSE = "Territorialgrense"
+        val RIKSGRENSE = "Riksgrense"
+        val AVTALT_AVGRENSNINGSLINJE = "AvtaltAvgrensningslinje"
+        val LOV_VIRKEOMRADEGRENSE = "LovVirkeområdeGrense"
+        val GRUNNLINJE = "Grunnlinje"
+
+        val FYLKE = "Fylke"
+        val KOMMUNE = "Kommune"
+        val NASJON = "Nasjon"
     }
 }

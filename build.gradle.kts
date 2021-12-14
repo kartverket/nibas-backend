@@ -33,6 +33,10 @@ dependencies {
 	implementation("org.springdoc:springdoc-openapi-kotlin:1.5.10")
 	implementation("org.springdoc:springdoc-openapi-ui:1.5.10")
 	implementation("org.locationtech.jts:jts-core:1.18.2")
+	implementation("org.locationtech.jts:jts:1.18.2")
+	implementation("org.locationtech.jts:jts-modules:1.18.2")
+	implementation("org.locationtech.jts:jts-io:1.18.2")
+
 	implementation("org.locationtech.spatial4j:spatial4j:0.8")
 	implementation("org.hibernate:hibernate-spatial:5.5.7.Final")
 	implementation("org.springframework.cloud:spring-cloud-starter")

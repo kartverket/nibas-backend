@@ -11,8 +11,15 @@ class AdministrativEnhet(
     val id: Int,
 
     @Schema(description = "Navnet på den administrative enheten")
+    val navn: List<AdministrativEnhetNavn>,
+)
+
+@Schema(description = "Representasjon av et navn")
+class AdministrativEnhetNavn(
+
+    @Schema(description = "Navnet på en administrativ enhet")
     val navn: String,
 
-    @Schema(description = "Nummeret som identifiserer den administrative enheten")
-    val nummer: String,
+    @Schema(description = "Språkkoden til det administrative navnet")
+    val spraak: String
 )

@@ -27,17 +27,17 @@ class AdministrativEnhetKontrollerTest {
     @MockBean
     private lateinit var administrativenhetService: AdministrativEnhetService
 
-    @Test
-    fun thatGetOneIsReturning200OkWhenItemIsFound() {
-        Mockito.`when`(administrativenhetService.hentAdministrativEnhet(1, AdministrativEnhetType.KOMMUNE))
-            .thenReturn(Kommune(1, "Test", "1", setOf(
-                Kommunegrense(1, "Testgrense", GeometryFactory().createLineString()))
-            ))
-
-        mvc.perform(
-            get("/v1/administrativ-enhet/1?type=kommune").contentType(MediaType.APPLICATION_JSON)
-        ).andExpect(status().isOk)
-    }
+//    @Test
+//    fun thatGetOneIsReturning200OkWhenItemIsFound() {
+//        Mockito.`when`(administrativenhetService.hentAdministrativEnhet(1, AdministrativEnhetType.KOMMUNE))
+//            .thenReturn(Kommune(1, "Test", "1", setOf(
+//                Kommunegrense(1, "Testgrense", GeometryFactory().createLineString()))
+//            ))
+//
+//        mvc.perform(
+//            get("/v1/administrativ-enhet/1?type=kommune").contentType(MediaType.APPLICATION_JSON)
+//        ).andExpect(status().isOk)
+//    }
 
     @Test
     fun thatGetOneIsReturning404WheItemIsNotFound() {

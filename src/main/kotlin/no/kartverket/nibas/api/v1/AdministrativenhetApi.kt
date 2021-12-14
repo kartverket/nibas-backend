@@ -9,10 +9,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
-import no.kartverket.nibas.api.v1.response.AdministrativEnhet as AdministrativEnhetResponse
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.*
 import no.kartverket.nibas.api.v1.request.AdministrativEnhet as AdministrativEnhetRequest
+import no.kartverket.nibas.api.v1.response.AdministrativEnhet as AdministrativEnhetResponse
 
 @RequestMapping("/v1/administrativ-enhet")
 @Tag(name = "v1/administrativ-enhet", description = "Endepunkter for å hente informasjon om administrative enheter (uten grenser) i Nasjonal inndelingsbase")

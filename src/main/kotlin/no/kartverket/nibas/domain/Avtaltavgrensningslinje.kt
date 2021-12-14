@@ -1,0 +1,106 @@
+package no.kartverket.nibas.domain
+
+import org.locationtech.jts.geom.LineString
+import java.time.LocalDate
+import javax.persistence.*
+
+@Table(name = "avtaltavgrensningslinje")
+@Entity
+class Avtaltavgrensningslinje : Grense() {
+    override var objtype: String? = "AvtaltAvgrensningslinje"
+
+    @Column(name = "lokalid", nullable = false)
+    var lokalid: String? = null
+
+
+    @Column(name = "navnerom", nullable = false)
+    var navnerom: String? = null
+
+
+    @Column(name = "versjonid")
+    var versjonid: String? = null
+
+    @Column(name = "datafangstdato")
+    var datafangstdato: LocalDate? = null
+
+    @Column(name = "oppdateringsdato")
+    var oppdateringsdato: LocalDate? = null
+
+    @Column(name = "sluttdato")
+    var sluttdato: LocalDate? = null
+
+    @Column(name = "gyldigfra")
+    var gyldigfra: LocalDate? = null
+
+    @Column(name = "gyldigtil")
+    var gyldigtil: LocalDate? = null
+
+    @Column(name = "datauttaksdato")
+    var datauttaksdato: LocalDate? = null
+
+    @ManyToOne
+    @JoinColumn(name = "typeendring")
+    var typeendring: Typeendring? = null
+
+    @Column(name = "tidspunktendring")
+    var tidspunktendring: LocalDate? = null
+
+
+    @Column(name = "opphav")
+    var opphav: String? = null
+
+    @Column(name = "omraadeid")
+    var omraadeid: Int? = null
+
+
+    @Column(name = "originaldatavert")
+    var originaldatavert: String? = null
+
+    @Column(name = "kopidato")
+    var kopidato: LocalDate? = null
+
+
+    @Column(name = "produkt")
+    var produkt: String? = null
+
+
+    @Column(name = "versjon")
+    var versjon: String? = null
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "maalemetode", nullable = false)
+    var maalemetode: Maalemetode? = null
+
+    @Column(name = "noeyaktighet")
+    var noeyaktighet: Int? = null
+
+    @Column(name = "gjelderomraade")
+    var gjelderomraade: String? = null
+
+    @ManyToOne
+    @JoinColumn(name = "grensestatus")
+    var grensestatus: Grensestatus? = null
+
+
+    @Column(name = "virkeomraadenavn")
+    var virkeomraadenavn: String? = null
+
+    @Column(name = "transformasjonsdato")
+    var transformasjonsdato: LocalDate? = null
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "fastsettingstype", nullable = false)
+    var fastsettingstype: Fastsettingstype? = null
+
+    @ManyToMany
+    @JoinTable(
+        schema = "nibas",
+        name = "avtaltavgrensningslinje_land",
+        joinColumns = arrayOf(JoinColumn(name = "avtaltavgrensningslinje_fk")),
+        inverseJoinColumns = arrayOf(JoinColumn(name = "landkode_fk"))
+    )
+    var landkode: MutableSet<Landkode> = mutableSetOf()
+
+    @OneToMany(mappedBy = "avtaltavgrensningslinjeFk", fetch = FetchType.LAZY)
+    var dokumentasjonsreferanse: MutableSet<Dokumentasjonsreferanse> = mutableSetOf()
+}

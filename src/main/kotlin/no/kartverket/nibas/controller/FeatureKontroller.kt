@@ -5,6 +5,9 @@ import no.kartverket.nibas.api.v1.common.geojson.FeatureProperties
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.toAdministrativEnhetResponse
+import no.kartverket.nibas.domain.Fylke
+import no.kartverket.nibas.domain.Kommune
+import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.service.AdministrativEnhetService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
@@ -24,16 +27,24 @@ class FeatureKontroller : FeatureApiV1 {
         val administrativeEnheter = administrativenhetService.hentAdministrativeEnheterMedId(ider, type)
         if (administrativeEnheter.any()) {
             administrativeEnheter.forEach { administrativEnhet ->
-                administrativEnhet.grenser.forEach { grense ->
+
+                val grenser = when(administrativEnhet) {
+                    is Kommune -> administrativEnhet.kommunegrenser
+                    is Fylke -> administrativEnhet.fylkesgrenser
+                    is Nasjon -> administrativEnhet.riksgrenser
+                    else -> throw RuntimeException("Ukjent grense")
+                }
+
+                grenser.forEach { grense ->
                     featureCollection.add(
                         Feature(
                             properties = FeatureProperties(
-                                grense.id,
-                                grense.navn,
+                                grense.id!!,
+                                grense.objtype!!,
                                 type,
                                 toAdministrativEnhetResponse(administrativEnhet, type)
                             ),
-                            geometry = grense.kurve
+                            geometry = grense.grense!!
                         )
                     )
                 }

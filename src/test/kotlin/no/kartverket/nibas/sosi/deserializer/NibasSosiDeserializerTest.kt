@@ -19,6 +19,10 @@ class NibasSosiDeserializerTest {
                 assertNotNull(root.getHode(), "Forventer et hode")
                 assertTrue(root.getKurver().isNotEmpty(), "Forventer kurver")
                 assertTrue(root.getFlater().isNotEmpty(), "Forventer flater")
+
+
+                val noe = root.getObjektMedId("155999")!!
+                noe.getDokumentasjonsReferanse()
             }
         }
     }
