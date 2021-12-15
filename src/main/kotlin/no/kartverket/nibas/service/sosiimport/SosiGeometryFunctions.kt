@@ -30,7 +30,7 @@ class SosiGeometryFunctions {
         fun sosiKoordinaterToLineString(sosiNordOest: List<SosiNordOest>, koordsys: String?): LineString {
             val koordinater: List<Coordinate> = sosiNordOest.flatMap { outer ->
                 outer.getKoordinater().map {
-                    Coordinate(it.north.toDouble(), it.east.toDouble())
+                    Coordinate(it.oest.toDouble() * outer.enhet, it.nord.toDouble() * outer.enhet)
                 }
             }
 
@@ -40,7 +40,7 @@ class SosiGeometryFunctions {
         fun sosiKoordinatToPoint(sosiNordOest: List<SosiNordOest>, koordsys: String?): Point? {
             return sosiNordOest.firstOrNull()?.let { first ->
                 first.getKoordinater().firstOrNull()?.let { coord ->
-                    getGeometryFactory(koordsys).createPoint(Coordinate(coord.north.toDouble(), coord.east.toDouble()))
+                    getGeometryFactory(koordsys).createPoint(Coordinate(coord.oest.toDouble() * first.enhet, coord.nord.toDouble() * first.enhet))
                 }
             }
         }

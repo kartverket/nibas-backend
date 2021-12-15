@@ -1,6 +1,5 @@
 package no.kartverket.nibas.sosi.model
 
-import no.kartverket.nibas.sosi.common.SosiKoder
 import java.io.PrintStream
 import java.time.format.DateTimeFormatter
 
@@ -10,7 +9,8 @@ open class SosiObjekt(
     val verdier: MutableList<SosiVerdi> = ArrayList(),
     var barn: MutableList<SosiObjekt> = ArrayList(),
     var forelder: SosiObjekt? = null,
-    var koordsys: String? = null
+    var koordsys: String? = null,
+    var enhet: Double = 1.0
 ) {
 
     companion object {
@@ -35,10 +35,11 @@ open class SosiObjekt(
         return this
     }
 
-    fun setKoordsysPaAlleBarn(koordsys: String?): SosiObjekt {
+    fun setKoordsysOgEnhetPaAlleBarn(koordsys: String?, enhet: Double): SosiObjekt {
         barn.forEach {
             it.koordsys = koordsys
-            it.setKoordsysPaAlleBarn(koordsys)
+            it.enhet = enhet
+            it.setKoordsysOgEnhetPaAlleBarn(koordsys, enhet)
         }
         return this
     }

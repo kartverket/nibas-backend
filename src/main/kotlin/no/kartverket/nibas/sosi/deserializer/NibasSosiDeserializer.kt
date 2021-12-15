@@ -31,7 +31,12 @@ class NibasSosiDeserializer {
 
         val kunMedVerdier = root.fjernBarnUtenVerdierEllerBarn()
         val koordsys = kunMedVerdier.getHode()?.getTranspar()?.getKoordSys()
-        return kunMedVerdier.setKoordsysPaAlleBarn(koordsys)
+        val enhet: Double = when (val enhet = kunMedVerdier.getHode()?.getTranspar()?.getEnhet()) {
+            null -> 1.0
+            else -> enhet
+        }
+
+        return kunMedVerdier.setKoordsysOgEnhetPaAlleBarn(koordsys, enhet)
 
     }
 
