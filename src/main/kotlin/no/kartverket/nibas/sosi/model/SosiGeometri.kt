@@ -18,7 +18,7 @@ open class SosiGeometri(type: String, niva: Int, verdier: MutableList<SosiVerdi>
     fun getDataUttaksdato(): LocalDate? = stringAsDate(getVerdiAvBarn(SosiKoder.DATAUTTAKSDATO))
     fun getOppdateringsdato(): LocalDate? = stringAsDate(getVerdiAvBarn(SosiKoder.OPPDATERINGSDATO))
     fun getAlleSosiNordOest(): List<SosiNordOest> = barn.filter { it is SosiNordOest }.map { it as SosiNordOest }
-    fun getReferanser(): List<SosiRef> = barn.filter { it is SosiRef }.map { it as SosiRef }
+    fun getReferanser(): List<SosiReferanse> = barn.filter { it is SosiReferanse }.map { it as SosiReferanse }
     fun getIdent(): SosiIdent? = barn.find { it is SosiIdent } as? SosiIdent
     fun getKommunenavn(): List<SosiNavn> =
         barn.filter { it is SosiNavn && it.type == SosiKoder.KOMMUNENAVN }.map { it as SosiNavn }

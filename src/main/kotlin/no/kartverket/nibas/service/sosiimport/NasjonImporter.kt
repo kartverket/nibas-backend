@@ -5,7 +5,7 @@ import no.kartverket.nibas.domain.*
 import no.kartverket.nibas.repository.*
 import no.kartverket.nibas.sosi.model.SosiFlate
 import no.kartverket.nibas.sosi.model.SosiObjekt
-import no.kartverket.nibas.sosi.model.SosiRef
+import no.kartverket.nibas.sosi.model.SosiReferanse
 import org.locationtech.jts.geom.LineString
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
@@ -44,23 +44,33 @@ class NasjonImporter {
 
                 runBlocking {
                     withContext(Dispatchers.Default) {
-                        val deferredSkall = flate.getSkallRef().map { ref ->
+                        val deferredSkall = flate.getSkallReferanser().map { ref ->
                             async {
-                                importerNasjonRef(ref, nasjon, root)
+                                importerNasjonRef(ref, root)
                             }
                         }
 
-                        val deferredHull = flate.getHullRef().map { liste ->
+                        val deferredHull = flate.getHullReferanser().map { liste ->
                             liste.map { ref ->
                                 async {
-                                    importerNasjonRef(ref, nasjon, root)
+                                    importerNasjonRef(ref, root)
                                 }
                             }
                         }
 
                         val skall = deferredSkall.awaitAll()
                         val hull = deferredHull.map { it.awaitAll() }
-                        nasjon.flate = SosiGeometryFunctions.lagFlate(skall, hull, flate.koordsys)
+
+                        nasjon.avtaltavgrensningslinjer = (skall.flatMap { it.avtaltavgrensningslinjer } + hull.flatMap { it.flatMap { i -> i.avtaltavgrensningslinjer } }).toMutableSet()
+                        nasjon.territorialgrenser = (skall.flatMap { it.territorialgrenser } + hull.flatMap { it.flatMap { i -> i.territorialgrenser } }).toMutableSet()
+                        nasjon.riksgrenser = (skall.flatMap { it.riksgrenser } + hull.flatMap { it.flatMap { i -> i.riksgrenser } }).toMutableSet()
+
+
+                        nasjon.flate = SosiGeometryFunctions.lagFlate(
+                            skall.map { it.lineString!! },
+                            hull.map { it.map { i -> i.lineString!! } },
+                            flate.koordsys
+                        )
                     }
                 }
 
@@ -86,22 +96,32 @@ class NasjonImporter {
         }
     }
 
-    private fun importerNasjonRef(ref: SosiRef, nasjon: Nasjon, root: SosiObjekt): LineString {
+    private fun importerNasjonRef(ref: SosiReferanse, root: SosiObjekt): NasjonReferanseImportResult {
         val referanse = ref.getVerdiUtenRetningOgParentes()
         when (val grenseRef = root.getObjektMedId(referanse)) {
             null -> throw RuntimeException("Finner ikke grense som refereres til. Feil i datagrunnlaget. Ref: $referanse")
             else -> {
                 val importertGrense = grenseImporter.importerGrense(grenseRef)
+                val result = NasjonReferanseImportResult()
                 when (importertGrense) {
-                    is Avtaltavgrensningslinje -> nasjon.avtaltavgrensningslinjer.add(importertGrense)
-                    is Territorialgrense -> nasjon.territorialgrenser.add(importertGrense)
-                    is Riksgrense -> nasjon.riksgrenser.add(importertGrense)
+                    is Avtaltavgrensningslinje -> result.avtaltavgrensningslinjer.add(importertGrense)
+                    is Territorialgrense -> result.territorialgrenser.add(importertGrense)
+                    is Riksgrense -> result.riksgrenser.add(importertGrense)
                 }
-                return when (ref.isRetningReversed()) {
-                    true -> importertGrense.grense!!.reverse()
-                    false -> importertGrense.grense!!
+                when (ref.isRetningReversed()) {
+                    true -> result.lineString = importertGrense.grense!!.reverse()
+                    false -> result.lineString = importertGrense.grense!!
                 }
+
+                return result
             }
         }
     }
 }
+
+data class NasjonReferanseImportResult(
+    val avtaltavgrensningslinjer: MutableSet<Avtaltavgrensningslinje> = mutableSetOf(),
+    val territorialgrenser: MutableSet<Territorialgrense> = mutableSetOf(),
+    val riksgrenser: MutableSet<Riksgrense> = mutableSetOf(),
+    var lineString: LineString? = null
+)

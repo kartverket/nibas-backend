@@ -4,8 +4,8 @@ import no.kartverket.nibas.sosi.common.SosiKoder
 
 class SosiFlate(niva: Int, verdier: MutableList<SosiVerdi>) : SosiGeometri(type = "FLATE", niva, verdier = verdier) {
     fun isSamiskForvaltningsomrade(): Boolean = getVerdiAvBarn(SosiKoder.SAMISKFORVALTNINGSOMRADE) == "JA"
-    fun getSkallRef(): List<SosiRef> {
-        val skall = ArrayList<SosiRef>()
+    fun getSkallReferanser(): List<SosiReferanse> {
+        val skall = ArrayList<SosiReferanse>()
         var inniHull = false
         getReferanser().forEach { ref ->
             if(ref.getVerdi().startsWith("(")) {
@@ -22,10 +22,10 @@ class SosiFlate(niva: Int, verdier: MutableList<SosiVerdi>) : SosiGeometri(type 
         return skall
     }
 
-    fun getHullRef(): List<List<SosiRef>> {
-        val hullListe = ArrayList<List<SosiRef>>()
+    fun getHullReferanser(): List<List<SosiReferanse>> {
+        val hullListe = ArrayList<List<SosiReferanse>>()
         var inniHull = false
-        var hull = ArrayList<SosiRef>()
+        var hull = ArrayList<SosiReferanse>()
         getReferanser().forEach { ref ->
             if(ref.getVerdi().startsWith("(")) {
                 inniHull = true

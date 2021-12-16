@@ -18,7 +18,7 @@ class SosiObjektFactory {
                 SosiKoder.MAKS_NO -> SosiNordOest(type = SosiKoder.MAKS_NO, niva = sosiLinje.niva(), verdier = toNoKoordinat(sosiLinje.verdier()))
                 SosiKoder.NOH -> SosiNoh(niva = sosiLinje.niva(), verdier = toNohKoordinat(sosiLinje.verdier()))
                 SosiKoder.IDENT -> SosiIdent(sosiLinje.niva(), toNoKoordinat(sosiLinje.verdier()))
-                SosiKoder.REF -> SosiRef(sosiLinje.niva(), verdier = sosiLinje.verdier())
+                SosiKoder.REF -> SosiReferanse(sosiLinje.niva(), verdier = sosiLinje.verdier())
                 SosiKoder.KVALITET -> SosiKvalitet(sosiLinje.niva(), verdier = sosiLinje.verdier())
                 SosiKoder.FYLKESNAVN -> SosiNavn(type = SosiKoder.FYLKESNAVN, sosiLinje.niva(), sosiLinje.verdier())
                 SosiKoder.KOMMUNENAVN -> SosiNavn(type = SosiKoder.KOMMUNENAVN, sosiLinje.niva(), sosiLinje.verdier())

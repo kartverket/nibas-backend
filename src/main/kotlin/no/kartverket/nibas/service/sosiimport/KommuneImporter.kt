@@ -5,7 +5,7 @@ import no.kartverket.nibas.domain.*
 import no.kartverket.nibas.repository.*
 import no.kartverket.nibas.sosi.model.SosiFlate
 import no.kartverket.nibas.sosi.model.SosiObjekt
-import no.kartverket.nibas.sosi.model.SosiRef
+import no.kartverket.nibas.sosi.model.SosiReferanse
 import org.locationtech.jts.geom.LineString
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
@@ -49,23 +49,41 @@ class KommuneImporter {
 
                 runBlocking {
                     withContext(Dispatchers.Default) {
-                        val deferredSkall = flate.getSkallRef().map { ref ->
-                            async {
-                                importerKommuneRef(ref, kommune, root)
-                            }
-                        }
-
-                        val deferredHull = flate.getHullRef().map { liste ->
-                            liste.map { ref ->
+                        val deferredSkall: List<Deferred<KommuneReferanseImportResult>> =
+                            flate.getSkallReferanser().map { ref ->
                                 async {
-                                    importerKommuneRef(ref, kommune, root)
+                                    importerKommuneRef(ref, root)
                                 }
                             }
-                        }
 
-                        val skall = deferredSkall.awaitAll()
-                        val hull = deferredHull.map { it.awaitAll() }
-                        kommune.flate = SosiGeometryFunctions.lagFlate(skall, hull, flate.koordsys)
+                        val deferredHull: List<List<Deferred<KommuneReferanseImportResult>>> =
+                            flate.getHullReferanser().map { liste ->
+                                liste.map { ref ->
+                                    async {
+                                        importerKommuneRef(ref, root)
+                                    }
+                                }
+                            }
+
+                        val skall: List<KommuneReferanseImportResult> = deferredSkall.awaitAll()
+                        val hull: List<List<KommuneReferanseImportResult>> = deferredHull.map { it.awaitAll() }
+
+                        kommune.kommunegrenser =
+                            (skall.flatMap { it.kommunegrenser } + hull.flatMap { it.flatMap { i -> i.kommunegrenser } }).toMutableSet()
+                        kommune.fylkesgrenser =
+                            (skall.flatMap { it.fylkesgrenser } + hull.flatMap { it.flatMap { i -> i.fylkesgrenser } }).toMutableSet()
+                        kommune.avtaltavgrensningslinjer =
+                            (skall.flatMap { it.avtaltavgrensningslinjer } + hull.flatMap { it.flatMap { i -> i.avtaltavgrensningslinjer } }).toMutableSet()
+                        kommune.territorialgrenser =
+                            (skall.flatMap { it.territorialgrenser } + hull.flatMap { it.flatMap { i -> i.territorialgrenser } }).toMutableSet()
+                        kommune.riksgrenser =
+                            (skall.flatMap { it.riksgrenser } + hull.flatMap { it.flatMap { i -> i.riksgrenser } }).toMutableSet()
+
+                        kommune.flate = SosiGeometryFunctions.lagFlate(
+                            skall.map { it.lineString!! },
+                            hull.map { it.map { i -> i.lineString!! } },
+                            flate.koordsys
+                        )
                     }
                 }
 
@@ -91,24 +109,35 @@ class KommuneImporter {
         }
     }
 
-    private fun importerKommuneRef(ref: SosiRef, kommune: Kommune, root: SosiObjekt): LineString {
+    private fun importerKommuneRef(ref: SosiReferanse, root: SosiObjekt): KommuneReferanseImportResult {
         val referanse = ref.getVerdiUtenRetningOgParentes()
         when (val grenseRef = root.getObjektMedId(referanse)) {
             null -> throw RuntimeException("Finner ikke grense som refereres til. Feil i datagrunnlaget. Ref: $referanse")
             else -> {
                 val importertGrense = grenseImporter.importerGrense(grenseRef)
+                val result = KommuneReferanseImportResult()
                 when (importertGrense) {
-                    is Kommunegrense -> kommune.kommunegrenser.add(importertGrense)
-                    is Fylkesgrense -> kommune.fylkesgrenser.add(importertGrense)
-                    is Avtaltavgrensningslinje -> kommune.avtaltavgrensningslinjer.add(importertGrense)
-                    is Territorialgrense -> kommune.territorialgrenser.add(importertGrense)
-                    is Riksgrense -> kommune.riksgrenser.add(importertGrense)
+                    is Kommunegrense -> result.kommunegrenser.add(importertGrense)
+                    is Fylkesgrense -> result.fylkesgrenser.add(importertGrense)
+                    is Avtaltavgrensningslinje -> result.avtaltavgrensningslinjer.add(importertGrense)
+                    is Territorialgrense -> result.territorialgrenser.add(importertGrense)
+                    is Riksgrense -> result.riksgrenser.add(importertGrense)
                 }
-                return when (ref.isRetningReversed()) {
-                    true -> importertGrense.grense!!.reverse()
-                    false -> importertGrense.grense!!
+                when (ref.isRetningReversed()) {
+                    true -> result.lineString = importertGrense.grense!!.reverse()
+                    false -> result.lineString = importertGrense.grense!!
                 }
+                return result
             }
         }
     }
 }
+
+data class KommuneReferanseImportResult(
+    val kommunegrenser: MutableSet<Kommunegrense> = mutableSetOf(),
+    val fylkesgrenser: MutableSet<Fylkesgrense> = mutableSetOf(),
+    val avtaltavgrensningslinjer: MutableSet<Avtaltavgrensningslinje> = mutableSetOf(),
+    val territorialgrenser: MutableSet<Territorialgrense> = mutableSetOf(),
+    val riksgrenser: MutableSet<Riksgrense> = mutableSetOf(),
+    var lineString: LineString? = null
+)
