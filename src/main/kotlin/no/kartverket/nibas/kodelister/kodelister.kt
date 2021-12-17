@@ -29,90 +29,66 @@ interface KodelisteService {
      */
     fun fylkesnummerIdExists(fylkesnummerId: String): Boolean
 
-    fun getGyldigeKommunenumre(): List<KodelisteItem>
-    fun getAlleKommunenumre(): List<KodelisteItem>
-    fun getGyldigeFylkesnumre(): List<KodelisteItem>
-    fun getAlleFylkesnumre(): List<KodelisteItem>
-    fun getMalemetodeKode(): List<KodelisteItem>
-    fun getMalemetode(): List<KodelisteItem>
+    fun getKommunenumre(): List<KodelisteItem>
+    fun getFylkesnumre(): List<KodelisteItem>
+    fun getMaalemetodeKoder(): List<KodelisteItem>
 }
 
 class DefaultKodelisteService constructor(private val kodelisteFetcher: KodelisteFetcher) : KodelisteService {
 
     private val malemetodeKodeUri = "malemetode-kode.json?"
-    private val malemetodeUri = "malemetode.json?"
     private val kommunenummerUri = "kommunenummer.json?"
-    private val kommunenummerAlleUri = "kommunenummer-alle.json?"
     private val fylkesnummerUri = "fylkesnummer.json?"
-    private val fylkesnummerAlleUri = "fylkesnummer-alle.json?"
-
     private val kodelisteByTypeMap: MutableMap<KodelisteType, Map<String, KodelisteItem>> = mutableMapOf()
 
     override fun getKommunenummerIdByCodeValue(codeValue: String): String {
-        return findMatchingUUIDFor(getAlleKommunenumre(), codeValue)
+        return findMatchingUUIDFor(getKommunenumre(), codeValue)
     }
 
     override fun getFylkesnummerIdByCodeValue(codeValue: String): String {
-        return findMatchingUUIDFor(getAlleFylkesnumre(), codeValue)
+        return findMatchingUUIDFor(getFylkesnumre(), codeValue)
     }
 
     override fun getMalemetodeIdByCodeValue(codeValue: String): String {
-        return findMatchingUUIDFor(getMalemetodeKode(), codeValue)
+        return findMatchingUUIDFor(getMaalemetodeKoder(), codeValue)
     }
 
     override fun kommunenummerIdExists(kommunenummerId: String): Boolean {
-        return getAlleKommunenummerMap().containsKey(kommunenummerId)
+        return getKommunenummerMap().containsKey(kommunenummerId)
     }
 
     override fun fylkesnummerIdExists(fylkesnummerId: String): Boolean {
-        return getAlleFylkesnummerMap().containsKey(fylkesnummerId)
+        return getFylkesnummerMap().containsKey(fylkesnummerId)
+    }
+
+    override fun getKommunenumre(): List<KodelisteItem> {
+        return toList(getKommunenummerMap())
+    }
+
+    override fun getFylkesnumre(): List<KodelisteItem> {
+        return toList(getFylkesnummerMap())
+    }
+
+    override fun getMaalemetodeKoder(): List<KodelisteItem> {
+        return toList(getMaalemetodeKoderMap())
     }
 
     private fun findMatchingUUIDFor(kodeliste: List<KodelisteItem>, codeValue: String) =
         kodeliste.first { it.item.codevalue == codeValue }.item.uuid
 
-    override fun getGyldigeKommunenumre(): List<KodelisteItem> {
-        return getKommunenummerMap().values.toList()
-    }
-
-    override fun getAlleKommunenumre(): List<KodelisteItem> {
-        return getAlleKommunenummerMap().values.toList()
-    }
-
-    override fun getGyldigeFylkesnumre(): List<KodelisteItem> {
-        return getFylkesnummerMap().values.toList()
-    }
-
-    override fun getAlleFylkesnumre(): List<KodelisteItem> {
-        return getAlleFylkesnummerMap().values.toList()
-    }
-
-    override fun getMalemetodeKode(): List<KodelisteItem> {
-        return getKodelisteItemsForType(malemetodeKodeUri, KodelisteType.MALEMETODE_KODE)
-    }
-
-    override fun getMalemetode(): List<KodelisteItem> {
-        return getKodelisteItemsForType(malemetodeUri, KodelisteType.MALEMETODE)
-    }
-
     private fun getKommunenummerMap(): Map<String, KodelisteItem> {
         return getKodelisteItemByIdMap(kommunenummerUri, KodelisteType.KOMMUNENUMMER)
-    }
-
-    private fun getAlleKommunenummerMap(): Map<String, KodelisteItem> {
-        return getKodelisteItemByIdMap(kommunenummerAlleUri, KodelisteType.KOMMUNENUMMER_ALLE)
     }
 
     private fun getFylkesnummerMap(): Map<String, KodelisteItem> {
         return getKodelisteItemByIdMap(fylkesnummerUri, KodelisteType.FYLKESNUMMER)
     }
 
-    private fun getAlleFylkesnummerMap(): Map<String, KodelisteItem> {
-        return getKodelisteItemByIdMap(fylkesnummerAlleUri, KodelisteType.FYLKESNUMMER_ALLE)
+    private fun getMaalemetodeKoderMap(): Map<String, KodelisteItem> {
+        return getKodelisteItemByIdMap(malemetodeKodeUri, KodelisteType.MALEMETODE_KODE)
     }
 
-    private fun getKodelisteItemsForType(uriPostfix: String, type: KodelisteType): List<KodelisteItem> =
-        getKodelisteItemByIdMap(uriPostfix, type).values.toList()
+    private fun toList(map: Map<String, KodelisteItem>): List<KodelisteItem> = map.values.toList()
 
     private fun getKodelisteItemByIdMap(uriPostfix: String, type: KodelisteType): Map<String, KodelisteItem> {
         if (!kodelisteByTypeMap.containsKey(type)) {
@@ -154,5 +130,5 @@ data class GeonorgeKodelisteItem(
 data class KodelisteItem(val type: KodelisteType, val item: GeonorgeKodelisteItem)
 
 enum class KodelisteType {
-    KOMMUNENUMMER, KOMMUNENUMMER_ALLE, FYLKESNUMMER, FYLKESNUMMER_ALLE, MALEMETODE_KODE, MALEMETODE
+    KOMMUNENUMMER, FYLKESNUMMER, MALEMETODE_KODE,
 }

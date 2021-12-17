@@ -1,25 +1,13 @@
-### Gyldige kommunenumre
+### Kommunenumre (kun gyldige pr des 21, men kommer inn historiske her på sikt)
 GET http://localhost:8080/v1/kodeliste/kommunenumre
 Accept: application/json
 
-### Alle kommunenumre, også historiske
-GET http://localhost:8080/v1/kodeliste/alle-kommunenumre
-Accept: application/json
-
-### Gyldige fylkesnumre
+### Fylkesnumre (kun gyldige pr des 21, men kommer inn historiske her på sikt)
 GET http://localhost:8080/v1/kodeliste/fylkesnumre
 Accept: application/json
 
-### Alle fylkesnumre, også historiske
-GET http://localhost:8080/v1/kodeliste/alle-fylkesnumre
-Accept: application/json
-
-### Målemetode-koder
+### Målemetode-koder (denne vi bruker pr nå)
 GET http://localhost:8080/v1/kodeliste/malemetode-koder
-Accept: application/json
-
-### Målemetoder
-GET http://localhost:8080/v1/kodeliste/malemetoder
 Accept: application/json
 
 ### POST Sosi-file for import (legg fila i src/test/resources)

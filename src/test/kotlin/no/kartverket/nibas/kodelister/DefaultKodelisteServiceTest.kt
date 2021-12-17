@@ -89,7 +89,7 @@ internal class DefaultKodelisteServiceTest {
         `when`(kodelisteFetcher.fetchForKodeliste(anyString())).thenReturn(
             listOf(
                 GeonorgeKodelisteItem(
-                    id = "https://register.geonorge.no/sosi-kodelister/kommunenummer-alle/5417/0faa6b9d-202f-4bbb-809b-00563a01c69b",
+                    id = "https://register.geonorge.no/sosi-kodelister/kommunenummer/5417/0faa6b9d-202f-4bbb-809b-00563a01c69b",
                     label = "5417",
                     lang = "no",
                     uuid = "0faa6b9d-202f-4bbb-809b-00563a01c69b",
@@ -98,7 +98,7 @@ internal class DefaultKodelisteServiceTest {
                     codevalue = "5417"
                 ),
                 GeonorgeKodelisteItem(
-                    id = "https://register.geonorge.no/sosi-kodelister/kommunenummer-alle/4616/34ed7216-73af-4f83-9b72-005cb5e7afb5",
+                    id = "https://register.geonorge.no/sosi-kodelister/kommunenummer/4616/34ed7216-73af-4f83-9b72-005cb5e7afb5",
                     label = "4616",
                     lang = "no",
                     uuid = uuidForTysnes,
@@ -114,7 +114,7 @@ internal class DefaultKodelisteServiceTest {
         `when`(kodelisteFetcher.fetchForKodeliste(anyString())).thenReturn(
             listOf(
                 GeonorgeKodelisteItem(
-                    id = "https://register.geonorge.no/sosi-kodelister/fylkesnummer-alle/22/b80dc6a5-07a0-41e2-8687-0e891bf8f4cf",
+                    id = "https://register.geonorge.no/sosi-kodelister/fylkesnummer/22/b80dc6a5-07a0-41e2-8687-0e891bf8f4cf",
                     label = "22",
                     lang = "no",
                     uuid = uuidForJanMayen,
@@ -123,7 +123,7 @@ internal class DefaultKodelisteServiceTest {
                     codevalue = codeValueForJanMayen
                 ),
                 GeonorgeKodelisteItem(
-                    id = "https://register.geonorge.no/sosi-kodelister/fylkesnummer-alle/42/4e2d77a8-1196-4736-9575-21c0219570f0",
+                    id = "https://register.geonorge.no/sosi-kodelister/fylkesnummer/42/4e2d77a8-1196-4736-9575-21c0219570f0",
                     label = "42",
                     lang = "no",
                     uuid = "4e2d77a8-1196-4736-9575-21c0219570f0",

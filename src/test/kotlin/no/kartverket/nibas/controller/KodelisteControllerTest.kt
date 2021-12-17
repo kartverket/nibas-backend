@@ -25,11 +25,11 @@ class KodelisteControllerTest {
 
     @Test
     fun fetchKommunenumreReturns200_OK() {
-        `when`(kodelisteService.getGyldigeKommunenumre()).thenReturn(
+        `when`(kodelisteService.getKommunenumre()).thenReturn(
             listOf(
                 KodelisteItem(
                     KodelisteType.KOMMUNENUMMER, GeonorgeKodelisteItem(
-                        id = "https://register.geonorge.no/sosi-kodelister/kommunenummer-alle/1516/6d31cee4-eafc-4973-8326-fef67eafee1a",
+                        id = "https://register.geonorge.no/sosi-kodelister/kommunenummer/1516/6d31cee4-eafc-4973-8326-fef67eafee1a",
                         label = "1516",
                         lang = "no",
                         uuid = "6d31cee4-eafc-4973-8326-fef67eafee1a",

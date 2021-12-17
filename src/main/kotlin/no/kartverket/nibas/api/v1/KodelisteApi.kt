@@ -8,22 +8,23 @@ import org.springframework.web.bind.annotation.RequestMapping
 @RequestMapping("/v1/kodeliste")
 interface KodelisteApi {
 
+    /**
+     * Slår opp kommuneumre fra Geonorge, cachet. (Pr des 21 kun de som er gyldige, men kommer inn historiske her innen 2023)
+     */
     @GetMapping("/kommunenumre", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun fetchGyldigeKommunenumre(): List<KodelisteItem>
+    fun fetchKommunenumre(): List<KodelisteItem>
 
-    @GetMapping("/alle-kommunenumre", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun fetchAlleKommunenumre(): List<KodelisteItem>
-
+    /**
+     * Slår opp fylkesnumre fra Geonorge, cachet. (Pr des 21 kun de som er gyldige, men kommer inn historiske her innen 2023)
+     */
     @GetMapping("/fylkesnumre", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun fetchGyldigeFylkesnumre(): List<KodelisteItem>
+    fun fetchFylkesnumre(): List<KodelisteItem>
 
-    @GetMapping("/alle-fylkesnumre", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun fetchAlleFylkesnumre(): List<KodelisteItem>
-
+    /**
+     * Slår opp målemetoder fra Geonorge, cachet. Er stridigheter i Geonorge om codevalue bør være tekstlig eller ha
+     * nummerert kode, denne metoden benytter tjenesten med nummerert kodeverdi.
+     */
     @GetMapping("/malemetode-koder", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun fetchMalemetodeKoder(): List<KodelisteItem>
-
-    @GetMapping("/malemetoder", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun fetchMalemetoder(): List<KodelisteItem>
+    fun fetchMaalemetodeKoder(): List<KodelisteItem>
 
 }
