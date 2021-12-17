@@ -1,5 +1,6 @@
 package no.kartverket.nibas.domain
 
+import org.hibernate.envers.Audited
 import java.time.LocalDate
 import javax.persistence.Column
 import javax.persistence.JoinColumn
@@ -7,6 +8,7 @@ import javax.persistence.ManyToOne
 import javax.persistence.MappedSuperclass
 
 @MappedSuperclass
+@Audited
 abstract class AdministrativGrense : Grense() {
 
     @Column(name = "lokalid", nullable = false)

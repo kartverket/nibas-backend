@@ -30,7 +30,7 @@ interface AdministrativEnhetApi {
         )
     )
     @GetMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentAlle(@RequestParam(name = "type", required = true) type: AdministrativEnhetType): Iterable<AdministrativEnhetResponse>
+    fun hentAlle(@RequestParam(name = "type", required = true) type: AdministrativEnhetType): List<AdministrativEnhetResponse>
 
     @Operation(summary = "Hent en administrativ enhet med gitt nummer og av definert type", description = "Henter angit administrativ enhet med gitt nummer og av definert type")
     @ApiResponses(

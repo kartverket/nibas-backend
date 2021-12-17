@@ -61,28 +61,39 @@ class AdministrativEnhetService @Autowired constructor(
     fun oppdaterGrenser(type: AdministrativEnhetType, oppdaterteGrenseFeatures: MutableList<Feature>) {
         when (type) {
             AdministrativEnhetType.KOMMUNE -> {
-                val kommunegrenser = oppdaterteGrenseFeatures.map { feature ->
-                    val eksisterendeGrense = kommunegrenseRepository.findById(feature.properties.id).unwrap()
-                    eksisterendeGrense?.grense = feature.geometry
-                    eksisterendeGrense
+                val grenseIderSomSkalOppdateres = oppdaterteGrenseFeatures.map{it.properties.id}.toSet()
+                val gamleGrenser = kommunegrenseRepository.findAllById(grenseIderSomSkalOppdateres)
+
+                val oppdaterteGrenser = gamleGrenser.map { grense ->
+                    val featureForGrense = oppdaterteGrenseFeatures.find { feature -> feature.properties.id == grense.id }
+                    grense.grense = featureForGrense?.geometry
+                    grense
                 }.toSet()
-                kommunegrenseRepository.saveAll(kommunegrenser)
+
+                kommunegrenseRepository.saveAll(oppdaterteGrenser)
             }
             AdministrativEnhetType.FYLKE -> {
-                val fylkesgrenser = oppdaterteGrenseFeatures.map { feature ->
-                    val eksisterendeGrense = fylkesgrenseRepository.findById(feature.properties.id).unwrap()
-                    eksisterendeGrense?.grense = feature.geometry
-                    eksisterendeGrense
+                val grenseIderSomSkalOppdateres = oppdaterteGrenseFeatures.map{it.properties.id}.toSet()
+                val gamleGrenser = fylkesgrenseRepository.findAllById(grenseIderSomSkalOppdateres)
+
+                val oppdaterteGrenser = gamleGrenser.map { grense ->
+                    val featureForGrense = oppdaterteGrenseFeatures.find { feature -> feature.properties.id == grense.id }
+                    grense.grense = featureForGrense?.geometry
+                    grense
                 }.toSet()
-                fylkesgrenseRepository.saveAll(fylkesgrenser)
+
+                fylkesgrenseRepository.saveAll(oppdaterteGrenser)
             }
             AdministrativEnhetType.NASJON -> {
-                val riksgrenser = oppdaterteGrenseFeatures.map { feature ->
-                    val eksisterendeGrense = riksgrenseRepository.findById(feature.properties.id).unwrap()
-                    eksisterendeGrense?.grense = feature.geometry
-                    eksisterendeGrense
+                val grenseIderSomSkalOppdateres = oppdaterteGrenseFeatures.map{it.properties.id}.toSet()
+                val gamleGrenser = riksgrenseRepository.findAllById(grenseIderSomSkalOppdateres)
+
+                val oppdaterteGrenser = gamleGrenser.map { grense ->
+                    val featureForGrense = oppdaterteGrenseFeatures.find { feature -> feature.properties.id == grense.id }
+                    grense.grense = featureForGrense?.geometry
+                    grense
                 }.toSet()
-                riksgrenseRepository.saveAll(riksgrenser)
+                riksgrenseRepository.saveAll(oppdaterteGrenser)
             }
         }
     }
@@ -92,10 +103,10 @@ class AdministrativEnhetService @Autowired constructor(
         oppdatertAdministrativEnhet: AdministrativEnhetRequest
     ): AdministrativEnhet {
         val oppdatertAdmEnhetNr = oppdatertAdministrativEnhet.nummer
-        return when (oppdatertAdministrativEnhet.type) {
+        when (oppdatertAdministrativEnhet.type) {
             AdministrativEnhetType.KOMMUNE -> {
                 val gammelKommune = kommuneRepository.findById(id).unwrap() as Kommune
-                gammelKommune.administrativenhetnavn = oppdatertAdministrativEnhet.navn.map { it ->
+                gammelKommune.administrativenhetnavn = oppdatertAdministrativEnhet.navn.map {
                     val navn = Administrativenhetnavn()
                     navn.navn = it.navn
                     navn.spraak = spraakkodeRepository.findByIdOrNull(it.spraak)
@@ -110,7 +121,7 @@ class AdministrativEnhetService @Autowired constructor(
             }
             AdministrativEnhetType.FYLKE -> {
                 val gammeltFylke = fylkeRepository.findById(id).unwrap() as Fylke
-                gammeltFylke.administrativenhetnavn = oppdatertAdministrativEnhet.navn.map { it ->
+                gammeltFylke.administrativenhetnavn = oppdatertAdministrativEnhet.navn.map {
                     val navn = Administrativenhetnavn()
                     navn.navn = it.navn
                     navn.spraak = spraakkodeRepository.findByIdOrNull(it.spraak)
@@ -122,7 +133,16 @@ class AdministrativEnhetService @Autowired constructor(
                 gammeltFylke.fylkesnummer = oppdatertAdmEnhetNr
                 return fylkeRepository.save(gammeltFylke)
             }
-            AdministrativEnhetType.NASJON -> nasjonRepository.findById(id).unwrap() as Nasjon
+            AdministrativEnhetType.NASJON -> {
+                val gammelNasjon = nasjonRepository.findById(id).unwrap() as Nasjon
+                gammelNasjon.administrativenhetnavn = oppdatertAdministrativEnhet.navn.map {
+                    val navn = Administrativenhetnavn()
+                    navn.navn = it.navn
+                    navn.spraak = spraakkodeRepository.findByIdOrNull(it.spraak)
+                    navn
+                }.toMutableSet()
+                return nasjonRepository.save(gammelNasjon)
+            }
         }
     }
 }

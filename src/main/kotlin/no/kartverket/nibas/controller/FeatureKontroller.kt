@@ -1,9 +1,9 @@
 package no.kartverket.nibas.controller
 
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
-import no.kartverket.nibas.api.v1.common.geojson.FeatureProperties
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
+import no.kartverket.nibas.api.v1.common.geojson.FeatureProperties
 import no.kartverket.nibas.api.v1.toAdministrativEnhetResponse
 import no.kartverket.nibas.domain.Fylke
 import no.kartverket.nibas.domain.Kommune
@@ -11,7 +11,6 @@ import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.service.AdministrativEnhetService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
-import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 import no.kartverket.nibas.api.v1.FeatureApi as FeatureApiV1

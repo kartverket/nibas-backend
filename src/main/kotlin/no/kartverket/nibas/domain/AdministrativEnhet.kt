@@ -4,10 +4,12 @@ import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
 import org.locationtech.jts.geom.Point
 import org.locationtech.jts.geom.Polygon
 import java.time.LocalDate
+import org.hibernate.envers.Audited
 import javax.persistence.*
 import kotlin.jvm.Transient
 
 @MappedSuperclass
+@Audited
 abstract class AdministrativEnhet(@Transient val type: AdministrativEnhetType) {
 
     @Id

@@ -1,18 +1,34 @@
 package no.kartverket.nibas.service
 
-import no.kartverket.nibas.repository.FylkeRepository
-import no.kartverket.nibas.repository.FylkesgrenseRepository
-import no.kartverket.nibas.repository.KommuneRepository
-import no.kartverket.nibas.repository.KommunegrenseRepository
-import no.kartverket.nibas.repository.NasjonRepository
-import no.kartverket.nibas.repository.RiksgrenseRepository
-import no.kartverket.nibas.repository.SpraakkodeRepository
+import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
+import no.kartverket.nibas.api.v1.common.geojson.Feature
+import no.kartverket.nibas.api.v1.common.geojson.FeatureProperties
+import no.kartverket.nibas.api.v1.request.AdministrativEnhet
+import no.kartverket.nibas.api.v1.request.AdministrativEnhetNavn as AdministrativEnhetNavnRequest
+import no.kartverket.nibas.api.v1.response.AdministrativEnhetNavn as AdministrativEnhetNavnResponse
+import no.kartverket.nibas.api.v1.response.AdministrativEnhet as AdministrativEnhetResponse
+import no.kartverket.nibas.domain.Fylke
+import no.kartverket.nibas.domain.Fylkesgrense
+import no.kartverket.nibas.domain.Kommune
+import no.kartverket.nibas.domain.Kommunegrense
+import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.repository.*
+import org.junit.jupiter.api.Test
+import org.locationtech.jts.geom.Coordinate
+import org.locationtech.jts.geom.GeometryFactory
+import org.mockito.ArgumentMatchers
+import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.mock.mockito.MockBean
+import java.time.LocalDate
+import java.util.*
+
 
 @SpringBootTest(classes = [AdministrativEnhetService::class])
 class AdministrativEnhetServiceTest {
+
+
 
     @Autowired lateinit var administrativenhetService: AdministrativEnhetService
 
@@ -37,13 +53,36 @@ class AdministrativEnhetServiceTest {
     @MockBean
     lateinit var spraakkodeRepository: SpraakkodeRepository
 
+    @MockBean
+    lateinit var kodelisteService: KodelisteService
 
 //    @Test
 //    fun thatOppdaterKommunegrenserOppdatererLikeGrenserKunEnGang() {
-//        val koordinater = arrayOf(Coordinate(1000.0, 1000.0), Coordinate(1100.0, 1100.0) )
-//        val koordinater2 = arrayOf(Coordinate(1100.0, 1100.0), Coordinate(1200.0, 1200.0) )
-//        val grenseString = GeometryFactory().createLineString(koordinater)
-//        val grenseString2 = GeometryFactory().createLineString(koordinater2)
+//        val gammelGrenseForRingerikeOgHole = GeometryFactory().createLineString(
+//            arrayOf(
+//                Coordinate(999.0, 999.0),
+//                Coordinate(1099.0, 1099.0)
+//            )
+//        )
+//        val gammelGrenseKunForHole = GeometryFactory().createLineString(
+//            arrayOf(
+//                Coordinate(1099.0, 1099.0),
+//                Coordinate(1199.0, 1199.0)
+//            )
+//        )
+//
+//        val nyGrenseForRingerikeOgHole = GeometryFactory().createLineString(
+//            arrayOf(
+//                Coordinate(1000.0, 1000.0),
+//                Coordinate(1100.0, 1100.0)
+//            )
+//        )
+//        val nyGrenseKunForHole = GeometryFactory().createLineString(
+//            arrayOf(
+//                Coordinate(1100.0, 1100.0),
+//                Coordinate(1200.0, 1200.0)
+//            )
+//        )
 //        val nyeFeatures = mutableListOf(
 //            Feature(
 //                properties = FeatureProperties(
@@ -53,9 +92,9 @@ class AdministrativEnhetServiceTest {
 //                    AdministrativEnhetResponse(
 //                        AdministrativEnhetType.KOMMUNE,
 //                        1,
-//                        listOf(AdministrativEnhetNavn("Ringerike", "nor"))
+//                        listOf(AdministrativEnhetNavnResponse("Ringerike", "nor"))
 //                    )),
-//                geometry = grenseString
+//                geometry = nyGrenseForRingerikeOgHole
 //            ),
 //            Feature(
 //                properties = FeatureProperties(
@@ -64,10 +103,10 @@ class AdministrativEnhetServiceTest {
 //                    AdministrativEnhetType.KOMMUNE,
 //                    AdministrativEnhetResponse(
 //                        AdministrativEnhetType.KOMMUNE,
-//                        1,
-//                        listOf(AdministrativEnhetNavn("Hole", "nor"))
+//                        2,
+//                        listOf(AdministrativEnhetNavnResponse("Hole", "nor"))
 //                    )),
-//                geometry = grenseString
+//                geometry = nyGrenseForRingerikeOgHole
 //            ),
 //            Feature(
 //                properties = FeatureProperties(
@@ -76,49 +115,170 @@ class AdministrativEnhetServiceTest {
 //                    AdministrativEnhetType.KOMMUNE,
 //                    AdministrativEnhetResponse(
 //                        AdministrativEnhetType.KOMMUNE,
-//                        1,
-//                        listOf(AdministrativEnhetNavn("Hole", "nor"))
+//                        2,
+//                        listOf(AdministrativEnhetNavnResponse("Hole", "nor"))
 //                    )),
-//                geometry = grenseString2
+//                geometry = nyGrenseKunForHole
 //            )
 //        )
 //
-//        val kommunegrense1 = Kommunegrense()
-//        kommunegrense1.id = 1
+//        val gammelKommunegrense1 = Kommunegrense()
+//        gammelKommunegrense1.id = 1
+//        gammelKommunegrense1.grense = gammelGrenseForRingerikeOgHole
 //
-//        val kommunegrense2 = Kommunegrense()
-//        kommunegrense2.id = 1
+//        val gammelKommunegrense2 = Kommunegrense()
+//        gammelKommunegrense2.id = 2
+//        gammelKommunegrense2.grense = gammelGrenseKunForHole
 //
-//        val nyeKommunegrenser = setOf(kommunegrense1, kommunegrense2)
+//        val gamleKommunegrenser = setOf(gammelKommunegrense1, gammelKommunegrense2)
+//        val forventetKommunegrense1 = Kommunegrense()
+//        forventetKommunegrense1.id = gammelKommunegrense1.id
+//        forventetKommunegrense1.grense = nyGrenseForRingerikeOgHole
+//
+//        val forventetKommunegrense2 = Kommunegrense()
+//        forventetKommunegrense2.id = gammelKommunegrense2.id
+//        forventetKommunegrense2.grense = nyGrenseKunForHole
+//
+//        Mockito.`when`(kommunegrenseRepository.findAllById(setOf(1,2))).thenReturn(gamleKommunegrenser)
 //
 //        administrativenhetService.oppdaterGrenser(AdministrativEnhetType.KOMMUNE, nyeFeatures)
-//        Mockito.verify(kommunegrenseRepository).saveAll(nyeKommunegrenser)
+//        Mockito.verify(kommunegrenseRepository).saveAll(setOf(forventetKommunegrense1, forventetKommunegrense2))
 //    }
-
+//
+//    @Test
+//    fun thatOppdaterFylkesgrenserOppdatererLikeGrenserKunEnGang() {
+//        val gammelGrenseForVikenOgInnlandet = GeometryFactory().createLineString(
+//            arrayOf(
+//                Coordinate(999.0, 999.0),
+//                Coordinate(1099.0, 1099.0)
+//            )
+//        )
+//        val gammelGrenseKunForViken = GeometryFactory().createLineString(
+//            arrayOf(
+//                Coordinate(1099.0, 1099.0),
+//                Coordinate(1199.0, 1199.0)
+//            )
+//        )
+//
+//        val nyGrenseForVikenOgInnlandet = GeometryFactory().createLineString(
+//            arrayOf(
+//                Coordinate(1000.0, 1000.0),
+//                Coordinate(1100.0, 1100.0)
+//            )
+//        )
+//        val nyGrenseKunForViken = GeometryFactory().createLineString(
+//            arrayOf(
+//                Coordinate(1100.0, 1100.0),
+//                Coordinate(1200.0, 1200.0)
+//            )
+//        )
+//        val nyeFeatures = mutableListOf(
+//            Feature(
+//                properties = FeatureProperties(
+//                    1,
+//                    "Grense1",
+//                    AdministrativEnhetType.FYLKE,
+//                    AdministrativEnhetResponse(
+//                        AdministrativEnhetType.FYLKE,
+//                        1,
+//                        listOf(AdministrativEnhetNavnResponse("Innlandet", "nor"))
+//                    )),
+//                geometry = nyGrenseForVikenOgInnlandet
+//            ),
+//            Feature(
+//                properties = FeatureProperties(
+//                    1,
+//                    "Grense1",
+//                    AdministrativEnhetType.FYLKE,
+//                    AdministrativEnhetResponse(
+//                        AdministrativEnhetType.FYLKE,
+//                        1,
+//                        listOf(AdministrativEnhetNavnResponse("Viken", "nor"))
+//                    )),
+//                geometry = nyGrenseForVikenOgInnlandet
+//            ),
+//            Feature(
+//                properties = FeatureProperties(
+//                    2,
+//                    "Grense2",
+//                    AdministrativEnhetType.FYLKE,
+//                    AdministrativEnhetResponse(
+//                        AdministrativEnhetType.FYLKE,
+//                        1,
+//                        listOf(AdministrativEnhetNavnResponse("Viken", "nor"))
+//                    )),
+//                geometry = nyGrenseKunForViken
+//            )
+//        )
+//
+//        val gammelFylkesgrense1 = Fylkesgrense()
+//        gammelFylkesgrense1.id = 1
+//        gammelFylkesgrense1.grense = gammelGrenseForVikenOgInnlandet
+//
+//        val gammelFylkesgrense2 = Fylkesgrense()
+//        gammelFylkesgrense2.id = 2
+//        gammelFylkesgrense2.grense = gammelGrenseKunForViken
+//
+//        val gamleFylkesgrenser = setOf(gammelFylkesgrense1, gammelFylkesgrense2)
+//        val forventetFylkesgrense1 = Fylkesgrense()
+//        forventetFylkesgrense1.id = gammelFylkesgrense1.id
+//        forventetFylkesgrense1.grense = nyGrenseForVikenOgInnlandet
+//
+//        val forventetFylkesgrense2 = Fylkesgrense()
+//        forventetFylkesgrense2.id = gammelFylkesgrense2.id
+//        forventetFylkesgrense2.grense = nyGrenseKunForViken
+//
+//        Mockito.`when`(fylkesgrenseRepository.findAllById(setOf(1,2))).thenReturn(gamleFylkesgrenser)
+//
+//        administrativenhetService.oppdaterGrenser(AdministrativEnhetType.FYLKE, nyeFeatures)
+//        Mockito.verify(fylkesgrenseRepository).saveAll(setOf(forventetFylkesgrense1, forventetFylkesgrense2))
+//    }
+//
 //    @Test
 //    fun thatOppdaterKommuneOppdateresKorrekt() {
-//        val administrativEnhetRequest = AdministrativEnhet(AdministrativEnhetType.KOMMUNE, "Ringerike - ny", "3008")
-//        val forventetAdministrativEnhetTilLagring = Kommune(1, "Ringerike - ny", "3008")
+//        val kommuneIdSomSkalOppdateres = 1
 //
-//        val kommuneFraDB = Kommune(1, "Ringerike", "3007")
-//        Mockito.`when`(kommuneRepository.findById(1)).thenReturn(Optional.of(kommuneFraDB))
+//        val administrativEnhetRequest = AdministrativEnhet(
+//            AdministrativEnhetType.KOMMUNE,
+//            listOf(AdministrativEnhetNavnRequest("Ringerike - ny", "nor")),
+//            "3008")
+//        val kommuneFraDB = Kommune()
+//        kommuneFraDB.id = kommuneIdSomSkalOppdateres
+//        kommuneFraDB.navn = "Ringerike"
+//
+//        val forventetAdministrativEnhetTilLagring = Kommune()
+//        forventetAdministrativEnhetTilLagring.id = kommuneIdSomSkalOppdateres
+//        forventetAdministrativEnhetTilLagring.navn = "Ringerike - ny"
+//
+//        Mockito.`when`(kommuneRepository.findById(kommuneIdSomSkalOppdateres)).thenReturn(Optional.of(kommuneFraDB))
 //        Mockito.`when`(kommuneRepository.save(ArgumentMatchers.any())).thenReturn(forventetAdministrativEnhetTilLagring)
 //
-//        administrativenhetService.oppdaterAdministrativEnhet(1, administrativEnhetRequest)
+//        administrativenhetService.oppdaterAdministrativEnhet(kommuneIdSomSkalOppdateres, administrativEnhetRequest)
 //        Mockito.verify(kommuneRepository).save(forventetAdministrativEnhetTilLagring)
 //    }
 //
 //    @Test
 //    fun thatOppdaterFylkeOppdateresKorrekt() {
-//        val administrativEnhetRequest = AdministrativEnhet(AdministrativEnhetType.FYLKE, "Viken - ny", "134")
-//        val forventetAdministrativEnhetTilLagring = Fylke(1, "Viken - ny", "134")
+//        val fylkeIdSomSkalOppdateres = 1
 //
-//        val fylkeFraDB = Fylke(1, "Viken", "34")
-//        Mockito.`when`(fylkesRepository.findById(1)).thenReturn(Optional.of(fylkeFraDB))
-//        Mockito.`when`(fylkesRepository.save(ArgumentMatchers.any())).thenReturn(forventetAdministrativEnhetTilLagring)
+//        val administrativEnhetRequest = AdministrativEnhet(
+//            AdministrativEnhetType.FYLKE,
+//            listOf(AdministrativEnhetNavnRequest("Viken - ny", "nor")),
+//            "34")
+//
+//        val fylkeFraDB = Fylke()
+//        fylkeFraDB.id = fylkeIdSomSkalOppdateres
+//        fylkeFraDB.navn = "Viken"
+//
+//        val forventetAdministrativEnhetTilLagring = Fylke()
+//        forventetAdministrativEnhetTilLagring.id = fylkeIdSomSkalOppdateres
+//        forventetAdministrativEnhetTilLagring.navn = "Viken - ny"
+//
+//        Mockito.`when`(fylkeRepository.findById(1)).thenReturn(Optional.of(fylkeFraDB))
+//        Mockito.`when`(fylkeRepository.save(ArgumentMatchers.any())).thenReturn(forventetAdministrativEnhetTilLagring)
 //
 //        administrativenhetService.oppdaterAdministrativEnhet(1, administrativEnhetRequest)
-//        Mockito.verify(fylkesRepository).save(forventetAdministrativEnhetTilLagring)
+//        Mockito.verify(fylkeRepository).save(forventetAdministrativEnhetTilLagring)
 //    }
 
 }

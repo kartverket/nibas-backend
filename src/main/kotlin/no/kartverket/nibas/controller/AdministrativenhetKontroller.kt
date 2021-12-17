@@ -19,14 +19,14 @@ class AdministrativEnhetKontroller : AdministrativEnhetApiV1 {
 
     override fun hentAlle(
         type: AdministrativEnhetType
-    ): Iterable<AdministrativEnhet> {
+    ): List<AdministrativEnhet> {
         return administrativenhetService.hentAlleAdministrativeEnheter(type).map { toAdministrativEnhetResponse(it, type) }
     }
 
     override fun hentEn(id: Int, type: AdministrativEnhetType): AdministrativEnhet {
-        return when (val administrativenhet = administrativenhetService.hentAdministrativEnhet(id, type)) {
+        return when (val administrativEnhet = administrativenhetService.hentAdministrativEnhet(id, type)) {
             null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
-            else -> toAdministrativEnhetResponse(administrativenhet, type)
+            else -> toAdministrativEnhetResponse(administrativEnhet, type)
         }
     }
 

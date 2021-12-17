@@ -14,7 +14,7 @@ import java.util.*
 class NibasBackendApplication {
     @Bean
     fun openApiDef(): OpenAPI {
-        return OpenAPI().info(Info().title("NIBAS Server API").description("API for å hente administrative enheter"));
+        return OpenAPI().info(Info().title("NIBAS Server API").description("API for å hente administrative enheter"))
     }
 }
 

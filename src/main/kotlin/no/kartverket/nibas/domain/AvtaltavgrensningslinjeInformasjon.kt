@@ -1,8 +1,11 @@
 package no.kartverket.nibas.domain
 
+import org.hibernate.envers.Audited
 import javax.persistence.*
 
+
 @Table(name = "avtaltavgrensningslinje_informasjon")
+@Audited
 @Entity
 class AvtaltavgrensningslinjeInformasjon {
     @Id

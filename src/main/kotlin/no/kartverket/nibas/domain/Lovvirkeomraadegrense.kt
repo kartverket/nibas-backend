@@ -1,6 +1,7 @@
 package no.kartverket.nibas.domain
 
 import java.time.LocalDate
+import org.hibernate.envers.Audited
 import javax.persistence.Column
 import javax.persistence.ElementCollection
 import javax.persistence.Entity
@@ -11,6 +12,7 @@ import javax.persistence.OneToMany
 import javax.persistence.Table
 
 @Table(name = "lovvirkeomraadegrense")
+@Audited
 @Entity
 class Lovvirkeomraadegrense : Grense() {
     override var objtype: String? = "LovVirkeområdeGrense"
@@ -62,7 +64,7 @@ class Lovvirkeomraadegrense : Grense() {
     @Column(name = "produkt")
     var produkt: String? = null
 
-
+    
     @Column(name = "versjon")
     var versjon: String? = null
 

@@ -1,8 +1,10 @@
 package no.kartverket.nibas.domain
 
+import org.hibernate.envers.Audited
 import javax.persistence.*
 
 @Table(name = "grunnlinje_informasjon")
+@Audited
 @Entity
 class GrunnlinjeInformasjon {
     @Id

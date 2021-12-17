@@ -1,6 +1,7 @@
 package no.kartverket.nibas.domain
 
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
+import org.hibernate.envers.Audited
 import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.FetchType
@@ -12,6 +13,7 @@ import javax.persistence.OneToMany
 import javax.persistence.Table
 
 @Table(name = "kommune")
+@Audited
 @Entity
 class Kommune : AdministrativEnhet(AdministrativEnhetType.KOMMUNE) {
 

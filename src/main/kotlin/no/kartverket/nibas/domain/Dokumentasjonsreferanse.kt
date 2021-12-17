@@ -1,9 +1,11 @@
 package no.kartverket.nibas.domain
 
 import java.time.LocalDate
+import org.hibernate.envers.Audited
 import javax.persistence.*
 
 @Table(name = "dokumentasjonsreferanse")
+@Audited
 @Entity
 class Dokumentasjonsreferanse {
     @Id

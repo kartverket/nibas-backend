@@ -63,7 +63,7 @@ class SosiLinje(var linje: String) {
     fun skalLeses() = !ignorer()
 
     private fun harNiva(): Boolean {
-        return niva() in 1..3;
+        return niva() in 1..3
     }
     fun nivaOgType(): String = linje.split(Regex("\\s"))[0]
     private fun linjeUtenType(): String = when {

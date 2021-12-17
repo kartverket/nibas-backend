@@ -21,6 +21,10 @@ repositories {
 	}
 }
 
+object DependencyVersions {
+	const val HIBERNATE_VERSION = "5.4.32.Final"
+}
+
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-web")
@@ -40,7 +44,8 @@ dependencies {
 	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0")
 
 	implementation("org.locationtech.spatial4j:spatial4j:0.8")
-	implementation("org.hibernate:hibernate-spatial:5.5.7.Final")
+	implementation("org.hibernate:hibernate-spatial:${DependencyVersions.HIBERNATE_VERSION}")
+	implementation("org.hibernate:hibernate-envers:${DependencyVersions.HIBERNATE_VERSION}")
 	implementation("org.springframework.cloud:spring-cloud-starter")
 	implementation("org.springframework.cloud:spring-cloud-starter-vault-config:3.0.4")
 	implementation("org.springframework.cloud:spring-cloud-starter-bootstrap:3.0.4")

@@ -16,6 +16,7 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import java.time.LocalDate
 
 
 @WebMvcTest(AdministrativEnhetApi::class)
@@ -27,17 +28,17 @@ class AdministrativEnhetKontrollerTest {
     @MockBean
     private lateinit var administrativenhetService: AdministrativEnhetService
 
-//    @Test
-//    fun thatGetOneIsReturning200OkWhenItemIsFound() {
-//        Mockito.`when`(administrativenhetService.hentAdministrativEnhet(1, AdministrativEnhetType.KOMMUNE))
-//            .thenReturn(Kommune(1, "Test", "1", setOf(
-//                Kommunegrense(1, "Testgrense", GeometryFactory().createLineString()))
-//            ))
-//
-//        mvc.perform(
-//            get("/v1/administrativ-enhet/1?type=kommune").contentType(MediaType.APPLICATION_JSON)
-//        ).andExpect(status().isOk)
-//    }
+    @Test
+    fun thatGetOneIsReturning200OkWhenItemIsFound() {
+        val kommune = Kommune()
+        kommune.id = 1
+        Mockito.`when`(administrativenhetService.hentAdministrativEnhet(1, AdministrativEnhetType.KOMMUNE))
+            .thenReturn(kommune)
+
+        mvc.perform(
+            get("/v1/administrativ-enhet/1?type=kommune").contentType(MediaType.APPLICATION_JSON)
+        ).andExpect(status().isOk)
+    }
 
     @Test
     fun thatGetOneIsReturning404WheItemIsNotFound() {

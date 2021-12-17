@@ -1,10 +1,11 @@
 package no.kartverket.nibas.domain
 
+import org.hibernate.envers.Audited
 import org.locationtech.jts.geom.LineString
-import java.time.LocalDate
 import javax.persistence.*
 
 @MappedSuperclass
+@Audited
 abstract class Grense {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
