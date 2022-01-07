@@ -7,7 +7,7 @@ import javax.persistence.*
 @Table(name = "nasjon")
 @Audited
 @Entity
-class Nasjon : AdministrativEnhet(AdministrativEnhetType.NASJON) {
+class Nasjon(override val id: Int = 0) : AdministrativEnhet(AdministrativEnhetType.NASJON, id) {
 
     @OneToMany(mappedBy = "nasjonFk", fetch = FetchType.LAZY)
     override var administrativenhetnavn: MutableSet<Administrativenhetnavn> = mutableSetOf()

@@ -10,13 +10,14 @@ import kotlin.jvm.Transient
 
 @MappedSuperclass
 @Audited
-abstract class AdministrativEnhet(@Transient val type: AdministrativEnhetType) {
+abstract class AdministrativEnhet(
+    @Transient val type: AdministrativEnhetType,
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "objid", nullable = false)
-    var id: Int? = null
-
+    val id: Int
+) {
     @Column(name = "objtype")
     var objtype: String? = null
 

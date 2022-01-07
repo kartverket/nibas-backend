@@ -14,15 +14,7 @@ import javax.persistence.Table
 @Audited
 @Entity
 class Territorialgrense : Grense() {
-    override var objtype: String? = "Riksgrense"
-    
-    @Column(name = "lokalid", nullable = false)
-    var lokalid: String? = null
-
-    
-    @Column(name = "navnerom", nullable = false)
-    var navnerom: String? = null
-
+    override var objtype: String? = "Territorialgrense"
     
     @Column(name = "versjonid")
     var versjonid: String? = null

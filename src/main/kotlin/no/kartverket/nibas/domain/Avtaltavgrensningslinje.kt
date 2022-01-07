@@ -18,14 +18,6 @@ import javax.persistence.Table
 class Avtaltavgrensningslinje : Grense() {
     override var objtype: String? = "AvtaltAvgrensningslinje"
 
-    @Column(name = "lokalid", nullable = false)
-    var lokalid: String? = null
-
-
-    @Column(name = "navnerom", nullable = false)
-    var navnerom: String? = null
-
-
     @Column(name = "versjonid")
     var versjonid: String? = null
 

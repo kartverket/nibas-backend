@@ -15,6 +15,12 @@ abstract class Grense {
     @Column(name = "objtype")
     var objtype: String? = null
 
+    @Column(name = "lokalid", nullable = false)
+    var lokalid: String? = null
+
+    @Column(name = "navnerom", nullable = false)
+    var navnerom: String? = null
+
     @Column(name = "grense", nullable = false)
     var grense: LineString? = null
 

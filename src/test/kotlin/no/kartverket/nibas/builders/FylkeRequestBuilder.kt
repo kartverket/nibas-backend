@@ -1,0 +1,41 @@
+package no.kartverket.nibas.builders
+
+import no.kartverket.nibas.api.v1.common.Fylkesnummer
+import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
+import no.kartverket.nibas.api.v1.request.FylkeRequest as FylkeRequest
+
+class FylkeRequestBuilder(private val id: Int = 1) {
+    companion object {
+        val DEFAULT_REQUEST = FylkeRequestBuilder().build()
+    }
+
+    private var navn = "Vestland"
+    private var spraak = "NOR"
+    private var lokalId = "123"
+    private var navnerom = "A.B.C"
+    private var fylkesnummerUuid = "UUID-1"
+    private var samiskforvaltningsomraade = false
+
+    fun build(): FylkeRequest = FylkeRequest(
+        administrativenhetnavn = listOf(AdministrativEnhetNavn(navn, spraak)),
+        lokalid = lokalId,
+        navnerom = navnerom,
+        fylkesnummerId = fylkesnummerUuid,
+        samiskforvaltningsomraade = samiskforvaltningsomraade
+    )
+
+    fun withNavn(navn: String): FylkeRequestBuilder {
+        this.navn = navn
+        return this
+    }
+
+    fun withNavnerom(navnerom: String): FylkeRequestBuilder {
+        this.navnerom = navnerom
+        return this
+    }
+
+    fun withLokalId(lokalId: String): FylkeRequestBuilder {
+        this.lokalId = lokalId
+        return this
+    }
+}

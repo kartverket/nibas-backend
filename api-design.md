@@ -52,7 +52,7 @@
       {
         "type": "Feature",
         "properties": {
-          "navn": "Posisjon"
+          "type": "Posisjon"
         },
         "geometry": {
           "type": "Point",
@@ -65,7 +65,7 @@
       {
         "type": "Feature",
         "properties": {
-          "navn": "Flate"
+          "type": "Flate"
         },
         "geometry": {
           "type": "Polygon",
@@ -106,8 +106,7 @@
         "id": 1000,
         "type": "Fylkesgrense",
         "lokalid": "12345",
-        "navnerom": "NO.KARTVERKET.AdmEnheterNorge",
-        "href": "http://localhost:8080/v1/fylkesgrenser/1000"
+        "navnerom": "NO.KARTVERKET.AdmEnheterNorge"
       },
       "geometry": {
         "type": "LineString",
@@ -131,8 +130,7 @@
         "kontekstId": 1,
         "type": "Riksgrense",
         "lokalid": "234455",
-        "navnerom": "NO.KARTVERKET.AdmEnheterNorge",
-        "href": "http://localhost:8080/v1/riksgrenser/3922"
+        "navnerom": "NO.KARTVERKET.AdmEnheterNorge"
       },
       "geometry": {
         "type": "LineString",
@@ -260,8 +258,7 @@
         "kontekstId": 1,
         "type": "Kommunegrense",
         "lokalid": "12345",
-        "navnerom": "NO.KARTVERKET.AdmEnheterNorge",
-        "href": "http://localhost:8080/v1/kommunegrenser/2344"
+        "navnerom": "NO.KARTVERKET.AdmEnheterNorge"
       },
       "geometry": {
         "type": "LineString",
@@ -283,8 +280,7 @@
         "id": 3922,
         "type": "Riksgrense",
         "lokalid": "234455",
-        "navnerom": "NO.KARTVERKET.AdmEnheterNorge",
-        "href": "http://localhost:8080/v1/riksgrenser/3922"
+        "navnerom": "NO.KARTVERKET.AdmEnheterNorge"
       },
       "geometry": {
         "type": "LineString",
@@ -304,9 +300,31 @@
 }
 ``` 
 
-# Oppdatering av grenser
+## GET http://localhost:8080/v1/kommuner/1/historikk
+```json
+[
+  {
+    "id": 1,
+    "href": "http://localhost:8080/v1/kommuner/1/historikk/1"
+  },
+  {
+    "id": 2,
+    "href": "http://localhost:8080/v1/kommuner/1/historikk/2"
+  }
+]
+```
+## GET http://localhost:8080/v1/kommuner/1/historikk/1
 
-## POST http://localhost:8080/v1/grenser/
+# Grenser
+# Hente grense
+### GET http://localhost:8080/v1/grenser/kommunegrenser/1
+### GET http://localhost:8080/v1/grenser/kommunegrenser/1/historikk
+### GET http://localhost:8080/v1/grenser/kommunegrenser/1/historikk/1
+
+# Hente historikk på grense
+
+## Oppdatere grenser
+### POST http://localhost:8080/v1/grenser/
 ```json
 {
   "type": "FeatureCollection",
@@ -319,8 +337,7 @@
         "kontekstId": 1,
         "type": "Kommunegrense",
         "lokalid": "12345",
-        "navnerom": "NO.KARTVERKET.AdmEnheterNorge",
-        "href": "http://localhost:8080/v1/kommunegrenser/2344"
+        "navnerom": "NO.KARTVERKET.AdmEnheterNorge"
       },
       "geometry": {
         "type": "LineString",
@@ -342,8 +359,7 @@
         "id": 3922,
         "type": "Riksgrense",
         "lokalid": "234455",
-        "navnerom": "NO.KARTVERKET.AdmEnheterNorge",
-        "href": "http://localhost:8080/v1/riksgrenser/3922"
+        "navnerom": "NO.KARTVERKET.AdmEnheterNorge"
       },
       "geometry": {
         "type": "LineString",

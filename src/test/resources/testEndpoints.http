@@ -20,3 +20,57 @@ Content-Disposition: form-data; name="file"; filename="ADM_Enheter_Norge.sos"
 
 < ./ADM_Enheter_Norge.sos
 --boundary
+
+### GET Nasjoner
+GET http://localhost:8080/v1/nasjoner
+###
+GET http://localhost:8080/v1/nasjoner/1
+###
+GET http://localhost:8080/v1/nasjoner/1/grenser
+###
+GET http://localhost:8080/v1/nasjoner/1/historikk
+###
+GET http://localhost:8080/v1/nasjoner/1/historikk/1
+
+### GET Fylker
+GET http://localhost:8080/v1/fylker
+###
+GET http://localhost:8080/v1/fylker/1
+###
+GET http://localhost:8080/v1/fylker/1/grenser
+###
+GET http://localhost:8080/v1/fylker/1/historikk
+###
+GET http://localhost:8080/v1/fylker/1/historikk/1
+
+### GET Kommuner
+GET http://localhost:8080/v1/kommuner
+###
+GET http://localhost:8080/v1/kommuner/1
+###
+GET http://localhost:8080/v1/kommuner/1/grenser
+###
+GET http://localhost:8080/v1/kommuner/1/historikk
+###
+GET http://localhost:8080/v1/kommuner/1/historikk/1
+
+### GET Grenser
+http://localhost:8080/v1/grenser/riksgrenser/1
+###
+http://localhost:8080/v1/grenser/riksgrenser/1/historikk
+###
+http://localhost:8080/v1/grenser/fylkesgrenser/1
+###
+http://localhost:8080/v1/grenser/fylkesgrenser/1/historikk
+###
+http://localhost:8080/v1/grenser/territorialgrenser/1
+###
+http://localhost:8080/v1/grenser/territorialgrenser/1/historikk
+###
+http://localhost:8080/v1/grenser/avtaltavgrensningslinjer/1
+###
+http://localhost:8080/v1/grenser/avtaltavgrensningslinjer/1/historikk
+###
+http://localhost:8080/v1/grenser/kommunegrenser/1
+###
+http://localhost:8080/v1/grenser/kommunegrenser/1/historikk

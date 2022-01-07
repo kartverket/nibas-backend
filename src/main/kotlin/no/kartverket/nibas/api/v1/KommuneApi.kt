@@ -1,0 +1,124 @@
+package no.kartverket.nibas.api.v1
+
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.ArraySchema
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.tags.Tag
+import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
+import no.kartverket.nibas.api.v1.request.KommuneRequest
+import no.kartverket.nibas.api.v1.response.HistorikkRef
+import no.kartverket.nibas.api.v1.response.KommuneRef
+import no.kartverket.nibas.api.v1.response.KommuneResponse
+import org.springframework.http.MediaType
+import org.springframework.web.bind.annotation.*
+
+@RequestMapping("/v1/kommuner")
+@Tag(
+    name = "v1/kommuner",
+    description = "Endepunkter for å hente informasjon om kommuner i Nasjonal inndelingsbase"
+)
+interface KommuneApi {
+
+    @Operation(summary = "Hent alle kommuner", description = "Henter alle kommuner i nasjonal inndelingsbase.")
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            description = "Successful operation",
+            content = [Content(
+                mediaType = "application/json",
+                array = ArraySchema(schema = Schema(implementation = KommuneRef::class))
+            )]
+        )
+    )
+    @GetMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun hentAlle(
+        @Parameter(description = "Valgfri id til et fylke for å filtrere kommuner innenfor et fylke") @RequestParam(
+            name = "fylkeid",
+            required = false
+        ) fylkeId: Int?
+    ): List<KommuneRef>
+
+    @Operation(summary = "Hent en kommune med gitt id", description = "Henter kommune med gitt id")
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            description = "Successful operation",
+            content = [Content(
+                mediaType = "application/json",
+                schema = Schema(implementation = KommuneResponse::class)
+            )]
+        ),
+        ApiResponse(responseCode = "404", description = "Not Found")
+    )
+    @GetMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun hentEn(@Parameter(description = "ID-en til kommunen man vil hente") @PathVariable id: Int): KommuneResponse
+
+    @Operation(
+        summary = "Hent grensene til en gitt kommune",
+        description = "Henter grensene til en kommune med gitt id"
+    )
+    @DefaultFeatureCollectionApiResponses
+    @GetMapping("/{id}/grenser", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun hentGrenser(@Parameter(description = "ID-en til kommunen man vil hente") @PathVariable id: Int): FeatureCollection
+
+    @Operation(
+        summary = "Hent historikk for en gitt kommune",
+        description = "Henter historikken til en kommune med gitt id"
+    )
+    @DefaultHistorikkRefListApiResponses
+    @GetMapping("/{id}/historikk", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun hentHistorikkForEn(@Parameter(description = "ID-en til kommunen man vil hente") @PathVariable id: Int): List<HistorikkRef>
+
+    @Operation(
+        summary = "Hent en historisk versjon av en kommune",
+        description = "Henter en gitt revisjon av en historisk kommune"
+    )
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            description = "Successful operation",
+            content = [Content(
+                mediaType = "application/json",
+                schema = Schema(implementation = KommuneResponse::class)
+            )]
+        ),
+        ApiResponse(
+            responseCode = "404",
+            description = "Not Found"
+        )
+    )
+    @GetMapping("/{id}/historikk/{revision}", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun hentHistorikkRevisjon(
+        @Parameter(description = "ID-en til kommunen man vil hente") @PathVariable id: Int,
+        @Parameter(description = "RevisjonsId til revisjonen man vil hente") @PathVariable revision: Int
+    ): KommuneResponse
+
+    @Operation(
+        summary = "Oppdater angitt kommune",
+        description = "Oppdaterer angitt kommune. Returnerer den oppdaterte kommunen"
+    )
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            description = "Successful operation",
+            content = [Content(
+                mediaType = "application/json",
+                schema = Schema(implementation = KommuneResponse::class)
+            )]
+        ),
+        ApiResponse(
+            responseCode = "400",
+            description = "Bad request. Check the request body and path"
+        )
+    )
+    @PutMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun oppdaterKommune(
+        @Parameter(description = "ID til kommunen man vil oppdatere") @PathVariable id: Int,
+        @RequestBody oppdatertKommune: KommuneRequest
+    ): KommuneResponse
+
+}

@@ -8,7 +8,7 @@ Spring Boot applikasjon som serverer informasjon om administrative grenser
 # Kjøre på lokal maskin
 * Definer følgende miljøvariable:
   * VAULT_TOKEN (Logg inn på Vault, og vel "Copy Token" øverst til høyre under profil-menyen)
-  * NIBAS_SOSI_DEPENDENCY_TOKEN (Finn den på gitlab under nibas-backend/settings/cicd/variables/)
+
 * Start opp nibas-db. Se [README.md](https://gitlab.statkart.no/nibas/nibas-db/-/blob/master/README.md) i nibas-db
 
 * Start nibas-backend:

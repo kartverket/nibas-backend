@@ -1,0 +1,166 @@
+package no.kartverket.nibas.kodelister
+
+import no.kartverket.nibas.api.v1.KodelisteApi
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.reactive.function.client.WebClient
+import java.time.Duration
+
+@RestController
+class KodelisteController @Autowired constructor(private val kodelisteService: KodelisteService) : KodelisteApi {
+
+    override fun fetchKommunenumre(): List<KodelisteItem> {
+        return kodelisteService.getKommunenumre()
+    }
+
+    override fun fetchFylkesnumre(): List<KodelisteItem> {
+        return kodelisteService.getFylkesnumre()
+    }
+
+    override fun fetchMaalemetodeKoder(): List<KodelisteItem> {
+        return kodelisteService.getMaalemetodeKoder()
+    }
+
+}
+
+interface KodelisteService {
+    /**
+     * Throws NoSuchElementException hvis ikke match
+     */
+    fun getKommunenummerIdByCodeValue(codeValue: String): String
+
+    fun getCodeValueByKommunenummerId(kommunenummerId: String): String?
+
+    fun getCodeValueByFylkesnummerId(fylkesnummerId: String): String?
+
+    /**
+     * Throws NoSuchElementException hvis ikke match
+     */
+    fun getFylkesnummerIdByCodeValue(codeValue: String): String
+
+    /**
+     * Throws NoSuchElementException hvis ikke match
+     */
+    fun getMalemetodeIdByCodeValue(codeValue: String): String
+
+    /**
+     * Returnerer true hvis gitt kommunenummerId finnes i eksternt forvaltet kodeliste.
+     */
+    fun kommunenummerIdExists(kommunenummerId: String): Boolean
+
+    /**
+     * Returnerer true hvis gitt fylkesnummerId finnes i eksternt forvaltet kodeliste.
+     */
+    fun fylkesnummerIdExists(fylkesnummerId: String): Boolean
+
+    fun getKommunenumre(): List<KodelisteItem>
+    fun getFylkesnumre(): List<KodelisteItem>
+    fun getMaalemetodeKoder(): List<KodelisteItem>
+}
+
+class DefaultKodelisteService constructor(private val kodelisteFetcher: KodelisteFetcher) : KodelisteService {
+
+    private val malemetodeKodeUri = "malemetode-kode.json?"
+    private val kommunenummerUri = "kommunenummer.json?"
+    private val fylkesnummerUri = "fylkesnummer.json?"
+    private val kodelisteByTypeMap: MutableMap<KodelisteType, Map<String, KodelisteItem>> = mutableMapOf()
+
+    override fun getKommunenummerIdByCodeValue(codeValue: String): String {
+        return findMatchingUUIDFor(getKommunenumre(), codeValue)
+    }
+
+    override fun getCodeValueByKommunenummerId(kommunenummerId: String): String? {
+        return getKommunenummerMap()[kommunenummerId]?.item?.codevalue
+    }
+
+    override fun getCodeValueByFylkesnummerId(fylkesnummerId: String): String? {
+        return getFylkesnummerMap()[fylkesnummerId]?.item?.codevalue
+    }
+
+    override fun getFylkesnummerIdByCodeValue(codeValue: String): String {
+        return findMatchingUUIDFor(getFylkesnumre(), codeValue)
+    }
+
+    override fun getMalemetodeIdByCodeValue(codeValue: String): String {
+        return findMatchingUUIDFor(getMaalemetodeKoder(), codeValue)
+    }
+
+    override fun kommunenummerIdExists(kommunenummerId: String): Boolean {
+        return getKommunenummerMap().containsKey(kommunenummerId)
+    }
+
+    override fun fylkesnummerIdExists(fylkesnummerId: String): Boolean {
+        return getFylkesnummerMap().containsKey(fylkesnummerId)
+    }
+
+    override fun getKommunenumre(): List<KodelisteItem> {
+        return toList(getKommunenummerMap())
+    }
+
+    override fun getFylkesnumre(): List<KodelisteItem> {
+        return toList(getFylkesnummerMap())
+    }
+
+    override fun getMaalemetodeKoder(): List<KodelisteItem> {
+        return toList(getMaalemetodeKoderMap())
+    }
+
+    private fun findMatchingUUIDFor(kodeliste: List<KodelisteItem>, codeValue: String) =
+        kodeliste.first { it.item.codevalue == codeValue }.item.uuid
+
+    private fun getKommunenummerMap(): Map<String, KodelisteItem> {
+        return getKodelisteItemByIdMap(kommunenummerUri, KodelisteType.KOMMUNENUMMER)
+    }
+
+    private fun getFylkesnummerMap(): Map<String, KodelisteItem> {
+        return getKodelisteItemByIdMap(fylkesnummerUri, KodelisteType.FYLKESNUMMER)
+    }
+
+    private fun getMaalemetodeKoderMap(): Map<String, KodelisteItem> {
+        return getKodelisteItemByIdMap(malemetodeKodeUri, KodelisteType.MALEMETODE_KODE)
+    }
+
+    private fun toList(map: Map<String, KodelisteItem>): List<KodelisteItem> = map.values.toList()
+
+    private fun getKodelisteItemByIdMap(uriPostfix: String, type: KodelisteType): Map<String, KodelisteItem> {
+        if (!kodelisteByTypeMap.containsKey(type)) {
+            kodelisteByTypeMap[type] =
+                kodelisteFetcher.fetchForKodeliste("/api/sosi-kodelister/$uriPostfix").associate { item ->
+                    item.uuid to KodelisteItem(type, item)
+                }
+        }
+        return kodelisteByTypeMap[type]!!
+    }
+
+}
+
+open class KodelisteFetcher(private val webClient: WebClient) {
+    open fun fetchForKodeliste(uri: String): List<GeonorgeKodelisteItem> {
+        return (webClient.get()
+            .uri(uri)
+            .retrieve()
+            .bodyToMono(GeonorgeKodelisteResponse::class.java)
+            .block(Duration.ofMillis(5_000))
+            ?: throw RuntimeException("Fetch for $uri failed.")).containeditems
+    }
+}
+
+data class GeonorgeKodelisteResponse(
+    val status: String, val containeditems: List<GeonorgeKodelisteItem>
+)
+
+data class GeonorgeKodelisteItem(
+    val id: String,
+    val label: String,
+    val lang: String,
+    val uuid: String,
+    val status: String,
+    val description: String,
+    val codevalue: String
+)
+
+data class KodelisteItem(val type: KodelisteType, val item: GeonorgeKodelisteItem)
+
+enum class KodelisteType {
+    KOMMUNENUMMER, FYLKESNUMMER, MALEMETODE_KODE,
+}

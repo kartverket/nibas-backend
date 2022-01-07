@@ -15,7 +15,7 @@ import javax.persistence.Table
 @Table(name = "kommune")
 @Audited
 @Entity
-class Kommune : AdministrativEnhet(AdministrativEnhetType.KOMMUNE) {
+class Kommune(override val id: Int = 0) : AdministrativEnhet(AdministrativEnhetType.KOMMUNE, id) {
 
     @Column(name = "kommunenummer", nullable = false)
     var kommunenummer: String = ""

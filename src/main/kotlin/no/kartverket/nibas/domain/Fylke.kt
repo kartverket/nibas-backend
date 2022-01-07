@@ -15,7 +15,7 @@ import org.hibernate.envers.Audited
 @Table(name = "fylke")
 @Audited
 @Entity
-class Fylke : AdministrativEnhet(AdministrativEnhetType.FYLKE) {
+class Fylke(override val id: Int = 0) : AdministrativEnhet(AdministrativEnhetType.FYLKE, id) {
 
     @Column(name = "fylkesnummer", nullable = false)
     var fylkesnummer: String = ""
