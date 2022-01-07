@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-	id("org.springframework.boot") version "2.5.4"
+	id("org.springframework.boot") version "2.6.2"
 	id("io.spring.dependency-management") version "1.0.11.RELEASE"
 	kotlin("jvm") version "1.5.21"
 	kotlin("plugin.spring") version "1.5.21"
@@ -47,8 +47,8 @@ dependencies {
 	implementation("org.hibernate:hibernate-spatial:${DependencyVersions.HIBERNATE_VERSION}")
 	implementation("org.hibernate:hibernate-envers:${DependencyVersions.HIBERNATE_VERSION}")
 	implementation("org.springframework.cloud:spring-cloud-starter")
-	implementation("org.springframework.cloud:spring-cloud-starter-vault-config:3.0.4")
-	implementation("org.springframework.cloud:spring-cloud-starter-bootstrap:3.0.4")
+	implementation("org.springframework.cloud:spring-cloud-starter-vault-config:3.1.0")
+	implementation("org.springframework.cloud:spring-cloud-starter-bootstrap:3.1.0")
 	implementation("org.locationtech.jts.io:jts-io-common:1.18.2")
 
 	runtimeOnly("org.flywaydb:flyway-core:8.0.4")
