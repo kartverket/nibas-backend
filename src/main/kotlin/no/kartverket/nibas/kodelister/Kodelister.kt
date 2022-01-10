@@ -2,9 +2,11 @@ package no.kartverket.nibas.kodelister
 
 import no.kartverket.nibas.api.v1.KodelisteApi
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.reactive.function.client.WebClient
 import java.time.Duration
+import java.util.logging.Logger
 
 @RestController
 class KodelisteController @Autowired constructor(private val kodelisteService: KodelisteService) : KodelisteApi {
@@ -56,14 +58,30 @@ interface KodelisteService {
     fun getKommunenumre(): List<KodelisteItem>
     fun getFylkesnumre(): List<KodelisteItem>
     fun getMaalemetodeKoder(): List<KodelisteItem>
+
+    /**
+     * Skedulert metode som automatisk invaliderer/tømmer kodelistene ved jevnt konfigurerbart mellomrom.
+     *
+     * Tømmer kodelistene.
+     */
+    fun clearKodelister()
 }
 
 class DefaultKodelisteService constructor(private val kodelisteFetcher: KodelisteFetcher) : KodelisteService {
 
+    private val logger: Logger = Logger.getLogger(this::class.java.name)
     private val malemetodeKodeUri = "malemetode-kode.json?"
     private val kommunenummerUri = "kommunenummer.json?"
     private val fylkesnummerUri = "fylkesnummer.json?"
     private val kodelisteByTypeMap: MutableMap<KodelisteType, Map<String, KodelisteItem>> = mutableMapOf()
+
+    @Scheduled(
+        cron = "\${nibas.cron.kodeliste.invalidate}"
+    )
+    override fun clearKodelister() {
+        logger.info("Invalidating kodelister.")
+        kodelisteByTypeMap.clear()
+    }
 
     override fun getKommunenummerIdByCodeValue(codeValue: String): String {
         return findMatchingUUIDFor(getKommunenumre(), codeValue)

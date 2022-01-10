@@ -74,3 +74,6 @@ http://localhost:8080/v1/grenser/avtaltavgrensningslinjer/1/historikk
 http://localhost:8080/v1/grenser/kommunegrenser/1
 ###
 http://localhost:8080/v1/grenser/kommunegrenser/1/historikk
+
+### Admin-API Invalidate kodelister
+PUT http://localhost:8080/v1/admin/kodelister/invalidate

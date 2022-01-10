@@ -41,3 +41,9 @@ spring:
     multipart:
       max-file-size: 128MB
       max-request-size: 128MB
+
+# Hver dag kl 03
+nibas:
+  cron:
+    kodeliste:
+      invalidate: 0 0 3 * * *

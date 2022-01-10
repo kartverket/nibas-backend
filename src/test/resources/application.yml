@@ -8,3 +8,9 @@ spring:
     database-platform: org.hibernate.spatial.dialect.postgis.PostgisDialect
   flyway:
     enabled: false
+
+# Hver dag kl 03
+nibas:
+  cron:
+    kodeliste:
+      invalidate: 0 0 3 * * *
