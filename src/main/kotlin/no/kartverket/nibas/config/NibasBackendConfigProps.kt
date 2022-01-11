@@ -1,16 +1,17 @@
 package no.kartverket.nibas.config
 
 import org.springframework.boot.context.properties.ConfigurationProperties
+import org.springframework.boot.context.properties.ConstructorBinding
 
+@ConstructorBinding
 @ConfigurationProperties(prefix = "nibas")
-class NibasBackendConfigProps {
+data class NibasBackendConfigProps(
+    var geonorgeBaseUrl: String = "https://register.geonorge.no/",
+    var httpProxy: HttpProxyConfig = HttpProxyConfig(enabled = false)
+)
 
-    var geonorgeBaseUrl: String = "https://register.geonorge.no/"
-
-    override fun toString(): String {
-        return "NibasBackendConfigProps(" +
-                "geonorgeBaseUrl='$geonorgeBaseUrl'" +
-                ")"
-    }
-
-}
+data class HttpProxyConfig(
+    val enabled: Boolean = false,
+    val host: String = "",
+    val port: Int = 0
+)

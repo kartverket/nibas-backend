@@ -47,3 +47,17 @@ nibas:
   cron:
     kodeliste:
       invalidate: 0 0 3 * * *
+  httpProxy:
+    enabled: true
+    host: tkgeproxy1.statkart.no
+    port: 3128
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+nibas:
+  httpProxy:
+    enabled: false
