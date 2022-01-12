@@ -5,18 +5,20 @@ import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.Kommunegrense
 import no.kartverket.nibas.domain.Riksgrense
 import org.locationtech.jts.geom.GeometryFactory
+import org.locationtech.jts.geom.LineString
 
-class GrenseBuilder(val id: Int = 1) {
+class GrenseBuilder(val id: Int? = 1) {
 
     private var lokalId: String = "123"
     private var navnerom: String = "A.B.C"
+    private var grenseGeometri: LineString = GeometryFactory().createLineString()
 
     fun buildFylkesgrense(): Fylkesgrense {
         val grense = Fylkesgrense()
         grense.id = id
         grense.lokalid = lokalId
         grense.navnerom = navnerom
-        grense.grense = GeometryFactory().createLineString()
+        grense.grense = grenseGeometri
         return grense
     }
 
@@ -25,7 +27,7 @@ class GrenseBuilder(val id: Int = 1) {
         grense.id = id
         grense.lokalid = lokalId
         grense.navnerom = navnerom
-        grense.grense = GeometryFactory().createLineString()
+        grense.grense = grenseGeometri
         return grense
     }
 
@@ -34,7 +36,7 @@ class GrenseBuilder(val id: Int = 1) {
         grense.id = id
         grense.lokalid = lokalId
         grense.navnerom = navnerom
-        grense.grense = GeometryFactory().createLineString()
+        grense.grense = grenseGeometri
         return grense
     }
 
@@ -43,8 +45,4 @@ class GrenseBuilder(val id: Int = 1) {
         return this
     }
 
-    fun withNavnerom(navnerom: String): GrenseBuilder {
-        this.navnerom = navnerom
-        return this
-    }
 }

@@ -23,9 +23,6 @@ class Lovvirkeomraadegrense : Grense() {
     @Column(name = "datafangstdato")
     var datafangstdato: LocalDate? = null
 
-    @Column(name = "oppdateringsdato")
-    var oppdateringsdato: LocalDate? = null
-
     @Column(name = "sluttdato")
     var sluttdato: LocalDate? = null
 

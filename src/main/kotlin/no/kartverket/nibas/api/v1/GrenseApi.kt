@@ -19,14 +19,14 @@ import org.springframework.web.bind.annotation.*
 )
 interface GrenseApi {
 
-    @Operation(summary = "Oppdater en eller flere grenser.")
+    @Operation(summary = "Lagrer grenser som sendes inn. Støtter både nye og oppdaterte grenser.")
     @ApiResponses(
         ApiResponse(responseCode = "200", description = "Successful operation"),
         ApiResponse(responseCode = "400", description = "Bad request")
     )
-    @PutMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
+    @PostMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
     @ResponseStatus(HttpStatus.OK)
-    fun oppdaterGrenser(@RequestBody grenser: FeatureCollection)
+    fun lagreGrenser(@RequestBody grenser: FeatureCollection)
 
     @Operation(summary = "Hent kommunegrense", description = "Henter kommunegrense med gitt id")
     @DefaultFeatureApiResponses

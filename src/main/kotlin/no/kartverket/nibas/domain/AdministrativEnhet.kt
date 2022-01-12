@@ -97,4 +97,13 @@ abstract class AdministrativEnhet(
 
     @javax.persistence.Transient
     var administrativenhetnavn: MutableSet<Administrativenhetnavn> = mutableSetOf()
+
+    @javax.persistence.Transient
+    var riksgrenser: MutableSet<Riksgrense> = mutableSetOf()
+
+    @javax.persistence.Transient
+    var avtaltavgrensningslinjer: MutableSet<Avtaltavgrensningslinje> = mutableSetOf()
+
+    @javax.persistence.Transient
+    var territorialgrenser: MutableSet<Territorialgrense> = mutableSetOf()
 }

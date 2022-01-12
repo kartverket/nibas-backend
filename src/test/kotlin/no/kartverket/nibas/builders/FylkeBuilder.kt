@@ -7,6 +7,7 @@ import java.time.LocalDate
 
 class FylkeBuilder(private val id: Int = 1) {
     private var avtaltavgrensningslinjer: MutableSet<Avtaltavgrensningslinje> = mutableSetOf()
+    private var objtype: String = "Fylke"
     private var territorialgrenser: MutableSet<Territorialgrense> = mutableSetOf()
     private var fylkesgrenser: MutableSet<Fylkesgrense> = mutableSetOf()
     private var riksgrenser: MutableSet<Riksgrense> = mutableSetOf()
@@ -41,6 +42,7 @@ class FylkeBuilder(private val id: Int = 1) {
         fylke.administrativenhetnavn = mutableSetOf(administrativenhetnavn)
         administrativenhetnavn.fylkeFk = fylke
 
+        fylke.objtype = objtype
         fylke.lokalid = lokalId
         fylke.navnerom = navnerom
         fylke.fylkesnummer = fylkesnummer

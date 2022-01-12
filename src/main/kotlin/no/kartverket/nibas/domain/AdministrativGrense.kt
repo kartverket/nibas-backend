@@ -14,9 +14,6 @@ abstract class AdministrativGrense : Grense() {
     @Column(name = "versjonid")
     var versjonid: String? = null
 
-    @Column(name = "oppdateringsdato", nullable = false)
-    var oppdateringsdato: LocalDate? = null
-
     @Column(name = "sluttdato")
     var sluttdato: LocalDate? = null
 

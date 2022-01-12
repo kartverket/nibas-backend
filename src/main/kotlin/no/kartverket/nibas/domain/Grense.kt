@@ -2,11 +2,14 @@ package no.kartverket.nibas.domain
 
 import org.hibernate.envers.Audited
 import org.locationtech.jts.geom.LineString
+import java.time.LocalDate
+import java.util.*
 import javax.persistence.*
 
 @MappedSuperclass
 @Audited
 abstract class Grense {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "objid", nullable = false)
@@ -16,13 +19,17 @@ abstract class Grense {
     var objtype: String? = null
 
     @Column(name = "lokalid", nullable = false)
-    var lokalid: String? = null
+    var lokalid: String? = UUID.randomUUID().toString()
+
+    @Column(name = "oppdateringsdato")
+    var oppdateringsdato: LocalDate? = LocalDate.now()
 
     @Column(name = "navnerom", nullable = false)
     var navnerom: String? = null
 
     @Column(name = "grense", nullable = false)
     var grense: LineString? = null
+
 
 
 }

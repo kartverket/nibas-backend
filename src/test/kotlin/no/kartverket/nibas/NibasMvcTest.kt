@@ -22,6 +22,8 @@ open class NibasMvcTest {
     fun get(url: String, matcher: ResultMatcher) = perform(MockMvcRequestBuilders.get(url), matcher)
     fun put(url: String, request: Any, expected: ResultMatcher) =
         perform(MockMvcRequestBuilders.put(url).content(this.mapper.writeValueAsString(request)), expected)
+    fun post(url: String, request: Any, expected: ResultMatcher) =
+        perform(MockMvcRequestBuilders.post(url).content(this.mapper.writeValueAsString(request)), expected)
 
     private fun perform(action: MockHttpServletRequestBuilder, expected: ResultMatcher) {
         mvc.perform(action.contentType(MediaType.APPLICATION_JSON)).andExpect(expected)

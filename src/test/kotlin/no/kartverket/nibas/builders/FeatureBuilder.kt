@@ -5,9 +5,10 @@ import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureProperties
 import no.kartverket.nibas.inndelinger.GrenseType
 import org.locationtech.jts.geom.Coordinate
+import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.GeometryFactory
 
-class FeatureBuilder(private val id: Int = 1) {
+class FeatureBuilder(private val id: Int? = 1) {
     companion object {
         val DEFAULT_FEATURE = FeatureBuilder().build()
     }
@@ -17,6 +18,7 @@ class FeatureBuilder(private val id: Int = 1) {
     private var navnerom: String = "ABC"
     private var kontekstId: Int = 123
     private var kontekstType: AdministrativEnhetType = AdministrativEnhetType.KOMMUNE
+    private var geometry: Geometry = GeometryFactory().createLineString(arrayOf(Coordinate(0.0, 0.0), Coordinate(1.0, 1.0)))
 
     fun build() = Feature(
         properties = FeatureProperties(
@@ -27,11 +29,26 @@ class FeatureBuilder(private val id: Int = 1) {
             kontekstId = kontekstId,
             kontekstType = kontekstType
         ),
-        geometry = GeometryFactory().createPoint(Coordinate(0.0, 0.0))
+        geometry = geometry
     )
 
     fun withGrensetype(grenseType: GrenseType): FeatureBuilder {
         this.grenseType = grenseType
+        return this
+    }
+
+    fun withKontekstId(kontekstId: Int): FeatureBuilder {
+        this.kontekstId = kontekstId
+        return this
+    }
+
+    fun withKontekstType(kontekstType: AdministrativEnhetType): FeatureBuilder {
+        this.kontekstType = kontekstType
+        return this
+    }
+
+    fun withGeometry(geometry: Geometry): FeatureBuilder {
+        this.geometry = geometry
         return this
     }
 }

@@ -19,7 +19,7 @@ class Nasjon(override val id: Int = 0) : AdministrativEnhet(AdministrativEnhetTy
         joinColumns = arrayOf(JoinColumn(name = "nasjon_fk")),
         inverseJoinColumns = arrayOf(JoinColumn(name = "avtaltavgrensningslinje_fk"))
     )
-    var avtaltavgrensningslinjer: MutableSet<Avtaltavgrensningslinje> = mutableSetOf()
+    override var avtaltavgrensningslinjer: MutableSet<Avtaltavgrensningslinje> = mutableSetOf()
 
     @ManyToMany
     @JoinTable(
@@ -28,7 +28,7 @@ class Nasjon(override val id: Int = 0) : AdministrativEnhet(AdministrativEnhetTy
         joinColumns = arrayOf(JoinColumn(name = "nasjon_fk")),
         inverseJoinColumns = arrayOf(JoinColumn(name = "territorialgrense_fk"))
     )
-    var territorialgrenser: MutableSet<Territorialgrense> = mutableSetOf()
+    override var territorialgrenser: MutableSet<Territorialgrense> = mutableSetOf()
 
     @ManyToMany
     @JoinTable(
@@ -37,6 +37,6 @@ class Nasjon(override val id: Int = 0) : AdministrativEnhet(AdministrativEnhetTy
         joinColumns = arrayOf(JoinColumn(name = "nasjon_fk")),
         inverseJoinColumns = arrayOf(JoinColumn(name = "riksgrense_fk"))
     )
-    var riksgrenser: MutableSet<Riksgrense> = mutableSetOf()
+    override var riksgrenser: MutableSet<Riksgrense> = mutableSetOf()
 
 }

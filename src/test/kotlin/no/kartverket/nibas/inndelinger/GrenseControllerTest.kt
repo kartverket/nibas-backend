@@ -48,8 +48,8 @@ class GrenseControllerTest : NibasMvcTest() {
         val featureCollection =
             FeatureCollection(features = listOf(kommunegrense1, kommunegrense2, fylkesgrense1, fylkesgrense2))
 
-        put("/v1/grenser/", featureCollection, status().isOk)
-        verify(grenseService).oppdaterKommunegrenser(listOf(kommunegrense1, kommunegrense2))
-        verify(grenseService).oppdaterFylkesgrenser(listOf(fylkesgrense1, fylkesgrense2))
+        post("/v1/grenser/", featureCollection, status().isOk)
+        verify(grenseService).lagreKommunegrenser(listOf(kommunegrense1, kommunegrense2))
+        verify(grenseService).lagreFylkesgrenser(listOf(fylkesgrense1, fylkesgrense2))
     }
 }
