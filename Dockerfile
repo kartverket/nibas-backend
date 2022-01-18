@@ -1,4 +1,4 @@
-FROM harbor-staging.statkart.no/proxy_cache/adoptopenjdk/openjdk11:alpine-jre
+FROM eclipse-temurin:17-alpine
 ARG project_version_arg
 ENV PROJECT_VERSION=$project_version_arg
 EXPOSE 8080
