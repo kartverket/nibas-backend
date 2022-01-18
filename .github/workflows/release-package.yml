@@ -5,6 +5,11 @@ on:
   pull_request:
     branches: [ master ]
 
+env:
+  image_name: nibas-backend
+  registry: ghcr.io
+  registry_path: kartverket
+
 jobs:
   build:
 
