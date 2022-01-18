@@ -9,19 +9,44 @@ jobs:
   build:
 
     runs-on: linux
+    outputs:
+      new_tag: ${{ steps.tag_version.outputs.new_tag }}
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
       # Fetch environment variables and set for subsequent steps
-    - name: read .env
-      run: cat .github/workflows/.env | sed '/^#/d' | tee -a ${GITHUB_ENV}
-    - name: Set up JDK
-      uses: actions/setup-java@v2
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-        cache: gradle
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-    - name: Build with Gradle
-      run: ./gradlew build --info
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Build with Gradle
+        run: ./gradlew build --info
+      
+      - name: Bump version and push tag
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.0
+        with:
+          github_token: ${{ github.token }}
+
+      - name: Login to Github Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.registry }}
+          username: ${{ github.actor }}
+          password:  ${{ github.token }}
+
+      - name: Build docker and push
+        id: build
+        uses: whoan/docker-build-with-cache-action@v5
+        with:
+          context: .
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+          registry: ${{ env.registry }}
+          image_tag: ${{ steps.tag_version.outputs.new_tag }}
+          image_name: ${{ github.repository }}
+          build_extra_args: '{"--build-arg": "project_version_arg=${{ steps.tag_version.outputs.new_tag }}"}'
