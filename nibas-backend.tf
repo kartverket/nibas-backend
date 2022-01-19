@@ -1,6 +1,6 @@
 terraform {
   backend "gcs" {
-    bucket  = "nibas-backend-state"
+    bucket  = "terraform-state-nibas-backend"
   }
 }
 
