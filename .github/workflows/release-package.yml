@@ -12,9 +12,7 @@ env:
 
 jobs:
   build:
-
-    # Vi har kanskje lyst til å kjøre på ubuntu-latest, men det feilet med permissions når diverse kataloger skulle opprettes
-    runs-on: linux
+    runs-on: ubuntu-latest
     outputs:
       new_tag: ${{ steps.tag_version.outputs.new_tag }}
 
@@ -34,8 +32,7 @@ jobs:
       
       - name: Bump version and push tag
         id: tag_version
-        #TODO: Sjekke ut om vi kan bumpe opp til 6.0. nibas-db kjører på 6.0 med runs-on: ubuntu-latest. Men her feila det med ubuntu-latest
-        uses: mathieudutour/github-tag-action@v5.3
+        uses: mathieudutour/github-tag-action@v6.0
         with:
           github_token: ${{ github.token }}
 
