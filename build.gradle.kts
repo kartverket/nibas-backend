@@ -16,9 +16,7 @@ java.sourceCompatibility = JavaVersion.VERSION_17
 
 repositories {
 	mavenLocal()
-	maven {
-		setUrl("https://artifactory.statkart.no/artifactory/mvn")
-	}
+	mavenCentral()
 }
 
 object DependencyVersions {
