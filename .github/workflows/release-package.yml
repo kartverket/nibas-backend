@@ -13,6 +13,7 @@ env:
 jobs:
   build:
 
+    # Vi har kanskje lyst til å kjøre på ubuntu-latest, men det feilet med permissions når diverse kataloger skulle opprettes
     runs-on: linux
     outputs:
       new_tag: ${{ steps.tag_version.outputs.new_tag }}
@@ -33,6 +34,7 @@ jobs:
       
       - name: Bump version and push tag
         id: tag_version
+        #TODO: Sjekke ut om vi kan bumpe opp til 6.0. nibas-db kjører på 6.0 med runs-on: ubuntu-latest. Men her feila det med ubuntu-latest
         uses: mathieudutour/github-tag-action@v5.3
         with:
           github_token: ${{ github.token }}
@@ -55,3 +57,38 @@ jobs:
           image_tag: ${{ steps.tag_version.outputs.new_tag }}
           image_name: ${{ github.repository }}
           build_extra_args: '{"--build-arg": "project_version_arg=${{ steps.tag_version.outputs.new_tag }}"}'
+
+  deploy:
+    needs: build
+    runs-on: linux
+    environment: atkv2-test-apps
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Authenticate with Google Cloud
+      uses: google-github-actions/auth@v0
+      with: 
+        credentials_json: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+
+    - name: Authenticate with cluster
+      run: gcloud container hub memberships get-credentials atkv2-test-apps --verbosity debug
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v1
+
+    - name: Generate terraform variables
+      run: |
+        cat <<EOF >> terraform.tfvars
+        nibas_backend_version="${{ needs.build.outputs.new_tag }}"
+        EOF
+    
+    - name: Terraform init
+      run: terraform init -input=false
+
+    - name: Terraform plan
+      run: terraform plan -input=false
+
+    - name: Terraform apply
+      run: terraform apply -input=false -auto-approve          

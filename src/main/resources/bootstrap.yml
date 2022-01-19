@@ -7,7 +7,7 @@ spring:
     vault:
       config:
         lifecycle:
-          enabled: true
+          enabled: false
       uri: https://vault.statkart.no
       ssl:
         trust-store: classpath:ca.jks
@@ -38,5 +38,5 @@ spring:
     vault:
       authentication: token
       token: ${VAULT_TOKEN}
-      enabled: true
+      enabled: false
 
