@@ -41,7 +41,7 @@ resource "kubernetes_deployment" "nibas-backend-deployment" {
       }
       spec {
         image_pull_secrets {
-          name="nibas-db-pull-token"
+          name="nibas-pull-token"
         }
         container {
           image = "ghcr.io/kartverket/nibas-backend:${var.nibas_backend_version}"
