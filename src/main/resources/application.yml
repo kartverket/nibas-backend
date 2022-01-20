@@ -23,7 +23,7 @@ spring:
     driver-class-name: org.postgresql.Driver
     # Dersom du vil kjøre uten oppslag mot Vault
     username: nibas
-    password: Lg]R+_9L0vZJ51dcP\u0026rpe\u003eM]M8VF=
+    password: Lg]R+_9L0vZJ51dcP&rpe>M]M8VF=
     url: jdbc:postgresql://nibas-db:5432/nibas
   jpa:
     database-platform: org.hibernate.spatial.dialect.postgis.PostgisDialect
