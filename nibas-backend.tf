@@ -72,9 +72,6 @@ resource "kubernetes_service" "nibas-backend-service" {
   metadata {
     name      = "nibas-backend-service"
     namespace = local.namespace
-#    annotations = {
-#      "external-dns.alpha.kubernetes.io/hostname" = "nibas-backend.tz2-test-apps.k8s.local"
-#    }
   }
   spec {
     selector = {
@@ -85,6 +82,18 @@ resource "kubernetes_service" "nibas-backend-service" {
       port        = 80
       target_port = 8080
     }
-    type     = "NodePort"
+    type     = "ClusterIP"
   }
+}
+
+resource "kubernetes_manifest" "istio-destination-rule" {
+  manifest = yamldecode(file("${path.module}/kubernetes/destination-rule.yaml"))
+}
+
+resource "kubernetes_manifest" "istio-gateway" {
+  manifest = yamldecode(file("${path.module}/kubernetes/gateway.yaml"))
+}
+
+resource "kubernetes_manifest" "istio-virtualservice" {
+  manifest = yamldecode(file("${path.module}/kubernetes/virtualservice.yaml"))
 }
