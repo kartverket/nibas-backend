@@ -70,7 +70,7 @@ resource "kubernetes_deployment" "nibas-backend-deployment" {
 
 resource "kubernetes_service" "nibas-backend-service" {
   metadata {
-    name      = "nibas-backend-service"
+    name      = "nibas-backend"
     namespace = local.namespace
   }
   spec {
