@@ -21,8 +21,8 @@ Spring Boot applikasjon som serverer informasjon om administrative grenser
 ``` 
 
 
-# Hente docker image fra harbor
-`docker pull harbor.statkart.no/nibas/nibas-backend:<versjonsnummer>`
+# Hente docker image fra ghcr.io
+`docker pull ghcr.io/kartverket/nibas-backend:<versjonsnummer>`
 
 # Starte docker image fra harbor
 `docker run -d --name nibas-backend -p 8080:8080 -e SPRING_PROFILES_ACTIVE=dev -e VAULT_TOKEN=<Logg inn på Vault, og vel "Copy Token" øverst til høyre under profil-menyen> harbor.statkart.no/nibas/nibas-backend:<versjonsnummer>` 

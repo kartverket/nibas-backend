@@ -9,9 +9,12 @@ management:
       enabled: true
     health:
       enabled: true
+  info:
+    env:
+      enabled: true
 
 info:
-  app:
+  application:
     version: ${PROJECT_VERSION}
 
 springdoc:
