@@ -6,5 +6,17 @@ on:
       - 'master'
 
 jobs:
-  call-gradle-build:
-    uses: kartverket/nibas-backend/.github/workflows/gradle-build.yml@master
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Build with Gradle
+        run: ./gradlew build --info
