@@ -18,7 +18,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      # Fetch environment variables and set for subsequent steps
       - name: Set up JDK
         uses: actions/setup-java@v2
         with:
