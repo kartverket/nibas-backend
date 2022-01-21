@@ -11,10 +11,13 @@ env:
   registry_path: kartverket
 
 jobs:
+  compile:
+    uses: kartverket/nibas-backend/.github/workflows/gradle-build.yml@master
+
   build:
+    needs: compile
     runs-on: ubuntu-latest
 
-    uses: kartverket/nibas-backend/.github/workflows/gradle-build.yml@master
     outputs:
       new_tag: ${{ steps.tag_version.outputs.new_tag }}
 
