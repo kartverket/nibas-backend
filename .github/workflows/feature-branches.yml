@@ -1,0 +1,10 @@
+name: nibas-feature-branches
+
+on:
+  push:
+    branches-ignore:    
+      - 'master'
+
+jobs:
+  call-gradle-build:
+    uses: kartverket/nibas-backend/.github/workflows/gradle-build.yml@master
