@@ -48,6 +48,7 @@ dependencies {
 	implementation("org.springframework.cloud:spring-cloud-starter-vault-config:3.1.0")
 	implementation("org.springframework.cloud:spring-cloud-starter-bootstrap:3.1.0")
 	implementation("org.locationtech.jts.io:jts-io-common:1.18.2")
+	implementation("org.springframework.cloud:spring-cloud-gcp-dependencies:1.2.8.RELEASE")
 
 	runtimeOnly("org.flywaydb:flyway-core:8.0.4")
 	runtimeOnly("org.postgresql:postgresql")
