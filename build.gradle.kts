@@ -48,11 +48,10 @@ dependencies {
 	implementation("org.springframework.cloud:spring-cloud-starter-vault-config:3.1.0")
 	implementation("org.springframework.cloud:spring-cloud-starter-bootstrap:3.1.0")
 	implementation("org.locationtech.jts.io:jts-io-common:1.18.2")
-	implementation platform("org.springframework.cloud:spring-cloud-gcp-dependencies:3.0.0")
 
 	runtimeOnly("org.flywaydb:flyway-core:8.0.4")
 	runtimeOnly("org.postgresql:postgresql")
-	runtimeOnly("org.springframework.cloud:spring-cloud-gcp-starter-logging")
+	runtimeOnly("com.google.cloud:spring-cloud-gcp-starter-logging:3.0.0")
 
 	testImplementation("org.jetbrains.kotlin:kotlin-test")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
