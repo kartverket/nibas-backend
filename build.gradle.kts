@@ -49,7 +49,7 @@ dependencies {
 	implementation("org.springframework.cloud:spring-cloud-starter-bootstrap:3.1.0")
 	implementation("org.locationtech.jts.io:jts-io-common:1.18.2")
 
-	runtimeOnly("org.springframework.cloud:spring-cloud-gcp-starter-logging:1.2.8.RELEASE")
+	runtimeOnly("com.google.cloud:spring-cloud-gcp-starter-logging:3.0.0")
 	runtimeOnly("org.flywaydb:flyway-core:8.0.4")
 	runtimeOnly("org.postgresql:postgresql")
 
