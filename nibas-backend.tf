@@ -41,7 +41,8 @@ resource "kubernetes_deployment" "nibas-backend-deployment" {
       }
       spec {
         image_pull_secrets {
-          name="nibas-pull-token"
+          # Midlertidig PAT for Kenneth
+          name="nibas-pull-token-kes"
         }
         container {
           image = "ghcr.io/kartverket/nibas-backend:${var.nibas_backend_version}"

@@ -46,11 +46,8 @@ dependencies {
 	implementation("org.hibernate:hibernate-envers:${DependencyVersions.HIBERNATE_VERSION}")
 	implementation("org.springframework.cloud:spring-cloud-starter")
 	implementation("org.springframework.cloud:spring-cloud-starter-vault-config:3.1.0")
-	implementation("org.springframework.cloud:spring-cloud-starter-bootstrap:3.1.0")
 	implementation("org.locationtech.jts.io:jts-io-common:1.18.2")
 
-	runtimeOnly("com.google.cloud:spring-cloud-gcp-starter-logging:3.0.0")
-	//runtimeOnly("org.springframework.cloud:spring-cloud-starter-sleuth:3.1.0")
 	runtimeOnly("org.flywaydb:flyway-core:8.0.4")
 	runtimeOnly("org.postgresql:postgresql")
 

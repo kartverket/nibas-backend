@@ -22,12 +22,15 @@ springdoc:
     path: /api-docs
 
 spring:
+  profiles:
+    active: prod
+
+  application:
+    name: nibas-backend
+
   datasource:
     driver-class-name: org.postgresql.Driver
-    # Dersom du vil kjøre uten oppslag mot Vault
-    username: nibas
-    password: Lg]R+_9L0vZJ51dcP&rpe>M]M8VF=
-    url: jdbc:postgresql://nibas-db:5432/nibas
+
   jpa:
     database-platform: org.hibernate.spatial.dialect.postgis.PostgisDialect
     hibernate:
@@ -37,13 +40,28 @@ spring:
 #    properties:
 #      hibernate:
 #        format_sql: true
+
   flyway:
     schemas: nibas
+
   #TODO: Remove when proper s3-integration is ready
   servlet:
     multipart:
       max-file-size: 128MB
       max-request-size: 128MB
+
+  # Vault-konfigurasjon
+  cloud:
+    vault:
+      uri: https://vault.tools.test.skip.statkart.no/
+      ssl:
+        trust-store: classpath:ca.jks
+        trust-store-type: jks
+        trust-store-password: changeit
+      connection-timeout: 5000
+      read-timeout: 15000
+  config:
+    import: vault://nibas/nibas-backend
 
 # Hver dag kl 03
 nibas:
@@ -59,8 +77,28 @@ nibas:
 spring:
   config:
     activate:
+      on-profile: test
+  cloud:
+    vault:
+      authentication: kubernetes
+      kubernetes:
+        role: nibas # Er en rolle definert hos skip
+        kubernetes-path: atkv2_test_apps
+        service-account-token-file: /var/run/secrets/kubernetes.io/serviceaccount/token
+---
+spring:
+  config:
+    activate:
       on-profile: dev
+    import: vault://nibas/nibas-backend-local
+  cloud:
+    vault:
+      authentication: token
+      token: ${VAULT_TOKEN}
+      enabled: true
+
 
 nibas:
   httpProxy:
     enabled: false
+
