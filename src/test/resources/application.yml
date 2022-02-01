@@ -8,6 +8,9 @@ spring:
     database-platform: org.hibernate.spatial.dialect.postgis.PostgisDialect
   flyway:
     enabled: false
+  cloud:
+    vault:
+      enabled: false
 
 # Hver dag kl 03
 nibas:
