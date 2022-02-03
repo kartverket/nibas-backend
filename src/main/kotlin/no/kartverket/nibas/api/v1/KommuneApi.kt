@@ -14,7 +14,12 @@ import no.kartverket.nibas.api.v1.response.HistorikkRef
 import no.kartverket.nibas.api.v1.response.KommuneRef
 import no.kartverket.nibas.api.v1.response.KommuneResponse
 import org.springframework.http.MediaType
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 
 @RequestMapping("/v1/kommuner")
 @Tag(
@@ -23,6 +28,7 @@ import org.springframework.web.bind.annotation.*
 )
 interface KommuneApi {
 
+    //TODO: Skulle vi heller vurdert å ha 2 tjenester her, en for hentAlle og en for hentAlleForFylke hvor fylkeId er påkrevet?
     @Operation(summary = "Hent alle kommuner", description = "Henter alle kommuner i nasjonal inndelingsbase.")
     @ApiResponses(
         ApiResponse(
@@ -39,7 +45,7 @@ interface KommuneApi {
         @Parameter(description = "Valgfri id til et fylke for å filtrere kommuner innenfor et fylke") @RequestParam(
             name = "fylkeid",
             required = false
-        ) fylkeId: Int?
+        ) fylkeId: String?
     ): List<KommuneRef>
 
     @Operation(summary = "Hent en kommune med gitt id", description = "Henter kommune med gitt id")
@@ -55,7 +61,7 @@ interface KommuneApi {
         ApiResponse(responseCode = "404", description = "Not Found")
     )
     @GetMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentEn(@Parameter(description = "ID-en til kommunen man vil hente") @PathVariable id: Int): KommuneResponse
+    fun hentEn(@Parameter(description = "ID-en til kommunen man vil hente") @PathVariable id: String): KommuneResponse
 
     @Operation(
         summary = "Hent grensene til en gitt kommune",
@@ -63,7 +69,7 @@ interface KommuneApi {
     )
     @DefaultFeatureCollectionApiResponses
     @GetMapping("/{id}/grenser", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentGrenser(@Parameter(description = "ID-en til kommunen man vil hente") @PathVariable id: Int): FeatureCollection
+    fun hentGrenser(@Parameter(description = "ID-en til kommunen man vil hente") @PathVariable id: String): FeatureCollection
 
     @Operation(
         summary = "Hent historikk for en gitt kommune",
@@ -71,7 +77,7 @@ interface KommuneApi {
     )
     @DefaultHistorikkRefListApiResponses
     @GetMapping("/{id}/historikk", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentHistorikkForEn(@Parameter(description = "ID-en til kommunen man vil hente") @PathVariable id: Int): List<HistorikkRef>
+    fun hentHistorikkForEn(@Parameter(description = "ID-en til kommunen man vil hente") @PathVariable id: String): List<HistorikkRef>
 
     @Operation(
         summary = "Hent en historisk versjon av en kommune",
@@ -93,7 +99,7 @@ interface KommuneApi {
     )
     @GetMapping("/{id}/historikk/{revision}", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun hentHistorikkRevisjon(
-        @Parameter(description = "ID-en til kommunen man vil hente") @PathVariable id: Int,
+        @Parameter(description = "ID-en til kommunen man vil hente") @PathVariable id: String,
         @Parameter(description = "RevisjonsId til revisjonen man vil hente") @PathVariable revision: Int
     ): KommuneResponse
 
@@ -117,7 +123,7 @@ interface KommuneApi {
     )
     @PutMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun oppdaterKommune(
-        @Parameter(description = "ID til kommunen man vil oppdatere") @PathVariable id: Int,
+        @Parameter(description = "ID til kommunen man vil oppdatere") @PathVariable id: String,
         @RequestBody oppdatertKommune: KommuneRequest
     ): KommuneResponse
 

@@ -4,8 +4,13 @@ import no.kartverket.nibas.api.v1.KommuneApi
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
-import no.kartverket.nibas.api.v1.response.*
-import no.kartverket.nibas.domain.*
+import no.kartverket.nibas.api.v1.request.KommuneRequest
+import no.kartverket.nibas.api.v1.response.HistorikkRef
+import no.kartverket.nibas.api.v1.response.KommuneRef
+import no.kartverket.nibas.api.v1.response.KommuneResponse
+import no.kartverket.nibas.api.v1.response.Kommunenummer
+import no.kartverket.nibas.domain.Grense
+import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.KommuneRepository
@@ -16,8 +21,6 @@ import org.springframework.stereotype.Service
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
-import no.kartverket.nibas.api.v1.request.KommuneRequest as KommuneRequest
-import no.kartverket.nibas.api.v1.response.KommuneResponse as KommuneResponse
 
 @RestController
 class KommuneController @Autowired constructor(
@@ -26,21 +29,21 @@ class KommuneController @Autowired constructor(
     private val historikkService: HistorikkService
 ) : KommuneApi {
 
-    override fun hentAlle(fylkeId: Int?): List<KommuneRef> {
+    override fun hentAlle(fylkeId: String?): List<KommuneRef> {
         return when (fylkeId) {
             null -> kommuneService.hentAlleKommuner().map { toKommuneRef(it) }
             else -> kommuneService.hentKommunerForFylke(fylkeId).map { toKommuneRef(it) }
         }
     }
 
-    override fun hentEn(id: Int): KommuneResponse {
+    override fun hentEn(id: String): KommuneResponse {
         return when (val kommune = kommuneService.hentKommune(id)) {
             null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
             else -> toKommuneResponse(kommune, kodelisteService)
         }
     }
 
-    override fun hentGrenser(id: Int): FeatureCollection {
+    override fun hentGrenser(id: String): FeatureCollection {
         return when (val grenser = kommuneService.hentGrenserForKommune(id)) {
             null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
             else -> FeatureCollection(
@@ -50,18 +53,18 @@ class KommuneController @Autowired constructor(
         }
     }
 
-    override fun oppdaterKommune(id: Int, oppdatertKommune: KommuneRequest): KommuneResponse {
+    override fun oppdaterKommune(id: String, oppdatertKommune: KommuneRequest): KommuneResponse {
         return when (val lagret = kommuneService.oppdaterKommune(id, oppdatertKommune)) {
             null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
             else -> toKommuneResponse(lagret, kodelisteService)
         }
     }
 
-    override fun hentHistorikkForEn(id: Int): List<HistorikkRef> =
+    override fun hentHistorikkForEn(id: String): List<HistorikkRef> =
         historikkService.hentHistorikk(id, Kommune::class.java).map { toHistorikkRef(it) }
 
 
-    override fun hentHistorikkRevisjon(id: Int, revision: Int): KommuneResponse {
+    override fun hentHistorikkRevisjon(id: String, revision: Int): KommuneResponse {
         return toKommuneResponse(
             historikkService.hentHistorikkRevisjon(id, revision, Kommune::class.java),
             kodelisteService
@@ -76,10 +79,10 @@ class KommuneService @Autowired constructor(
 ) {
 
     fun hentAlleKommuner() = kommuneRepository.findAll().toList()
-    fun hentKommune(id: Int) = kommuneRepository.findById(id).unwrap()
-    fun hentKommunerForFylke(fylkeId: Int) = kommuneRepository.findByFylkeFk_Id(fylkeId)
+    fun hentKommune(id: String) = kommuneRepository.findById(id).unwrap()
+    fun hentKommunerForFylke(fylkeId: String) = kommuneRepository.findByFylkeFk_Id(fylkeId)
 
-    fun hentGrenserForKommune(id: Int): Set<Grense>? {
+    fun hentGrenserForKommune(id: String): Set<Grense>? {
         return kommuneRepository.findById(id).unwrap()?.let {
             it.kommunegrenser +
                     it.fylkesgrenser +
@@ -89,11 +92,11 @@ class KommuneService @Autowired constructor(
         }
     }
 
-    fun oppdaterKommune(id: Int, oppdatertKommune: KommuneRequest): Kommune? {
+    fun oppdaterKommune(id: String, oppdatertKommune: KommuneRequest): Kommune? {
         return hentKommune(id)?.let { gammel ->
             gammel.samiskforvaltningsomraade = oppdatertKommune.samiskforvaltningsomraade
             gammel.kommunenummer = oppdatertKommune.kommunenummerId
-            gammel.navnerom = oppdatertKommune.navnerom
+            gammel.navnerom = oppdatertKommune.navnerom!!
             gammel.lokalid = oppdatertKommune.lokalid
 
             // Finner basert på språkkode, og oppdaterer den
@@ -112,14 +115,14 @@ class KommuneService @Autowired constructor(
 fun toKommuneRef(kommune: Kommune): KommuneRef = KommuneRef(
     id = kommune.id,
     navn = kommune.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!) },
-    href = ServletUriComponentsBuilder.fromCurrentRequestUri().pathSegment(kommune.id.toString()).build().toUriString()
+    href = ServletUriComponentsBuilder.fromCurrentRequestUri().pathSegment(kommune.id).build().toUriString()
 )
 
 fun toKommuneResponse(kommune: Kommune, kodelisteService: KodelisteService): KommuneResponse = KommuneResponse(
     id = kommune.id,
     administrativenhetnavn = kommune.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!) },
-    lokalid = kommune.lokalid!!,
-    navnerom = kommune.navnerom!!,
+    lokalid = kommune.lokalid,
+    navnerom = kommune.navnerom,
     kommunenummer = Kommunenummer(
         id = kommune.kommunenummer,
         kodeverdi = kodelisteService.getCodeValueByKommunenummerId(kommune.kommunenummer)?.toInt()

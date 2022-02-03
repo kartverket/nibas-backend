@@ -1,16 +1,16 @@
 package no.kartverket.nibas.inndelinger
 
 import no.kartverket.nibas.NibasMvcTest
+import no.kartverket.nibas.api.v1.request.KommuneRequest
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.builders.KommuneRequestBuilder
 import no.kartverket.nibas.kodelister.KodelisteService
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.anyInt
+import org.mockito.Mockito.anyString
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-import no.kartverket.nibas.api.v1.request.KommuneRequest as KommuneRequest
 import org.mockito.Mockito.`when` as whenever
 
 @WebMvcTest(KommuneController::class)
@@ -19,6 +19,7 @@ class KommuneControllerTest : NibasMvcTest() {
     @MockBean
     private lateinit var kommuneService: KommuneService
 
+    //Disse ubrukte servicene må være tilstede for å få bygget konteksten
     @MockBean
     private lateinit var kodelisteService: KodelisteService
 
@@ -27,7 +28,7 @@ class KommuneControllerTest : NibasMvcTest() {
 
     @Test
     fun thatHentAlleReturns200_OK() {
-        val kommune = KommuneBuilder(1)
+        val kommune = KommuneBuilder("1")
             .withNavn("Oslo")
             .build()
 
@@ -37,20 +38,20 @@ class KommuneControllerTest : NibasMvcTest() {
 
     @Test
     fun thatHentEnReturns200_OK() {
-        whenever(kommuneService.hentKommune(anyInt())).thenReturn(KommuneBuilder.DEFAULT_KOMMUNE)
+        whenever(kommuneService.hentKommune(anyString())).thenReturn(KommuneBuilder.DEFAULT_KOMMUNE)
         get("/v1/kommuner/1", status().isOk)
     }
 
     @Test
     fun thatHentEnReturns404_NotFound() {
-        whenever(kommuneService.hentKommune(anyInt())).thenReturn(null)
+        whenever(kommuneService.hentKommune(anyString())).thenReturn(null)
         get("/v1/kommuner/1", status().isNotFound)
     }
 
     @Test
     fun thatHentGrenserReturns200_Ok() {
         whenever(
-            kommuneService.hentGrenserForKommune(anyInt())
+            kommuneService.hentGrenserForKommune(anyString())
         ).thenReturn(
             setOf(GrenseBuilder().buildKommunegrense())
         )
@@ -59,7 +60,7 @@ class KommuneControllerTest : NibasMvcTest() {
 
     @Test
     fun thatHentGrenserReturns404_NotFound() {
-        whenever(kommuneService.hentGrenserForKommune(anyInt())).thenReturn(null)
+        whenever(kommuneService.hentGrenserForKommune(anyString())).thenReturn(null)
         get("/v1/kommuner/1/grenser", status().isNotFound)
     }
 
@@ -67,7 +68,7 @@ class KommuneControllerTest : NibasMvcTest() {
     @Test
     fun thatOppdaterKommuneReturns200_Ok() {
         whenever(
-            kommuneService.oppdaterKommune(anyInt(), any(KommuneRequest::class.java))
+            kommuneService.oppdaterKommune(anyString(), any(KommuneRequest::class.java))
         ).thenReturn(KommuneBuilder.DEFAULT_KOMMUNE)
         put("/v1/kommuner/1", KommuneRequestBuilder.DEFAULT_REQUEST, status().isOk)
     }
@@ -75,7 +76,7 @@ class KommuneControllerTest : NibasMvcTest() {
     @Test
     fun thatOppdaterFylkeReturns404_NotFound() {
         whenever(
-            kommuneService.oppdaterKommune(anyInt(), any(KommuneRequest::class.java))
+            kommuneService.oppdaterKommune(anyString(), any(KommuneRequest::class.java))
         ).thenReturn(null)
         put("/v1/kommuner/1", KommuneRequestBuilder.DEFAULT_REQUEST, status().isNotFound)
     }

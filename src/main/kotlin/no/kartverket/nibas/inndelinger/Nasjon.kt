@@ -4,8 +4,11 @@ import no.kartverket.nibas.api.v1.NasjonApi
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
+import no.kartverket.nibas.api.v1.request.NasjonRequest
 import no.kartverket.nibas.api.v1.response.HistorikkRef
-import no.kartverket.nibas.domain.*
+import no.kartverket.nibas.api.v1.response.NasjonResponse
+import no.kartverket.nibas.domain.Grense
+import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.NasjonRepository
 import no.kartverket.nibas.unwrap
@@ -15,8 +18,6 @@ import org.springframework.stereotype.Service
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
-import no.kartverket.nibas.api.v1.request.NasjonRequest as NasjonRequest
-import no.kartverket.nibas.api.v1.response.NasjonResponse as NasjonResponse
 import no.kartverket.nibas.api.v1.response.NasjonRef as NasjonRefResponse
 
 @RestController
@@ -27,14 +28,14 @@ class NasjonController @Autowired constructor(
 
     override fun hentAlle(): List<NasjonRefResponse> = nasjonService.hentAlleNasjoner().map { toNasjonRef(it) }
 
-    override fun hentEn(id: Int): NasjonResponse {
+    override fun hentEn(id: String): NasjonResponse {
         return when (val nasjon = nasjonService.hentNasjon(id)) {
             null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
             else -> toNasjonResponse(nasjon)
         }
     }
 
-    override fun hentGrenser(id: Int): FeatureCollection {
+    override fun hentGrenser(id: String): FeatureCollection {
         return when (val grenser = nasjonService.hentGrenserForNasjon(id)) {
             null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
             else -> FeatureCollection(
@@ -43,17 +44,17 @@ class NasjonController @Autowired constructor(
         }
     }
 
-    override fun oppdaterNasjon(id: Int, oppdatertNasjon: NasjonRequest): NasjonResponse {
+    override fun oppdaterNasjon(id: String, oppdatertNasjon: NasjonRequest): NasjonResponse {
         return when (val lagret = nasjonService.oppdaterNasjon(id, oppdatertNasjon)) {
             null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
             else -> toNasjonResponse(lagret)
         }
     }
 
-    override fun hentHistorikkForEn(id: Int): List<HistorikkRef> =
+    override fun hentHistorikkForEn(id: String): List<HistorikkRef> =
         historikkService.hentHistorikk(id, Nasjon::class.java).map { toHistorikkRef(it) }
 
-    override fun hentHistorikkRevisjon(id: Int, revision: Int): NasjonResponse {
+    override fun hentHistorikkRevisjon(id: String, revision: Int): NasjonResponse {
         return toNasjonResponse(
             historikkService.hentHistorikkRevisjon(id, revision, Nasjon::class.java)
         )
@@ -67,9 +68,9 @@ class NasjonService @Autowired constructor(
 ) {
 
     fun hentAlleNasjoner() = nasjonRepository.findAll().toList()
-    fun hentNasjon(id: Int) = nasjonRepository.findById(id).unwrap()
+    fun hentNasjon(id: String) = nasjonRepository.findById(id).unwrap()
 
-    fun hentGrenserForNasjon(id: Int): Set<Grense>? {
+    fun hentGrenserForNasjon(id: String): Set<Grense>? {
         return nasjonRepository.findById(id).unwrap()?.let {
             it.riksgrenser +
                     it.territorialgrenser +
@@ -77,7 +78,7 @@ class NasjonService @Autowired constructor(
         }
     }
 
-    fun oppdaterNasjon(id: Int, oppdatertNasjon: NasjonRequest): Nasjon? {
+    fun oppdaterNasjon(id: String, oppdatertNasjon: NasjonRequest): Nasjon? {
         return hentNasjon(id)?.let { gammel ->
             gammel.navnerom = oppdatertNasjon.navnerom
             gammel.lokalid = oppdatertNasjon.lokalid
@@ -103,7 +104,7 @@ fun toNasjonRef(nasjon: Nasjon): NasjonRefResponse = NasjonRefResponse(
 fun toNasjonResponse(nasjon: Nasjon): NasjonResponse = NasjonResponse(
     id = nasjon.id,
     administrativenhetnavn = nasjon.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!) },
-    lokalid = nasjon.lokalid!!,
-    navnerom = nasjon.navnerom!!,
+    lokalid = nasjon.lokalid,
+    navnerom = nasjon.navnerom,
     features = FeatureCollection(features = listOf(posisjonToFeature(nasjon.posisjon), flateToFeature(nasjon.flate)))
 )

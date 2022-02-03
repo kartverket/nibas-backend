@@ -2,11 +2,13 @@ package no.kartverket.nibas.inndelinger
 
 import no.kartverket.nibas.builders.NasjonBuilder
 import no.kartverket.nibas.builders.NasjonRequestBuilder
-import no.kartverket.nibas.domain.*
+import no.kartverket.nibas.domain.Avtaltavgrensningslinje
+import no.kartverket.nibas.domain.Riksgrense
+import no.kartverket.nibas.domain.Territorialgrense
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.NasjonRepository
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.anyInt
+import org.mockito.Mockito.anyString
 import org.mockito.Mockito.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -31,8 +33,8 @@ class NasjonServiceTest {
 
     @Test
     fun hentGrenserForNasjonReturnsNullWhenNasjonNotFound() {
-        whenever(nasjonRepository.findById(anyInt())).thenReturn(Optional.empty())
-        assertNull(nasjonService.hentGrenserForNasjon(1), "Expected to not find the nasjon")
+        whenever(nasjonRepository.findById(anyString())).thenReturn(Optional.empty())
+        assertNull(nasjonService.hentGrenserForNasjon("1"), "Expected to not find the nasjon")
     }
 
     @Test
@@ -43,9 +45,9 @@ class NasjonServiceTest {
             .withAvtaltavgrensningslinjer(Avtaltavgrensningslinje())
             .build()
 
-        whenever(nasjonRepository.findById(anyInt())).thenReturn(Optional.of(nasjon))
+        whenever(nasjonRepository.findById(anyString())).thenReturn(Optional.of(nasjon))
 
-        when (val grenserForNasjon = nasjonService.hentGrenserForNasjon(1)) {
+        when (val grenserForNasjon = nasjonService.hentGrenserForNasjon("1")) {
             null -> fail("Expected grenser to have a value")
             else -> {
                 assertEquals(6, grenserForNasjon.size, "Expected six borders")
@@ -70,8 +72,11 @@ class NasjonServiceTest {
 
     @Test
     fun thatOppdaterFylkeReturnsNullWhenFylkeNotFound() {
-        whenever(nasjonRepository.findById(anyInt())).thenReturn(Optional.empty())
-        assertNull(nasjonService.oppdaterNasjon(1, NasjonRequestBuilder.DEFAULT_NASJON), "Expected to not find the nasjon")
+        whenever(nasjonRepository.findById(anyString())).thenReturn(Optional.empty())
+        assertNull(
+            nasjonService.oppdaterNasjon("1", NasjonRequestBuilder.DEFAULT_NASJON),
+            "Expected to not find the nasjon"
+        )
     }
 
     @Test
@@ -83,8 +88,8 @@ class NasjonServiceTest {
         val eksisterende = NasjonBuilder.DEFAULT_NASJON
         val oppdatertNasjon = NasjonRequestBuilder().withNavnerom(navnerom).withLokalId(lokalId).withNavn(navn).build()
 
-        whenever(nasjonRepository.findById(anyInt())).thenReturn(Optional.of(eksisterende))
-        nasjonService.oppdaterNasjon(1, oppdatertNasjon)
+        whenever(nasjonRepository.findById(anyString())).thenReturn(Optional.of(eksisterende))
+        nasjonService.oppdaterNasjon("1", oppdatertNasjon)
 
         val forventetNavnToSave = eksisterende.administrativenhetnavn.first()
         forventetNavnToSave.navn = navn

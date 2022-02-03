@@ -3,10 +3,14 @@ package no.kartverket.nibas.inndelinger
 import no.kartverket.nibas.api.v1.FylkeApi
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
-import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.Fylkesnummer
+import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
+import no.kartverket.nibas.api.v1.request.FylkeRequest
+import no.kartverket.nibas.api.v1.response.FylkeRef
+import no.kartverket.nibas.api.v1.response.FylkeResponse
 import no.kartverket.nibas.api.v1.response.HistorikkRef
-import no.kartverket.nibas.domain.*
+import no.kartverket.nibas.domain.Fylke
+import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.FylkeRepository
@@ -17,9 +21,6 @@ import org.springframework.stereotype.Service
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
-import no.kartverket.nibas.api.v1.request.FylkeRequest as FylkeRequest
-import no.kartverket.nibas.api.v1.response.FylkeResponse as FylkeResponse
-import no.kartverket.nibas.api.v1.response.FylkeRef
 
 @RestController
 class FylkeController @Autowired constructor(
@@ -30,14 +31,14 @@ class FylkeController @Autowired constructor(
 
     override fun hentAlle(): List<FylkeRef> = fylkeService.hentAlleFylker().map { toFylkeRef(it) }
 
-    override fun hentEn(id: Int): FylkeResponse {
+    override fun hentEn(id: String): FylkeResponse {
         return when (val fylke = fylkeService.hentFylke(id)) {
             null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
             else -> toFylkeResponse(fylke, kodelisteService)
         }
     }
 
-    override fun hentGrenser(id: Int): FeatureCollection {
+    override fun hentGrenser(id: String): FeatureCollection {
         return when (val grenser = fylkeService.hentGrenserForFylke(id)) {
             null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
             else -> FeatureCollection(
@@ -46,17 +47,17 @@ class FylkeController @Autowired constructor(
         }
     }
 
-    override fun oppdaterFylke(id: Int, oppdatertFylke: FylkeRequest): FylkeResponse {
+    override fun oppdaterFylke(id: String, oppdatertFylke: FylkeRequest): FylkeResponse {
         return when (val lagret = fylkeService.oppdaterFylke(id, oppdatertFylke)) {
             null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
             else -> toFylkeResponse(lagret, kodelisteService)
         }
     }
 
-    override fun hentHistorikkForEn(id: Int): List<HistorikkRef> =
+    override fun hentHistorikkForEn(id: String): List<HistorikkRef> =
         historikkService.hentHistorikk(id, Fylke::class.java).map { toHistorikkRef(it) }
 
-    override fun hentHistorikkRevisjon(id: Int, revision: Int): FylkeResponse {
+    override fun hentHistorikkRevisjon(id: String, revision: Int): FylkeResponse {
         return toFylkeResponse(
             historikkService.hentHistorikkRevisjon(id, revision, Fylke::class.java),
             kodelisteService
@@ -71,9 +72,9 @@ class FylkeService @Autowired constructor(
 ) {
 
     fun hentAlleFylker() = fylkeRepository.findAll().toList()
-    fun hentFylke(id: Int) = fylkeRepository.findById(id).unwrap()
+    fun hentFylke(id: String) = fylkeRepository.findById(id).unwrap()
 
-    fun hentGrenserForFylke(id: Int): Set<Grense>? {
+    fun hentGrenserForFylke(id: String): Set<Grense>? {
         return fylkeRepository.findById(id).unwrap()?.let {
             it.fylkesgrenser +
                     it.riksgrenser +
@@ -82,7 +83,7 @@ class FylkeService @Autowired constructor(
         }
     }
 
-    fun oppdaterFylke(id: Int, oppdatertFylke: FylkeRequest): Fylke? {
+    fun oppdaterFylke(id: String, oppdatertFylke: FylkeRequest): Fylke? {
         return hentFylke(id)?.let { gammel ->
             gammel.samiskforvaltningsomraade = oppdatertFylke.samiskforvaltningsomraade
             gammel.fylkesnummer = oppdatertFylke.fylkesnummerId
@@ -110,8 +111,8 @@ fun toFylkeRef(fylke: Fylke): FylkeRef = FylkeRef(
 fun toFylkeResponse(fylke: Fylke, kodelisteService: KodelisteService): FylkeResponse = FylkeResponse(
     id = fylke.id,
     administrativenhetnavn = fylke.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!) },
-    lokalid = fylke.lokalid!!,
-    navnerom = fylke.navnerom!!,
+    lokalid = fylke.lokalid,
+    navnerom = fylke.navnerom,
     fylkesnummer = Fylkesnummer(
         id = fylke.fylkesnummer,
         kodeverdi = kodelisteService.getCodeValueByFylkesnummerId(fylke.fylkesnummer)?.toInt()!!

@@ -6,8 +6,23 @@ import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.FeatureProperties
 import no.kartverket.nibas.api.v1.response.HistorikkRef
-import no.kartverket.nibas.domain.*
-import no.kartverket.nibas.repository.*
+import no.kartverket.nibas.domain.AdministrativEnhet
+import no.kartverket.nibas.domain.Avtaltavgrensningslinje
+import no.kartverket.nibas.domain.Fylke
+import no.kartverket.nibas.domain.Fylkesgrense
+import no.kartverket.nibas.domain.Grense
+import no.kartverket.nibas.domain.Kommune
+import no.kartverket.nibas.domain.Kommunegrense
+import no.kartverket.nibas.domain.Riksgrense
+import no.kartverket.nibas.domain.Territorialgrense
+import no.kartverket.nibas.repository.AvtaltAvgrensningslinjeRepository
+import no.kartverket.nibas.repository.FylkeRepository
+import no.kartverket.nibas.repository.FylkesgrenseRepository
+import no.kartverket.nibas.repository.KommuneRepository
+import no.kartverket.nibas.repository.KommunegrenseRepository
+import no.kartverket.nibas.repository.NasjonRepository
+import no.kartverket.nibas.repository.RiksgrenseRepository
+import no.kartverket.nibas.repository.TerritorialgrenseRepository
 import no.kartverket.nibas.unwrap
 import org.locationtech.jts.geom.LineString
 import org.locationtech.jts.geom.Point
@@ -40,26 +55,26 @@ class GrenseController @Autowired constructor(
         }
     }
 
-    override fun hentKommunegrense(id: Int): Feature = hentGrense(id, Kommunegrense::class)
-    override fun hentFylkesgrense(id: Int): Feature = hentGrense(id, Fylkesgrense::class)
-    override fun hentRiksgrense(id: Int): Feature = hentGrense(id, Riksgrense::class)
-    override fun hentTerritorialsgrense(id: Int): Feature = hentGrense(id, Territorialgrense::class)
-    override fun hentAvtaltavgrensningslinje(id: Int): Feature = hentGrense(id, Avtaltavgrensningslinje::class)
-    private fun <T : Grense> hentGrense(id: Int, type: KClass<T>): Feature {
+    override fun hentKommunegrense(id: String): Feature = hentGrense(id, Kommunegrense::class)
+    override fun hentFylkesgrense(id: String): Feature = hentGrense(id, Fylkesgrense::class)
+    override fun hentRiksgrense(id: String): Feature = hentGrense(id, Riksgrense::class)
+    override fun hentTerritorialsgrense(id: String): Feature = hentGrense(id, Territorialgrense::class)
+    override fun hentAvtaltavgrensningslinje(id: String): Feature = hentGrense(id, Avtaltavgrensningslinje::class)
+    private fun <T : Grense> hentGrense(id: String, type: KClass<T>): Feature {
         return when (val grense = grenseService.hentGrense(id, type)) {
             null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
             else -> grenseToFeature(grense)
         }
     }
 
-    override fun hentKommunegrenseHistorikk(id: Int) = hentGrenseHistorikk(id, Kommunegrense::class.java)
-    override fun hentFylkesgrenseHistorikk(id: Int) = hentGrenseHistorikk(id, Fylkesgrense::class.java)
-    override fun hentRiksgrenseHistorikk(id: Int) = hentGrenseHistorikk(id, Riksgrense::class.java)
-    override fun hentTerritorialgrenseHistorikk(id: Int) = hentGrenseHistorikk(id, Territorialgrense::class.java)
-    override fun hentAvtaltavgrensningslinjeHistorikk(id: Int) =
+    override fun hentKommunegrenseHistorikk(id: String) = hentGrenseHistorikk(id, Kommunegrense::class.java)
+    override fun hentFylkesgrenseHistorikk(id: String) = hentGrenseHistorikk(id, Fylkesgrense::class.java)
+    override fun hentRiksgrenseHistorikk(id: String) = hentGrenseHistorikk(id, Riksgrense::class.java)
+    override fun hentTerritorialgrenseHistorikk(id: String) = hentGrenseHistorikk(id, Territorialgrense::class.java)
+    override fun hentAvtaltavgrensningslinjeHistorikk(id: String) =
         hentGrenseHistorikk(id, Avtaltavgrensningslinje::class.java)
 
-    private fun <T> hentGrenseHistorikk(id: Int, type: Class<T>): List<HistorikkRef> {
+    private fun <T> hentGrenseHistorikk(id: String, type: Class<T>): List<HistorikkRef> {
         return historikkService.hentHistorikk(id, type).map { pair ->
             HistorikkRef(
                 pair.first.id,
@@ -71,22 +86,22 @@ class GrenseController @Autowired constructor(
         }
     }
 
-    override fun hentKommunegrenseRevisjon(id: Int, revision: Int) =
+    override fun hentKommunegrenseRevisjon(id: String, revision: Int) =
         hentGrenseRevisjon(id, revision, Kommunegrense::class.java)
 
-    override fun hentFylkesgrenseRevisjon(id: Int, revision: Int): Feature =
+    override fun hentFylkesgrenseRevisjon(id: String, revision: Int): Feature =
         hentGrenseRevisjon(id, revision, Fylkesgrense::class.java)
 
-    override fun hentRiksgrenseRevisjon(id: Int, revision: Int): Feature =
+    override fun hentRiksgrenseRevisjon(id: String, revision: Int): Feature =
         hentGrenseRevisjon(id, revision, Riksgrense::class.java)
 
-    override fun hentAvtaltavgrensningslinjeRevisjon(id: Int, revision: Int): Feature =
+    override fun hentAvtaltavgrensningslinjeRevisjon(id: String, revision: Int): Feature =
         hentGrenseRevisjon(id, revision, Avtaltavgrensningslinje::class.java)
 
-    override fun hentTerritorialgrenseRevisjon(id: Int, revision: Int): Feature =
+    override fun hentTerritorialgrenseRevisjon(id: String, revision: Int): Feature =
         hentGrenseRevisjon(id, revision, Territorialgrense::class.java)
 
-    private fun <T : Grense> hentGrenseRevisjon(id: Int, revision: Int, type: Class<T>): Feature =
+    private fun <T : Grense> hentGrenseRevisjon(id: String, revision: Int, type: Class<T>): Feature =
         grenseToFeature(historikkService.hentHistorikkRevisjon(id, revision, type))
 
 }
@@ -104,7 +119,7 @@ class GrenseService @Autowired constructor(
 ) {
 
     @Suppress("UNCHECKED_CAST")
-    fun <T : Grense> hentGrense(id: Int, kClass: KClass<T>): T? {
+    fun <T : Grense> hentGrense(id: String, kClass: KClass<T>): T? {
         return when (kClass) {
             Kommunegrense::class -> kommunegrenseRepository
             Fylkesgrense::class -> fylkesgrenseRepository
@@ -123,19 +138,26 @@ class GrenseService @Autowired constructor(
         lagreGrenser(grenser, avtaltAvgrensningslinjeRepository)
 
     @Transactional
-    fun <T : Grense> lagreGrenser(grenser: List<Feature>, grenseRepository: CrudRepository<T, Int>, ) {
-        val oppdaterteFeatures = grenser.filter{feature -> feature.properties.id != null}
+    fun <T : Grense> lagreGrenser(grenser: List<Feature>, grenseRepository: CrudRepository<T, String>) {
+        val oppdaterteFeatures = grenser.filter { feature -> feature.properties.id != null }
         oppdaterGrenser(grenseRepository, oppdaterteFeatures)
 
         val nyeFeatures = grenser - oppdaterteFeatures
-        if (!nyeFeatures.isEmpty()) {
+        if (nyeFeatures.isNotEmpty()) {
 
             //Opprett nye grenser av gitt type for en gitt administrativ enhet (basert på konteksttype)
             nyeFeatures.groupBy { it.properties.kontekstType }.forEach { entry ->
-                when(entry.key) {
-                    AdministrativEnhetType.KOMMUNE -> opprettNyeGrenser(entry.value, grenseRepository, kommuneRepository)
+                when (entry.key) {
+                    AdministrativEnhetType.KOMMUNE -> opprettNyeGrenser(
+                        entry.value,
+                        grenseRepository,
+                        kommuneRepository
+                    )
                     AdministrativEnhetType.FYLKE -> opprettNyeGrenser(entry.value, grenseRepository, fylkeRepository)
                     AdministrativEnhetType.NASJON -> opprettNyeGrenser(entry.value, grenseRepository, nasjonRepository)
+                    else -> {
+                        throw RuntimeException("Ukjent type: ${entry.key}")
+                    }
                 }
             }
 
@@ -143,23 +165,28 @@ class GrenseService @Autowired constructor(
     }
 
     private fun <T : Grense> oppdaterGrenser(
-        grenseRepository: CrudRepository<T, Int>,
+        grenseRepository: CrudRepository<T, String>,
         oppdaterteFeatures: List<Feature>
     ) {
         val eksisterendeGrenser = grenseRepository.findAllById(oppdaterteFeatures.map { it.properties.id })
         val oppdaterte = eksisterendeGrenser.map { gammel ->
             val ny = oppdaterteFeatures.find { it.properties.id == gammel.id }
             gammel.grense = ny?.geometry as LineString
-            gammel.navnerom = ny.properties.navnerom
-            gammel.lokalid = ny.properties.lokalid
+            // TODO: Burde vi sette navnerom og lokalid fra innkommende feature? LokalId skal aldri endre seg og skulle helst vært val.
+            gammel.navnerom = ny.properties.navnerom!!
+            gammel.lokalid = ny.properties.lokalid!!
             gammel
         }
         grenseRepository.saveAll(oppdaterte)
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun <T : Grense, E : AdministrativEnhet> opprettNyeGrenser(nyeGrenser: List<Feature>, grenseRepository: CrudRepository<T, Int>, administrativEnhetRepository: CrudRepository<E, Int>) {
-        val enheterMedNyeGrenser = administrativEnhetRepository.findAllById(nyeGrenser.map{it.properties.kontekstId})
+    private fun <T : Grense, E : AdministrativEnhet> opprettNyeGrenser(
+        nyeGrenser: List<Feature>,
+        grenseRepository: CrudRepository<T, String>,
+        administrativEnhetRepository: CrudRepository<E, String>
+    ) {
+        val enheterMedNyeGrenser = administrativEnhetRepository.findAllById(nyeGrenser.map { it.properties.kontekstId })
         val enheterSomSkalEndres = enheterMedNyeGrenser.map { enhet ->
             val nyeGrenseObjekterForEnhet = nyeGrenser.filter { it.properties.kontekstId == enhet.id }.map { feature ->
 
@@ -167,7 +194,8 @@ class GrenseService @Autowired constructor(
 
                 grense.grense = feature.geometry as LineString
                 grense.objtype = feature.properties.type
-                grense.navnerom = feature.properties.navnerom
+                // TODO: Burde ikke behøve å sette navnerom fra feature, den er default satt i entiteten
+                grense.navnerom = feature.properties.navnerom!!
                 grense
             }
             grenseRepository.saveAll(nyeGrenseObjekterForEnhet)
@@ -213,11 +241,11 @@ enum class GrenseType {
     Kommunegrense, Fylkesgrense, Riksgrense, AvtaltAvgrensningslinje, Territorialgrense
 }
 
-fun grenseToFeature(grense: Grense, kontekstId: Int? = null, kontekstType: AdministrativEnhetType? = null): Feature {
+fun grenseToFeature(grense: Grense, kontekstId: String? = null, kontekstType: AdministrativEnhetType? = null): Feature {
     return Feature(
         properties = FeatureProperties(
             type = grense.objtype!!,
-            id = grense.id!!,
+            id = grense.id,
             lokalid = grense.lokalid,
             navnerom = grense.navnerom,
             kontekstId = kontekstId,

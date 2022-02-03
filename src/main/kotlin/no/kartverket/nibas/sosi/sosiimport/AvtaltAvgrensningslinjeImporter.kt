@@ -3,6 +3,7 @@ package no.kartverket.nibas.sosi.sosiimport
 import no.kartverket.nibas.domain.Avtaltavgrensningslinje
 import no.kartverket.nibas.domain.AvtaltavgrensningslinjeInformasjon
 import no.kartverket.nibas.domain.Grense
+import no.kartverket.nibas.domain.updateSosiIdentifikasjon
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.AvtaltAvgrensningslinjeInformasjonRepository
 import no.kartverket.nibas.repository.AvtaltAvgrensningslinjeRepository
@@ -31,8 +32,9 @@ class AvtaltAvgrensningslinjeImporter @Autowired constructor(
     val logger: Logger = Logger.getLogger(this::class.java.name)
 
     fun importAvtaltAvgrensningslinje(sosiAvtaltAvgrensningslinje: SosiGeometri): Grense {
+        val sosiIdent = sosiAvtaltAvgrensningslinje.getIdent()
         return when (val existing =
-            avtaltAvgrensningslinjeRepository.findByLokalid(sosiAvtaltAvgrensningslinje.getIdent()?.getLokalId()!!)) {
+            avtaltAvgrensningslinjeRepository.findByLokalid(sosiIdent?.getLokalId()!!)) {
             null -> {
                 val landkoder = sosiAvtaltAvgrensningslinje.getLandkoder().map { landkode ->
                     when (val land = landKodeRepository.findById(landkode).unwrap()) {
@@ -42,8 +44,7 @@ class AvtaltAvgrensningslinjeImporter @Autowired constructor(
                 }.toMutableSet()
 
                 var avtaltavgrensningslinje = Avtaltavgrensningslinje()
-                avtaltavgrensningslinje.lokalid = sosiAvtaltAvgrensningslinje.getIdent()?.getLokalId()
-                avtaltavgrensningslinje.navnerom = sosiAvtaltAvgrensningslinje.getIdent()?.getNavnerom()
+                avtaltavgrensningslinje.updateSosiIdentifikasjon(sosiIdent)
                 avtaltavgrensningslinje.opphav = sosiAvtaltAvgrensningslinje.getOpphav()
                 avtaltavgrensningslinje.datauttaksdato = sosiAvtaltAvgrensningslinje.getDataUttaksdato()
                 avtaltavgrensningslinje.landkode = landkoder

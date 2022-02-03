@@ -11,7 +11,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 @Service
 class HistorikkService(val auditReader: AuditReader) {
 
-    fun <T> hentHistorikk(id: Int, type: Class<T>): List<Pair<DefaultRevisionEntity, RevisionType>> {
+    fun <T> hentHistorikk(id: String, type: Class<T>): List<Pair<DefaultRevisionEntity, RevisionType>> {
         return auditReader.createQuery()
             .forRevisionsOfEntity(type, false, false)
             .add(AuditEntity.id().eq(id))
@@ -22,7 +22,7 @@ class HistorikkService(val auditReader: AuditReader) {
     }
 
     @Suppress("UNCHECKED_CAST")
-    fun <T> hentHistorikkRevisjon(id: Int, revision: Int, type: Class<T>): T {
+    fun <T> hentHistorikkRevisjon(id: String, revision: Int, type: Class<T>): T {
         return auditReader.createQuery().forEntitiesAtRevision(type, revision)
             .add(AuditEntity.id().eq(id)).singleResult as T
     }

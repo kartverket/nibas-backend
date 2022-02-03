@@ -1,7 +1,7 @@
 package no.kartverket.nibas.domain
 
-import java.time.LocalDate
 import org.hibernate.envers.Audited
+import java.time.LocalDate
 import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.FetchType
@@ -19,7 +19,7 @@ class Avtaltavgrensningslinje : Grense() {
     override var objtype: String? = "AvtaltAvgrensningslinje"
 
     @Column(name = "versjonid")
-    var versjonid: String? = null
+    override var versjonid: String? = null
 
     @Column(name = "datafangstdato")
     var datafangstdato: LocalDate? = null

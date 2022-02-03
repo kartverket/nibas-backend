@@ -1,11 +1,17 @@
 package no.kartverket.nibas.builders
 
-import no.kartverket.nibas.domain.*
+import no.kartverket.nibas.domain.Administrativenhetnavn
+import no.kartverket.nibas.domain.Avtaltavgrensningslinje
+import no.kartverket.nibas.domain.Fylke
+import no.kartverket.nibas.domain.Fylkesgrense
+import no.kartverket.nibas.domain.Riksgrense
+import no.kartverket.nibas.domain.Spraakkode
+import no.kartverket.nibas.domain.Territorialgrense
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
 import java.time.LocalDate
 
-class FylkeBuilder(private val id: Int = 1) {
+class FylkeBuilder(private val id: String = "1") {
     private var avtaltavgrensningslinjer: MutableSet<Avtaltavgrensningslinje> = mutableSetOf()
     private var objtype: String = "Fylke"
     private var territorialgrenser: MutableSet<Territorialgrense> = mutableSetOf()

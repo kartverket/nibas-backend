@@ -12,7 +12,7 @@ import java.util.*
 data class NasjonRef(
 
     @Schema(description = "ID-en til nasjonen")
-    val id: Int,
+    val id: String,
 
     @Schema(description = "Liste over navn til nasjonen")
     val navn: List<AdministrativEnhetNavn>,
@@ -25,7 +25,7 @@ data class NasjonRef(
 data class FylkeRef(
 
     @Schema(description = "ID-en til fylket")
-    val id: Int,
+    val id: String,
 
     @Schema(description = "Liste over navn til fylket")
     val navn: List<AdministrativEnhetNavn>,
@@ -38,7 +38,7 @@ data class FylkeRef(
 data class KommuneRef(
 
     @Schema(description = "ID-en til kommunen")
-    val id: Int,
+    val id: String,
 
     @Schema(description = "Liste over navn til kommunen")
     val navn: List<AdministrativEnhetNavn>,
@@ -66,7 +66,7 @@ data class HistorikkRef(
 @Schema(description = "Representasjon av en nasjon")
 data class NasjonResponse(
     @Schema(description = "ID-en til nasjonen")
-    val id: Int,
+    val id: String,
 
     @Schema(description = "Liste over navn til nasjonen")
     val administrativenhetnavn: List<AdministrativEnhetNavn>,
@@ -85,7 +85,7 @@ data class NasjonResponse(
 data class FylkeResponse(
 
     @Schema(description = "ID-en til fylket")
-    val id: Int,
+    val id: String,
 
     @Schema(description = "Liste over navn til fylket")
     val administrativenhetnavn: List<AdministrativEnhetNavn>,
@@ -112,7 +112,7 @@ data class FylkeResponse(
 @Schema(description = "")
 data class KommuneResponse(
     @Schema(description = "ID-en til kommunen")
-    val id: Int,
+    val id: String,
 
     @Schema(description = "Liste over navn til kommunen")
     val administrativenhetnavn: List<AdministrativEnhetNavn>,

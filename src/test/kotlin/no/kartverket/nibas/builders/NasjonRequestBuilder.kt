@@ -1,9 +1,9 @@
 package no.kartverket.nibas.builders
 
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
-import no.kartverket.nibas.api.v1.request.NasjonRequest as NasjonRequest
+import no.kartverket.nibas.api.v1.request.NasjonRequest
 
-class NasjonRequestBuilder(private val id: Int = 1) {
+class NasjonRequestBuilder {
 
     companion object {
         val DEFAULT_NASJON = NasjonRequestBuilder().build()

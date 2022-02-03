@@ -3,6 +3,7 @@ package no.kartverket.nibas.sosi.sosiimport
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.Lovvirkeomraadegrense
 import no.kartverket.nibas.domain.LovvirkeomraadegrenseInformasjon
+import no.kartverket.nibas.domain.updateSosiIdentifikasjon
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.FastsettingstypeRepository
 import no.kartverket.nibas.repository.LovVirkeomraadeGrenseRepository
@@ -25,8 +26,9 @@ class LovVirkeomraadeGrenseImporter @Autowired constructor(
     val logger: Logger = Logger.getLogger(this::class.java.name)
 
     fun importLovVirkeomradeGrense(sosiLovvirkeomraadegrense: SosiKurve): Grense {
+        val sosiIdent = sosiLovvirkeomraadegrense.getIdent()
         return when (val existing =
-            lovVirkeomraadeGrenseRepository.findByLokalid(sosiLovvirkeomraadegrense.getIdent()?.getLokalId()!!)) {
+            lovVirkeomraadeGrenseRepository.findByLokalid(sosiIdent?.getLokalId()!!)) {
             null -> {
                 val kommunenummerIds = sosiLovvirkeomraadegrense.getKommunenumre().map { sosiKommunenummer ->
                     kodelisteService.getKommunenummerIdByCodeValue(sosiKommunenummer)
@@ -34,9 +36,7 @@ class LovVirkeomraadeGrenseImporter @Autowired constructor(
 
 
                 var lovvirkeomraadegrense = Lovvirkeomraadegrense()
-                lovvirkeomraadegrense.lokalid = sosiLovvirkeomraadegrense.getIdent()?.getLokalId()
-                lovvirkeomraadegrense.navnerom = sosiLovvirkeomraadegrense.getIdent()?.getNavnerom()
-                lovvirkeomraadegrense.versjonid = sosiLovvirkeomraadegrense.getIdent()?.getVersjonId()
+                lovvirkeomraadegrense.updateSosiIdentifikasjon(sosiIdent)
                 lovvirkeomraadegrense.datafangstdato = sosiLovvirkeomraadegrense.getDatafangstDato()
                 lovvirkeomraadegrense.oppdateringsdato = sosiLovvirkeomraadegrense.getOppdateringsdato()
                 lovvirkeomraadegrense.datauttaksdato = sosiLovvirkeomraadegrense.getDataUttaksdato()

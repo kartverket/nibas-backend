@@ -4,28 +4,29 @@ import org.hibernate.envers.Audited
 import org.locationtech.jts.geom.LineString
 import java.time.LocalDate
 import java.util.*
-import javax.persistence.*
+import javax.persistence.Column
+import javax.persistence.Id
+import javax.persistence.MappedSuperclass
 
 @MappedSuperclass
 @Audited
-abstract class Grense {
+abstract class Grense : ContainsSosiIdentifikasjon {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "objid", nullable = false)
-    var id: Int? = null
+    @Column(name = "objid", nullable = false, updatable = false)
+    val id: String = UUID.randomUUID().toString()
 
     @Column(name = "objtype")
     var objtype: String? = null
 
-    @Column(name = "lokalid", nullable = false)
-    var lokalid: String? = UUID.randomUUID().toString()
+    @Column(name = "lokalid", nullable = false, updatable = false)
+    override var lokalid: String = UUID.randomUUID().toString()
 
     @Column(name = "oppdateringsdato")
     var oppdateringsdato: LocalDate? = LocalDate.now()
 
-    @Column(name = "navnerom", nullable = false)
-    var navnerom: String? = null
+    @Column(name = "navnerom", nullable = false, updatable = false)
+    override var navnerom: String = DEFAULT_NAVNEROM
 
     @Column(name = "grense", nullable = false)
     var grense: LineString? = null

@@ -1,10 +1,10 @@
 CREATE TABLE identifikasjon (
-                                objid serial NOT NULL,
+                                objid text NOT NULL,
                                 objtype text DEFAULT 'Identifikasjon',
                                 lokalid text NOT NULL,
                                 navnerom text NOT NULL,
                                 versjonid text,
-                                punktreferanse_fk int)
+                                punktreferanse_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE typeendring (
@@ -17,7 +17,7 @@ INSERT INTO typeendring (identifier, description) VALUES ('N', 'Nytt');
 INSERT INTO typeendring (identifier, description) VALUES ('S', 'Slettet');
 
 CREATE TABLE fylke (
-                       objid serial NOT NULL,
+                       objid text NOT NULL,
                        objtype text DEFAULT 'Fylke',
                        lokalid text NOT NULL,
                        navnerom text NOT NULL,
@@ -42,16 +42,16 @@ CREATE TABLE fylke (
                        administrativkode text,
                        fylkesnummer text NOT NULL,
                        samiskforvaltningsomraade boolean,
-                       nasjon_fk int)
+                       nasjon_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE fylke_fylkesgrense (
-                                    fylke_fk int,
-                                    fylkesgrense_fk int)
+                                    fylke_fk text,
+                                    fylkesgrense_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE fylkesgrense (
-                              objid serial NOT NULL,
+                              objid text NOT NULL,
                               objtype text DEFAULT 'Fylkesgrense',
                               lokalid text NOT NULL,
                               navnerom text NOT NULL,
@@ -81,57 +81,57 @@ CREATE TABLE fylkesgrense (
     WITH (OIDS=FALSE);
 
 CREATE TABLE avgrensning_bispedoemme (
-                                         avgrensning_fk int,
-                                         bispedoemme_fk int)
+                                         avgrensning_fk text,
+                                         bispedoemme_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE delomraade_fylkesgrense (
-                                         delomraade_fk int,
-                                         fylkesgrense_fk int)
+                                         delomraade_fk text,
+                                         fylkesgrense_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE fylkesgrense_grensepunktsjoe (
-                                              fylkesgrense_fk int,
-                                              grensepunktsjoe_fk int)
+                                              fylkesgrense_fk text,
+                                              grensepunktsjoe_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE avgrensning_prosti (
-                                    avgrensning_fk int,
-                                    prosti_fk int)
+                                    avgrensning_fk text,
+                                    prosti_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE stemmekrets_fylkesgrense (
-                                          stemmekrets_fk int,
-                                          fylkesgrense_fk int)
+                                          stemmekrets_fk text,
+                                          fylkesgrense_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE grunnkrets_fylkesgrense (
-                                         grunnkrets_fk int,
-                                         fylkesgrense_fk int)
+                                         grunnkrets_fk text,
+                                         fylkesgrense_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE avgrensning_sokn (
-                                  avgrensning_fk int,
-                                  sokn_fk int)
+                                  avgrensning_fk text,
+                                  sokn_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE skolekrets_fylkesgrense (
-                                         skolekrets_fk int,
-                                         fylkesgrense_fk int)
+                                         skolekrets_fk text,
+                                         fylkesgrense_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE fylkesgrense_grensemerkeland (
-                                              fylkesgrense_fk int,
-                                              grensemerkeland_fk int)
+                                              fylkesgrense_fk text,
+                                              grensemerkeland_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE kommune_fylkesgrense (
-                                      kommune_fk int,
-                                      fylkesgrense_fk int)
+                                      kommune_fk text,
+                                      fylkesgrense_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE grensemerkeland (
-                                 objid serial NOT NULL,
+                                 objid text NOT NULL,
                                  objtype text DEFAULT 'GrensemerkeLand',
                                  lokalid text NOT NULL,
                                  navnerom text NOT NULL,
@@ -161,12 +161,12 @@ CREATE TABLE grensemerkeland (
     WITH (OIDS=FALSE);
 
 CREATE TABLE grensemerkeland_kommunegrense (
-                                               grensemerkeland_fk int,
-                                               kommunegrense_fk int)
+                                               grensemerkeland_fk text,
+                                               kommunegrense_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE kommune (
-                         objid serial NOT NULL,
+                         objid text NOT NULL,
                          objtype text DEFAULT 'Kommune',
                          lokalid text NOT NULL,
                          navnerom text NOT NULL,
@@ -191,16 +191,16 @@ CREATE TABLE kommune (
                          administrativkode text,
                          kommunenummer text NOT NULL,
                          samiskforvaltningsomraade boolean NOT NULL,
-                         fylke_fk int)
+                         fylke_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE kommune_kommunegrense (
-                                       kommune_fk int,
-                                       kommunegrense_fk int)
+                                       kommune_fk text,
+                                       kommunegrense_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE kommunegrense (
-                               objid serial NOT NULL,
+                               objid text NOT NULL,
                                objtype text DEFAULT 'Kommunegrense',
                                lokalid text NOT NULL,
                                navnerom text NOT NULL,
@@ -230,47 +230,47 @@ CREATE TABLE kommunegrense (
     WITH (OIDS=FALSE);
 
 CREATE TABLE grensepunktsjoe_kommunegrense (
-                                               grensepunktsjoe_fk int,
-                                               kommunegrense_fk int)
+                                               grensepunktsjoe_fk text,
+                                               kommunegrense_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE grunnkrets_kommunegrense (
-                                          grunnkrets_fk int,
-                                          kommunegrense_fk int)
+                                          grunnkrets_fk text,
+                                          kommunegrense_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE delomraade_kommunegrense (
-                                          delomraade_fk int,
-                                          kommunegrense_fk int)
+                                          delomraade_fk text,
+                                          kommunegrense_fk text)
     WITH (OIDS=FALSE);
 
 --CREATE TABLE avgrensning_prosti (
---avgrensning_fk int,
---prosti_fk int)
+--avgrensning_fk text,
+--prosti_fk text)
 --WITH (OIDS=FALSE);
 
 CREATE TABLE skolekrets_kommunegrense (
-                                          skolekrets_fk int,
-                                          kommunegrense_fk int)
+                                          skolekrets_fk text,
+                                          kommunegrense_fk text)
     WITH (OIDS=FALSE);
 
 --CREATE TABLE avgrensning_sokn (
---avgrensning_fk int,
---sokn_fk int)
+--avgrensning_fk text,
+--sokn_fk text)
 --WITH (OIDS=FALSE);
 
 CREATE TABLE stemmekrets_kommunegrense (
-                                           stemmekrets_fk int,
-                                           kommunegrense_fk int)
+                                           stemmekrets_fk text,
+                                           kommunegrense_fk text)
     WITH (OIDS=FALSE);
 
 --CREATE TABLE avgrensning_bispedoemme (
---avgrensning_fk int,
---bispedoemme_fk int)
+--avgrensning_fk text,
+--bispedoemme_fk text)
 --WITH (OIDS=FALSE);
 
 CREATE TABLE nasjon (
-                        objid serial NOT NULL,
+                        objid text NOT NULL,
                         objtype text DEFAULT 'Nasjon',
                         lokalid text NOT NULL,
                         navnerom text NOT NULL,
@@ -296,14 +296,14 @@ CREATE TABLE nasjon (
     WITH (OIDS=FALSE);
 
 CREATE TABLE administrativenhetnavn (
-                                        objid serial NOT NULL,
+                                        objid text NOT NULL,
                                         objtype text DEFAULT 'AdministrativEnhetNavn',
                                         navn text NOT NULL,
                                         spraak text NOT NULL,
                                         rekkefoelge int,
-                                        fylke_fk int,
-                                        kommune_fk int,
-                                        nasjon_fk int)
+                                        fylke_fk text,
+                                        kommune_fk text,
+                                        nasjon_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE grensepunkttypekode (
@@ -400,7 +400,7 @@ INSERT INTO terrengdetaljkode (identifier, description) VALUES ('VKA', 'VegKant'
 INSERT INTO terrengdetaljkode (identifier, description) VALUES ('VMI', 'VegMidt');
 
 CREATE TABLE brytningspunkt (
-                                objid serial NOT NULL,
+                                objid text NOT NULL,
                                 objtype text DEFAULT 'Brytningspunkt',
                                 lokalid text NOT NULL,
                                 navnerom text NOT NULL,
@@ -432,57 +432,57 @@ CREATE TABLE brytningspunkt (
     WITH (OIDS=FALSE);
 
 CREATE TABLE riksgrense_grensemerke_vassdragspunkt (
-                                                       riksgrense_fk int,
-                                                       grensemerke_vassdragspunkt_fk int)
+                                                       riksgrense_fk text,
+                                                       grensemerke_vassdragspunkt_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE riksgrense_grensemerke_riksroeys (
-                                                  riksgrense_fk int,
-                                                  grensemerke_riksroeys_fk int)
+                                                  riksgrense_fk text,
+                                                  grensemerke_riksroeys_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE riksgrense_grensemerke_profilpunkt (
-                                                    riksgrense_fk int,
-                                                    grensemerke_profilpunkt_fk int)
+                                                    riksgrense_fk text,
+                                                    grensemerke_profilpunkt_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE riksgrense_grensemerke_brytningspunkt (
-                                                       riksgrense_fk int,
-                                                       grensemerke_brytningspunkt_fk int)
+                                                       riksgrense_fk text,
+                                                       grensemerke_brytningspunkt_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE riksgrense_grensemerke_viserstein (
-                                                   riksgrense_fk int,
-                                                   grensemerke_viserstein_fk int)
+                                                   riksgrense_fk text,
+                                                   grensemerke_viserstein_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE riksgrense_grensemerke_oevrighjelpemerke (
-                                                          riksgrense_fk int,
-                                                          grensemerke_oevrighjelpemerke_fk int)
+                                                          riksgrense_fk text,
+                                                          grensemerke_oevrighjelpemerke_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE riksgrense_grensemerke_storutligger (
-                                                     riksgrense_fk int,
-                                                     grensemerke_storutligger_fk int)
+                                                     riksgrense_fk text,
+                                                     grensemerke_storutligger_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE riksgrense_grensemerke_litenutligger (
-                                                      riksgrense_fk int,
-                                                      grensemerke_litenutligger_fk int)
+                                                      riksgrense_fk text,
+                                                      grensemerke_litenutligger_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE riksgrense_grensemerke_grensestolpe (
-                                                     riksgrense_fk int,
-                                                     grensemerke_grensestolpe_fk int)
+                                                     riksgrense_fk text,
+                                                     grensemerke_grensestolpe_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE riksgrense_grensemerke_grenseskilt (
-                                                    riksgrense_fk int,
-                                                    grensemerke_grenseskilt_fk int)
+                                                    riksgrense_fk text,
+                                                    grensemerke_grenseskilt_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE grenseskilt (
-                             objid serial NOT NULL,
+                             objid text NOT NULL,
                              objtype text DEFAULT 'Grenseskilt',
                              lokalid text NOT NULL,
                              navnerom text NOT NULL,
@@ -515,7 +515,7 @@ CREATE TABLE grenseskilt (
     WITH (OIDS=FALSE);
 
 CREATE TABLE grensestolpe (
-                              objid serial NOT NULL,
+                              objid text NOT NULL,
                               objtype text DEFAULT 'Grensestolpe',
                               lokalid text NOT NULL,
                               navnerom text NOT NULL,
@@ -547,7 +547,7 @@ CREATE TABLE grensestolpe (
     WITH (OIDS=FALSE);
 
 CREATE TABLE litenutligger (
-                               objid serial NOT NULL,
+                               objid text NOT NULL,
                                objtype text DEFAULT 'LitenUtligger',
                                lokalid text NOT NULL,
                                navnerom text NOT NULL,
@@ -579,7 +579,7 @@ CREATE TABLE litenutligger (
     WITH (OIDS=FALSE);
 
 CREATE TABLE profilpunkt (
-                             objid serial NOT NULL,
+                             objid text NOT NULL,
                              objtype text DEFAULT 'Profilpunkt',
                              lokalid text NOT NULL,
                              navnerom text NOT NULL,
@@ -614,7 +614,7 @@ CREATE TABLE profilpunkt (
     WITH (OIDS=FALSE);
 
 CREATE TABLE riksgrense (
-                            objid serial NOT NULL,
+                            objid text NOT NULL,
                             objtype text DEFAULT 'Riksgrense',
                             lokalid text NOT NULL,
                             navnerom text NOT NULL,
@@ -641,12 +641,12 @@ CREATE TABLE riksgrense (
     WITH (OIDS=FALSE);
 
 --CREATE TABLE avgrensning_prosti (
---avgrensning_fk int,
---prosti_fk int)
+--avgrensning_fk text,
+--prosti_fk text)
 --WITH (OIDS=FALSE);
 
 CREATE TABLE riksroeys (
-                           objid serial NOT NULL,
+                           objid text NOT NULL,
                            objtype text DEFAULT 'Riksrøys',
                            lokalid text NOT NULL,
                            navnerom text NOT NULL,
@@ -680,7 +680,7 @@ CREATE TABLE riksroeys (
     WITH (OIDS=FALSE);
 
 CREATE TABLE sikringspunkt (
-                               objid serial NOT NULL,
+                               objid text NOT NULL,
                                objtype text DEFAULT 'Sikringspunkt',
                                posisjon geometry(Point, 25833) NOT NULL,
                                nummer text NOT NULL,
@@ -690,13 +690,13 @@ CREATE TABLE sikringspunkt (
                                diameter double precision,
                                merknad text,
                                underlag text,
-                               riksroeys_fk int,
-                               utligger_storutligger_fk int,
-                               utligger_litenutligger_fk int)
+                               riksroeys_fk text,
+                               utligger_storutligger_fk text,
+                               utligger_litenutligger_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE storutligger (
-                              objid serial NOT NULL,
+                              objid text NOT NULL,
                               objtype text DEFAULT 'StorUtligger',
                               lokalid text NOT NULL,
                               navnerom text NOT NULL,
@@ -728,7 +728,7 @@ CREATE TABLE storutligger (
     WITH (OIDS=FALSE);
 
 CREATE TABLE vassdragspunkt (
-                                objid serial NOT NULL,
+                                objid text NOT NULL,
                                 objtype text DEFAULT 'Vassdragspunkt',
                                 lokalid text NOT NULL,
                                 navnerom text NOT NULL,
@@ -759,7 +759,7 @@ CREATE TABLE vassdragspunkt (
     WITH (OIDS=FALSE);
 
 CREATE TABLE viserstein (
-                            objid serial NOT NULL,
+                            objid text NOT NULL,
                             objtype text DEFAULT 'Viserstein',
                             lokalid text NOT NULL,
                             navnerom text NOT NULL,
@@ -790,7 +790,7 @@ CREATE TABLE viserstein (
     WITH (OIDS=FALSE);
 
 CREATE TABLE oevrighjelpemerke (
-                                   objid serial NOT NULL,
+                                   objid text NOT NULL,
                                    objtype text DEFAULT 'ØvrigHjelpemerke',
                                    lokalid text NOT NULL,
                                    navnerom text NOT NULL,
@@ -822,77 +822,77 @@ CREATE TABLE oevrighjelpemerke (
     WITH (OIDS=FALSE);
 
 CREATE TABLE hjertesteininformasjon (
-                                        objid serial NOT NULL,
+                                        objid text NOT NULL,
                                         objtype text DEFAULT 'Hjertesteininformasjon',
                                         egenhoeydehjertestein double precision,
                                         inskripsjonhjertestein text,
                                         etableringsdatohjertestein date,
-                                        riksroeys_fk int)
+                                        riksroeys_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE naermestegrensemerke (
-                                      objid serial NOT NULL,
+                                      objid text NOT NULL,
                                       objtype text DEFAULT 'NærmesteGrensemerke',
                                       grensemerkenummer text NOT NULL,
                                       grensemerkeavstand double precision,
                                       grensemerkeretning double precision,
-                                      brytningspunkt_fk int,
-                                      riksroeys_fk int)
+                                      brytningspunkt_fk text,
+                                      riksroeys_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE registrertekoordinater (
-                                        objid serial NOT NULL,
+                                        objid text NOT NULL,
                                         objtype text DEFAULT 'RegistrerteKoordinater',
                                         nordkoordinat double precision NOT NULL,
                                         oestkoordinat double precision NOT NULL,
                                         koordinatsystem text NOT NULL,
                                         kilde text,
-                                        brytningspunkt_fk int,
-                                        grenseskilt_fk int,
-                                        grensestolpe_fk int,
-                                        litenutligger_fk int,
-                                        profilpunkt_fk int,
-                                        riksroeys_fk int,
-                                        storutligger_fk int,
-                                        vassdragspunkt_fk int,
-                                        viserstein_fk int,
-                                        oevrighjelpemerke_fk int)
+                                        brytningspunkt_fk text,
+                                        grenseskilt_fk text,
+                                        grensestolpe_fk text,
+                                        litenutligger_fk text,
+                                        profilpunkt_fk text,
+                                        riksroeys_fk text,
+                                        storutligger_fk text,
+                                        vassdragspunkt_fk text,
+                                        viserstein_fk text,
+                                        oevrighjelpemerke_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE registrerthoeyde (
-                                  objid serial NOT NULL,
+                                  objid text NOT NULL,
                                   objtype text DEFAULT 'RegistrertHøyde',
                                   hoeyde double precision NOT NULL,
                                   hoeydereferansesystem text NOT NULL,
                                   hoeydereferanse text NOT NULL,
                                   kilde text,
-                                  brytningspunkt_fk int,
-                                  grenseskilt_fk int,
-                                  grensestolpe_fk int,
-                                  litenutligger_fk int,
-                                  profilpunkt_fk int,
-                                  riksroeys_fk int,
-                                  storutligger_fk int,
-                                  vassdragspunkt_fk int,
-                                  viserstein_fk int,
-                                  oevrighjelpemerke_fk int)
+                                  brytningspunkt_fk text,
+                                  grenseskilt_fk text,
+                                  grensestolpe_fk text,
+                                  litenutligger_fk text,
+                                  profilpunkt_fk text,
+                                  riksroeys_fk text,
+                                  storutligger_fk text,
+                                  vassdragspunkt_fk text,
+                                  viserstein_fk text,
+                                  oevrighjelpemerke_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE vedlikehold (
-                             objid serial NOT NULL,
+                             objid text NOT NULL,
                              objtype text DEFAULT 'Vedlikehold',
                              arbeidutfoertdato date NOT NULL,
                              arbeidutfoertbeskrivelse text,
-                             brytningspunkt_fk int,
-                             grenseskilt_fk int,
-                             grensestolpe_fk int,
-                             litenutligger_fk int,
-                             profilpunkt_fk int,
-                             riksroeys_fk int,
-                             storutligger_fk int,
-                             vassdragspunkt_fk int,
-                             viserstein_fk int,
-                             oevrighjelpemerke_fk int)
+                             brytningspunkt_fk text,
+                             grenseskilt_fk text,
+                             grensestolpe_fk text,
+                             litenutligger_fk text,
+                             profilpunkt_fk text,
+                             riksroeys_fk text,
+                             storutligger_fk text,
+                             vassdragspunkt_fk text,
+                             viserstein_fk text,
+                             oevrighjelpemerke_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE hoeydereferanse (
@@ -1053,7 +1053,7 @@ INSERT INTO underlag (identifier, description) VALUES ('Morene', 'Morene');
 INSERT INTO underlag (identifier, description) VALUES ('Annet', 'Annet');
 
 CREATE TABLE delomraade (
-                            objid serial NOT NULL,
+                            objid text NOT NULL,
                             objtype text DEFAULT 'Delområde',
                             lokalid text NOT NULL,
                             navnerom text NOT NULL,
@@ -1079,12 +1079,12 @@ CREATE TABLE delomraade (
     WITH (OIDS=FALSE);
 
 CREATE TABLE delomraade_delomraadegrens (
-                                            delomraade_fk int,
-                                            delomraadegrens_fk int)
+                                            delomraade_fk text,
+                                            delomraadegrens_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE delomraadegrense (
-                                  objid serial NOT NULL,
+                                  objid text NOT NULL,
                                   objtype text DEFAULT 'Delområdegrense',
                                   lokalid text NOT NULL,
                                   navnerom text NOT NULL,
@@ -1112,12 +1112,12 @@ CREATE TABLE delomraadegrense (
     WITH (OIDS=FALSE);
 
 CREATE TABLE grunnkrets_delomraadegrense (
-                                             grunnkrets_fk int,
-                                             delomraadegrense_fk int)
+                                             grunnkrets_fk text,
+                                             delomraadegrense_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE grunnkrets (
-                            objid serial NOT NULL,
+                            objid text NOT NULL,
                             objtype text DEFAULT 'Grunnkrets',
                             lokalid text NOT NULL,
                             navnerom text NOT NULL,
@@ -1140,16 +1140,16 @@ CREATE TABLE grunnkrets (
                             grunnkretsnummer text NOT NULL,
                             grunnkretsnavn text,
                             kommunenummer text NOT NULL,
-                            delomraadeinndeling_fk int)
+                            delomraadeinndeling_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE grunnkrets_grunnkretsgrense (
-                                             grunnkrets_fk int,
-                                             grunnkretsgrense_fk int)
+                                             grunnkrets_fk text,
+                                             grunnkretsgrense_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE grunnkretsgrense (
-                                  objid serial NOT NULL,
+                                  objid text NOT NULL,
                                   objtype text DEFAULT 'Grunnkretsgrense',
                                   lokalid text NOT NULL,
                                   navnerom text NOT NULL,
@@ -1177,7 +1177,7 @@ CREATE TABLE grunnkretsgrense (
     WITH (OIDS=FALSE);
 
 CREATE TABLE valgdistriktsgrense (
-                                     objid serial NOT NULL,
+                                     objid text NOT NULL,
                                      objtype text DEFAULT 'Valgdistriktsgrense',
                                      identifikasjon_lokalid text NOT NULL,
                                      identifikasjon_navnerom text NOT NULL,
@@ -1207,12 +1207,12 @@ CREATE TABLE valgdistriktsgrense (
     WITH (OIDS=FALSE);
 
 CREATE TABLE stemmekrets_valgdistriktsgrense (
-                                                 stemmekrets_fk int,
-                                                 valgdistriktsgrense_fk int)
+                                                 stemmekrets_fk text,
+                                                 valgdistriktsgrense_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE skolekrets (
-                            objid serial NOT NULL,
+                            objid text NOT NULL,
                             objtype text DEFAULT 'Skolekrets',
                             lokalid text NOT NULL,
                             navnerom text NOT NULL,
@@ -1241,12 +1241,12 @@ CREATE TABLE skolekrets (
     WITH (OIDS=FALSE);
 
 CREATE TABLE skolekrets_skolekretsgrense (
-                                             skolekrets_fk int,
-                                             skolekretsgrense_fk int)
+                                             skolekrets_fk text,
+                                             skolekretsgrense_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE skolekretsgrense (
-                                  objid serial NOT NULL,
+                                  objid text NOT NULL,
                                   objtype text DEFAULT 'Skolekretsgrense',
                                   identifikasjon_lokalid text NOT NULL,
                                   identifikasjon_navnerom text NOT NULL,
@@ -1276,7 +1276,7 @@ CREATE TABLE skolekretsgrense (
     WITH (OIDS=FALSE);
 
 CREATE TABLE stemmekrets (
-                             objid serial NOT NULL,
+                             objid text NOT NULL,
                              objtype text DEFAULT 'Stemmekrets',
                              lokalid text NOT NULL,
                              navnerom text NOT NULL,
@@ -1307,12 +1307,12 @@ CREATE TABLE stemmekrets (
     WITH (OIDS=FALSE);
 
 CREATE TABLE stemmekrets_stemmekretsgrense (
-                                               stemmekrets_fk int,
-                                               stemmekretsgrense_fk int)
+                                               stemmekrets_fk text,
+                                               stemmekretsgrense_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE stemmekretsgrense (
-                                   objid serial NOT NULL,
+                                   objid text NOT NULL,
                                    objtype text DEFAULT 'Stemmekretsgrense',
                                    identifikasjon_lokalid text NOT NULL,
                                    identifikasjon_navnerom text NOT NULL,
@@ -1342,7 +1342,7 @@ CREATE TABLE stemmekretsgrense (
     WITH (OIDS=FALSE);
 
 CREATE TABLE sektorgrense (
-                              objid serial NOT NULL,
+                              objid text NOT NULL,
                               objtype text DEFAULT 'Sektorgrense',
                               lokalid text NOT NULL,
                               navnerom text NOT NULL,
@@ -1368,12 +1368,12 @@ CREATE TABLE sektorgrense (
     WITH (OIDS=FALSE);
 
 CREATE TABLE sektoromraade_sektorgrense (
-                                            sektoromraade_fk int,
-                                            sektorgrense_fk int)
+                                            sektoromraade_fk text,
+                                            sektorgrense_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE sektorlokalitet (
-                                 objid serial NOT NULL,
+                                 objid text NOT NULL,
                                  objtype text DEFAULT 'Sektorlokalitet',
                                  lokalid text NOT NULL,
                                  navnerom text NOT NULL,
@@ -1400,12 +1400,12 @@ CREATE TABLE sektorlokalitet (
     WITH (OIDS=FALSE);
 
 CREATE TABLE sektoromraade_sektorlokalitet (
-                                               sektoromraade_fk int,
-                                               sektorlokalitet_fk int)
+                                               sektoromraade_fk text,
+                                               sektorlokalitet_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE sektoromraade (
-                               objid serial NOT NULL,
+                               objid text NOT NULL,
                                objtype text DEFAULT 'Sektorområde',
                                lokalid text NOT NULL,
                                navnerom text NOT NULL,
@@ -1433,7 +1433,7 @@ CREATE TABLE sektoromraade (
     WITH (OIDS=FALSE);
 
 CREATE TABLE bispedoemme (
-                             objid serial NOT NULL,
+                             objid text NOT NULL,
                              objtype text DEFAULT 'Bispedømme',
                              lokalid text NOT NULL,
                              navnerom text NOT NULL,
@@ -1459,12 +1459,12 @@ CREATE TABLE bispedoemme (
     WITH (OIDS=FALSE);
 
 CREATE TABLE bispedoemme_avgrensning (
-                                         bispedoemme_fk int,
-                                         avgrensning_fk int)
+                                         bispedoemme_fk text,
+                                         avgrensning_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE bispedoemmegrense (
-                                   objid serial NOT NULL,
+                                   objid text NOT NULL,
                                    objtype text DEFAULT 'Bispedømmegrense',
                                    identifikasjon_lokalid text NOT NULL,
                                    identifikasjon_navnerom text NOT NULL,
@@ -1494,17 +1494,17 @@ CREATE TABLE bispedoemmegrense (
     WITH (OIDS=FALSE);
 
 CREATE TABLE prosti_avgrensning (
-                                    prosti_fk int,
-                                    avgrensning_fk int)
+                                    prosti_fk text,
+                                    avgrensning_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE sokn_avgrensning (
-                                  sokn_fk int,
-                                  avgrensning_fk int)
+                                  sokn_fk text,
+                                  avgrensning_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE prosti (
-                        objid serial NOT NULL,
+                        objid text NOT NULL,
                         objtype text DEFAULT 'Prosti',
                         lokalid text NOT NULL,
                         navnerom text NOT NULL,
@@ -1527,16 +1527,16 @@ CREATE TABLE prosti (
                         organisasjonsnummer int,
                         prostinummer text,
                         prostinavn text,
-                        bispedoemme_fk int)
+                        bispedoemme_fk text)
     WITH (OIDS=FALSE);
 
 --CREATE TABLE prosti_avgrensning (
---prosti_fk int,
---avgrensning_fk int)
+--prosti_fk text,
+--avgrensning_fk text)
 --WITH (OIDS=FALSE);
 
 CREATE TABLE prostigrense (
-                              objid serial NOT NULL,
+                              objid text NOT NULL,
                               objtype text DEFAULT 'Prostigrense',
                               identifikasjon_lokalid text NOT NULL,
                               identifikasjon_navnerom text NOT NULL,
@@ -1566,12 +1566,12 @@ CREATE TABLE prostigrense (
     WITH (OIDS=FALSE);
 
 --CREATE TABLE sokn_avgrensning (
---sokn_fk int,
---avgrensning_fk int)
+--sokn_fk text,
+--avgrensning_fk text)
 --WITH (OIDS=FALSE);
 
 CREATE TABLE sokn (
-                      objid serial NOT NULL,
+                      objid text NOT NULL,
                       objtype text DEFAULT 'Sokn',
                       lokalid text NOT NULL,
                       navnerom text NOT NULL,
@@ -1594,16 +1594,16 @@ CREATE TABLE sokn (
                       organisasjonsnummer int NOT NULL,
                       soknenummer text,
                       soknenavn text,
-                      prosti_fk int)
+                      prosti_fk text)
     WITH (OIDS=FALSE);
 
 --CREATE TABLE sokn_avgrensning (
---sokn_fk int,
---avgrensning_fk int)
+--sokn_fk text,
+--avgrensning_fk text)
 --WITH (OIDS=FALSE);
 
 CREATE TABLE soknegrense (
-                             objid serial NOT NULL,
+                             objid text NOT NULL,
                              objtype text DEFAULT 'Soknegrense',
                              identifikasjon_lokalid text NOT NULL,
                              identifikasjon_navnerom text NOT NULL,
@@ -2923,7 +2923,7 @@ INSERT INTO soknenummer (identifier, description) VALUES ('09060705', '09060705'
 INSERT INTO soknenummer (identifier, description) VALUES ('09060706', '09060706');
 
 CREATE TABLE postnummeromraade (
-                                   objid serial NOT NULL,
+                                   objid text NOT NULL,
                                    objtype text DEFAULT 'Postnummerområde',
                                    lokalid text NOT NULL,
                                    navnerom text NOT NULL,
@@ -2944,31 +2944,31 @@ CREATE TABLE postnummeromraade (
                                    kopidato timestamp with time zone,
                                    postnummer text NOT NULL,
                                    poststed text,
-                                   postomraade_fk int)
+                                   postomraade_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE postnummeromraade_postsonegrense (
-                                                  postnummeromraade_fk int,
-                                                  postsonegrense_fk int)
+                                                  postnummeromraade_fk text,
+                                                  postsonegrense_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE postnummeromraade_postnummeromraadegrense (
-                                                           postnummeromraade_fk int,
-                                                           postnummeromraadegrense_fk int)
+                                                           postnummeromraade_fk text,
+                                                           postnummeromraadegrense_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE postnummeromraade_postomraadegrense (
-                                                     postnummeromraade_fk int,
-                                                     postomraadegrense_fk int)
+                                                     postnummeromraade_fk text,
+                                                     postomraadegrense_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE postnummeromraade_postregiongrense (
-                                                    postnummeromraade_fk int,
-                                                    postregiongrense_fk int)
+                                                    postnummeromraade_fk text,
+                                                    postregiongrense_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE postnummeromraadegrense (
-                                         objid serial NOT NULL,
+                                         objid text NOT NULL,
                                          objtype text DEFAULT 'Postnummerområdegrense',
                                          identifikasjon_lokalid text NOT NULL,
                                          identifikasjon_navnerom text NOT NULL,
@@ -2998,7 +2998,7 @@ CREATE TABLE postnummeromraadegrense (
     WITH (OIDS=FALSE);
 
 CREATE TABLE postomraade (
-                             objid serial NOT NULL,
+                             objid text NOT NULL,
                              objtype text DEFAULT 'Postområde',
                              lokalid text NOT NULL,
                              navnerom text NOT NULL,
@@ -3018,26 +3018,26 @@ CREATE TABLE postomraade (
                              originaldatavert text,
                              kopidato timestamp with time zone,
                              postomraadenummer text NOT NULL,
-                             postregion_fk int)
+                             postregion_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE postomraade_postsonegrense (
-                                            postomraade_fk int,
-                                            postsonegrense_fk int)
+                                            postomraade_fk text,
+                                            postsonegrense_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE postomraade_postomraadegrense (
-                                               postomraade_fk int,
-                                               postomraadegrense_fk int)
+                                               postomraade_fk text,
+                                               postomraadegrense_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE postomraade_postregiongrense (
-                                              postomraade_fk int,
-                                              postregiongrense_fk int)
+                                              postomraade_fk text,
+                                              postregiongrense_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE postomraadegrense (
-                                   objid serial NOT NULL,
+                                   objid text NOT NULL,
                                    objtype text DEFAULT 'Postområdegrense',
                                    identifikasjon_lokalid text NOT NULL,
                                    identifikasjon_navnerom text NOT NULL,
@@ -3067,7 +3067,7 @@ CREATE TABLE postomraadegrense (
     WITH (OIDS=FALSE);
 
 CREATE TABLE postregion (
-                            objid serial NOT NULL,
+                            objid text NOT NULL,
                             objtype text DEFAULT 'Postregion',
                             lokalid text NOT NULL,
                             navnerom text NOT NULL,
@@ -3087,21 +3087,21 @@ CREATE TABLE postregion (
                             originaldatavert text,
                             kopidato timestamp with time zone,
                             postregionnummer text NOT NULL,
-                            postsone_fk int)
+                            postsone_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE postregion_postsonegrense (
-                                           postregion_fk int,
-                                           postsonegrense_fk int)
+                                           postregion_fk text,
+                                           postsonegrense_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE postregion_postregiongrense (
-                                             postregion_fk int,
-                                             postregiongrense_fk int)
+                                             postregion_fk text,
+                                             postregiongrense_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE postregiongrense (
-                                  objid serial NOT NULL,
+                                  objid text NOT NULL,
                                   objtype text DEFAULT 'Postregiongrense',
                                   identifikasjon_lokalid text NOT NULL,
                                   identifikasjon_navnerom text NOT NULL,
@@ -3131,7 +3131,7 @@ CREATE TABLE postregiongrense (
     WITH (OIDS=FALSE);
 
 CREATE TABLE postsone (
-                          objid serial NOT NULL,
+                          objid text NOT NULL,
                           objtype text DEFAULT 'Postsone',
                           lokalid text NOT NULL,
                           navnerom text NOT NULL,
@@ -3154,12 +3154,12 @@ CREATE TABLE postsone (
     WITH (OIDS=FALSE);
 
 CREATE TABLE postsone_postsonegrense (
-                                         postsone_fk int,
-                                         postsonegrense_fk int)
+                                         postsone_fk text,
+                                         postsonegrense_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE postsonegrense (
-                                objid serial NOT NULL,
+                                objid text NOT NULL,
                                 objtype text DEFAULT 'Postsonegrense',
                                 identifikasjon_lokalid text NOT NULL,
                                 identifikasjon_navnerom text NOT NULL,
@@ -3189,7 +3189,7 @@ CREATE TABLE postsonegrense (
     WITH (OIDS=FALSE);
 
 CREATE TABLE lovvirkeomraade (
-                                 objid serial NOT NULL,
+                                 objid text NOT NULL,
                                  objtype text DEFAULT 'LovVirkeområde',
                                  lokalid text NOT NULL,
                                  navnerom text NOT NULL,
@@ -3216,7 +3216,7 @@ CREATE TABLE lovvirkeomraade (
     WITH (OIDS=FALSE);
 
 CREATE TABLE lovvirkeomraadegrense (
-                                       objid serial NOT NULL,
+                                       objid text NOT NULL,
                                        objtype text DEFAULT 'LovVirkeområdeGrense',
                                        lokalid text NOT NULL,
                                        navnerom text NOT NULL,
@@ -3247,12 +3247,12 @@ CREATE TABLE lovvirkeomraadegrense (
     WITH (OIDS=FALSE);
 
 CREATE TABLE lovvirkeomraadegrense_lovvirkeomraadegrensepunkt (
-                                                                  lovvirkeomraadegrense_fk int,
-                                                                  lovvirkeomraadegrensepunkt_fk int)
+                                                                  lovvirkeomraadegrense_fk text,
+                                                                  lovvirkeomraadegrensepunkt_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE lovvirkeomraadegrensepunkt (
-                                            objid serial NOT NULL,
+                                            objid text NOT NULL,
                                             objtype text DEFAULT 'LovVirkeområdeGrensePunkt',
                                             lokalid text NOT NULL,
                                             navnerom text NOT NULL,
@@ -3277,47 +3277,47 @@ CREATE TABLE lovvirkeomraadegrensepunkt (
     WITH (OIDS=FALSE);
 
 CREATE TABLE dokumentasjonsreferanse (
-                                         objid serial NOT NULL,
+                                         objid text NOT NULL,
                                          objtype text DEFAULT 'Dokumentasjonsreferanse',
                                          rettskildetittel text NOT NULL,
                                          rettskildeid text,
                                          hjemmel text,
                                          fastsettingsmyndighet text,
                                          fastsettingsdato date NOT NULL,
-                                         fylkesgrense_fk int,
-                                         kommunegrense_fk int,
-                                         riksgrense_fk int,
-                                         lovvirkeomraade_fk int,
-                                         lovvirkeomraadegrense_fk int,
-                                         avtaltavgrensningslinje_fk int,
-                                         detsaerskilteomraadet_fk int,
-                                         fiskerisone_fk int,
-                                         fiskevernsone_fk int,
-                                         grense200nautiskemil_fk int,
-                                         grunnlinje_fk int,
-                                         graasonegrense_fk int,
-                                         graasonen_fk int,
-                                         indrefarvann_fk int,
-                                         kontinentalsokkel_fk int,
-                                         norgesoekonomiskesone_fk int,
-                                         sjoeterritorium_fk int,
-                                         territorialfarvann_fk int,
-                                         territorialgrense_fk int,
-                                         tilstoetendesone_fk int,
-                                         yttergrensesokkel_fk int,
-                                         yttergrensetilstoetendesone_fk int)
+                                         fylkesgrense_fk text,
+                                         kommunegrense_fk text,
+                                         riksgrense_fk text,
+                                         lovvirkeomraade_fk text,
+                                         lovvirkeomraadegrense_fk text,
+                                         avtaltavgrensningslinje_fk text,
+                                         detsaerskilteomraadet_fk text,
+                                         fiskerisone_fk text,
+                                         fiskevernsone_fk text,
+                                         grense200nautiskemil_fk text,
+                                         grunnlinje_fk text,
+                                         graasonegrense_fk text,
+                                         graasonen_fk text,
+                                         indrefarvann_fk text,
+                                         kontinentalsokkel_fk text,
+                                         norgesoekonomiskesone_fk text,
+                                         sjoeterritorium_fk text,
+                                         territorialfarvann_fk text,
+                                         territorialgrense_fk text,
+                                         tilstoetendesone_fk text,
+                                         yttergrensesokkel_fk text,
+                                         yttergrensetilstoetendesone_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE punktreferanse (
-                                objid serial NOT NULL,
+                                objid text NOT NULL,
                                 objtype text DEFAULT 'Punktreferanse',
                                 punktnummer text,
                                 punktnavn text,
-                                grensemerkeland_fk int,
-                                lovvirkeomraadegrensepunkt_fk int,
-                                grenseboeye_fk int,
-                                grensepunktsjoe_fk int,
-                                sjoeroeys_fk int)
+                                grensemerkeland_fk text,
+                                lovvirkeomraadegrensepunkt_fk text,
+                                grenseboeye_fk text,
+                                grensepunktsjoe_fk text,
+                                sjoeroeys_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE administrativgrensekode (
@@ -3409,7 +3409,7 @@ INSERT INTO sonetype (identifier, description) VALUES ('VernesoneForPlanteliv', 
 INSERT INTO sonetype (identifier, description) VALUES ('Skogforvaltningsområde', 'Skogforvaltningsområde');
 
 CREATE TABLE avtaltavgrensningslinje (
-                                         objid serial NOT NULL,
+                                         objid text NOT NULL,
                                          objtype text DEFAULT 'AvtaltAvgrensningslinje',
                                          lokalid text NOT NULL,
                                          navnerom text NOT NULL,
@@ -3439,22 +3439,22 @@ CREATE TABLE avtaltavgrensningslinje (
     WITH (OIDS=FALSE);
 
 CREATE TABLE avtaltavgrensningslinje_grenseboeye (
-                                                     avtaltavgrensningslinje_fk int,
-                                                     grenseboeye_fk int)
+                                                     avtaltavgrensningslinje_fk text,
+                                                     grenseboeye_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE sjoeroeys_avtaltavgrensningslinje (
-                                                   sjoeroeys_fk int,
-                                                   avtaltavgrensningslinje_fk int)
+                                                   sjoeroeys_fk text,
+                                                   avtaltavgrensningslinje_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE avtaltavgrensningslinje_grensepunktsjoe (
-                                                         avtaltavgrensningslinje_fk int,
-                                                         grensepunktsjoe_fk int)
+                                                         avtaltavgrensningslinje_fk text,
+                                                         grensepunktsjoe_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE beregnetmidtlinje (
-                                   objid serial NOT NULL,
+                                   objid text NOT NULL,
                                    objtype text DEFAULT 'BeregnetMidtlinje',
                                    lokalid text NOT NULL,
                                    navnerom text NOT NULL,
@@ -3483,12 +3483,12 @@ CREATE TABLE beregnetmidtlinje (
     WITH (OIDS=FALSE);
 
 CREATE TABLE grensepunktsjoe_beregnetmidtlinje (
-                                                   grensepunktsjoe_fk int,
-                                                   beregnetmidtlinje_fk int)
+                                                   grensepunktsjoe_fk text,
+                                                   beregnetmidtlinje_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE detsaerskilteomraadet (
-                                       objid serial NOT NULL,
+                                       objid text NOT NULL,
                                        objtype text DEFAULT 'DetSærskilteOmrådet',
                                        lokalid text NOT NULL,
                                        navnerom text NOT NULL,
@@ -3513,7 +3513,7 @@ CREATE TABLE detsaerskilteomraadet (
     WITH (OIDS=FALSE);
 
 CREATE TABLE fiskerisone (
-                             objid serial NOT NULL,
+                             objid text NOT NULL,
                              objtype text DEFAULT 'Fiskerisone',
                              lokalid text NOT NULL,
                              navnerom text NOT NULL,
@@ -3538,7 +3538,7 @@ CREATE TABLE fiskerisone (
     WITH (OIDS=FALSE);
 
 CREATE TABLE fiskevernsone (
-                               objid serial NOT NULL,
+                               objid text NOT NULL,
                                objtype text DEFAULT 'Fiskevernsone',
                                lokalid text NOT NULL,
                                navnerom text NOT NULL,
@@ -3563,7 +3563,7 @@ CREATE TABLE fiskevernsone (
     WITH (OIDS=FALSE);
 
 CREATE TABLE grense200nautiskemil (
-                                      objid serial NOT NULL,
+                                      objid text NOT NULL,
                                       objtype text DEFAULT 'Grense200NautiskeMil',
                                       lokalid text NOT NULL,
                                       navnerom text NOT NULL,
@@ -3595,7 +3595,7 @@ CREATE TABLE grense200nautiskemil (
     WITH (OIDS=FALSE);
 
 CREATE TABLE grenseboeye (
-                             objid serial NOT NULL,
+                             objid text NOT NULL,
                              objtype text DEFAULT 'Grensebøye',
                              lokalid text NOT NULL,
                              navnerom text NOT NULL,
@@ -3622,12 +3622,12 @@ CREATE TABLE grenseboeye (
                              egenhoeyde double precision,
                              arbeidutfoertdato date,
                              arbeidutfoertbeskrivelse text,
-                             grunnlinje_fk int,
-                             riksgrense_fk int)
+                             grunnlinje_fk text,
+                             riksgrense_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE grensepunktsjoe (
-                                 objid serial NOT NULL,
+                                 objid text NOT NULL,
                                  objtype text DEFAULT 'GrensepunktSjø',
                                  lokalid text NOT NULL,
                                  navnerom text NOT NULL,
@@ -3652,22 +3652,22 @@ CREATE TABLE grensepunktsjoe (
     WITH (OIDS=FALSE);
 
 CREATE TABLE sektorlinje_grensepunktsjoe (
-                                             sektorlinje_fk int,
-                                             grensepunktsjoe_fk int)
+                                             sektorlinje_fk text,
+                                             grensepunktsjoe_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE grunnlinje_grensepunktsjoe (
-                                            grunnlinje_fk int,
-                                            grensepunktsjoe_fk int)
+                                            grunnlinje_fk text,
+                                            grensepunktsjoe_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE graasonegrense_grensepunktsjoe (
-                                                graasonegrense_fk int,
-                                                grensepunktsjoe_fk int)
+                                                graasonegrense_fk text,
+                                                grensepunktsjoe_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE grunnlinje (
-                            objid serial NOT NULL,
+                            objid text NOT NULL,
                             objtype text DEFAULT 'Grunnlinje',
                             lokalid text NOT NULL,
                             navnerom text NOT NULL,
@@ -3699,7 +3699,7 @@ CREATE TABLE grunnlinje (
     WITH (OIDS=FALSE);
 
 CREATE TABLE graasonegrense (
-                                objid serial NOT NULL,
+                                objid text NOT NULL,
                                 objtype text DEFAULT 'Gråsonegrense',
                                 lokalid text NOT NULL,
                                 navnerom text NOT NULL,
@@ -3729,7 +3729,7 @@ CREATE TABLE graasonegrense (
     WITH (OIDS=FALSE);
 
 CREATE TABLE graasonen (
-                           objid serial NOT NULL,
+                           objid text NOT NULL,
                            objtype text DEFAULT 'Gråsonen',
                            lokalid text NOT NULL,
                            navnerom text NOT NULL,
@@ -3754,7 +3754,7 @@ CREATE TABLE graasonen (
     WITH (OIDS=FALSE);
 
 CREATE TABLE indrefarvann (
-                              objid serial NOT NULL,
+                              objid text NOT NULL,
                               objtype text DEFAULT 'IndreFarvann',
                               lokalid text NOT NULL,
                               navnerom text NOT NULL,
@@ -3779,7 +3779,7 @@ CREATE TABLE indrefarvann (
     WITH (OIDS=FALSE);
 
 CREATE TABLE internasjonaltfarvann (
-                                       objid serial NOT NULL,
+                                       objid text NOT NULL,
                                        objtype text DEFAULT 'InternasjonaltFarvann',
                                        lokalid text NOT NULL,
                                        navnerom text NOT NULL,
@@ -3803,7 +3803,7 @@ CREATE TABLE internasjonaltfarvann (
     WITH (OIDS=FALSE);
 
 CREATE TABLE kontinentalsokkel (
-                                   objid serial NOT NULL,
+                                   objid text NOT NULL,
                                    objtype text DEFAULT 'Kontinentalsokkel',
                                    lokalid text NOT NULL,
                                    navnerom text NOT NULL,
@@ -3828,7 +3828,7 @@ CREATE TABLE kontinentalsokkel (
     WITH (OIDS=FALSE);
 
 CREATE TABLE kystkontur (
-                            objid serial NOT NULL,
+                            objid text NOT NULL,
                             objtype text DEFAULT 'Kystkontur',
                             lokalid text NOT NULL,
                             navnerom text NOT NULL,
@@ -3856,7 +3856,7 @@ CREATE TABLE kystkontur (
     WITH (OIDS=FALSE);
 
 CREATE TABLE landindrefarvann (
-                                  objid serial NOT NULL,
+                                  objid text NOT NULL,
                                   objtype text DEFAULT 'LandIndreFarvann',
                                   lokalid text NOT NULL,
                                   navnerom text NOT NULL,
@@ -3879,7 +3879,7 @@ CREATE TABLE landindrefarvann (
     WITH (OIDS=FALSE);
 
 CREATE TABLE norgesoekonomiskesone (
-                                       objid serial NOT NULL,
+                                       objid text NOT NULL,
                                        objtype text DEFAULT 'NorgesØkonomiskeSone',
                                        lokalid text NOT NULL,
                                        navnerom text NOT NULL,
@@ -3904,7 +3904,7 @@ CREATE TABLE norgesoekonomiskesone (
     WITH (OIDS=FALSE);
 
 CREATE TABLE sektorlinje (
-                             objid serial NOT NULL,
+                             objid text NOT NULL,
                              objtype text DEFAULT 'Sektorlinje',
                              lokalid text NOT NULL,
                              navnerom text NOT NULL,
@@ -3933,7 +3933,7 @@ CREATE TABLE sektorlinje (
     WITH (OIDS=FALSE);
 
 CREATE TABLE sjoeroeys (
-                           objid serial NOT NULL,
+                           objid text NOT NULL,
                            objtype text DEFAULT 'Sjørøys',
                            lokalid text NOT NULL,
                            navnerom text NOT NULL,
@@ -3963,7 +3963,7 @@ CREATE TABLE sjoeroeys (
     WITH (OIDS=FALSE);
 
 CREATE TABLE sjoeterritorium (
-                                 objid serial NOT NULL,
+                                 objid text NOT NULL,
                                  objtype text DEFAULT 'Sjøterritorium',
                                  lokalid text NOT NULL,
                                  navnerom text NOT NULL,
@@ -3988,7 +3988,7 @@ CREATE TABLE sjoeterritorium (
     WITH (OIDS=FALSE);
 
 CREATE TABLE territorialfarvann (
-                                    objid serial NOT NULL,
+                                    objid text NOT NULL,
                                     objtype text DEFAULT 'Territorialfarvann',
                                     lokalid text NOT NULL,
                                     navnerom text NOT NULL,
@@ -4013,7 +4013,7 @@ CREATE TABLE territorialfarvann (
     WITH (OIDS=FALSE);
 
 CREATE TABLE territorialgrense (
-                                   objid serial NOT NULL,
+                                   objid text NOT NULL,
                                    objtype text DEFAULT 'Territorialgrense',
                                    lokalid text NOT NULL,
                                    navnerom text NOT NULL,
@@ -4045,7 +4045,7 @@ CREATE TABLE territorialgrense (
     WITH (OIDS=FALSE);
 
 CREATE TABLE territorialomraade (
-                                    objid serial NOT NULL,
+                                    objid text NOT NULL,
                                     objtype text DEFAULT 'Territorialområde',
                                     lokalid text NOT NULL,
                                     navnerom text NOT NULL,
@@ -4068,7 +4068,7 @@ CREATE TABLE territorialomraade (
     WITH (OIDS=FALSE);
 
 CREATE TABLE tidligereomstridtomraade (
-                                          objid serial NOT NULL,
+                                          objid text NOT NULL,
                                           objtype text DEFAULT 'TidligereOmstridtOmråde',
                                           lokalid text NOT NULL,
                                           navnerom text NOT NULL,
@@ -4092,7 +4092,7 @@ CREATE TABLE tidligereomstridtomraade (
     WITH (OIDS=FALSE);
 
 CREATE TABLE tilstoetendesone (
-                                  objid serial NOT NULL,
+                                  objid text NOT NULL,
                                   objtype text DEFAULT 'TilstøtendeSone',
                                   lokalid text NOT NULL,
                                   navnerom text NOT NULL,
@@ -4117,7 +4117,7 @@ CREATE TABLE tilstoetendesone (
     WITH (OIDS=FALSE);
 
 CREATE TABLE yttergrensesokkel (
-                                   objid serial NOT NULL,
+                                   objid text NOT NULL,
                                    objtype text DEFAULT 'YttergrenseSokkel',
                                    lokalid text NOT NULL,
                                    navnerom text NOT NULL,
@@ -4149,7 +4149,7 @@ CREATE TABLE yttergrensesokkel (
     WITH (OIDS=FALSE);
 
 CREATE TABLE yttergrensetilstoetendesone (
-                                             objid serial NOT NULL,
+                                             objid text NOT NULL,
                                              objtype text DEFAULT 'YttergrenseTilstøtendeSone',
                                              lokalid text NOT NULL,
                                              navnerom text NOT NULL,
@@ -4219,830 +4219,830 @@ INSERT INTO landkode (identifier, description) VALUES ('SE', 'Sweden');
 INSERT INTO landkode (identifier, description) VALUES ('GB', 'United Kingdom');
 
 CREATE TABLE fylke_informasjon (
-                                   objid serial NOT NULL,
-                                   fylke_fk int,
+                                   objid text NOT NULL,
+                                   fylke_fk text,
                                    informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE fylkesgrense_informasjon (
-                                          objid serial NOT NULL,
-                                          fylkesgrense_fk int,
+                                          objid text NOT NULL,
+                                          fylkesgrense_fk text,
                                           informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE grensemerkeland_informasjon (
-                                             objid serial NOT NULL,
-                                             grensemerkeland_fk int,
+                                             objid text NOT NULL,
+                                             grensemerkeland_fk text,
                                              informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE kommune_informasjon (
-                                     objid serial NOT NULL,
-                                     kommune_fk int,
+                                     objid text NOT NULL,
+                                     kommune_fk text,
                                      informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE kommunegrense_informasjon (
-                                           objid serial NOT NULL,
-                                           kommunegrense_fk int,
+                                           objid text NOT NULL,
+                                           kommunegrense_fk text,
                                            informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE nasjon_informasjon (
-                                    objid serial NOT NULL,
-                                    nasjon_fk int,
+                                    objid text NOT NULL,
+                                    nasjon_fk text,
                                     informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE brytningspunkt_navn (
-                                     objid serial NOT NULL,
-                                     brytningspunkt_fk int,
+                                     objid text NOT NULL,
+                                     brytningspunkt_fk text,
                                      navn text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE brytningspunkt_informasjon (
-                                            objid serial NOT NULL,
-                                            brytningspunkt_fk int,
+                                            objid text NOT NULL,
+                                            brytningspunkt_fk text,
                                             informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE brytningspunkt_fotodokumentasjon (
-                                                  objid serial NOT NULL,
-                                                  brytningspunkt_fk int,
+                                                  objid text NOT NULL,
+                                                  brytningspunkt_fk text,
                                                   fotodokumentasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE grenseskilt_informasjon (
-                                         objid serial NOT NULL,
-                                         grenseskilt_fk int,
+                                         objid text NOT NULL,
+                                         grenseskilt_fk text,
                                          informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE grenseskilt_fotodokumentasjon (
-                                               objid serial NOT NULL,
-                                               grenseskilt_fk int,
+                                               objid text NOT NULL,
+                                               grenseskilt_fk text,
                                                fotodokumentasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE grensestolpe_informasjon (
-                                          objid serial NOT NULL,
-                                          grensestolpe_fk int,
+                                          objid text NOT NULL,
+                                          grensestolpe_fk text,
                                           informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE grensestolpe_fotodokumentasjon (
-                                                objid serial NOT NULL,
-                                                grensestolpe_fk int,
+                                                objid text NOT NULL,
+                                                grensestolpe_fk text,
                                                 fotodokumentasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE litenutligger_informasjon (
-                                           objid serial NOT NULL,
-                                           litenutligger_fk int,
+                                           objid text NOT NULL,
+                                           litenutligger_fk text,
                                            informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE litenutligger_fotodokumentasjon (
-                                                 objid serial NOT NULL,
-                                                 litenutligger_fk int,
+                                                 objid text NOT NULL,
+                                                 litenutligger_fk text,
                                                  fotodokumentasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE litenutligger_navn (
-                                    objid serial NOT NULL,
-                                    litenutligger_fk int,
+                                    objid text NOT NULL,
+                                    litenutligger_fk text,
                                     navn text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE profilpunkt_informasjon (
-                                         objid serial NOT NULL,
-                                         profilpunkt_fk int,
+                                         objid text NOT NULL,
+                                         profilpunkt_fk text,
                                          informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE profilpunkt_fotodokumentasjon (
-                                               objid serial NOT NULL,
-                                               profilpunkt_fk int,
+                                               objid text NOT NULL,
+                                               profilpunkt_fk text,
                                                fotodokumentasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE riksgrense_ansvarligmyndighet (
-                                               objid serial NOT NULL,
-                                               riksgrense_fk int,
+                                               objid text NOT NULL,
+                                               riksgrense_fk text,
                                                ansvarligmyndighet text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE riksgrense_informasjon (
-                                        objid serial NOT NULL,
-                                        riksgrense_fk int,
+                                        objid text NOT NULL,
+                                        riksgrense_fk text,
                                         informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE riksroeys_riksroeysnavn (
-                                         objid serial NOT NULL,
-                                         riksroeys_fk int,
+                                         objid text NOT NULL,
+                                         riksroeys_fk text,
                                          riksroeysnavn text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE riksroeys_informasjon (
-                                       objid serial NOT NULL,
-                                       riksroeys_fk int,
+                                       objid text NOT NULL,
+                                       riksroeys_fk text,
                                        informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE riksroeys_fotodokumentasjon (
-                                             objid serial NOT NULL,
-                                             riksroeys_fk int,
+                                             objid text NOT NULL,
+                                             riksroeys_fk text,
                                              fotodokumentasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE storutligger_informasjon (
-                                          objid serial NOT NULL,
-                                          storutligger_fk int,
+                                          objid text NOT NULL,
+                                          storutligger_fk text,
                                           informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE storutligger_fotodokumentasjon (
-                                                objid serial NOT NULL,
-                                                storutligger_fk int,
+                                                objid text NOT NULL,
+                                                storutligger_fk text,
                                                 fotodokumentasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE storutligger_navn (
-                                   objid serial NOT NULL,
-                                   storutligger_fk int,
+                                   objid text NOT NULL,
+                                   storutligger_fk text,
                                    navn text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE vassdragspunkt_informasjon (
-                                            objid serial NOT NULL,
-                                            vassdragspunkt_fk int,
+                                            objid text NOT NULL,
+                                            vassdragspunkt_fk text,
                                             informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE vassdragspunkt_fotodokumentasjon (
-                                                  objid serial NOT NULL,
-                                                  vassdragspunkt_fk int,
+                                                  objid text NOT NULL,
+                                                  vassdragspunkt_fk text,
                                                   fotodokumentasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE viserstein_informasjon (
-                                        objid serial NOT NULL,
-                                        viserstein_fk int,
+                                        objid text NOT NULL,
+                                        viserstein_fk text,
                                         informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE viserstein_fotodokumentasjon (
-                                              objid serial NOT NULL,
-                                              viserstein_fk int,
+                                              objid text NOT NULL,
+                                              viserstein_fk text,
                                               fotodokumentasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE oevrighjelpemerke_informasjon (
-                                               objid serial NOT NULL,
-                                               oevrighjelpemerke_fk int,
+                                               objid text NOT NULL,
+                                               oevrighjelpemerke_fk text,
                                                informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE oevrighjelpemerke_fotodokumentasjon (
-                                                     objid serial NOT NULL,
-                                                     oevrighjelpemerke_fk int,
+                                                     objid text NOT NULL,
+                                                     oevrighjelpemerke_fk text,
                                                      fotodokumentasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE hjertesteininformasjon_bildehjertestein (
-                                                         objid serial NOT NULL,
-                                                         hjertesteininformasjon_fk int,
+                                                         objid text NOT NULL,
+                                                         hjertesteininformasjon_fk text,
                                                          bildehjertestein text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE delomraade_informasjon (
-                                        objid serial NOT NULL,
-                                        delomraade_fk int,
+                                        objid text NOT NULL,
+                                        delomraade_fk text,
                                         informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE delomraadegrense_informasjon (
-                                              objid serial NOT NULL,
-                                              delomraadegrense_fk int,
+                                              objid text NOT NULL,
+                                              delomraadegrense_fk text,
                                               informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE grunnkrets_informasjon (
-                                        objid serial NOT NULL,
-                                        grunnkrets_fk int,
+                                        objid text NOT NULL,
+                                        grunnkrets_fk text,
                                         informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE grunnkretsgrense_informasjon (
-                                              objid serial NOT NULL,
-                                              grunnkretsgrense_fk int,
+                                              objid text NOT NULL,
+                                              grunnkretsgrense_fk text,
                                               informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE sektorgrense_informasjon (
-                                          objid serial NOT NULL,
-                                          sektorgrense_fk int,
+                                          objid text NOT NULL,
+                                          sektorgrense_fk text,
                                           informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE sektorlokalitet_informasjon (
-                                             objid serial NOT NULL,
-                                             sektorlokalitet_fk int,
+                                             objid text NOT NULL,
+                                             sektorlokalitet_fk text,
                                              informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE sektoromraade_informasjon (
-                                           objid serial NOT NULL,
-                                           sektoromraade_fk int,
+                                           objid text NOT NULL,
+                                           sektoromraade_fk text,
                                            informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE bispedoemme_informasjon (
-                                         objid serial NOT NULL,
-                                         bispedoemme_fk int,
+                                         objid text NOT NULL,
+                                         bispedoemme_fk text,
                                          informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE bispedoemmegrense_informasjon (
-                                               objid serial NOT NULL,
-                                               bispedoemmegrense_fk int,
+                                               objid text NOT NULL,
+                                               bispedoemmegrense_fk text,
                                                informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE prosti_informasjon (
-                                    objid serial NOT NULL,
-                                    prosti_fk int,
+                                    objid text NOT NULL,
+                                    prosti_fk text,
                                     informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE prostigrense_informasjon (
-                                          objid serial NOT NULL,
-                                          prostigrense_fk int,
+                                          objid text NOT NULL,
+                                          prostigrense_fk text,
                                           informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE sokn_fellesraad (
-                                 objid serial NOT NULL,
-                                 sokn_fk int,
+                                 objid text NOT NULL,
+                                 sokn_fk text,
                                  fellesraad text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE sokn_informasjon (
-                                  objid serial NOT NULL,
-                                  sokn_fk int,
+                                  objid text NOT NULL,
+                                  sokn_fk text,
                                   informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE soknegrense_informasjon (
-                                         objid serial NOT NULL,
-                                         soknegrense_fk int,
+                                         objid text NOT NULL,
+                                         soknegrense_fk text,
                                          informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE postnummeromraade_informasjon (
-                                               objid serial NOT NULL,
-                                               postnummeromraade_fk int,
+                                               objid text NOT NULL,
+                                               postnummeromraade_fk text,
                                                informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE postnummeromraadegrense_informasjon (
-                                                     objid serial NOT NULL,
-                                                     postnummeromraadegrense_fk int,
+                                                     objid text NOT NULL,
+                                                     postnummeromraadegrense_fk text,
                                                      informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE postomraade_informasjon (
-                                         objid serial NOT NULL,
-                                         postomraade_fk int,
+                                         objid text NOT NULL,
+                                         postomraade_fk text,
                                          informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE postomraadegrense_informasjon (
-                                               objid serial NOT NULL,
-                                               postomraadegrense_fk int,
+                                               objid text NOT NULL,
+                                               postomraadegrense_fk text,
                                                informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE postregion_informasjon (
-                                        objid serial NOT NULL,
-                                        postregion_fk int,
+                                        objid text NOT NULL,
+                                        postregion_fk text,
                                         informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE postregiongrense_informasjon (
-                                              objid serial NOT NULL,
-                                              postregiongrense_fk int,
+                                              objid text NOT NULL,
+                                              postregiongrense_fk text,
                                               informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE postsone_informasjon (
-                                      objid serial NOT NULL,
-                                      postsone_fk int,
+                                      objid text NOT NULL,
+                                      postsone_fk text,
                                       informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE postsonegrense_informasjon (
-                                            objid serial NOT NULL,
-                                            postsonegrense_fk int,
+                                            objid text NOT NULL,
+                                            postsonegrense_fk text,
                                             informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE lovvirkeomraade_sonetype (
-                                          lovvirkeomraade_fk int,
+                                          lovvirkeomraade_fk text,
                                           sonetype_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE lovvirkeomraade_miljoeomraade (
-                                               lovvirkeomraade_fk int,
+                                               lovvirkeomraade_fk text,
                                                miljoeomraade_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE lovvirkeomraade_informasjon (
-                                             objid serial NOT NULL,
-                                             lovvirkeomraade_fk int,
+                                             objid text NOT NULL,
+                                             lovvirkeomraade_fk text,
                                              informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE lovvirkeomraade_ansvarligmyndighet (
-                                                    objid serial NOT NULL,
-                                                    lovvirkeomraade_fk int,
+                                                    objid text NOT NULL,
+                                                    lovvirkeomraade_fk text,
                                                     ansvarligmyndighet text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE lovvirkeomraadegrense_informasjon (
-                                                   objid serial NOT NULL,
-                                                   lovvirkeomraadegrense_fk int,
+                                                   objid text NOT NULL,
+                                                   lovvirkeomraadegrense_fk text,
                                                    informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE lovvirkeomraadegrense_ansvarligmyndighet (
-                                                          objid serial NOT NULL,
-                                                          lovvirkeomraadegrense_fk int,
+                                                          objid text NOT NULL,
+                                                          lovvirkeomraadegrense_fk text,
                                                           ansvarligmyndighet text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE lovvirkeomraadegrensepunkt_informasjon (
-                                                        objid serial NOT NULL,
-                                                        lovvirkeomraadegrensepunkt_fk int,
+                                                        objid text NOT NULL,
+                                                        lovvirkeomraadegrensepunkt_fk text,
                                                         informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE dokumentasjonsreferanse_dokumentlink (
-                                                      objid serial NOT NULL,
-                                                      dokumentasjonsreferanse_fk int,
+                                                      objid text NOT NULL,
+                                                      dokumentasjonsreferanse_fk text,
                                                       dokumentlink text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE dokumentasjonsreferanse_internreferansekartverket (
-                                                                   objid serial NOT NULL,
-                                                                   dokumentasjonsreferanse_fk int,
+                                                                   objid text NOT NULL,
+                                                                   dokumentasjonsreferanse_fk text,
                                                                    internreferansekartverket text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE avtaltavgrensningslinje_informasjon (
-                                                     objid serial NOT NULL,
-                                                     avtaltavgrensningslinje_fk int,
+                                                     objid text NOT NULL,
+                                                     avtaltavgrensningslinje_fk text,
                                                      informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE avtaltavgrensningslinje_ansvarligmyndighet (
-                                                            objid serial NOT NULL,
-                                                            avtaltavgrensningslinje_fk int,
+                                                            objid text NOT NULL,
+                                                            avtaltavgrensningslinje_fk text,
                                                             ansvarligmyndighet text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE avtaltavgrensningslinje_land (
-                                              avtaltavgrensningslinje_fk int,
+                                              avtaltavgrensningslinje_fk text,
                                               landkode_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE beregnetmidtlinje_informasjon (
-                                               objid serial NOT NULL,
-                                               beregnetmidtlinje_fk int,
+                                               objid text NOT NULL,
+                                               beregnetmidtlinje_fk text,
                                                informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE beregnetmidtlinje_ansvarligmyndighet (
-                                                      objid serial NOT NULL,
-                                                      beregnetmidtlinje_fk int,
+                                                      objid text NOT NULL,
+                                                      beregnetmidtlinje_fk text,
                                                       ansvarligmyndighet text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE beregnetmidtlinje_land (
-                                        beregnetmidtlinje_fk int,
+                                        beregnetmidtlinje_fk text,
                                         landkode_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE detsaerskilteomraadet_informasjon (
-                                                   objid serial NOT NULL,
-                                                   detsaerskilteomraadet_fk int,
+                                                   objid text NOT NULL,
+                                                   detsaerskilteomraadet_fk text,
                                                    informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE detsaerskilteomraadet_land (
-                                            detsaerskilteomraadet_fk int,
+                                            detsaerskilteomraadet_fk text,
                                             landkode_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE detsaerskilteomraadet_ansvarligmyndighet (
-                                                          objid serial NOT NULL,
-                                                          detsaerskilteomraadet_fk int,
+                                                          objid text NOT NULL,
+                                                          detsaerskilteomraadet_fk text,
                                                           ansvarligmyndighet text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE detsaerskilteomraadet_sonetype (
-                                                detsaerskilteomraadet_fk int,
+                                                detsaerskilteomraadet_fk text,
                                                 sonetype_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE detsaerskilteomraadet_miljoeomraade (
-                                                     detsaerskilteomraadet_fk int,
+                                                     detsaerskilteomraadet_fk text,
                                                      miljoeomraade_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE fiskerisone_informasjon (
-                                         objid serial NOT NULL,
-                                         fiskerisone_fk int,
+                                         objid text NOT NULL,
+                                         fiskerisone_fk text,
                                          informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE fiskerisone_land (
-                                  fiskerisone_fk int,
+                                  fiskerisone_fk text,
                                   landkode_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE fiskerisone_ansvarligmyndighet (
-                                                objid serial NOT NULL,
-                                                fiskerisone_fk int,
+                                                objid text NOT NULL,
+                                                fiskerisone_fk text,
                                                 ansvarligmyndighet text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE fiskerisone_sonetype (
-                                      fiskerisone_fk int,
+                                      fiskerisone_fk text,
                                       sonetype_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE fiskerisone_miljoeomraade (
-                                           fiskerisone_fk int,
+                                           fiskerisone_fk text,
                                            miljoeomraade_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE fiskevernsone_informasjon (
-                                           objid serial NOT NULL,
-                                           fiskevernsone_fk int,
+                                           objid text NOT NULL,
+                                           fiskevernsone_fk text,
                                            informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE fiskevernsone_land (
-                                    fiskevernsone_fk int,
+                                    fiskevernsone_fk text,
                                     landkode_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE fiskevernsone_ansvarligmyndighet (
-                                                  objid serial NOT NULL,
-                                                  fiskevernsone_fk int,
+                                                  objid text NOT NULL,
+                                                  fiskevernsone_fk text,
                                                   ansvarligmyndighet text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE fiskevernsone_sonetype (
-                                        fiskevernsone_fk int,
+                                        fiskevernsone_fk text,
                                         sonetype_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE fiskevernsone_miljoeomraade (
-                                             fiskevernsone_fk int,
+                                             fiskevernsone_fk text,
                                              miljoeomraade_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE grense200nautiskemil_informasjon (
-                                                  objid serial NOT NULL,
-                                                  grense200nautiskemil_fk int,
+                                                  objid text NOT NULL,
+                                                  grense200nautiskemil_fk text,
                                                   informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE grense200nautiskemil_ansvarligmyndighet (
-                                                         objid serial NOT NULL,
-                                                         grense200nautiskemil_fk int,
+                                                         objid text NOT NULL,
+                                                         grense200nautiskemil_fk text,
                                                          ansvarligmyndighet text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE grenseboeye_informasjon (
-                                         objid serial NOT NULL,
-                                         grenseboeye_fk int,
+                                         objid text NOT NULL,
+                                         grenseboeye_fk text,
                                          informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE grensepunktsjoe_informasjon (
-                                             objid serial NOT NULL,
-                                             grensepunktsjoe_fk int,
+                                             objid text NOT NULL,
+                                             grensepunktsjoe_fk text,
                                              informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE grunnlinje_informasjon (
-                                        objid serial NOT NULL,
-                                        grunnlinje_fk int,
+                                        objid text NOT NULL,
+                                        grunnlinje_fk text,
                                         informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE grunnlinje_ansvarligmyndighet (
-                                               objid serial NOT NULL,
-                                               grunnlinje_fk int,
+                                               objid text NOT NULL,
+                                               grunnlinje_fk text,
                                                ansvarligmyndighet text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE graasonegrense_informasjon (
-                                            objid serial NOT NULL,
-                                            graasonegrense_fk int,
+                                            objid text NOT NULL,
+                                            graasonegrense_fk text,
                                             informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE graasonegrense_ansvarligmyndighet (
-                                                   objid serial NOT NULL,
-                                                   graasonegrense_fk int,
+                                                   objid text NOT NULL,
+                                                   graasonegrense_fk text,
                                                    ansvarligmyndighet text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE graasonegrense_land (
-                                     graasonegrense_fk int,
+                                     graasonegrense_fk text,
                                      landkode_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE graasonen_informasjon (
-                                       objid serial NOT NULL,
-                                       graasonen_fk int,
+                                       objid text NOT NULL,
+                                       graasonen_fk text,
                                        informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE graasonen_land (
-                                graasonen_fk int,
+                                graasonen_fk text,
                                 landkode_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE graasonen_ansvarligmyndighet (
-                                              objid serial NOT NULL,
-                                              graasonen_fk int,
+                                              objid text NOT NULL,
+                                              graasonen_fk text,
                                               ansvarligmyndighet text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE graasonen_sonetype (
-                                    graasonen_fk int,
+                                    graasonen_fk text,
                                     sonetype_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE graasonen_miljoeomraade (
-                                         graasonen_fk int,
+                                         graasonen_fk text,
                                          miljoeomraade_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE indrefarvann_informasjon (
-                                          objid serial NOT NULL,
-                                          indrefarvann_fk int,
+                                          objid text NOT NULL,
+                                          indrefarvann_fk text,
                                           informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE indrefarvann_land (
-                                   indrefarvann_fk int,
+                                   indrefarvann_fk text,
                                    landkode_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE indrefarvann_ansvarligmyndighet (
-                                                 objid serial NOT NULL,
-                                                 indrefarvann_fk int,
+                                                 objid text NOT NULL,
+                                                 indrefarvann_fk text,
                                                  ansvarligmyndighet text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE indrefarvann_sonetype (
-                                       indrefarvann_fk int,
+                                       indrefarvann_fk text,
                                        sonetype_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE indrefarvann_miljoeomraade (
-                                            indrefarvann_fk int,
+                                            indrefarvann_fk text,
                                             miljoeomraade_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE internasjonaltfarvann_informasjon (
-                                                   objid serial NOT NULL,
-                                                   internasjonaltfarvann_fk int,
+                                                   objid text NOT NULL,
+                                                   internasjonaltfarvann_fk text,
                                                    informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE kontinentalsokkel_informasjon (
-                                               objid serial NOT NULL,
-                                               kontinentalsokkel_fk int,
+                                               objid text NOT NULL,
+                                               kontinentalsokkel_fk text,
                                                informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE kontinentalsokkel_land (
-                                        kontinentalsokkel_fk int,
+                                        kontinentalsokkel_fk text,
                                         landkode_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE kontinentalsokkel_ansvarligmyndighet (
-                                                      objid serial NOT NULL,
-                                                      kontinentalsokkel_fk int,
+                                                      objid text NOT NULL,
+                                                      kontinentalsokkel_fk text,
                                                       ansvarligmyndighet text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE kontinentalsokkel_sonetype (
-                                            kontinentalsokkel_fk int,
+                                            kontinentalsokkel_fk text,
                                             sonetype_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE kontinentalsokkel_miljoeomraade (
-                                                 kontinentalsokkel_fk int,
+                                                 kontinentalsokkel_fk text,
                                                  miljoeomraade_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE kystkontur_informasjon (
-                                        objid serial NOT NULL,
-                                        kystkontur_fk int,
+                                        objid text NOT NULL,
+                                        kystkontur_fk text,
                                         informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE landindrefarvann_informasjon (
-                                              objid serial NOT NULL,
-                                              landindrefarvann_fk int,
+                                              objid text NOT NULL,
+                                              landindrefarvann_fk text,
                                               informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE norgesoekonomiskesone_informasjon (
-                                                   objid serial NOT NULL,
-                                                   norgesoekonomiskesone_fk int,
+                                                   objid text NOT NULL,
+                                                   norgesoekonomiskesone_fk text,
                                                    informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE norgesoekonomiskesone_land (
-                                            norgesoekonomiskesone_fk int,
+                                            norgesoekonomiskesone_fk text,
                                             landkode_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE norgesoekonomiskesone_ansvarligmyndighet (
-                                                          objid serial NOT NULL,
-                                                          norgesoekonomiskesone_fk int,
+                                                          objid text NOT NULL,
+                                                          norgesoekonomiskesone_fk text,
                                                           ansvarligmyndighet text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE norgesoekonomiskesone_sonetype (
-                                                norgesoekonomiskesone_fk int,
+                                                norgesoekonomiskesone_fk text,
                                                 sonetype_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE norgesoekonomiskesone_miljoeomraade (
-                                                     norgesoekonomiskesone_fk int,
+                                                     norgesoekonomiskesone_fk text,
                                                      miljoeomraade_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE sektorlinje_informasjon (
-                                         objid serial NOT NULL,
-                                         sektorlinje_fk int,
+                                         objid text NOT NULL,
+                                         sektorlinje_fk text,
                                          informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE sektorlinje_ansvarligmyndighet (
-                                                objid serial NOT NULL,
-                                                sektorlinje_fk int,
+                                                objid text NOT NULL,
+                                                sektorlinje_fk text,
                                                 ansvarligmyndighet text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE sektorlinje_land (
-                                  sektorlinje_fk int,
+                                  sektorlinje_fk text,
                                   landkode_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE sjoeroeys_informasjon (
-                                       objid serial NOT NULL,
-                                       sjoeroeys_fk int,
+                                       objid text NOT NULL,
+                                       sjoeroeys_fk text,
                                        informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE sjoeterritorium_informasjon (
-                                             objid serial NOT NULL,
-                                             sjoeterritorium_fk int,
+                                             objid text NOT NULL,
+                                             sjoeterritorium_fk text,
                                              informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE sjoeterritorium_land (
-                                      sjoeterritorium_fk int,
+                                      sjoeterritorium_fk text,
                                       landkode_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE sjoeterritorium_ansvarligmyndighet (
-                                                    objid serial NOT NULL,
-                                                    sjoeterritorium_fk int,
+                                                    objid text NOT NULL,
+                                                    sjoeterritorium_fk text,
                                                     ansvarligmyndighet text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE sjoeterritorium_sonetype (
-                                          sjoeterritorium_fk int,
+                                          sjoeterritorium_fk text,
                                           sonetype_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE sjoeterritorium_miljoeomraade (
-                                               sjoeterritorium_fk int,
+                                               sjoeterritorium_fk text,
                                                miljoeomraade_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE territorialfarvann_informasjon (
-                                                objid serial NOT NULL,
-                                                territorialfarvann_fk int,
+                                                objid text NOT NULL,
+                                                territorialfarvann_fk text,
                                                 informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE territorialfarvann_land (
-                                         territorialfarvann_fk int,
+                                         territorialfarvann_fk text,
                                          landkode_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE territorialfarvann_ansvarligmyndighet (
-                                                       objid serial NOT NULL,
-                                                       territorialfarvann_fk int,
+                                                       objid text NOT NULL,
+                                                       territorialfarvann_fk text,
                                                        ansvarligmyndighet text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE territorialfarvann_sonetype (
-                                             territorialfarvann_fk int,
+                                             territorialfarvann_fk text,
                                              sonetype_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE territorialfarvann_miljoeomraade (
-                                                  territorialfarvann_fk int,
+                                                  territorialfarvann_fk text,
                                                   miljoeomraade_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE territorialgrense_informasjon (
-                                               objid serial NOT NULL,
-                                               territorialgrense_fk int,
+                                               objid text NOT NULL,
+                                               territorialgrense_fk text,
                                                informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE territorialgrense_ansvarligmyndighet (
-                                                      objid serial NOT NULL,
-                                                      territorialgrense_fk int,
+                                                      objid text NOT NULL,
+                                                      territorialgrense_fk text,
                                                       ansvarligmyndighet text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE territorialomraade_informasjon (
-                                                objid serial NOT NULL,
-                                                territorialomraade_fk int,
+                                                objid text NOT NULL,
+                                                territorialomraade_fk text,
                                                 informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE tidligereomstridtomraade_informasjon (
-                                                      objid serial NOT NULL,
-                                                      tidligereomstridtomraade_fk int,
+                                                      objid text NOT NULL,
+                                                      tidligereomstridtomraade_fk text,
                                                       informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE tilstoetendesone_informasjon (
-                                              objid serial NOT NULL,
-                                              tilstoetendesone_fk int,
+                                              objid text NOT NULL,
+                                              tilstoetendesone_fk text,
                                               informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE tilstoetendesone_land (
-                                       tilstoetendesone_fk int,
+                                       tilstoetendesone_fk text,
                                        landkode_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE tilstoetendesone_ansvarligmyndighet (
-                                                     objid serial NOT NULL,
-                                                     tilstoetendesone_fk int,
+                                                     objid text NOT NULL,
+                                                     tilstoetendesone_fk text,
                                                      ansvarligmyndighet text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE tilstoetendesone_sonetype (
-                                           tilstoetendesone_fk int,
+                                           tilstoetendesone_fk text,
                                            sonetype_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE tilstoetendesone_miljoeomraade (
-                                                tilstoetendesone_fk int,
+                                                tilstoetendesone_fk text,
                                                 miljoeomraade_fk text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE yttergrensesokkel_informasjon (
-                                               objid serial NOT NULL,
-                                               yttergrensesokkel_fk int,
+                                               objid text NOT NULL,
+                                               yttergrensesokkel_fk text,
                                                informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE yttergrensesokkel_ansvarligmyndighet (
-                                                      objid serial NOT NULL,
-                                                      yttergrensesokkel_fk int,
+                                                      objid text NOT NULL,
+                                                      yttergrensesokkel_fk text,
                                                       ansvarligmyndighet text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE yttergrensetilstoetendesone_informasjon (
-                                                         objid serial NOT NULL,
-                                                         yttergrensetilstoetendesone_fk int,
+                                                         objid text NOT NULL,
+                                                         yttergrensetilstoetendesone_fk text,
                                                          informasjon text)
     WITH (OIDS=FALSE);
 
 CREATE TABLE yttergrensetilstoetendesone_ansvarligmyndighet (
-                                                                objid serial NOT NULL,
-                                                                yttergrensetilstoetendesone_fk int,
+                                                                objid text NOT NULL,
+                                                                yttergrensetilstoetendesone_fk text,
                                                                 ansvarligmyndighet text)
     WITH (OIDS=FALSE);
 

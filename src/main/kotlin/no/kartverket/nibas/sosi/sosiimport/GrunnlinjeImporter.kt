@@ -3,6 +3,7 @@ package no.kartverket.nibas.sosi.sosiimport
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.Grunnlinje
 import no.kartverket.nibas.domain.GrunnlinjeInformasjon
+import no.kartverket.nibas.domain.updateSosiIdentifikasjon
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.FastsettingstypeRepository
 import no.kartverket.nibas.repository.GrensestatusRepository
@@ -27,12 +28,11 @@ class GrunnlinjeImporter @Autowired constructor(
     val logger = Logger.getLogger(this::class.java.name)
 
     fun importGrunnlinje(sosiGrunnlinje: SosiGeometri): Grense {
-        return when (val existing = grunnlinjeRepository.findByLokalid(sosiGrunnlinje.getIdent()?.getLokalId()!!)) {
+        val sosiIdent = sosiGrunnlinje.getIdent()
+        return when (val existing = grunnlinjeRepository.findByLokalid(sosiIdent?.getLokalId()!!)) {
             null -> {
                 var grunnlinje = Grunnlinje()
-                grunnlinje.lokalid = sosiGrunnlinje.getIdent()?.getLokalId()
-                grunnlinje.navnerom = sosiGrunnlinje.getIdent()?.getNavnerom()
-                grunnlinje.versjonid = sosiGrunnlinje.getIdent()?.getVersjonId()
+                grunnlinje.updateSosiIdentifikasjon(sosiIdent)
                 grunnlinje.datafangstdato = sosiGrunnlinje.getDatafangstDato()
                 grunnlinje.oppdateringsdato = sosiGrunnlinje.getOppdateringsdato()
                 grunnlinje.datauttaksdato = sosiGrunnlinje.getDataUttaksdato()

@@ -34,35 +34,35 @@ interface CrudRepositoryWithLokalIdFinder<T, ID> : CrudRepository<T, ID> {
     fun findByLokalid(lokalid: String): T?
 }
 
-interface AvtaltAvgrensningslinjeRepository : CrudRepositoryWithLokalIdFinder<Avtaltavgrensningslinje, Int>
-interface RiksgrenseRepository : CrudRepositoryWithLokalIdFinder<Riksgrense, Int>
-interface TerritorialgrenseRepository : CrudRepositoryWithLokalIdFinder<Territorialgrense, Int>
-interface AvtaltAvgrensningslinjeInformasjonRepository : CrudRepository<AvtaltavgrensningslinjeInformasjon, Int>
+interface AvtaltAvgrensningslinjeRepository : CrudRepositoryWithLokalIdFinder<Avtaltavgrensningslinje, String>
+interface RiksgrenseRepository : CrudRepositoryWithLokalIdFinder<Riksgrense, String>
+interface TerritorialgrenseRepository : CrudRepositoryWithLokalIdFinder<Territorialgrense, String>
+interface AvtaltAvgrensningslinjeInformasjonRepository : CrudRepository<AvtaltavgrensningslinjeInformasjon, String>
 interface LandKodeRepository : CrudRepository<Landkode, String>
 interface GrensestatusRepository : CrudRepository<Grensestatus, String>
 interface FastsettingstypeRepository : CrudRepository<Fastsettingstype, String>
 interface TerrengdetaljkodeRepository : CrudRepository<Terrengdetaljkode, String>
 interface NoeyaktighetsklassekodeRepository : CrudRepository<Noeyaktighetsklassekode, String>
 interface TypeendringRepository : CrudRepository<Typeendring, String>
-interface DokumentasjonsreferanseRepository : CrudRepository<Dokumentasjonsreferanse, Int>
-interface DokumentasjonsreferanseDokumentlinkRepository : CrudRepository<DokumentasjonsreferanseDokumentlink, Int>
+interface DokumentasjonsreferanseRepository : CrudRepository<Dokumentasjonsreferanse, String>
+interface DokumentasjonsreferanseDokumentlinkRepository : CrudRepository<DokumentasjonsreferanseDokumentlink, String>
 interface SpraakkodeRepository : CrudRepository<Spraakkode, String>
-interface LovVirkeomraadeGrenseRepository : CrudRepositoryWithLokalIdFinder<Lovvirkeomraadegrense, Int>
-interface LovvirkeomraadeGrenseInformasjonRepository : CrudRepository<LovvirkeomraadegrenseInformasjon, Int>
-interface GrunnlinjeRepository : CrudRepositoryWithLokalIdFinder<Grunnlinje, Int>
-interface GrunnlinjeInformasjonRepository : CrudRepository<GrunnlinjeInformasjon, Int>
-interface AdministrativenhetnavnRepository : CrudRepository<Administrativenhetnavn, Int>
-interface NasjonInformasjonRepository : CrudRepository<NasjonInformasjon, Int>
-interface NasjonRepository : CrudRepositoryWithLokalIdFinder<Nasjon, Int>
-interface FylkesgrenseRepository : CrudRepositoryWithLokalIdFinder<Fylkesgrense, Int>
-interface FylkeInformasjonRepository : CrudRepository<FylkeInformasjon, Int>
-interface FylkeRepository : CrudRepositoryWithLokalIdFinder<Fylke, Int> {
+interface LovVirkeomraadeGrenseRepository : CrudRepositoryWithLokalIdFinder<Lovvirkeomraadegrense, String>
+interface LovvirkeomraadeGrenseInformasjonRepository : CrudRepository<LovvirkeomraadegrenseInformasjon, String>
+interface GrunnlinjeRepository : CrudRepositoryWithLokalIdFinder<Grunnlinje, String>
+interface GrunnlinjeInformasjonRepository : CrudRepository<GrunnlinjeInformasjon, String>
+interface AdministrativenhetnavnRepository : CrudRepository<Administrativenhetnavn, String>
+interface NasjonInformasjonRepository : CrudRepository<NasjonInformasjon, String>
+interface NasjonRepository : CrudRepositoryWithLokalIdFinder<Nasjon, String>
+interface FylkesgrenseRepository : CrudRepositoryWithLokalIdFinder<Fylkesgrense, String>
+interface FylkeInformasjonRepository : CrudRepository<FylkeInformasjon, String>
+interface FylkeRepository : CrudRepositoryWithLokalIdFinder<Fylke, String> {
     fun findByFylkesnummer(fylkesnummer_id: String): Fylke?
 }
-interface KommunegrenseRepository : CrudRepositoryWithLokalIdFinder<Kommunegrense, Int>
-interface KommuneInformasjonRepository : CrudRepository<KommuneInformasjon, Int>
-interface KommuneRepository : CrudRepositoryWithLokalIdFinder<Kommune, Int> {
-    fun findByFylkeFk_Id(id: Int): List<Kommune>
+interface KommunegrenseRepository : CrudRepositoryWithLokalIdFinder<Kommunegrense, String>
+interface KommuneInformasjonRepository : CrudRepository<KommuneInformasjon, String>
+interface KommuneRepository : CrudRepositoryWithLokalIdFinder<Kommune, String> {
+    fun findByFylkeFk_Id(id: String): List<Kommune>
 }
 
 

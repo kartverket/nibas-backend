@@ -47,6 +47,7 @@ data class KommuneRequest(
     @NotBlank
     val lokalid: String,
 
+    //TODO: Vurdere å gjøre påkrevet, fordi det er en påkrevet egenskap i sosi-modellen
     @Schema(description = "Navnerommet for kommunen")
     val navnerom: String?,
 

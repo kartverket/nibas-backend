@@ -14,7 +14,11 @@ import no.kartverket.nibas.api.v1.response.HistorikkRef
 import no.kartverket.nibas.api.v1.response.NasjonRef
 import no.kartverket.nibas.api.v1.response.NasjonResponse
 import org.springframework.http.MediaType
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
 
 @RequestMapping("/v1/nasjoner")
 @Tag(
@@ -50,7 +54,7 @@ interface NasjonApi {
         )
     )
     @GetMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentEn(@Parameter(description = "ID-en til nasjonen man vil hente") @PathVariable id: Int): NasjonResponse
+    fun hentEn(@Parameter(description = "ID-en til nasjonen man vil hente") @PathVariable id: String): NasjonResponse
 
     @Operation(
         summary = "Hent grensene til en gitt nasjon",
@@ -58,12 +62,12 @@ interface NasjonApi {
     )
     @DefaultFeatureCollectionApiResponses
     @GetMapping("/{id}/grenser", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentGrenser(@Parameter(description = "ID-en til nasjonen man vil hente") @PathVariable id: Int): FeatureCollection
+    fun hentGrenser(@Parameter(description = "ID-en til nasjonen man vil hente") @PathVariable id: String): FeatureCollection
 
 
     @PutMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun oppdaterNasjon(
-        @Parameter(description = "ID til nasjonen man vil oppdatere") @PathVariable id: Int,
+        @Parameter(description = "ID til nasjonen man vil oppdatere") @PathVariable id: String,
         @RequestBody oppdatertNasjon: NasjonRequest
     ): NasjonResponse
 
@@ -73,7 +77,7 @@ interface NasjonApi {
     )
     @DefaultHistorikkRefListApiResponses
     @GetMapping("/{id}/historikk", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentHistorikkForEn(@Parameter(description = "ID-en til nasjonen man vil hente historikk for") @PathVariable id: Int): List<HistorikkRef>
+    fun hentHistorikkForEn(@Parameter(description = "ID-en til nasjonen man vil hente historikk for") @PathVariable id: String): List<HistorikkRef>
 
     @Operation(
         summary = "Hent en historisk versjon av en nasjon",
@@ -95,7 +99,7 @@ interface NasjonApi {
     )
     @GetMapping("/{id}/historikk/{revision}", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun hentHistorikkRevisjon(
-        @Parameter(description = "Id til nasjonen man vil hente") @PathVariable id: Int,
+        @Parameter(description = "Id til nasjonen man vil hente") @PathVariable id: String,
         @Parameter(description = "Id til revisjonen man vil hente") @PathVariable revision: Int
     ): NasjonResponse
 }

@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import io.swagger.v3.oas.annotations.media.Schema
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
 import org.locationtech.jts.geom.Geometry
-import org.locationtech.jts.geom.LineString
 
 data class FeatureCollection(
     @Schema(description = "Toppnivå for geojson-strukturen, definert av en konstant med navn type og verdi FeatureCollection")
@@ -37,7 +36,7 @@ data class FeatureProperties(
     val type: String,
 
     @Schema(description = "Id til feature")
-    val id: Int? = null,
+    val id: String? = null,
 
     @Schema(description = "Lokal id som identifiserer geometrien")
     val lokalid: String? = null,
@@ -46,7 +45,7 @@ data class FeatureProperties(
     val navnerom: String? = null,
 
     @Schema(description = "Id til objekt som det vises til i kontekst")
-    val kontekstId: Int? = null,
+    val kontekstId: String? = null,
 
     @Schema(description = "Hvilken kontekst geometrien skal sees i")
     val kontekstType: AdministrativEnhetType? = null

@@ -4,6 +4,7 @@ import no.kartverket.nibas.domain.AdministrativEnhet
 import no.kartverket.nibas.domain.Fylke
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Nasjon
+import no.kartverket.nibas.domain.updateSosiIdentifikasjon
 import no.kartverket.nibas.repository.LandKodeRepository
 import no.kartverket.nibas.sosi.common.SosiKoder
 import no.kartverket.nibas.sosi.model.SosiFlate
@@ -18,16 +19,14 @@ class AdministrativEnhetImporter {
     lateinit var landKodeRepository: LandKodeRepository
 
     fun importer(flate: SosiFlate): AdministrativEnhet {
-        val administrativEnhet = when(flate.getObjType()) {
+        val administrativEnhet = when (flate.getObjType()) {
             SosiKoder.KOMMUNE -> Kommune()
             SosiKoder.FYLKE -> Fylke()
             SosiKoder.NASJON -> Nasjon()
             else -> throw RuntimeException("Ukjent administrativ enhet")
         }
 
-        administrativEnhet.lokalid = flate.getIdent()?.getLokalId()
-        administrativEnhet.navnerom = flate.getIdent()?.getNavnerom()
-        administrativEnhet.versjonid = flate.getIdent()?.getVersjonId()
+        administrativEnhet.updateSosiIdentifikasjon(flate.getIdent())
         administrativEnhet.oppdateringsdato = flate.getOppdateringsdato()
         administrativEnhet.datauttaksdato = flate.getDataUttaksdato()
         administrativEnhet.opphav = flate.getOpphav()
@@ -42,6 +41,5 @@ class AdministrativEnhetImporter {
 
         return administrativEnhet
     }
-
 
 }
