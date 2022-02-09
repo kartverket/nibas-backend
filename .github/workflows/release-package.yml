@@ -75,7 +75,7 @@ jobs:
     - name: Generate terraform variables
       run: |
         cat <<EOF >> terraform.tfvars
-        nibas_backend_version="${{ needs.build.outputs.new_tag }}"
+        nibas_backend_version="v0.0.28"
         EOF
     
     - name: Terraform init
