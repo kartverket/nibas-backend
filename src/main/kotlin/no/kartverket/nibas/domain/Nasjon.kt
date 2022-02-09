@@ -2,12 +2,23 @@ package no.kartverket.nibas.domain
 
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
 import org.hibernate.envers.Audited
-import javax.persistence.*
+import java.util.*
+import javax.persistence.Entity
+import javax.persistence.FetchType
+import javax.persistence.JoinColumn
+import javax.persistence.JoinTable
+import javax.persistence.ManyToMany
+import javax.persistence.OneToMany
+import javax.persistence.Table
 
+/**
+ * id overrides i konstruktør for å kunne overstyre verdi for test.
+ */
 @Table(name = "nasjon")
 @Audited
 @Entity
-class Nasjon(override val id: Int = 0) : AdministrativEnhet(AdministrativEnhetType.NASJON, id) {
+class Nasjon(override val id: String = UUID.randomUUID().toString()) :
+    AdministrativEnhet(AdministrativEnhetType.NASJON) {
 
     @OneToMany(mappedBy = "nasjonFk", fetch = FetchType.LAZY)
     override var administrativenhetnavn: MutableSet<Administrativenhetnavn> = mutableSetOf()

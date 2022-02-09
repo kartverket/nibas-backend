@@ -1,18 +1,23 @@
 package no.kartverket.nibas.domain
 
-import java.time.LocalDate
 import org.hibernate.envers.Audited
-import javax.persistence.*
+import java.time.LocalDate
+import java.util.*
+import javax.persistence.Column
+import javax.persistence.Entity
+import javax.persistence.Id
+import javax.persistence.JoinColumn
+import javax.persistence.ManyToOne
+import javax.persistence.OneToOne
+import javax.persistence.Table
 
 @Table(name = "dokumentasjonsreferanse")
 @Audited
 @Entity
 class Dokumentasjonsreferanse {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "objid", nullable = false)
-    var id: Int? = null
-
+    @Column(name = "objid", nullable = false, updatable = false)
+    val id: String = UUID.randomUUID().toString()
     
     @Column(name = "objtype")
     var objtype: String? = null

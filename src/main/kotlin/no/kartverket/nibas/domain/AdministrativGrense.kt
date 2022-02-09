@@ -12,7 +12,7 @@ import javax.persistence.MappedSuperclass
 abstract class AdministrativGrense : Grense() {
 
     @Column(name = "versjonid")
-    var versjonid: String? = null
+    override var versjonid: String? = null
 
     @Column(name = "sluttdato")
     var sluttdato: LocalDate? = null

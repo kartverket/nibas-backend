@@ -24,7 +24,7 @@ class GrenseControllerTest : NibasMvcTest() {
 
     @Test
     fun thatHentKommunegrenseReturns200_OK() {
-        whenever(grenseService.hentGrense(1, Kommunegrense::class))
+        whenever(grenseService.hentGrense("1", Kommunegrense::class))
             .thenReturn(GrenseBuilder().buildKommunegrense())
 
         get("/v1/grenser/kommunegrenser/1", status().isOk)
@@ -32,7 +32,7 @@ class GrenseControllerTest : NibasMvcTest() {
 
     @Test
     fun thatHentKommunegrenseReturns404_NotFound() {
-        whenever(grenseService.hentGrense(1, Kommunegrense::class))
+        whenever(grenseService.hentGrense("1", Kommunegrense::class))
             .thenReturn(null)
 
         get("/v1/grenser/kommunegrenser/1", status().isNotFound)
@@ -40,10 +40,10 @@ class GrenseControllerTest : NibasMvcTest() {
 
     @Test
     fun thatOppdaterGrenserUpdatesCorrectly() {
-        val kommunegrense1 = FeatureBuilder(1).withGrensetype(GrenseType.Kommunegrense).build()
-        val kommunegrense2 = FeatureBuilder(2).withGrensetype(GrenseType.Kommunegrense).build()
-        val fylkesgrense1 = FeatureBuilder(1).withGrensetype(GrenseType.Fylkesgrense).build()
-        val fylkesgrense2 = FeatureBuilder(2).withGrensetype(GrenseType.Fylkesgrense).build()
+        val kommunegrense1 = FeatureBuilder("1").withGrensetype(GrenseType.Kommunegrense).build()
+        val kommunegrense2 = FeatureBuilder("2").withGrensetype(GrenseType.Kommunegrense).build()
+        val fylkesgrense1 = FeatureBuilder("1").withGrensetype(GrenseType.Fylkesgrense).build()
+        val fylkesgrense2 = FeatureBuilder("2").withGrensetype(GrenseType.Fylkesgrense).build()
 
         val featureCollection =
             FeatureCollection(features = listOf(kommunegrense1, kommunegrense2, fylkesgrense1, fylkesgrense2))

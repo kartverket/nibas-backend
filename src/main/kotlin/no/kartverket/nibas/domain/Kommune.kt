@@ -2,6 +2,7 @@ package no.kartverket.nibas.domain
 
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
 import org.hibernate.envers.Audited
+import java.util.*
 import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.FetchType
@@ -12,10 +13,14 @@ import javax.persistence.ManyToOne
 import javax.persistence.OneToMany
 import javax.persistence.Table
 
+/**
+ * id overrides i konstruktør for å kunne overstyre verdi for test.
+ */
 @Table(name = "kommune")
 @Audited
 @Entity
-class Kommune(override val id: Int = 0) : AdministrativEnhet(AdministrativEnhetType.KOMMUNE, id) {
+class Kommune(override val id: String = UUID.randomUUID().toString()) :
+    AdministrativEnhet(AdministrativEnhetType.KOMMUNE) {
 
     @Column(name = "kommunenummer", nullable = false)
     var kommunenummer: String = ""

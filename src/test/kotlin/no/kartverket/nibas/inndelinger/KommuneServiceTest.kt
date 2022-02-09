@@ -2,11 +2,15 @@ package no.kartverket.nibas.inndelinger
 
 import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.builders.KommuneRequestBuilder
-import no.kartverket.nibas.domain.*
+import no.kartverket.nibas.domain.Avtaltavgrensningslinje
+import no.kartverket.nibas.domain.Fylkesgrense
+import no.kartverket.nibas.domain.Kommunegrense
+import no.kartverket.nibas.domain.Riksgrense
+import no.kartverket.nibas.domain.Territorialgrense
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.KommuneRepository
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.anyInt
+import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -31,8 +35,8 @@ class KommuneServiceTest {
 
     @Test
     fun hentGrenserForKommuneReturnsNullWhenKommuneNotFound() {
-        whenever(kommuneRepository.findById(anyInt())).thenReturn(Optional.empty())
-        assertNull(kommuneService.hentGrenserForKommune(1), "Expected to not find the kommune")
+        whenever(kommuneRepository.findById(anyString())).thenReturn(Optional.empty())
+        assertNull(kommuneService.hentGrenserForKommune("1"), "Expected to not find the kommune")
     }
 
     @Test
@@ -45,9 +49,9 @@ class KommuneServiceTest {
             .withAvtaltavgrensningslinjer(Avtaltavgrensningslinje())
             .build()
 
-        whenever(kommuneRepository.findById(anyInt())).thenReturn(Optional.of(kommune))
+        whenever(kommuneRepository.findById(anyString())).thenReturn(Optional.of(kommune))
 
-        when (val grenserForKommune = kommuneService.hentGrenserForKommune(1)) {
+        when (val grenserForKommune = kommuneService.hentGrenserForKommune("1")) {
             null -> fail("Expected grenser to have a value")
             else -> {
                 assertEquals(15, grenserForKommune.size, "Expected 15 borders")
@@ -82,8 +86,11 @@ class KommuneServiceTest {
 
     @Test
     fun thatOppdaterKommuneReturnsNullWhenKommuneNotFound() {
-        whenever(kommuneRepository.findById(anyInt())).thenReturn(Optional.empty())
-        assertNull(kommuneService.oppdaterKommune(1, KommuneRequestBuilder.DEFAULT_REQUEST), "Expected to not find the kommune")
+        whenever(kommuneRepository.findById(anyString())).thenReturn(Optional.empty())
+        assertNull(
+            kommuneService.oppdaterKommune("1", KommuneRequestBuilder.DEFAULT_REQUEST),
+            "Expected to not find the kommune"
+        )
     }
 
     @Test
@@ -93,10 +100,11 @@ class KommuneServiceTest {
         val navn = "Bergen"
 
         val eksisterende = KommuneBuilder.DEFAULT_KOMMUNE
-        val oppdatertKommune = KommuneRequestBuilder().withNavnerom(navnerom).withLokalId(lokalId).withNavn(navn).build()
+        val oppdatertKommune =
+            KommuneRequestBuilder().withNavnerom(navnerom).withLokalId(lokalId).withNavn(navn).build()
 
-        whenever(kommuneRepository.findById(anyInt())).thenReturn(Optional.of(eksisterende))
-        kommuneService.oppdaterKommune(1, oppdatertKommune)
+        whenever(kommuneRepository.findById(anyString())).thenReturn(Optional.of(eksisterende))
+        kommuneService.oppdaterKommune("1", oppdatertKommune)
 
         val forventetNavnToSave = eksisterende.administrativenhetnavn.first()
         forventetNavnToSave.navn = navn

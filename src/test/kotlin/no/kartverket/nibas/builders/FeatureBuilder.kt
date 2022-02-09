@@ -8,7 +8,7 @@ import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.GeometryFactory
 
-class FeatureBuilder(private val id: Int? = 1) {
+class FeatureBuilder(private val id: String? = "1") {
     companion object {
         val DEFAULT_FEATURE = FeatureBuilder().build()
     }
@@ -16,7 +16,7 @@ class FeatureBuilder(private val id: Int? = 1) {
     private var grenseType: GrenseType = GrenseType.Kommunegrense
     private var lokalid: String = "123"
     private var navnerom: String = "ABC"
-    private var kontekstId: Int = 123
+    private var kontekstId: String = "123"
     private var kontekstType: AdministrativEnhetType = AdministrativEnhetType.KOMMUNE
     private var geometry: Geometry = GeometryFactory().createLineString(arrayOf(Coordinate(0.0, 0.0), Coordinate(1.0, 1.0)))
 
@@ -37,7 +37,7 @@ class FeatureBuilder(private val id: Int? = 1) {
         return this
     }
 
-    fun withKontekstId(kontekstId: Int): FeatureBuilder {
+    fun withKontekstId(kontekstId: String): FeatureBuilder {
         this.kontekstId = kontekstId
         return this
     }

@@ -1,10 +1,15 @@
 package no.kartverket.nibas.builders
 
-import no.kartverket.nibas.domain.*
+import no.kartverket.nibas.domain.Administrativenhetnavn
+import no.kartverket.nibas.domain.Avtaltavgrensningslinje
+import no.kartverket.nibas.domain.Nasjon
+import no.kartverket.nibas.domain.Riksgrense
+import no.kartverket.nibas.domain.Spraakkode
+import no.kartverket.nibas.domain.Territorialgrense
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
 
-class NasjonBuilder(private val id: Int = 1) {
+class NasjonBuilder(private val id: String = "1") {
 
     private var navn: String = "Norge"
     private var spraak: String = "nor"

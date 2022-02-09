@@ -1,10 +1,9 @@
 package no.kartverket.nibas.builders
 
-import no.kartverket.nibas.api.v1.common.Fylkesnummer
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
-import no.kartverket.nibas.api.v1.request.FylkeRequest as FylkeRequest
+import no.kartverket.nibas.api.v1.request.FylkeRequest
 
-class FylkeRequestBuilder(private val id: Int = 1) {
+class FylkeRequestBuilder() {
     companion object {
         val DEFAULT_REQUEST = FylkeRequestBuilder().build()
     }

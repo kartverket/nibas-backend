@@ -3,6 +3,7 @@ package no.kartverket.nibas.sosi.sosiimport
 import no.kartverket.nibas.domain.AdministrativGrense
 import no.kartverket.nibas.domain.Fylkesgrense
 import no.kartverket.nibas.domain.Kommunegrense
+import no.kartverket.nibas.domain.updateSosiIdentifikasjon
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.FastsettingstypeRepository
 import no.kartverket.nibas.repository.GrensestatusRepository
@@ -30,9 +31,7 @@ class AdministrativGrenseImporter @Autowired constructor(
             else -> throw RuntimeException("Ukjent grensetype for import av administrativ grense")
         }
 
-        grense.lokalid = sosiGeometri.getIdent()?.getLokalId()
-        grense.navnerom = sosiGeometri.getIdent()?.getNavnerom()
-        grense.versjonid = sosiGeometri.getIdent()?.getVersjonId()
+        grense.updateSosiIdentifikasjon(sosiGeometri.getIdent())
         grense.oppdateringsdato = sosiGeometri.getOppdateringsdato()
         grense.datauttaksdato = sosiGeometri.getDataUttaksdato()
         grense.noeyaktighet = sosiGeometri.getKvalitet()?.getNoyaktighet()

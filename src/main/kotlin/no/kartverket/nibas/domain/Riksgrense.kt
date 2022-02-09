@@ -1,7 +1,8 @@
 package no.kartverket.nibas.domain
 
-import java.time.LocalDate
 import org.hibernate.envers.Audited
+import java.time.LocalDate
+import java.util.*
 import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.FetchType
@@ -10,15 +11,18 @@ import javax.persistence.ManyToOne
 import javax.persistence.OneToMany
 import javax.persistence.Table
 
+/**
+ * id overrides i konstruktør for å kunne overstyre verdi for test.
+ */
 @Table(name = "riksgrense")
 @Audited
 @Entity
-class Riksgrense : Grense() {
+class Riksgrense(override val id: String = UUID.randomUUID().toString()) : Grense() {
 
     override var objtype: String? = "Riksgrense"
 
     @Column(name = "versjonid")
-    var versjonid: String? = null
+    override var versjonid: String? = null
 
     @Column(name = "datafangstdato")
     var datafangstdato: LocalDate? = null

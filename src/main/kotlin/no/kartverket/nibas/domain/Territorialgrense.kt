@@ -1,7 +1,7 @@
 package no.kartverket.nibas.domain
 
-import java.time.LocalDate
 import org.hibernate.envers.Audited
+import java.time.LocalDate
 import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.FetchType
@@ -15,9 +15,9 @@ import javax.persistence.Table
 @Entity
 class Territorialgrense : Grense() {
     override var objtype: String? = "Territorialgrense"
-    
+
     @Column(name = "versjonid")
-    var versjonid: String? = null
+    override var versjonid: String? = null
 
     @Column(name = "datafangstdato")
     var datafangstdato: LocalDate? = null
@@ -41,25 +41,25 @@ class Territorialgrense : Grense() {
     @Column(name = "tidspunktendring")
     var tidspunktendring: LocalDate? = null
 
-    
+
     @Column(name = "opphav")
     var opphav: String? = null
 
     @Column(name = "omraadeid")
     var omraadeid: Int? = null
 
-    
+
     @Column(name = "originaldatavert")
     var originaldatavert: String? = null
 
     @Column(name = "kopidato")
     var kopidato: LocalDate? = null
 
-    
+
     @Column(name = "produkt")
     var produkt: String? = null
 
-    
+
     @Column(name = "versjon")
     var versjon: String? = null
 
@@ -69,7 +69,7 @@ class Territorialgrense : Grense() {
     @Column(name = "noeyaktighet")
     var noeyaktighet: Int? = null
 
-    
+
     @Column(name = "gjelderomraade")
     var gjelderomraade: String? = null
 
@@ -77,7 +77,7 @@ class Territorialgrense : Grense() {
     @JoinColumn(name = "grensestatus")
     var grensestatus: Grensestatus? = null
 
-    
+
     @Column(name = "virkeomraadenavn")
     var virkeomraadenavn: String? = null
 

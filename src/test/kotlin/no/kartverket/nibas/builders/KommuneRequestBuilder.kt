@@ -2,9 +2,9 @@ package no.kartverket.nibas.builders
 
 
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
-import no.kartverket.nibas.api.v1.request.KommuneRequest as KommuneRequest
+import no.kartverket.nibas.api.v1.request.KommuneRequest
 
-class KommuneRequestBuilder(private val id: Int = 1) {
+class KommuneRequestBuilder {
     companion object {
         val DEFAULT_REQUEST = KommuneRequestBuilder().build()
     }

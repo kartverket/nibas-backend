@@ -2,6 +2,7 @@ package no.kartverket.nibas.sosi.sosiimport
 
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.Riksgrense
+import no.kartverket.nibas.domain.updateSosiIdentifikasjon
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.FastsettingstypeRepository
 import no.kartverket.nibas.repository.GrensestatusRepository
@@ -24,12 +25,11 @@ class RiksgrenseImporter @Autowired constructor(
     val logger: Logger = Logger.getLogger(this::class.java.name)
 
     fun importSosiRiksgrense(sosiRiksgrense: SosiGeometri): Grense {
-        return when (val existing = riksgrenseRepository.findByLokalid(sosiRiksgrense.getIdent()?.getLokalId()!!)) {
+        val sosiIdent = sosiRiksgrense.getIdent()
+        return when (val existing = riksgrenseRepository.findByLokalid(sosiIdent?.getLokalId()!!)) {
             null -> {
                 var riksgrense = Riksgrense()
-                riksgrense.lokalid = sosiRiksgrense.getIdent()?.getLokalId()
-                riksgrense.navnerom = sosiRiksgrense.getIdent()?.getNavnerom()
-                riksgrense.versjonid = sosiRiksgrense.getIdent()?.getVersjonId()
+                riksgrense.updateSosiIdentifikasjon(sosiIdent)
                 riksgrense.datafangstdato = sosiRiksgrense.getDatafangstDato()
                 riksgrense.oppdateringsdato = sosiRiksgrense.getOppdateringsdato()
                 riksgrense.datauttaksdato = sosiRiksgrense.getDataUttaksdato()

@@ -10,11 +10,15 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.request.FylkeRequest
-import no.kartverket.nibas.api.v1.response.FylkeResponse
 import no.kartverket.nibas.api.v1.response.FylkeRef
+import no.kartverket.nibas.api.v1.response.FylkeResponse
 import no.kartverket.nibas.api.v1.response.HistorikkRef
 import org.springframework.http.MediaType
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
 
 @RequestMapping("/v1/fylker")
 @Tag(
@@ -50,7 +54,7 @@ interface FylkeApi {
         )
     )
     @GetMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentEn(@Parameter(description = "ID-en til fylket man vil hente") @PathVariable id: Int): FylkeResponse
+    fun hentEn(@Parameter(description = "ID-en til fylket man vil hente") @PathVariable id: String): FylkeResponse
 
     @Operation(
         summary = "Hent grensene til et gitt fylke",
@@ -58,12 +62,12 @@ interface FylkeApi {
     )
     @DefaultFeatureCollectionApiResponses
     @GetMapping("/{id}/grenser", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentGrenser(@Parameter(description = "ID-en til fylket man vil hente") @PathVariable id: Int): FeatureCollection
+    fun hentGrenser(@Parameter(description = "ID-en til fylket man vil hente") @PathVariable id: String): FeatureCollection
 
 
     @PutMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun oppdaterFylke(
-        @Parameter(description = "ID til fylket man vil oppdatere") @PathVariable id: Int,
+        @Parameter(description = "ID til fylket man vil oppdatere") @PathVariable id: String,
         @RequestBody oppdatertFylke: FylkeRequest
     ): FylkeResponse
 
@@ -73,7 +77,7 @@ interface FylkeApi {
     )
     @DefaultHistorikkRefListApiResponses
     @GetMapping("/{id}/historikk", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentHistorikkForEn(@Parameter(description = "ID-en til fylket man vil hente historikk for") @PathVariable id: Int): List<HistorikkRef>
+    fun hentHistorikkForEn(@Parameter(description = "ID-en til fylket man vil hente historikk for") @PathVariable id: String): List<HistorikkRef>
 
     @Operation(
         summary = "Hent en historisk versjon av et fylke",
@@ -95,7 +99,7 @@ interface FylkeApi {
     )
     @GetMapping("/{id}/historikk/{revision}", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun hentHistorikkRevisjon(
-        @Parameter(description = "ID-en til fylket man vil hente") @PathVariable id: Int,
+        @Parameter(description = "ID-en til fylket man vil hente") @PathVariable id: String,
         @Parameter(description = "RevisjonsId til revisjonen man vil hente") @PathVariable revision: Int
     ): FylkeResponse
 }

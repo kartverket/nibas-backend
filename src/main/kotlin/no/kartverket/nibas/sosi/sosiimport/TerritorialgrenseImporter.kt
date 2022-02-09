@@ -2,6 +2,7 @@ package no.kartverket.nibas.sosi.sosiimport
 
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.Territorialgrense
+import no.kartverket.nibas.domain.updateSosiIdentifikasjon
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.FastsettingstypeRepository
 import no.kartverket.nibas.repository.GrensestatusRepository
@@ -26,15 +27,12 @@ class TerritorialgrenseImporter @Autowired constructor(
     val logger: Logger = Logger.getLogger(this::class.java.name)
 
     fun importSosiTerritorialgrense(sosiTerritorialgrense: SosiGeometri): Grense {
-
-
+        val sosiIdent = sosiTerritorialgrense.getIdent()
         return when (val existing =
-            territorialgrenseRepository.findByLokalid(sosiTerritorialgrense.getIdent()?.getLokalId()!!)) {
+            territorialgrenseRepository.findByLokalid(sosiIdent?.getLokalId()!!)) {
             null -> {
                 var territorialgrense = Territorialgrense()
-                territorialgrense.lokalid = sosiTerritorialgrense.getIdent()?.getLokalId()
-                territorialgrense.navnerom = sosiTerritorialgrense.getIdent()?.getNavnerom()
-                territorialgrense.versjonid = sosiTerritorialgrense.getIdent()?.getVersjonId()
+                territorialgrense.updateSosiIdentifikasjon(sosiIdent)
                 territorialgrense.datafangstdato = sosiTerritorialgrense.getDatafangstDato()
                 territorialgrense.oppdateringsdato = sosiTerritorialgrense.getOppdateringsdato()
                 territorialgrense.datauttaksdato = sosiTerritorialgrense.getDataUttaksdato()
