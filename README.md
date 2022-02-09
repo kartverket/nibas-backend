@@ -1,4 +1,5 @@
 # nibas-backend
+TODO: Fjern meg
 
 Spring Boot applikasjon som serverer informasjon om administrative grenser
 
