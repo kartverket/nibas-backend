@@ -1,6 +1,7 @@
 # nibas-backend
 
 Spring Boot applikasjon som serverer informasjon om administrative grenser
+TODO: Fjern meg.
 
 # Bygge
 `./gradlew assemble`
