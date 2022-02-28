@@ -3,13 +3,14 @@ package no.kartverket.nibas.domain
 import org.hibernate.envers.Audited
 import java.time.LocalDate
 import javax.persistence.Column
+import javax.persistence.Embedded
 import javax.persistence.JoinColumn
 import javax.persistence.ManyToOne
 import javax.persistence.MappedSuperclass
 
 @MappedSuperclass
 @Audited
-abstract class AdministrativGrense : Grense() {
+abstract class AdministrativGrense : ContainingMetadataForAdmGrenser, Grense() {
 
     @Column(name = "versjonid")
     override var versjonid: String? = null
@@ -20,49 +21,32 @@ abstract class AdministrativGrense : Grense() {
     @Column(name = "datauttaksdato")
     var datauttaksdato: LocalDate? = null
 
-    @ManyToOne
-    @JoinColumn(name = "typeendring")
-    var typeendring: Typeendring? = null
+    @Column(name = "oppdateringsdato")
+    override var oppdateringsdato: LocalDate = LocalDate.now()
 
-    @Column(name = "tidspunktendring")
-    var tidspunktendring: LocalDate? = null
+    @Embedded
+    var endringsflagg: Endringsflagg? = Endringsflagg()
 
-    @Column(name = "maalemetode")
-    var maalemetode: String? = null
-
-    @Column(name = "noeyaktighet")
-    var noeyaktighet: Int? = null
-
+    @Embedded
+    override var kvalitet: Posisjonskvalitet? = Posisjonskvalitet()
 
     @Column(name = "opphav")
-    var opphav: String? = null
+    override var opphav: String? = null
 
-
-    @Column(name = "produkt")
-    var produkt: String? = null
-
-
-    @Column(name = "versjon")
-    var versjon: String? = null
+    @Embedded
+    var registreringsversjon: Registreringsversjon? = Registreringsversjon()
 
     @Column(name = "gyldigfra")
-    var gyldigfra: LocalDate? = null
+    override var gyldigFra: LocalDate? = null
 
     @Column(name = "gyldigtil")
-    var gyldigtil: LocalDate? = null
+    override var gyldigTil: LocalDate? = null
 
-    @Column(name = "omraadeid")
-    var omraadeid: Int? = null
-
-
-    @Column(name = "originaldatavert")
-    var originaldatavert: String? = null
-
-    @Column(name = "kopidato")
-    var kopidato: LocalDate? = null
+    @Embedded
+    var kopidata: Kopidata? = Kopidata()
 
     @Column(name = "datafangstdato")
-    var datafangstdato: LocalDate? = null
+    override var datafangstdato: LocalDate? = null
 
     @Column(name = "omtvistet")
     var omtvistet: Boolean? = null

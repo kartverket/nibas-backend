@@ -14,11 +14,14 @@ import javax.persistence.Table
 @Table(name = "lovvirkeomraadegrense")
 @Audited
 @Entity
-class Lovvirkeomraadegrense : Grense() {
+class Lovvirkeomraadegrense : Grense(), LovvirkeomraadeMetadata {
     override var objtype: String? = "LovVirkeområdeGrense"
 
     @Column(name = "versjonid")
     override var versjonid: String? = null
+
+    @Column(name = "oppdateringsdato")
+    override var oppdateringsdato: LocalDate? = LocalDate.now()
 
     @Column(name = "datafangstdato")
     var datafangstdato: LocalDate? = null
@@ -102,5 +105,6 @@ class Lovvirkeomraadegrense : Grense() {
     // Uten at vi behøver definere egen entity for dette.
     @ElementCollection
     var kommunenummer: MutableSet<String> = mutableSetOf()
+
 
 }

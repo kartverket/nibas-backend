@@ -17,7 +17,7 @@ import javax.persistence.Table
 @Table(name = "riksgrense")
 @Audited
 @Entity
-class Riksgrense(override val id: String = UUID.randomUUID().toString()) : Grense() {
+class Riksgrense(override val id: String = UUID.randomUUID().toString()) : Grense(), RiksgrenseMetadata {
 
     override var objtype: String? = "Riksgrense"
 
@@ -38,6 +38,9 @@ class Riksgrense(override val id: String = UUID.randomUUID().toString()) : Grens
 
     @Column(name = "datauttaksdato")
     var datauttaksdato: LocalDate? = null
+
+    @Column(name = "oppdateringsdato")
+    override var oppdateringsdato: LocalDate? = LocalDate.now()
 
     @ManyToOne
     @JoinColumn(name = "typeendring")

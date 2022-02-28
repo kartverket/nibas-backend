@@ -38,16 +38,17 @@ data class FeatureProperties(
     @Schema(description = "Id til feature")
     val id: String? = null,
 
-    @Schema(description = "Lokal id som identifiserer geometrien")
-    val lokalid: String? = null,
-
-    @Schema(description = "Navnerommet til typen")
-    val navnerom: String? = null,
-
     @Schema(description = "Id til objekt som det vises til i kontekst")
     val kontekstId: String? = null,
 
     @Schema(description = "Hvilken kontekst geometrien skal sees i")
-    val kontekstType: AdministrativEnhetType? = null
+    val kontekstType: AdministrativEnhetType? = null,
+
+    //TODO: Lar denne ligge her midlertidig, bør flyttes inn i metadata-type også for de ikke-adm.grensene
+    @Schema(description = "Identifikasjon for grensen i sosi-modellen.")
+    val identifikasjon: Identifikasjon? = null,
+
+    @Schema(description = "Diverse metadata-felter fra sosi-modellen.")
+    val metadata: AdmGrenserMetadata? = null,
 )
 

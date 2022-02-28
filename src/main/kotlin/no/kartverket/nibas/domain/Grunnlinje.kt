@@ -13,7 +13,7 @@ import javax.persistence.Table
 @Table(name = "grunnlinje")
 @Audited
 @Entity
-class Grunnlinje : Grense() {
+class Grunnlinje : Grense(), MaritimeGrenserMetadata {
     override var objtype: String? = "Grunnlinje"
     
     @Column(name = "versjonid")
@@ -33,6 +33,9 @@ class Grunnlinje : Grense() {
 
     @Column(name = "datauttaksdato")
     var datauttaksdato: LocalDate? = null
+
+    @Column(name = "oppdateringsdato")
+    override var oppdateringsdato: LocalDate? = LocalDate.now()
 
     @ManyToOne
     @JoinColumn(name = "typeendring")

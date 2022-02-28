@@ -14,8 +14,17 @@ import javax.persistence.Table
 @Audited
 @Entity
 class Fylkesgrense(override val id: String = UUID.randomUUID().toString()) : AdministrativGrense() {
+
     override var objtype: String? = "Fylkesgrense"
 
     @OneToMany(mappedBy = "fylkesgrenseFk", fetch = FetchType.LAZY)
     var dokumentasjonsreferanse: MutableSet<Dokumentasjonsreferanse> = mutableSetOf()
+
+    @OneToMany(mappedBy = "fylkesgrenseFk", fetch = FetchType.LAZY)
+    var informasjonList: MutableSet<FylkesgrenseInformasjon> = mutableSetOf()
+
+    override fun informasjon(): List<String> {
+        return this.informasjonList.mapNotNull { it.informasjon }
+    }
+
 }

@@ -15,7 +15,7 @@ import javax.persistence.Table
 @Table(name = "avtaltavgrensningslinje")
 @Audited
 @Entity
-class Avtaltavgrensningslinje : Grense() {
+class Avtaltavgrensningslinje : Grense(), MaritimeGrenserMetadata {
     override var objtype: String? = "AvtaltAvgrensningslinje"
 
     @Column(name = "versjonid")
@@ -43,6 +43,8 @@ class Avtaltavgrensningslinje : Grense() {
     @Column(name = "tidspunktendring")
     var tidspunktendring: LocalDate? = null
 
+    @Column(name = "oppdateringsdato")
+    override var oppdateringsdato: LocalDate? = LocalDate.now()
 
     @Column(name = "opphav")
     var opphav: String? = null

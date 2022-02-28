@@ -55,11 +55,11 @@ GET http://localhost:8080/v1/kommuner/1/historikk
 GET http://localhost:8080/v1/kommuner/1/historikk/1
 
 ### GET Grenser
-http://localhost:8080/v1/grenser/riksgrenser/1
+http://localhost:8080/v1/grenser/riksgrenser/e5559a2c-9bda-4436-9b7a-6d15a7944aca
 ###
 http://localhost:8080/v1/grenser/riksgrenser/1/historikk
 ###
-http://localhost:8080/v1/grenser/fylkesgrenser/1
+http://localhost:8080/v1/grenser/fylkesgrenser/46c77dbf-278f-4ef1-908a-d3c4aa2bc103
 ###
 http://localhost:8080/v1/grenser/fylkesgrenser/1/historikk
 ###
@@ -71,7 +71,7 @@ http://localhost:8080/v1/grenser/avtaltavgrensningslinjer/1
 ###
 http://localhost:8080/v1/grenser/avtaltavgrensningslinjer/1/historikk
 ###
-http://localhost:8080/v1/grenser/kommunegrenser/1
+http://localhost:8080/v1/grenser/kommunegrenser/a2bc27de-58de-4b62-a96a-7273afd5c15a
 ###
 http://localhost:8080/v1/grenser/kommunegrenser/1/historikk
 

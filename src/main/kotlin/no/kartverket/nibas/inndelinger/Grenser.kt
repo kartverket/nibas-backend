@@ -5,9 +5,11 @@ import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.FeatureProperties
+import no.kartverket.nibas.api.v1.common.geojson.Identifikasjon
 import no.kartverket.nibas.api.v1.response.HistorikkRef
 import no.kartverket.nibas.domain.AdministrativEnhet
 import no.kartverket.nibas.domain.Avtaltavgrensningslinje
+import no.kartverket.nibas.domain.ContainingMetadataForAdmGrenser
 import no.kartverket.nibas.domain.Fylke
 import no.kartverket.nibas.domain.Fylkesgrense
 import no.kartverket.nibas.domain.Grense
@@ -15,6 +17,7 @@ import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Kommunegrense
 import no.kartverket.nibas.domain.Riksgrense
 import no.kartverket.nibas.domain.Territorialgrense
+import no.kartverket.nibas.domain.toMetadata
 import no.kartverket.nibas.repository.AvtaltAvgrensningslinjeRepository
 import no.kartverket.nibas.repository.FylkeRepository
 import no.kartverket.nibas.repository.FylkesgrenseRepository
@@ -172,9 +175,6 @@ class GrenseService @Autowired constructor(
         val oppdaterte = eksisterendeGrenser.map { gammel ->
             val ny = oppdaterteFeatures.find { it.properties.id == gammel.id }
             gammel.grense = ny?.geometry as LineString
-            // TODO: Burde vi sette navnerom og lokalid fra innkommende feature? LokalId skal aldri endre seg og skulle helst vært val.
-            gammel.navnerom = ny.properties.navnerom!!
-            gammel.lokalid = ny.properties.lokalid!!
             gammel
         }
         grenseRepository.saveAll(oppdaterte)
@@ -194,8 +194,6 @@ class GrenseService @Autowired constructor(
 
                 grense.grense = feature.geometry as LineString
                 grense.objtype = feature.properties.type
-                // TODO: Burde ikke behøve å sette navnerom fra feature, den er default satt i entiteten
-                grense.navnerom = feature.properties.navnerom!!
                 grense
             }
             grenseRepository.saveAll(nyeGrenseObjekterForEnhet)
@@ -242,15 +240,21 @@ enum class GrenseType {
 }
 
 fun grenseToFeature(grense: Grense, kontekstId: String? = null, kontekstType: AdministrativEnhetType? = null): Feature {
+    var featureProperties = FeatureProperties(
+        type = grense.objtype!!,
+        id = grense.id,
+        kontekstId = kontekstId,
+        kontekstType = kontekstType,
+        identifikasjon = Identifikasjon(grense.lokalid, grense.navnerom)
+    )
+    if (grense is ContainingMetadataForAdmGrenser) {
+        featureProperties = featureProperties.copy(
+            metadata = grense.toMetadata()
+        )
+    }
+
     return Feature(
-        properties = FeatureProperties(
-            type = grense.objtype!!,
-            id = grense.id,
-            lokalid = grense.lokalid,
-            navnerom = grense.navnerom,
-            kontekstId = kontekstId,
-            kontekstType = kontekstType
-        ),
+        properties = featureProperties,
         geometry = grense.grense!!
     )
 }

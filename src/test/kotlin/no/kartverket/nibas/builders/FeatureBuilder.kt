@@ -3,6 +3,7 @@ package no.kartverket.nibas.builders
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureProperties
+import no.kartverket.nibas.api.v1.common.geojson.Identifikasjon
 import no.kartverket.nibas.inndelinger.GrenseType
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.Geometry
@@ -18,14 +19,14 @@ class FeatureBuilder(private val id: String? = "1") {
     private var navnerom: String = "ABC"
     private var kontekstId: String = "123"
     private var kontekstType: AdministrativEnhetType = AdministrativEnhetType.KOMMUNE
-    private var geometry: Geometry = GeometryFactory().createLineString(arrayOf(Coordinate(0.0, 0.0), Coordinate(1.0, 1.0)))
+    private var geometry: Geometry =
+        GeometryFactory().createLineString(arrayOf(Coordinate(0.0, 0.0), Coordinate(1.0, 1.0)))
 
     fun build() = Feature(
         properties = FeatureProperties(
             type = grenseType.toString(),
             id = id,
-            lokalid = lokalid,
-            navnerom = navnerom,
+            identifikasjon = Identifikasjon(lokalid, navnerom),
             kontekstId = kontekstId,
             kontekstType = kontekstType
         ),

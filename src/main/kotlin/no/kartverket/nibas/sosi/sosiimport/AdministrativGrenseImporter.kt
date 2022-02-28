@@ -32,16 +32,16 @@ class AdministrativGrenseImporter @Autowired constructor(
         }
 
         grense.updateSosiIdentifikasjon(sosiGeometri.getIdent())
-        grense.oppdateringsdato = sosiGeometri.getOppdateringsdato()
+        grense.oppdateringsdato = sosiGeometri.getOppdateringsdato()!!
         grense.datauttaksdato = sosiGeometri.getDataUttaksdato()
-        grense.noeyaktighet = sosiGeometri.getKvalitet()?.getNoyaktighet()
+        grense.kvalitet?.noeyaktighet = sosiGeometri.getKvalitet()?.getNoyaktighet()
         grense.opphav = sosiGeometri.getOpphav()
-        grense.gyldigfra = sosiGeometri.getGyldigFra()
-        grense.gyldigtil = sosiGeometri.getGyldigTil()
+        grense.gyldigFra = sosiGeometri.getGyldigFra()
+        grense.gyldigTil = sosiGeometri.getGyldigTil()
         grense.datafangstdato = sosiGeometri.getDatafangstDato()
         grense.omtvistet = sosiGeometri.getOmtvistet()
 
-        grense.maalemetode = when (val maalemetode = sosiGeometri.getKvalitet()?.getMalemetode()) {
+        grense.kvalitet?.maalemetode = when (val maalemetode = sosiGeometri.getKvalitet()?.getMalemetode()) {
             null -> null
             else -> kodelisteService.getMalemetodeIdByCodeValue(maalemetode)
         }
