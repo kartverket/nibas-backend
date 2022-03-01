@@ -1,17 +1,10 @@
 package no.kartverket.nibas.domain
 
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
+import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import org.hibernate.envers.Audited
 import java.util.*
-import javax.persistence.Column
-import javax.persistence.Entity
-import javax.persistence.FetchType
-import javax.persistence.JoinColumn
-import javax.persistence.JoinTable
-import javax.persistence.ManyToMany
-import javax.persistence.ManyToOne
-import javax.persistence.OneToMany
-import javax.persistence.Table
+import javax.persistence.*
 
 /**
  * id overrides i konstruktør for å kunne overstyre verdi for test.
@@ -32,45 +25,38 @@ class Fylke(override val id: String = UUID.randomUUID().toString()) :
     @JoinColumn(name = "nasjon_fk")
     var nasjonFk: Nasjon? = null
 
-    @ManyToMany
-    @JoinTable(
-        schema = "nibas",
-        name = "fylke_fylkesgrense",
-        joinColumns = arrayOf(JoinColumn(name = "fylke_fk")),
-        inverseJoinColumns = arrayOf(JoinColumn(name = "fylkesgrense_fk"))
-    )
-    var fylkesgrenser: MutableSet<Fylkesgrense> = mutableSetOf()
+    @OneToMany(mappedBy = "fylke", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    var fylkesgrenser: MutableSet<FylkeFylkesgrense> = mutableSetOf()
 
-    @ManyToMany
-    @JoinTable(
-        schema = "nibas",
-        name = "fylke_avtaltavgrensningslinje",
-        joinColumns = arrayOf(JoinColumn(name = "fylke_fk")),
-        inverseJoinColumns = arrayOf(JoinColumn(name = "avtaltavgrensningslinje_fk"))
-    )
-    override var avtaltavgrensningslinjer: MutableSet<Avtaltavgrensningslinje> = mutableSetOf()
+    @OneToMany(mappedBy = "fylke", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    var avtaltavgrensningslinjer: MutableSet<FylkeAvtaltavgrensningslinje> = mutableSetOf()
 
-    @ManyToMany
-    @JoinTable(
-        schema = "nibas",
-        name = "fylke_territorialgrense",
-        joinColumns = arrayOf(JoinColumn(name = "fylke_fk")),
-        inverseJoinColumns = arrayOf(JoinColumn(name = "territorialgrense_fk"))
-    )
-    override var territorialgrenser: MutableSet<Territorialgrense> = mutableSetOf()
+    @OneToMany(mappedBy = "fylke", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    var territorialgrenser: MutableSet<FylkeTerritorialgrense> = mutableSetOf()
 
-    @ManyToMany
-    @JoinTable(
-        schema = "nibas",
-        name = "fylke_riksgrense",
-        joinColumns = arrayOf(JoinColumn(name = "fylke_fk")),
-        inverseJoinColumns = arrayOf(JoinColumn(name = "riksgrense_fk"))
-    )
-    override var riksgrenser: MutableSet<Riksgrense> = mutableSetOf()
+    @OneToMany(mappedBy = "fylke", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    var riksgrenser: MutableSet<FylkeRiksgrense> = mutableSetOf()
+
 
     @OneToMany(mappedBy = "fylkeFk", fetch = FetchType.LAZY)
     var informasjon: MutableSet<FylkeInformasjon> = mutableSetOf()
 
     @OneToMany(mappedBy = "fylkeFk", fetch = FetchType.LAZY)
     override var administrativenhetnavn: MutableSet<Administrativenhetnavn> = mutableSetOf()
+
+    override fun oppdaterFlate() {
+        flate = SosiGeometryFunctions.beregnFlate(fylkesgrenser + avtaltavgrensningslinjer + territorialgrenser + riksgrenser)
+    }
+
+    override fun oppdaterEllerLeggTilGrenseKobling(grense: Grense, attributter: GrenseKoblingAttributter) {
+        val (samling, default) = when(grense) {
+            is Fylkesgrense -> SamlingOgDefault(fylkesgrenser, FylkeFylkesgrense(this, grense, attributter))
+            is Avtaltavgrensningslinje -> SamlingOgDefault(avtaltavgrensningslinjer, FylkeAvtaltavgrensningslinje(this, grense, attributter))
+            is Territorialgrense -> SamlingOgDefault(territorialgrenser, FylkeTerritorialgrense(this, grense, attributter))
+            is Riksgrense -> SamlingOgDefault(riksgrenser, FylkeRiksgrense(this, grense, attributter))
+            else -> throw RuntimeException("Kan ikke legge til ${grense::class.simpleName} på enhet Fylke")
+        }
+
+        oppdaterSamling(grense, attributter, samling, default)
+    }
 }

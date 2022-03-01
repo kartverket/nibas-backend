@@ -9,7 +9,7 @@ import no.kartverket.nibas.api.v1.response.HistorikkRef
 import no.kartverket.nibas.api.v1.response.KommuneRef
 import no.kartverket.nibas.api.v1.response.KommuneResponse
 import no.kartverket.nibas.api.v1.response.Kommunenummer
-import no.kartverket.nibas.domain.Grense
+import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
@@ -47,8 +47,7 @@ class KommuneController @Autowired constructor(
         return when (val grenser = kommuneService.hentGrenserForKommune(id)) {
             null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
             else -> FeatureCollection(
-                features = grenser.map { grenseToFeature(it, id, AdministrativEnhetType.KOMMUNE) }
-                    .sortedBy { it.properties.id }
+                features = grenser.sortedBy { it.grenseKoblingAttributter.rekkefoelge }.map { grenseKoblingToFeature(id, AdministrativEnhetType.KOMMUNE, it) }
             )
         }
     }
@@ -82,13 +81,13 @@ class KommuneService @Autowired constructor(
     fun hentKommune(id: String) = kommuneRepository.findById(id).unwrap()
     fun hentKommunerForFylke(fylkeId: String) = kommuneRepository.findByFylkeFk_Id(fylkeId)
 
-    fun hentGrenserForKommune(id: String): Set<Grense>? {
-        return kommuneRepository.findById(id).unwrap()?.let {
-            it.kommunegrenser +
-                    it.fylkesgrenser +
-                    it.riksgrenser +
-                    it.territorialgrenser +
-                    it.avtaltavgrensningslinjer
+    fun hentGrenserForKommune(id: String): Set<GrenseKobling>? {
+        return kommuneRepository.findById(id).unwrap()?.let { kommune ->
+            kommune.kommunegrenser +
+                    kommune.fylkesgrenser +
+                    kommune.riksgrenser +
+                    kommune.territorialgrenser +
+                    kommune.avtaltavgrensningslinjer
         }
     }
 

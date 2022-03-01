@@ -47,16 +47,16 @@ class NasjonImporter {
 
                 runBlocking {
                     withContext(Dispatchers.Default) {
-                        val deferredSkall = flate.getSkallReferanser().map { ref ->
+                        val deferredSkall = flate.getSkallReferanser().mapIndexed { rekkefoelge, ref ->
                             async {
-                                importerNasjonRef(ref, root)
+                                importerNasjonRef(nasjon, ref, root, rekkefoelge)
                             }
                         }
 
-                        val deferredHull = flate.getHullReferanser().map { liste ->
-                            liste.map { ref ->
+                        val deferredHull = flate.getHullReferanser().mapIndexed { hullIndex, liste ->
+                            liste.mapIndexed { rekkefoelge, ref ->
                                 async {
-                                    importerNasjonRef(ref, root)
+                                    importerNasjonRef(nasjon, ref, root, rekkefoelge, hullIndex)
                                 }
                             }
                         }
@@ -99,7 +99,7 @@ class NasjonImporter {
         }
     }
 
-    private fun importerNasjonRef(ref: SosiReferanse, root: SosiObjekt): NasjonReferanseImportResult {
+    private fun importerNasjonRef(nasjon: Nasjon, ref: SosiReferanse, root: SosiObjekt, rekkefoelge: Int, hullIndex: Int? = null): NasjonReferanseImportResult {
         val referanse = ref.getVerdiUtenRetningOgParentes()
         when (val grenseRef = root.getObjektMedId(referanse)) {
             null -> throw RuntimeException("Finner ikke grense som refereres til. Feil i datagrunnlaget. Ref: $referanse")
@@ -107,13 +107,13 @@ class NasjonImporter {
                 val importertGrense = grenseImporter.importerGrense(grenseRef)
                 val result = NasjonReferanseImportResult()
                 when (importertGrense) {
-                    is Avtaltavgrensningslinje -> result.avtaltavgrensningslinjer.add(importertGrense)
-                    is Territorialgrense -> result.territorialgrenser.add(importertGrense)
-                    is Riksgrense -> result.riksgrenser.add(importertGrense)
+                    is Avtaltavgrensningslinje -> result.avtaltavgrensningslinjer.add(NasjonAvtaltavgrensningslinje(nasjon, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, hullIndex)))
+                    is Territorialgrense -> result.territorialgrenser.add(NasjonTerritorialgrense(nasjon, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, hullIndex)))
+                    is Riksgrense -> result.riksgrenser.add(NasjonRiksgrense(nasjon, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, hullIndex)))
                 }
-                when (ref.isRetningReversed()) {
-                    true -> result.lineString = importertGrense.grense!!.reverse()
-                    false -> result.lineString = importertGrense.grense!!
+                when (ref.erRetningMedKlokken()) {
+                    true -> result.lineString = importertGrense.grense!!
+                    false -> result.lineString = importertGrense.grense!!.reverse()
                 }
 
                 return result
@@ -123,8 +123,8 @@ class NasjonImporter {
 }
 
 data class NasjonReferanseImportResult(
-    val avtaltavgrensningslinjer: MutableSet<Avtaltavgrensningslinje> = mutableSetOf(),
-    val territorialgrenser: MutableSet<Territorialgrense> = mutableSetOf(),
-    val riksgrenser: MutableSet<Riksgrense> = mutableSetOf(),
+    val avtaltavgrensningslinjer: MutableSet<NasjonAvtaltavgrensningslinje> = mutableSetOf(),
+    val territorialgrenser: MutableSet<NasjonTerritorialgrense> = mutableSetOf(),
+    val riksgrenser: MutableSet<NasjonRiksgrense> = mutableSetOf(),
     var lineString: LineString? = null
 )

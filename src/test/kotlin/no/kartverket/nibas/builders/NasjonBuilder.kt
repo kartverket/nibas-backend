@@ -1,11 +1,6 @@
 package no.kartverket.nibas.builders
 
-import no.kartverket.nibas.domain.Administrativenhetnavn
-import no.kartverket.nibas.domain.Avtaltavgrensningslinje
-import no.kartverket.nibas.domain.Nasjon
-import no.kartverket.nibas.domain.Riksgrense
-import no.kartverket.nibas.domain.Spraakkode
-import no.kartverket.nibas.domain.Territorialgrense
+import no.kartverket.nibas.domain.*
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
 
@@ -44,9 +39,9 @@ class NasjonBuilder(private val id: String = "1") {
         nasjon.posisjon = GeometryFactory().createPoint(Coordinate(1.0, 1.0))
         nasjon.flate = GeometryFactory().createPolygon()
 
-        nasjon.riksgrenser = riksgrenser
-        nasjon.territorialgrenser = territorialgrenser
-        nasjon.avtaltavgrensningslinjer = avtaltavgrensningslinjer
+        nasjon.riksgrenser = riksgrenser.map { NasjonRiksgrense(nasjon, it, GrenseKoblingAttributter()) }.toMutableSet()
+        nasjon.territorialgrenser = territorialgrenser.map { NasjonTerritorialgrense(nasjon, it, GrenseKoblingAttributter()) }.toMutableSet()
+        nasjon.avtaltavgrensningslinjer = avtaltavgrensningslinjer.map { NasjonAvtaltavgrensningslinje(nasjon, it, GrenseKoblingAttributter()) }.toMutableSet()
         return nasjon
     }
 

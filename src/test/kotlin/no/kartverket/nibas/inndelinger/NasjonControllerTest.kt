@@ -5,6 +5,8 @@ import no.kartverket.nibas.api.v1.request.NasjonRequest
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.NasjonBuilder
 import no.kartverket.nibas.builders.NasjonRequestBuilder
+import no.kartverket.nibas.domain.GrenseKoblingAttributter
+import no.kartverket.nibas.domain.NasjonRiksgrense
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyString
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
@@ -44,7 +46,7 @@ class NasjonControllerTest : NibasMvcTest() {
         whenever(
             nasjonService.hentGrenserForNasjon(anyString())
         ).thenReturn(
-            setOf(GrenseBuilder().buildRiksgrense())
+            setOf(NasjonRiksgrense(NasjonBuilder.DEFAULT_NASJON, GrenseBuilder().buildRiksgrense(), GrenseKoblingAttributter()))
         )
         get("/v1/nasjoner/1/grenser", status().isOk)
     }

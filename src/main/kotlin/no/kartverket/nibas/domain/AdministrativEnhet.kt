@@ -106,12 +106,20 @@ abstract class AdministrativEnhet(
     @javax.persistence.Transient
     var administrativenhetnavn: MutableSet<Administrativenhetnavn> = mutableSetOf()
 
-    @javax.persistence.Transient
-    var riksgrenser: MutableSet<Riksgrense> = mutableSetOf()
+    abstract fun oppdaterFlate()
 
-    @javax.persistence.Transient
-    var avtaltavgrensningslinjer: MutableSet<Avtaltavgrensningslinje> = mutableSetOf()
+    abstract fun oppdaterEllerLeggTilGrenseKobling(grense: Grense, attributter: GrenseKoblingAttributter)
 
-    @javax.persistence.Transient
-    var territorialgrenser: MutableSet<Territorialgrense> = mutableSetOf()
+    data class SamlingOgDefault<T : GrenseKobling>(val samling: MutableSet<T>, val default: GrenseKobling)
+
+    @Suppress("UNCHECKED_CAST")
+    fun <T: GrenseKobling> oppdaterSamling(grense: Grense, attributter: GrenseKoblingAttributter, samling: MutableSet<T>, default: GrenseKobling) {
+        val kobling: T  = when(val kobling = samling.find { it.getGrense().id == grense.id }) {
+            null -> default as T
+            else -> kobling
+        }
+
+        kobling.oppdaterAttributter(attributter)
+        samling.add(kobling)
+    }
 }

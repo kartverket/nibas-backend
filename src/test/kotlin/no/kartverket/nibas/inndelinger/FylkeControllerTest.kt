@@ -5,6 +5,9 @@ import no.kartverket.nibas.api.v1.request.FylkeRequest
 import no.kartverket.nibas.builders.FylkeBuilder
 import no.kartverket.nibas.builders.FylkeRequestBuilder
 import no.kartverket.nibas.builders.GrenseBuilder
+import no.kartverket.nibas.domain.FylkeFylkesgrense
+import no.kartverket.nibas.domain.GrenseKobling
+import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.kodelister.KodelisteService
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyString
@@ -62,7 +65,7 @@ class FylkeControllerTest : NibasMvcTest() {
         whenever(
             fylkeService.hentGrenserForFylke(anyString())
         ).thenReturn(
-            setOf(GrenseBuilder().buildFylkesgrense())
+            setOf(FylkeFylkesgrense(FylkeBuilder.DEFAULT_FYLKE, GrenseBuilder().buildFylkesgrense(), GrenseKoblingAttributter()))
         )
         get("/v1/fylker/1/grenser", status().isOk)
     }

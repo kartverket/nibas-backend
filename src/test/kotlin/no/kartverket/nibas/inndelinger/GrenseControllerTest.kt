@@ -22,6 +22,9 @@ class GrenseControllerTest : NibasMvcTest() {
     @MockBean
     private lateinit var historikkService: HistorikkService
 
+    @MockBean
+    private lateinit var flateService: FlateService
+
     @Test
     fun thatHentKommunegrenseReturns200_OK() {
         whenever(grenseService.hentGrense("1", Kommunegrense::class))

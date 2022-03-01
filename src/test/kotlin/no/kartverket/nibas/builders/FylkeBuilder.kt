@@ -1,12 +1,6 @@
 package no.kartverket.nibas.builders
 
-import no.kartverket.nibas.domain.Administrativenhetnavn
-import no.kartverket.nibas.domain.Avtaltavgrensningslinje
-import no.kartverket.nibas.domain.Fylke
-import no.kartverket.nibas.domain.Fylkesgrense
-import no.kartverket.nibas.domain.Riksgrense
-import no.kartverket.nibas.domain.Spraakkode
-import no.kartverket.nibas.domain.Territorialgrense
+import no.kartverket.nibas.domain.*
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
 import java.time.LocalDate
@@ -57,10 +51,10 @@ class FylkeBuilder(private val id: String = "1") {
         fylke.posisjon = GeometryFactory().createPoint(Coordinate(1.0, 1.0))
         fylke.flate = GeometryFactory().createPolygon()
 
-        fylke.fylkesgrenser = fylkesgrenser
-        fylke.riksgrenser = riksgrenser
-        fylke.territorialgrenser = territorialgrenser
-        fylke.avtaltavgrensningslinjer = avtaltavgrensningslinjer
+        fylke.fylkesgrenser = fylkesgrenser.map { FylkeFylkesgrense(fylke, it, GrenseKoblingAttributter()) }.toMutableSet()
+        fylke.riksgrenser = riksgrenser.map { FylkeRiksgrense(fylke, it, GrenseKoblingAttributter()) }.toMutableSet()
+        fylke.territorialgrenser = territorialgrenser.map { FylkeTerritorialgrense(fylke, it, GrenseKoblingAttributter()) }.toMutableSet()
+        fylke.avtaltavgrensningslinjer = avtaltavgrensningslinjer.map { FylkeAvtaltavgrensningslinje(fylke, it, GrenseKoblingAttributter()) }.toMutableSet()
 
         return fylke
     }

@@ -55,29 +55,30 @@ class KommuneServiceTest {
             null -> fail("Expected grenser to have a value")
             else -> {
                 assertEquals(15, grenserForKommune.size, "Expected 15 borders")
+                val grenserUtenRetning = grenserForKommune.map { it.getGrense() }
                 assertEquals(
                     1,
-                    grenserForKommune.filterIsInstance<Avtaltavgrensningslinje>().size,
+                    grenserUtenRetning.filterIsInstance<Avtaltavgrensningslinje>().size,
                     "Expected 1 AvtaltAvgrensningslinje"
                 )
                 assertEquals(
                     2,
-                    grenserForKommune.filterIsInstance<Territorialgrense>().size,
+                    grenserUtenRetning.filterIsInstance<Territorialgrense>().size,
                     "Expected 2 Territorialgrense"
                 )
                 assertEquals(
                     3,
-                    grenserForKommune.filterIsInstance<Riksgrense>().size,
+                    grenserUtenRetning.filterIsInstance<Riksgrense>().size,
                     "Expected 3 Riksgrense"
                 )
                 assertEquals(
                     4,
-                    grenserForKommune.filterIsInstance<Fylkesgrense>().size,
+                    grenserUtenRetning.filterIsInstance<Fylkesgrense>().size,
                     "Expected 4 Fylkesgrense"
                 )
                 assertEquals(
                     5,
-                    grenserForKommune.filterIsInstance<Kommunegrense>().size,
+                    grenserUtenRetning.filterIsInstance<Kommunegrense>().size,
                     "Expected 5 Kommunegrense"
                 )
             }

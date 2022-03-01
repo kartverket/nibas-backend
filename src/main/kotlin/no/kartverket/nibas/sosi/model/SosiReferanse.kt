@@ -23,7 +23,7 @@ package no.kartverket.nibas.sosi.model
  */
 class SosiReferanse(niva: Int, verdier: MutableList<SosiVerdi>) : SosiObjekt(type = "REF", niva, verdier = verdier) {
     fun getVerdi(): String = verdier[0].verdi.replace(":", "")
-    fun isRetningReversed(): Boolean = getVerdiUtenParentes().startsWith("-")
+    fun erRetningMedKlokken(): Boolean = !getVerdiUtenParentes().startsWith("-")
     fun getVerdiUtenRetning(): String = getVerdi().replace("-", "")
     fun getVerdiUtenParentes(): String = getVerdi().replace("(", "").replace(")", "")
     fun getVerdiUtenRetningOgParentes(): String = getVerdiUtenRetning().replace("(", "").replace(")", "")

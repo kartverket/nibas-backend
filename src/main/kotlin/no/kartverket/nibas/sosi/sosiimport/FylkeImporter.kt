@@ -47,17 +47,17 @@ class FylkeImporter @Autowired constructor(
 
                 runBlocking {
                     withContext(Dispatchers.Default) {
-                        val deferredSkall: List<Deferred<FylkeReferanseImportResult>> = flate.getSkallReferanser().map { ref ->
+                        val deferredSkall: List<Deferred<FylkeReferanseImportResult>> = flate.getSkallReferanser().mapIndexed { rekkefoelge, ref ->
                             async {
-                                importerFylkeRef(ref, root)
+                                importerFylkeRef(fylke, ref, root, rekkefoelge)
                             }
                         }
 
                         val deferredHull: List<List<Deferred<FylkeReferanseImportResult>>> =
-                            flate.getHullReferanser().map { liste ->
-                                liste.map { ref ->
+                            flate.getHullReferanser().mapIndexed { hullIndex, liste ->
+                                liste.mapIndexed { rekkefoelge, ref ->
                                     async {
-                                        importerFylkeRef(ref, root)
+                                        importerFylkeRef(fylke, ref, root, rekkefoelge, hullIndex)
                                     }
                                 }
                             }
@@ -100,7 +100,7 @@ class FylkeImporter @Autowired constructor(
         }
     }
 
-    private fun importerFylkeRef(ref: SosiReferanse, root: SosiObjekt): FylkeReferanseImportResult {
+    private fun importerFylkeRef(fylke: Fylke, ref: SosiReferanse, root: SosiObjekt, rekkefoelge: Int, hullIndex: Int? = null): FylkeReferanseImportResult {
         val referanse = ref.getVerdiUtenRetningOgParentes()
         when (val grenseRef = root.getObjektMedId(referanse)) {
             null -> throw RuntimeException("Finner ikke grense som refereres til. Feil i datagrunnlaget. Ref: $referanse")
@@ -108,14 +108,14 @@ class FylkeImporter @Autowired constructor(
                 val importertGrense = grenseImporter.importerGrense(grenseRef)
                 val result = FylkeReferanseImportResult()
                 when (importertGrense) {
-                    is Fylkesgrense -> result.fylkesgrenser.add(importertGrense)
-                    is Avtaltavgrensningslinje -> result.avtaltavgrensningslinjer.add(importertGrense)
-                    is Territorialgrense -> result.territorialgrenser.add(importertGrense)
-                    is Riksgrense -> result.riksgrenser.add(importertGrense)
+                    is Fylkesgrense -> result.fylkesgrenser.add(FylkeFylkesgrense(fylke, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, hullIndex)))
+                    is Avtaltavgrensningslinje -> result.avtaltavgrensningslinjer.add(FylkeAvtaltavgrensningslinje(fylke, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, hullIndex)))
+                    is Territorialgrense -> result.territorialgrenser.add(FylkeTerritorialgrense(fylke, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, hullIndex)))
+                    is Riksgrense -> result.riksgrenser.add(FylkeRiksgrense(fylke, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, hullIndex)))
                 }
-                when (ref.isRetningReversed()) {
-                    true -> result.lineString = importertGrense.grense!!.reverse()
-                    false -> result.lineString = importertGrense.grense!!
+                when (ref.erRetningMedKlokken()) {
+                    true -> result.lineString = importertGrense.grense!!
+                    false -> result.lineString = importertGrense.grense!!.reverse()
                 }
                 return result
             }
@@ -124,9 +124,9 @@ class FylkeImporter @Autowired constructor(
 }
 
 data class FylkeReferanseImportResult(
-    val fylkesgrenser: MutableSet<Fylkesgrense> = mutableSetOf(),
-    val avtaltavgrensningslinjer: MutableSet<Avtaltavgrensningslinje> = mutableSetOf(),
-    val territorialgrenser: MutableSet<Territorialgrense> = mutableSetOf(),
-    val riksgrenser: MutableSet<Riksgrense> = mutableSetOf(),
+    val fylkesgrenser: MutableSet<FylkeFylkesgrense> = mutableSetOf(),
+    val avtaltavgrensningslinjer: MutableSet<FylkeAvtaltavgrensningslinje> = mutableSetOf(),
+    val territorialgrenser: MutableSet<FylkeTerritorialgrense> = mutableSetOf(),
+    val riksgrenser: MutableSet<FylkeRiksgrense> = mutableSetOf(),
     var lineString: LineString? = null
 )

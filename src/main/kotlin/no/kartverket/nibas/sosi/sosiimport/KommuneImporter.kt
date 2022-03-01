@@ -44,17 +44,17 @@ class KommuneImporter @Autowired constructor(
                 runBlocking {
                     withContext(Dispatchers.Default) {
                         val deferredSkall: List<Deferred<KommuneReferanseImportResult>> =
-                            flate.getSkallReferanser().map { ref ->
+                            flate.getSkallReferanser().mapIndexed { rekkefoelge, ref ->
                                 async {
-                                    importerKommuneRef(ref, root)
+                                    importerKommuneRef(kommune, ref, root, rekkefoelge)
                                 }
                             }
 
                         val deferredHull: List<List<Deferred<KommuneReferanseImportResult>>> =
-                            flate.getHullReferanser().map { liste ->
-                                liste.map { ref ->
+                            flate.getHullReferanser().mapIndexed { hullIndex, liste ->
+                                liste.mapIndexed { rekkefoelge, ref ->
                                     async {
-                                        importerKommuneRef(ref, root)
+                                        importerKommuneRef(kommune, ref, root, rekkefoelge, hullIndex)
                                     }
                                 }
                             }
@@ -105,7 +105,7 @@ class KommuneImporter @Autowired constructor(
         }
     }
 
-    private fun importerKommuneRef(ref: SosiReferanse, root: SosiObjekt): KommuneReferanseImportResult {
+    private fun importerKommuneRef(kommune: Kommune, ref: SosiReferanse, root: SosiObjekt, rekkefoelge: Int, hullIndex: Int? = null): KommuneReferanseImportResult {
         val referanse = ref.getVerdiUtenRetningOgParentes()
         when (val grenseRef = root.getObjektMedId(referanse)) {
             null -> throw RuntimeException("Finner ikke grense som refereres til. Feil i datagrunnlaget. Ref: $referanse")
@@ -113,15 +113,15 @@ class KommuneImporter @Autowired constructor(
                 val importertGrense = grenseImporter.importerGrense(grenseRef)
                 val result = KommuneReferanseImportResult()
                 when (importertGrense) {
-                    is Kommunegrense -> result.kommunegrenser.add(importertGrense)
-                    is Fylkesgrense -> result.fylkesgrenser.add(importertGrense)
-                    is Avtaltavgrensningslinje -> result.avtaltavgrensningslinjer.add(importertGrense)
-                    is Territorialgrense -> result.territorialgrenser.add(importertGrense)
-                    is Riksgrense -> result.riksgrenser.add(importertGrense)
+                    is Kommunegrense -> result.kommunegrenser.add(KommuneKommunegrense(kommune, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, hullIndex)))
+                    is Fylkesgrense -> result.fylkesgrenser.add(KommuneFylkesgrense(kommune, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, hullIndex)))
+                    is Avtaltavgrensningslinje -> result.avtaltavgrensningslinjer.add(KommuneAvtaltavgrensningslinje(kommune, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, hullIndex)))
+                    is Territorialgrense -> result.territorialgrenser.add(KommuneTerritorialgrense(kommune, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, hullIndex)))
+                    is Riksgrense -> result.riksgrenser.add(KommuneRiksgrense(kommune, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, hullIndex)))
                 }
-                when (ref.isRetningReversed()) {
-                    true -> result.lineString = importertGrense.grense!!.reverse()
-                    false -> result.lineString = importertGrense.grense!!
+                when (ref.erRetningMedKlokken()) {
+                    true -> result.lineString = importertGrense.grense!!
+                    false -> result.lineString = importertGrense.grense!!.reverse()
                 }
                 return result
             }
@@ -130,10 +130,10 @@ class KommuneImporter @Autowired constructor(
 }
 
 data class KommuneReferanseImportResult(
-    val kommunegrenser: MutableSet<Kommunegrense> = mutableSetOf(),
-    val fylkesgrenser: MutableSet<Fylkesgrense> = mutableSetOf(),
-    val avtaltavgrensningslinjer: MutableSet<Avtaltavgrensningslinje> = mutableSetOf(),
-    val territorialgrenser: MutableSet<Territorialgrense> = mutableSetOf(),
-    val riksgrenser: MutableSet<Riksgrense> = mutableSetOf(),
+    val kommunegrenser: MutableSet<KommuneKommunegrense> = mutableSetOf(),
+    val fylkesgrenser: MutableSet<KommuneFylkesgrense> = mutableSetOf(),
+    val avtaltavgrensningslinjer: MutableSet<KommuneAvtaltavgrensningslinje> = mutableSetOf(),
+    val territorialgrenser: MutableSet<KommuneTerritorialgrense> = mutableSetOf(),
+    val riksgrenser: MutableSet<KommuneRiksgrense> = mutableSetOf(),
     var lineString: LineString? = null
 )

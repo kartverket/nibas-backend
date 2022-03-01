@@ -2,22 +2,13 @@ package no.kartverket.nibas.inndelinger
 
 import no.kartverket.nibas.api.v1.GrenseApi
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
+import no.kartverket.nibas.api.v1.common.geojson.ContextProperties
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.FeatureProperties
 import no.kartverket.nibas.api.v1.common.geojson.Identifikasjon
 import no.kartverket.nibas.api.v1.response.HistorikkRef
-import no.kartverket.nibas.domain.AdministrativEnhet
-import no.kartverket.nibas.domain.Avtaltavgrensningslinje
-import no.kartverket.nibas.domain.ContainingMetadataForAdmGrenser
-import no.kartverket.nibas.domain.Fylke
-import no.kartverket.nibas.domain.Fylkesgrense
-import no.kartverket.nibas.domain.Grense
-import no.kartverket.nibas.domain.Kommune
-import no.kartverket.nibas.domain.Kommunegrense
-import no.kartverket.nibas.domain.Riksgrense
-import no.kartverket.nibas.domain.Territorialgrense
-import no.kartverket.nibas.domain.toMetadata
+import no.kartverket.nibas.domain.*
 import no.kartverket.nibas.repository.AvtaltAvgrensningslinjeRepository
 import no.kartverket.nibas.repository.FylkeRepository
 import no.kartverket.nibas.repository.FylkesgrenseRepository
@@ -43,7 +34,8 @@ import kotlin.reflect.KClass
 @RestController
 class GrenseController @Autowired constructor(
     private val grenseService: GrenseService,
-    private val historikkService: HistorikkService
+    private val historikkService: HistorikkService,
+    private val flateService: FlateService
 ) : GrenseApi {
 
     override fun lagreGrenser(grenser: FeatureCollection) {
@@ -56,6 +48,8 @@ class GrenseController @Autowired constructor(
                 GrenseType.Territorialgrense -> grenseService.lagreTerritorialgrenser(entry.value)
             }
         }
+
+        flateService.beregnFlaterFor(grenser.features)
     }
 
     override fun hentKommunegrense(id: String): Feature = hentGrense(id, Kommunegrense::class)
@@ -66,7 +60,7 @@ class GrenseController @Autowired constructor(
     private fun <T : Grense> hentGrense(id: String, type: KClass<T>): Feature {
         return when (val grense = grenseService.hentGrense(id, type)) {
             null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
-            else -> grenseToFeature(grense)
+            else -> grenseToFeature(grense = grense)
         }
     }
 
@@ -105,7 +99,7 @@ class GrenseController @Autowired constructor(
         hentGrenseRevisjon(id, revision, Territorialgrense::class.java)
 
     private fun <T : Grense> hentGrenseRevisjon(id: String, revision: Int, type: Class<T>): Feature =
-        grenseToFeature(historikkService.hentHistorikkRevisjon(id, revision, type))
+        grenseToFeature(grense = historikkService.hentHistorikkRevisjon(id, revision, type))
 
 }
 
@@ -140,86 +134,52 @@ class GrenseService @Autowired constructor(
     fun lagreAvtaltAvgrensningslinjer(grenser: List<Feature>) =
         lagreGrenser(grenser, avtaltAvgrensningslinjeRepository)
 
+    data class GrenseMedRetningOgKontekst<T : Grense>(
+        val grenseMedAttributter: GrenseMedAttributter<T>,
+        val kontekstType: AdministrativEnhetType,
+        val kontekstId: String
+    )
+
     @Transactional
-    fun <T : Grense> lagreGrenser(grenser: List<Feature>, grenseRepository: CrudRepository<T, String>) {
-        val oppdaterteFeatures = grenser.filter { feature -> feature.properties.id != null }
-        oppdaterGrenser(grenseRepository, oppdaterteFeatures)
+    fun <T : Grense> lagreGrenser(grenserSomSkalLagres: List<Feature>, grenseRepository: CrudRepository<T, String>) {
+        val eksisterendeGrenser = grenseRepository.findAllById(
+            grenserSomSkalLagres.filter { feature -> feature.properties.id != null }.map { it.properties.id })
 
-        val nyeFeatures = grenser - oppdaterteFeatures
-        if (nyeFeatures.isNotEmpty()) {
+        val oppdaterteGrenser = grenserSomSkalLagres.map { feature ->
+            val grense = when (val grenseId = feature.properties.id) {
+                null -> lagGrenseForType(feature)
+                else -> eksisterendeGrenser.find { it.id == grenseId }!!
+            }
+            grense.grense = feature.geometry as LineString
 
-            //Opprett nye grenser av gitt type for en gitt administrativ enhet (basert på konteksttype)
-            nyeFeatures.groupBy { it.properties.kontekstType }.forEach { entry ->
-                when (entry.key) {
-                    AdministrativEnhetType.KOMMUNE -> opprettNyeGrenser(
-                        entry.value,
-                        grenseRepository,
-                        kommuneRepository
-                    )
-                    AdministrativEnhetType.FYLKE -> opprettNyeGrenser(entry.value, grenseRepository, fylkeRepository)
-                    AdministrativEnhetType.NASJON -> opprettNyeGrenser(entry.value, grenseRepository, nasjonRepository)
-                    else -> {
-                        throw RuntimeException("Ukjent type: ${entry.key}")
-                    }
+            val contextProps = feature.properties.contextProperties!!
+            GrenseMedRetningOgKontekst(
+                GrenseMedAttributter(grense, GrenseKoblingAttributter(contextProps.directionClockwise, contextProps.order, contextProps.holeIndex)),
+                contextProps.type!!,
+                contextProps.id!!)
+        }
+
+        grenseRepository.saveAll(oppdaterteGrenser.map { it.grenseMedAttributter.grense })
+
+        oppdaterteGrenser.groupBy { it.kontekstType }.forEach { entry ->
+            when (entry.key) {
+                AdministrativEnhetType.KOMMUNE -> oppdaterEnheter(entry.value, kommuneRepository)
+                AdministrativEnhetType.FYLKE -> oppdaterEnheter(entry.value, fylkeRepository)
+                AdministrativEnhetType.NASJON -> oppdaterEnheter(entry.value, nasjonRepository)
+            }
+        }
+    }
+
+    private fun <T : Grense, S : AdministrativEnhet> oppdaterEnheter(grenser: List<GrenseMedRetningOgKontekst<T>>, repository: CrudRepository<S, String>) {
+        val enheter = repository.findAllById(grenser.map { it.kontekstId })
+        repository.saveAll(
+            enheter.map { enhet ->
+                grenser.filter { it.kontekstId == enhet.id }.map { it.grenseMedAttributter }.forEach { grenseMedAttributter ->
+                    enhet.oppdaterEllerLeggTilGrenseKobling(grenseMedAttributter.grense, grenseMedAttributter.attributter)
                 }
+                enhet
             }
-
-        }
-    }
-
-    private fun <T : Grense> oppdaterGrenser(
-        grenseRepository: CrudRepository<T, String>,
-        oppdaterteFeatures: List<Feature>
-    ) {
-        val eksisterendeGrenser = grenseRepository.findAllById(oppdaterteFeatures.map { it.properties.id })
-        val oppdaterte = eksisterendeGrenser.map { gammel ->
-            val ny = oppdaterteFeatures.find { it.properties.id == gammel.id }
-            gammel.grense = ny?.geometry as LineString
-            gammel
-        }
-        grenseRepository.saveAll(oppdaterte)
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun <T : Grense, E : AdministrativEnhet> opprettNyeGrenser(
-        nyeGrenser: List<Feature>,
-        grenseRepository: CrudRepository<T, String>,
-        administrativEnhetRepository: CrudRepository<E, String>
-    ) {
-        val enheterMedNyeGrenser = administrativEnhetRepository.findAllById(nyeGrenser.map { it.properties.kontekstId })
-        val enheterSomSkalEndres = enheterMedNyeGrenser.map { enhet ->
-            val nyeGrenseObjekterForEnhet = nyeGrenser.filter { it.properties.kontekstId == enhet.id }.map { feature ->
-
-                val grense = lagGrenseForType<T>(feature)
-
-                grense.grense = feature.geometry as LineString
-                grense.objtype = feature.properties.type
-                grense
-            }
-            grenseRepository.saveAll(nyeGrenseObjekterForEnhet)
-
-            // Alle grenser er av samme type, henter bare ut den første for å sjekke typen
-            when (GrenseType.valueOf(nyeGrenseObjekterForEnhet[0].objtype!!)) {
-                GrenseType.Kommunegrense ->
-                    when (enhet) {
-                        is Kommune -> enhet.kommunegrenser.addAll(nyeGrenseObjekterForEnhet as List<Kommunegrense>)
-                        else -> throw RuntimeException("Kan ikke legge til kommunegrenser på valgt enhet ${enhet.objtype}")
-                    }
-                GrenseType.Fylkesgrense ->
-                    when (enhet) {
-                        is Kommune -> enhet.fylkesgrenser.addAll(nyeGrenseObjekterForEnhet as List<Fylkesgrense>)
-                        is Fylke -> enhet.fylkesgrenser.addAll(nyeGrenseObjekterForEnhet as List<Fylkesgrense>)
-                        else -> throw RuntimeException("Kan ikke legge til fylkesgrenser på valgt enhet ${enhet.objtype}")
-                    }
-                GrenseType.Riksgrense -> enhet.riksgrenser.addAll(nyeGrenseObjekterForEnhet as List<Riksgrense>)
-                GrenseType.AvtaltAvgrensningslinje -> enhet.avtaltavgrensningslinjer.addAll(nyeGrenseObjekterForEnhet as List<Avtaltavgrensningslinje>)
-                GrenseType.Territorialgrense -> enhet.territorialgrenser.addAll(nyeGrenseObjekterForEnhet as List<Territorialgrense>)
-            }
-
-            enhet
-        }
-
-        administrativEnhetRepository.saveAll(enheterSomSkalEndres)
+        )
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -239,12 +199,27 @@ enum class GrenseType {
     Kommunegrense, Fylkesgrense, Riksgrense, AvtaltAvgrensningslinje, Territorialgrense
 }
 
-fun grenseToFeature(grense: Grense, kontekstId: String? = null, kontekstType: AdministrativEnhetType? = null): Feature {
+class GrenseMedAttributter<T : Grense>(val grense: T, val attributter: GrenseKoblingAttributter)
+
+fun grenseKoblingToFeature(
+    kontekstId: String? = null,
+    kontekstType: AdministrativEnhetType? = null,
+    grenseKobling: GrenseKobling
+): Feature {
+    val feature = grenseToFeature(grenseKobling.getGrense())
+    return feature.copy(properties = feature.properties.copy(contextProperties = ContextProperties(
+        id = kontekstId,
+        type = kontekstType,
+        directionClockwise = grenseKobling.grenseKoblingAttributter.retningMedKlokken,
+        order = grenseKobling.grenseKoblingAttributter.rekkefoelge,
+        holeIndex = grenseKobling.grenseKoblingAttributter.hullIndeks
+    )))
+}
+
+fun grenseToFeature(grense: Grense): Feature {
     var featureProperties = FeatureProperties(
         type = grense.objtype!!,
         id = grense.id,
-        kontekstId = kontekstId,
-        kontekstType = kontekstType,
         identifikasjon = Identifikasjon(grense.lokalid, grense.navnerom)
     )
     if (grense is ContainingMetadataForAdmGrenser) {
@@ -252,7 +227,6 @@ fun grenseToFeature(grense: Grense, kontekstId: String? = null, kontekstType: Ad
             metadata = grense.toMetadata()
         )
     }
-
     return Feature(
         properties = featureProperties,
         geometry = grense.grense!!

@@ -62,23 +62,6 @@ class GrenseServiceTest {
     var fylkesgrenseCaptor: ArgumentCaptor<List<Fylkesgrense>>? = null
 
     @Test
-    fun thatOppdaterGrenseKunOppdatererEksisterendeGrenser() {
-        val oppdatertGeometri = GeometryFactory().createLineString(arrayOf(Coordinate(1.0, 1.0), Coordinate(2.0, 2.0)))
-        val nyGeometri = GeometryFactory().createLineString(arrayOf(Coordinate(2.0, 2.0), Coordinate(3.0, 3.0)))
-
-        val eksisterende = GrenseBuilder().buildFylkesgrense()
-        val oppdatertGrense =
-            FeatureBuilder("1").withGrensetype(GrenseType.Fylkesgrense).withGeometry(oppdatertGeometri).build()
-        val nyGrense = FeatureBuilder(null).withGrensetype(GrenseType.Fylkesgrense).withGeometry(nyGeometri).build()
-
-        whenever(fylkesgrenseRepository.findAllById(anyCollection())).thenReturn(listOf(eksisterende))
-        grenseService.lagreFylkesgrenser(listOf(oppdatertGrense, nyGrense))
-
-        eksisterende.grense = oppdatertGeometri
-        verify(fylkesgrenseRepository).saveAll(listOf(eksisterende))
-    }
-
-    @Test
     fun thatOppdaterGrenseOppdatererEksisterendeOgOppretterNye() {
         val oppdatertGeometri = GeometryFactory().createLineString(arrayOf(Coordinate(1.0, 1.0), Coordinate(2.0, 2.0)))
 
@@ -120,7 +103,7 @@ class GrenseServiceTest {
             )
         )
 
-        verify(fylkesgrenseRepository, times(3)).saveAll(fylkesgrenseCaptor!!.capture())
+        verify(fylkesgrenseRepository, times(1)).saveAll(fylkesgrenseCaptor!!.capture())
 
         val lagredeGrenser: MutableList<List<Fylkesgrense>> = fylkesgrenseCaptor!!.allValues
         assertEquals(4, lagredeGrenser.flatten().size, "Skal lagre 4 grenser til databasen")
@@ -147,7 +130,7 @@ class GrenseServiceTest {
                 grenseService.lagreKommunegrenser(listOf(nyKommunegrensefeatureForFylke))
             }
 
-        assertEquals("Kan ikke legge til kommunegrenser på valgt enhet Fylke", exception.message)
+        assertEquals("Kan ikke legge til Kommunegrense på enhet Fylke", exception.message)
     }
 
 }

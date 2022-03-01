@@ -1,13 +1,6 @@
 package no.kartverket.nibas.builders
 
-import no.kartverket.nibas.domain.Administrativenhetnavn
-import no.kartverket.nibas.domain.Avtaltavgrensningslinje
-import no.kartverket.nibas.domain.Fylkesgrense
-import no.kartverket.nibas.domain.Kommune
-import no.kartverket.nibas.domain.Kommunegrense
-import no.kartverket.nibas.domain.Riksgrense
-import no.kartverket.nibas.domain.Spraakkode
-import no.kartverket.nibas.domain.Territorialgrense
+import no.kartverket.nibas.domain.*
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
 import java.time.LocalDate
@@ -57,11 +50,11 @@ class KommuneBuilder(private val id: String = "1") {
         kommune.posisjon = GeometryFactory().createPoint(Coordinate(1.0, 1.0))
         kommune.flate = GeometryFactory().createPolygon()
 
-        kommune.kommunegrenser = kommunegrenser
-        kommune.fylkesgrenser = fylkesgrenser
-        kommune.riksgrenser = riksgrenser
-        kommune.territorialgrenser = territorialgrenser
-        kommune.avtaltavgrensningslinjer = avtaltavgrensningslinjer
+        kommune.kommunegrenser = kommunegrenser.map { KommuneKommunegrense(kommune, it, GrenseKoblingAttributter()) }.toMutableSet()
+        kommune.fylkesgrenser = fylkesgrenser.map { KommuneFylkesgrense(kommune, it, GrenseKoblingAttributter()) }.toMutableSet()
+        kommune.riksgrenser = riksgrenser.map { KommuneRiksgrense(kommune, it, GrenseKoblingAttributter()) }.toMutableSet()
+        kommune.territorialgrenser = territorialgrenser.map { KommuneTerritorialgrense(kommune, it, GrenseKoblingAttributter()) }.toMutableSet()
+        kommune.avtaltavgrensningslinjer = avtaltavgrensningslinjer.map { KommuneAvtaltavgrensningslinje(kommune, it, GrenseKoblingAttributter()) }.toMutableSet()
 
         return kommune
     }

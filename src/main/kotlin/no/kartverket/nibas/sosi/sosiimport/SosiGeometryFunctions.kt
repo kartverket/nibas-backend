@@ -1,5 +1,6 @@
 package no.kartverket.nibas.sosi.sosiimport
 
+import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.sosi.model.SosiNordOest
 import org.locationtech.jts.geom.*
 
@@ -40,16 +41,23 @@ class SosiGeometryFunctions {
         fun sosiKoordinatToPoint(sosiNordOest: List<SosiNordOest>, koordsys: String?): Point? {
             return sosiNordOest.firstOrNull()?.let { first ->
                 first.getKoordinater().firstOrNull()?.let { coord ->
-                    getGeometryFactory(koordsys).createPoint(Coordinate(coord.oest.toDouble() * first.enhet, coord.nord.toDouble() * first.enhet))
+                    getGeometryFactory(koordsys).createPoint(
+                        Coordinate(
+                            coord.oest.toDouble() * first.enhet,
+                            coord.nord.toDouble() * first.enhet
+                        )
+                    )
                 }
             }
         }
 
-        fun lagFlate(
-            skallLineStrings: List<LineString>,
-            hullLineStrings: List<List<LineString>>,
-            koordsys: String?
-        ): Polygon {
+        /**
+         * Lager en flate (Polygon) basert på skall og hull.
+         *
+         * @param skallLineStrings Linjene som utgjør ytre del av et polygon. Disse linjene må forme et lukket Polygon
+         * @param hullLineStrings Dobbel liste som inneholder alle hull i et polygon. Hver av listene inneholde linjer som utgjør et lukket polygon.
+         */
+        fun lagFlate(skallLineStrings: List<LineString>, hullLineStrings: List<List<LineString>>, koordsys: String? = null): Polygon {
             val skall = GeometryFactory()
                 .createLinearRing(
                     getGeometryFactory(koordsys)
@@ -65,6 +73,30 @@ class SosiGeometryFunctions {
             }.toTypedArray()
 
             return getGeometryFactory(koordsys).createPolygon(skall, hull)
+        }
+
+        fun beregnFlate(grenseKoblinger: Set<GrenseKobling>): Polygon {
+            val skallKoblinger = grenseKoblinger.filterTo(HashSet()) { it.grenseKoblingAttributter.hullIndeks == null }
+            val hullKoblinger: Map<Int, List<GrenseKobling>> =
+                (grenseKoblinger - skallKoblinger).groupBy { it.grenseKoblingAttributter.hullIndeks!! }
+
+            val skall: List<LineString> = skallKoblinger.sortedBy { it.grenseKoblingAttributter.rekkefoelge }.map {
+                when (it.grenseKoblingAttributter.retningMedKlokken) {
+                    true -> it.getGrense().grense!!
+                    false -> it.getGrense().grense!!.reverse()
+                }
+            }
+
+            val hull: List<List<LineString>> = hullKoblinger.map { h ->
+                h.value.sortedBy { it.grenseKoblingAttributter.rekkefoelge }.map {
+                    when (it.grenseKoblingAttributter.retningMedKlokken) {
+                        true -> it.getGrense().grense!!
+                        false -> it.getGrense().grense!!.reverse()
+                    }
+                }
+            }
+
+            return lagFlate(skall, hull)
         }
     }
 }

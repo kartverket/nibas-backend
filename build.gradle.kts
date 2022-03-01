@@ -78,6 +78,7 @@ tasks.withType<KotlinCompile> {
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+	exclude("**/**IntegrationTest.class")
 }
 
 tasks.getByName<Jar>("jar") {

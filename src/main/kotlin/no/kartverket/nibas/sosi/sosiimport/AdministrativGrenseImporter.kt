@@ -32,7 +32,6 @@ class AdministrativGrenseImporter @Autowired constructor(
         }
 
         grense.updateSosiIdentifikasjon(sosiGeometri.getIdent())
-        grense.oppdateringsdato = sosiGeometri.getOppdateringsdato()!!
         grense.datauttaksdato = sosiGeometri.getDataUttaksdato()
         grense.kvalitet?.noeyaktighet = sosiGeometri.getKvalitet()?.getNoyaktighet()
         grense.opphav = sosiGeometri.getOpphav()
@@ -41,39 +40,15 @@ class AdministrativGrenseImporter @Autowired constructor(
         grense.datafangstdato = sosiGeometri.getDatafangstDato()
         grense.omtvistet = sosiGeometri.getOmtvistet()
 
-        grense.kvalitet?.maalemetode = when (val maalemetode = sosiGeometri.getKvalitet()?.getMalemetode()) {
-            null -> null
-            else -> kodelisteService.getMalemetodeIdByCodeValue(maalemetode)
-        }
-        grense.grensestatus = when (val grenseStatus = sosiGeometri.getGrensestatus()) {
-            null -> null
-            else -> grensestatusRepository.findByIdOrNull(grenseStatus) ?: throw RuntimeException("Ukjent grensestatus")
-        }
+        grense.oppdateringsdato = sosiGeometri.getOppdateringsdato() ?: grense.oppdateringsdato
+        grense.kvalitet?.maalemetode = sosiGeometri.getKvalitet()?.getMalemetode()?.let { kodelisteService.getMalemetodeIdByCodeValue(it) }
+        grense.grensestatus = sosiGeometri.getGrensestatus()?.let { grensestatusRepository.findByIdOrNull(it) ?: throw RuntimeException("Ukjent grensestatus") }
+        grense.fastsettingstype = sosiGeometri.getFastsettingstype()?.let { fastsettingstypeRepository.findByIdOrNull(it) ?: throw RuntimeException("Ukjent fastsettingstype") }
+        grense.foelgerterrengdetalj = sosiGeometri.getFolgerTerrengdetalj()?.let { terrengdetaljkodeRepository.findByIdOrNull(it) ?: throw RuntimeException("Ukjent terrengdetalj") }
+        grense.noeyaktighetsklasse = sosiGeometri.getNoyaktighetsklasse()?.let { noeyaktighetsklassekodeRepository.findByIdOrNull(it) ?: throw RuntimeException("Ukjent nøyaktighetsklasse") }
 
-        grense.fastsettingstype =
-            when (val fastsettingstype = sosiGeometri.getFastsettingstype()) {
-                null -> null
-                else -> fastsettingstypeRepository.findByIdOrNull(fastsettingstype)
-                    ?: throw RuntimeException("Ukjent fastsettingstype")
-            }
+        grense.grense = SosiGeometryFunctions.sosiKoordinaterToLineString(sosiGeometri.getAlleSosiNordOest(), sosiGeometri.koordsys)
 
-        grense.foelgerterrengdetalj =
-            when (val foelgerterrengdetalj = sosiGeometri.getFolgerTerrengdetalj()) {
-                null -> null
-                else -> terrengdetaljkodeRepository.findByIdOrNull(foelgerterrengdetalj)
-                    ?: throw RuntimeException("Ukjent terrengdetalj")
-            }
-
-        grense.noeyaktighetsklasse =
-            when (val noeyaktighetsklasse = sosiGeometri.getNoyaktighetsklasse()) {
-                null -> null
-                else -> noeyaktighetsklassekodeRepository.findByIdOrNull(noeyaktighetsklasse) ?: throw RuntimeException(
-                    "Ukjent nøyaktighetsklasse"
-                )
-            }
-
-        grense.grense =
-            SosiGeometryFunctions.sosiKoordinaterToLineString(sosiGeometri.getAlleSosiNordOest(), sosiGeometri.koordsys)
         return grense
     }
 }

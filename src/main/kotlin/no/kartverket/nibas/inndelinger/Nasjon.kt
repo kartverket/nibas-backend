@@ -7,7 +7,7 @@ import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.request.NasjonRequest
 import no.kartverket.nibas.api.v1.response.HistorikkRef
 import no.kartverket.nibas.api.v1.response.NasjonResponse
-import no.kartverket.nibas.domain.Grense
+import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.NasjonRepository
@@ -39,7 +39,7 @@ class NasjonController @Autowired constructor(
         return when (val grenser = nasjonService.hentGrenserForNasjon(id)) {
             null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
             else -> FeatureCollection(
-                features = grenser.map { grenseToFeature(it, id, AdministrativEnhetType.NASJON) }.toMutableList()
+                features = grenser.sortedBy { it.grenseKoblingAttributter.rekkefoelge }.map { grenseKoblingToFeature(id, AdministrativEnhetType.NASJON, it) }
             )
         }
     }
@@ -70,12 +70,13 @@ class NasjonService @Autowired constructor(
     fun hentAlleNasjoner() = nasjonRepository.findAll().toList()
     fun hentNasjon(id: String) = nasjonRepository.findById(id).unwrap()
 
-    fun hentGrenserForNasjon(id: String): Set<Grense>? {
-        return nasjonRepository.findById(id).unwrap()?.let {
-            it.riksgrenser +
-                    it.territorialgrenser +
-                    it.avtaltavgrensningslinjer
+    fun hentGrenserForNasjon(id: String): Set<GrenseKobling>? {
+        return nasjonRepository.findById(id).unwrap()?.let { nasjon ->
+            nasjon.riksgrenser +
+                    nasjon.territorialgrenser +
+                    nasjon.avtaltavgrensningslinjer
         }
+
     }
 
     fun oppdaterNasjon(id: String, oppdatertNasjon: NasjonRequest): Nasjon? {
@@ -98,7 +99,7 @@ class NasjonService @Autowired constructor(
 fun toNasjonRef(nasjon: Nasjon): NasjonRefResponse = NasjonRefResponse(
     id = nasjon.id,
     navn = nasjon.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!) },
-    href = ServletUriComponentsBuilder.fromCurrentRequestUri().pathSegment(nasjon.id.toString()).build().toUriString()
+    href = ServletUriComponentsBuilder.fromCurrentRequestUri().pathSegment(nasjon.id).build().toUriString()
 )
 
 fun toNasjonResponse(nasjon: Nasjon): NasjonResponse = NasjonResponse(

@@ -53,16 +53,29 @@ interface GrunnlinjeRepository : CrudRepositoryWithLokalIdFinder<Grunnlinje, Str
 interface GrunnlinjeInformasjonRepository : CrudRepository<GrunnlinjeInformasjon, String>
 interface AdministrativenhetnavnRepository : CrudRepository<Administrativenhetnavn, String>
 interface NasjonInformasjonRepository : CrudRepository<NasjonInformasjon, String>
-interface NasjonRepository : CrudRepositoryWithLokalIdFinder<Nasjon, String>
+interface NasjonRepository : CrudRepositoryWithLokalIdFinder<Nasjon, String> {
+    fun findByTerritorialgrenser_Territorialgrense_Id(id: String): List<Nasjon>
+    fun findByAvtaltavgrensningslinjer_Avtaltavgrensningslinje_Id(id: String): List<Nasjon>
+    fun findByRiksgrenser_Riksgrense_Id(id: String): List<Nasjon>
+}
 interface FylkesgrenseRepository : CrudRepositoryWithLokalIdFinder<Fylkesgrense, String>
 interface FylkeInformasjonRepository : CrudRepository<FylkeInformasjon, String>
 interface FylkeRepository : CrudRepositoryWithLokalIdFinder<Fylke, String> {
     fun findByFylkesnummer(fylkesnummer_id: String): Fylke?
+    fun findByFylkesgrenser_Fylkesgrense_Id(id: String): List<Fylke>
+    fun findByTerritorialgrenser_Territorialgrense_Id(id: String): List<Fylke>
+    fun findByAvtaltavgrensningslinjer_Avtaltavgrensningslinje_Id(id: String): List<Fylke>
+    fun findByRiksgrenser_Riksgrense_Id(id: String): List<Fylke>
 }
 interface KommunegrenseRepository : CrudRepositoryWithLokalIdFinder<Kommunegrense, String>
 interface KommuneInformasjonRepository : CrudRepository<KommuneInformasjon, String>
 interface KommuneRepository : CrudRepositoryWithLokalIdFinder<Kommune, String> {
     fun findByFylkeFk_Id(id: String): List<Kommune>
+    fun findByKommunegrenser_Kommunegrense_Id(id: String): List<Kommune>
+    fun findByFylkesgrenser_Fylkesgrense_Id(id: String): List<Kommune>
+    fun findByTerritorialgrenser_Territorialgrense_Id(id: String): List<Kommune>
+    fun findByAvtaltavgrensningslinjer_Avtaltavgrensningslinje_Id(id: String): List<Kommune>
+    fun findByRiksgrenser_Riksgrense_Id(id: String): List<Kommune>
 }
 
 

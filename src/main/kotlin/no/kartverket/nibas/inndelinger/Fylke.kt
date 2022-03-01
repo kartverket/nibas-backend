@@ -10,7 +10,7 @@ import no.kartverket.nibas.api.v1.response.FylkeRef
 import no.kartverket.nibas.api.v1.response.FylkeResponse
 import no.kartverket.nibas.api.v1.response.HistorikkRef
 import no.kartverket.nibas.domain.Fylke
-import no.kartverket.nibas.domain.Grense
+import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.FylkeRepository
@@ -42,7 +42,7 @@ class FylkeController @Autowired constructor(
         return when (val grenser = fylkeService.hentGrenserForFylke(id)) {
             null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
             else -> FeatureCollection(
-                features = grenser.map { grenseToFeature(it, id, AdministrativEnhetType.FYLKE) }.toMutableList()
+                features = grenser.sortedBy { it.grenseKoblingAttributter.rekkefoelge }.map { grenseKoblingToFeature(id, AdministrativEnhetType.FYLKE, it) }
             )
         }
     }
@@ -74,12 +74,12 @@ class FylkeService @Autowired constructor(
     fun hentAlleFylker() = fylkeRepository.findAll().toList()
     fun hentFylke(id: String) = fylkeRepository.findById(id).unwrap()
 
-    fun hentGrenserForFylke(id: String): Set<Grense>? {
-        return fylkeRepository.findById(id).unwrap()?.let {
-            it.fylkesgrenser +
-                    it.riksgrenser +
-                    it.territorialgrenser +
-                    it.avtaltavgrensningslinjer
+    fun hentGrenserForFylke(id: String): Set<GrenseKobling>? {
+        return fylkeRepository.findById(id).unwrap()?.let { fylke ->
+            fylke.fylkesgrenser +
+                    fylke.riksgrenser +
+                    fylke.territorialgrenser +
+                    fylke.avtaltavgrensningslinjer
         }
     }
 
