@@ -6,7 +6,7 @@ import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.Id
 import javax.persistence.JoinColumn
-import javax.persistence.OneToOne
+import javax.persistence.ManyToOne
 import javax.persistence.Table
 
 @Table(name = "dokumentasjonsreferanse_dokumentlink")
@@ -17,7 +17,7 @@ class DokumentasjonsreferanseDokumentlink {
     @Column(name = "objid", nullable = false, updatable = false)
     val id: String = UUID.randomUUID().toString()
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "dokumentasjonsreferanse_fk")
     var dokumentasjonsreferanseFk: Dokumentasjonsreferanse? = null
 

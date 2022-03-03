@@ -21,10 +21,14 @@ class Fylkesgrense(override val id: String = UUID.randomUUID().toString()) : Adm
     var dokumentasjonsreferanse: MutableSet<Dokumentasjonsreferanse> = mutableSetOf()
 
     @OneToMany(mappedBy = "fylkesgrenseFk", fetch = FetchType.LAZY)
-    var informasjonList: MutableSet<FylkesgrenseInformasjon> = mutableSetOf()
+    var fylkesgrenseInformasjonselementer: MutableSet<FylkesgrenseInformasjon> = mutableSetOf()
 
-    override fun informasjon(): List<String> {
-        return this.informasjonList.mapNotNull { it.informasjon }
+    override fun getDokumentasjonsreferanser(): List<Dokumentasjonsreferanse> {
+        return dokumentasjonsreferanse.toList()
+    }
+
+    override fun getInformasjonselementer(): List<String> {
+        return this.fylkesgrenseInformasjonselementer.mapNotNull { it.informasjon }
     }
 
 }

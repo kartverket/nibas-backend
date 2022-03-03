@@ -20,9 +20,13 @@ class Kommunegrense(override val id: String = UUID.randomUUID().toString()) : Ad
     var dokumentasjonsreferanse: MutableSet<Dokumentasjonsreferanse> = mutableSetOf()
 
     @OneToMany(mappedBy = "kommunegrenseFk", fetch = FetchType.LAZY)
-    var informasjonList: MutableSet<KommunegrenseInformasjon> = mutableSetOf()
+    var kommunegrenseInformasjonselementer: MutableSet<KommunegrenseInformasjon> = mutableSetOf()
 
-    override fun informasjon(): List<String> {
-        return this.informasjonList.mapNotNull { it.informasjon }
+    override fun getDokumentasjonsreferanser(): List<Dokumentasjonsreferanse> {
+        return dokumentasjonsreferanse.toList()
+    }
+
+    override fun getInformasjonselementer(): List<String> {
+        return this.kommunegrenseInformasjonselementer.mapNotNull { it.informasjon }
     }
 }

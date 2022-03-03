@@ -1,7 +1,8 @@
 package no.kartverket.nibas.domain
 
+import no.kartverket.nibas.api.v1.common.geojson.Dokref
 import org.hibernate.envers.Audited
-import java.time.LocalDate
+import java.time.ZonedDateTime
 import javax.persistence.Column
 import javax.persistence.Embedded
 import javax.persistence.JoinColumn
@@ -10,43 +11,43 @@ import javax.persistence.MappedSuperclass
 
 @MappedSuperclass
 @Audited
-abstract class AdministrativGrense : ContainingMetadataForAdmGrenser, Grense() {
+abstract class AdministrativGrense : Grense() {
 
     @Column(name = "versjonid")
     override var versjonid: String? = null
 
     @Column(name = "sluttdato")
-    var sluttdato: LocalDate? = null
+    var sluttdato: ZonedDateTime? = null
 
     @Column(name = "datauttaksdato")
-    var datauttaksdato: LocalDate? = null
+    var datauttaksdato: ZonedDateTime? = null
 
     @Column(name = "oppdateringsdato")
-    override var oppdateringsdato: LocalDate = LocalDate.now()
+    var oppdateringsdato: ZonedDateTime = ZonedDateTime.now()
 
     @Embedded
     var endringsflagg: Endringsflagg? = Endringsflagg()
 
     @Embedded
-    override var kvalitet: Posisjonskvalitet? = Posisjonskvalitet()
+    var kvalitet: PosisjonskvalitetEmbeddable? = PosisjonskvalitetEmbeddable()
 
     @Column(name = "opphav")
-    override var opphav: String? = null
+    var opphav: String? = null
 
     @Embedded
     var registreringsversjon: Registreringsversjon? = Registreringsversjon()
 
     @Column(name = "gyldigfra")
-    override var gyldigFra: LocalDate? = null
+    var gyldigFra: ZonedDateTime? = null
 
     @Column(name = "gyldigtil")
-    override var gyldigTil: LocalDate? = null
+    var gyldigTil: ZonedDateTime? = null
 
     @Embedded
     var kopidata: Kopidata? = Kopidata()
 
     @Column(name = "datafangstdato")
-    override var datafangstdato: LocalDate? = null
+    var datafangstdato: ZonedDateTime? = null
 
     @Column(name = "omtvistet")
     var omtvistet: Boolean? = null
@@ -66,4 +67,11 @@ abstract class AdministrativGrense : ContainingMetadataForAdmGrenser, Grense() {
     @ManyToOne
     @JoinColumn(name = "noeyaktighetsklasse")
     var noeyaktighetsklasse: Noeyaktighetsklassekode? = null
+
+    abstract fun getInformasjonselementer(): List<String>
+    abstract fun getDokumentasjonsreferanser(): List<Dokumentasjonsreferanse>
+
+    fun getListeAvDokumentasjonsreferanser(): List<Dokref> {
+        return getDokumentasjonsreferanser().map { it.toDokRef() }
+    }
 }

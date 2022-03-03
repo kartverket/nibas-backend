@@ -1,8 +1,9 @@
 package no.kartverket.nibas.domain
 
-import io.swagger.v3.oas.annotations.media.Schema
 import no.kartverket.nibas.api.v1.common.geojson.AdmGrenserMetadata
+import no.kartverket.nibas.api.v1.common.geojson.Dokref
 import no.kartverket.nibas.api.v1.common.geojson.Identifikasjon
+import no.kartverket.nibas.api.v1.common.geojson.Posisjonskvalitet
 import java.time.LocalDate
 import javax.persistence.Column
 import javax.persistence.Embeddable
@@ -32,20 +33,15 @@ data class Kopidata(
 )
 
 @Embeddable
-data class Posisjonskvalitet(
-    @Schema(
-        description = "Metode for måling i grunnriss (x,y), og høyde (z) når metoden er den samme som ved måling i " +
-                "grunnriss"
-    )
+data class PosisjonskvalitetEmbeddable(
     @Column(name = "maalemetode")
     var maalemetode: String? = null,
-    @Schema(
-        description = "Punktstandardavviket i grunnriss for punkter samt tverravvik for linjer Merknad: Oppgitt i " +
-                "cm"
-    )
     @Column(name = "noeyaktighet")
     var noeyaktighet: Int? = null
 )
+
+fun PosisjonskvalitetEmbeddable.toKvalitet(): Posisjonskvalitet =
+    Posisjonskvalitet(maalemetode, noeyaktighet)
 
 @Embeddable
 data class Registreringsversjon(
@@ -68,27 +64,34 @@ interface MaritimeGrenserMetadata {
     var oppdateringsdato: LocalDate?
 }
 
-/**
- * TODO: Mange felles metadata-felter for adm_grenser/adm_enheter/adm_punkter. Slå sammen på sikt?
- */
-interface ContainingMetadataForAdmGrenser : ContainsSosiIdentifikasjon {
-    var datafangstdato: LocalDate?
-    var gyldigFra: LocalDate?
-    var gyldigTil: LocalDate?
-    fun informasjon(): List<String>
-    var kvalitet: Posisjonskvalitet?
-    var oppdateringsdato: LocalDate
-    var opphav: String?
-}
-
-fun ContainingMetadataForAdmGrenser.toMetadata(): AdmGrenserMetadata =
+fun AdministrativGrense.toMetadata(): AdmGrenserMetadata =
     AdmGrenserMetadata(
         datafangstdato = this.datafangstdato,
         gyldigFra = this.gyldigFra,
         gyldigTil = this.gyldigTil,
-        informasjon = this.informasjon(),
-        kvalitet = this.kvalitet,
+        informasjonselementer = this.getInformasjonselementer(),
+        posisjonskvalitet = this.kvalitet?.toKvalitet(),
         oppdateringsdato = this.oppdateringsdato,
         opphav = this.opphav,
-        identifikasjon = Identifikasjon(this.lokalid, this.navnerom, this.versjonid)
+        identifikasjon = Identifikasjon(this.lokalid, this.navnerom, this.versjonid),
+        dokumentasjonsreferanser = this.getListeAvDokumentasjonsreferanser(),
+        fastsettingstype = this.fastsettingstype?.id,
+        foelgerTerrengdetalj = this.foelgerterrengdetalj?.id,
+        grensestatus = this.grensestatus?.id,
+        noeyaktighetsklasse = this.noeyaktighetsklasse?.id,
+        omtvistet = this.omtvistet
     )
+
+fun Dokumentasjonsreferanse.toDokRef() = Dokref(
+    dokumentlenker = this.dokumentlink
+        .mapNotNull { it.dokumentlink }
+        .sorted(),
+    fastsettingsdato = this.fastsettingsdato!!,
+    fastsettingsmyndighet = this.fastsettingsmyndighet,
+    hjemmel = this.hjemmel,
+    internReferanserKartverket = this.internReferanserKartverket
+        .mapNotNull { it.internReferanseKartverket }
+        .sorted(),
+    rettskildeId = this.rettskildeid,
+    rettskildeTittel = this.rettskildetittel!!
+)

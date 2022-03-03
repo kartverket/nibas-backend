@@ -5,10 +5,11 @@ import java.time.LocalDate
 import java.util.*
 import javax.persistence.Column
 import javax.persistence.Entity
+import javax.persistence.FetchType
 import javax.persistence.Id
 import javax.persistence.JoinColumn
 import javax.persistence.ManyToOne
-import javax.persistence.OneToOne
+import javax.persistence.OneToMany
 import javax.persistence.Table
 
 @Table(name = "dokumentasjonsreferanse")
@@ -18,23 +19,19 @@ class Dokumentasjonsreferanse {
     @Id
     @Column(name = "objid", nullable = false, updatable = false)
     val id: String = UUID.randomUUID().toString()
-    
+
     @Column(name = "objtype")
     var objtype: String? = null
 
-    
     @Column(name = "rettskildetittel", nullable = false)
     var rettskildetittel: String? = null
 
-    
     @Column(name = "rettskildeid")
     var rettskildeid: String? = null
 
-    
     @Column(name = "hjemmel")
     var hjemmel: String? = null
 
-    
     @Column(name = "fastsettingsmyndighet")
     var fastsettingsmyndighet: String? = null
 
@@ -129,6 +126,10 @@ class Dokumentasjonsreferanse {
     @JoinColumn(name = "yttergrensetilstoetendesone_fk")
     var yttergrensetilstoetendesoneFk: Yttergrensetilstoetendesone? = null
 
-    @OneToOne(mappedBy = "dokumentasjonsreferanseFk")
-    var dokumentlink: DokumentasjonsreferanseDokumentlink? = null
+    @OneToMany(mappedBy = "dokumentasjonsreferanseFk", fetch = FetchType.LAZY)
+    var dokumentlink: MutableSet<DokumentasjonsreferanseDokumentlink> = mutableSetOf()
+
+    @OneToMany(mappedBy = "dokumentasjonsreferanseFk", fetch = FetchType.LAZY)
+    var internReferanserKartverket: MutableSet<DokumentasjonsreferanseInternReferanseKartverket> = mutableSetOf()
+
 }

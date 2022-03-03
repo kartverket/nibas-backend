@@ -8,7 +8,17 @@ import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.FeatureProperties
 import no.kartverket.nibas.api.v1.common.geojson.Identifikasjon
 import no.kartverket.nibas.api.v1.response.HistorikkRef
-import no.kartverket.nibas.domain.*
+import no.kartverket.nibas.domain.AdministrativEnhet
+import no.kartverket.nibas.domain.AdministrativGrense
+import no.kartverket.nibas.domain.Avtaltavgrensningslinje
+import no.kartverket.nibas.domain.Fylkesgrense
+import no.kartverket.nibas.domain.Grense
+import no.kartverket.nibas.domain.GrenseKobling
+import no.kartverket.nibas.domain.GrenseKoblingAttributter
+import no.kartverket.nibas.domain.Kommunegrense
+import no.kartverket.nibas.domain.Riksgrense
+import no.kartverket.nibas.domain.Territorialgrense
+import no.kartverket.nibas.domain.toMetadata
 import no.kartverket.nibas.repository.AvtaltAvgrensningslinjeRepository
 import no.kartverket.nibas.repository.FylkeRepository
 import no.kartverket.nibas.repository.FylkesgrenseRepository
@@ -154,9 +164,17 @@ class GrenseService @Autowired constructor(
 
             val contextProps = feature.properties.contextProperties!!
             GrenseMedRetningOgKontekst(
-                GrenseMedAttributter(grense, GrenseKoblingAttributter(contextProps.directionClockwise, contextProps.order, contextProps.holeIndex)),
+                GrenseMedAttributter(
+                    grense,
+                    GrenseKoblingAttributter(
+                        contextProps.directionClockwise,
+                        contextProps.order,
+                        contextProps.holeIndex
+                    )
+                ),
                 contextProps.type!!,
-                contextProps.id!!)
+                contextProps.id!!
+            )
         }
 
         grenseRepository.saveAll(oppdaterteGrenser.map { it.grenseMedAttributter.grense })
@@ -170,13 +188,20 @@ class GrenseService @Autowired constructor(
         }
     }
 
-    private fun <T : Grense, S : AdministrativEnhet> oppdaterEnheter(grenser: List<GrenseMedRetningOgKontekst<T>>, repository: CrudRepository<S, String>) {
+    private fun <T : Grense, S : AdministrativEnhet> oppdaterEnheter(
+        grenser: List<GrenseMedRetningOgKontekst<T>>,
+        repository: CrudRepository<S, String>
+    ) {
         val enheter = repository.findAllById(grenser.map { it.kontekstId })
         repository.saveAll(
             enheter.map { enhet ->
-                grenser.filter { it.kontekstId == enhet.id }.map { it.grenseMedAttributter }.forEach { grenseMedAttributter ->
-                    enhet.oppdaterEllerLeggTilGrenseKobling(grenseMedAttributter.grense, grenseMedAttributter.attributter)
-                }
+                grenser.filter { it.kontekstId == enhet.id }.map { it.grenseMedAttributter }
+                    .forEach { grenseMedAttributter ->
+                        enhet.oppdaterEllerLeggTilGrenseKobling(
+                            grenseMedAttributter.grense,
+                            grenseMedAttributter.attributter
+                        )
+                    }
                 enhet
             }
         )
@@ -207,13 +232,17 @@ fun grenseKoblingToFeature(
     grenseKobling: GrenseKobling
 ): Feature {
     val feature = grenseToFeature(grenseKobling.getGrense())
-    return feature.copy(properties = feature.properties.copy(contextProperties = ContextProperties(
-        id = kontekstId,
-        type = kontekstType,
-        directionClockwise = grenseKobling.grenseKoblingAttributter.retningMedKlokken,
-        order = grenseKobling.grenseKoblingAttributter.rekkefoelge,
-        holeIndex = grenseKobling.grenseKoblingAttributter.hullIndeks
-    )))
+    return feature.copy(
+        properties = feature.properties.copy(
+            contextProperties = ContextProperties(
+                id = kontekstId,
+                type = kontekstType,
+                directionClockwise = grenseKobling.grenseKoblingAttributter.retningMedKlokken,
+                order = grenseKobling.grenseKoblingAttributter.rekkefoelge,
+                holeIndex = grenseKobling.grenseKoblingAttributter.hullIndeks
+            )
+        )
+    )
 }
 
 fun grenseToFeature(grense: Grense): Feature {
@@ -221,7 +250,7 @@ fun grenseToFeature(grense: Grense): Feature {
         type = grense.objtype!!,
         identifikasjon = Identifikasjon(grense.lokalid, grense.navnerom)
     )
-    if (grense is ContainingMetadataForAdmGrenser) {
+    if (grense is AdministrativGrense) {
         featureProperties = featureProperties.copy(
             metadata = grense.toMetadata()
         )
