@@ -143,10 +143,10 @@ class GrenseService @Autowired constructor(
     @Transactional
     fun <T : Grense> lagreGrenser(grenserSomSkalLagres: List<Feature>, grenseRepository: CrudRepository<T, String>) {
         val eksisterendeGrenser = grenseRepository.findAllById(
-            grenserSomSkalLagres.filter { feature -> feature.properties.id != null }.map { it.properties.id })
+            grenserSomSkalLagres.filter { feature -> feature.id != null }.map { it.id })
 
         val oppdaterteGrenser = grenserSomSkalLagres.map { feature ->
-            val grense = when (val grenseId = feature.properties.id) {
+            val grense = when (val grenseId = feature.id) {
                 null -> lagGrenseForType(feature)
                 else -> eksisterendeGrenser.find { it.id == grenseId }!!
             }
@@ -219,7 +219,6 @@ fun grenseKoblingToFeature(
 fun grenseToFeature(grense: Grense): Feature {
     var featureProperties = FeatureProperties(
         type = grense.objtype!!,
-        id = grense.id,
         identifikasjon = Identifikasjon(grense.lokalid, grense.navnerom)
     )
     if (grense is ContainingMetadataForAdmGrenser) {
@@ -228,6 +227,7 @@ fun grenseToFeature(grense: Grense): Feature {
         )
     }
     return Feature(
+        id = grense.id,
         properties = featureProperties,
         geometry = grense.grense!!
     )

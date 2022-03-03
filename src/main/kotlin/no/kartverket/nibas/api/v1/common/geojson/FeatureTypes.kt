@@ -19,6 +19,9 @@ data class Feature(
     @Schema(description = "En konstant, navn: type, verdi: Feature")
     val type: String = "Feature",
 
+    @Schema(description = "Id til feature")
+    val id: String? = null,
+
     @Schema(description = "Et sett med egenskaper som beskriver denne featuren")
     @JsonProperty("properties")
     var properties: FeatureProperties,
@@ -34,9 +37,6 @@ data class FeatureProperties(
 
     @Schema(description = "Definerer hvilken type geometri som leveres")
     val type: String,
-
-    @Schema(description = "Id til feature")
-    val id: String? = null,
 
     //TODO: Lar denne ligge her midlertidig, bør flyttes inn i metadata-type også for de ikke-adm.grensene
     @Schema(description = "Identifikasjon for grensen i sosi-modellen.")

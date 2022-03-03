@@ -24,9 +24,9 @@ class FeatureBuilder(private val id: String? = "1") {
         GeometryFactory().createLineString(arrayOf(Coordinate(0.0, 0.0), Coordinate(1.0, 1.0)))
 
     fun build() = Feature(
+        id = id,
         properties = FeatureProperties(
             type = grenseType.toString(),
-            id = id,
             identifikasjon = Identifikasjon(lokalid, navnerom),
             contextProperties = ContextProperties(
                 id = kontekstId,

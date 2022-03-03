@@ -1,23 +1,18 @@
 package no.kartverket.nibas.inndelinger
 
-import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.domain.AdministrativEnhet
 import no.kartverket.nibas.domain.Fylke
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Nasjon
-import no.kartverket.nibas.repository.*
-import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
+import no.kartverket.nibas.repository.FylkeRepository
+import no.kartverket.nibas.repository.KommuneRepository
+import no.kartverket.nibas.repository.NasjonRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
 @Service
 class FlateService @Autowired constructor(
-    private val kommunegrenseRepository: KommunegrenseRepository,
-    private val fylkesgrenseRepository: FylkesgrenseRepository,
-    private val territorialgrenseRepository: TerritorialgrenseRepository,
-    private val avtaltAvgrensningslinjeRepository: AvtaltAvgrensningslinjeRepository,
-    private val riksgrenseRepository: RiksgrenseRepository,
     private val kommuneRepository: KommuneRepository,
     private val fylkeRepository: FylkeRepository,
     private val nasjonRepository: NasjonRepository
@@ -26,11 +21,11 @@ class FlateService @Autowired constructor(
     fun beregnFlaterFor(features: List<Feature>) {
         val enheterSomSkalFlatedannes: Set<AdministrativEnhet> = features.flatMap {
             when (GrenseType.valueOf(it.properties.type)) {
-                GrenseType.Kommunegrense -> finnEnheterMedKommunegrense(it.properties.id!!)
-                GrenseType.Fylkesgrense -> finnEnheterMedFylkesgrense(it.properties.id!!)
-                GrenseType.Riksgrense -> finnEnheterMedRiksgrense(it.properties.id!!)
-                GrenseType.AvtaltAvgrensningslinje -> finnEnheterMedAvtaltAvgrensningslinje(it.properties.id!!)
-                GrenseType.Territorialgrense -> finnEnheterMedTerritorialgrense(it.properties.id!!)
+                GrenseType.Kommunegrense -> finnEnheterMedKommunegrense(it.id!!)
+                GrenseType.Fylkesgrense -> finnEnheterMedFylkesgrense(it.id!!)
+                GrenseType.Riksgrense -> finnEnheterMedRiksgrense(it.id!!)
+                GrenseType.AvtaltAvgrensningslinje -> finnEnheterMedAvtaltAvgrensningslinje(it.id!!)
+                GrenseType.Territorialgrense -> finnEnheterMedTerritorialgrense(it.id!!)
             }
         }.toSet()
 
