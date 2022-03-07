@@ -20,7 +20,7 @@ repositories {
 }
 
 object DependencyVersions {
-	const val HIBERNATE_VERSION = "5.4.32.Final"
+	const val HIBERNATE_VERSION = "5.6.5.Final"
 }
 
 dependencies {

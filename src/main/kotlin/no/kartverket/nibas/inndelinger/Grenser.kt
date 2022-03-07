@@ -2,7 +2,7 @@ package no.kartverket.nibas.inndelinger
 
 import no.kartverket.nibas.api.v1.GrenseApi
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
-import no.kartverket.nibas.api.v1.common.geojson.ContextProperties
+import no.kartverket.nibas.api.v1.common.geojson.KontekstEgenskaper
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.FeatureProperties
@@ -29,8 +29,8 @@ import no.kartverket.nibas.repository.RiksgrenseRepository
 import no.kartverket.nibas.repository.TerritorialgrenseRepository
 import no.kartverket.nibas.unwrap
 import org.locationtech.jts.geom.LineString
+import org.locationtech.jts.geom.MultiPolygon
 import org.locationtech.jts.geom.Point
-import org.locationtech.jts.geom.Polygon
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.CrudRepository
 import org.springframework.http.HttpStatus
@@ -162,19 +162,11 @@ class GrenseService @Autowired constructor(
             }
             grense.grense = feature.geometry as LineString
 
-            val contextProps = feature.properties.contextProperties!!
+            val kontekstEgenskaper = feature.properties.kontekstEgenskaper!!
             GrenseMedRetningOgKontekst(
-                GrenseMedAttributter(
-                    grense,
-                    GrenseKoblingAttributter(
-                        contextProps.directionClockwise,
-                        contextProps.order,
-                        contextProps.holeIndex
-                    )
-                ),
-                contextProps.type!!,
-                contextProps.id!!
-            )
+                GrenseMedAttributter(grense, GrenseKoblingAttributter(kontekstEgenskaper.retningMedKlokken, kontekstEgenskaper.rekkefoelge, kontekstEgenskaper.flateIndeks, kontekstEgenskaper.hullIndeks)),
+                kontekstEgenskaper.type!!,
+                kontekstEgenskaper.id!!)
         }
 
         grenseRepository.saveAll(oppdaterteGrenser.map { it.grenseMedAttributter.grense })
@@ -232,17 +224,14 @@ fun grenseKoblingToFeature(
     grenseKobling: GrenseKobling
 ): Feature {
     val feature = grenseToFeature(grenseKobling.getGrense())
-    return feature.copy(
-        properties = feature.properties.copy(
-            contextProperties = ContextProperties(
-                id = kontekstId,
-                type = kontekstType,
-                directionClockwise = grenseKobling.grenseKoblingAttributter.retningMedKlokken,
-                order = grenseKobling.grenseKoblingAttributter.rekkefoelge,
-                holeIndex = grenseKobling.grenseKoblingAttributter.hullIndeks
-            )
-        )
-    )
+    return feature.copy(properties = feature.properties.copy(kontekstEgenskaper = KontekstEgenskaper(
+        id = kontekstId,
+        type = kontekstType,
+        retningMedKlokken = grenseKobling.grenseKoblingAttributter.retningMedKlokken,
+        rekkefoelge = grenseKobling.grenseKoblingAttributter.rekkefoelge,
+        flateIndeks = grenseKobling.grenseKoblingAttributter.flateIndeks,
+        hullIndeks = grenseKobling.grenseKoblingAttributter.hullIndeks
+    )))
 }
 
 fun grenseToFeature(grense: Grense): Feature {
@@ -265,5 +254,5 @@ fun grenseToFeature(grense: Grense): Feature {
 fun posisjonToFeature(posisjon: Point?): Feature =
     Feature(properties = FeatureProperties(type = "Posisjon"), geometry = posisjon!!)
 
-fun flateToFeature(flate: Polygon?): Feature =
+fun flateToFeature(flate: MultiPolygon?): Feature =
     Feature(properties = FeatureProperties(type = "Flate"), geometry = flate!!)

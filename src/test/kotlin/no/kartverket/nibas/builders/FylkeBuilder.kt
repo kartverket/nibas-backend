@@ -49,7 +49,7 @@ class FylkeBuilder(private val id: String = "1") {
         fylke.samiskforvaltningsomraade = samiskforvaltningsomraade
         fylke.oppdateringsdato = oppdateringsdato
         fylke.posisjon = GeometryFactory().createPoint(Coordinate(1.0, 1.0))
-        fylke.flate = GeometryFactory().createPolygon()
+        fylke.flate = GeometryFactory().createMultiPolygon(arrayOf(GeometryFactory().createPolygon()))
 
         fylke.fylkesgrenser = fylkesgrenser.map { FylkeFylkesgrense(fylke, it, GrenseKoblingAttributter()) }.toMutableSet()
         fylke.riksgrenser = riksgrenser.map { FylkeRiksgrense(fylke, it, GrenseKoblingAttributter()) }.toMutableSet()

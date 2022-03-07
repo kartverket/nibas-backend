@@ -2,10 +2,10 @@ package no.kartverket.nibas.api.v1
 
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
+import no.kartverket.nibas.domain.*
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import org.junit.jupiter.api.Test
-import org.locationtech.jts.geom.GeometryFactory
-import org.locationtech.jts.geom.PrecisionModel
+import org.locationtech.jts.geom.LineString
 import org.springframework.web.reactive.function.client.WebClient
 import java.time.Duration
 import kotlin.test.assertTrue
@@ -14,44 +14,48 @@ import kotlin.test.fail
 class KommuneApiIntegrationTest {
 
     @Test
-    fun thatFlatedanningErMuligMedGittRekkefolgeOgHull() {
+    fun thatFlatedanningErMuligMedHull() {
+        val stjordal = "9cc5760c-556b-49b0-90ed-744654caf8ea" // Finn korrekt id i egen DB
+        beregnFlateForKommuneId(stjordal)
+    }
+
+    @Test
+    fun thatFlatedanningErMuligMedFlereFlater() {
+        val malvik = "00205fb8-78e9-4c29-9307-30fd4ccf3be9" // Finn korrekt id i egen DB
+        beregnFlateForKommuneId(malvik)
+    }
+
+    fun beregnFlateForKommuneId(id: String) {
         val webClient = WebClient.builder().baseUrl("http://localhost:8080/v1")
             .codecs { it.defaultCodecs().maxInMemorySize(10 * 1024 * 1024) }.build()
 
-        val stjordal = "5d45c59d-f33e-4a9e-aee1-ad945d6a1fe5"
         val featureCollection = webClient.get()
-            .uri("/kommuner/${stjordal}/grenser")
+            .uri("/kommuner/${id}/grenser")
             .retrieve()
             .bodyToMono(FeatureCollection::class.java)
             .block(Duration.ofMillis(5_000))
 
-        when(featureCollection) {
+        when (featureCollection) {
             null -> fail("Could not get result")
             else -> {
+                val grenseKoblinger = featureCollection.features.map { featureToGrenseKobling(it) }
+                assertTrue(SosiGeometryFunctions.beregnFlate(grenseKoblinger.toSet()).isValid)
 
-                val skall = featureCollection.features.filter { it.properties.contextProperties!!.holeIndex == null }
-                val hull: Map<Int?, List<Feature>> = featureCollection.features.filter { it.properties.contextProperties!!.holeIndex != null }
-                    .groupBy { it.properties.contextProperties!!.holeIndex }
-
-                val gf = GeometryFactory(PrecisionModel(), 25833)
-                val skallCoordinates = skall.sortedBy { it.properties.contextProperties!!.order }.map { it ->
-                    when(it.properties.contextProperties!!.directionClockwise) {
-                        true -> gf.createLineString(it.geometry.coordinates)
-                        false -> gf.createLineString(it.geometry.coordinates).reverse()
-                    }
-                }
-
-                val hullCoordinates = hull.map { h ->
-                    h.value.sortedBy { it.properties.contextProperties!!.order }.map { it ->
-                        when (it.properties.contextProperties!!.directionClockwise) {
-                            true -> gf.createLineString(it.geometry.coordinates)
-                            false -> gf.createLineString(it.geometry.coordinates).reverse()
-                        }
-                    }
-                }
-
-                assertTrue(SosiGeometryFunctions.lagFlate(skallCoordinates, hullCoordinates, "23").isValid)
             }
         }
+    }
+
+    fun featureToGrenseKobling(feature: Feature): GrenseKobling {
+        // FYI, bryr oss ikke om hvilken type grense det er, skal bare verifisere at polygoner blir laget riktig
+        val ke = feature.properties.kontekstEgenskaper!!
+
+        val kommunegrense = Kommunegrense()
+        kommunegrense.grense = feature.geometry as LineString
+
+        return KommuneKommunegrense(
+            Kommune(),
+            kommunegrense,
+            GrenseKoblingAttributter(ke.retningMedKlokken, ke.rekkefoelge, ke.flateIndeks, ke.hullIndeks)
+        )
     }
 }

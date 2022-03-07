@@ -18,6 +18,9 @@ data class GrenseKoblingAttributter(
     @Column(name = "rekkefoelge", nullable = false)
     var rekkefoelge: Int = 0,
 
+    @Column(name = "flate_indeks", nullable = false)
+    var flateIndeks: Int = 0,
+
     @Column(name = "hull_indeks", nullable = true)
     var hullIndeks: Int? = null
 

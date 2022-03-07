@@ -37,7 +37,7 @@ class NasjonBuilder(private val id: String = "1") {
         nasjon.lokalid = lokalId
         nasjon.navnerom = navnerom
         nasjon.posisjon = GeometryFactory().createPoint(Coordinate(1.0, 1.0))
-        nasjon.flate = GeometryFactory().createPolygon()
+        nasjon.flate = GeometryFactory().createMultiPolygon(arrayOf(GeometryFactory().createPolygon()))
 
         nasjon.riksgrenser = riksgrenser.map { NasjonRiksgrense(nasjon, it, GrenseKoblingAttributter()) }.toMutableSet()
         nasjon.territorialgrenser = territorialgrenser.map { NasjonTerritorialgrense(nasjon, it, GrenseKoblingAttributter()) }.toMutableSet()

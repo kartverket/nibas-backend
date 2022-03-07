@@ -10,6 +10,7 @@ import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.NasjonRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import java.util.logging.Logger
 
 @Service
 class FlateService @Autowired constructor(
@@ -17,6 +18,8 @@ class FlateService @Autowired constructor(
     private val fylkeRepository: FylkeRepository,
     private val nasjonRepository: NasjonRepository
 ) {
+
+    val logger = Logger.getLogger(this::class.qualifiedName)
 
     fun beregnFlaterFor(features: List<Feature>) {
         val enheterSomSkalFlatedannes: Set<AdministrativEnhet> = features.flatMap {
@@ -30,6 +33,7 @@ class FlateService @Autowired constructor(
         }.toSet()
 
         enheterSomSkalFlatedannes.forEach { enhet ->
+            logger.info(enhet.administrativenhetnavn.map { it.navn }.toString())
             enhet.oppdaterFlate()
             when(enhet) {
                 is Kommune -> kommuneRepository.save(enhet)

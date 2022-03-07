@@ -1,7 +1,7 @@
 package no.kartverket.nibas.builders
 
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
-import no.kartverket.nibas.api.v1.common.geojson.ContextProperties
+import no.kartverket.nibas.api.v1.common.geojson.KontekstEgenskaper
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureProperties
 import no.kartverket.nibas.api.v1.common.geojson.Identifikasjon
@@ -28,7 +28,7 @@ class FeatureBuilder(private val id: String? = "1") {
         properties = FeatureProperties(
             type = grenseType.toString(),
             identifikasjon = Identifikasjon(lokalid, navnerom),
-            contextProperties = ContextProperties(
+            kontekstEgenskaper = KontekstEgenskaper(
                 id = kontekstId,
                 type = kontekstType
             )

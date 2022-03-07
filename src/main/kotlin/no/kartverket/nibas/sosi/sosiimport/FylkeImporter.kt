@@ -70,11 +70,7 @@ class FylkeImporter @Autowired constructor(
                         fylke.territorialgrenser = (skall.flatMap { it.territorialgrenser } + hull.flatMap { it.flatMap { i -> i.territorialgrenser } }).toMutableSet()
                         fylke.riksgrenser = (skall.flatMap { it.riksgrenser } + hull.flatMap { it.flatMap { i -> i.riksgrenser } }).toMutableSet()
 
-                        fylke.flate = SosiGeometryFunctions.lagFlate(
-                            skall.map { it.lineString!! },
-                            hull.map { it.map { i -> i.lineString!! } },
-                            flate.koordsys
-                        )
+                        fylke.oppdaterFlate()
                     }
                 }
 
@@ -108,10 +104,10 @@ class FylkeImporter @Autowired constructor(
                 val importertGrense = grenseImporter.importerGrense(grenseRef)
                 val result = FylkeReferanseImportResult()
                 when (importertGrense) {
-                    is Fylkesgrense -> result.fylkesgrenser.add(FylkeFylkesgrense(fylke, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, hullIndex)))
-                    is Avtaltavgrensningslinje -> result.avtaltavgrensningslinjer.add(FylkeAvtaltavgrensningslinje(fylke, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, hullIndex)))
-                    is Territorialgrense -> result.territorialgrenser.add(FylkeTerritorialgrense(fylke, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, hullIndex)))
-                    is Riksgrense -> result.riksgrenser.add(FylkeRiksgrense(fylke, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, hullIndex)))
+                    is Fylkesgrense -> result.fylkesgrenser.add(FylkeFylkesgrense(fylke, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, 0, hullIndex)))
+                    is Avtaltavgrensningslinje -> result.avtaltavgrensningslinjer.add(FylkeAvtaltavgrensningslinje(fylke, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, 0, hullIndex)))
+                    is Territorialgrense -> result.territorialgrenser.add(FylkeTerritorialgrense(fylke, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, 0, hullIndex)))
+                    is Riksgrense -> result.riksgrenser.add(FylkeRiksgrense(fylke, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, 0, hullIndex)))
                 }
                 when (ref.erRetningMedKlokken()) {
                     true -> result.lineString = importertGrense.grense!!

@@ -2,6 +2,7 @@ package no.kartverket.nibas.domain
 
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
 import org.hibernate.envers.Audited
+import org.locationtech.jts.geom.MultiPolygon
 import org.locationtech.jts.geom.Point
 import org.locationtech.jts.geom.Polygon
 import java.time.LocalDate
@@ -101,7 +102,7 @@ abstract class AdministrativEnhet(
     var posisjon: Point? = null
 
     @Column(name = "flate")
-    var flate: Polygon? = null
+    var flate: MultiPolygon? = null
 
     @javax.persistence.Transient
     var administrativenhetnavn: MutableSet<Administrativenhetnavn> = mutableSetOf()

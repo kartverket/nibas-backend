@@ -6,6 +6,7 @@ import no.kartverket.nibas.sosi.sosiimport.KommuneImporter
 import no.kartverket.nibas.sosi.sosiimport.NasjonImporter
 import no.kartverket.nibas.sosi.common.SosiKoder
 import no.kartverket.nibas.sosi.deserializer.NibasSosiDeserializer
+import no.kartverket.nibas.sosi.model.SosiFlate
 import no.kartverket.nibas.sosi.model.SosiObjekt
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -63,9 +64,10 @@ class SosiImportService {
                 fylkeImporter.importerSosiFylke(fylke, root)
             }
 
-            kommuner.forEachIndexed { index, kommune ->
-                logger.info("Importing kommune ${index + 1} of ${kommuner.size}")
-                kommuneImporter.importerSosiKommune(kommune, root)
+            val gruppertKommune: Map<String?, List<SosiFlate>> = kommuner.groupBy { it.getKommunenummer() }
+            gruppertKommune.entries.forEachIndexed { index, entry ->
+                logger.info("Importing kommune ${index + 1} of ${gruppertKommune.size}")
+                kommuneImporter.importerSosiKommune(entry.value, root)
             }
         }
         logger.info("Took $millis ms to import")

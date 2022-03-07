@@ -46,23 +46,26 @@ data class FeatureProperties(
     val metadata: AdmGrenserMetadata? = null,
 
     @Schema(description = "Egenskaper til konteksten til grensen.")
-    val contextProperties: ContextProperties? = null
+    val kontekstEgenskaper: KontekstEgenskaper? = null
 )
 
 @Schema(description = "Egenskaper som beskriver konteksten som grensen sees i.")
-data class ContextProperties (
+data class KontekstEgenskaper (
     @Schema(description = "Id til objekt som det vises til i kontekst")
     val id: String? = null,
 
     @Schema(description = "Hvilken kontekst geometrien skal sees i")
     val type: AdministrativEnhetType? = null,
 
-    @Schema(description = "Angir om grensen skal leses mot klokken for å danne flate.")
-    val directionClockwise: Boolean = true,
+    @Schema(description = "Angir om grensen skal leses med klokken for å danne flate.")
+    val retningMedKlokken: Boolean = true,
 
     @Schema(description = "Angir rekkefølgen på gitt grenselinje i flatedanningen.")
-    val order: Int = 0,
+    val rekkefoelge: Int = 0,
+
+    @Schema(description = "Angir hvilken flate for enheten grensen er en del av.")
+    val flateIndeks: Int = 0,
 
     @Schema(description = "Angir om grensen er en del av et hull, og i så fall index på gitt hull.")
-    val holeIndex: Int? = null
+    val hullIndeks: Int? = null
 )

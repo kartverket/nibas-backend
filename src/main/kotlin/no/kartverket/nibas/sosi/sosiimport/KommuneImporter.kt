@@ -29,83 +29,95 @@ class KommuneImporter @Autowired constructor(
     val logger = Logger.getLogger(this::class.java.name)
 
     @Transactional
-    fun importerSosiKommune(flate: SosiFlate, root: SosiObjekt) {
-        val lokalid = flate.getIdent()?.getLokalId()!!
-        when (kommuneRepository.findByLokalid(lokalid)) {
-            null -> {
-                var kommune = administrativEnhetImporter.importer(flate) as Kommune
-                kommune.kommunenummer =
-                    kodelisteService.getKommunenummerIdByCodeValue(
-                        flate.getKommunenummer()
-                            ?: throw RuntimeException("Kommunenummer ikke satt i modellen for kommune med flate-id $lokalid")
-                    )
-                kommune.samiskforvaltningsomraade = flate.isSamiskForvaltningsomrade()
+    fun importerSosiKommune(flater: List<SosiFlate>, root: SosiObjekt) {
 
-                runBlocking {
-                    withContext(Dispatchers.Default) {
-                        val deferredSkall: List<Deferred<KommuneReferanseImportResult>> =
-                            flate.getSkallReferanser().mapIndexed { rekkefoelge, ref ->
+        // Henter egenskapene bare fra første flate. Egenskapene er/skal være like på tvers av flatene.
+        val forsteFlate = flater.first()
+        val lokalid = forsteFlate.getIdent()?.getLokalId()!!
+
+        var kommune = administrativEnhetImporter.importer(forsteFlate) as Kommune
+        kommune.kommunenummer = kodelisteService.getKommunenummerIdByCodeValue(
+            forsteFlate.getKommunenummer()
+                ?: throw RuntimeException("Kommunenummer ikke satt i modellen for kommune med flate-id $lokalid")
+        )
+        kommune.samiskforvaltningsomraade = forsteFlate.isSamiskForvaltningsomrade()
+
+        runBlocking {
+            withContext(Dispatchers.Default) {
+                val flateLinjer = flater.mapIndexed { skall_index, flate ->
+                    val deferredSkallForFlate: List<Deferred<KommuneReferanseImportResult>> =
+                        flate.getSkallReferanser().mapIndexed { rekkefoelge, ref ->
+                            async {
+                                importerKommuneRef(kommune, ref, root, skall_index, rekkefoelge)
+                            }
+                        }
+
+                    val deferredHullForFlate: List<List<Deferred<KommuneReferanseImportResult>>> =
+                        flate.getHullReferanser().mapIndexed { hullIndex, liste ->
+                            liste.mapIndexed { rekkefoelge, ref ->
                                 async {
-                                    importerKommuneRef(kommune, ref, root, rekkefoelge)
+                                    importerKommuneRef(kommune, ref, root, skall_index, rekkefoelge, hullIndex)
                                 }
                             }
+                        }
 
-                        val deferredHull: List<List<Deferred<KommuneReferanseImportResult>>> =
-                            flate.getHullReferanser().mapIndexed { hullIndex, liste ->
-                                liste.mapIndexed { rekkefoelge, ref ->
-                                    async {
-                                        importerKommuneRef(kommune, ref, root, rekkefoelge, hullIndex)
-                                    }
-                                }
-                            }
-
-                        val skall: List<KommuneReferanseImportResult> = deferredSkall.awaitAll()
-                        val hull: List<List<KommuneReferanseImportResult>> = deferredHull.map { it.awaitAll() }
-
-                        kommune.kommunegrenser =
-                            (skall.flatMap { it.kommunegrenser } + hull.flatMap { it.flatMap { i -> i.kommunegrenser } }).toMutableSet()
-                        kommune.fylkesgrenser =
-                            (skall.flatMap { it.fylkesgrenser } + hull.flatMap { it.flatMap { i -> i.fylkesgrenser } }).toMutableSet()
-                        kommune.avtaltavgrensningslinjer =
-                            (skall.flatMap { it.avtaltavgrensningslinjer } + hull.flatMap { it.flatMap { i -> i.avtaltavgrensningslinjer } }).toMutableSet()
-                        kommune.territorialgrenser =
-                            (skall.flatMap { it.territorialgrenser } + hull.flatMap { it.flatMap { i -> i.territorialgrenser } }).toMutableSet()
-                        kommune.riksgrenser =
-                            (skall.flatMap { it.riksgrenser } + hull.flatMap { it.flatMap { i -> i.riksgrenser } }).toMutableSet()
-
-                        kommune.flate = SosiGeometryFunctions.lagFlate(
-                            skall.map { it.lineString!! },
-                            hull.map { it.map { i -> i.lineString!! } },
-                            flate.koordsys
-                        )
-                    }
+                    val skallForFlate: List<KommuneReferanseImportResult> = deferredSkallForFlate.awaitAll()
+                    val hullForFlate: List<List<KommuneReferanseImportResult>> =
+                        deferredHullForFlate.map { it.awaitAll() }
+                    Pair(skallForFlate, hullForFlate)
                 }
 
-                // Fylkesnummer er de to første sifferne i kommunenummeret
-                kommune.fylkeFk = fylkeRepository.findByFylkesnummer(kodelisteService.getFylkesnummerIdByCodeValue(flate.getKommunenummer()!!.substring(0,2)))
-                kommune = kommuneRepository.save(kommune)
+                val skall: List<List<KommuneReferanseImportResult>> = flateLinjer.map { it.first }
+                val hull: List<List<List<KommuneReferanseImportResult>>> = flateLinjer.map { it.second }
 
-                if (flate.getInformasjon() != null) {
-                    val kommuneInformasjon = KommuneInformasjon()
-                    kommuneInformasjon.informasjon = flate.getInformasjon()
-                    kommuneInformasjon.kommuneFk = kommune
-                    kommuneInformasjonRepository.save(kommuneInformasjon)
-                }
+                kommune.kommunegrenser =
+                    (skall.flatMap { it.flatMap { i -> i.kommunegrenser } } + hull.flatMap { it.flatMap { i -> i.flatMap { a -> a.kommunegrenser } } }).toMutableSet()
+                kommune.fylkesgrenser =
+                    (skall.flatMap { it.flatMap { i -> i.fylkesgrenser } } + hull.flatMap { it.flatMap { i -> i.flatMap { a -> a.fylkesgrenser } } }).toMutableSet()
+                kommune.avtaltavgrensningslinjer =
+                    (skall.flatMap { it.flatMap { i -> i.avtaltavgrensningslinjer } } + hull.flatMap { it.flatMap { i -> i.flatMap { a -> a.avtaltavgrensningslinjer } } }).toMutableSet()
+                kommune.territorialgrenser =
+                    (skall.flatMap { it.flatMap { i -> i.territorialgrenser } } + hull.flatMap { it.flatMap { i -> i.flatMap { a -> a.territorialgrenser } } }).toMutableSet()
+                kommune.riksgrenser =
+                    (skall.flatMap { it.flatMap { i -> i.riksgrenser } } + hull.flatMap { it.flatMap { i -> i.flatMap { a -> a.riksgrenser } } }).toMutableSet()
 
-                flate.getKommunenavn().forEach { sosiKommunenavn ->
-                    val kommunenavn = Administrativenhetnavn()
-                    kommunenavn.navn = sosiKommunenavn.getNavn()
-                    kommunenavn.spraak = sosiKommunenavn.getSprak()?.let { spraakkodeRepository.findByIdOrNull(it) }
-                    kommunenavn.rekkefoelge = sosiKommunenavn.getRekkefolge()
-                    kommunenavn.kommuneFk = kommune
-                    administrativenhetnavnRepository.save(kommunenavn)
-                }
+                kommune.oppdaterFlate()
             }
-            else -> {}
+        }
+
+        // Fylkesnummer er de to første sifferne i kommunenummeret
+        kommune.fylkeFk = fylkeRepository.findByFylkesnummer(
+            kodelisteService.getFylkesnummerIdByCodeValue(
+                forsteFlate.getKommunenummer()!!.substring(0, 2)
+            )
+        )
+        kommune = kommuneRepository.save(kommune)
+
+        if (forsteFlate.getInformasjon() != null) {
+            val kommuneInformasjon = KommuneInformasjon()
+            kommuneInformasjon.informasjon = forsteFlate.getInformasjon()
+            kommuneInformasjon.kommuneFk = kommune
+            kommuneInformasjonRepository.save(kommuneInformasjon)
+        }
+
+        forsteFlate.getKommunenavn().forEach { sosiKommunenavn ->
+            val kommunenavn = Administrativenhetnavn()
+            kommunenavn.navn = sosiKommunenavn.getNavn()
+            kommunenavn.spraak = sosiKommunenavn.getSprak()?.let { spraakkodeRepository.findByIdOrNull(it) }
+            kommunenavn.rekkefoelge = sosiKommunenavn.getRekkefolge()
+            kommunenavn.kommuneFk = kommune
+            administrativenhetnavnRepository.save(kommunenavn)
         }
     }
 
-    private fun importerKommuneRef(kommune: Kommune, ref: SosiReferanse, root: SosiObjekt, rekkefoelge: Int, hullIndex: Int? = null): KommuneReferanseImportResult {
+    private fun importerKommuneRef(
+        kommune: Kommune,
+        ref: SosiReferanse,
+        root: SosiObjekt,
+        skallIndex: Int,
+        rekkefoelge: Int,
+        hullIndex: Int? = null
+    ): KommuneReferanseImportResult {
         val referanse = ref.getVerdiUtenRetningOgParentes()
         when (val grenseRef = root.getObjektMedId(referanse)) {
             null -> throw RuntimeException("Finner ikke grense som refereres til. Feil i datagrunnlaget. Ref: $referanse")
@@ -113,16 +125,48 @@ class KommuneImporter @Autowired constructor(
                 val importertGrense = grenseImporter.importerGrense(grenseRef)
                 val result = KommuneReferanseImportResult()
                 when (importertGrense) {
-                    is Kommunegrense -> result.kommunegrenser.add(KommuneKommunegrense(kommune, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, hullIndex)))
-                    is Fylkesgrense -> result.fylkesgrenser.add(KommuneFylkesgrense(kommune, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, hullIndex)))
-                    is Avtaltavgrensningslinje -> result.avtaltavgrensningslinjer.add(KommuneAvtaltavgrensningslinje(kommune, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, hullIndex)))
-                    is Territorialgrense -> result.territorialgrenser.add(KommuneTerritorialgrense(kommune, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, hullIndex)))
-                    is Riksgrense -> result.riksgrenser.add(KommuneRiksgrense(kommune, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, hullIndex)))
+                    is Kommunegrense -> result.kommunegrenser.add(
+                        KommuneKommunegrense(
+                            kommune,
+                            importertGrense,
+                            GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, skallIndex, hullIndex)
+                        )
+                    )
+                    is Fylkesgrense -> result.fylkesgrenser.add(
+                        KommuneFylkesgrense(
+                            kommune,
+                            importertGrense,
+                            GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, skallIndex, hullIndex)
+                        )
+                    )
+                    is Avtaltavgrensningslinje -> result.avtaltavgrensningslinjer.add(
+                        KommuneAvtaltavgrensningslinje(
+                            kommune,
+                            importertGrense,
+                            GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, skallIndex, hullIndex)
+                        )
+                    )
+                    is Territorialgrense -> result.territorialgrenser.add(
+                        KommuneTerritorialgrense(
+                            kommune,
+                            importertGrense,
+                            GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, skallIndex, hullIndex)
+                        )
+                    )
+                    is Riksgrense -> result.riksgrenser.add(
+                        KommuneRiksgrense(
+                            kommune,
+                            importertGrense,
+                            GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, skallIndex, hullIndex)
+                        )
+                    )
                 }
-                when (ref.erRetningMedKlokken()) {
-                    true -> result.lineString = importertGrense.grense!!
-                    false -> result.lineString = importertGrense.grense!!.reverse()
+
+                result.lineString = when(ref.erRetningMedKlokken()) {
+                    true -> importertGrense.grense!!
+                    false -> importertGrense.grense!!.reverse()
                 }
+
                 return result
             }
         }

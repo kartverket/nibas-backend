@@ -69,11 +69,7 @@ class NasjonImporter {
                         nasjon.riksgrenser = (skall.flatMap { it.riksgrenser } + hull.flatMap { it.flatMap { i -> i.riksgrenser } }).toMutableSet()
 
 
-                        nasjon.flate = SosiGeometryFunctions.lagFlate(
-                            skall.map { it.lineString!! },
-                            hull.map { it.map { i -> i.lineString!! } },
-                            flate.koordsys
-                        )
+                        nasjon.oppdaterFlate()
                     }
                 }
 
@@ -107,9 +103,9 @@ class NasjonImporter {
                 val importertGrense = grenseImporter.importerGrense(grenseRef)
                 val result = NasjonReferanseImportResult()
                 when (importertGrense) {
-                    is Avtaltavgrensningslinje -> result.avtaltavgrensningslinjer.add(NasjonAvtaltavgrensningslinje(nasjon, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, hullIndex)))
-                    is Territorialgrense -> result.territorialgrenser.add(NasjonTerritorialgrense(nasjon, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, hullIndex)))
-                    is Riksgrense -> result.riksgrenser.add(NasjonRiksgrense(nasjon, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, hullIndex)))
+                    is Avtaltavgrensningslinje -> result.avtaltavgrensningslinjer.add(NasjonAvtaltavgrensningslinje(nasjon, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, 0, hullIndex)))
+                    is Territorialgrense -> result.territorialgrenser.add(NasjonTerritorialgrense(nasjon, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, 0, hullIndex)))
+                    is Riksgrense -> result.riksgrenser.add(NasjonRiksgrense(nasjon, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, 0, hullIndex)))
                 }
                 when (ref.erRetningMedKlokken()) {
                     true -> result.lineString = importertGrense.grense!!

@@ -48,7 +48,7 @@ class KommuneBuilder(private val id: String = "1") {
         kommune.samiskforvaltningsomraade = samiskforvaltningsomraade
         kommune.oppdateringsdato = oppdateringsdato
         kommune.posisjon = GeometryFactory().createPoint(Coordinate(1.0, 1.0))
-        kommune.flate = GeometryFactory().createPolygon()
+        kommune.flate = GeometryFactory().createMultiPolygon(arrayOf(GeometryFactory().createPolygon()))
 
         kommune.kommunegrenser = kommunegrenser.map { KommuneKommunegrense(kommune, it, GrenseKoblingAttributter()) }.toMutableSet()
         kommune.fylkesgrenser = fylkesgrenser.map { KommuneFylkesgrense(kommune, it, GrenseKoblingAttributter()) }.toMutableSet()

@@ -14,7 +14,7 @@ class SosiGeometryFunctions {
 
         val sridToGeometryFactory = mutableMapOf<Int, GeometryFactory>()
 
-        fun getGeometryFactory(koordsys: String?): GeometryFactory {
+        fun getGeometryFactory(koordsys: String? = null): GeometryFactory {
             val srid = when (koordsys) {
                 null -> defaultSrid
                 else -> koordsysToSrid.getOrDefault(koordsys, defaultSrid)
@@ -75,28 +75,33 @@ class SosiGeometryFunctions {
             return getGeometryFactory(koordsys).createPolygon(skall, hull)
         }
 
-        fun beregnFlate(grenseKoblinger: Set<GrenseKobling>): Polygon {
-            val skallKoblinger = grenseKoblinger.filterTo(HashSet()) { it.grenseKoblingAttributter.hullIndeks == null }
-            val hullKoblinger: Map<Int, List<GrenseKobling>> =
-                (grenseKoblinger - skallKoblinger).groupBy { it.grenseKoblingAttributter.hullIndeks!! }
+        fun beregnFlate(grenseKoblinger: Set<GrenseKobling>): MultiPolygon {
+            val flater: List<Polygon> = grenseKoblinger.groupBy { it.grenseKoblingAttributter.flateIndeks }.map { entry ->
+                val koblingerForFlate = entry.value
 
-            val skall: List<LineString> = skallKoblinger.sortedBy { it.grenseKoblingAttributter.rekkefoelge }.map {
-                when (it.grenseKoblingAttributter.retningMedKlokken) {
-                    true -> it.getGrense().grense!!
-                    false -> it.getGrense().grense!!.reverse()
-                }
-            }
+                val skallKoblinger = koblingerForFlate.filterTo(HashSet()) { it.grenseKoblingAttributter.hullIndeks == null }
+                val hullKoblinger: Map<Int, List<GrenseKobling>> = (koblingerForFlate - skallKoblinger).groupBy { it.grenseKoblingAttributter.hullIndeks!! }
 
-            val hull: List<List<LineString>> = hullKoblinger.map { h ->
-                h.value.sortedBy { it.grenseKoblingAttributter.rekkefoelge }.map {
+                val skall: List<LineString> = skallKoblinger.sortedBy { it.grenseKoblingAttributter.rekkefoelge }.map {
                     when (it.grenseKoblingAttributter.retningMedKlokken) {
                         true -> it.getGrense().grense!!
                         false -> it.getGrense().grense!!.reverse()
                     }
                 }
+
+                val hull: List<List<LineString>> = hullKoblinger.map { h ->
+                    h.value.sortedBy { it.grenseKoblingAttributter.rekkefoelge }.map {
+                        when (it.grenseKoblingAttributter.retningMedKlokken) {
+                            true -> it.getGrense().grense!!
+                            false -> it.getGrense().grense!!.reverse()
+                        }
+                    }
+                }
+
+                lagFlate(skall, hull)
             }
 
-            return lagFlate(skall, hull)
+            return getGeometryFactory().createMultiPolygon(flater.toTypedArray())
         }
     }
 }

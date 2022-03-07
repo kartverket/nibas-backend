@@ -22,13 +22,17 @@ class NibasGeometryAsGeoJSONSerializer : GeometryAsGeoJSONSerializer() {
                 gen.writeFieldName("coordinates")
                 write(gen, geometry.coordinate)
             }
-            is Polygon -> {
-                gen.writeFieldName("coordinates")
-                write(gen, geometry)
-            }
             is LineString -> {
                 gen.writeFieldName("coordinates")
                 write(gen, geometry.coordinateSequence)
+            }
+            is MultiPolygon -> {
+                gen.writeFieldName("coordinates")
+                gen.writeStartArray()
+                for (i in 0 until geometry.getNumGeometries()) {
+                    write(gen, geometry.getGeometryN(i) as Polygon)
+                }
+                gen.writeEndArray()
             }
             else -> {
                 throw UnsupportedOperationException("unknown: $geometry")
