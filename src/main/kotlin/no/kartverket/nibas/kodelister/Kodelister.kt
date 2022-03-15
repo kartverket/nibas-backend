@@ -1,5 +1,6 @@
 package no.kartverket.nibas.kodelister
 
+import io.swagger.v3.oas.annotations.media.Schema
 import no.kartverket.nibas.api.v1.KodelisteApi
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.scheduling.annotation.Scheduled
@@ -135,7 +136,7 @@ class DefaultKodelisteService constructor(private val kodelisteFetcher: Kodelist
     }
 
     private fun getMaalemetodeKoderMap(): Map<String, KodelisteItem> {
-        return getKodelisteItemByIdMap(malemetodeKodeUri, KodelisteType.MALEMETODE_KODE)
+        return getKodelisteItemByIdMap(malemetodeKodeUri, KodelisteType.MAALEMETODE_KODE)
     }
 
     private fun toList(map: Map<String, KodelisteItem>): List<KodelisteItem> = map.values.toList()
@@ -167,18 +168,39 @@ data class GeonorgeKodelisteResponse(
     val status: String, val containeditems: List<GeonorgeKodelisteItem>
 )
 
+// API-typer
+
+data class KodelisteItem(
+    @Schema(description = "Angir typen av eksternt forvaltet kodeliste.")
+    val type: KodelisteType,
+    @Schema(description = "Inneholder kodelisteinnslaget fra Geonorge.")
+    val item: GeonorgeKodelisteItem
+)
+
 data class GeonorgeKodelisteItem(
+    @Schema(description = "Id er en URL til kodelisteinnslaget hos Geonorge.")
     val id: String,
+    @Schema(description = "Kompakt tekst for framvisning.")
     val label: String,
+    @Schema(description = "Angir språket, no for norsk.")
     val lang: String,
+    @Schema(description = "Unik id.")
     val uuid: String,
+    @Schema(description = "Beskriver om kodelisteinnslaget er gyldig.")
     val status: String,
+    @Schema(description = "Beskrivelse av innslaget.")
     val description: String,
+    @Schema(description = "Numerisk kode.")
     val codevalue: String
 )
 
-data class KodelisteItem(val type: KodelisteType, val item: GeonorgeKodelisteItem)
-
 enum class KodelisteType {
-    KOMMUNENUMMER, FYLKESNUMMER, MALEMETODE_KODE,
+    @Schema(description = "Kodeliste for gyldige kommunenumre.")
+    KOMMUNENUMMER,
+
+    @Schema(description = "Kodeliste for gyldige fylkesnumre.")
+    FYLKESNUMMER,
+
+    @Schema(description = "Kodeliste for målemetode-koder.")
+    MAALEMETODE_KODE,
 }

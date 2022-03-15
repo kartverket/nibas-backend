@@ -24,7 +24,7 @@ interface KodelisteApi {
      * Slår opp målemetoder fra Geonorge, cachet. Er stridigheter i Geonorge om codevalue bør være tekstlig eller ha
      * nummerert kode, denne metoden benytter tjenesten med nummerert kodeverdi.
      */
-    @GetMapping("/malemetode-koder", produces = [MediaType.APPLICATION_JSON_VALUE])
+    @GetMapping("/maalemetode-koder", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun fetchMaalemetodeKoder(): List<KodelisteItem>
 
 }

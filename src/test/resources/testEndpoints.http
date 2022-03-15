@@ -7,7 +7,7 @@ GET http://localhost:8080/v1/kodeliste/fylkesnumre
 Accept: application/json
 
 ### Målemetode-koder (denne vi bruker pr nå)
-GET http://localhost:8080/v1/kodeliste/malemetode-koder
+GET http://localhost:8080/v1/kodeliste/maalemetode-koder
 Accept: application/json
 
 ### POST Sosi-file for import (legg fila i src/test/resources)
