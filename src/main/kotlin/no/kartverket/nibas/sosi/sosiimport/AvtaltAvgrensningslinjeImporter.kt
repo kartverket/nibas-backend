@@ -48,14 +48,10 @@ class AvtaltAvgrensningslinjeImporter @Autowired constructor(
                 avtaltavgrensningslinje.opphav = sosiAvtaltAvgrensningslinje.getOpphav()
                 avtaltavgrensningslinje.datauttaksdato = sosiAvtaltAvgrensningslinje.getDataUttaksdato()
                 avtaltavgrensningslinje.landkode = landkoder
-                avtaltavgrensningslinje.oppdateringsdato = sosiAvtaltAvgrensningslinje.getOppdateringsdato()
-                avtaltavgrensningslinje.gyldigfra = sosiAvtaltAvgrensningslinje.getGyldigFra()
-                avtaltavgrensningslinje.noeyaktighet = sosiAvtaltAvgrensningslinje.getKvalitet()?.getNoyaktighet()
-                avtaltavgrensningslinje.maalemetode =
-                    when (val maalemetode = sosiAvtaltAvgrensningslinje.getKvalitet()?.getMalemetode()) {
-                        null -> throw RuntimeException("Maalemetode er påkrevd")
-                        else -> kodelisteService.getMalemetodeIdByCodeValue(maalemetode)
-                    }
+                avtaltavgrensningslinje.oppdateringsdato = sosiAvtaltAvgrensningslinje.getOppdateringsdato()!!
+
+                avtaltavgrensningslinje.gyldigFra = sosiAvtaltAvgrensningslinje.getGyldigFra()
+                avtaltavgrensningslinje.kvalitet = sosiAvtaltAvgrensningslinje.getPosisjonskvalitet(kodelisteService)
                 avtaltavgrensningslinje.grensestatus =
                     when (val grenseStatus = sosiAvtaltAvgrensningslinje.getGrensestatus()) {
                         null -> null

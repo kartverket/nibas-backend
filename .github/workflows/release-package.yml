@@ -19,6 +19,9 @@ jobs:
       new_tag: ${{ steps.tag_version.outputs.new_tag }}
 
     steps:
+      - uses: szenius/set-timezone@v1.0
+        with:
+          timezoneLinux: "Europe/Oslo"
       - uses: actions/checkout@v2
       - name: Set up JDK
         uses: actions/setup-java@v2

@@ -34,22 +34,18 @@ class GrunnlinjeImporter @Autowired constructor(
                 var grunnlinje = Grunnlinje()
                 grunnlinje.updateSosiIdentifikasjon(sosiIdent)
                 grunnlinje.datafangstdato = sosiGrunnlinje.getDatafangstDato()
-                grunnlinje.oppdateringsdato = sosiGrunnlinje.getOppdateringsdato()
+                grunnlinje.oppdateringsdato = sosiGrunnlinje.getOppdateringsdato()!!
                 grunnlinje.datauttaksdato = sosiGrunnlinje.getDataUttaksdato()
 
                 grunnlinje.opphav = sosiGrunnlinje.getOpphav()
-                grunnlinje.gyldigfra = sosiGrunnlinje.getGyldigFra()
-                grunnlinje.gyldigtil = sosiGrunnlinje.getGyldigTil()
+                grunnlinje.gyldigFra = sosiGrunnlinje.getGyldigFra()
+                grunnlinje.gyldigTil = sosiGrunnlinje.getGyldigTil()
 
                 //Her kan kommunenr være optional
-                grunnlinje.kommunenummer =
+                grunnlinje.kommunenummerId =
                     sosiGrunnlinje.getKommunenummer()?.let { kodelisteService.getKommunenummerIdByCodeValue(it) }
 
-                grunnlinje.noeyaktighet = sosiGrunnlinje.getKvalitet()?.getNoyaktighet()
-                grunnlinje.maalemetode = when (val maalemetode = sosiGrunnlinje.getKvalitet()?.getMalemetode()) {
-                    null -> throw RuntimeException("Maalemetode er påkrevd")
-                    else -> kodelisteService.getMalemetodeIdByCodeValue(maalemetode)
-                }
+                grunnlinje.kvalitet = sosiGrunnlinje.getPosisjonskvalitet(kodelisteService)
                 grunnlinje.grensestatus = when (val grenseStatus = sosiGrunnlinje.getGrensestatus()) {
                     null -> null
                     else -> grensestatusRepository.findByIdOrNull(grenseStatus)

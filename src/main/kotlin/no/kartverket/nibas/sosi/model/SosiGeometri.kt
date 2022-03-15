@@ -1,7 +1,11 @@
 package no.kartverket.nibas.sosi.model
 
-import no.kartverket.nibas.sosi.common.*
+import no.kartverket.nibas.domain.PosisjonskvalitetEmbeddable
+import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.sosi.common.SosiKoder
 import java.time.LocalDate
+import java.time.ZoneId
+import java.time.ZonedDateTime
 
 open class SosiGeometri(type: String, niva: Int, verdier: MutableList<SosiVerdi>) :
     SosiObjekt(type = type, niva, verdier = verdier) {
@@ -15,8 +19,8 @@ open class SosiGeometri(type: String, niva: Int, verdier: MutableList<SosiVerdi>
     }
 
     fun getOpphav(): String? = getVerdiAvBarn(SosiKoder.OPPHAV)
-    fun getDataUttaksdato(): LocalDate? = stringAsDate(getVerdiAvBarn(SosiKoder.DATAUTTAKSDATO))
-    fun getOppdateringsdato(): LocalDate? = stringAsDate(getVerdiAvBarn(SosiKoder.OPPDATERINGSDATO))
+    fun getDataUttaksdato(): ZonedDateTime? = stringAsZonedDateTime(getVerdiAvBarn(SosiKoder.DATAUTTAKSDATO))
+    fun getOppdateringsdato(): ZonedDateTime? = stringAsZonedDateTime(getVerdiAvBarn(SosiKoder.OPPDATERINGSDATO))
     fun getAlleSosiNordOest(): List<SosiNordOest> = barn.filter { it is SosiNordOest }.map { it as SosiNordOest }
     fun getReferanser(): List<SosiReferanse> = barn.filter { it is SosiReferanse }.map { it as SosiReferanse }
     fun getIdent(): SosiIdent? = barn.find { it is SosiIdent } as? SosiIdent
@@ -31,10 +35,10 @@ open class SosiGeometri(type: String, niva: Int, verdier: MutableList<SosiVerdi>
         barn.filter { it is SosiNavn && it.type == SosiKoder.NASJONNAVN }.map { it as SosiNavn }
 
     fun getFastsettingstype(): String? = getVerdiAvBarn(SosiKoder.FASTSETTINGSTYPE)
-    fun getGyldigFra(): LocalDate? = stringAsDate(getVerdiAvBarn(SosiKoder.GYLDIGFRA))
-    fun getGyldigTil(): LocalDate? = stringAsDate(getVerdiAvBarn(SosiKoder.GYLDIGTIL))
-    fun getSluttdato(): LocalDate? = stringAsDate(getVerdiAvBarn(SosiKoder.SLUTTDATO))
-    fun getDatafangstDato(): LocalDate? = stringAsDate(getVerdiAvBarn(SosiKoder.DATAFANGSTDATO))
+    fun getGyldigFra(): ZonedDateTime? = stringAsZonedDateTime(getVerdiAvBarn(SosiKoder.GYLDIGFRA))
+    fun getGyldigTil(): ZonedDateTime? = stringAsZonedDateTime(getVerdiAvBarn(SosiKoder.GYLDIGTIL))
+    fun getSluttdato(): ZonedDateTime? = stringAsZonedDateTime(getVerdiAvBarn(SosiKoder.SLUTTDATO))
+    fun getDatafangstDato(): ZonedDateTime? = stringAsZonedDateTime(getVerdiAvBarn(SosiKoder.DATAFANGSTDATO))
     fun getGrensestatus(): String? = getVerdiAvBarn(SosiKoder.GRENSESTATUS)
     fun getFolgerTerrengdetalj(): String? = getVerdiAvBarn(SosiKoder.FOLGERTERRENGDETALJ)
     fun getKvalitet(): SosiKvalitet? = barn.find { it is SosiKvalitet } as? SosiKvalitet
@@ -47,8 +51,32 @@ open class SosiGeometri(type: String, niva: Int, verdier: MutableList<SosiVerdi>
     fun getKommunenumre(): List<String> = getVerdierAvBarn(SosiKoder.KOMMUNENUMMER)
     fun getKommunenummer(): String? = getVerdiAvBarn(SosiKoder.KOMMUNENUMMER)
 
-    private fun stringAsDate(verdi: String?) = when (verdi) {
-        null -> null
-        else -> LocalDate.parse(verdi, SOSI_DATOFORMAT)
+    fun getPosisjonskvalitet(kodelisteService: KodelisteService): PosisjonskvalitetEmbeddable? {
+        val sosiKvalitet = this.getKvalitet()
+        if (sosiKvalitet != null) {
+            return PosisjonskvalitetEmbeddable(
+                //Hvis kvalitet er satt må målemetode være angitt
+                maalemetode = when (val maalemetode = sosiKvalitet.getMalemetode()) {
+                    null -> throw RuntimeException("Maalemetode er påkrevd")
+                    else -> kodelisteService.getMalemetodeIdByCodeValue(maalemetode)
+                },
+                noeyaktighet = sosiKvalitet.getNoyaktighet()
+            )
+        }
+        return null
     }
+}
+
+fun stringAsZonedDateTime(verdi: String?): ZonedDateTime? = when (verdi) {
+    null -> null
+    else -> toZonedDateTime(stringAsDate(verdi))
+}
+
+private fun toZonedDateTime(localDate: LocalDate?): ZonedDateTime? {
+    return localDate?.atStartOfDay(ZoneId.systemDefault())
+}
+
+private fun stringAsDate(verdi: String?) = when (verdi) {
+    null -> null
+    else -> LocalDate.parse(verdi, SosiObjekt.SOSI_DATOFORMAT)
 }

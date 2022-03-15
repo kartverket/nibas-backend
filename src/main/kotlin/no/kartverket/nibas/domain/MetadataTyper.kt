@@ -1,10 +1,7 @@
 package no.kartverket.nibas.domain
 
-import no.kartverket.nibas.api.v1.common.geojson.AdmGrenserMetadata
-import no.kartverket.nibas.api.v1.common.geojson.Dokref
-import no.kartverket.nibas.api.v1.common.geojson.Identifikasjon
-import no.kartverket.nibas.api.v1.common.geojson.Posisjonskvalitet
 import java.time.LocalDate
+import java.time.ZonedDateTime
 import javax.persistence.Column
 import javax.persistence.Embeddable
 import javax.persistence.JoinColumn
@@ -34,14 +31,11 @@ data class Kopidata(
 
 @Embeddable
 data class PosisjonskvalitetEmbeddable(
-    @Column(name = "maalemetode")
-    var maalemetode: String? = null,
+    @Column(name = "maalemetode", nullable = false)
+    var maalemetode: String = "",
     @Column(name = "noeyaktighet")
     var noeyaktighet: Int? = null
 )
-
-fun PosisjonskvalitetEmbeddable.toKvalitet(): Posisjonskvalitet =
-    Posisjonskvalitet(maalemetode, noeyaktighet)
 
 @Embeddable
 data class Registreringsversjon(
@@ -52,46 +46,31 @@ data class Registreringsversjon(
     var versjon: String? = null
 )
 
-interface LovvirkeomraadeMetadata {
-    var oppdateringsdato: LocalDate?
+interface MaritimGrense {
+    fun getAnsvarligeMyndigheter(): Collection<AnsvarligMyndighet>
+    var gjelderomraade: String?
+    var transformasjonsdato: LocalDate?
+    var virkeomraadenavn: String?
+    fun getLand(): Collection<Landkode>
 }
 
-interface RiksgrenseMetadata {
-    var oppdateringsdato: LocalDate?
+interface CommonMetadataProperties : ContainsSosiIdentifikasjon {
+    var datafangstdato: ZonedDateTime?
+    var gyldigFra: ZonedDateTime?
+    var gyldigTil: ZonedDateTime?
+    fun getGrenseInfoElementer(): Collection<GrenseInfo>
+    var kvalitet: PosisjonskvalitetEmbeddable?
+    var oppdateringsdato: ZonedDateTime
+    var opphav: String?
+    var dokumentasjonsreferanser: MutableSet<Dokumentasjonsreferanse>
+    var fastsettingstype: Fastsettingstype?
+    var grensestatus: Grensestatus?
 }
 
-interface MaritimeGrenserMetadata {
-    var oppdateringsdato: LocalDate?
+interface AnsvarligMyndighet {
+    var ansvarligmyndighet: String?
 }
 
-fun AdministrativGrense.toMetadata(): AdmGrenserMetadata =
-    AdmGrenserMetadata(
-        datafangstdato = this.datafangstdato,
-        gyldigFra = this.gyldigFra,
-        gyldigTil = this.gyldigTil,
-        informasjonselementer = this.getInformasjonselementer(),
-        posisjonskvalitet = this.kvalitet?.toKvalitet(),
-        oppdateringsdato = this.oppdateringsdato,
-        opphav = this.opphav,
-        identifikasjon = Identifikasjon(this.lokalid, this.navnerom, this.versjonid),
-        dokumentasjonsreferanser = this.getListeAvDokumentasjonsreferanser(),
-        fastsettingstype = this.fastsettingstype?.id,
-        foelgerTerrengdetalj = this.foelgerterrengdetalj?.id,
-        grensestatus = this.grensestatus?.id,
-        noeyaktighetsklasse = this.noeyaktighetsklasse?.id,
-        omtvistet = this.omtvistet
-    )
-
-fun Dokumentasjonsreferanse.toDokRef() = Dokref(
-    dokumentlenker = this.dokumentlink
-        .mapNotNull { it.dokumentlink }
-        .sorted(),
-    fastsettingsdato = this.fastsettingsdato!!,
-    fastsettingsmyndighet = this.fastsettingsmyndighet,
-    hjemmel = this.hjemmel,
-    internReferanserKartverket = this.internReferanserKartverket
-        .mapNotNull { it.internReferanseKartverket }
-        .sorted(),
-    rettskildeId = this.rettskildeid,
-    rettskildeTittel = this.rettskildetittel!!
-)
+interface GrenseInfo {
+    var informasjon: String?
+}

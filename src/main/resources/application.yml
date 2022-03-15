@@ -41,6 +41,9 @@ spring:
 #      hibernate:
 #        format_sql: true
 
+  jackson:
+    time-zone: "Europe/Oslo"
+
   flyway:
     schemas: nibas
 

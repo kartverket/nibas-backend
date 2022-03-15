@@ -38,19 +38,20 @@ data class FeatureProperties(
     @Schema(description = "Definerer hvilken type geometri som leveres")
     val type: String,
 
-    //TODO: Lar denne ligge her midlertidig, bør flyttes inn i metadata-type også for de ikke-adm.grensene
-    @Schema(description = "Identifikasjon for grensen i sosi-modellen.")
-    val identifikasjon: Identifikasjon? = null,
-
-    @Schema(description = "Diverse metadata-felter fra sosi-modellen.")
-    val metadata: AdmGrenserMetadata? = null,
+    @Schema(
+        description = "Diverse metadata-felter fra sosi-modellen.",
+        oneOf = [AdministrativGrenseMetadata::class, RiksgrenseMetadata::class, TerritorialgrenseMetadata::class,
+            AvtaltAvgrensningslinjeMetadata::class, GrunnlinjeMetadata::class],
+        discriminatorProperty = discriminatorField
+    )
+    val metadata: Metadata? = null,
 
     @Schema(description = "Egenskaper til konteksten til grensen.")
     val kontekstEgenskaper: KontekstEgenskaper? = null
 )
 
 @Schema(description = "Egenskaper som beskriver konteksten som grensen sees i.")
-data class KontekstEgenskaper (
+data class KontekstEgenskaper(
     @Schema(description = "Id til objekt som det vises til i kontekst")
     val id: String? = null,
 

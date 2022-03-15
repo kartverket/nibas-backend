@@ -34,19 +34,15 @@ class TerritorialgrenseImporter @Autowired constructor(
                 var territorialgrense = Territorialgrense()
                 territorialgrense.updateSosiIdentifikasjon(sosiIdent)
                 territorialgrense.datafangstdato = sosiTerritorialgrense.getDatafangstDato()
-                territorialgrense.oppdateringsdato = sosiTerritorialgrense.getOppdateringsdato()
+                territorialgrense.oppdateringsdato = sosiTerritorialgrense.getOppdateringsdato()!!
+
                 territorialgrense.datauttaksdato = sosiTerritorialgrense.getDataUttaksdato()
 
                 territorialgrense.opphav = sosiTerritorialgrense.getOpphav()
-                territorialgrense.gyldigfra = sosiTerritorialgrense.getGyldigFra()
-                territorialgrense.gyldigtil = sosiTerritorialgrense.getGyldigTil()
+                territorialgrense.gyldigFra = sosiTerritorialgrense.getGyldigFra()
+                territorialgrense.gyldigTil = sosiTerritorialgrense.getGyldigTil()
 
-                territorialgrense.noeyaktighet = sosiTerritorialgrense.getKvalitet()?.getNoyaktighet()
-                territorialgrense.maalemetode =
-                    when (val maalemetode = sosiTerritorialgrense.getKvalitet()?.getMalemetode()) {
-                        null -> throw RuntimeException("Maalemetode er påkrevd")
-                        else -> kodelisteService.getMalemetodeIdByCodeValue(maalemetode)
-                    }
+                territorialgrense.kvalitet = sosiTerritorialgrense.getPosisjonskvalitet(kodelisteService)
 
                 territorialgrense.grensestatus = when (val grenseStatus = sosiTerritorialgrense.getGrensestatus()) {
                     null -> null

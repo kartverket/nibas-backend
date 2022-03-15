@@ -2,6 +2,7 @@ package no.kartverket.nibas.domain
 
 import org.hibernate.envers.Audited
 import java.time.LocalDate
+import java.time.ZonedDateTime
 import javax.persistence.Column
 import javax.persistence.ElementCollection
 import javax.persistence.Entity
@@ -14,29 +15,29 @@ import javax.persistence.Table
 @Table(name = "lovvirkeomraadegrense")
 @Audited
 @Entity
-class Lovvirkeomraadegrense : Grense(), LovvirkeomraadeMetadata {
+class Lovvirkeomraadegrense : Grense() {
     override var objtype: String? = "LovVirkeområdeGrense"
 
     @Column(name = "versjonid")
     override var versjonid: String? = null
 
     @Column(name = "oppdateringsdato")
-    override var oppdateringsdato: LocalDate? = LocalDate.now()
+    var oppdateringsdato: ZonedDateTime? = ZonedDateTime.now()
 
     @Column(name = "datafangstdato")
-    var datafangstdato: LocalDate? = null
+    var datafangstdato: ZonedDateTime? = null
 
     @Column(name = "sluttdato")
     var sluttdato: LocalDate? = null
 
     @Column(name = "gyldigfra")
-    var gyldigfra: LocalDate? = null
+    var gyldigfra: ZonedDateTime? = null
 
     @Column(name = "gyldigtil")
-    var gyldigtil: LocalDate? = null
+    var gyldigtil: ZonedDateTime? = null
 
     @Column(name = "datauttaksdato")
-    var datauttaksdato: LocalDate? = null
+    var datauttaksdato: ZonedDateTime? = null
 
     @ManyToOne
     @JoinColumn(name = "typeendring")

@@ -47,7 +47,8 @@ class KommuneController @Autowired constructor(
         return when (val grenser = kommuneService.hentGrenserForKommune(id)) {
             null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
             else -> FeatureCollection(
-                features = grenser.sortedBy { it.grenseKoblingAttributter.rekkefoelge }.map { grenseKoblingToFeature(id, AdministrativEnhetType.KOMMUNE, it) }
+                features = grenser.sortedBy { it.grenseKoblingAttributter.rekkefoelge }
+                    .map { grenseKoblingToFeature(id, AdministrativEnhetType.KOMMUNE, it, kodelisteService) }
             )
         }
     }
@@ -122,11 +123,13 @@ fun toKommuneResponse(kommune: Kommune, kodelisteService: KodelisteService): Kom
     administrativenhetnavn = kommune.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!) },
     lokalid = kommune.lokalid,
     navnerom = kommune.navnerom,
-    kommunenummer = Kommunenummer(
-        id = kommune.kommunenummer,
-        kodeverdi = kodelisteService.getCodeValueByKommunenummerId(kommune.kommunenummer)?.toInt()
-    ),
+    kommunenummer = createKommunenummerFromUUID(kommune.kommunenummer, kodelisteService),
     samiskforvaltningsomraade = kommune.samiskforvaltningsomraade!!,
     oppdateringsdato = kommune.oppdateringsdato!!,
     features = FeatureCollection(features = listOf(posisjonToFeature(kommune.posisjon), flateToFeature(kommune.flate)))
+)
+
+fun createKommunenummerFromUUID(kommunenrUUID: String, kodelisteService: KodelisteService) = Kommunenummer(
+    id = kommunenrUUID,
+    kodeverdi = kodelisteService.getCodeValueByKommunenummerId(kommunenrUUID)?.toInt()
 )

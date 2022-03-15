@@ -2,9 +2,13 @@ package no.kartverket.nibas.domain
 
 import org.hibernate.envers.Audited
 import java.time.LocalDate
+import java.time.ZonedDateTime
+import java.util.*
 import javax.persistence.Column
+import javax.persistence.Embedded
 import javax.persistence.Entity
 import javax.persistence.FetchType
+import javax.persistence.Id
 import javax.persistence.JoinColumn
 import javax.persistence.ManyToOne
 import javax.persistence.OneToMany
@@ -13,29 +17,29 @@ import javax.persistence.Table
 @Table(name = "grunnlinje")
 @Audited
 @Entity
-class Grunnlinje : Grense(), MaritimeGrenserMetadata {
+class Grunnlinje : Grense(), MaritimGrense, CommonMetadataProperties {
     override var objtype: String? = "Grunnlinje"
-    
+
     @Column(name = "versjonid")
     override var versjonid: String? = null
 
     @Column(name = "datafangstdato")
-    var datafangstdato: LocalDate? = null
+    override var datafangstdato: ZonedDateTime? = null
 
     @Column(name = "sluttdato")
     var sluttdato: LocalDate? = null
 
     @Column(name = "gyldigfra")
-    var gyldigfra: LocalDate? = null
+    override var gyldigFra: ZonedDateTime? = null
 
     @Column(name = "gyldigtil")
-    var gyldigtil: LocalDate? = null
+    override var gyldigTil: ZonedDateTime? = null
 
     @Column(name = "datauttaksdato")
-    var datauttaksdato: LocalDate? = null
+    var datauttaksdato: ZonedDateTime? = null
 
     @Column(name = "oppdateringsdato")
-    override var oppdateringsdato: LocalDate? = LocalDate.now()
+    override var oppdateringsdato: ZonedDateTime = ZonedDateTime.now()
 
     @ManyToOne
     @JoinColumn(name = "typeendring")
@@ -44,47 +48,39 @@ class Grunnlinje : Grense(), MaritimeGrenserMetadata {
     @Column(name = "tidspunktendring")
     var tidspunktendring: LocalDate? = null
 
-    
     @Column(name = "opphav")
-    var opphav: String? = null
+    override var opphav: String? = null
 
     @Column(name = "omraadeid")
     var omraadeid: Int? = null
 
-    
     @Column(name = "originaldatavert")
     var originaldatavert: String? = null
 
     @Column(name = "kopidato")
     var kopidato: LocalDate? = null
 
-    
     @Column(name = "produkt")
     var produkt: String? = null
 
-    
     @Column(name = "versjon")
     var versjon: String? = null
 
-    @Column(name = "maalemetode", nullable = false)
-    var maalemetode: String = ""
+    @Embedded
+    override var kvalitet: PosisjonskvalitetEmbeddable? = null
 
-    @Column(name = "noeyaktighet")
-    var noeyaktighet: Int? = null
-    
     @Column(name = "gjelderomraade")
-    var gjelderomraade: String? = null
+    override var gjelderomraade: String? = null
 
     @ManyToOne
     @JoinColumn(name = "grensestatus")
-    var grensestatus: Grensestatus? = null
+    override var grensestatus: Grensestatus? = null
 
-    
     @Column(name = "virkeomraadenavn")
-    var virkeomraadenavn: String? = null
+    override var virkeomraadenavn: String? = null
 
     @Column(name = "transformasjonsdato")
-    var transformasjonsdato: LocalDate? = null
+    override var transformasjonsdato: LocalDate? = null
 
     @ManyToOne
     @JoinColumn(name = "land")
@@ -92,14 +88,62 @@ class Grunnlinje : Grense(), MaritimeGrenserMetadata {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "fastsettingstype", nullable = false)
-    var fastsettingstype: Fastsettingstype? = null
+    override var fastsettingstype: Fastsettingstype? = null
 
+    // UUID
     @Column(name = "kommunenummer")
-    var kommunenummer: String? = null
+    var kommunenummerId: String? = null
 
     @OneToMany(mappedBy = "grunnlinjeFk", fetch = FetchType.LAZY)
-    var dokumentasjonsreferanse: MutableSet<Dokumentasjonsreferanse> = mutableSetOf()
+    override var dokumentasjonsreferanser: MutableSet<Dokumentasjonsreferanse> = mutableSetOf()
 
     @OneToMany(mappedBy = "grunnlinjeFk", fetch = FetchType.LAZY)
     var informasjon: MutableSet<GrunnlinjeInformasjon> = mutableSetOf()
+
+    @OneToMany(mappedBy = "grunnlinjeFk", fetch = FetchType.LAZY)
+    var grunnlinjeAnsvarligeMyndigheter: MutableSet<GrunnlinjeAnsvarligMyndighet> = mutableSetOf()
+
+    override fun getAnsvarligeMyndigheter(): Collection<AnsvarligMyndighet> {
+        return this.grunnlinjeAnsvarligeMyndigheter
+    }
+
+    override fun getLand(): Collection<Landkode> {
+        return if (land != null) listOf(land!!) else emptyList()
+    }
+
+    override fun getGrenseInfoElementer(): Collection<GrenseInfo> {
+        return this.informasjon
+    }
+}
+
+@Table(name = "grunnlinje_informasjon")
+@Audited
+@Entity
+class GrunnlinjeInformasjon : GrenseInfo {
+    @Id
+    @Column(name = "objid", nullable = false, updatable = false)
+    val id: String = UUID.randomUUID().toString()
+
+    @ManyToOne
+    @JoinColumn(name = "grunnlinje_fk")
+    var grunnlinjeFk: Grunnlinje? = null
+
+    @Column(name = "informasjon")
+    override var informasjon: String? = null
+}
+
+@Table(name = "grunnlinje_ansvarligmyndighet")
+@Audited
+@Entity
+class GrunnlinjeAnsvarligMyndighet : AnsvarligMyndighet {
+    @Id
+    @Column(name = "objid", nullable = false, updatable = false)
+    val id: String = UUID.randomUUID().toString()
+
+    @ManyToOne
+    @JoinColumn(name = "grunnlinje_fk")
+    var grunnlinjeFk: Grunnlinje? = null
+
+    @Column(name = "ansvarligmyndighet")
+    override var ansvarligmyndighet: String? = null
 }

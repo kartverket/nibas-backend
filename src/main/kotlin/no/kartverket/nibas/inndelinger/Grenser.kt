@@ -2,11 +2,11 @@ package no.kartverket.nibas.inndelinger
 
 import no.kartverket.nibas.api.v1.GrenseApi
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
-import no.kartverket.nibas.api.v1.common.geojson.KontekstEgenskaper
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.FeatureProperties
-import no.kartverket.nibas.api.v1.common.geojson.Identifikasjon
+import no.kartverket.nibas.api.v1.common.geojson.KontekstEgenskaper
+import no.kartverket.nibas.api.v1.common.geojson.toMetadata
 import no.kartverket.nibas.api.v1.response.HistorikkRef
 import no.kartverket.nibas.domain.AdministrativEnhet
 import no.kartverket.nibas.domain.AdministrativGrense
@@ -15,10 +15,11 @@ import no.kartverket.nibas.domain.Fylkesgrense
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
+import no.kartverket.nibas.domain.Grunnlinje
 import no.kartverket.nibas.domain.Kommunegrense
 import no.kartverket.nibas.domain.Riksgrense
 import no.kartverket.nibas.domain.Territorialgrense
-import no.kartverket.nibas.domain.toMetadata
+import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.AvtaltAvgrensningslinjeRepository
 import no.kartverket.nibas.repository.FylkeRepository
 import no.kartverket.nibas.repository.FylkesgrenseRepository
@@ -45,7 +46,8 @@ import kotlin.reflect.KClass
 class GrenseController @Autowired constructor(
     private val grenseService: GrenseService,
     private val historikkService: HistorikkService,
-    private val flateService: FlateService
+    private val flateService: FlateService,
+    private val kodelisteService: KodelisteService
 ) : GrenseApi {
 
     override fun lagreGrenser(grenser: FeatureCollection) {
@@ -70,7 +72,7 @@ class GrenseController @Autowired constructor(
     private fun <T : Grense> hentGrense(id: String, type: KClass<T>): Feature {
         return when (val grense = grenseService.hentGrense(id, type)) {
             null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
-            else -> grenseToFeature(grense = grense)
+            else -> grenseToFeature(grense = grense, kodelisteService)
         }
     }
 
@@ -109,7 +111,7 @@ class GrenseController @Autowired constructor(
         hentGrenseRevisjon(id, revision, Territorialgrense::class.java)
 
     private fun <T : Grense> hentGrenseRevisjon(id: String, revision: Int, type: Class<T>): Feature =
-        grenseToFeature(grense = historikkService.hentHistorikkRevisjon(id, revision, type))
+        grenseToFeature(grense = historikkService.hentHistorikkRevisjon(id, revision, type), kodelisteService)
 
 }
 
@@ -164,9 +166,18 @@ class GrenseService @Autowired constructor(
 
             val kontekstEgenskaper = feature.properties.kontekstEgenskaper!!
             GrenseMedRetningOgKontekst(
-                GrenseMedAttributter(grense, GrenseKoblingAttributter(kontekstEgenskaper.retningMedKlokken, kontekstEgenskaper.rekkefoelge, kontekstEgenskaper.flateIndeks, kontekstEgenskaper.hullIndeks)),
+                GrenseMedAttributter(
+                    grense,
+                    GrenseKoblingAttributter(
+                        kontekstEgenskaper.retningMedKlokken,
+                        kontekstEgenskaper.rekkefoelge,
+                        kontekstEgenskaper.flateIndeks,
+                        kontekstEgenskaper.hullIndeks
+                    )
+                ),
                 kontekstEgenskaper.type!!,
-                kontekstEgenskaper.id!!)
+                kontekstEgenskaper.id!!
+            )
         }
 
         grenseRepository.saveAll(oppdaterteGrenser.map { it.grenseMedAttributter.grense })
@@ -221,29 +232,36 @@ class GrenseMedAttributter<T : Grense>(val grense: T, val attributter: GrenseKob
 fun grenseKoblingToFeature(
     kontekstId: String? = null,
     kontekstType: AdministrativEnhetType? = null,
-    grenseKobling: GrenseKobling
+    grenseKobling: GrenseKobling,
+    kodelisteService: KodelisteService
 ): Feature {
-    val feature = grenseToFeature(grenseKobling.getGrense())
-    return feature.copy(properties = feature.properties.copy(kontekstEgenskaper = KontekstEgenskaper(
-        id = kontekstId,
-        type = kontekstType,
-        retningMedKlokken = grenseKobling.grenseKoblingAttributter.retningMedKlokken,
-        rekkefoelge = grenseKobling.grenseKoblingAttributter.rekkefoelge,
-        flateIndeks = grenseKobling.grenseKoblingAttributter.flateIndeks,
-        hullIndeks = grenseKobling.grenseKoblingAttributter.hullIndeks
-    )))
+    val feature = grenseToFeature(grenseKobling.getGrense(), kodelisteService)
+    return feature.copy(
+        properties = feature.properties.copy(
+            kontekstEgenskaper = KontekstEgenskaper(
+                id = kontekstId,
+                type = kontekstType,
+                retningMedKlokken = grenseKobling.grenseKoblingAttributter.retningMedKlokken,
+                rekkefoelge = grenseKobling.grenseKoblingAttributter.rekkefoelge,
+                flateIndeks = grenseKobling.grenseKoblingAttributter.flateIndeks,
+                hullIndeks = grenseKobling.grenseKoblingAttributter.hullIndeks
+            )
+        )
+    )
 }
 
-fun grenseToFeature(grense: Grense): Feature {
+fun grenseToFeature(grense: Grense, kodelisteService: KodelisteService): Feature {
     var featureProperties = FeatureProperties(
         type = grense.objtype!!,
-        identifikasjon = Identifikasjon(grense.lokalid, grense.navnerom)
     )
-    if (grense is AdministrativGrense) {
-        featureProperties = featureProperties.copy(
-            metadata = grense.toMetadata()
-        )
+    when (grense) {
+        is AdministrativGrense -> featureProperties = featureProperties.copy(metadata = grense.toMetadata())
+        is Riksgrense -> featureProperties = featureProperties.copy(metadata = grense.toMetadata())
+        is Avtaltavgrensningslinje -> featureProperties = featureProperties.copy(metadata = grense.toMetadata())
+        is Territorialgrense -> featureProperties = featureProperties.copy(metadata = grense.toMetadata())
+        is Grunnlinje -> featureProperties = featureProperties.copy(metadata = grense.toMetadata(kodelisteService))
     }
+
     return Feature(
         id = grense.id,
         properties = featureProperties,

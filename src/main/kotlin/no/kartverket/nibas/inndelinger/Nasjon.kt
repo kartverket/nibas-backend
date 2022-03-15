@@ -9,6 +9,7 @@ import no.kartverket.nibas.api.v1.response.HistorikkRef
 import no.kartverket.nibas.api.v1.response.NasjonResponse
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Nasjon
+import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.NasjonRepository
 import no.kartverket.nibas.unwrap
@@ -23,7 +24,8 @@ import no.kartverket.nibas.api.v1.response.NasjonRef as NasjonRefResponse
 @RestController
 class NasjonController @Autowired constructor(
     private val nasjonService: NasjonService,
-    private val historikkService: HistorikkService
+    private val historikkService: HistorikkService,
+    private val kodelisteService: KodelisteService
 ) : NasjonApi {
 
     override fun hentAlle(): List<NasjonRefResponse> = nasjonService.hentAlleNasjoner().map { toNasjonRef(it) }
@@ -39,7 +41,8 @@ class NasjonController @Autowired constructor(
         return when (val grenser = nasjonService.hentGrenserForNasjon(id)) {
             null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
             else -> FeatureCollection(
-                features = grenser.sortedBy { it.grenseKoblingAttributter.rekkefoelge }.map { grenseKoblingToFeature(id, AdministrativEnhetType.NASJON, it) }
+                features = grenser.sortedBy { it.grenseKoblingAttributter.rekkefoelge }
+                    .map { grenseKoblingToFeature(id, AdministrativEnhetType.NASJON, it, kodelisteService) }
             )
         }
     }

@@ -17,16 +17,12 @@ class Kommunegrense(override val id: String = UUID.randomUUID().toString()) : Ad
     override var objtype: String? = "Kommunegrense"
 
     @OneToMany(mappedBy = "kommunegrenseFk", fetch = FetchType.LAZY)
-    var dokumentasjonsreferanse: MutableSet<Dokumentasjonsreferanse> = mutableSetOf()
+    override var dokumentasjonsreferanser: MutableSet<Dokumentasjonsreferanse> = mutableSetOf()
 
     @OneToMany(mappedBy = "kommunegrenseFk", fetch = FetchType.LAZY)
-    var kommunegrenseInformasjonselementer: MutableSet<KommunegrenseInformasjon> = mutableSetOf()
+    var informasjonselementer: MutableSet<KommunegrenseInformasjon> = mutableSetOf()
 
-    override fun getDokumentasjonsreferanser(): List<Dokumentasjonsreferanse> {
-        return dokumentasjonsreferanse.toList()
-    }
-
-    override fun getInformasjonselementer(): List<String> {
-        return this.kommunegrenseInformasjonselementer.mapNotNull { it.informasjon }
+    override fun getGrenseInfoElementer(): Collection<GrenseInfo> {
+        return informasjonselementer
     }
 }

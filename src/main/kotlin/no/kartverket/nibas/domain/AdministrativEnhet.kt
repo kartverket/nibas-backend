@@ -4,8 +4,8 @@ import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
 import org.hibernate.envers.Audited
 import org.locationtech.jts.geom.MultiPolygon
 import org.locationtech.jts.geom.Point
-import org.locationtech.jts.geom.Polygon
 import java.time.LocalDate
+import java.time.ZonedDateTime
 import java.util.*
 import javax.persistence.Column
 import javax.persistence.Id
@@ -42,13 +42,13 @@ abstract class AdministrativEnhet(
     override var versjonid: String? = null
 
     @Column(name = "oppdateringsdato")
-    var oppdateringsdato: LocalDate? = null
+    var oppdateringsdato: ZonedDateTime? = null
 
     @Column(name = "sluttdato")
-    var sluttdato: LocalDate? = null
+    var sluttdato: ZonedDateTime? = null
 
     @Column(name = "datauttaksdato")
-    var datauttaksdato: LocalDate? = null
+    var datauttaksdato: ZonedDateTime? = null
 
     @Column(name = "opphav")
     var opphav: String? = null
@@ -60,10 +60,10 @@ abstract class AdministrativEnhet(
     var versjon: String? = null
 
     @Column(name = "gyldigfra")
-    var gyldigfra: LocalDate? = null
+    var gyldigfra: ZonedDateTime? = null
 
     @Column(name = "gyldigtil")
-    var gyldigtil: LocalDate? = null
+    var gyldigtil: ZonedDateTime? = null
 
     @Column(name = "omraadeid")
     var omraadeid: Int? = null
@@ -75,7 +75,7 @@ abstract class AdministrativEnhet(
     var kopidato: LocalDate? = null
 
     @Column(name = "datafangstdato")
-    var datafangstdato: LocalDate? = null
+    var datafangstdato: ZonedDateTime? = null
 
     @ManyToOne
     @JoinColumn(name = "land")

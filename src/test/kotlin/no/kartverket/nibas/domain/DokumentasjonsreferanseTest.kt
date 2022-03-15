@@ -1,6 +1,7 @@
 package no.kartverket.nibas.domain
 
 import no.kartverket.nibas.api.v1.common.geojson.Dokref
+import no.kartverket.nibas.api.v1.common.geojson.toDokRef
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.LocalDate

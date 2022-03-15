@@ -1,9 +1,22 @@
 package no.kartverket.nibas.builders
 
-import no.kartverket.nibas.domain.*
+import no.kartverket.nibas.domain.Administrativenhetnavn
+import no.kartverket.nibas.domain.Avtaltavgrensningslinje
+import no.kartverket.nibas.domain.Fylkesgrense
+import no.kartverket.nibas.domain.GrenseKoblingAttributter
+import no.kartverket.nibas.domain.Kommune
+import no.kartverket.nibas.domain.KommuneAvtaltavgrensningslinje
+import no.kartverket.nibas.domain.KommuneFylkesgrense
+import no.kartverket.nibas.domain.KommuneKommunegrense
+import no.kartverket.nibas.domain.KommuneRiksgrense
+import no.kartverket.nibas.domain.KommuneTerritorialgrense
+import no.kartverket.nibas.domain.Kommunegrense
+import no.kartverket.nibas.domain.Riksgrense
+import no.kartverket.nibas.domain.Spraakkode
+import no.kartverket.nibas.domain.Territorialgrense
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
-import java.time.LocalDate
+import java.time.ZonedDateTime
 
 class KommuneBuilder(private val id: String = "1") {
     private var avtaltavgrensningslinjer: MutableSet<Avtaltavgrensningslinje> = mutableSetOf()
@@ -17,7 +30,7 @@ class KommuneBuilder(private val id: String = "1") {
     private var navn = "Vestland"
     private var spraak = "NOR"
     private var samiskforvaltningsomraade = false
-    private var oppdateringsdato = LocalDate.now()
+    private var oppdateringsdato: ZonedDateTime = ZonedDateTime.now()
 
     companion object {
         val DEFAULT_KOMMUNE = KommuneBuilder().build()

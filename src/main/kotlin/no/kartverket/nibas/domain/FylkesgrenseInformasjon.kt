@@ -12,7 +12,7 @@ import javax.persistence.Table
 @Table(name = "fylkesgrense_informasjon")
 @Audited
 @Entity
-class FylkesgrenseInformasjon {
+class FylkesgrenseInformasjon : GrenseInfo {
     @Id
     @Column(name = "objid", nullable = false, updatable = false)
     val id: String = UUID.randomUUID().toString()
@@ -22,5 +22,5 @@ class FylkesgrenseInformasjon {
     var fylkesgrenseFk: Fylkesgrense? = null
 
     @Column(name = "informasjon")
-    var informasjon: String? = null
+    override var informasjon: String? = null
 }

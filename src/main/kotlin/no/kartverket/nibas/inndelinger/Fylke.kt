@@ -42,7 +42,8 @@ class FylkeController @Autowired constructor(
         return when (val grenser = fylkeService.hentGrenserForFylke(id)) {
             null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
             else -> FeatureCollection(
-                features = grenser.sortedBy { it.grenseKoblingAttributter.rekkefoelge }.map { grenseKoblingToFeature(id, AdministrativEnhetType.FYLKE, it) }
+                features = grenser.sortedBy { it.grenseKoblingAttributter.rekkefoelge }
+                    .map { grenseKoblingToFeature(id, AdministrativEnhetType.FYLKE, it, kodelisteService) }
             )
         }
     }

@@ -2,10 +2,13 @@ package no.kartverket.nibas.domain
 
 import org.hibernate.envers.Audited
 import java.time.LocalDate
+import java.time.ZonedDateTime
 import java.util.*
 import javax.persistence.Column
+import javax.persistence.Embedded
 import javax.persistence.Entity
 import javax.persistence.FetchType
+import javax.persistence.Id
 import javax.persistence.JoinColumn
 import javax.persistence.ManyToOne
 import javax.persistence.OneToMany
@@ -17,7 +20,7 @@ import javax.persistence.Table
 @Table(name = "riksgrense")
 @Audited
 @Entity
-class Riksgrense(override val id: String = UUID.randomUUID().toString()) : Grense(), RiksgrenseMetadata {
+class Riksgrense(override val id: String = UUID.randomUUID().toString()) : Grense(), CommonMetadataProperties {
 
     override var objtype: String? = "Riksgrense"
 
@@ -25,22 +28,22 @@ class Riksgrense(override val id: String = UUID.randomUUID().toString()) : Grens
     override var versjonid: String? = null
 
     @Column(name = "datafangstdato")
-    var datafangstdato: LocalDate? = null
+    override var datafangstdato: ZonedDateTime? = null
 
     @Column(name = "sluttdato")
     var sluttdato: LocalDate? = null
 
     @Column(name = "gyldigfra")
-    var gyldigfra: LocalDate? = null
+    override var gyldigFra: ZonedDateTime? = null
 
     @Column(name = "gyldigtil")
-    var gyldigtil: LocalDate? = null
+    override var gyldigTil: ZonedDateTime? = null
 
     @Column(name = "datauttaksdato")
-    var datauttaksdato: LocalDate? = null
+    var datauttaksdato: ZonedDateTime? = null
 
-    @Column(name = "oppdateringsdato")
-    override var oppdateringsdato: LocalDate? = LocalDate.now()
+    @Column(name = "oppdateringsdato", nullable = false)
+    override var oppdateringsdato: ZonedDateTime = ZonedDateTime.now()
 
     @ManyToOne
     @JoinColumn(name = "typeendring")
@@ -49,14 +52,11 @@ class Riksgrense(override val id: String = UUID.randomUUID().toString()) : Grens
     @Column(name = "tidspunktendring")
     var tidspunktendring: LocalDate? = null
 
-    @Column(name = "maalemetode", nullable = false)
-    var maalemetode: String = ""
-
-    @Column(name = "noeyaktighet")
-    var noeyaktighet: Int? = null
+    @Embedded
+    override var kvalitet: PosisjonskvalitetEmbeddable? = null
 
     @Column(name = "opphav")
-    var opphav: String? = null
+    override var opphav: String? = null
 
     @Column(name = "stedfestingverifisert")
     var stedfestingverifisert: Boolean? = null
@@ -76,12 +76,58 @@ class Riksgrense(override val id: String = UUID.randomUUID().toString()) : Grens
 
     @ManyToOne
     @JoinColumn(name = "grensestatus")
-    var grensestatus: Grensestatus? = null
+    override var grensestatus: Grensestatus? = null
 
     @ManyToOne
     @JoinColumn(name = "fastsettingstype")
-    var fastsettingstype: Fastsettingstype? = null
+    override var fastsettingstype: Fastsettingstype? = null
 
     @OneToMany(mappedBy = "riksgrenseFk", fetch = FetchType.LAZY)
-    var dokumentasjonsreferanse: MutableSet<Dokumentasjonsreferanse> = mutableSetOf()
+    override var dokumentasjonsreferanser: MutableSet<Dokumentasjonsreferanse> = mutableSetOf()
+
+    @OneToMany(mappedBy = "riksgrenseFk", fetch = FetchType.LAZY)
+    var riksgrenseInformasjonselementer: MutableSet<RiksgrenseInformasjon> = mutableSetOf()
+
+    @OneToMany(mappedBy = "riksgrenseFk", fetch = FetchType.LAZY)
+    var riksgrenseAnsvarligeMyndigheter: MutableSet<RiksgrenseAnsvarligMyndighet> = mutableSetOf()
+
+    override fun getGrenseInfoElementer(): Collection<GrenseInfo> {
+        return this.riksgrenseInformasjonselementer
+    }
+
+    fun getAnsvarligeMyndigheter(): List<String> {
+        return this.riksgrenseAnsvarligeMyndigheter.mapNotNull { it.ansvarligmyndighet }
+    }
+}
+
+@Table(name = "riksgrense_informasjon")
+@Audited
+@Entity
+class RiksgrenseInformasjon : GrenseInfo {
+    @Id
+    @Column(name = "objid", nullable = false, updatable = false)
+    val id: String = UUID.randomUUID().toString()
+
+    @ManyToOne
+    @JoinColumn(name = "riksgrense_fk")
+    var riksgrenseFk: Riksgrense? = null
+
+    @Column(name = "informasjon")
+    override var informasjon: String? = null
+}
+
+@Table(name = "riksgrense_ansvarligmyndighet")
+@Audited
+@Entity
+class RiksgrenseAnsvarligMyndighet {
+    @Id
+    @Column(name = "objid", nullable = false, updatable = false)
+    val id: String = UUID.randomUUID().toString()
+
+    @ManyToOne
+    @JoinColumn(name = "riksgrense_fk")
+    var riksgrenseFk: Riksgrense? = null
+
+    @Column(name = "ansvarligmyndighet")
+    var ansvarligmyndighet: String? = null
 }

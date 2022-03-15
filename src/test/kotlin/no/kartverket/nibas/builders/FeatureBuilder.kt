@@ -1,14 +1,21 @@
 package no.kartverket.nibas.builders
 
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
-import no.kartverket.nibas.api.v1.common.geojson.KontekstEgenskaper
+import no.kartverket.nibas.api.v1.common.geojson.AdministrativGrenseMetadata
+import no.kartverket.nibas.api.v1.common.geojson.AvtaltAvgrensningslinjeMetadata
+import no.kartverket.nibas.api.v1.common.geojson.CommonMetadata
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureProperties
 import no.kartverket.nibas.api.v1.common.geojson.Identifikasjon
+import no.kartverket.nibas.api.v1.common.geojson.KontekstEgenskaper
+import no.kartverket.nibas.api.v1.common.geojson.RiksgrenseMetadata
+import no.kartverket.nibas.api.v1.common.geojson.TerritorialgrenseMetadata
 import no.kartverket.nibas.inndelinger.GrenseType
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.GeometryFactory
+import java.time.ZonedDateTime
+
 
 class FeatureBuilder(private val id: String? = "1") {
     companion object {
@@ -16,6 +23,7 @@ class FeatureBuilder(private val id: String? = "1") {
     }
 
     private var grenseType: GrenseType = GrenseType.Kommunegrense
+    private var metadata: no.kartverket.nibas.api.v1.common.geojson.Metadata? = null
     private var lokalid: String = "123"
     private var navnerom: String = "ABC"
     private var kontekstId: String = "123"
@@ -23,18 +31,36 @@ class FeatureBuilder(private val id: String? = "1") {
     private var geometry: Geometry =
         GeometryFactory().createLineString(arrayOf(Coordinate(0.0, 0.0), Coordinate(1.0, 1.0)))
 
-    fun build() = Feature(
-        id = id,
-        properties = FeatureProperties(
+    fun build(): Feature {
+        var properties = FeatureProperties(
             type = grenseType.toString(),
-            identifikasjon = Identifikasjon(lokalid, navnerom),
             kontekstEgenskaper = KontekstEgenskaper(
                 id = kontekstId,
                 type = kontekstType
             )
-        ),
-        geometry = geometry
-    )
+        )
+
+        if (metadata == null) {
+            val commonMetadata = CommonMetadata(
+                identifikasjon = Identifikasjon(lokalid, navnerom),
+                oppdateringsdato = ZonedDateTime.now()
+            )
+            metadata = when (grenseType) {
+                GrenseType.Kommunegrense -> AdministrativGrenseMetadata(common = commonMetadata)
+                GrenseType.Fylkesgrense -> AdministrativGrenseMetadata(common = commonMetadata)
+                GrenseType.Riksgrense -> RiksgrenseMetadata(common = commonMetadata)
+                GrenseType.Territorialgrense -> TerritorialgrenseMetadata(common = commonMetadata)
+                GrenseType.AvtaltAvgrensningslinje -> AvtaltAvgrensningslinjeMetadata(common = commonMetadata)
+            }
+        }
+        properties = properties.copy(metadata = metadata)
+
+        return Feature(
+            id = id,
+            properties = properties,
+            geometry = geometry
+        )
+    }
 
     fun withGrensetype(grenseType: GrenseType): FeatureBuilder {
         this.grenseType = grenseType
@@ -53,6 +79,11 @@ class FeatureBuilder(private val id: String? = "1") {
 
     fun withGeometry(geometry: Geometry): FeatureBuilder {
         this.geometry = geometry
+        return this
+    }
+
+    fun withMetadata(metadata: no.kartverket.nibas.api.v1.common.geojson.Metadata): FeatureBuilder {
+        this.metadata = metadata
         return this
     }
 }

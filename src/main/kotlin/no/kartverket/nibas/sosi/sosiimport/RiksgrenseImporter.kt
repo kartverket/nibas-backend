@@ -31,18 +31,15 @@ class RiksgrenseImporter @Autowired constructor(
                 var riksgrense = Riksgrense()
                 riksgrense.updateSosiIdentifikasjon(sosiIdent)
                 riksgrense.datafangstdato = sosiRiksgrense.getDatafangstDato()
-                riksgrense.oppdateringsdato = sosiRiksgrense.getOppdateringsdato()
+                riksgrense.oppdateringsdato = sosiRiksgrense.getOppdateringsdato()!!
+
                 riksgrense.datauttaksdato = sosiRiksgrense.getDataUttaksdato()
 
                 riksgrense.opphav = sosiRiksgrense.getOpphav()
-                riksgrense.gyldigfra = sosiRiksgrense.getGyldigFra()
-                riksgrense.gyldigtil = sosiRiksgrense.getGyldigTil()
+                riksgrense.gyldigFra = sosiRiksgrense.getGyldigFra()
+                riksgrense.gyldigTil = sosiRiksgrense.getGyldigTil()
 
-                riksgrense.noeyaktighet = sosiRiksgrense.getKvalitet()?.getNoyaktighet()
-                riksgrense.maalemetode = when (val maalemetode = sosiRiksgrense.getKvalitet()?.getMalemetode()) {
-                    null -> throw RuntimeException("Maalemetode er påkrevd")
-                    else -> kodelisteService.getMalemetodeIdByCodeValue(maalemetode)
-                }
+                riksgrense.kvalitet = sosiRiksgrense.getPosisjonskvalitet(kodelisteService)
                 riksgrense.grensestatus = when (val grenseStatus = sosiRiksgrense.getGrensestatus()) {
                     null -> null
                     else -> grensestatusRepository.findByIdOrNull(grenseStatus)
