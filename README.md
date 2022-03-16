@@ -25,6 +25,7 @@ $ ./gradlew clean build -Ppat=<PERSONLIG_PAT> -PpatUser=<BRUKERNAVN_GITHUB>
 ./gradlew bootRun -PTLSversion=TLSv1.2 --args='--spring.profiles.active=dev'
 ``` 
 
+* Det er mulig å disable autentisering for lokal kjøring. Dette gjøres ved å kjøre med spring-profilen security-off. Man kan kjøre med flere profiler samtidig, så det er bare å legge den til (komma-separert) til der du vanligvis spesifiserer spring-profilen (om det er på kommandolinja eller i intellij run config)
 
 # Hente docker image fra ghcr.io
 `docker pull ghcr.io/kartverket/nibas-backend:<versjonsnummer>`
