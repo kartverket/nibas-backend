@@ -17,14 +17,27 @@ java.sourceCompatibility = JavaVersion.VERSION_17
 repositories {
 	mavenLocal()
 	mavenCentral()
+	//Aut-lib package registry
+	maven {
+		name = "Aut-lib GitHubPackages"
+		url = uri("https://maven.pkg.github.com/kartverket/aut-lib")
+		credentials {
+			username = project.findProperty("patUser") as String? ?: System.getenv("PAT_USER")
+			password = project.findProperty("pat") as String? ?: System.getenv("PAT")
+		}
+	}
 }
+
 
 object DependencyVersions {
 	const val HIBERNATE_VERSION = "5.6.5.Final"
 }
 
 dependencies {
+	implementation("no.kartverket.aut:aut-lib:0.0.6")
+
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+	implementation("org.springframework.boot:spring-boot-starter-security") // Web-security
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("org.springframework.boot:spring-boot-starter-webflux")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")

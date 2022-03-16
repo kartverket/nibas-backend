@@ -64,7 +64,7 @@ spring:
       connection-timeout: 5000
       read-timeout: 15000
   config:
-    import: vault://nibas/nibas-backend
+    import: vault://nibas/nibas-backend, vault://nibas/nibas-db
 
 # Hver dag kl 03
 nibas:
@@ -93,7 +93,7 @@ spring:
   config:
     activate:
       on-profile: dev
-    import: vault://nibas/nibas-backend-local
+    import: vault://nibas/nibas-backend-local, vault://nibas/nibas-db-local
   cloud:
     vault:
       authentication: token

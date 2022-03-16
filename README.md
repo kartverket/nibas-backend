@@ -6,8 +6,13 @@ Spring Boot applikasjon som serverer informasjon om administrative grenser
 `./gradlew assemble`
 
 # Kjøre på lokal maskin
+* Hent aut-lib fra github
+```
+$ ./gradlew clean build -Ppat=<PERSONLIG_PAT> -PpatUser=<BRUKERNAVN_GITHUB>
+```
+
 * Definer følgende miljøvariable:
-  * VAULT_TOKEN (Logg inn på Vault, og vel "Copy Token" øverst til høyre under profil-menyen)
+  * VAULT_TOKEN (Logg inn på Vault, og velg "Copy Token" øverst til høyre under profil-menyen)
 
 * Start opp nibas-db. Se [README.md](https://gitlab.statkart.no/nibas/nibas-db/-/blob/master/README.md) i nibas-db
 
