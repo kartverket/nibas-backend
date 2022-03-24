@@ -2,6 +2,7 @@ package no.kartverket.nibas.api.v1.common.geojson
 
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping
 import io.swagger.v3.oas.annotations.media.Schema
 import no.kartverket.nibas.api.v1.response.Kommunenummer
 import no.kartverket.nibas.domain.AdministrativGrense
@@ -28,21 +29,47 @@ const val grunnlinjeMetadataSchema: String = "GrunnlinjeMetadata"
 const val discriminatorField: String = "discriminator"
 
 /**
- * Marker interface for typer med metadata som skal slippe ut av API-et for en grense/feature. JsonTypeInfo-property
- * legger til et felt i responsen. Dette har 2 funksjoner:
+ * Marker interface for typer med metadata som skal slippe ut av API-et for en grense/feature.
+ *
+ * Json-annotasjonene behøves for Jackson-deserialisering.
+ * Schema-annotasjonen med mappinger er tilstede for generert OpenAPI (tidligere kalt Swagger)-dokumentasjon og koblinger
+ * mellom skjemaene. Dette kan også brukes som grunnlag for generering av Typescript-kode.
+ *
+ * Property i JsonTypeInfo legger til et felt i responsen. Dette har 2 funksjoner:
  * 1. Diskriminator for Jackson-deserialisering
- * 2. Fungerer også som diskriminator for Swagger for å hjelpe bruker til å navigere i Swagger-Schemas for den
+ * 2. Fungerer også som diskriminator for OpenAPI for å hjelpe bruker til å navigere i Schemas for den
  * polymorfiske typen.
+ *
+ * TODO: NIBAS-347: Bruker her subTypes i stedet for oneOf for å unngå sirkulær avhengighet som stopper kodegenerering.
  */
+@Schema(
+    description = "Diverse metadata-felter fra sosi-modellen.",
+    subTypes = [
+        AdministrativGrenseMetadata::class,
+        RiksgrenseMetadata::class,
+        TerritorialgrenseMetadata::class,
+        AvtaltAvgrensningslinjeMetadata::class,
+        GrunnlinjeMetadata::class
+    ],
+    discriminatorProperty = discriminatorField,
+    discriminatorMapping = [
+        DiscriminatorMapping(value = administrativGrenseMetadataSchema, schema = AdministrativGrenseMetadata::class),
+        DiscriminatorMapping(value = riksgrenseMetadataSchema, schema = RiksgrenseMetadata::class),
+        DiscriminatorMapping(value = territorialgrenseMetadataSchema, schema = TerritorialgrenseMetadata::class),
+        DiscriminatorMapping(
+            value = avtaltAvgrensningslinjeMetadataSchema,
+            schema = AvtaltAvgrensningslinjeMetadata::class
+        ),
+        DiscriminatorMapping(value = grunnlinjeMetadataSchema, schema = GrunnlinjeMetadata::class),
+    ]
+)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = discriminatorField)
 @JsonSubTypes(
-    value = [
-        JsonSubTypes.Type(value = AdministrativGrenseMetadata::class, name = administrativGrenseMetadataSchema),
-        JsonSubTypes.Type(value = RiksgrenseMetadata::class, name = riksgrenseMetadataSchema),
-        JsonSubTypes.Type(value = TerritorialgrenseMetadata::class, name = territorialgrenseMetadataSchema),
-        JsonSubTypes.Type(value = AvtaltAvgrensningslinjeMetadata::class, name = avtaltAvgrensningslinjeMetadataSchema),
-        JsonSubTypes.Type(value = GrunnlinjeMetadata::class, name = grunnlinjeMetadataSchema)
-    ]
+    JsonSubTypes.Type(value = AdministrativGrenseMetadata::class, name = administrativGrenseMetadataSchema),
+    JsonSubTypes.Type(value = RiksgrenseMetadata::class, name = riksgrenseMetadataSchema),
+    JsonSubTypes.Type(value = TerritorialgrenseMetadata::class, name = territorialgrenseMetadataSchema),
+    JsonSubTypes.Type(value = AvtaltAvgrensningslinjeMetadata::class, name = avtaltAvgrensningslinjeMetadataSchema),
+    JsonSubTypes.Type(value = GrunnlinjeMetadata::class, name = grunnlinjeMetadataSchema)
 )
 interface Metadata
 

@@ -40,9 +40,6 @@ data class FeatureProperties(
 
     @Schema(
         description = "Diverse metadata-felter fra sosi-modellen.",
-        oneOf = [AdministrativGrenseMetadata::class, RiksgrenseMetadata::class, TerritorialgrenseMetadata::class,
-            AvtaltAvgrensningslinjeMetadata::class, GrunnlinjeMetadata::class],
-        discriminatorProperty = discriminatorField
     )
     val metadata: Metadata? = null,
 

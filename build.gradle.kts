@@ -31,6 +31,7 @@ repositories {
 
 object DependencyVersions {
 	const val HIBERNATE_VERSION = "5.6.5.Final"
+	const val SPRINGDOC_OPENAPI_VERSION = "1.6.6"
 }
 
 dependencies {
@@ -45,9 +46,9 @@ dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
-	implementation("org.springdoc:springdoc-openapi-webmvc-core:1.5.10")
-	implementation("org.springdoc:springdoc-openapi-kotlin:1.5.10")
-	implementation("org.springdoc:springdoc-openapi-ui:1.5.10")
+	implementation("org.springdoc:springdoc-openapi-webmvc-core:${DependencyVersions.SPRINGDOC_OPENAPI_VERSION}")
+	implementation("org.springdoc:springdoc-openapi-kotlin:${DependencyVersions.SPRINGDOC_OPENAPI_VERSION}")
+	implementation("org.springdoc:springdoc-openapi-ui:${DependencyVersions.SPRINGDOC_OPENAPI_VERSION}")
 	implementation("org.locationtech.jts:jts-core:1.18.2")
 	implementation("org.locationtech.jts:jts:1.18.2")
 	implementation("org.locationtech.jts:jts-modules:1.18.2")
