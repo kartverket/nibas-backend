@@ -69,7 +69,8 @@ jobs:
         with:
           image-ref: '${{ steps.build.outputs.full_image_name }}:${{ steps.tag_version.outputs.new_tag }}'
           format: 'table'
-          severity: 'CRITICAL,HIGH,MEDIUM'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
 
   deploy:
     needs: build
