@@ -62,7 +62,7 @@ dependencies {
 	implementation("org.springframework.cloud:spring-cloud-starter-vault-config:3.1.0")
 	implementation("org.locationtech.jts.io:jts-io-common:1.18.2")
 
-	runtimeOnly("org.flywaydb:flyway-core:8.0.4")
+	runtimeOnly("org.flywaydb:flyway-core:8.5.5")
 	runtimeOnly("org.postgresql:postgresql")
 
 	testImplementation("org.jetbrains.kotlin:kotlin-test")
