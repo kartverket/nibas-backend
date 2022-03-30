@@ -5,6 +5,7 @@ Spring Boot applikasjon som serverer informasjon om administrative grenser.
 # Innholdsfortegnelse
 
 - [Bygge](#bygge)
+- [Autentisering](#autentisering)
 - [Formatering](#formatering)
 
 # Bygge <a name="bygge"></a>
@@ -30,7 +31,28 @@ $ ./gradlew clean build -Ppat=<PERSONLIG_PAT> -PpatUser=<BRUKERNAVN_GITHUB>
 ./gradlew bootRun -PTLSversion=TLSv1.2 --args='--spring.profiles.active=dev'
 ``` 
 
-* Det er mulig å disable autentisering for lokal kjøring. Dette gjøres ved å kjøre med spring-profilen security-off. Man kan kjøre med flere profiler samtidig, så det er bare å legge den til (komma-separert) til der du vanligvis spesifiserer spring-profilen (om det er på kommandolinja eller i intellij run config)
+#Autentisering <a name="autentisering"></a>
+Applikasjonen starter default med autentisering påskrudd. Dette betyr at alle API-endepunkt er sikret og trenger en Authorization-header for å kunne aksesseres. 
+
+### Disable autentisering ved lokal kjøring
+Man kan disable sikkerhet ved lokal kjøring ved å bruke spring-profilen security-off. Man kan kjøre med flere profiler samtidig, så det er bare å legge den til (komma-separert) til der du vanligvis spesifiserer spring-profilen (om det er på kommandolinja eller i intellij run config). Alle kall uten denne headeren resulterer i en 401 Unauthorized 
+### Test av API utenfor klienten
+For å teste et endepunkt (med autentisering påskrudd) uten å kalle det via nibas-frontend trenger man å legge på en Authorization-header på kallet. Man henter dette enklest ved å gjøre følgende:
+* gå til test (http://nibas.test.skip.statkart.no/)
+* logg inn med en av følgende brukere (brukernavn og passord finnes her https://docs.digdir.no/idporten_testbrukere.html)
+  * 21079408678, 21079408597, 21079408406, 21079408325, 21079408244
+* inspiser det initielle kallet for å hente fylker (chrome dev tools eller lignende) og finn Authorization-headeren. 
+* kopier med verdien av denne headeren og legg det på som en ny header med nøkkel "Authorization" i det verktøyet du bruker for å teste API-et (eksempelvis postman)
+* utfør rest-kallet
+ 
+Voila! Du får tak i data fra API-et
+
+### Testing av sikrede kontrollere fra kode
+Alle tester som arver fra [NibasMvcTest](src/test/kotlin/no/kartverket/nibas/NibasMvcTest.kt) har skrudd av sikkerhet (med profilen security-off).  
+Ønsker man å bruke NibasMvcTest, men allikevel skru på sikkerhet kan man override profilene som er satt opp i NibasMvcTest (se for eksempel [WebSecurityConfigTest](src/test/kotlin/no/kartverket/nibas/config/WebSecurityConfigTest.kt)): 
+```kotlin
+@ActiveProfiles("dev", inheritProfiles = false)
+```
 
 # Hente docker image fra ghcr.io
 `docker pull ghcr.io/kartverket/nibas-backend:<versjonsnummer>`
