@@ -2,7 +2,12 @@
 
 Spring Boot applikasjon som serverer informasjon om administrative grenser
 
-# Bygge
+# Innholdsfortegnelse
+
+- [Bygge](#bygge)
+- [Formatering](#formatering)
+
+# Bygge <a name="bygge"></a>
 `./gradlew assemble`
 
 # Kjøre på lokal maskin
@@ -53,7 +58,7 @@ Databasen migreres ved oppstart av applikasjonen, men dersom du ønsker å gjør
 
 
 # Ressurser
-Gitt att <adresse-til-nibas> = localhost:8080
+Gitt at <adresse-til-nibas> = localhost:8080
 * Open API Specification: [http://<adresse-til-nibas>/api-docs](http://localhost:8080/api-docs)
 * Swagger UI: [http://<adresse-til-nibas>/swagger-ui.html](http://localhost:8080/swagger-ui.html)
 
@@ -84,3 +89,9 @@ root.getKurver().forEach { kurve ->
     }
 }
 ```
+
+## Formatering <a name="formatering"></a>
+
+Vi bruker EditorConfig for formatering (som IntelliJ default forstår). I tillegg benyttes Detekt i byggeløypa (anbefalt av SKIP). Dette kan en også sette opp i 
+IntelliJ for å få varsler der. Gå til File->Settings->Plugins og installer Detekt-plugin. Etterpå gå til File->Settings->Tools->Detekt. Huk av Enable Detekt, 
+Enable rules og Enable formatting. Under Configuration Files, legg til stien til detekt.yml som ligger på rota.
