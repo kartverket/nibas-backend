@@ -1,6 +1,6 @@
 # nibas-backend
 
-Spring Boot applikasjon som serverer informasjon om administrative grenser
+Spring Boot applikasjon som serverer informasjon om administrative grenser.
 
 # Innholdsfortegnelse
 
