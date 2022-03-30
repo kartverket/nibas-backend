@@ -7,7 +7,7 @@ plugins {
 	kotlin("plugin.spring") version "1.6.10"
 	kotlin("plugin.jpa") version "1.6.10"
 	kotlin("plugin.allopen") version "1.6.10"
-	id("org.flywaydb.flyway") version "8.0.4"
+	id("org.flywaydb.flyway") version "8.5.5"
 }
 
 group = "no.kartverket.nibas"
