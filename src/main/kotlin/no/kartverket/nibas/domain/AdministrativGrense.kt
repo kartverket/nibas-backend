@@ -10,7 +10,7 @@ import javax.persistence.MappedSuperclass
 
 @MappedSuperclass
 @Audited
-abstract class AdministrativGrense : Grense(), CommonMetadataProperties {
+abstract class AdministrativGrense : Grense() {
 
     @Column(name = "versjonid")
     override var versjonid: String? = null
@@ -26,9 +26,6 @@ abstract class AdministrativGrense : Grense(), CommonMetadataProperties {
 
     @Embedded
     var endringsflagg: Endringsflagg? = Endringsflagg()
-
-    @Embedded
-    override var kvalitet: PosisjonskvalitetEmbeddable? = null
 
     @Column(name = "opphav")
     override var opphav: String? = null
@@ -52,19 +49,10 @@ abstract class AdministrativGrense : Grense(), CommonMetadataProperties {
     var omtvistet: Boolean? = null
 
     @ManyToOne
-    @JoinColumn(name = "grensestatus")
-    override var grensestatus: Grensestatus? = null
-
-    @ManyToOne
-    @JoinColumn(name = "fastsettingstype")
-    override var fastsettingstype: Fastsettingstype? = null
-
-    @ManyToOne
     @JoinColumn(name = "foelgerterrengdetalj")
     var foelgerterrengdetalj: Terrengdetaljkode? = null
 
     @ManyToOne
     @JoinColumn(name = "noeyaktighetsklasse")
     var noeyaktighetsklasse: Noeyaktighetsklassekode? = null
-
 }

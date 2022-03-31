@@ -4,8 +4,8 @@ import org.hibernate.envers.Audited
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.*
+import javax.persistence.CascadeType
 import javax.persistence.Column
-import javax.persistence.Embedded
 import javax.persistence.Entity
 import javax.persistence.FetchType
 import javax.persistence.Id
@@ -17,7 +17,7 @@ import javax.persistence.Table
 @Table(name = "grunnlinje")
 @Audited
 @Entity
-class Grunnlinje : Grense(), MaritimGrense, CommonMetadataProperties {
+class Grunnlinje : Grense(), MaritimGrense {
     override var objtype: String? = "Grunnlinje"
 
     @Column(name = "versjonid")
@@ -66,15 +66,8 @@ class Grunnlinje : Grense(), MaritimGrense, CommonMetadataProperties {
     @Column(name = "versjon")
     var versjon: String? = null
 
-    @Embedded
-    override var kvalitet: PosisjonskvalitetEmbeddable? = null
-
     @Column(name = "gjelderomraade")
     override var gjelderomraade: String? = null
-
-    @ManyToOne
-    @JoinColumn(name = "grensestatus")
-    override var grensestatus: Grensestatus? = null
 
     @Column(name = "virkeomraadenavn")
     override var virkeomraadenavn: String? = null
@@ -86,6 +79,7 @@ class Grunnlinje : Grense(), MaritimGrense, CommonMetadataProperties {
     @JoinColumn(name = "land")
     var land: Landkode? = null
 
+    // Overstyres fordi den er non-nullable
     @ManyToOne(optional = false)
     @JoinColumn(name = "fastsettingstype", nullable = false)
     override var fastsettingstype: Fastsettingstype? = null
@@ -94,39 +88,57 @@ class Grunnlinje : Grense(), MaritimGrense, CommonMetadataProperties {
     @Column(name = "kommunenummer")
     var kommunenummerId: String? = null
 
-    @OneToMany(mappedBy = "grunnlinjeFk", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "grunnlinjeFk", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     override var dokumentasjonsreferanser: MutableSet<Dokumentasjonsreferanse> = mutableSetOf()
 
-    @OneToMany(mappedBy = "grunnlinjeFk", fetch = FetchType.LAZY)
-    var informasjon: MutableSet<GrunnlinjeInformasjon> = mutableSetOf()
+    @OneToMany(mappedBy = "grunnlinjeFk", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    var informasjonselementer: MutableSet<GrunnlinjeInformasjon> = mutableSetOf()
 
-    @OneToMany(mappedBy = "grunnlinjeFk", fetch = FetchType.LAZY)
-    var grunnlinjeAnsvarligeMyndigheter: MutableSet<GrunnlinjeAnsvarligMyndighet> = mutableSetOf()
+    @OneToMany(mappedBy = "grunnlinjeFk", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    var ansvarligeMyndigheter: MutableSet<GrunnlinjeAnsvarligMyndighet> = mutableSetOf()
 
     override fun getAnsvarligeMyndigheter(): Collection<AnsvarligMyndighet> {
-        return this.grunnlinjeAnsvarligeMyndigheter
+        return this.ansvarligeMyndigheter
+    }
+
+    override fun setAnsvarligeMyndigheter(ansvarligeMyndigheter: List<AnsvarligMyndighetHolder>) {
+        doSetAnsvarligeMyndigheter(ansvarligeMyndigheter, this.ansvarligeMyndigheter) { GrunnlinjeAnsvarligMyndighet(this) }
     }
 
     override fun getLand(): Collection<Landkode> {
         return if (land != null) listOf(land!!) else emptyList()
     }
 
-    override fun getGrenseInfoElementer(): Collection<GrenseInfo> {
-        return this.informasjon
+    override fun setLand(landkoder: List<Landkode>) {
+        land = if (landkoder.size > 1) {
+            throw RuntimeException("Invalid number of land (${landkoder.size}). Max 1 allowed for grunnlinje.")
+        } else if (landkoder.isEmpty()) {
+            null
+        } else {
+            landkoder[0]
+        }
+    }
+
+    override fun getInfo(): String? {
+        return doGetInfoFromSingletonCollection(informasjonselementer)
+    }
+
+    override fun setInfo(updatedInfo: String?) {
+        doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { GrunnlinjeInformasjon(this) }
     }
 }
 
 @Table(name = "grunnlinje_informasjon")
 @Audited
 @Entity
-class GrunnlinjeInformasjon : GrenseInfo {
+class GrunnlinjeInformasjon(grunnlinje: Grunnlinje) : Info {
     @Id
     @Column(name = "objid", nullable = false, updatable = false)
-    val id: String = UUID.randomUUID().toString()
+    override val id: String = UUID.randomUUID().toString()
 
     @ManyToOne
     @JoinColumn(name = "grunnlinje_fk")
-    var grunnlinjeFk: Grunnlinje? = null
+    var grunnlinjeFk: Grunnlinje? = grunnlinje
 
     @Column(name = "informasjon")
     override var informasjon: String? = null
@@ -135,14 +147,14 @@ class GrunnlinjeInformasjon : GrenseInfo {
 @Table(name = "grunnlinje_ansvarligmyndighet")
 @Audited
 @Entity
-class GrunnlinjeAnsvarligMyndighet : AnsvarligMyndighet {
+class GrunnlinjeAnsvarligMyndighet(grunnlinje: Grunnlinje) : AnsvarligMyndighet {
     @Id
     @Column(name = "objid", nullable = false, updatable = false)
-    val id: String = UUID.randomUUID().toString()
+    override val id: String = UUID.randomUUID().toString()
 
     @ManyToOne
     @JoinColumn(name = "grunnlinje_fk")
-    var grunnlinjeFk: Grunnlinje? = null
+    var grunnlinjeFk: Grunnlinje? = grunnlinje
 
     @Column(name = "ansvarligmyndighet")
     override var ansvarligmyndighet: String? = null

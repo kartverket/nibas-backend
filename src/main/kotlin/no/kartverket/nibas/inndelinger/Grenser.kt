@@ -2,11 +2,16 @@ package no.kartverket.nibas.inndelinger
 
 import no.kartverket.nibas.api.v1.GrenseApi
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
+import no.kartverket.nibas.api.v1.common.geojson.AdministrativGrenseMetadata
+import no.kartverket.nibas.api.v1.common.geojson.AvtaltAvgrensningslinjeMetadata
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.FeatureProperties
 import no.kartverket.nibas.api.v1.common.geojson.KontekstEgenskaper
+import no.kartverket.nibas.api.v1.common.geojson.RiksgrenseMetadata
+import no.kartverket.nibas.api.v1.common.geojson.TerritorialgrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.toMetadata
+import no.kartverket.nibas.api.v1.common.geojson.updateMetadata
 import no.kartverket.nibas.api.v1.response.HistorikkRef
 import no.kartverket.nibas.domain.AdministrativEnhet
 import no.kartverket.nibas.domain.AdministrativGrense
@@ -112,7 +117,6 @@ class GrenseController @Autowired constructor(
 
     private fun <T : Grense> hentGrenseRevisjon(id: String, revision: Int, type: Class<T>): Feature =
         grenseToFeature(grense = historikkService.hentHistorikkRevisjon(id, revision, type), kodelisteService)
-
 }
 
 @Service
@@ -139,9 +143,15 @@ class GrenseService @Autowired constructor(
         }.findById(id).unwrap() as T
     }
 
-    fun lagreKommunegrenser(grenser: List<Feature>) = lagreGrenser(grenser, kommunegrenseRepository)
-    fun lagreFylkesgrenser(grenser: List<Feature>) = lagreGrenser(grenser, fylkesgrenseRepository)
-    fun lagreTerritorialgrenser(grenser: List<Feature>) = lagreGrenser(grenser, territorialgrenseRepository)
+    fun lagreKommunegrenser(grenser: List<Feature>) =
+        lagreGrenser(grenser, kommunegrenseRepository)
+
+    fun lagreFylkesgrenser(grenser: List<Feature>) =
+        lagreGrenser(grenser, fylkesgrenseRepository)
+
+    fun lagreTerritorialgrenser(grenser: List<Feature>) =
+        lagreGrenser(grenser, territorialgrenseRepository)
+
     fun lagreRiksgrenser(grenser: List<Feature>) = lagreGrenser(grenser, riksgrenseRepository)
     fun lagreAvtaltAvgrensningslinjer(grenser: List<Feature>) =
         lagreGrenser(grenser, avtaltAvgrensningslinjeRepository)
@@ -153,16 +163,21 @@ class GrenseService @Autowired constructor(
     )
 
     @Transactional
-    fun <T : Grense> lagreGrenser(grenserSomSkalLagres: List<Feature>, grenseRepository: CrudRepository<T, String>) {
+    fun <T : Grense> lagreGrenser(
+        grenserSomSkalLagres: List<Feature>,
+        grenseRepository: CrudRepository<T, String>
+    ) {
         val eksisterendeGrenser = grenseRepository.findAllById(
-            grenserSomSkalLagres.filter { feature -> feature.id != null }.map { it.id })
+            grenserSomSkalLagres.filter { feature -> feature.id != null }.map { it.id }
+        )
 
         val oppdaterteGrenser = grenserSomSkalLagres.map { feature ->
-            val grense = when (val grenseId = feature.id) {
+            var grense = when (val grenseId = feature.id) {
                 null -> lagGrenseForType(feature)
                 else -> eksisterendeGrenser.find { it.id == grenseId }!!
             }
             grense.grense = feature.geometry as LineString
+            grense = updateMetadataOnGrense(feature, grense)
 
             val kontekstEgenskaper = feature.properties.kontekstEgenskaper!!
             GrenseMedRetningOgKontekst(
@@ -189,6 +204,22 @@ class GrenseService @Autowired constructor(
                 AdministrativEnhetType.NASJON -> oppdaterEnheter(entry.value, nasjonRepository)
             }
         }
+    }
+
+    private fun <T : Grense> updateMetadataOnGrense(
+        feature: Feature,
+        grense: T
+    ): T {
+        val featureMetadata = feature.properties.metadata
+        if (featureMetadata != null) {
+            when (grense) {
+                is AdministrativGrense -> grense.updateMetadata(featureMetadata as AdministrativGrenseMetadata)
+                is Riksgrense -> grense.updateMetadata(featureMetadata as RiksgrenseMetadata)
+                is Avtaltavgrensningslinje -> grense.updateMetadata(featureMetadata as AvtaltAvgrensningslinjeMetadata)
+                is Territorialgrense -> grense.updateMetadata(featureMetadata as TerritorialgrenseMetadata)
+            }
+        }
+        return grense
     }
 
     private fun <T : Grense, S : AdministrativEnhet> oppdaterEnheter(
@@ -220,7 +251,6 @@ class GrenseService @Autowired constructor(
             GrenseType.Territorialgrense -> Territorialgrense()
         } as T
     }
-
 }
 
 enum class GrenseType {

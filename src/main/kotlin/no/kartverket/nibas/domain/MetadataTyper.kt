@@ -1,7 +1,9 @@
 package no.kartverket.nibas.domain
 
+import no.kartverket.nibas.api.v1.common.geojson.Posisjonskvalitet
 import java.time.LocalDate
 import java.time.ZonedDateTime
+import java.util.function.Supplier
 import javax.persistence.Column
 import javax.persistence.Embeddable
 import javax.persistence.JoinColumn
@@ -35,7 +37,9 @@ data class PosisjonskvalitetEmbeddable(
     var maalemetode: String = "",
     @Column(name = "noeyaktighet")
     var noeyaktighet: Int? = null
-)
+) {
+    fun toKvalitet(): Posisjonskvalitet = Posisjonskvalitet(maalemetode, noeyaktighet)
+}
 
 @Embeddable
 data class Registreringsversjon(
@@ -46,31 +50,91 @@ data class Registreringsversjon(
     var versjon: String? = null
 )
 
-interface MaritimGrense {
-    fun getAnsvarligeMyndigheter(): Collection<AnsvarligMyndighet>
-    var gjelderomraade: String?
-    var transformasjonsdato: LocalDate?
-    var virkeomraadenavn: String?
-    fun getLand(): Collection<Landkode>
-}
-
+// Felles egenskaper for grenser, adm_enheter, punkter ++
 interface CommonMetadataProperties : ContainsSosiIdentifikasjon {
     var datafangstdato: ZonedDateTime?
     var gyldigFra: ZonedDateTime?
     var gyldigTil: ZonedDateTime?
-    fun getGrenseInfoElementer(): Collection<GrenseInfo>
-    var kvalitet: PosisjonskvalitetEmbeddable?
     var oppdateringsdato: ZonedDateTime
     var opphav: String?
-    var dokumentasjonsreferanser: MutableSet<Dokumentasjonsreferanse>
-    var fastsettingstype: Fastsettingstype?
-    var grensestatus: Grensestatus?
+    fun getInfo(): String?
+    fun setInfo(updatedInfo: String?)
 }
 
+// Felles egenskaper for maritime grenser
+interface MaritimGrense {
+    var gjelderomraade: String?
+    var transformasjonsdato: LocalDate?
+    var virkeomraadenavn: String?
+    fun getAnsvarligeMyndigheter(): Collection<AnsvarligMyndighet>
+    fun setAnsvarligeMyndigheter(ansvarligeMyndigheter: List<AnsvarligMyndighetHolder>)
+    fun getLand(): Collection<Landkode>
+    fun setLand(landkoder: List<Landkode>)
+}
+
+// Representerer domenemodellen, slipper ut av backend.
 interface AnsvarligMyndighet {
+    val id: String
     var ansvarligmyndighet: String?
 }
 
-interface GrenseInfo {
+// Representerer domenemodellen, slipper ut av backend.
+interface Info {
+    val id: String
     var informasjon: String?
+}
+
+// Innkommende fra klienten. Id kan være null
+data class AnsvarligMyndighetHolder(val id: String? = null, var ansvarligmyndighet: String? = null)
+
+/**
+ * Hjelpefunksjon for å sette informasjonstekst inn i liste av infoelementer (skal i praksis være en singleton-collection).
+ * Dersom innsendt informasjon er null, og koblingsentiteten finnes, så blir feltet bare satt til null, vi sletter ikke
+ * koblingen. (Vi kan gjøre det med removeOrphans.)
+ * @param updatedInfo Ny eller endret info som man ønsker å sette på entiteten. Kan også være null.
+ * @param existingInfoElementer Collection av info-elementene som sitter på entiteten fra før
+ * @param newInfoSupplier Supplier for å kunne instansiere ny Info-impl
+ */
+fun <T : Info> doSetInfoInSingletonCollection(
+    updatedInfo: String?,
+    existingInfoElementer: MutableSet<T>,
+    newInfoSupplier: Supplier<T>
+) {
+    if (updatedInfo == null && existingInfoElementer.isNotEmpty()) {
+        existingInfoElementer.first().informasjon = null
+    } else {
+        val infoElement: T
+        if (existingInfoElementer.isEmpty()) {
+            infoElement = newInfoSupplier.get()
+            existingInfoElementer.add(infoElement)
+        } else {
+            infoElement = existingInfoElementer.first()
+        }
+        infoElement.informasjon = updatedInfo
+    }
+}
+
+fun <T : Info> doGetInfoFromSingletonCollection(informasjonselementer: MutableSet<T>): String? {
+    return informasjonselementer.firstOrNull()?.informasjon
+}
+
+/**
+ * Hjelpefunksjon for å sette/oppdatere liste av ansvarlige myndigheter.
+ * @param listToUpdate Liste med ansvarlige myndigheter som man ønsker å sette i objektet
+ * @param existingAnsvarligeMyndigheter Collection av de ansvarlige myndigheter som sitter på entiteten fra før
+ * @param newAnsvarligMyndighetSupplier Supplier for å kunne instansiere ny AnsvarligMyndighet-impl
+ */
+fun <T : AnsvarligMyndighet> doSetAnsvarligeMyndigheter(
+    listToUpdate: List<AnsvarligMyndighetHolder>,
+    existingAnsvarligeMyndigheter: MutableSet<T>,
+    newAnsvarligMyndighetSupplier: Supplier<T>
+) {
+    listToUpdate.forEach { ansvarligMyndighetHolder ->
+        var ansvarligMyndighetEntity = existingAnsvarligeMyndigheter.find { am -> am.id == ansvarligMyndighetHolder.id }
+        if (ansvarligMyndighetEntity == null) { // Hvis ny instans, opprettes den
+            ansvarligMyndighetEntity = newAnsvarligMyndighetSupplier.get()
+            existingAnsvarligeMyndigheter.add(ansvarligMyndighetEntity)
+        }
+        ansvarligMyndighetEntity.ansvarligmyndighet = ansvarligMyndighetHolder.ansvarligmyndighet
+    }
 }

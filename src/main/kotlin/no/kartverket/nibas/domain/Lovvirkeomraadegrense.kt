@@ -3,10 +3,12 @@ package no.kartverket.nibas.domain
 import org.hibernate.envers.Audited
 import java.time.LocalDate
 import java.time.ZonedDateTime
+import java.util.*
 import javax.persistence.Column
 import javax.persistence.ElementCollection
 import javax.persistence.Entity
 import javax.persistence.FetchType
+import javax.persistence.Id
 import javax.persistence.JoinColumn
 import javax.persistence.ManyToOne
 import javax.persistence.OneToMany
@@ -22,19 +24,19 @@ class Lovvirkeomraadegrense : Grense() {
     override var versjonid: String? = null
 
     @Column(name = "oppdateringsdato")
-    var oppdateringsdato: ZonedDateTime? = ZonedDateTime.now()
+    override var oppdateringsdato: ZonedDateTime = ZonedDateTime.now()
 
     @Column(name = "datafangstdato")
-    var datafangstdato: ZonedDateTime? = null
+    override var datafangstdato: ZonedDateTime? = null
 
     @Column(name = "sluttdato")
     var sluttdato: LocalDate? = null
 
     @Column(name = "gyldigfra")
-    var gyldigfra: ZonedDateTime? = null
+    override var gyldigFra: ZonedDateTime? = null
 
     @Column(name = "gyldigtil")
-    var gyldigtil: ZonedDateTime? = null
+    override var gyldigTil: ZonedDateTime? = null
 
     @Column(name = "datauttaksdato")
     var datauttaksdato: ZonedDateTime? = null
@@ -46,19 +48,11 @@ class Lovvirkeomraadegrense : Grense() {
     @Column(name = "tidspunktendring")
     var tidspunktendring: LocalDate? = null
 
-    @Column(name = "maalemetode", nullable = false)
-    var maalemetode: String = ""
-
-    @Column(name = "noeyaktighet")
-    var noeyaktighet: Int? = null
-
-
     @Column(name = "opphav")
-    var opphav: String? = null
+    override var opphav: String? = null
 
     @Column(name = "produkt")
     var produkt: String? = null
-
 
     @Column(name = "versjon")
     var versjon: String? = null
@@ -66,28 +60,17 @@ class Lovvirkeomraadegrense : Grense() {
     @Column(name = "omraadeid")
     var omraadeid: Int? = null
 
-
     @Column(name = "originaldatavert")
     var originaldatavert: String? = null
 
     @Column(name = "kopidato")
     var kopidato: LocalDate? = null
 
-
     @Column(name = "gjelderomraade")
     var gjelderomraade: String? = null
 
-
     @Column(name = "virkeomraadenavn")
     var virkeomraadenavn: String? = null
-
-    @ManyToOne
-    @JoinColumn(name = "grensestatus")
-    var grensestatus: Grensestatus? = null
-
-    @ManyToOne
-    @JoinColumn(name = "fastsettingstype")
-    var fastsettingstype: Fastsettingstype? = null
 
     @Column(name = "sonenautisk")
     var sonenautisk: Int? = null
@@ -97,15 +80,37 @@ class Lovvirkeomraadegrense : Grense() {
     var foelgeradministrativgrense: Administrativgrensekode? = null
 
     @OneToMany(mappedBy = "lovvirkeomraadegrenseFk", fetch = FetchType.LAZY)
-    var informasjon: MutableSet<LovvirkeomraadegrenseInformasjon>? = null
+    var informasjon: MutableSet<LovvirkeomraadegrenseInformasjon> = mutableSetOf()
 
     @OneToMany(mappedBy = "lovvirkeomraadegrenseFk", fetch = FetchType.LAZY)
-    var dokumentasjonsreferanse: MutableSet<Dokumentasjonsreferanse> = mutableSetOf()
+    override var dokumentasjonsreferanser: MutableSet<Dokumentasjonsreferanse> = mutableSetOf()
 
     // Holder på liste av kommunenummer-UUIDs grensen er tilknyttet
     // Uten at vi behøver definere egen entity for dette.
     @ElementCollection
     var kommunenummer: MutableSet<String> = mutableSetOf()
 
+    override fun getInfo(): String? {
+        return doGetInfoFromSingletonCollection(informasjon)
+    }
 
+    override fun setInfo(updatedInfo: String?) {
+        doSetInfoInSingletonCollection(updatedInfo, informasjon) { LovvirkeomraadegrenseInformasjon(this) }
+    }
+}
+
+@Table(name = "lovvirkeomraadegrense_informasjon")
+@Audited
+@Entity
+class LovvirkeomraadegrenseInformasjon(lovvirkeomraadegrense: Lovvirkeomraadegrense) : Info {
+    @Id
+    @Column(name = "objid", nullable = false, updatable = false)
+    override val id: String = UUID.randomUUID().toString()
+
+    @ManyToOne
+    @JoinColumn(name = "lovvirkeomraadegrense_fk")
+    var lovvirkeomraadegrenseFk: Lovvirkeomraadegrense? = lovvirkeomraadegrense
+
+    @Column(name = "informasjon")
+    override var informasjon: String? = null
 }

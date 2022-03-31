@@ -4,8 +4,8 @@ import org.hibernate.envers.Audited
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.*
+import javax.persistence.CascadeType
 import javax.persistence.Column
-import javax.persistence.Embedded
 import javax.persistence.Entity
 import javax.persistence.FetchType
 import javax.persistence.Id
@@ -20,7 +20,7 @@ import javax.persistence.Table
 @Table(name = "riksgrense")
 @Audited
 @Entity
-class Riksgrense(override val id: String = UUID.randomUUID().toString()) : Grense(), CommonMetadataProperties {
+class Riksgrense(override val id: String = UUID.randomUUID().toString()) : Grense() {
 
     override var objtype: String? = "Riksgrense"
 
@@ -52,9 +52,6 @@ class Riksgrense(override val id: String = UUID.randomUUID().toString()) : Grens
     @Column(name = "tidspunktendring")
     var tidspunktendring: LocalDate? = null
 
-    @Embedded
-    override var kvalitet: PosisjonskvalitetEmbeddable? = null
-
     @Column(name = "opphav")
     override var opphav: String? = null
 
@@ -74,43 +71,39 @@ class Riksgrense(override val id: String = UUID.randomUUID().toString()) : Grens
     @Column(name = "grensegatebredde")
     var grensegatebredde: Double? = null
 
-    @ManyToOne
-    @JoinColumn(name = "grensestatus")
-    override var grensestatus: Grensestatus? = null
-
-    @ManyToOne
-    @JoinColumn(name = "fastsettingstype")
-    override var fastsettingstype: Fastsettingstype? = null
-
-    @OneToMany(mappedBy = "riksgrenseFk", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "riksgrenseFk", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     override var dokumentasjonsreferanser: MutableSet<Dokumentasjonsreferanse> = mutableSetOf()
 
-    @OneToMany(mappedBy = "riksgrenseFk", fetch = FetchType.LAZY)
-    var riksgrenseInformasjonselementer: MutableSet<RiksgrenseInformasjon> = mutableSetOf()
+    @OneToMany(mappedBy = "riksgrenseFk", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    var informasjonselementer: MutableSet<RiksgrenseInformasjon> = mutableSetOf()
 
-    @OneToMany(mappedBy = "riksgrenseFk", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "riksgrenseFk", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     var riksgrenseAnsvarligeMyndigheter: MutableSet<RiksgrenseAnsvarligMyndighet> = mutableSetOf()
 
-    override fun getGrenseInfoElementer(): Collection<GrenseInfo> {
-        return this.riksgrenseInformasjonselementer
+    override fun getInfo(): String? {
+        return doGetInfoFromSingletonCollection(informasjonselementer)
     }
 
-    fun getAnsvarligeMyndigheter(): List<String> {
-        return this.riksgrenseAnsvarligeMyndigheter.mapNotNull { it.ansvarligmyndighet }
+    override fun setInfo(updatedInfo: String?) {
+        doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { RiksgrenseInformasjon(this) }
+    }
+
+    fun setAnsvarligeMyndigheter(listToUpdate: List<AnsvarligMyndighetHolder>) {
+        doSetAnsvarligeMyndigheter(listToUpdate, riksgrenseAnsvarligeMyndigheter) { RiksgrenseAnsvarligMyndighet(this) }
     }
 }
 
 @Table(name = "riksgrense_informasjon")
 @Audited
 @Entity
-class RiksgrenseInformasjon : GrenseInfo {
+class RiksgrenseInformasjon(riksgrense: Riksgrense) : Info {
     @Id
     @Column(name = "objid", nullable = false, updatable = false)
-    val id: String = UUID.randomUUID().toString()
+    override val id: String = UUID.randomUUID().toString()
 
     @ManyToOne
     @JoinColumn(name = "riksgrense_fk")
-    var riksgrenseFk: Riksgrense? = null
+    var riksgrenseFk: Riksgrense? = riksgrense
 
     @Column(name = "informasjon")
     override var informasjon: String? = null
@@ -119,15 +112,15 @@ class RiksgrenseInformasjon : GrenseInfo {
 @Table(name = "riksgrense_ansvarligmyndighet")
 @Audited
 @Entity
-class RiksgrenseAnsvarligMyndighet {
+class RiksgrenseAnsvarligMyndighet(riksgrense: Riksgrense) : AnsvarligMyndighet {
     @Id
     @Column(name = "objid", nullable = false, updatable = false)
-    val id: String = UUID.randomUUID().toString()
+    override val id: String = UUID.randomUUID().toString()
 
     @ManyToOne
     @JoinColumn(name = "riksgrense_fk")
-    var riksgrenseFk: Riksgrense? = null
+    var riksgrenseFk: Riksgrense? = riksgrense
 
     @Column(name = "ansvarligmyndighet")
-    var ansvarligmyndighet: String? = null
+    override var ansvarligmyndighet: String? = null
 }

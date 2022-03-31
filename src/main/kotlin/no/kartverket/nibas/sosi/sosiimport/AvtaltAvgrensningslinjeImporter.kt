@@ -73,9 +73,8 @@ class AvtaltAvgrensningslinjeImporter @Autowired constructor(
                 avtaltavgrensningslinje = avtaltAvgrensningslinjeRepository.save(avtaltavgrensningslinje)
 
                 if (sosiAvtaltAvgrensningslinje.getInformasjon() != null) {
-                    val avtaltavgrensningslinjeInformasjon = AvtaltavgrensningslinjeInformasjon()
+                    val avtaltavgrensningslinjeInformasjon = AvtaltavgrensningslinjeInformasjon(avtaltavgrensningslinje)
                     avtaltavgrensningslinjeInformasjon.informasjon = sosiAvtaltAvgrensningslinje.getInformasjon()
-                    avtaltavgrensningslinjeInformasjon.avtaltavgrensningslinjeFk = avtaltavgrensningslinje
                     avtaltAvgrensningslinjeInformasjonRepository.save(avtaltavgrensningslinjeInformasjon)
                 }
 

@@ -1,8 +1,11 @@
 package no.kartverket.nibas.domain
 
+import no.kartverket.nibas.api.v1.common.geojson.Dokref
+import no.kartverket.nibas.api.v1.common.geojson.TekstHolder
 import org.hibernate.envers.Audited
 import java.time.LocalDate
 import java.util.*
+import javax.persistence.CascadeType
 import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.FetchType
@@ -126,10 +129,26 @@ class Dokumentasjonsreferanse {
     @JoinColumn(name = "yttergrensetilstoetendesone_fk")
     var yttergrensetilstoetendesoneFk: Yttergrensetilstoetendesone? = null
 
-    @OneToMany(mappedBy = "dokumentasjonsreferanseFk", fetch = FetchType.LAZY)
-    var dokumentlink: MutableSet<DokumentasjonsreferanseDokumentlink> = mutableSetOf()
+    @OneToMany(mappedBy = "dokumentasjonsreferanseFk", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    var dokumentlenker: MutableSet<DokumentasjonsreferanseDokumentlink> = mutableSetOf()
 
-    @OneToMany(mappedBy = "dokumentasjonsreferanseFk", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "dokumentasjonsreferanseFk", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     var internReferanserKartverket: MutableSet<DokumentasjonsreferanseInternReferanseKartverket> = mutableSetOf()
 
+    fun toDokRef(): Dokref = Dokref(
+        id = this.id,
+        dokumentlenker = this.dokumentlenker
+            .filter { it.dokumentlink != null }
+            .map { TekstHolder(it.id, it.dokumentlink!!) }
+            .sortedBy { it.beskrivelse },
+        fastsettingsdato = this.fastsettingsdato!!,
+        fastsettingsmyndighet = this.fastsettingsmyndighet,
+        hjemmel = this.hjemmel,
+        internReferanserKartverket = this.internReferanserKartverket
+            .filter { it.internReferanseKartverket != null }
+            .map { TekstHolder(it.id, it.internReferanseKartverket!!) }
+            .sortedBy { it.beskrivelse },
+        rettskildeId = this.rettskildeid,
+        rettskildeTittel = this.rettskildetittel!!
+    )
 }

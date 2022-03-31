@@ -1,7 +1,7 @@
 package no.kartverket.nibas.domain
 
 import no.kartverket.nibas.api.v1.common.geojson.Dokref
-import no.kartverket.nibas.api.v1.common.geojson.toDokRef
+import no.kartverket.nibas.api.v1.common.geojson.TekstHolder
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -14,10 +14,9 @@ internal class DokumentasjonsreferanseTest {
         val march1 = LocalDate.of(2022, Month.MARCH, 1)
 
         val dokumentasjonsreferanse = Dokumentasjonsreferanse()
-
         val link1 = dokLink("dok3")
         val link2 = dokLink()
-        dokumentasjonsreferanse.dokumentlink = mutableSetOf(link1, link2)
+        dokumentasjonsreferanse.dokumentlenker = mutableSetOf(link1, link2)
         dokumentasjonsreferanse.fastsettingsdato = march1
         dokumentasjonsreferanse.fastsettingsmyndighet = "mynd1"
         dokumentasjonsreferanse.hjemmel = "hjemmel2"
@@ -28,16 +27,26 @@ internal class DokumentasjonsreferanseTest {
         dokumentasjonsreferanse.rettskildeid = "id1"
         dokumentasjonsreferanse.rettskildetittel = "Titten Tei"
 
-        val dokRef = dokumentasjonsreferanse.toDokRef()
+        val generatedUUID = dokumentasjonsreferanse.id
+        val link1Id = link1.id
+        val internRef1Id = internRef1.id
+        val internRef2Id = internRef2.id
+
         val expectedDokRef = Dokref(
-            dokumentlenker = listOf("dok3"),
+            id = generatedUUID,
+            dokumentlenker = listOf(TekstHolder(link1Id, "dok3")),
             fastsettingsdato = march1,
             fastsettingsmyndighet = "mynd1",
             hjemmel = "hjemmel2",
-            internReferanserKartverket = listOf("ref22", "ref44"),
+            internReferanserKartverket = listOf(
+                TekstHolder(internRef2Id, "ref22"),
+                TekstHolder(internRef1Id, "ref44")
+            ),
             rettskildeId = "id1",
             rettskildeTittel = "Titten Tei"
         )
+
+        val dokRef = dokumentasjonsreferanse.toDokRef()
         assertThat(dokRef).isEqualTo(expectedDokRef)
     }
 

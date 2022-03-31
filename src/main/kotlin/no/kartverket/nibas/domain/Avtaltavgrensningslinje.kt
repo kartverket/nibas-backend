@@ -4,8 +4,8 @@ import org.hibernate.envers.Audited
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.*
+import javax.persistence.CascadeType
 import javax.persistence.Column
-import javax.persistence.Embedded
 import javax.persistence.Entity
 import javax.persistence.FetchType
 import javax.persistence.Id
@@ -19,7 +19,7 @@ import javax.persistence.Table
 @Table(name = "avtaltavgrensningslinje")
 @Audited
 @Entity
-class Avtaltavgrensningslinje : Grense(), MaritimGrense, CommonMetadataProperties {
+class Avtaltavgrensningslinje : Grense(), MaritimGrense {
     override var objtype: String? = "AvtaltAvgrensningslinje"
 
     @Column(name = "versjonid")
@@ -68,15 +68,8 @@ class Avtaltavgrensningslinje : Grense(), MaritimGrense, CommonMetadataPropertie
     @Column(name = "versjon")
     var versjon: String? = null
 
-    @Embedded
-    override var kvalitet: PosisjonskvalitetEmbeddable? = null
-
     @Column(name = "gjelderomraade")
     override var gjelderomraade: String? = null
-
-    @ManyToOne
-    @JoinColumn(name = "grensestatus")
-    override var grensestatus: Grensestatus? = null
 
     @Column(name = "virkeomraadenavn")
     override var virkeomraadenavn: String? = null
@@ -84,11 +77,12 @@ class Avtaltavgrensningslinje : Grense(), MaritimGrense, CommonMetadataPropertie
     @Column(name = "transformasjonsdato")
     override var transformasjonsdato: LocalDate? = null
 
+    // Overstyres fordi den er non-nullable
     @ManyToOne(optional = false)
     @JoinColumn(name = "fastsettingstype", nullable = false)
     override var fastsettingstype: Fastsettingstype? = null
 
-    @ManyToMany
+    @ManyToMany(cascade = [CascadeType.ALL])
     @JoinTable(
         schema = "nibas",
         name = "avtaltavgrensningslinje_land",
@@ -97,26 +91,39 @@ class Avtaltavgrensningslinje : Grense(), MaritimGrense, CommonMetadataPropertie
     )
     var landkode: MutableSet<Landkode> = mutableSetOf()
 
-    @OneToMany(mappedBy = "avtaltavgrensningslinjeFk", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "avtaltavgrensningslinjeFk", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     override var dokumentasjonsreferanser: MutableSet<Dokumentasjonsreferanse> = mutableSetOf()
 
-    @OneToMany(mappedBy = "avtaltavgrensningslinjeFk", fetch = FetchType.LAZY)
-    var avtaltavgrensningslinjeInformasjonselementer: MutableSet<AvtaltavgrensningslinjeInformasjon> = mutableSetOf()
+    @OneToMany(mappedBy = "avtaltavgrensningslinjeFk", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    var informasjonselementer: MutableSet<AvtaltavgrensningslinjeInformasjon> = mutableSetOf()
 
-    @OneToMany(mappedBy = "avtaltavgrensningslinjeFk", fetch = FetchType.LAZY)
-    var avtaltavgrensningslinjeAnsvarligeMyndigheter: MutableSet<AvtaltavgrensningslinjeAnsvarligMyndighet> =
+    @OneToMany(mappedBy = "avtaltavgrensningslinjeFk", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    var ansvarligeMyndigheter: MutableSet<AvtaltavgrensningslinjeAnsvarligMyndighet> =
         mutableSetOf()
 
-    override fun getGrenseInfoElementer(): Collection<GrenseInfo> {
-        return this.avtaltavgrensningslinjeInformasjonselementer
+    override fun getInfo(): String? {
+        return doGetInfoFromSingletonCollection(informasjonselementer)
+    }
+
+    override fun setInfo(updatedInfo: String?) {
+        doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { AvtaltavgrensningslinjeInformasjon(this) }
     }
 
     override fun getAnsvarligeMyndigheter(): Collection<AnsvarligMyndighet> {
-        return this.avtaltavgrensningslinjeAnsvarligeMyndigheter
+        return this.ansvarligeMyndigheter
+    }
+
+    override fun setAnsvarligeMyndigheter(ansvarligeMyndigheter: List<AnsvarligMyndighetHolder>) {
+        doSetAnsvarligeMyndigheter(ansvarligeMyndigheter, this.ansvarligeMyndigheter) { AvtaltavgrensningslinjeAnsvarligMyndighet() }
     }
 
     override fun getLand(): Collection<Landkode> {
         return this.landkode
+    }
+
+    override fun setLand(landkoder: List<Landkode>) {
+        this.landkode.clear()
+        this.landkode.addAll(landkoder)
     }
 }
 
@@ -126,7 +133,7 @@ class Avtaltavgrensningslinje : Grense(), MaritimGrense, CommonMetadataPropertie
 class AvtaltavgrensningslinjeAnsvarligMyndighet : AnsvarligMyndighet {
     @Id
     @Column(name = "objid", nullable = false, updatable = false)
-    val id: String = UUID.randomUUID().toString()
+    override val id: String = UUID.randomUUID().toString()
 
     @ManyToOne
     @JoinColumn(name = "avtaltavgrensningslinje_fk")
@@ -139,15 +146,14 @@ class AvtaltavgrensningslinjeAnsvarligMyndighet : AnsvarligMyndighet {
 @Table(name = "avtaltavgrensningslinje_informasjon")
 @Audited
 @Entity
-class AvtaltavgrensningslinjeInformasjon : GrenseInfo {
+class AvtaltavgrensningslinjeInformasjon(avtaltavgrensningslinje: Avtaltavgrensningslinje) : Info {
     @Id
     @Column(name = "objid", nullable = false, updatable = false)
-    val id: String = UUID.randomUUID().toString()
+    override val id: String = UUID.randomUUID().toString()
 
     @ManyToOne
     @JoinColumn(name = "avtaltavgrensningslinje_fk")
-    var avtaltavgrensningslinjeFk: Avtaltavgrensningslinje? = null
-
+    var avtaltavgrensningslinjeFk: Avtaltavgrensningslinje? = avtaltavgrensningslinje
 
     @Column(name = "informasjon")
     override var informasjon: String? = null

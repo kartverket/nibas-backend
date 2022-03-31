@@ -4,8 +4,8 @@ import org.hibernate.envers.Audited
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.*
+import javax.persistence.CascadeType
 import javax.persistence.Column
-import javax.persistence.Embedded
 import javax.persistence.Entity
 import javax.persistence.FetchType
 import javax.persistence.Id
@@ -17,7 +17,7 @@ import javax.persistence.Table
 @Table(name = "territorialgrense")
 @Audited
 @Entity
-class Territorialgrense : Grense(), MaritimGrense, CommonMetadataProperties {
+class Territorialgrense : Grense(), MaritimGrense {
     override var objtype: String? = "Territorialgrense"
 
     @Column(name = "versjonid")
@@ -66,15 +66,8 @@ class Territorialgrense : Grense(), MaritimGrense, CommonMetadataProperties {
     @Column(name = "versjon")
     var versjon: String? = null
 
-    @Embedded
-    override var kvalitet: PosisjonskvalitetEmbeddable? = null
-
     @Column(name = "gjelderomraade")
     override var gjelderomraade: String? = null
-
-    @ManyToOne
-    @JoinColumn(name = "grensestatus")
-    override var grensestatus: Grensestatus? = null
 
     @Column(name = "virkeomraadenavn")
     override var virkeomraadenavn: String? = null
@@ -86,6 +79,7 @@ class Territorialgrense : Grense(), MaritimGrense, CommonMetadataProperties {
     @JoinColumn(name = "land")
     var land: Landkode? = null
 
+    // Overstyres fordi den er non-nullable
     @ManyToOne(optional = false)
     @JoinColumn(name = "fastsettingstype", nullable = false)
     override var fastsettingstype: Fastsettingstype? = null
@@ -93,25 +87,43 @@ class Territorialgrense : Grense(), MaritimGrense, CommonMetadataProperties {
     @Column(name = "beregningsdato")
     var beregningsdato: LocalDate? = null
 
-    @OneToMany(mappedBy = "territorialgrenseFk", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "territorialgrenseFk", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     override var dokumentasjonsreferanser: MutableSet<Dokumentasjonsreferanse> = mutableSetOf()
 
-    @OneToMany(mappedBy = "territorialgrenseFk", fetch = FetchType.LAZY)
-    var territorialgrenseAnsvarligeMyndigheter: MutableSet<TerritorialgrenseAnsvarligMyndighet> = mutableSetOf()
+    @OneToMany(mappedBy = "territorialgrenseFk", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    var ansvarligeMyndigheter: MutableSet<TerritorialgrenseAnsvarligMyndighet> = mutableSetOf()
 
-    @OneToMany(mappedBy = "territorialgrenseFk", fetch = FetchType.LAZY)
-    var territorialgrenseInformasjonselementer: MutableSet<TerritorialgrenseInformasjon> = mutableSetOf()
+    @OneToMany(mappedBy = "territorialgrenseFk", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    var informasjonselementer: MutableSet<TerritorialgrenseInformasjon> = mutableSetOf()
 
     override fun getLand(): Collection<Landkode> {
         return if (land != null) listOf(land!!) else emptyList()
     }
 
-    override fun getAnsvarligeMyndigheter(): Collection<AnsvarligMyndighet> {
-        return this.territorialgrenseAnsvarligeMyndigheter
+    override fun setLand(landkoder: List<Landkode>) {
+        land = if (landkoder.size > 1) {
+            throw RuntimeException("Invalid number of land (${landkoder.size}). Max 1 allowed for territorialgrense.")
+        } else if (landkoder.isEmpty()) {
+            null
+        } else {
+            landkoder[0]
+        }
     }
 
-    override fun getGrenseInfoElementer(): Collection<GrenseInfo> {
-        return this.territorialgrenseInformasjonselementer
+    override fun getAnsvarligeMyndigheter(): Collection<AnsvarligMyndighet> {
+        return this.ansvarligeMyndigheter
+    }
+
+    override fun setAnsvarligeMyndigheter(ansvarligeMyndigheter: List<AnsvarligMyndighetHolder>) {
+        doSetAnsvarligeMyndigheter(ansvarligeMyndigheter, this.ansvarligeMyndigheter) { TerritorialgrenseAnsvarligMyndighet(this) }
+    }
+
+    override fun getInfo(): String? {
+        return doGetInfoFromSingletonCollection(informasjonselementer)
+    }
+
+    override fun setInfo(updatedInfo: String?) {
+        doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { TerritorialgrenseInformasjon(this) }
     }
 
 }
@@ -119,14 +131,14 @@ class Territorialgrense : Grense(), MaritimGrense, CommonMetadataProperties {
 @Table(name = "territorialgrense_ansvarligmyndighet")
 @Audited
 @Entity
-class TerritorialgrenseAnsvarligMyndighet : AnsvarligMyndighet {
+class TerritorialgrenseAnsvarligMyndighet(territorialgrense: Territorialgrense) : AnsvarligMyndighet {
     @Id
     @Column(name = "objid", nullable = false, updatable = false)
-    val id: String = UUID.randomUUID().toString()
+    override val id: String = UUID.randomUUID().toString()
 
     @ManyToOne
     @JoinColumn(name = "territorialgrense_fk")
-    var territorialgrenseFk: Territorialgrense? = null
+    var territorialgrenseFk: Territorialgrense? = territorialgrense
 
     @Column(name = "ansvarligmyndighet")
     override var ansvarligmyndighet: String? = null
@@ -135,14 +147,14 @@ class TerritorialgrenseAnsvarligMyndighet : AnsvarligMyndighet {
 @Table(name = "territorialgrense_informasjon")
 @Audited
 @Entity
-class TerritorialgrenseInformasjon : GrenseInfo {
+class TerritorialgrenseInformasjon(territorialgrense: Territorialgrense) : Info {
     @Id
     @Column(name = "objid", nullable = false, updatable = false)
-    val id: String = UUID.randomUUID().toString()
+    override val id: String = UUID.randomUUID().toString()
 
     @ManyToOne
     @JoinColumn(name = "territorialgrense_fk")
-    var territorialgrenseFk: Territorialgrense? = null
+    var territorialgrenseFk: Territorialgrense? = territorialgrense
 
     @Column(name = "informasjon")
     override var informasjon: String? = null

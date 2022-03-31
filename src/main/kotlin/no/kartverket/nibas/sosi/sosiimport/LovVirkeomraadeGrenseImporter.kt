@@ -38,20 +38,17 @@ class LovVirkeomraadeGrenseImporter @Autowired constructor(
                 var lovvirkeomraadegrense = Lovvirkeomraadegrense()
                 lovvirkeomraadegrense.updateSosiIdentifikasjon(sosiIdent)
                 lovvirkeomraadegrense.datafangstdato = sosiLovvirkeomraadegrense.getDatafangstDato()
-                lovvirkeomraadegrense.oppdateringsdato = sosiLovvirkeomraadegrense.getOppdateringsdato()
+                val oppdateringsdato = sosiLovvirkeomraadegrense.getOppdateringsdato()
+                if (oppdateringsdato != null) {
+                    lovvirkeomraadegrense.oppdateringsdato = oppdateringsdato
+                }
                 lovvirkeomraadegrense.datauttaksdato = sosiLovvirkeomraadegrense.getDataUttaksdato()
                 lovvirkeomraadegrense.kommunenummer = kommunenummerIds
                 lovvirkeomraadegrense.opphav = sosiLovvirkeomraadegrense.getOpphav()
-                lovvirkeomraadegrense.gyldigfra = sosiLovvirkeomraadegrense.getGyldigFra()
-                lovvirkeomraadegrense.gyldigtil = sosiLovvirkeomraadegrense.getGyldigTil()
+                lovvirkeomraadegrense.gyldigFra = sosiLovvirkeomraadegrense.getGyldigFra()
+                lovvirkeomraadegrense.gyldigTil = sosiLovvirkeomraadegrense.getGyldigTil()
 
-                lovvirkeomraadegrense.noeyaktighet = sosiLovvirkeomraadegrense.getKvalitet()?.getNoyaktighet()
-                lovvirkeomraadegrense.maalemetode =
-                    when (val maalemetode = sosiLovvirkeomraadegrense.getKvalitet()?.getMalemetode()) {
-                        null -> throw RuntimeException("Maalemetode er påkrevd")
-                        else -> kodelisteService.getMalemetodeIdByCodeValue(maalemetode)
-                    }
-
+                lovvirkeomraadegrense.kvalitet = sosiLovvirkeomraadegrense.getPosisjonskvalitet(kodelisteService)
                 lovvirkeomraadegrense.fastsettingstype =
                     when (val fastsettingstype = sosiLovvirkeomraadegrense.getFastsettingstype()) {
                         null -> null
@@ -66,9 +63,8 @@ class LovVirkeomraadeGrenseImporter @Autowired constructor(
                 lovvirkeomraadegrense = lovVirkeomraadeGrenseRepository.save(lovvirkeomraadegrense)
 
                 if (sosiLovvirkeomraadegrense.getInformasjon() != null) {
-                    val lovvirkeomraadegrenseInformasjon = LovvirkeomraadegrenseInformasjon()
+                    val lovvirkeomraadegrenseInformasjon = LovvirkeomraadegrenseInformasjon(lovvirkeomraadegrense)
                     lovvirkeomraadegrenseInformasjon.informasjon = sosiLovvirkeomraadegrense.getInformasjon()
-                    lovvirkeomraadegrenseInformasjon.lovvirkeomraadegrenseFk = lovvirkeomraadegrense
                     lovvirkeomraadeGrenseInformasjonRepository.save(lovvirkeomraadegrenseInformasjon)
                 }
 

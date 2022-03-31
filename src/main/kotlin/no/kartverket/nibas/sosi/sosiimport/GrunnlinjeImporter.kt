@@ -69,9 +69,8 @@ class GrunnlinjeImporter @Autowired constructor(
 
 
                 if (sosiGrunnlinje.getInformasjon() != null) {
-                    val grunnlinjeInformasjon = GrunnlinjeInformasjon()
+                    val grunnlinjeInformasjon = GrunnlinjeInformasjon(grunnlinje)
                     grunnlinjeInformasjon.informasjon = sosiGrunnlinje.getInformasjon()
-                    grunnlinjeInformasjon.grunnlinjeFk = grunnlinje
                     grunnlinjeInformasjonRepository.save(grunnlinjeInformasjon)
                 }
                 return grunnlinje
