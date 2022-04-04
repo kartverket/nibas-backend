@@ -9,7 +9,7 @@ plugins {
     kotlin("plugin.jpa") version "1.6.10"
     kotlin("plugin.allopen") version "1.6.10"
     id("org.flywaydb.flyway") version "8.5.5"
-    id("io.gitlab.arturbosch.detekt") version "1.20.0-RC1"
+    id("io.gitlab.arturbosch.detekt") version "1.20.0-RC2"
 }
 
 group = "no.kartverket.nibas"
