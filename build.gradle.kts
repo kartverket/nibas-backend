@@ -54,7 +54,7 @@ dependencies {
     implementation("org.locationtech.jts:jts:1.18.2")
     implementation("org.locationtech.jts:jts-modules:1.18.2")
     implementation("org.locationtech.jts:jts-io:1.18.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
 
     implementation("org.locationtech.spatial4j:spatial4j:0.8")
     implementation("org.hibernate:hibernate-spatial:${DependencyVersions.HIBERNATE_VERSION}")
