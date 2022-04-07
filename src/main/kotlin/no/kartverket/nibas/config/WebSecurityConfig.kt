@@ -2,7 +2,6 @@ package no.kartverket.nibas.config
 
 import no.kartverket.aut.lib.AuthorizerPlugin
 import no.kartverket.aut.lib.jwk.AutModulJwkProvider
-import no.kartverket.aut.lib.jwk.JwkProvider
 import no.kartverket.aut.lib.jwk.JwkProviderProperties
 import no.kartverket.aut.lib.jwt.impl.DefaultJwtValidator
 import no.kartverket.aut.lib.jwt.impl.JwtAuthenticationRequestFilter
@@ -14,6 +13,7 @@ import org.springframework.core.env.Environment
 import org.springframework.http.HttpStatus
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
+import org.springframework.security.config.annotation.web.builders.WebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
@@ -66,6 +66,11 @@ class WebSecurityConfig @Autowired constructor(
                 .anyRequest()
                 .hasRole("NIBAS")
         }
+    }
+
+    @Throws(Exception::class)
+    override fun configure(web: WebSecurity) {
+        web.ignoring().antMatchers("/actuator/health", "/actuator/info")
     }
 
 }
