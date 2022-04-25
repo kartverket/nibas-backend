@@ -7,7 +7,7 @@ plugins {
     kotlin("jvm") version "1.6.20"
     kotlin("plugin.spring") version "1.6.21"
     kotlin("plugin.jpa") version "1.6.20"
-    kotlin("plugin.allopen") version "1.6.20"
+    kotlin("plugin.allopen") version "1.6.21"
     id("org.flywaydb.flyway") version "8.5.9"
     id("io.gitlab.arturbosch.detekt") version "1.20.0-RC2"
 }
