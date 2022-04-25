@@ -1,5 +1,6 @@
 package no.kartverket.nibas.domain
 
+import no.kartverket.nibas.inndelinger.GrenseType
 import org.hibernate.envers.Audited
 import java.util.*
 import javax.persistence.CascadeType
@@ -19,7 +20,7 @@ import javax.persistence.Table
 @Audited
 @Entity
 class Kommunegrense(override val id: String = UUID.randomUUID().toString()) : AdministrativGrense() {
-    override var objtype: String? = "Kommunegrense"
+    override var objtype: String? = GrenseType.Kommunegrense.value
 
     @OneToMany(mappedBy = "kommunegrenseFk", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     override var dokumentasjonsreferanser: MutableSet<Dokumentasjonsreferanse> = mutableSetOf()

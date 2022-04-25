@@ -1,5 +1,10 @@
 package no.kartverket.nibas.kodelister
 
+import no.kartverket.nibas.repository.FastsettingstypeRepository
+import no.kartverket.nibas.repository.GrensestatusRepository
+import no.kartverket.nibas.repository.LandKodeRepository
+import no.kartverket.nibas.repository.NoeyaktighetsklassekodeRepository
+import no.kartverket.nibas.repository.TerrengdetaljkodeRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
@@ -12,7 +17,22 @@ import org.mockito.MockitoAnnotations
 internal class DefaultKodelisteServiceTest {
 
     @Mock
-    private lateinit var kodelisteFetcher: KodelisteFetcher
+    private lateinit var kodelisteFetcherMock: KodelisteFetcher
+
+    @Mock
+    private lateinit var landKodeRepositoryMock: LandKodeRepository
+
+    @Mock
+    private lateinit var terrengdetaljkodeRepositoryMock: TerrengdetaljkodeRepository
+
+    @Mock
+    private lateinit var noeyaktighetsklassekodeRepositoryMock: NoeyaktighetsklassekodeRepository
+
+    @Mock
+    private lateinit var fastsettingstypeRepositoryMock: FastsettingstypeRepository
+
+    @Mock
+    private lateinit var grensestatusRepositoryMock: GrensestatusRepository
 
     private lateinit var kodelisteService: KodelisteService
 
@@ -26,7 +46,8 @@ internal class DefaultKodelisteServiceTest {
     @BeforeEach
     fun beforeEach() {
         MockitoAnnotations.openMocks(this)
-        kodelisteService = DefaultKodelisteService(kodelisteFetcher)
+        kodelisteService = DefaultKodelisteService(kodelisteFetcherMock, landKodeRepositoryMock, terrengdetaljkodeRepositoryMock,
+            noeyaktighetsklassekodeRepositoryMock, fastsettingstypeRepositoryMock, grensestatusRepositoryMock)
     }
 
     @Test
@@ -71,22 +92,8 @@ internal class DefaultKodelisteServiceTest {
             .isInstanceOf(NoSuchElementException::class.java)
     }
 
-    @Test
-    fun kommunenummerIdExists() {
-        doMockKommunenummer()
-        assertThat(kodelisteService.kommunenummerIdExists(uuidForTysnes)).isTrue
-        assertThat(kodelisteService.kommunenummerIdExists("0faa6b9d-202f-4bbb-809b-00563a01c69c")).isFalse
-    }
-
-    @Test
-    fun fylkesnummerIdExists() {
-        doMockFylkesnummer()
-        assertThat(kodelisteService.fylkesnummerIdExists(uuidForJanMayen)).isTrue
-        assertThat(kodelisteService.fylkesnummerIdExists("0faa6b9d-202f-4bbb-809b-00563a01c69c")).isFalse
-    }
-
     private fun doMockKommunenummer() {
-        `when`(kodelisteFetcher.fetchForKodeliste(anyString())).thenReturn(
+        `when`(kodelisteFetcherMock.fetchForKodeliste(anyString())).thenReturn(
             listOf(
                 GeonorgeKodelisteItem(
                     id = "https://register.geonorge.no/sosi-kodelister/kommunenummer/5417/0faa6b9d-202f-4bbb-809b-00563a01c69b",
@@ -111,7 +118,7 @@ internal class DefaultKodelisteServiceTest {
     }
 
     private fun doMockFylkesnummer() {
-        `when`(kodelisteFetcher.fetchForKodeliste(anyString())).thenReturn(
+        `when`(kodelisteFetcherMock.fetchForKodeliste(anyString())).thenReturn(
             listOf(
                 GeonorgeKodelisteItem(
                     id = "https://register.geonorge.no/sosi-kodelister/fylkesnummer/22/b80dc6a5-07a0-41e2-8687-0e891bf8f4cf",
@@ -136,10 +143,11 @@ internal class DefaultKodelisteServiceTest {
     }
 
     private fun doMockMalemetoder() {
-        `when`(kodelisteFetcher.fetchForKodeliste(anyString())).thenReturn(
+        `when`(kodelisteFetcherMock.fetchForKodeliste(anyString())).thenReturn(
             listOf(
                 GeonorgeKodelisteItem(
-                    id = "https://register.geonorge.no/sosi-kodelister/malemetode-kode/terrengmalt-uspesifisert-maleinstrument/7f48625b-e46f-413e-ae4d-0381ac64264b",
+                    id = "https://register.geonorge.no/sosi-kodelister/malemetode-kode/terrengmalt-uspesifisert-maleinstrument/7f48625b-e46f-413e-ae4d-0381ac" +
+                        "64264b",
                     label = "Terrengmålt: Uspesifisert måleinstrument",
                     lang = "no",
                     uuid = "7f48625b-e46f-413e-ae4d-0381ac64264b",
@@ -148,7 +156,8 @@ internal class DefaultKodelisteServiceTest {
                     codevalue = "10"
                 ),
                 GeonorgeKodelisteItem(
-                    id = "https://register.geonorge.no/sosi-kodelister/malemetode-kode/digitaliseringbord-ortofoto-fotokopi/b067d9fc-64a4-4bd4-aa10-049c4d6ab6d6",
+                    id = "https://register.geonorge.no/sosi-kodelister/malemetode-kode/digitaliseringbord-ortofoto-fotokopi/b067d9fc-64a4-4bd4-aa10-049c4d6ab" +
+                        "6d6",
                     label = "Digitaliseringbord: Ortofoto, fotokopi",
                     lang = "no",
                     uuid = uuidForOrtofoto,

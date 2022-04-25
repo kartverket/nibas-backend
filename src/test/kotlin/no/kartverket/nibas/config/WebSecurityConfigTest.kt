@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.test.context.ActiveProfiles
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @ActiveProfiles("dev", inheritProfiles = false)
@@ -20,7 +19,7 @@ class WebSecurityConfigTest : NibasMvcTest(){
     private lateinit var fylkeService: FylkeService
 
     @MockBean
-    private lateinit var kodelisteService: KodelisteService
+    private lateinit var kodelisteServiceMock: KodelisteService
 
     @MockBean
     private lateinit var historikkService: HistorikkService

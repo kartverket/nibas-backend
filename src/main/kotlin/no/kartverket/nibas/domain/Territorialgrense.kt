@@ -1,5 +1,6 @@
 package no.kartverket.nibas.domain
 
+import no.kartverket.nibas.inndelinger.GrenseType
 import org.hibernate.envers.Audited
 import java.time.LocalDate
 import java.time.ZonedDateTime
@@ -18,7 +19,7 @@ import javax.persistence.Table
 @Audited
 @Entity
 class Territorialgrense : Grense(), MaritimGrense {
-    override var objtype: String? = "Territorialgrense"
+    override var objtype: String? = GrenseType.Territorialgrense.value
 
     @Column(name = "versjonid")
     override var versjonid: String? = null
@@ -96,8 +97,8 @@ class Territorialgrense : Grense(), MaritimGrense {
     @OneToMany(mappedBy = "territorialgrenseFk", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     var informasjonselementer: MutableSet<TerritorialgrenseInformasjon> = mutableSetOf()
 
-    override fun getLand(): Collection<Landkode> {
-        return if (land != null) listOf(land!!) else emptyList()
+    override fun getLandIds(): List<String> {
+        return if (land != null) listOf(land!!.id) else emptyList()
     }
 
     override fun setLand(landkoder: List<Landkode>) {

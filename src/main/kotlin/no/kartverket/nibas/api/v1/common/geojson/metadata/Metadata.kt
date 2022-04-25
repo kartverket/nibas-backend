@@ -1,23 +1,12 @@
-package no.kartverket.nibas.api.v1.common.geojson
+package no.kartverket.nibas.api.v1.common.geojson.metadata
 
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import io.swagger.v3.oas.annotations.media.DiscriminatorMapping
 import io.swagger.v3.oas.annotations.media.Schema
 import no.kartverket.nibas.api.v1.response.Kommunenummer
-import no.kartverket.nibas.domain.AdministrativGrense
-import no.kartverket.nibas.domain.AnsvarligMyndighetHolder
-import no.kartverket.nibas.domain.Avtaltavgrensningslinje
-import no.kartverket.nibas.domain.CommonMetadataProperties
 import no.kartverket.nibas.domain.ContainsSosiIdentifikasjon
-import no.kartverket.nibas.domain.Grunnlinje
-import no.kartverket.nibas.domain.Landkode
-import no.kartverket.nibas.domain.MaritimGrense
 import no.kartverket.nibas.domain.PosisjonskvalitetEmbeddable
-import no.kartverket.nibas.domain.Riksgrense
-import no.kartverket.nibas.domain.Territorialgrense
-import no.kartverket.nibas.inndelinger.createKommunenummerFromUUID
-import no.kartverket.nibas.kodelister.KodelisteService
 import java.time.LocalDate
 import java.time.ZonedDateTime
 
@@ -83,9 +72,9 @@ data class AdministrativGrenseMetadata(
     @Schema(description = "Felles metadata-egenskaper for grenser.")
     val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
     @Schema(description = "Opplysning om at grense følger naturlige skillelinjer i terrenget.")
-    var foelgerTerrengdetalj: String? = null,
+    var foelgerTerrengdetalj: KodelisteEntry = KodelisteEntry(),
     @Schema(description = "Klassifikasjon av stedfestingsnøyaktighet på grenser, og er basert på dårligste nøyaktighet til grensepunktene til grensen.")
-    var noeyaktighetsklasse: String? = null,
+    var noeyaktighetsklasse: KodelisteEntry = KodelisteEntry(),
     @Schema(description = "Angir om grensen er omtvistet, eller det er tvil om forløpet.")
     var omtvistet: Boolean? = null,
 ) : Metadata
@@ -100,7 +89,7 @@ data class RiksgrenseMetadata(
     @Schema(description = "Felles metadata-egenskaper for grenser.")
     val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
     @Schema(description = "Opplysning om at grense følger naturlige skillelinjer i terrenget.")
-    var foelgerTerrengdetalj: String? = null,
+    var foelgerTerrengdetalj: KodelisteEntry = KodelisteEntry(),
     @Schema(description = "Angivelse om stedfestingen (koordinatene) er kontrollert og funnet i orden (verifisert).")
     var stedfestingVerifisert: Boolean? = null,
     @Schema(description = "Organisasjon(er) som er ansvarlig for opprettholdelse av grensa.")
@@ -175,10 +164,16 @@ data class CommonGrenseMetadata(
     @Schema(description = "Beskrivelse av kvaliteten på stedfestingen")
     var posisjonskvalitet: Posisjonskvalitet? = null,
     @Schema(description = "Juridisk status på grensa.")
-    var grensestatus: String? = null,
+    var grensestatus: KodelisteEntry = KodelisteEntry(),
     @Schema(description = "Måte en grense er fastsatt på.")
-    var fastsettingstype: String? = null
+    var fastsettingstype: KodelisteEntry = KodelisteEntry()
 )
+
+data class KodelisteEntry(
+    @Schema(description = "Id for kodeliste-innslaget.")
+    val id: String? = null,
+    @Schema(description = "Lenke til kodelista.")
+    val href: String = "")
 
 data class TekstHolder(
     @Schema(description = "ID for elementet.")
@@ -197,17 +192,25 @@ data class MaritimeGrenserMetadata(
     @Schema(description = "Begrep knyttet til yttergrensa for virkeområdet, som oftest angitt i lov eller forskrift.")
     var virkeomraadenavn: String? = null,
     @Schema(description = "Angivelse av hvilke land grensa er knyttet til Merknad: Alfanumerisk kode (ISO 3166-1 alpha-2) for land som definert i ISO 3166.")
-    var land: List<TekstHolder> = emptyList(),
+    var land: Landkoder = Landkoder(),
 )
+
+data class Landkoder(
+    @Schema(description = "Liste av valgte landkode-ids.")
+    var ids: List<String> = emptyList(),
+    @Schema(description = "Peker til landkoder-kodeliste.")
+    var href: String = "")
 
 data class Posisjonskvalitet(
     @Schema(description = "Metode for måling i grunnriss (x,y), og høyde (z) når metoden er den samme som ved måling i grunnriss.")
-    var maalemetode: String = "",
+    var maalemetode: KodelisteEntry = KodelisteEntry(),
     @Schema(description = "Punktstandardavviket i grunnriss for punkter samt tverravvik for linjer. Merknad: Oppgitt i cm.")
     var noeyaktighet: Int? = null
 )
 
-fun Posisjonskvalitet.toEmbeddable(): PosisjonskvalitetEmbeddable = PosisjonskvalitetEmbeddable(maalemetode, noeyaktighet)
+fun Posisjonskvalitet.toEmbeddable(): PosisjonskvalitetEmbeddable = PosisjonskvalitetEmbeddable(
+    maalemetode = this.maalemetode.id!!,
+    noeyaktighet = noeyaktighet)
 
 data class Identifikasjon(
     @Schema(description = "Lokal id som identifiserer geometrien. Dette er en globalt unik id.")
@@ -236,127 +239,3 @@ data class Dokref(
     @Schema(description = "Navn på lov, forskrift, vedtak, dom eller traktat.")
     var rettskildeTittel: String
 )
-
-fun AdministrativGrense.toMetadata(): AdministrativGrenseMetadata = AdministrativGrenseMetadata(
-    common = this.getCommonMetadata(),
-    commonGrense = this.getGrenseMetadata(),
-    foelgerTerrengdetalj = this.foelgerterrengdetalj?.id,
-    noeyaktighetsklasse = this.noeyaktighetsklasse?.id,
-    omtvistet = this.omtvistet
-)
-
-fun AdministrativGrense.updateMetadata(metadata: AdministrativGrenseMetadata) {
-    updateWithCommonMetadata(metadata.common)
-    updateWithGrenseMetadata(metadata.commonGrense)
-    foelgerterrengdetalj?.id = metadata.foelgerTerrengdetalj
-    noeyaktighetsklasse?.id = metadata.noeyaktighetsklasse
-    omtvistet = metadata.omtvistet
-}
-
-fun Riksgrense.toMetadata(): RiksgrenseMetadata = RiksgrenseMetadata(
-    common = this.getCommonMetadata(),
-    commonGrense = this.getGrenseMetadata(),
-    foelgerTerrengdetalj = this.foelgerterrengdetalj?.id,
-    stedfestingVerifisert = this.stedfestingverifisert,
-    ansvarligeMyndigheter = this.riksgrenseAnsvarligeMyndigheter
-        .filter { it.ansvarligmyndighet != null }
-        .map { TekstHolder(it.id, it.ansvarligmyndighet!!) },
-    grensegateBredde = this.grensegatebredde
-)
-
-fun Riksgrense.updateMetadata(metadata: RiksgrenseMetadata) {
-    updateWithCommonMetadata(metadata.common)
-    updateWithGrenseMetadata(metadata.commonGrense)
-    foelgerterrengdetalj?.id = metadata.foelgerTerrengdetalj
-    stedfestingverifisert = metadata.stedfestingVerifisert
-    setAnsvarligeMyndigheter(toAnsvarligeMyndigheter(metadata.ansvarligeMyndigheter))
-    grensegatebredde = metadata.grensegateBredde
-}
-
-fun Avtaltavgrensningslinje.toMetadata(): AvtaltAvgrensningslinjeMetadata = AvtaltAvgrensningslinjeMetadata(
-    common = this.getCommonMetadata(),
-    commonGrense = this.getGrenseMetadata(),
-    maritimeGrenser = this.getMaritimeMetadata()
-)
-
-fun Avtaltavgrensningslinje.updateMetadata(metadata: AvtaltAvgrensningslinjeMetadata) {
-    updateWithCommonMetadata(metadata.common)
-    updateWithGrenseMetadata(metadata.commonGrense)
-    updateWithMaritimeMetadata(metadata.maritimeGrenser)
-}
-
-fun Territorialgrense.toMetadata(): TerritorialgrenseMetadata = TerritorialgrenseMetadata(
-    common = this.getCommonMetadata(),
-    commonGrense = this.getGrenseMetadata(),
-    maritimeGrenser = this.getMaritimeMetadata(),
-    beregningsdato = this.beregningsdato
-)
-
-fun Territorialgrense.updateMetadata(metadata: TerritorialgrenseMetadata) {
-    updateWithCommonMetadata(metadata.common)
-    updateWithGrenseMetadata(metadata.commonGrense)
-    updateWithMaritimeMetadata(metadata.maritimeGrenser)
-    beregningsdato = metadata.beregningsdato
-}
-
-fun Grunnlinje.toMetadata(kodelisteService: KodelisteService): GrunnlinjeMetadata {
-    val grunnlinjeMetadata = GrunnlinjeMetadata(
-        common = this.getCommonMetadata(),
-        commonGrense = this.getGrenseMetadata(),
-        maritimeGrenser = this.getMaritimeMetadata()
-    )
-    if (this.kommunenummerId != null) {
-        grunnlinjeMetadata.kommunenummer = createKommunenummerFromUUID(this.kommunenummerId!!, kodelisteService)
-    }
-    return grunnlinjeMetadata
-}
-
-private fun CommonMetadataProperties.getCommonMetadata(): CommonMetadata = CommonMetadata(
-    identifikasjon = Identifikasjon(this.lokalid, this.navnerom, this.versjonid),
-    datafangstdato = this.datafangstdato,
-    gyldigFra = this.gyldigFra,
-    gyldigTil = this.gyldigTil,
-    informasjon = this.getInfo(),
-    oppdateringsdato = this.oppdateringsdato,
-    opphav = this.opphav,
-)
-
-// Identifikasjon ignoreres, dette skal ikke kunne oppdateres, burde egentlig ikke være med på tur inn
-private fun CommonMetadataProperties.updateWithCommonMetadata(common: CommonMetadata) {
-    this.datafangstdato = common.datafangstdato
-    this.gyldigFra = common.gyldigFra
-    this.gyldigTil = common.gyldigTil
-    this.setInfo(common.informasjon)
-    this.oppdateringsdato = ZonedDateTime.now()
-    this.opphav = common.opphav
-}
-
-private fun MaritimGrense.getMaritimeMetadata(): MaritimeGrenserMetadata = MaritimeGrenserMetadata(
-    ansvarligeMyndigheter = this.getAnsvarligeMyndigheter()
-        .filter { it.ansvarligmyndighet != null }
-        .map { TekstHolder(it.id, it.ansvarligmyndighet!!) },
-    gjelderOmraade = this.gjelderomraade,
-    transformasjonsdato = this.transformasjonsdato,
-    virkeomraadenavn = this.virkeomraadenavn,
-    land = this.getLand()
-        .map { TekstHolder(it.id!!, it.description!!) }
-        .sortedBy { it.id }
-)
-
-private fun MaritimGrense.updateWithMaritimeMetadata(maritimeGrenserMetadata: MaritimeGrenserMetadata) {
-    this.setAnsvarligeMyndigheter(toAnsvarligeMyndigheter(maritimeGrenserMetadata.ansvarligeMyndigheter))
-    this.gjelderomraade = maritimeGrenserMetadata.gjelderOmraade
-    this.transformasjonsdato = maritimeGrenserMetadata.transformasjonsdato
-    this.virkeomraadenavn = maritimeGrenserMetadata.virkeomraadenavn
-    this.setLand(maritimeGrenserMetadata.toListeAvLand())
-}
-
-private fun toAnsvarligeMyndigheter(tekstholdere: List<TekstHolder>): List<AnsvarligMyndighetHolder> =
-    tekstholdere.map { AnsvarligMyndighetHolder(id = it.id, ansvarligmyndighet = it.beskrivelse) }
-
-private fun MaritimeGrenserMetadata.toListeAvLand(): List<Landkode> = this.land.map {
-    val landkode = Landkode()
-    landkode.id = it.id
-    landkode.description = it.beskrivelse
-    landkode
-}

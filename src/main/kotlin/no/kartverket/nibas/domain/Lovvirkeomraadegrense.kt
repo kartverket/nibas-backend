@@ -1,5 +1,6 @@
 package no.kartverket.nibas.domain
 
+import no.kartverket.nibas.inndelinger.GrenseType
 import org.hibernate.envers.Audited
 import java.time.LocalDate
 import java.time.ZonedDateTime
@@ -18,7 +19,7 @@ import javax.persistence.Table
 @Audited
 @Entity
 class Lovvirkeomraadegrense : Grense() {
-    override var objtype: String? = "LovVirkeområdeGrense"
+    override var objtype: String? = GrenseType.Lovvirkeomraadegrense.value
 
     @Column(name = "versjonid")
     override var versjonid: String? = null

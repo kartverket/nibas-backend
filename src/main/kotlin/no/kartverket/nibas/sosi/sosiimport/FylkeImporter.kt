@@ -1,7 +1,23 @@
 package no.kartverket.nibas.sosi.sosiimport
 
-import kotlinx.coroutines.*
-import no.kartverket.nibas.domain.*
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import no.kartverket.nibas.domain.Administrativenhetnavn
+import no.kartverket.nibas.domain.Avtaltavgrensningslinje
+import no.kartverket.nibas.domain.Fylke
+import no.kartverket.nibas.domain.FylkeAvtaltavgrensningslinje
+import no.kartverket.nibas.domain.FylkeFylkesgrense
+import no.kartverket.nibas.domain.FylkeInformasjon
+import no.kartverket.nibas.domain.FylkeRiksgrense
+import no.kartverket.nibas.domain.FylkeTerritorialgrense
+import no.kartverket.nibas.domain.Fylkesgrense
+import no.kartverket.nibas.domain.GrenseKoblingAttributter
+import no.kartverket.nibas.domain.Riksgrense
+import no.kartverket.nibas.domain.Territorialgrense
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.FylkeInformasjonRepository

@@ -5,6 +5,7 @@ import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.builders.FeatureBuilder
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.domain.Kommunegrense
+import no.kartverket.nibas.kodelister.KodelisteService
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.verify
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
@@ -24,6 +25,9 @@ class GrenseControllerTest : NibasMvcTest() {
 
     @MockBean
     private lateinit var flateService: FlateService
+
+    @MockBean
+    private lateinit var kodelisteServiceMock: KodelisteService
 
     @Test
     fun thatHentKommunegrenseReturns200_OK() {

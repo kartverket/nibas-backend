@@ -37,6 +37,24 @@ enum class TerrengdetaljEnum(val code: String) {
 enum class FastsettingstypeEnum { BestemteKoordinater }
 enum class GrensestatusEnum { Traktat }
 
+val terrengdetaljkodeAnnetGjerde = Terrengdetaljkode().apply {
+    id = TerrengdetaljEnum.AnnetGjerde.code
+    description = "Annet gjerde"
+}
+val noeyaktighetsklassekodeLite = Noeyaktighetsklassekode().apply {
+    id = NoeyaktighetsklasseEnum.NK1.code
+    description = "Lite nøyaktige"
+}
+val grensestatusTraktat = Grensestatus().apply {
+    id = GrensestatusEnum.Traktat.name
+    description = "Traktat"
+}
+val fastsettingstypeBestemteKoordinater = Fastsettingstype().apply {
+    id = FastsettingstypeEnum.BestemteKoordinater.name
+    description = "Mine bestemte koordinater"
+}
+
+
 class FylkesgrenseBuilder(private val id: String = "1") {
 
     private var lokalid: String = LOKALID
@@ -52,19 +70,19 @@ class FylkesgrenseBuilder(private val id: String = "1") {
         noeyaktighet = 200
     )
     private var opphav = "opphav3"
-    private var terrengdetaljEnum: TerrengdetaljEnum = TerrengdetaljEnum.AnnetGjerde
-    private var noeyaktighetsklasseEnum: NoeyaktighetsklasseEnum = NoeyaktighetsklasseEnum.NK1
-    private var fastsettingstypeEnum: FastsettingstypeEnum = FastsettingstypeEnum.BestemteKoordinater
-    private var grensestatusEnum: GrensestatusEnum = GrensestatusEnum.Traktat
     private var informasjonstekst = INFORMASJONTEKST
+    private var terrengdetaljkode: Terrengdetaljkode? = terrengdetaljkodeAnnetGjerde
+    private var noeyaktighetsklassekode: Noeyaktighetsklassekode? = noeyaktighetsklassekodeLite
+    private var grensestatus: Grensestatus? = grensestatusTraktat
+    private var fastsettingstype: Fastsettingstype = fastsettingstypeBestemteKoordinater
 
     fun build(): Fylkesgrense {
         val fylkesgrense = Fylkesgrense(id = this.id)
         fylkesgrense.lokalid = lokalid
         fylkesgrense.navnerom = navnerom
         fylkesgrense.versjonid = versjonid
-        fylkesgrense.foelgerterrengdetalj = Terrengdetaljkode().apply { id = terrengdetaljEnum.code }
-        fylkesgrense.noeyaktighetsklasse = Noeyaktighetsklassekode().apply { id = noeyaktighetsklasseEnum.code }
+        fylkesgrense.foelgerterrengdetalj = terrengdetaljkode
+        fylkesgrense.noeyaktighetsklasse = noeyaktighetsklassekode
         fylkesgrense.omtvistet = omtvistet
         fylkesgrense.datafangstdato = datafangstdato
         fylkesgrense.gyldigFra = gyldigFra
@@ -72,12 +90,27 @@ class FylkesgrenseBuilder(private val id: String = "1") {
         fylkesgrense.kvalitet = kvalitet
         fylkesgrense.oppdateringsdato = oppdateringsdato
         fylkesgrense.opphav = opphav
-        fylkesgrense.fastsettingstype = Fastsettingstype().apply { id = fastsettingstypeEnum.name }
-        fylkesgrense.grensestatus = Grensestatus().apply { id = grensestatusEnum.name }
+        fylkesgrense.fastsettingstype = fastsettingstype
+        fylkesgrense.grensestatus = grensestatus
         fylkesgrense.setInfo(informasjonstekst)
 
         fylkesgrense.dokumentasjonsreferanser.addAll(dokumentasjonsreferanser)
         return fylkesgrense
+    }
+
+    fun withFastsettingstype(fastsettingstype: Fastsettingstype): FylkesgrenseBuilder {
+        this.fastsettingstype = fastsettingstype
+        return this
+    }
+
+    fun withFoelgerTerrengdetalj(terrengdetaljkode: Terrengdetaljkode?): FylkesgrenseBuilder {
+        this.terrengdetaljkode = terrengdetaljkode
+        return this
+    }
+
+    fun withNoeyaktighetsklassekode(noeyaktighetsklassekode: Noeyaktighetsklassekode?): FylkesgrenseBuilder {
+        this.noeyaktighetsklassekode = noeyaktighetsklassekode
+        return this
     }
 
     fun withOppdateringsdato(dateTime: ZonedDateTime): FylkesgrenseBuilder {

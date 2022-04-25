@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController
 class AdminController @Autowired constructor(private val kodelisteService: KodelisteService) : AdminApi {
 
     override fun invalidateKodelisteCache() {
-        kodelisteService.clearKodelister()
+        kodelisteService.clearCachedeKodelister()
     }
 
 }

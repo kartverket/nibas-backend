@@ -23,12 +23,14 @@ class FlateService @Autowired constructor(
 
     fun beregnFlaterFor(features: List<Feature>) {
         val enheterSomSkalFlatedannes: Set<AdministrativEnhet> = features.flatMap {
-            when (GrenseType.valueOf(it.properties.type)) {
+            val type = it.properties.type
+            when (GrenseType.fromValue(type)) {
                 GrenseType.Kommunegrense -> finnEnheterMedKommunegrense(it.id!!)
                 GrenseType.Fylkesgrense -> finnEnheterMedFylkesgrense(it.id!!)
                 GrenseType.Riksgrense -> finnEnheterMedRiksgrense(it.id!!)
                 GrenseType.AvtaltAvgrensningslinje -> finnEnheterMedAvtaltAvgrensningslinje(it.id!!)
                 GrenseType.Territorialgrense -> finnEnheterMedTerritorialgrense(it.id!!)
+                else -> throw RuntimeException("Not yet implemented for grensetype: $type")
             }
         }.toSet()
 

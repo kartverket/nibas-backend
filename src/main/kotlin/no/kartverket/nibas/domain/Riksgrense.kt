@@ -1,5 +1,6 @@
 package no.kartverket.nibas.domain
 
+import no.kartverket.nibas.inndelinger.GrenseType
 import org.hibernate.envers.Audited
 import java.time.LocalDate
 import java.time.ZonedDateTime
@@ -22,7 +23,7 @@ import javax.persistence.Table
 @Entity
 class Riksgrense(override val id: String = UUID.randomUUID().toString()) : Grense() {
 
-    override var objtype: String? = "Riksgrense"
+    override var objtype: String? = GrenseType.Riksgrense.value
 
     @Column(name = "versjonid")
     override var versjonid: String? = null

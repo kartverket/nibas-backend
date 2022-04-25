@@ -1,7 +1,7 @@
 package no.kartverket.nibas.domain
 
-import no.kartverket.nibas.api.v1.common.geojson.Dokref
-import no.kartverket.nibas.api.v1.common.geojson.TekstHolder
+import no.kartverket.nibas.api.v1.common.geojson.metadata.Dokref
+import no.kartverket.nibas.api.v1.common.geojson.metadata.TekstHolder
 import org.hibernate.envers.Audited
 import java.time.LocalDate
 import java.util.*

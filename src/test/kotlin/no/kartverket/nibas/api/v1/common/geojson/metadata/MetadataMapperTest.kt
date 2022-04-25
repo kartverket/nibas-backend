@@ -1,4 +1,4 @@
-package no.kartverket.nibas.api.v1.common.geojson
+package no.kartverket.nibas.api.v1.common.geojson.metadata
 
 import no.kartverket.nibas.builders.DokumentasjonsreferanseBuilder
 import no.kartverket.nibas.builders.FastsettingstypeEnum
@@ -20,17 +20,36 @@ import no.kartverket.nibas.builders.TITTEL
 import no.kartverket.nibas.builders.TerrengdetaljEnum
 import no.kartverket.nibas.builders.TerritorialgrenseBuilder
 import no.kartverket.nibas.builders.VERSJON_33
+import no.kartverket.nibas.builders.fastsettingstypeBestemteKoordinater
+import no.kartverket.nibas.builders.noeyaktighetsklassekodeLite
+import no.kartverket.nibas.builders.terrengdetaljkodeAnnetGjerde
 import no.kartverket.nibas.domain.AnsvarligMyndighetHolder
-import no.kartverket.nibas.domain.DokumentasjonsreferanseDokumentlink
-import no.kartverket.nibas.domain.DokumentasjonsreferanseInternReferanseKartverket
-import no.kartverket.nibas.domain.Territorialgrense
+import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.repository.LandKodeRepository
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.mockito.Mock
+import org.mockito.Mockito.`when`
+import org.mockito.MockitoAnnotations
 import java.time.LocalDate
 import java.time.ZonedDateTime
 
-// Unit test av mappinglogikk
-internal class MetaDataKtTest {
+/**
+ * Enhetstest av MetadataMapper.
+ */
+internal class MetadataMapperTest {
+
+    @Mock
+    private lateinit var kodelisteServiceMock: KodelisteService
+
+    @Mock
+    private lateinit var landKodeRepositoryMock: LandKodeRepository
+
+    @Mock
+    private lateinit var kodelisteHrefProviderMock: KodelisteHrefProviderI
+
+    private lateinit var metadataMapper: MetadataMapper
 
     private val oppdDato: ZonedDateTime = ZonedDateTime.now()
     private val dataFanget = oppdDato.minusYears(1)
@@ -50,6 +69,30 @@ internal class MetaDataKtTest {
         .addInternRefs(referanse1, referanse2)
         .build()
 
+    private val maalemetodeHref = "maalemetodeHref"
+    private val terrengDetaljHref = "terrengHref"
+    private val noeyaktighetHref = "href2"
+    private val landkodeHref = "landkodeHref"
+    private val fastsettingstypeHref = "fastHref"
+    private val grensestatusHref = "grensestatusHref"
+    private val kv = "Kartverket"
+    private val hav = "Havarikommisjonen"
+    private val ansvarligMyndighet1 = AnsvarligMyndighetHolder(ansvarligmyndighet = kv)
+    private val ansvarligMyndighet2 = AnsvarligMyndighetHolder(ansvarligmyndighet = hav)
+
+    @BeforeEach
+    fun beforeEach() {
+        MockitoAnnotations.openMocks(this)
+        metadataMapper = MetadataMapper(kodelisteServiceMock, kodelisteHrefProviderMock)
+
+        `when`(kodelisteHrefProviderMock.terrengDetaljHref()).thenReturn(terrengDetaljHref)
+        `when`(kodelisteHrefProviderMock.noeyaktighetsklasseHref()).thenReturn(noeyaktighetHref)
+        `when`(kodelisteHrefProviderMock.maalemetodeKodeHref()).thenReturn(maalemetodeHref)
+        `when`(kodelisteHrefProviderMock.landkodeHref()).thenReturn(landkodeHref)
+        `when`(kodelisteHrefProviderMock.fastsettingstypeKodeHref()).thenReturn(fastsettingstypeHref)
+        `when`(kodelisteHrefProviderMock.grensestatusKodeHref()).thenReturn(grensestatusHref)
+    }
+
     // Fra Fylkesgrense -> AdministrativGrenseMetadata
     @Test
     fun toAdministrativGrenseMetadata() {
@@ -58,41 +101,28 @@ internal class MetaDataKtTest {
             .datafangstdato(dataFanget)
             .gyldigFra(gyldigFraTidspunkt)
             .dokRef(dokumentasjonsreferanse)
+            .withFastsettingstype(fastsettingstypeBestemteKoordinater)
+            .withFoelgerTerrengdetalj(terrengdetaljkodeAnnetGjerde)
+            .withNoeyaktighetsklassekode(noeyaktighetsklassekodeLite)
             .build()
 
         val administrativGrenseMetadata = AdministrativGrenseMetadata(
             common = expectedCommonMetadata(),
             commonGrense = expectedCommonGrensedata(),
-            foelgerTerrengdetalj = TerrengdetaljEnum.AnnetGjerde.code,
-            noeyaktighetsklasse = NoeyaktighetsklasseEnum.NK1.code,
+            foelgerTerrengdetalj = KodelisteEntry(id = TerrengdetaljEnum.AnnetGjerde.code, href = terrengDetaljHref),
+            noeyaktighetsklasse = KodelisteEntry(id = NoeyaktighetsklasseEnum.NK1.code, href = noeyaktighetHref),
             omtvistet = true
         )
 
-        val metadata = fylkesgrense.toMetadata()
+        val metadata = metadataMapper.toMetadata(fylkesgrense)
         assertThat(metadata).isEqualTo(administrativGrenseMetadata)
-
-        val newGyldigFraDato = gyldigFraTidspunkt.plusMonths(1)
-        val updatedMetadata = administrativGrenseMetadata.copy(
-            common = administrativGrenseMetadata.common.copy(
-                gyldigFra = newGyldigFraDato,
-            )
-        )
-        fylkesgrense.updateMetadata(updatedMetadata)
-        assertThat(fylkesgrense.gyldigFra).isEqualTo(newGyldigFraDato)
-    }
-
-    private fun Territorialgrense.findIdForAnsvarligMyndighet(myndighet: String): String {
-        return this.ansvarligeMyndigheter.first { it.ansvarligmyndighet == myndighet }.id
     }
 
     // Får testet mapping for maritim grense
     // Territorialgrense -> TerritorialgrenseMetadata
     @Test
     fun toTerritorialgrenseMetadata() {
-        val kv = "Kartverket"
-        val hav = "Havarikommisjonen"
-        val ansvarligMyndighet1 = AnsvarligMyndighetHolder(ansvarligmyndighet = kv)
-        val ansvarligMyndighet2 = AnsvarligMyndighetHolder(ansvarligmyndighet = hav)
+        mockRussland(landKodeRepositoryMock)
 
         val territorialgrense = TerritorialgrenseBuilder()
             .withOppdateringsdato(oppdDato)
@@ -115,22 +145,16 @@ internal class MetaDataKtTest {
                 gjelderOmraade = "Område over elva",
                 transformasjonsdato = transformasjonsdato,
                 virkeomraadenavn = "Virkeområde 33",
-                land = listOf(
-                    TekstHolder("ru", "Russland"),
+                land = Landkoder(
+                    ids = listOf("ru"),
+                    href = landkodeHref
                 ),
             ),
             beregningsdato = beregningsdato
         )
 
-        val metadata = territorialgrense.toMetadata()
+        val metadata = metadataMapper.toMetadata(territorialgrense)
         assertThat(metadata).isEqualTo(territorialgrenseMetadata)
-
-        val updatedBeregningsdato = beregningsdato.minusDays(1)
-        val updatedMetadata = territorialgrenseMetadata.copy(
-            beregningsdato = updatedBeregningsdato
-        )
-        territorialgrense.updateMetadata(updatedMetadata)
-        assertThat(territorialgrense.beregningsdato).isEqualTo(updatedBeregningsdato)
     }
 
     private fun expectedCommonMetadata() = CommonMetadata(
@@ -145,11 +169,11 @@ internal class MetaDataKtTest {
 
     private fun expectedCommonGrensedata() = CommonGrenseMetadata(
         posisjonskvalitet = Posisjonskvalitet(
-            MaalemetodeKodeEnum.TERRENGMAALT.uuid,
-            200
+            maalemetode = KodelisteEntry(id = MaalemetodeKodeEnum.TERRENGMAALT.uuid, href = maalemetodeHref),
+            noeyaktighet = 200
         ),
-        fastsettingstype = FastsettingstypeEnum.BestemteKoordinater.name,
-        grensestatus = GrensestatusEnum.Traktat.name,
+        fastsettingstype = KodelisteEntry(id = FastsettingstypeEnum.BestemteKoordinater.name, href = fastsettingstypeHref),
+        grensestatus = KodelisteEntry(id = GrensestatusEnum.Traktat.name, href = grensestatusHref),
         dokumentasjonsreferanser = listOf(dokRef(dokumentasjonsreferanse.id))
     )
 
@@ -170,14 +194,6 @@ internal class MetaDataKtTest {
             rettskildeId = RETTSKILDE_ID_1,
             rettskildeTittel = TITTEL
         )
-    }
-
-    private fun internReferanse(referanse: String): DokumentasjonsreferanseInternReferanseKartverket {
-        return DokumentasjonsreferanseInternReferanseKartverket().apply { internReferanseKartverket = referanse }
-    }
-
-    private fun dokLink(linkText: String): DokumentasjonsreferanseDokumentlink {
-        return DokumentasjonsreferanseDokumentlink().apply { dokumentlink = linkText }
     }
 
 }

@@ -78,9 +78,9 @@ class FylkeService @Autowired constructor(
     fun hentGrenserForFylke(id: String): Set<GrenseKobling>? {
         return fylkeRepository.findById(id).unwrap()?.let { fylke ->
             fylke.fylkesgrenser +
-                    fylke.riksgrenser +
-                    fylke.territorialgrenser +
-                    fylke.avtaltavgrensningslinjer
+                fylke.riksgrenser +
+                fylke.territorialgrenser +
+                fylke.avtaltavgrensningslinjer
         }
     }
 

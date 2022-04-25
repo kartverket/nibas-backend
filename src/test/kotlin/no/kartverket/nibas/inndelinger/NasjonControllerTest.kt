@@ -7,6 +7,7 @@ import no.kartverket.nibas.builders.NasjonBuilder
 import no.kartverket.nibas.builders.NasjonRequestBuilder
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.NasjonRiksgrense
+import no.kartverket.nibas.kodelister.KodelisteService
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyString
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
@@ -22,6 +23,9 @@ class NasjonControllerTest : NibasMvcTest() {
 
     @MockBean
     private lateinit var historikkService: HistorikkService
+
+    @MockBean
+    private lateinit var kodelisteServiceMock: KodelisteService
 
     @Test
     fun thatHentAlleReturns200_OK() {

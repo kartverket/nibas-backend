@@ -23,7 +23,7 @@ class KommuneControllerTest : NibasMvcTest() {
 
     //Disse ubrukte servicene må være tilstede for å få bygget konteksten
     @MockBean
-    private lateinit var kodelisteService: KodelisteService
+    private lateinit var kodelisteServiceMock: KodelisteService
 
     @MockBean
     private lateinit var historikkService: HistorikkService

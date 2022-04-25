@@ -2,16 +2,16 @@ package no.kartverket.nibas.inndelinger
 
 import no.kartverket.nibas.api.v1.GrenseApi
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
-import no.kartverket.nibas.api.v1.common.geojson.AdministrativGrenseMetadata
-import no.kartverket.nibas.api.v1.common.geojson.AvtaltAvgrensningslinjeMetadata
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.FeatureProperties
 import no.kartverket.nibas.api.v1.common.geojson.KontekstEgenskaper
-import no.kartverket.nibas.api.v1.common.geojson.RiksgrenseMetadata
-import no.kartverket.nibas.api.v1.common.geojson.TerritorialgrenseMetadata
-import no.kartverket.nibas.api.v1.common.geojson.toMetadata
-import no.kartverket.nibas.api.v1.common.geojson.updateMetadata
+import no.kartverket.nibas.api.v1.common.geojson.metadata.AdministrativGrenseMetadata
+import no.kartverket.nibas.api.v1.common.geojson.metadata.AvtaltAvgrensningslinjeMetadata
+import no.kartverket.nibas.api.v1.common.geojson.metadata.MetadataMapper
+import no.kartverket.nibas.api.v1.common.geojson.metadata.MetadataUpdater
+import no.kartverket.nibas.api.v1.common.geojson.metadata.RiksgrenseMetadata
+import no.kartverket.nibas.api.v1.common.geojson.metadata.TerritorialgrenseMetadata
 import no.kartverket.nibas.api.v1.response.HistorikkRef
 import no.kartverket.nibas.domain.AdministrativEnhet
 import no.kartverket.nibas.domain.AdministrativGrense
@@ -26,12 +26,17 @@ import no.kartverket.nibas.domain.Riksgrense
 import no.kartverket.nibas.domain.Territorialgrense
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.AvtaltAvgrensningslinjeRepository
+import no.kartverket.nibas.repository.FastsettingstypeRepository
 import no.kartverket.nibas.repository.FylkeRepository
 import no.kartverket.nibas.repository.FylkesgrenseRepository
+import no.kartverket.nibas.repository.GrensestatusRepository
 import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.KommunegrenseRepository
+import no.kartverket.nibas.repository.LandKodeRepository
 import no.kartverket.nibas.repository.NasjonRepository
+import no.kartverket.nibas.repository.NoeyaktighetsklassekodeRepository
 import no.kartverket.nibas.repository.RiksgrenseRepository
+import no.kartverket.nibas.repository.TerrengdetaljkodeRepository
 import no.kartverket.nibas.repository.TerritorialgrenseRepository
 import no.kartverket.nibas.unwrap
 import org.locationtech.jts.geom.LineString
@@ -57,12 +62,13 @@ class GrenseController @Autowired constructor(
 
     override fun lagreGrenser(grenser: FeatureCollection) {
         grenser.features.groupBy { it.properties.type }.forEach { entry ->
-            when (GrenseType.valueOf(entry.key)) {
+            when (GrenseType.fromValue(entry.key)) {
                 GrenseType.Kommunegrense -> grenseService.lagreKommunegrenser(entry.value)
                 GrenseType.Fylkesgrense -> grenseService.lagreFylkesgrenser(entry.value)
                 GrenseType.Riksgrense -> grenseService.lagreRiksgrenser(entry.value)
                 GrenseType.AvtaltAvgrensningslinje -> grenseService.lagreAvtaltAvgrensningslinjer(entry.value)
                 GrenseType.Territorialgrense -> grenseService.lagreTerritorialgrenser(entry.value)
+                else -> throw RuntimeException("Not yet implemented for grensetype: ${entry.key}")
             }
         }
 
@@ -128,7 +134,12 @@ class GrenseService @Autowired constructor(
     private val riksgrenseRepository: RiksgrenseRepository,
     private val kommuneRepository: KommuneRepository,
     private val fylkeRepository: FylkeRepository,
-    private val nasjonRepository: NasjonRepository
+    private val nasjonRepository: NasjonRepository,
+    private val landKodeRepository: LandKodeRepository,
+    private val fastsettingstypeRepository: FastsettingstypeRepository,
+    private val terrengdetaljkodeRepository: TerrengdetaljkodeRepository,
+    private val noeyaktighetsklassekodeRepository: NoeyaktighetsklassekodeRepository,
+    private val grensestatusRepository: GrensestatusRepository
 ) {
 
     @Suppress("UNCHECKED_CAST")
@@ -212,11 +223,17 @@ class GrenseService @Autowired constructor(
     ): T {
         val featureMetadata = feature.properties.metadata
         if (featureMetadata != null) {
+            val metadataUpdater = MetadataUpdater(landKodeRepository,
+                fastsettingstypeRepository,
+                terrengdetaljkodeRepository,
+                noeyaktighetsklassekodeRepository,
+                grensestatusRepository
+            )
             when (grense) {
-                is AdministrativGrense -> grense.updateMetadata(featureMetadata as AdministrativGrenseMetadata)
-                is Riksgrense -> grense.updateMetadata(featureMetadata as RiksgrenseMetadata)
-                is Avtaltavgrensningslinje -> grense.updateMetadata(featureMetadata as AvtaltAvgrensningslinjeMetadata)
-                is Territorialgrense -> grense.updateMetadata(featureMetadata as TerritorialgrenseMetadata)
+                is AdministrativGrense -> metadataUpdater.updateAdministrativGrense(grense, (featureMetadata as AdministrativGrenseMetadata))
+                is Riksgrense -> metadataUpdater.updateRiksgrense(grense, (featureMetadata as RiksgrenseMetadata))
+                is Avtaltavgrensningslinje -> metadataUpdater.updateAvtaltavgrensningslinje(grense, (featureMetadata as AvtaltAvgrensningslinjeMetadata))
+                is Territorialgrense -> metadataUpdater.updateTerritoritalgrense(grense, (featureMetadata as TerritorialgrenseMetadata))
             }
         }
         return grense
@@ -243,18 +260,38 @@ class GrenseService @Autowired constructor(
 
     @Suppress("UNCHECKED_CAST")
     private fun <T : Grense> lagGrenseForType(feature: Feature): T {
-        return when (GrenseType.valueOf(feature.properties.type)) {
+        return when (GrenseType.fromValue(feature.properties.type)) {
             GrenseType.Kommunegrense -> Kommunegrense()
             GrenseType.Fylkesgrense -> Fylkesgrense()
             GrenseType.Riksgrense -> Riksgrense()
             GrenseType.AvtaltAvgrensningslinje -> Avtaltavgrensningslinje()
             GrenseType.Territorialgrense -> Territorialgrense()
+            else -> throw RuntimeException("Not yet implemented for grensetype: ${feature.properties.type}")
         } as T
     }
 }
 
-enum class GrenseType {
-    Kommunegrense, Fylkesgrense, Riksgrense, AvtaltAvgrensningslinje, Territorialgrense
+/**
+ * Introduserte en value-attributt for å kunne ha norske tegn i verdi, men ikke i enum-konstant-navn.
+ */
+enum class GrenseType(val value: String) {
+    Kommunegrense("Kommunegrense"),
+    Fylkesgrense("Fylkesgrense"),
+    Riksgrense("Riksgrense"),
+    AvtaltAvgrensningslinje("AvtaltAvgrensningslinje"),
+    Territorialgrense("Territorialgrense"),
+    Grunnlinje("Grunnlinje"),
+    Lovvirkeomraadegrense("LovVirkeområdeGrense");
+
+    companion object {
+        fun fromValue(valueIn: String): GrenseType {
+            try {
+                return values().first { it.value == valueIn }
+            } catch (e: NoSuchElementException) {
+                throw IllegalArgumentException("Invalid value: $valueIn")
+            }
+        }
+    }
 }
 
 class GrenseMedAttributter<T : Grense>(val grense: T, val attributter: GrenseKoblingAttributter)
@@ -284,12 +321,13 @@ fun grenseToFeature(grense: Grense, kodelisteService: KodelisteService): Feature
     var featureProperties = FeatureProperties(
         type = grense.objtype!!,
     )
+    val metadataMapper = MetadataMapper(kodelisteService)
     when (grense) {
-        is AdministrativGrense -> featureProperties = featureProperties.copy(metadata = grense.toMetadata())
-        is Riksgrense -> featureProperties = featureProperties.copy(metadata = grense.toMetadata())
-        is Avtaltavgrensningslinje -> featureProperties = featureProperties.copy(metadata = grense.toMetadata())
-        is Territorialgrense -> featureProperties = featureProperties.copy(metadata = grense.toMetadata())
-        is Grunnlinje -> featureProperties = featureProperties.copy(metadata = grense.toMetadata(kodelisteService))
+        is AdministrativGrense -> featureProperties = featureProperties.copy(metadata = metadataMapper.toMetadata(grense))
+        is Riksgrense -> featureProperties = featureProperties.copy(metadata = metadataMapper.toMetadata(grense))
+        is Avtaltavgrensningslinje -> featureProperties = featureProperties.copy(metadata = metadataMapper.toMetadata(grense))
+        is Territorialgrense -> featureProperties = featureProperties.copy(metadata = metadataMapper.toMetadata(grense))
+        is Grunnlinje -> featureProperties = featureProperties.copy(metadata = metadataMapper.toMetadata(grense))
     }
 
     return Feature(

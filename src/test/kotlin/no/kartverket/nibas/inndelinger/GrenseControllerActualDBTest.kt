@@ -1,12 +1,13 @@
 package no.kartverket.nibas.inndelinger
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import no.kartverket.nibas.api.v1.common.geojson.Dokref
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
-import no.kartverket.nibas.api.v1.common.geojson.TekstHolder
-import no.kartverket.nibas.api.v1.common.geojson.toMetadata
+import no.kartverket.nibas.api.v1.common.geojson.metadata.Dokref
+import no.kartverket.nibas.api.v1.common.geojson.metadata.MetadataMapper
+import no.kartverket.nibas.api.v1.common.geojson.metadata.TekstHolder
 import no.kartverket.nibas.builders.FeatureBuilder
 import no.kartverket.nibas.domain.Kommunegrense
+import no.kartverket.nibas.kodelister.KodelisteService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -40,6 +41,9 @@ class GrenseControllerActualDBTest {
     @Autowired
     lateinit var grenseService: GrenseService
 
+    @Autowired
+    lateinit var kodelisteService: KodelisteService
+
     val kommunegrenseId = "3e50135f-db16-426e-961e-6a0f9d464db7"
 
     @Ignore
@@ -52,7 +56,8 @@ class GrenseControllerActualDBTest {
         assertThat(kommunegrense.dokumentasjonsreferanser).isEmpty()
 
         // Konverterer til metadataObjekt og endrer noen egenskaper
-        val metadata = kommunegrense.toMetadata()
+        val metadataMapper = MetadataMapper(kodelisteService)
+        val metadata = metadataMapper.toMetadata(kommunegrense)
         val gyldigFra = ZonedDateTime.now().plusDays(1)
         val dokumentLink = "LinkTilMittDokument"
         val fastsettingsmyndighet = "Kartverket"

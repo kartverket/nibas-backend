@@ -7,12 +7,17 @@ import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.domain.Fylkesgrense
 import no.kartverket.nibas.repository.AvtaltAvgrensningslinjeRepository
+import no.kartverket.nibas.repository.FastsettingstypeRepository
 import no.kartverket.nibas.repository.FylkeRepository
 import no.kartverket.nibas.repository.FylkesgrenseRepository
+import no.kartverket.nibas.repository.GrensestatusRepository
 import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.KommunegrenseRepository
+import no.kartverket.nibas.repository.LandKodeRepository
 import no.kartverket.nibas.repository.NasjonRepository
+import no.kartverket.nibas.repository.NoeyaktighetsklassekodeRepository
 import no.kartverket.nibas.repository.RiksgrenseRepository
+import no.kartverket.nibas.repository.TerrengdetaljkodeRepository
 import no.kartverket.nibas.repository.TerritorialgrenseRepository
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -57,6 +62,21 @@ class GrenseServiceTest {
 
     @MockBean
     private lateinit var nasjonRepository: NasjonRepository
+
+    @MockBean
+    private lateinit var landKodeRepository: LandKodeRepository
+
+    @MockBean
+    private lateinit var fastsettingstypeRepositoryMock: FastsettingstypeRepository
+
+    @MockBean
+    private lateinit var terrengdetaljkodeRepositoryMock: TerrengdetaljkodeRepository
+
+    @MockBean
+    private lateinit var noeyaktighetsklassekodeRepositoryMock: NoeyaktighetsklassekodeRepository
+
+    @MockBean
+    private lateinit var grensestatusRepositoryMock: GrensestatusRepository
 
     @Captor
     var fylkesgrenseCaptor: ArgumentCaptor<List<Fylkesgrense>>? = null

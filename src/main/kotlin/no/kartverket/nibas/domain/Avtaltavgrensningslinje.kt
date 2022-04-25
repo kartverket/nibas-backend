@@ -1,5 +1,6 @@
 package no.kartverket.nibas.domain
 
+import no.kartverket.nibas.inndelinger.GrenseType
 import org.hibernate.envers.Audited
 import java.time.LocalDate
 import java.time.ZonedDateTime
@@ -20,7 +21,7 @@ import javax.persistence.Table
 @Audited
 @Entity
 class Avtaltavgrensningslinje : Grense(), MaritimGrense {
-    override var objtype: String? = "AvtaltAvgrensningslinje"
+    override var objtype: String? = GrenseType.AvtaltAvgrensningslinje.value
 
     @Column(name = "versjonid")
     override var versjonid: String? = null
@@ -117,8 +118,8 @@ class Avtaltavgrensningslinje : Grense(), MaritimGrense {
         doSetAnsvarligeMyndigheter(ansvarligeMyndigheter, this.ansvarligeMyndigheter) { AvtaltavgrensningslinjeAnsvarligMyndighet() }
     }
 
-    override fun getLand(): Collection<Landkode> {
-        return this.landkode
+    override fun getLandIds(): List<String> {
+        return this.landkode.map { it.id }
     }
 
     override fun setLand(landkoder: List<Landkode>) {

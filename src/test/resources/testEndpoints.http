@@ -1,14 +1,42 @@
-### Kommunenumre (kun gyldige pr des 21, men kommer inn historiske her på sikt)
+## Kodelister
+
+### Kommunenumre
 GET http://localhost:8080/v1/kodeliste/kommunenumre
 Accept: application/json
 
-### Fylkesnumre (kun gyldige pr des 21, men kommer inn historiske her på sikt)
+### Fylkesnumre
 GET http://localhost:8080/v1/kodeliste/fylkesnumre
 Accept: application/json
 
-### Målemetode-koder (denne vi bruker pr nå)
+### Målemetode-koder
 GET http://localhost:8080/v1/kodeliste/maalemetode-koder
 Accept: application/json
+
+### Landkoder
+GET http://localhost:8080/v1/kodeliste/landkoder
+Accept: application/json
+
+### Terrengdetaljkoder
+GET http://localhost:8080/v1/kodeliste/terrengdetaljkoder
+Accept: application/json
+
+### Nøyaktighetsklassekoder
+GET http://localhost:8080/v1/kodeliste/noeyaktighetsklasser
+Accept: application/json
+
+### Grensetyper
+GET http://localhost:8080/v1/kodeliste/grensetyper
+Accept: application/json
+
+### Fastsettingstyper
+GET http://localhost:8080/v1/kodeliste/fastsettingstyper
+Accept: application/json
+
+### Grensestatuser
+GET http://localhost:8080/v1/kodeliste/grensestatuser
+Accept: application/json
+
+## Slutt på kodelister
 
 ### POST Sosi-file for import (legg fila i src/test/resources)
 POST http://localhost:8080/v1/import
@@ -23,55 +51,76 @@ Content-Disposition: form-data; name="file"; filename="ADM_Enheter_Norge.sos"
 
 ### GET Nasjoner
 GET http://localhost:8080/v1/nasjoner
+
 ###
 GET http://localhost:8080/v1/nasjoner/1
+
 ###
 GET http://localhost:8080/v1/nasjoner/1/grenser
+
 ###
 GET http://localhost:8080/v1/nasjoner/1/historikk
+
 ###
 GET http://localhost:8080/v1/nasjoner/1/historikk/1
 
 ### GET Fylker
 GET http://localhost:8080/v1/fylker
+
 ###
 GET http://localhost:8080/v1/fylker/1
+
 ###
 GET http://localhost:8080/v1/fylker/1/grenser
+
 ###
 GET http://localhost:8080/v1/fylker/1/historikk
+
 ###
 GET http://localhost:8080/v1/fylker/1/historikk/1
 
 ### GET Kommuner
 GET http://localhost:8080/v1/kommuner
+
 ###
 GET http://localhost:8080/v1/kommuner/1
+
 ###
 GET http://localhost:8080/v1/kommuner/1/grenser
+
 ###
 GET http://localhost:8080/v1/kommuner/1/historikk
+
 ###
 GET http://localhost:8080/v1/kommuner/1/historikk/1
 
 ### GET Grenser
-http://localhost:8080/v1/grenser/riksgrenser/e5559a2c-9bda-4436-9b7a-6d15a7944aca
+http://localhost:8080/v1/grenser/riksgrenser/55bfbb2e-496c-4b33-aba4-2ca1d4cb41d6
+
 ###
 http://localhost:8080/v1/grenser/riksgrenser/1/historikk
+
 ###
 http://localhost:8080/v1/grenser/fylkesgrenser/46c77dbf-278f-4ef1-908a-d3c4aa2bc103
+
 ###
 http://localhost:8080/v1/grenser/fylkesgrenser/1/historikk
+
 ###
 http://localhost:8080/v1/grenser/territorialgrenser/1
+
 ###
 http://localhost:8080/v1/grenser/territorialgrenser/1/historikk
+
 ###
-http://localhost:8080/v1/grenser/avtaltavgrensningslinjer/1
+http://localhost:8080/v1/grenser/avtaltavgrensningslinjer/bfbc949b-c110-4f0a-a9ed-179c0eebb54c
+
 ###
 http://localhost:8080/v1/grenser/avtaltavgrensningslinjer/1/historikk
+
 ###
-http://localhost:8080/v1/grenser/kommunegrenser/a2bc27de-58de-4b62-a96a-7273afd5c15a
+http://localhost:8080/v1/grenser/kommunegrenser/857fa624-5ba4-42b0-b0aa-f06d25d8f114
+
 ###
 http://localhost:8080/v1/grenser/kommunegrenser/1/historikk
 

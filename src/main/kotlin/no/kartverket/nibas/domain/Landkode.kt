@@ -15,7 +15,7 @@ import javax.persistence.Table
 class Landkode {
     @Id
     @Column(name = "identifier", nullable = false)
-    var id: String? = null
+    lateinit var id: String
 
     @Column(name = "description")
     var description: String? = null

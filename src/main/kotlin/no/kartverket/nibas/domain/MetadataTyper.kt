@@ -1,6 +1,9 @@
 package no.kartverket.nibas.domain
 
-import no.kartverket.nibas.api.v1.common.geojson.Posisjonskvalitet
+import no.kartverket.nibas.api.v1.common.geojson.metadata.KodelisteEntry
+import no.kartverket.nibas.api.v1.common.geojson.metadata.KodelisteHrefProvider
+import no.kartverket.nibas.api.v1.common.geojson.metadata.KodelisteHrefProviderI
+import no.kartverket.nibas.api.v1.common.geojson.metadata.Posisjonskvalitet
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.function.Supplier
@@ -38,7 +41,11 @@ data class PosisjonskvalitetEmbeddable(
     @Column(name = "noeyaktighet")
     var noeyaktighet: Int? = null
 ) {
-    fun toKvalitet(): Posisjonskvalitet = Posisjonskvalitet(maalemetode, noeyaktighet)
+    fun toKvalitet(kodelisteHrefProvider: KodelisteHrefProviderI = KodelisteHrefProvider()): Posisjonskvalitet = Posisjonskvalitet(
+        KodelisteEntry(
+            id = maalemetode,
+            href = kodelisteHrefProvider.maalemetodeKodeHref()),
+        noeyaktighet)
 }
 
 @Embeddable
@@ -68,7 +75,7 @@ interface MaritimGrense {
     var virkeomraadenavn: String?
     fun getAnsvarligeMyndigheter(): Collection<AnsvarligMyndighet>
     fun setAnsvarligeMyndigheter(ansvarligeMyndigheter: List<AnsvarligMyndighetHolder>)
-    fun getLand(): Collection<Landkode>
+    fun getLandIds(): List<String>
     fun setLand(landkoder: List<Landkode>)
 }
 
