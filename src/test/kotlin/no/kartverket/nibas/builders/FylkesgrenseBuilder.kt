@@ -7,7 +7,7 @@ import no.kartverket.nibas.domain.Grensestatus
 import no.kartverket.nibas.domain.Noeyaktighetsklassekode
 import no.kartverket.nibas.domain.PosisjonskvalitetEmbeddable
 import no.kartverket.nibas.domain.Terrengdetaljkode
-import java.time.ZonedDateTime
+import java.time.LocalDate
 
 const val LOKALID = "lokalId1"
 const val NAVNEROM = "navnerom"
@@ -61,9 +61,9 @@ class FylkesgrenseBuilder(private val id: String = "1") {
     private var navnerom: String = NAVNEROM
     private var versjonid: String = VERSJON_33
     private var omtvistet: Boolean = true
-    private var oppdateringsdato: ZonedDateTime = ZonedDateTime.now()
-    private var datafangstdato: ZonedDateTime = ZonedDateTime.now()
-    private var gyldigFra: ZonedDateTime = ZonedDateTime.now()
+    private var oppdateringsdato: LocalDate = LocalDate.now()
+    private var datafangstdato: LocalDate = LocalDate.now()
+    private var gyldigFra: LocalDate = LocalDate.now()
     private var dokumentasjonsreferanser: MutableList<Dokumentasjonsreferanse> = mutableListOf()
     private var kvalitet: PosisjonskvalitetEmbeddable = PosisjonskvalitetEmbeddable(
         maalemetode = MaalemetodeKodeEnum.TERRENGMAALT.uuid,
@@ -113,17 +113,17 @@ class FylkesgrenseBuilder(private val id: String = "1") {
         return this
     }
 
-    fun withOppdateringsdato(dateTime: ZonedDateTime): FylkesgrenseBuilder {
+    fun withOppdateringsdato(dateTime: LocalDate): FylkesgrenseBuilder {
         this.oppdateringsdato = dateTime
         return this
     }
 
-    fun datafangstdato(dateTime: ZonedDateTime): FylkesgrenseBuilder {
+    fun datafangstdato(dateTime: LocalDate): FylkesgrenseBuilder {
         this.datafangstdato = dateTime
         return this
     }
 
-    fun gyldigFra(dateTime: ZonedDateTime): FylkesgrenseBuilder {
+    fun gyldigFra(dateTime: LocalDate): FylkesgrenseBuilder {
         this.gyldigFra = dateTime
         return this
     }

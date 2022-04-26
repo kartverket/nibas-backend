@@ -5,7 +5,7 @@ import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.common.Fylkesnummer
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.inndelinger.HistorikkStatus
-import java.time.ZonedDateTime
+import java.time.LocalDate
 import java.util.*
 
 @Schema(description = "En referanse til en nasjon")
@@ -103,7 +103,7 @@ data class FylkeResponse(
     val samiskforvaltningsomraade: Boolean,
 
     @Schema(description = "Angir når dette fylket ble sist oppdatert")
-    val oppdateringsdato: ZonedDateTime,
+    val oppdateringsdato: LocalDate,
 
     @Schema(description = "Geometrien til fylket. Ikke grenser")
     val features: FeatureCollection
@@ -130,7 +130,7 @@ data class KommuneResponse(
     val samiskforvaltningsomraade: Boolean,
 
     @Schema(description = "Angir når denne kommunen ble sist oppdatert")
-    val oppdateringsdato: ZonedDateTime,
+    val oppdateringsdato: LocalDate,
 
     @Schema(description = "Geometrien til kommunen. Ikke grenser")
     val features: FeatureCollection

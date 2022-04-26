@@ -8,7 +8,6 @@ import no.kartverket.nibas.api.v1.response.Kommunenummer
 import no.kartverket.nibas.domain.ContainsSosiIdentifikasjon
 import no.kartverket.nibas.domain.PosisjonskvalitetEmbeddable
 import java.time.LocalDate
-import java.time.ZonedDateTime
 
 const val ADMINISTRATIV_GRENSE_METADATA_SCHEMA: String = "AdministrativGrenseMetadata"
 const val RIKSGRENSE_METADATA_SCHEMA: String = "RiksgrenseMetadata"
@@ -145,15 +144,15 @@ data class CommonMetadata(
     @Schema(description = "Unik identifikasjon av et objekt")
     var identifikasjon: Identifikasjon,
     @Schema(description = "Dato når objektet siste gang ble registrert/observert/målt i terrenget")
-    var datafangstdato: ZonedDateTime? = null,
+    var datafangstdato: LocalDate? = null,
     @Schema(description = "Tidspunktet når objektet oppstod i den virkelige verden")
-    var gyldigFra: ZonedDateTime? = null,
+    var gyldigFra: LocalDate? = null,
     @Schema(description = "Tidspunktet når objektet opphørte å eksistere i den virkelige verden")
-    var gyldigTil: ZonedDateTime? = null,
+    var gyldigTil: LocalDate? = null,
     @Schema(description = "Generelle opplysninger/merknad")
     var informasjon: String? = null,
     @Schema(description = "Dato for siste endring på objektdataene")
-    var oppdateringsdato: ZonedDateTime = ZonedDateTime.now(),
+    var oppdateringsdato: LocalDate = LocalDate.now(),
     @Schema(description = "Referanse til opphavsmaterialet, kildematerialet, organisasjons/publiseringskilde.")
     var opphav: String? = null,
 )

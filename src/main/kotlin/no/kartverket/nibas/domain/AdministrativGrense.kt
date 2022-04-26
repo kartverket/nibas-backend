@@ -1,7 +1,7 @@
 package no.kartverket.nibas.domain
 
 import org.hibernate.envers.Audited
-import java.time.ZonedDateTime
+import java.time.LocalDate
 import javax.persistence.Column
 import javax.persistence.Embedded
 import javax.persistence.JoinColumn
@@ -16,13 +16,13 @@ abstract class AdministrativGrense : Grense() {
     override var versjonid: String? = null
 
     @Column(name = "sluttdato")
-    var sluttdato: ZonedDateTime? = null
+    var sluttdato: LocalDate? = null
 
     @Column(name = "datauttaksdato")
-    var datauttaksdato: ZonedDateTime? = null
+    var datauttaksdato: LocalDate? = null
 
     @Column(name = "oppdateringsdato")
-    override var oppdateringsdato: ZonedDateTime = ZonedDateTime.now()
+    override var oppdateringsdato: LocalDate = LocalDate.now()
 
     @Embedded
     var endringsflagg: Endringsflagg? = Endringsflagg()
@@ -34,16 +34,16 @@ abstract class AdministrativGrense : Grense() {
     var registreringsversjon: Registreringsversjon? = Registreringsversjon()
 
     @Column(name = "gyldigfra")
-    override var gyldigFra: ZonedDateTime? = null
+    override var gyldigFra: LocalDate? = null
 
     @Column(name = "gyldigtil")
-    override var gyldigTil: ZonedDateTime? = null
+    override var gyldigTil: LocalDate? = null
 
     @Embedded
     var kopidata: Kopidata? = Kopidata()
 
     @Column(name = "datafangstdato")
-    override var datafangstdato: ZonedDateTime? = null
+    override var datafangstdato: LocalDate? = null
 
     @Column(name = "omtvistet")
     var omtvistet: Boolean? = null

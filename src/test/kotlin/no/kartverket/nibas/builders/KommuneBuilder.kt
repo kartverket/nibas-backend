@@ -16,7 +16,7 @@ import no.kartverket.nibas.domain.Spraakkode
 import no.kartverket.nibas.domain.Territorialgrense
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
-import java.time.ZonedDateTime
+import java.time.LocalDate
 
 class KommuneBuilder(private val id: String = "1") {
     private var avtaltavgrensningslinjer: MutableSet<Avtaltavgrensningslinje> = mutableSetOf()
@@ -30,7 +30,7 @@ class KommuneBuilder(private val id: String = "1") {
     private var navn = "Vestland"
     private var spraak = "NOR"
     private var samiskforvaltningsomraade = false
-    private var oppdateringsdato: ZonedDateTime = ZonedDateTime.now()
+    private var oppdateringsdato: LocalDate = LocalDate.now()
 
     companion object {
         val DEFAULT_KOMMUNE = KommuneBuilder().build()

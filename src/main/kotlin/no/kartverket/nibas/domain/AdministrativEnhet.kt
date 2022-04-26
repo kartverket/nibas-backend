@@ -5,7 +5,6 @@ import org.hibernate.envers.Audited
 import org.locationtech.jts.geom.MultiPolygon
 import org.locationtech.jts.geom.Point
 import java.time.LocalDate
-import java.time.ZonedDateTime
 import java.util.*
 import javax.persistence.Column
 import javax.persistence.Id
@@ -42,13 +41,13 @@ abstract class AdministrativEnhet(
     override var versjonid: String? = null
 
     @Column(name = "oppdateringsdato")
-    var oppdateringsdato: ZonedDateTime? = null
+    var oppdateringsdato: LocalDate? = null
 
     @Column(name = "sluttdato")
-    var sluttdato: ZonedDateTime? = null
+    var sluttdato: LocalDate? = null
 
     @Column(name = "datauttaksdato")
-    var datauttaksdato: ZonedDateTime? = null
+    var datauttaksdato: LocalDate? = null
 
     @Column(name = "opphav")
     var opphav: String? = null
@@ -60,10 +59,10 @@ abstract class AdministrativEnhet(
     var versjon: String? = null
 
     @Column(name = "gyldigfra")
-    var gyldigfra: ZonedDateTime? = null
+    var gyldigfra: LocalDate? = null
 
     @Column(name = "gyldigtil")
-    var gyldigtil: ZonedDateTime? = null
+    var gyldigtil: LocalDate? = null
 
     @Column(name = "omraadeid")
     var omraadeid: Int? = null
@@ -75,7 +74,7 @@ abstract class AdministrativEnhet(
     var kopidato: LocalDate? = null
 
     @Column(name = "datafangstdato")
-    var datafangstdato: ZonedDateTime? = null
+    var datafangstdato: LocalDate? = null
 
     @ManyToOne
     @JoinColumn(name = "land")

@@ -3,7 +3,6 @@ package no.kartverket.nibas.domain
 import no.kartverket.nibas.inndelinger.GrenseType
 import org.hibernate.envers.Audited
 import java.time.LocalDate
-import java.time.ZonedDateTime
 import java.util.*
 import javax.persistence.Column
 import javax.persistence.ElementCollection
@@ -25,22 +24,22 @@ class Lovvirkeomraadegrense : Grense() {
     override var versjonid: String? = null
 
     @Column(name = "oppdateringsdato")
-    override var oppdateringsdato: ZonedDateTime = ZonedDateTime.now()
+    override var oppdateringsdato: LocalDate = LocalDate.now()
 
     @Column(name = "datafangstdato")
-    override var datafangstdato: ZonedDateTime? = null
+    override var datafangstdato: LocalDate? = null
 
     @Column(name = "sluttdato")
     var sluttdato: LocalDate? = null
 
     @Column(name = "gyldigfra")
-    override var gyldigFra: ZonedDateTime? = null
+    override var gyldigFra: LocalDate? = null
 
     @Column(name = "gyldigtil")
-    override var gyldigTil: ZonedDateTime? = null
+    override var gyldigTil: LocalDate? = null
 
     @Column(name = "datauttaksdato")
-    var datauttaksdato: ZonedDateTime? = null
+    var datauttaksdato: LocalDate? = null
 
     @ManyToOne
     @JoinColumn(name = "typeendring")

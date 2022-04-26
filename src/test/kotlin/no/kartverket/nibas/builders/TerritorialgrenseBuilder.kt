@@ -8,16 +8,15 @@ import no.kartverket.nibas.domain.Landkode
 import no.kartverket.nibas.domain.PosisjonskvalitetEmbeddable
 import no.kartverket.nibas.domain.Territorialgrense
 import java.time.LocalDate
-import java.time.ZonedDateTime
 
 class TerritorialgrenseBuilder {
 
     private var lokalid: String = LOKALID
     private var navnerom: String = NAVNEROM
     private var versjonid: String = VERSJON_33
-    private var oppdateringsdato: ZonedDateTime = ZonedDateTime.now()
-    private var datafangstdato: ZonedDateTime = ZonedDateTime.now()
-    private var gyldigFra: ZonedDateTime = ZonedDateTime.now()
+    private var oppdateringsdato: LocalDate = LocalDate.now()
+    private var datafangstdato: LocalDate = LocalDate.now()
+    private var gyldigFra: LocalDate = LocalDate.now()
     private var dokumentasjonsreferanser: MutableList<Dokumentasjonsreferanse> = mutableListOf()
     private var kvalitet: PosisjonskvalitetEmbeddable = PosisjonskvalitetEmbeddable(
         maalemetode = MaalemetodeKodeEnum.TERRENGMAALT.uuid,
@@ -59,17 +58,17 @@ class TerritorialgrenseBuilder {
         return territorialgrense
     }
 
-    fun withOppdateringsdato(dateTime: ZonedDateTime): TerritorialgrenseBuilder {
+    fun withOppdateringsdato(dateTime: LocalDate): TerritorialgrenseBuilder {
         this.oppdateringsdato = dateTime
         return this
     }
 
-    fun datafangstdato(dateTime: ZonedDateTime): TerritorialgrenseBuilder {
+    fun datafangstdato(dateTime: LocalDate): TerritorialgrenseBuilder {
         this.datafangstdato = dateTime
         return this
     }
 
-    fun gyldigFra(dateTime: ZonedDateTime): TerritorialgrenseBuilder {
+    fun gyldigFra(dateTime: LocalDate): TerritorialgrenseBuilder {
         this.gyldigFra = dateTime
         return this
     }

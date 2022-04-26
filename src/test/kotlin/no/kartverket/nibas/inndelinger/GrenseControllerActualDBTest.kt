@@ -18,7 +18,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-import java.time.ZonedDateTime
+import java.time.LocalDate
 import javax.transaction.Transactional
 import kotlin.test.Ignore
 
@@ -58,7 +58,7 @@ class GrenseControllerActualDBTest {
         // Konverterer til metadataObjekt og endrer noen egenskaper
         val metadataMapper = MetadataMapper(kodelisteService)
         val metadata = metadataMapper.toMetadata(kommunegrense)
-        val gyldigFra = ZonedDateTime.now().plusDays(1)
+        val gyldigFra = LocalDate.now().plusDays(1)
         val dokumentLink = "LinkTilMittDokument"
         val fastsettingsmyndighet = "Kartverket"
         val rettskildeId = "Id 33"

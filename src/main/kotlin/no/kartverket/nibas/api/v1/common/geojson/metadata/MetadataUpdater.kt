@@ -17,7 +17,7 @@ import no.kartverket.nibas.repository.GrensestatusRepository
 import no.kartverket.nibas.repository.LandKodeRepository
 import no.kartverket.nibas.repository.NoeyaktighetsklassekodeRepository
 import no.kartverket.nibas.repository.TerrengdetaljkodeRepository
-import java.time.ZonedDateTime
+import java.time.LocalDate
 
 /**
  * Hjelpeklasse/mappinglogikk metadata -> grense.
@@ -114,7 +114,7 @@ class MetadataUpdater(private val landKodeRepository: LandKodeRepository,
         this.gyldigFra = common.gyldigFra
         this.gyldigTil = common.gyldigTil
         this.setInfo(common.informasjon)
-        this.oppdateringsdato = ZonedDateTime.now()
+        this.oppdateringsdato = LocalDate.now()
         this.opphav = common.opphav
     }
 

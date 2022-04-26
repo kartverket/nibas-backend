@@ -43,7 +43,7 @@ class FeatureBuilder(private val id: String? = "1") {
         if (metadata == null) {
             val commonMetadata = CommonMetadata(
                 identifikasjon = Identifikasjon(lokalid, navnerom),
-                oppdateringsdato = ZonedDateTime.now()
+                oppdateringsdato = ZonedDateTime.now().toLocalDate()
             )
             metadata = when (grenseType) {
                 GrenseType.Kommunegrense -> AdministrativGrenseMetadata(common = commonMetadata)

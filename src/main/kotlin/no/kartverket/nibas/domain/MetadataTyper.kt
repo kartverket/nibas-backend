@@ -5,7 +5,6 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.KodelisteHrefProvider
 import no.kartverket.nibas.api.v1.common.geojson.metadata.KodelisteHrefProviderI
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Posisjonskvalitet
 import java.time.LocalDate
-import java.time.ZonedDateTime
 import java.util.function.Supplier
 import javax.persistence.Column
 import javax.persistence.Embeddable
@@ -59,10 +58,10 @@ data class Registreringsversjon(
 
 // Felles egenskaper for grenser, adm_enheter, punkter ++
 interface CommonMetadataProperties : ContainsSosiIdentifikasjon {
-    var datafangstdato: ZonedDateTime?
-    var gyldigFra: ZonedDateTime?
-    var gyldigTil: ZonedDateTime?
-    var oppdateringsdato: ZonedDateTime
+    var datafangstdato: LocalDate?
+    var gyldigFra: LocalDate?
+    var gyldigTil: LocalDate?
+    var oppdateringsdato: LocalDate
     var opphav: String?
     fun getInfo(): String?
     fun setInfo(updatedInfo: String?)
