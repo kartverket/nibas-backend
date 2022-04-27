@@ -24,7 +24,7 @@ repositories {
         name = "Aut-lib GitHubPackages"
         url = uri("https://maven.pkg.github.com/kartverket/aut-lib")
         credentials {
-            username = project.findProperty("patUser") as String? ?: System.getenv("PAT_USER")
+            username = project.findProperty("gh_username") as String? ?: System.getenv("GH_USERNAME")
             password = project.findProperty("pat") as String? ?: System.getenv("PAT")
         }
     }

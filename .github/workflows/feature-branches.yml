@@ -24,5 +24,5 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build --info
         env:
-          PAT_USER: ${{ secrets.PAT_USER }}
-          PAT: ${{ secrets.PAT_READ_LIB }}
+          GH_USERNAME: ${{ secrets.PAT_USERNAME }}
+          PAT: ${{ secrets.PAT_SCOPE_READ_PACKAGE }}

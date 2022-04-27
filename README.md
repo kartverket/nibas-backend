@@ -14,7 +14,7 @@ Spring Boot applikasjon som serverer informasjon om administrative grenser.
 # Kjøre på lokal maskin
 * Hent aut-lib fra github
 ```
-$ ./gradlew clean build -Ppat=<PERSONLIG_PAT> -PpatUser=<BRUKERNAVN_GITHUB>
+$ ./gradlew clean build -Ppat=<PERSONLIG_PAT> -Pgh_username=<BRUKERNAVN_GITHUB>
 ```
 
 * Definer følgende miljøvariable:
