@@ -1,6 +1,8 @@
 package no.kartverket.nibas.sosi.model
 
 import java.io.PrintStream
+import java.time.LocalDate
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 open class SosiObjekt(
@@ -62,5 +64,10 @@ open class SosiObjekt(
      */
     fun getObjektMedId(objId: String): SosiGeometri? {
         return barn.find { it is SosiGeometri && it.getId() == objId } as? SosiGeometri
+    }
+
+    protected fun stringAsDate(verdi: String?): LocalDate? = when (verdi) {
+        null -> null
+        else -> LocalDate.parse(verdi.substring(0,8), SOSI_DATOFORMAT)
     }
 }

@@ -17,7 +17,7 @@ import javax.persistence.Table
 @Table(name = "grunnlinje")
 @Audited
 @Entity
-class Grunnlinje : Grense(), MaritimGrense {
+class Grunnlinje : GrenseMedDokumentasjonsreferanser(), MaritimGrense {
     override var objtype: String? = GrenseType.Grunnlinje.value
 
     @Column(name = "versjonid")

@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 )
 interface FylkeApi {
 
-    @Operation(summary = "Hent alle fylker", description = "Henter alle fylker i nasjonal inndelingsbase.")
+    @Operation(summary = "Hent alle fylker", description = "Henter alle fylker i Nasjonal inndelingsbase.")
     @ApiResponses(
         ApiResponse(
             responseCode = "200",

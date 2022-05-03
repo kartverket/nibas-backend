@@ -224,7 +224,6 @@ internal class MetadataUpdaterTest {
         ),
         fastsettingstype = KodelisteEntry(id = FastsettingstypeEnum.BestemteKoordinater.name, href = fastsettingstypeHref),
         grensestatus = KodelisteEntry(id = GrensestatusEnum.Traktat.name, href = grensestatusHref),
-        dokumentasjonsreferanser = listOf(dokRef(dokumentasjonsreferanse.id))
     )
 
     private fun dokRef(id: String): Dokref {

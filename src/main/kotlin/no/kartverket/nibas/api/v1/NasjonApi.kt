@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 )
 interface NasjonApi {
 
-    @Operation(summary = "Hent alle nasjoner", description = "Henter alle nasjoner i nasjonal inndelingsbase.")
+    @Operation(summary = "Hent alle nasjoner", description = "Henter alle nasjoner i Nasjonal inndelingsbase.")
     @ApiResponses(
         ApiResponse(
             responseCode = "200",

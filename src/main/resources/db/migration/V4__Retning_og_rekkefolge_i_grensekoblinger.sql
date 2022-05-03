@@ -72,3 +72,46 @@ ALTER TABLE nasjon_riksgrense
     add column rekkefoelge         int     not null default 0,
     add column flate_indeks        int     not null default 0,
     add column hull_indeks         int;
+
+-- Grunnkrets
+ALTER TABLE grunnkrets_kommunegrense
+    add column retning_med_klokken boolean not null default true,
+    add column rekkefoelge         int     not null default 0,
+    add column flate_indeks        int     not null default 0,
+    add column hull_indeks         int;
+
+ALTER TABLE grunnkrets_fylkesgrense
+    add column retning_med_klokken boolean not null default true,
+    add column rekkefoelge         int     not null default 0,
+    add column flate_indeks        int     not null default 0,
+    add column hull_indeks         int;
+
+ALTER TABLE grunnkrets_avtaltavgrensningslinje
+    add column retning_med_klokken boolean not null default true,
+    add column rekkefoelge         int     not null default 0,
+    add column flate_indeks        int     not null default 0,
+    add column hull_indeks         int;
+
+ALTER TABLE grunnkrets_territorialgrense
+    add column retning_med_klokken boolean not null default true,
+    add column rekkefoelge         int     not null default 0,
+    add column flate_indeks        int     not null default 0,
+    add column hull_indeks         int;
+
+ALTER TABLE grunnkrets_riksgrense
+    add column retning_med_klokken boolean not null default true,
+    add column rekkefoelge         int     not null default 0,
+    add column flate_indeks        int     not null default 0,
+    add column hull_indeks         int;
+
+ALTER TABLE grunnkrets_grunnkretsgrense
+    add column retning_med_klokken boolean not null default true,
+    add column rekkefoelge         int     not null default 0,
+    add column flate_indeks        int     not null default 0,
+    add column hull_indeks         int;
+
+ALTER TABLE grunnkrets_delomraadegrense
+    add column retning_med_klokken boolean not null default true,
+    add column rekkefoelge         int     not null default 0,
+    add column flate_indeks        int     not null default 0,
+    add column hull_indeks         int;

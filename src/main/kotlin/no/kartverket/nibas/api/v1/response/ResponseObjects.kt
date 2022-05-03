@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.common.Fylkesnummer
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
+import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.inndelinger.HistorikkStatus
 import java.time.LocalDate
 import java.util.*
@@ -44,6 +45,19 @@ data class KommuneRef(
     val navn: List<AdministrativEnhetNavn>,
 
     @Schema(description = "URL til full representasjon av kommunen")
+    val href: String
+)
+
+@Schema(description = "En referanse til en grunnkrets")
+data class GrunnkretsRef(
+
+    @Schema(description = "ID-en til grunnkretser")
+    val id: String,
+
+    @Schema(description = "Navnet på grunnkretser")
+    val navn: String,
+
+    @Schema(description = "URL til full representasjon av grunnkretsen")
     val href: String
 )
 
@@ -133,6 +147,27 @@ data class KommuneResponse(
     val oppdateringsdato: LocalDate,
 
     @Schema(description = "Geometrien til kommunen. Ikke grenser")
+    val features: FeatureCollection
+)
+
+@Schema(description = "Representasjon av en grunnkrets")
+data class GrunnkretsResponse(
+    @Schema(description = "ID-en til grunnkretsen")
+    val id: String,
+
+    @Schema(description = "Navnet på grunnkretsen")
+    val navn: String,
+
+    @Schema(description = "Grunnkretsnummeret til grunnkretsen")
+    val grunnkretsnummer: String,
+
+    @Schema(description = "Identifikasjon av grunnkretsen")
+    val identifikasjon: Identifikasjon,
+
+    @Schema(description = "Kommunenummeret til grunnkretsen")
+    val kommunenummer: String,
+
+    @Schema(description = "Geometrien til grunnkretsen, dvs representasjonspunkt og flaten")
     val features: FeatureCollection
 )
 

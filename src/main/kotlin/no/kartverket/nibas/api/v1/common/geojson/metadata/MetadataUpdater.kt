@@ -1,17 +1,6 @@
 package no.kartverket.nibas.api.v1.common.geojson.metadata
 
-import no.kartverket.nibas.domain.AdministrativGrense
-import no.kartverket.nibas.domain.AnsvarligMyndighetHolder
-import no.kartverket.nibas.domain.Avtaltavgrensningslinje
-import no.kartverket.nibas.domain.CommonMetadataProperties
-import no.kartverket.nibas.domain.Dokumentasjonsreferanse
-import no.kartverket.nibas.domain.DokumentasjonsreferanseDokumentlink
-import no.kartverket.nibas.domain.DokumentasjonsreferanseInternReferanseKartverket
-import no.kartverket.nibas.domain.Grense
-import no.kartverket.nibas.domain.Landkode
-import no.kartverket.nibas.domain.MaritimGrense
-import no.kartverket.nibas.domain.Riksgrense
-import no.kartverket.nibas.domain.Territorialgrense
+import no.kartverket.nibas.domain.*
 import no.kartverket.nibas.repository.FastsettingstypeRepository
 import no.kartverket.nibas.repository.GrensestatusRepository
 import no.kartverket.nibas.repository.LandKodeRepository
@@ -32,6 +21,7 @@ class MetadataUpdater(private val landKodeRepository: LandKodeRepository,
     fun updateAdministrativGrense(grense: AdministrativGrense, metadata: AdministrativGrenseMetadata): AdministrativGrense {
         grense.updateWithCommonMetadata(metadata.common)
         updateWithGrenseMetadata(grense, metadata.commonGrense)
+        updateDokumentasjonsreferanser(grense, metadata.dokumentasjonsreferanser)
 
         val terrengdetaljKodeId = metadata.foelgerTerrengdetalj.id
         grense.foelgerterrengdetalj = if (terrengdetaljKodeId != null) {
@@ -64,6 +54,7 @@ class MetadataUpdater(private val landKodeRepository: LandKodeRepository,
     fun updateRiksgrense(grense: Riksgrense, metadata: RiksgrenseMetadata): Riksgrense {
         grense.updateWithCommonMetadata(metadata.common)
         updateWithGrenseMetadata(grense, metadata.commonGrense)
+        updateDokumentasjonsreferanser(grense, metadata.dokumentasjonsreferanser)
 
         val terrengdetaljKodeId = metadata.foelgerTerrengdetalj.id
         grense.foelgerterrengdetalj = if (terrengdetaljKodeId != null) {
@@ -86,7 +77,7 @@ class MetadataUpdater(private val landKodeRepository: LandKodeRepository,
     fun updateAvtaltavgrensningslinje(grense: Avtaltavgrensningslinje, metadata: AvtaltAvgrensningslinjeMetadata): Avtaltavgrensningslinje {
         grense.updateWithCommonMetadata(metadata.common)
         updateWithGrenseMetadata(grense, metadata.commonGrense)
-
+        updateDokumentasjonsreferanser(grense, metadata.dokumentasjonsreferanser)
         grense.updateWithMaritimeMetadata(metadata.maritimeGrenser)
         return grense
     }
@@ -94,7 +85,7 @@ class MetadataUpdater(private val landKodeRepository: LandKodeRepository,
     fun updateTerritoritalgrense(grense: Territorialgrense, metadata: TerritorialgrenseMetadata): Territorialgrense {
         grense.updateWithCommonMetadata(metadata.common)
         updateWithGrenseMetadata(grense, metadata.commonGrense)
-
+        updateDokumentasjonsreferanser(grense, metadata.dokumentasjonsreferanser)
         grense.updateWithMaritimeMetadata(metadata.maritimeGrenser)
         grense.beregningsdato = metadata.beregningsdato
         return grense
@@ -132,7 +123,6 @@ class MetadataUpdater(private val landKodeRepository: LandKodeRepository,
 
     private fun updateWithGrenseMetadata(grense: Grense, commonGrenseMetadata: CommonGrenseMetadata) {
         grense.kvalitet = commonGrenseMetadata.posisjonskvalitet?.toEmbeddable()
-        updateDokumentasjonsreferanser(grense, commonGrenseMetadata.dokumentasjonsreferanser)
 
         val fastsettingstypeId = commonGrenseMetadata.fastsettingstype.id
         grense.fastsettingstype = if (fastsettingstypeId != null) {
@@ -159,7 +149,7 @@ class MetadataUpdater(private val landKodeRepository: LandKodeRepository,
         }
     }
 
-    private fun updateDokumentasjonsreferanser(grense: Grense, dokRefList: List<Dokref>) {
+    private fun updateDokumentasjonsreferanser(grense: GrenseMedDokumentasjonsreferanser, dokRefList: List<Dokref>) {
         dokRefList.forEach { dokRef ->
             var dokumentasjonsreferanse = grense.dokumentasjonsreferanser.find { dokumentasjonsreferanse -> dokumentasjonsreferanse.id == dokRef.id }
             if (dokumentasjonsreferanse == null) { // Legger til ny Dokumentasjonsreferanse hvis ulik id/id er null

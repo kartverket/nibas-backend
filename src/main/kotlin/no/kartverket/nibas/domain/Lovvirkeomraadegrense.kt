@@ -17,7 +17,7 @@ import javax.persistence.Table
 @Table(name = "lovvirkeomraadegrense")
 @Audited
 @Entity
-class Lovvirkeomraadegrense : Grense() {
+class Lovvirkeomraadegrense : GrenseMedDokumentasjonsreferanser() {
     override var objtype: String? = GrenseType.Lovvirkeomraadegrense.value
 
     @Column(name = "versjonid")

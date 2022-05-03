@@ -19,7 +19,7 @@ import javax.persistence.Table
 @Table(name = "avtaltavgrensningslinje")
 @Audited
 @Entity
-class Avtaltavgrensningslinje : Grense(), MaritimGrense {
+class Avtaltavgrensningslinje : GrenseMedDokumentasjonsreferanser(), MaritimGrense {
     override var objtype: String? = GrenseType.AvtaltAvgrensningslinje.value
 
     @Column(name = "versjonid")

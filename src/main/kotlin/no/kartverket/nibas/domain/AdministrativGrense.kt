@@ -10,7 +10,7 @@ import javax.persistence.MappedSuperclass
 
 @MappedSuperclass
 @Audited
-abstract class AdministrativGrense : Grense() {
+abstract class AdministrativGrense : GrenseMedDokumentasjonsreferanser() {
 
     @Column(name = "versjonid")
     override var versjonid: String? = null

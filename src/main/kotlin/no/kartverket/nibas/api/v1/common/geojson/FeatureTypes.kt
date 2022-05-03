@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import io.swagger.v3.oas.annotations.media.Schema
-import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
+import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Metadata
 import org.locationtech.jts.geom.Geometry
 
@@ -54,7 +54,7 @@ data class KontekstEgenskaper(
     val id: String? = null,
 
     @Schema(description = "Hvilken kontekst geometrien skal sees i")
-    val type: AdministrativEnhetType? = null,
+    val type: KontekstEnhetType? = null,
 
     @Schema(description = "Angir om grensen skal leses med klokken for å danne flate.")
     val retningMedKlokken: Boolean = true,

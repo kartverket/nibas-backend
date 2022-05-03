@@ -6,6 +6,15 @@ enum class AdministrativEnhetType {
     FYLKE, KOMMUNE, NASJON
 }
 
+enum class StatistiskEnhetType {
+    GRUNNKRETS
+}
+
+// Vurderte å innføre en sealed class som hadde AdministrativEnhet og StatistiskEnhet (ala dette https://stackoverflow.com/a/56771284), men det gjør det litt mer kronglete når man skal gruppere på undertypene senere.
+enum class KontekstEnhetType {
+    FYLKE, KOMMUNE, NASJON, GRUNNKRETS
+}
+
 @Schema(description = "Representasjon av et fylkesnummer")
 data class Fylkesnummer(
 

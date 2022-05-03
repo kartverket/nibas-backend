@@ -2,8 +2,8 @@ package no.kartverket.nibas.inndelinger
 
 import no.kartverket.nibas.api.v1.FylkeApi
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
-import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
 import no.kartverket.nibas.api.v1.common.Fylkesnummer
+import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.request.FylkeRequest
 import no.kartverket.nibas.api.v1.response.FylkeRef
@@ -43,7 +43,7 @@ class FylkeController @Autowired constructor(
             null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
             else -> FeatureCollection(
                 features = grenser.sortedBy { it.grenseKoblingAttributter.rekkefoelge }
-                    .map { grenseKoblingToFeature(id, AdministrativEnhetType.FYLKE, it, kodelisteService) }
+                    .map { grenseKoblingToFeature(id, KontekstEnhetType.FYLKE, it, kodelisteService) }
             )
         }
     }

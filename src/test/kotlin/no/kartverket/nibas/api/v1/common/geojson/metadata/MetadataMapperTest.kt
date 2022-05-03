@@ -108,6 +108,7 @@ internal class MetadataMapperTest {
         val administrativGrenseMetadata = AdministrativGrenseMetadata(
             common = expectedCommonMetadata(),
             commonGrense = expectedCommonGrensedata(),
+            dokumentasjonsreferanser = listOf(dokumentasjonsreferanse).map { it.toDokRef() },
             foelgerTerrengdetalj = KodelisteEntry(id = TerrengdetaljEnum.AnnetGjerde.code, href = terrengDetaljHref),
             noeyaktighetsklasse = KodelisteEntry(id = NoeyaktighetsklasseEnum.NK1.code, href = noeyaktighetHref),
             omtvistet = true
@@ -149,6 +150,7 @@ internal class MetadataMapperTest {
                     href = landkodeHref
                 ),
             ),
+            dokumentasjonsreferanser = listOf(dokumentasjonsreferanse).map { it.toDokRef() },
             beregningsdato = beregningsdato
         )
 
@@ -173,7 +175,6 @@ internal class MetadataMapperTest {
         ),
         fastsettingstype = KodelisteEntry(id = FastsettingstypeEnum.BestemteKoordinater.name, href = fastsettingstypeHref),
         grensestatus = KodelisteEntry(id = GrensestatusEnum.Traktat.name, href = grensestatusHref),
-        dokumentasjonsreferanser = listOf(dokRef(dokumentasjonsreferanse.id))
     )
 
     private fun dokRef(id: String): Dokref {

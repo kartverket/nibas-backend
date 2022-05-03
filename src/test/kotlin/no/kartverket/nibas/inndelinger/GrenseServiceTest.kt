@@ -1,6 +1,6 @@
 package no.kartverket.nibas.inndelinger
 
-import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
+import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.builders.FeatureBuilder
 import no.kartverket.nibas.builders.FylkeBuilder
 import no.kartverket.nibas.builders.GrenseBuilder
@@ -96,17 +96,17 @@ class GrenseServiceTest {
 
         val oppdatertGrensefeature = FeatureBuilder("1").withGrensetype(GrenseType.Fylkesgrense).withGeometry(oppdatertGeometri).build()
         val nyFylkesgrensefeatureForFylke = FeatureBuilder(null)
-            .withKontekstType(AdministrativEnhetType.FYLKE)
+            .withKontekstType(KontekstEnhetType.FYLKE)
             .withKontekstId("1")
             .withGrensetype(GrenseType.Fylkesgrense)
             .withGeometry(nyGrenseGeometri).build()
         val nyFylkesgrensefeatureForKommune = FeatureBuilder(null)
-            .withKontekstType(AdministrativEnhetType.KOMMUNE)
+            .withKontekstType(KontekstEnhetType.KOMMUNE)
             .withKontekstId("1")
             .withGrensetype(GrenseType.Fylkesgrense)
             .withGeometry(nyGrenseGeometri2).build()
         val nyFylkesgrensefeature2ForKommune = FeatureBuilder(null)
-            .withKontekstType(AdministrativEnhetType.KOMMUNE)
+            .withKontekstType(KontekstEnhetType.KOMMUNE)
             .withKontekstId("1")
             .withGrensetype(GrenseType.Fylkesgrense)
             .withGeometry(nyGrenseGeometri3).build()
@@ -141,7 +141,7 @@ class GrenseServiceTest {
     @Test
     fun thatKommunegrenseIkkeKanLeggesTilFylke() {
         val nyKommunegrensefeatureForFylke = FeatureBuilder(null)
-            .withKontekstType(AdministrativEnhetType.FYLKE)
+            .withKontekstType(KontekstEnhetType.FYLKE)
             .withKontekstId("1")
             .withGrensetype(GrenseType.Kommunegrense)
             .build()

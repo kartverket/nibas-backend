@@ -51,3 +51,21 @@ CREATE TABLE nasjon_avtaltavgrensningslinje (nasjon_fk text, avtaltavgrensningsl
 ALTER TABLE nasjon_avtaltavgrensningslinje ADD PRIMARY KEY (nasjon_fk, avtaltavgrensningslinje_fk);
 ALTER TABLE nasjon_avtaltavgrensningslinje ADD FOREIGN KEY (nasjon_fk) REFERENCES nasjon(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE nasjon_avtaltavgrensningslinje ADD FOREIGN KEY (avtaltavgrensningslinje_fk) REFERENCES avtaltavgrensningslinje(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
+
+-- Manglende kobling fra grunnkrets mot territorialgrense
+CREATE TABLE grunnkrets_territorialgrense (grunnkrets_fk text, territorialgrense_fk text) WITH (OIDS=FALSE);
+ALTER TABLE grunnkrets_territorialgrense ADD PRIMARY KEY (grunnkrets_fk, territorialgrense_fk);
+ALTER TABLE grunnkrets_territorialgrense ADD FOREIGN KEY (grunnkrets_fk) REFERENCES grunnkrets(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE grunnkrets_territorialgrense ADD FOREIGN KEY (territorialgrense_fk) REFERENCES territorialgrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
+
+-- Manglende kobling fra grunnkrets mot riksgrense
+CREATE TABLE grunnkrets_riksgrense (grunnkrets_fk text, riksgrense_fk text) WITH (OIDS=FALSE);
+ALTER TABLE grunnkrets_riksgrense ADD PRIMARY KEY (grunnkrets_fk, riksgrense_fk);
+ALTER TABLE grunnkrets_riksgrense ADD FOREIGN KEY (grunnkrets_fk) REFERENCES grunnkrets(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE grunnkrets_riksgrense ADD FOREIGN KEY (riksgrense_fk) REFERENCES riksgrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
+
+-- Manglende kobling fra grunnkrets mot avtaltavgrensningslinje
+CREATE TABLE grunnkrets_avtaltavgrensningslinje (grunnkrets_fk text, avtaltavgrensningslinje_fk text) WITH (OIDS=FALSE);
+ALTER TABLE grunnkrets_avtaltavgrensningslinje ADD PRIMARY KEY (grunnkrets_fk, avtaltavgrensningslinje_fk);
+ALTER TABLE grunnkrets_avtaltavgrensningslinje ADD FOREIGN KEY (grunnkrets_fk) REFERENCES grunnkrets(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE grunnkrets_avtaltavgrensningslinje ADD FOREIGN KEY (avtaltavgrensningslinje_fk) REFERENCES avtaltavgrensningslinje(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;

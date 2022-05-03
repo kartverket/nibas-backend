@@ -10,10 +10,13 @@ import no.kartverket.nibas.api.v1.TERRENGDETALJKODE_PATH
 import no.kartverket.nibas.domain.AdministrativGrense
 import no.kartverket.nibas.domain.Avtaltavgrensningslinje
 import no.kartverket.nibas.domain.CommonMetadataProperties
+import no.kartverket.nibas.domain.Delomraadegrense
 import no.kartverket.nibas.domain.Grense
+import no.kartverket.nibas.domain.Grunnkretsgrense
 import no.kartverket.nibas.domain.Grunnlinje
 import no.kartverket.nibas.domain.MaritimGrense
 import no.kartverket.nibas.domain.Riksgrense
+import no.kartverket.nibas.domain.StatistiskGrense
 import no.kartverket.nibas.domain.Territorialgrense
 import no.kartverket.nibas.inndelinger.createKommunenummerFromUUID
 import no.kartverket.nibas.kodelister.KodelisteService
@@ -29,6 +32,7 @@ class MetadataMapper(private val kodelisteService: KodelisteService,
     fun toMetadata(grense: AdministrativGrense): AdministrativGrenseMetadata = AdministrativGrenseMetadata(
         common = grense.getCommonMetadata(),
         commonGrense = getCommonGrenseMetadata(grense),
+        dokumentasjonsreferanser = grense.dokumentasjonsreferanser.map { it.toDokRef() },
         foelgerTerrengdetalj = KodelisteEntry(id = grense.foelgerterrengdetalj?.id, href = kodelisteHrefProvider.terrengDetaljHref()),
         noeyaktighetsklasse = KodelisteEntry(id = grense.noeyaktighetsklasse?.id, href = kodelisteHrefProvider.noeyaktighetsklasseHref()),
         omtvistet = grense.omtvistet
@@ -37,6 +41,7 @@ class MetadataMapper(private val kodelisteService: KodelisteService,
     fun toMetadata(grense: Riksgrense): RiksgrenseMetadata = RiksgrenseMetadata(
         common = grense.getCommonMetadata(),
         commonGrense = getCommonGrenseMetadata(grense),
+        dokumentasjonsreferanser = grense.dokumentasjonsreferanser.map { it.toDokRef() },
         foelgerTerrengdetalj = KodelisteEntry(id = grense.foelgerterrengdetalj?.id, href = kodelisteHrefProvider.terrengDetaljHref()),
         stedfestingVerifisert = grense.stedfestingverifisert,
         ansvarligeMyndigheter = grense.riksgrenseAnsvarligeMyndigheter
@@ -48,12 +53,14 @@ class MetadataMapper(private val kodelisteService: KodelisteService,
     fun toMetadata(grense: Avtaltavgrensningslinje): AvtaltAvgrensningslinjeMetadata = AvtaltAvgrensningslinjeMetadata(
         common = grense.getCommonMetadata(),
         commonGrense = getCommonGrenseMetadata(grense),
+        dokumentasjonsreferanser = grense.dokumentasjonsreferanser.map { it.toDokRef() },
         maritimeGrenser = grense.getMaritimeMetadata()
     )
 
     fun toMetadata(grense: Territorialgrense): TerritorialgrenseMetadata = TerritorialgrenseMetadata(
         common = grense.getCommonMetadata(),
         commonGrense = getCommonGrenseMetadata(grense),
+        dokumentasjonsreferanser = grense.dokumentasjonsreferanser.map { it.toDokRef() },
         maritimeGrenser = grense.getMaritimeMetadata(),
         beregningsdato = grense.beregningsdato
     )
@@ -62,6 +69,7 @@ class MetadataMapper(private val kodelisteService: KodelisteService,
         val grunnlinjeMetadata = GrunnlinjeMetadata(
             common = grense.getCommonMetadata(),
             commonGrense = getCommonGrenseMetadata(grense),
+            dokumentasjonsreferanser = grense.dokumentasjonsreferanser.map { it.toDokRef() },
             maritimeGrenser = grense.getMaritimeMetadata()
         )
         val kommunenummerId = grense.kommunenummerId
@@ -71,9 +79,15 @@ class MetadataMapper(private val kodelisteService: KodelisteService,
         return grunnlinjeMetadata
     }
 
+    fun toMetadata(grense: StatistiskGrense): StatistiskgrenseMetadata = StatistiskgrenseMetadata(
+        common = grense.getCommonMetadata(),
+        commonGrense = getCommonGrenseMetadata(grense),
+        foelgerTerrengdetalj = KodelisteEntry(id = grense.foelgerterrengdetalj?.id, href = kodelisteHrefProvider.terrengDetaljHref()),
+        noeyaktighetsklasse = KodelisteEntry(id = grense.noeyaktighetsklasse?.id, href = kodelisteHrefProvider.noeyaktighetsklasseHref()),
+    )
+
     private fun getCommonGrenseMetadata(grense: Grense): CommonGrenseMetadata = CommonGrenseMetadata(
         posisjonskvalitet = grense.kvalitet?.toKvalitet(kodelisteHrefProvider),
-        dokumentasjonsreferanser = grense.dokumentasjonsreferanser.map { it.toDokRef() },
         fastsettingstype = KodelisteEntry(id = grense.fastsettingstype?.id, href = kodelisteHrefProvider.fastsettingstypeKodeHref()),
         grensestatus = KodelisteEntry(id = grense.grensestatus?.id, href = kodelisteHrefProvider.grensestatusKodeHref())
     )

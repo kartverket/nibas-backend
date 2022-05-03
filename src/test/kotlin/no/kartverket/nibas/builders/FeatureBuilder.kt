@@ -1,6 +1,6 @@
 package no.kartverket.nibas.builders
 
-import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
+import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureProperties
 import no.kartverket.nibas.api.v1.common.geojson.KontekstEgenskaper
@@ -27,7 +27,7 @@ class FeatureBuilder(private val id: String? = "1") {
     private var lokalid: String = "123"
     private var navnerom: String = "ABC"
     private var kontekstId: String = "123"
-    private var kontekstType: AdministrativEnhetType = AdministrativEnhetType.KOMMUNE
+    private var kontekstType: KontekstEnhetType = KontekstEnhetType.KOMMUNE
     private var geometry: Geometry =
         GeometryFactory().createLineString(arrayOf(Coordinate(0.0, 0.0), Coordinate(1.0, 1.0)))
 
@@ -73,7 +73,7 @@ class FeatureBuilder(private val id: String? = "1") {
         return this
     }
 
-    fun withKontekstType(kontekstType: AdministrativEnhetType): FeatureBuilder {
+    fun withKontekstType(kontekstType: KontekstEnhetType): FeatureBuilder {
         this.kontekstType = kontekstType
         return this
     }

@@ -1,7 +1,7 @@
 package no.kartverket.nibas.inndelinger
 
 import no.kartverket.nibas.api.v1.GrenseApi
-import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
+import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.FeatureProperties
@@ -23,6 +23,7 @@ import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.Grunnlinje
 import no.kartverket.nibas.domain.Kommunegrense
 import no.kartverket.nibas.domain.Riksgrense
+import no.kartverket.nibas.domain.StatistiskGrense
 import no.kartverket.nibas.domain.Territorialgrense
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.AvtaltAvgrensningslinjeRepository
@@ -169,7 +170,7 @@ class GrenseService @Autowired constructor(
 
     data class GrenseMedRetningOgKontekst<T : Grense>(
         val grenseMedAttributter: GrenseMedAttributter<T>,
-        val kontekstType: AdministrativEnhetType,
+        val kontekstType: KontekstEnhetType,
         val kontekstId: String
     )
 
@@ -210,9 +211,10 @@ class GrenseService @Autowired constructor(
 
         oppdaterteGrenser.groupBy { it.kontekstType }.forEach { entry ->
             when (entry.key) {
-                AdministrativEnhetType.KOMMUNE -> oppdaterEnheter(entry.value, kommuneRepository)
-                AdministrativEnhetType.FYLKE -> oppdaterEnheter(entry.value, fylkeRepository)
-                AdministrativEnhetType.NASJON -> oppdaterEnheter(entry.value, nasjonRepository)
+                KontekstEnhetType.KOMMUNE -> oppdaterEnheter(entry.value, kommuneRepository)
+                KontekstEnhetType.FYLKE -> oppdaterEnheter(entry.value, fylkeRepository)
+                KontekstEnhetType.NASJON -> oppdaterEnheter(entry.value, nasjonRepository)
+                KontekstEnhetType.GRUNNKRETS -> throw IllegalArgumentException("Kan ikke oppdatere grunnkretser ennå")
             }
         }
     }
@@ -298,7 +300,7 @@ class GrenseMedAttributter<T : Grense>(val grense: T, val attributter: GrenseKob
 
 fun grenseKoblingToFeature(
     kontekstId: String? = null,
-    kontekstType: AdministrativEnhetType? = null,
+    kontekstType: KontekstEnhetType? = null,
     grenseKobling: GrenseKobling,
     kodelisteService: KodelisteService
 ): Feature {
@@ -328,6 +330,7 @@ fun grenseToFeature(grense: Grense, kodelisteService: KodelisteService): Feature
         is Avtaltavgrensningslinje -> featureProperties = featureProperties.copy(metadata = metadataMapper.toMetadata(grense))
         is Territorialgrense -> featureProperties = featureProperties.copy(metadata = metadataMapper.toMetadata(grense))
         is Grunnlinje -> featureProperties = featureProperties.copy(metadata = metadataMapper.toMetadata(grense))
+        is StatistiskGrense -> featureProperties = featureProperties.copy(metadata = metadataMapper.toMetadata(grense))
     }
 
     return Feature(

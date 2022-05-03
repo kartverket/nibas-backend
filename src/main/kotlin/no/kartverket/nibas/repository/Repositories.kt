@@ -3,6 +3,7 @@ package no.kartverket.nibas.repository
 import no.kartverket.nibas.domain.Administrativenhetnavn
 import no.kartverket.nibas.domain.Avtaltavgrensningslinje
 import no.kartverket.nibas.domain.AvtaltavgrensningslinjeInformasjon
+import no.kartverket.nibas.domain.Delomraadegrense
 import no.kartverket.nibas.domain.Dokumentasjonsreferanse
 import no.kartverket.nibas.domain.DokumentasjonsreferanseDokumentlink
 import no.kartverket.nibas.domain.Fastsettingstype
@@ -10,6 +11,10 @@ import no.kartverket.nibas.domain.Fylke
 import no.kartverket.nibas.domain.FylkeInformasjon
 import no.kartverket.nibas.domain.Fylkesgrense
 import no.kartverket.nibas.domain.Grensestatus
+import no.kartverket.nibas.domain.Grunnkrets
+import no.kartverket.nibas.domain.GrunnkretsInformasjon
+import no.kartverket.nibas.domain.Grunnkretsgrense
+import no.kartverket.nibas.domain.GrunnkretsgrenseInformasjon
 import no.kartverket.nibas.domain.Grunnlinje
 import no.kartverket.nibas.domain.GrunnlinjeInformasjon
 import no.kartverket.nibas.domain.Kommune
@@ -76,6 +81,15 @@ interface KommuneRepository : CrudRepositoryWithLokalIdFinder<Kommune, String> {
     fun findByTerritorialgrenser_Territorialgrense_Id(id: String): List<Kommune>
     fun findByAvtaltavgrensningslinjer_Avtaltavgrensningslinje_Id(id: String): List<Kommune>
     fun findByRiksgrenser_Riksgrense_Id(id: String): List<Kommune>
+    fun findByKommunenummer(kommunenummer: String): Kommune?
 }
+interface GrunnkretsRepository : CrudRepositoryWithLokalIdFinder<Grunnkrets, String> {
+    fun findByKommunenummer(kommunenummer: String): List<Grunnkrets>
+}
+interface GrunnkretsInformasjonRepository : CrudRepository<GrunnkretsInformasjon, String>
+
+interface GrunnkretsgrenseRepository : CrudRepositoryWithLokalIdFinder<Grunnkretsgrense, String>
+interface GrunnkretsgrenseInformasjonRepository : CrudRepository<GrunnkretsgrenseInformasjon, String>
+interface DelomraadegrenseRepository : CrudRepositoryWithLokalIdFinder<Delomraadegrense, String>
 
 

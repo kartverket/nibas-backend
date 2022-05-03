@@ -63,9 +63,16 @@ class SosiKoder {
         val AVTALT_AVGRENSNINGSLINJE = "AvtaltAvgrensningslinje"
         val LOV_VIRKEOMRADEGRENSE = "LovVirkeområdeGrense"
         val GRUNNLINJE = "Grunnlinje"
+        val GRUNNKRETSGRENSE = "Grunnkretsgrense"
+        val DELOMRAADEGRENSE = "Delområdegrense"
 
         val FYLKE = "Fylke"
         val KOMMUNE = "Kommune"
         val NASJON = "Nasjon"
+        val GRUNNKRETS = "Grunnkrets"
+
+        val GRUNNKRETSID = "GRUNNKRETSID"
+        val GRUNNKRETSNUMMER = "GRUNNKRETSNUMMER"
+        val GRUNNKRETSNAVN = "GRUNNKRETSNAVN"
     }
 }

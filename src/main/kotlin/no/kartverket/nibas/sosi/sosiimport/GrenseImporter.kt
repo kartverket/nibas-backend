@@ -31,6 +31,12 @@ class GrenseImporter {
     @Autowired
     lateinit var fylkesgrenseImporter: FylkesgrenseImporter
 
+    @Autowired
+    lateinit var grunnkretsgrenseImporter: GrunnkretsgrenseImporter
+
+    @Autowired
+    lateinit var delomraadegrenseImporter: DelomraadegrenseImporter
+
     fun importerGrense(grense: SosiGeometri): Grense {
         return when (grense.getObjType()) {
             SosiKoder.KOMMUNEGRENSE -> kommunegrenseImporter.importerKommunegrense(grense)
@@ -40,6 +46,8 @@ class GrenseImporter {
             SosiKoder.AVTALT_AVGRENSNINGSLINJE -> avtaltAvgrensningslinjeImporter.importAvtaltAvgrensningslinje(grense)
             SosiKoder.LOV_VIRKEOMRADEGRENSE -> lovVirkeomraadeGrenseImporter.importLovVirkeomradeGrense(grense as SosiKurve)
             SosiKoder.GRUNNLINJE -> grunnlinjeImporter.importGrunnlinje(grense)
+            SosiKoder.GRUNNKRETSGRENSE -> grunnkretsgrenseImporter.importerGrunnkretsgrense(grense)
+            SosiKoder.DELOMRAADEGRENSE -> delomraadegrenseImporter.importerDelomraadegrense(grense)
             else -> throw RuntimeException("Found no importer for ${grense.getObjType()}")
         }
     }

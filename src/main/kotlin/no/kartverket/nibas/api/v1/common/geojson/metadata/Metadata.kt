@@ -14,6 +14,7 @@ const val RIKSGRENSE_METADATA_SCHEMA: String = "RiksgrenseMetadata"
 const val TERRITORIALGRENSE_METADATA_SCHEMA: String = "TerritorialgrenseMetadata"
 const val AVTALT_AVGRENSNINGSLINJE_METADATA_SCHEMA: String = "AvtaltAvgrensningslinjeMetadata"
 const val GRUNNLINJE_METADATA_SCHEMA: String = "GrunnlinjeMetadata"
+const val STATISTISKGRENSE_METADATA_SCHEMA: String = "StatistiskgrenseMetadata"
 
 const val DISCRIMINATOR_FIELD: String = "discriminator"
 
@@ -37,7 +38,8 @@ const val DISCRIMINATOR_FIELD: String = "discriminator"
         RiksgrenseMetadata::class,
         TerritorialgrenseMetadata::class,
         AvtaltAvgrensningslinjeMetadata::class,
-        GrunnlinjeMetadata::class
+        GrunnlinjeMetadata::class,
+        StatistiskgrenseMetadata::class
     ],
     discriminatorProperty = DISCRIMINATOR_FIELD,
     discriminatorMapping = [
@@ -49,6 +51,7 @@ const val DISCRIMINATOR_FIELD: String = "discriminator"
             schema = AvtaltAvgrensningslinjeMetadata::class
         ),
         DiscriminatorMapping(value = GRUNNLINJE_METADATA_SCHEMA, schema = GrunnlinjeMetadata::class),
+        DiscriminatorMapping(value = STATISTISKGRENSE_METADATA_SCHEMA, schema = StatistiskgrenseMetadata::class)
     ]
 )
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = DISCRIMINATOR_FIELD)
@@ -57,7 +60,8 @@ const val DISCRIMINATOR_FIELD: String = "discriminator"
     JsonSubTypes.Type(value = RiksgrenseMetadata::class, name = RIKSGRENSE_METADATA_SCHEMA),
     JsonSubTypes.Type(value = TerritorialgrenseMetadata::class, name = TERRITORIALGRENSE_METADATA_SCHEMA),
     JsonSubTypes.Type(value = AvtaltAvgrensningslinjeMetadata::class, name = AVTALT_AVGRENSNINGSLINJE_METADATA_SCHEMA),
-    JsonSubTypes.Type(value = GrunnlinjeMetadata::class, name = GRUNNLINJE_METADATA_SCHEMA)
+    JsonSubTypes.Type(value = GrunnlinjeMetadata::class, name = GRUNNLINJE_METADATA_SCHEMA),
+    JsonSubTypes.Type(value = StatistiskgrenseMetadata::class, name = STATISTISKGRENSE_METADATA_SCHEMA)
 )
 interface Metadata
 
@@ -70,6 +74,8 @@ data class AdministrativGrenseMetadata(
     val common: CommonMetadata,
     @Schema(description = "Felles metadata-egenskaper for grenser.")
     val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
+    @Schema(description = "Henviser til fastsettings- eller lovinformasjon.")
+    var dokumentasjonsreferanser: List<Dokref> = emptyList(),
     @Schema(description = "Opplysning om at grense følger naturlige skillelinjer i terrenget.")
     var foelgerTerrengdetalj: KodelisteEntry = KodelisteEntry(),
     @Schema(description = "Klassifikasjon av stedfestingsnøyaktighet på grenser, og er basert på dårligste nøyaktighet til grensepunktene til grensen.")
@@ -87,6 +93,8 @@ data class RiksgrenseMetadata(
     val common: CommonMetadata,
     @Schema(description = "Felles metadata-egenskaper for grenser.")
     val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
+    @Schema(description = "Henviser til fastsettings- eller lovinformasjon.")
+    var dokumentasjonsreferanser: List<Dokref> = emptyList(),
     @Schema(description = "Opplysning om at grense følger naturlige skillelinjer i terrenget.")
     var foelgerTerrengdetalj: KodelisteEntry = KodelisteEntry(),
     @Schema(description = "Angivelse om stedfestingen (koordinatene) er kontrollert og funnet i orden (verifisert).")
@@ -106,6 +114,8 @@ data class TerritorialgrenseMetadata(
     val common: CommonMetadata,
     @Schema(description = "Felles metadata-egenskaper for grenser.")
     val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
+    @Schema(description = "Henviser til fastsettings- eller lovinformasjon.")
+    var dokumentasjonsreferanser: List<Dokref> = emptyList(),
     @Schema(description = "Metadata-egenskaper for maritim grense.")
     var maritimeGrenser: MaritimeGrenserMetadata = MaritimeGrenserMetadata(),
     @Schema(description = "Tidspunktet for når koordinatene er utregnet.")
@@ -117,10 +127,12 @@ data class TerritorialgrenseMetadata(
     description = "Spesifikk metadata for en AvtaltAvgrensningslinje. Beskrevet i SOSI-modellen her: https://objektkatalog.geonorge.no/Diagram/Index/EAID_EEECEE48_B3FA_4807_AAE4_B30B63BC28E1",
 )
 data class AvtaltAvgrensningslinjeMetadata(
-    @Schema(description = "Felles metadata-egenskaper for grenser.")
+    @Schema(description = "Felles metadata-egenskaper.")
     val common: CommonMetadata,
     @Schema(description = "Felles metadata-egenskaper for grenser.")
     val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
+    @Schema(description = "Henviser til fastsettings- eller lovinformasjon.")
+    var dokumentasjonsreferanser: List<Dokref> = emptyList(),
     @Schema(description = "Metadata-egenskaper for maritim grense.")
     var maritimeGrenser: MaritimeGrenserMetadata = MaritimeGrenserMetadata(),
 ) : Metadata
@@ -130,14 +142,31 @@ data class AvtaltAvgrensningslinjeMetadata(
     description = "Spesifikk metadata for en Grunnlinje. Beskrevet i SOSI-modellen her: https://objektkatalog.geonorge.no/Diagram/Index/EAID_EEECEE48_B3FA_4807_AAE4_B30B63BC28E1",
 )
 data class GrunnlinjeMetadata(
-    @Schema(description = "Felles metadata-egenskaper for grenser.")
+    @Schema(description = "Felles metadata-egenskaper.")
     val common: CommonMetadata,
     @Schema(description = "Felles metadata-egenskaper for grenser.")
     val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
+    @Schema(description = "Henviser til fastsettings- eller lovinformasjon.")
+    var dokumentasjonsreferanser: List<Dokref> = emptyList(),
     @Schema(description = "Metadata-egenskaper for maritim grense.")
     var maritimeGrenser: MaritimeGrenserMetadata = MaritimeGrenserMetadata(),
     @Schema(description = "Nummerering av kommunen i henhold til Statistisk sentralbyrå sin offisielle liste.")
     var kommunenummer: Kommunenummer? = null
+) : Metadata
+
+@Schema(
+    name = STATISTISKGRENSE_METADATA_SCHEMA,
+    description = "Spesifikk metadata for en statistisk grense (grunnkrets/delområde). Beskrevet i SOSI-modellen her: https://objektkatalog.geonorge.no/Diagram/Index/EAID_A3C68E12_E409_42c0_937D_6C1B62351E42",
+)
+data class StatistiskgrenseMetadata(
+    @Schema(description = "Felles metadata-egenskaper.")
+    val common: CommonMetadata,
+    @Schema(description = "Felles metadata-egenskaper for grenser.")
+    val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
+    @Schema(description = "Opplysning om at grense følger naturlige skillelinjer i terrenget.")
+    var foelgerTerrengdetalj: KodelisteEntry = KodelisteEntry(),
+    @Schema(description = "Klassifikasjon av stedfestingsnøyaktighet på grenser, og er basert på dårligste nøyaktighet til grensepunktene til grensen.")
+    var noeyaktighetsklasse: KodelisteEntry = KodelisteEntry(),
 ) : Metadata
 
 data class CommonMetadata(
@@ -158,8 +187,6 @@ data class CommonMetadata(
 )
 
 data class CommonGrenseMetadata(
-    @Schema(description = "Henviser til fastsettings- eller lovinformasjon.")
-    var dokumentasjonsreferanser: List<Dokref> = emptyList(),
     @Schema(description = "Beskrivelse av kvaliteten på stedfestingen")
     var posisjonskvalitet: Posisjonskvalitet? = null,
     @Schema(description = "Juridisk status på grensa.")

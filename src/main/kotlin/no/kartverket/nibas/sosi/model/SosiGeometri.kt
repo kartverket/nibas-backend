@@ -42,6 +42,11 @@ open class SosiGeometri(type: String, niva: Int, verdier: MutableList<SosiVerdi>
     fun getGrensestatus(): String? = getVerdiAvBarn(SosiKoder.GRENSESTATUS)
     fun getFolgerTerrengdetalj(): String? = getVerdiAvBarn(SosiKoder.FOLGERTERRENGDETALJ)
     fun getKvalitet(): SosiKvalitet? = barn.find { it is SosiKvalitet } as? SosiKvalitet
+    fun getEndringsflagg(): SosiEndringsflagg? = barn.find {it is SosiEndringsflagg} as? SosiEndringsflagg
+    fun getKopidata(): SosiKopidata? = barn.find {it is SosiKopidata} as? SosiKopidata
+    fun getGrunnkretsId(): SosiGrunnkretsId? = barn.find {it is SosiGrunnkretsId} as? SosiGrunnkretsId
+
+    fun getRegistreringsversjon(): SosiRegistreringsversjon? = barn.find {it is SosiRegistreringsversjon} as? SosiRegistreringsversjon
     fun getLandkode(): String? = getVerdiAvBarn(SosiKoder.LANDKODE)
     fun getLandkoder(): List<String> = getVerdierAvBarn(SosiKoder.LANDKODE)
     fun getDokumentasjonsReferanse(): List<SosiDokumentasjonsReferanse> =
@@ -65,16 +70,4 @@ open class SosiGeometri(type: String, niva: Int, verdier: MutableList<SosiVerdi>
         }
         return null
     }
-}
-
-fun stringAsZonedDateTime(verdi: String?): ZonedDateTime? = when (verdi) {
-    null -> null
-    else -> stringAsDate(verdi)?.toZonedDateTime()
-}
-
-fun LocalDate.toZonedDateTime(): ZonedDateTime = this.atStartOfDay(ZoneId.systemDefault())
-
-private fun stringAsDate(verdi: String?) = when (verdi) {
-    null -> null
-    else -> LocalDate.parse(verdi, SosiObjekt.SOSI_DATOFORMAT)
 }

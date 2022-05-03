@@ -41,6 +41,4 @@ abstract class Grense : CommonMetadataProperties {
     @JoinColumn(name = "fastsettingstype")
     var fastsettingstype: Fastsettingstype? = null
 
-    abstract var dokumentasjonsreferanser: MutableSet<Dokumentasjonsreferanse>
-
 }

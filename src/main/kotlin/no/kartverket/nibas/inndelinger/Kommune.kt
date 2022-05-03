@@ -2,7 +2,7 @@ package no.kartverket.nibas.inndelinger
 
 import no.kartverket.nibas.api.v1.KommuneApi
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
-import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
+import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.request.KommuneRequest
 import no.kartverket.nibas.api.v1.response.HistorikkRef
@@ -48,7 +48,7 @@ class KommuneController @Autowired constructor(
             null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
             else -> FeatureCollection(
                 features = grenser.sortedBy { it.grenseKoblingAttributter.rekkefoelge }
-                    .map { grenseKoblingToFeature(id, AdministrativEnhetType.KOMMUNE, it, kodelisteService) }
+                    .map { grenseKoblingToFeature(id, KontekstEnhetType.KOMMUNE, it, kodelisteService) }
             )
         }
     }
@@ -62,7 +62,6 @@ class KommuneController @Autowired constructor(
 
     override fun hentHistorikkForEn(id: String): List<HistorikkRef> =
         historikkService.hentHistorikk(id, Kommune::class.java).map { toHistorikkRef(it) }
-
 
     override fun hentHistorikkRevisjon(id: String, revision: Int): KommuneResponse {
         return toKommuneResponse(
@@ -85,10 +84,10 @@ class KommuneService @Autowired constructor(
     fun hentGrenserForKommune(id: String): Set<GrenseKobling>? {
         return kommuneRepository.findById(id).unwrap()?.let { kommune ->
             kommune.kommunegrenser +
-                    kommune.fylkesgrenser +
-                    kommune.riksgrenser +
-                    kommune.territorialgrenser +
-                    kommune.avtaltavgrensningslinjer
+            kommune.fylkesgrenser +
+            kommune.riksgrenser +
+            kommune.territorialgrenser +
+            kommune.avtaltavgrensningslinjer
         }
     }
 

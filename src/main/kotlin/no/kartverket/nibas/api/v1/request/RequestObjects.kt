@@ -2,6 +2,7 @@ package no.kartverket.nibas.api.v1.request
 
 import io.swagger.v3.oas.annotations.media.Schema
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
+import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import javax.validation.constraints.NotBlank
 import javax.validation.constraints.NotNull
 
@@ -58,4 +59,17 @@ data class KommuneRequest(
     @Schema(description = "Angir om kommunen er et samisk forvaltningsområde")
     @NotNull
     val samiskforvaltningsomraade: Boolean,
+)
+
+@Schema(description = "Representasjon av en grunnkrets")
+data class GrunnkretsRequest(
+
+    @Schema(description = "Navnet på grunnkretsen")
+    val navn: String,
+
+    @Schema(description = "Grunnkretsnummeret til grunnkretsen")
+    val grunnkretsnummer: String,
+
+    @Schema(description = "Identifikasjon av grunnkretsen")
+    val identifikasjon: Identifikasjon
 )

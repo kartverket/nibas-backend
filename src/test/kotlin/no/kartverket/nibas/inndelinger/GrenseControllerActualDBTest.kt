@@ -70,14 +70,12 @@ class GrenseControllerActualDBTest {
                 gyldigFra = gyldigFra,
                 informasjon = beskrivelse
             ),
-            commonGrense = metadata.commonGrense.copy(
-                dokumentasjonsreferanser = listOf(
-                    Dokref(
-                        dokumentlenker = listOf(TekstHolder(beskrivelse = dokumentLink)),
-                        fastsettingsmyndighet = fastsettingsmyndighet,
-                        rettskildeId = rettskildeId,
-                        rettskildeTittel = rettskildeTittel
-                    )
+            dokumentasjonsreferanser = listOf(
+                Dokref(
+                    dokumentlenker = listOf(TekstHolder(beskrivelse = dokumentLink)),
+                    fastsettingsmyndighet = fastsettingsmyndighet,
+                    rettskildeId = rettskildeId,
+                    rettskildeTittel = rettskildeTittel
                 )
             )
         )

@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.RequestParam
 interface KommuneApi {
 
     //TODO: Skulle vi heller vurdert å ha 2 tjenester her, en for hentAlle og en for hentAlleForFylke hvor fylkeId er påkrevet?
-    @Operation(summary = "Hent alle kommuner", description = "Henter alle kommuner i nasjonal inndelingsbase.")
+    @Operation(summary = "Hent alle kommuner", description = "Henter alle kommuner i Nasjonal inndelingsbase.")
     @ApiResponses(
         ApiResponse(
             responseCode = "200",
