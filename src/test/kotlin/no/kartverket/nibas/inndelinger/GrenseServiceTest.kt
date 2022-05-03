@@ -6,6 +6,7 @@ import no.kartverket.nibas.builders.FylkeBuilder
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.domain.Fylkesgrense
+import no.kartverket.nibas.domain.Kommunegrense
 import no.kartverket.nibas.repository.AvtaltAvgrensningslinjeRepository
 import no.kartverket.nibas.repository.FastsettingstypeRepository
 import no.kartverket.nibas.repository.FylkeRepository
@@ -19,6 +20,7 @@ import no.kartverket.nibas.repository.NoeyaktighetsklassekodeRepository
 import no.kartverket.nibas.repository.RiksgrenseRepository
 import no.kartverket.nibas.repository.TerrengdetaljkodeRepository
 import no.kartverket.nibas.repository.TerritorialgrenseRepository
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.locationtech.jts.geom.Coordinate
@@ -29,6 +31,7 @@ import org.mockito.Mockito.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.mock.mockito.MockBean
+import java.util.*
 import kotlin.test.assertEquals
 import org.mockito.Mockito.`when` as whenever
 
@@ -38,33 +41,33 @@ class GrenseServiceTest {
     @Autowired
     lateinit var grenseService: GrenseService
 
+    @MockBean
+    private lateinit var kommunegrenseRepositoryMock: KommunegrenseRepository
+
+    @MockBean
+    private lateinit var fylkesgrenseRepositoryMock: FylkesgrenseRepository
+
+    @MockBean
+    private lateinit var kommuneRepositoryMock: KommuneRepository
+
+    @MockBean
+    private lateinit var fylkeRepositoryMock: FylkeRepository
+
     //Disse ubrukte servicene må være tilstede for å få bygget konteksten
     @MockBean
-    private lateinit var kommunegrenseRepository: KommunegrenseRepository
+    private lateinit var territorialgrenseRepositoryMock: TerritorialgrenseRepository
 
     @MockBean
-    private lateinit var fylkesgrenseRepository: FylkesgrenseRepository
+    private lateinit var avtaltAvgrensningslinjeRepositoryMock: AvtaltAvgrensningslinjeRepository
 
     @MockBean
-    private lateinit var territorialgrenseRepository: TerritorialgrenseRepository
+    private lateinit var riksgrenseRepositoryMock: RiksgrenseRepository
 
     @MockBean
-    private lateinit var avtaltAvgrensningslinjeRepository: AvtaltAvgrensningslinjeRepository
+    private lateinit var nasjonRepositoryMock: NasjonRepository
 
     @MockBean
-    private lateinit var riksgrenseRepository: RiksgrenseRepository
-
-    @MockBean
-    private lateinit var kommuneRepository: KommuneRepository
-
-    @MockBean
-    private lateinit var fylkeRepository: FylkeRepository
-
-    @MockBean
-    private lateinit var nasjonRepository: NasjonRepository
-
-    @MockBean
-    private lateinit var landKodeRepository: LandKodeRepository
+    private lateinit var landKodeRepositoryMock: LandKodeRepository
 
     @MockBean
     private lateinit var fastsettingstypeRepositoryMock: FastsettingstypeRepository
@@ -111,9 +114,9 @@ class GrenseServiceTest {
         val fylkeSomSkalOppdateres = FylkeBuilder.DEFAULT_FYLKE
         val kommuneSomSkalOppdateres = KommuneBuilder.DEFAULT_KOMMUNE
 
-        whenever(fylkesgrenseRepository.findAllById(anyCollection())).thenReturn(listOf(eksisterendeGrense))
-        whenever(fylkeRepository.findAllById(anyCollection())).thenReturn(listOf(fylkeSomSkalOppdateres))
-        whenever(kommuneRepository.findAllById(anyCollection())).thenReturn(listOf(kommuneSomSkalOppdateres))
+        whenever(fylkesgrenseRepositoryMock.findAllById(anyCollection())).thenReturn(listOf(eksisterendeGrense))
+        whenever(fylkeRepositoryMock.findAllById(anyCollection())).thenReturn(listOf(fylkeSomSkalOppdateres))
+        whenever(kommuneRepositoryMock.findAllById(anyCollection())).thenReturn(listOf(kommuneSomSkalOppdateres))
         grenseService.lagreFylkesgrenser(
             listOf(
                 oppdatertGrensefeature,
@@ -123,15 +126,15 @@ class GrenseServiceTest {
             )
         )
 
-        verify(fylkesgrenseRepository, times(1)).saveAll(fylkesgrenseCaptor!!.capture())
+        verify(fylkesgrenseRepositoryMock, times(1)).saveAll(fylkesgrenseCaptor!!.capture())
 
         val lagredeGrenser: MutableList<List<Fylkesgrense>> = fylkesgrenseCaptor!!.allValues
         assertEquals(4, lagredeGrenser.flatten().size, "Skal lagre 4 grenser til databasen")
 
-        verify(fylkeRepository).saveAll(listOf(fylkeSomSkalOppdateres))
+        verify(fylkeRepositoryMock).saveAll(listOf(fylkeSomSkalOppdateres))
         assertEquals(1, fylkeSomSkalOppdateres.fylkesgrenser.size, "Fylket skal ha fått en fylkesgrense")
 
-        verify(kommuneRepository).saveAll(listOf(kommuneSomSkalOppdateres))
+        verify(kommuneRepositoryMock).saveAll(listOf(kommuneSomSkalOppdateres))
         assertEquals(2, kommuneSomSkalOppdateres.fylkesgrenser.size, "Kommunen skal ha fått to fylkesgrenser")
     }
 
@@ -143,7 +146,7 @@ class GrenseServiceTest {
             .withGrensetype(GrenseType.Kommunegrense)
             .build()
 
-        whenever(fylkeRepository.findAllById(anyCollection())).thenReturn(listOf(FylkeBuilder.DEFAULT_FYLKE))
+        whenever(fylkeRepositoryMock.findAllById(anyCollection())).thenReturn(listOf(FylkeBuilder.DEFAULT_FYLKE))
 
         val exception =
             assertThrows<RuntimeException>("Skal kaste exception når det legges til en ny kommunegrense på et fylke") {
@@ -151,6 +154,13 @@ class GrenseServiceTest {
             }
 
         assertEquals("Kan ikke legge til Kommunegrense på enhet Fylke", exception.message)
+    }
+
+    @Test
+    fun hentGrenseReturnsNullInCaseOfNoMatch() {
+        val emptyKommunegrense = Optional.empty<Kommunegrense>()
+        whenever(kommunegrenseRepositoryMock.findById(anyString())).thenReturn(emptyKommunegrense)
+        assertThat(grenseService.hentGrense("1", Kommunegrense::class)).isNull()
     }
 
 }

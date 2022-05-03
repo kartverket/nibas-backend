@@ -151,7 +151,7 @@ class GrenseService @Autowired constructor(
             Avtaltavgrensningslinje::class -> avtaltAvgrensningslinjeRepository
             Riksgrense::class -> riksgrenseRepository
             else -> throw RuntimeException("Ukjent grensetype")
-        }.findById(id).unwrap() as T
+        }.findById(id).unwrap() as T?
     }
 
     fun lagreKommunegrenser(grenser: List<Feature>) =
