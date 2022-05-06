@@ -88,7 +88,7 @@ spring:
       authentication: kubernetes
       kubernetes:
         role: nibas # Er en rolle definert hos skip
-        kubernetes-path: atkv2_test_apps
+        kubernetes-path: atkv1-dev
         service-account-token-file: /var/run/secrets/kubernetes.io/serviceaccount/token
 ---
 spring:
