@@ -33,6 +33,7 @@ resource "kubernetes_deployment" "nibas-backend-deployment" {
       metadata {
         annotations = {
           "prometheus.io/scrape" = "true"
+          "seccomp.security.alpha.kubernetes.io/pod" = "runtime/default"
         }
         labels = {
           app = "nibas-backend"
