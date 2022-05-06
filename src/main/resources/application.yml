@@ -58,7 +58,7 @@ spring:
   # Vault-konfigurasjon
   cloud:
     vault:
-      uri: https://vault.tools.test.skip.statkart.no/
+      uri: https://vault.dev.skip.statkart.no/
       ssl:
         trust-store: classpath:ca.jks
         trust-store-type: jks
