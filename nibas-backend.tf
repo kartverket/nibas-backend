@@ -44,9 +44,20 @@ resource "kubernetes_deployment" "nibas-backend-deployment" {
           # Midlertidig PAT for Kenneth
           name="nibas-pull-token-atkv1-kes"
         }
+        security_context {
+          supplemental_groups = [199]
+          fs_group = 199
+        }
         container {
           image = "ghcr.io/kartverket/nibas-backend:${var.nibas_backend_version}"
           name  = "nibas-backend"
+          security_context {
+            privileged                 = false # Normal priviliges
+            allow_privilege_escalation = false # Prevent reqests for root priviliges
+            read_only_root_filesystem  = true  # Prevent writing to system files
+            run_as_user                = 199   # Run as an unpriviliged user
+            run_as_group               = 199   # Run as an unpriviliged group
+          }
           resources {
             requests = {
               memory = "1Gi"

@@ -3,6 +3,10 @@ on:
   push:
     branches: [ master ]
 
+permissions:
+  id-token: write
+  contents: 'read'
+
 env:
   image_name: nibas-backend
   registry: ghcr.io
