@@ -81,25 +81,41 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    environment: atkv2-test-apps
-    
+    environment: ${{ matrix.environment }}
+    strategy:
+      matrix:
+        environment: [ 'atkv1-dev' ]
+
     steps:
     - name: Checkout
       uses: actions/checkout@v2
+
+    # Fetch environment variables and set for subsequent steps
+    - name: read .env
+      uses: c-py/action-dotenv-to-setenv@v3
+      with: 
+        env-file: .github/workflows/.env.${{matrix.environment}}
       
     - name: Set up Cloud SDK
       uses: google-github-actions/setup-gcloud@v0
 
-    - name: Authenticate with Google Cloud
+    # Authenticate with google cloud serviceaccount to have permissions in cluster.
+    # Variabel project_id må settes til kubernetesprosjektet her.   
+    - id: auth
+      name: Authenticate to GCP
       uses: google-github-actions/auth@v0
-      with: 
-        credentials_json: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+      with:
+        workload_identity_provider: ${{env.WORKLOAD_IDENTITY_FEDERATION_PROVIDER}}
+        service_account: ${{env.WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT}}
+        project_id: ${{env.TF_VAR_PROJECT_ID}}
 
     - name: Authenticate with cluster
-      run: gcloud container hub memberships get-credentials atkv2-test-apps --verbosity debug
-
+      run: gcloud container hub memberships get-credentials ${{ matrix.environment }} --verbosity debug
+    
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v1
+      with:
+        terraform_wrapper: false
 
     - name: Generate terraform variables
       run: |
@@ -107,8 +123,14 @@ jobs:
         nibas_backend_version="${{ needs.build.outputs.new_tag }}"
         EOF
     
+    - name: Generate terraform backend variables
+      run: |
+        cat <<EOF >> backend.tfbackend
+        bucket="${{ env.BUCKET }}"
+        EOF
+    
     - name: Terraform init
-      run: terraform init -input=false
+      run: terraform init -input=false -backend-config=backend.tfbackend
 
     - name: Terraform plan
       run: terraform plan -input=false

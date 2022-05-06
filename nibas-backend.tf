@@ -1,6 +1,6 @@
 terraform {
   backend "gcs" {
-    bucket  = "terraform-state-nibas-backend"
+    prefix = "nibas-backend"
   }
 }
 
@@ -42,7 +42,7 @@ resource "kubernetes_deployment" "nibas-backend-deployment" {
       spec {
         image_pull_secrets {
           # Midlertidig PAT for Kenneth
-          name="nibas-pull-token-kes"
+          name="nibas-pull-token-atkv1-kes"
         }
         container {
           image = "ghcr.io/kartverket/nibas-backend:${var.nibas_backend_version}"
