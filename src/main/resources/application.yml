@@ -74,9 +74,7 @@ nibas:
     kodeliste:
       invalidate: 0 0 3 * * *
   httpProxy:
-    enabled: true
-    host: tkgeproxy1.statkart.no
-    port: 3128
+    enabled: false
 
 ---
 spring:
