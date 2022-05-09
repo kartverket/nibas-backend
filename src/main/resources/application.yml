@@ -73,9 +73,6 @@ nibas:
   cron:
     kodeliste:
       invalidate: 0 0 3 * * *
-  httpProxy:
-    enabled: false
-
 ---
 spring:
   config:
@@ -99,9 +96,4 @@ spring:
       authentication: token
       token: ${VAULT_TOKEN}
       enabled: true
-
-
-nibas:
-  httpProxy:
-    enabled: false
 
