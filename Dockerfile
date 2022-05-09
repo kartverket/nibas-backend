@@ -12,5 +12,7 @@ RUN addgroup -g ${GROUP_ID} ${GROUP_NAME} && adduser --uid ${USER_ID} --disabled
 EXPOSE 8080
 RUN mkdir /nibas-backend
 COPY build/libs/*.jar /nibas-backend/app.jar
+RUN mkdir /tmp
+VOLUME /tmp
 USER ${USER_ID}
 ENTRYPOINT ["java", "-XX:MaxRAMPercentage=70.0", "-Djava.security.egd=file:/dev/./urandom","-jar", "/nibas-backend/app.jar"]
