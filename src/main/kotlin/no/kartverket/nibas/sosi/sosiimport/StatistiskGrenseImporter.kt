@@ -49,7 +49,6 @@ class StatistiskGrenseImporter @Autowired constructor(
 
         grense.kvalitet = sosiGeometri.getPosisjonskvalitet(kodelisteService)
 
-        grense.oppdateringsdato = sosiGeometri.getOppdateringsdato() ?: grense.oppdateringsdato
         grense.opphav = sosiGeometri.getOpphav()
 
         grense.registreringsversjon?.produkt = sosiGeometri.getRegistreringsversjon()?.getProdukt()

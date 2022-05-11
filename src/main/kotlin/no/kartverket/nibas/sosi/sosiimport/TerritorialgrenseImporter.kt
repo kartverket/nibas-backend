@@ -34,7 +34,6 @@ class TerritorialgrenseImporter @Autowired constructor(
                 var territorialgrense = Territorialgrense()
                 territorialgrense.updateSosiIdentifikasjon(sosiIdent)
                 territorialgrense.datafangstdato = sosiTerritorialgrense.getDatafangstDato()
-                territorialgrense.oppdateringsdato = sosiTerritorialgrense.getOppdateringsdato()!!
 
                 territorialgrense.datauttaksdato = sosiTerritorialgrense.getDataUttaksdato()
 

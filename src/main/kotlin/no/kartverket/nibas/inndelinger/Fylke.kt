@@ -106,7 +106,7 @@ class FylkeService @Autowired constructor(
 fun toFylkeRef(fylke: Fylke): FylkeRef = FylkeRef(
     id = fylke.id,
     navn = fylke.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!) },
-    href = ServletUriComponentsBuilder.fromCurrentRequestUri().pathSegment(fylke.id.toString()).build().toUriString()
+    href = ServletUriComponentsBuilder.fromCurrentRequestUri().pathSegment(fylke.id).build().toUriString()
 )
 
 fun toFylkeResponse(fylke: Fylke, kodelisteService: KodelisteService): FylkeResponse = FylkeResponse(
@@ -119,6 +119,6 @@ fun toFylkeResponse(fylke: Fylke, kodelisteService: KodelisteService): FylkeResp
         kodeverdi = kodelisteService.getCodeValueByFylkesnummerId(fylke.fylkesnummer)?.toInt()!!
     ),
     samiskforvaltningsomraade = fylke.samiskforvaltningsomraade!!,
-    oppdateringsdato = fylke.oppdateringsdato!!,
+    oppdateringsdato = fylke.auditInfo.oppdateringsdato,
     features = FeatureCollection(features = listOf(posisjonToFeature(fylke.posisjon), flateToFeature(fylke.flate)))
 )

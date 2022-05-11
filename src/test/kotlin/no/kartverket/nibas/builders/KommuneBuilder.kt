@@ -59,7 +59,7 @@ class KommuneBuilder(private val id: String = "1") {
         kommune.navnerom = navnerom
         kommune.kommunenummer = kommunenummer
         kommune.samiskforvaltningsomraade = samiskforvaltningsomraade
-        kommune.oppdateringsdato = oppdateringsdato
+        kommune.auditInfo.oppdateringsdato = oppdateringsdato
         kommune.posisjon = GeometryFactory().createPoint(Coordinate(1.0, 1.0))
         kommune.flate = GeometryFactory().createMultiPolygon(arrayOf(GeometryFactory().createPolygon()))
 

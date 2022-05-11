@@ -23,9 +23,6 @@ class Lovvirkeomraadegrense : GrenseMedDokumentasjonsreferanser() {
     @Column(name = "versjonid")
     override var versjonid: String? = null
 
-    @Column(name = "oppdateringsdato")
-    override var oppdateringsdato: LocalDate = LocalDate.now()
-
     @Column(name = "datafangstdato")
     override var datafangstdato: LocalDate? = null
 

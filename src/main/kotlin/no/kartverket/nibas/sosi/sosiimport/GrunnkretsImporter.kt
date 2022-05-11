@@ -76,7 +76,6 @@ class GrunnkretsImporter @Autowired constructor(
             grunnkrets.kopidata?.kopidato = flate.getKopidata()?.getKopidato()
             grunnkrets.kopidata?.omraadeid = flate.getKopidata()?.getOmraadeId()
             grunnkrets.kopidata?.originaldatavert = flate.getKopidata()?.getOriginalDatavert()
-            grunnkrets.oppdateringsdato = flate.getOppdateringsdato()!!
             grunnkrets.opphav = flate.getOpphav()
 
             grunnkrets.registreringsversjon?.produkt = flate.getRegistreringsversjon()?.getProdukt()

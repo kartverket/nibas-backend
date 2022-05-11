@@ -1,12 +1,15 @@
 package no.kartverket.nibas.domain
 
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
+import no.kartverket.nibas.sporing.AuditInfo
+import no.kartverket.nibas.sporing.Sporbar
 import org.hibernate.envers.Audited
 import org.locationtech.jts.geom.MultiPolygon
 import org.locationtech.jts.geom.Point
 import java.time.LocalDate
 import java.util.*
 import javax.persistence.Column
+import javax.persistence.Embedded
 import javax.persistence.Id
 import javax.persistence.JoinColumn
 import javax.persistence.ManyToOne
@@ -16,11 +19,14 @@ import javax.persistence.MappedSuperclass
 @Audited
 abstract class AdministrativEnhet(
     @Transient val type: AdministrativEnhetType,
-) : ContainsSosiIdentifikasjon {
+) : ContainsSosiIdentifikasjon, Sporbar {
 
     @Id
     @Column(name = "objid", nullable = false, updatable = false)
     val id: String = UUID.randomUUID().toString()
+
+    @Embedded
+    override var auditInfo: AuditInfo = AuditInfo()
 
     @Column(name = "objtype")
     var objtype: String? = null
@@ -39,9 +45,6 @@ abstract class AdministrativEnhet(
 
     @Column(name = "versjonid")
     override var versjonid: String? = null
-
-    @Column(name = "oppdateringsdato")
-    var oppdateringsdato: LocalDate? = null
 
     @Column(name = "sluttdato")
     var sluttdato: LocalDate? = null

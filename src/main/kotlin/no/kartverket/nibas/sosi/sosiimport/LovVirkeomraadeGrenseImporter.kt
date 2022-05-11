@@ -38,10 +38,6 @@ class LovVirkeomraadeGrenseImporter @Autowired constructor(
                 var lovvirkeomraadegrense = Lovvirkeomraadegrense()
                 lovvirkeomraadegrense.updateSosiIdentifikasjon(sosiIdent)
                 lovvirkeomraadegrense.datafangstdato = sosiLovvirkeomraadegrense.getDatafangstDato()
-                val oppdateringsdato = sosiLovvirkeomraadegrense.getOppdateringsdato()
-                if (oppdateringsdato != null) {
-                    lovvirkeomraadegrense.oppdateringsdato = oppdateringsdato
-                }
                 lovvirkeomraadegrense.datauttaksdato = sosiLovvirkeomraadegrense.getDataUttaksdato()
                 lovvirkeomraadegrense.kommunenummer = kommunenummerIds
                 lovvirkeomraadegrense.opphav = sosiLovvirkeomraadegrense.getOpphav()

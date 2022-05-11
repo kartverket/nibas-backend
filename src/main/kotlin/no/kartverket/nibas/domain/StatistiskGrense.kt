@@ -2,7 +2,6 @@ package no.kartverket.nibas.domain
 
 import org.hibernate.envers.Audited
 import java.time.LocalDate
-import java.time.ZonedDateTime
 import javax.persistence.Column
 import javax.persistence.Embedded
 import javax.persistence.JoinColumn
@@ -18,9 +17,6 @@ abstract class StatistiskGrense : Grense() {
 
     @Column(name = "datafangstdato")
     override var datafangstdato: LocalDate? = null
-
-    @Column(name = "oppdateringsdato")
-    override var oppdateringsdato: LocalDate = LocalDate.now()
 
     @Column(name = "sluttdato")
     var sluttdato: LocalDate? = null

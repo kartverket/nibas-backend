@@ -45,9 +45,6 @@ class Territorialgrense : GrenseMedDokumentasjonsreferanser(), MaritimGrense {
     @Column(name = "tidspunktendring")
     var tidspunktendring: LocalDate? = null
 
-    @Column(name = "oppdateringsdato")
-    override var oppdateringsdato: LocalDate = LocalDate.now()
-
     @Column(name = "opphav")
     override var opphav: String? = null
 

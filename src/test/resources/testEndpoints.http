@@ -39,8 +39,8 @@ Accept: application/json
 ## Slutt på kodelister
 
 ### POST Sosi-file for import (legg fila i src/test/resources)
-POST http://nibas.test.skip.statkart.no/v1/import
-Authorization: Bearer <LEGG TIL ET BEARER-TOKEN HER, KOPIER FRA NETTLESER ETTER INNLOGGING>
+POST http://localhost:8080/v1/import
+#Authorization: Bearer <LEGG TIL ET BEARER-TOKEN HER, KOPIER FRA NETTLESER ETTER INNLOGGING>
 Content-Type: multipart/form-data; boundary=boundary
 Accept: application/json
 

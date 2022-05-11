@@ -4,6 +4,7 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.KodelisteEntry
 import no.kartverket.nibas.api.v1.common.geojson.metadata.KodelisteHrefProvider
 import no.kartverket.nibas.api.v1.common.geojson.metadata.KodelisteHrefProviderI
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Posisjonskvalitet
+import no.kartverket.nibas.sporing.Sporbar
 import java.time.LocalDate
 import java.util.function.Supplier
 import javax.persistence.Column
@@ -57,11 +58,10 @@ data class Registreringsversjon(
 )
 
 // Felles egenskaper for grenser, adm_enheter, punkter ++
-interface CommonMetadataProperties : ContainsSosiIdentifikasjon {
+interface CommonMetadataProperties : ContainsSosiIdentifikasjon, Sporbar {
     var datafangstdato: LocalDate?
     var gyldigFra: LocalDate?
     var gyldigTil: LocalDate?
-    var oppdateringsdato: LocalDate
     var opphav: String?
     fun getInfo(): String?
     fun setInfo(updatedInfo: String?)

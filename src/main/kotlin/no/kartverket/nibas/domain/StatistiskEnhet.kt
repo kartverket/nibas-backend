@@ -1,9 +1,10 @@
 package no.kartverket.nibas.domain
 
 import no.kartverket.nibas.api.v1.common.StatistiskEnhetType
+import no.kartverket.nibas.sporing.AuditInfo
+import no.kartverket.nibas.sporing.Sporbar
 import org.hibernate.envers.Audited
 import java.time.LocalDate
-import java.time.ZonedDateTime
 import java.util.*
 import javax.persistence.Column
 import javax.persistence.Embedded
@@ -14,10 +15,13 @@ import javax.persistence.MappedSuperclass
 @Audited
 abstract class StatistiskEnhet(
     @Transient val type: StatistiskEnhetType,
-) : CommonMetadataProperties {
+) : CommonMetadataProperties, Sporbar {
     @Id
     @Column(name = "objid", nullable = false, updatable = false)
     val id: String = UUID.randomUUID().toString()
+
+    @Embedded
+    override var auditInfo: AuditInfo = AuditInfo()
 
     @Column(name = "objtype")
     var objtype: String? = null
@@ -39,9 +43,6 @@ abstract class StatistiskEnhet(
 
     @Column(name = "datafangstdato")
     override var datafangstdato: LocalDate? = null
-
-    @Column(name = "oppdateringsdato")
-    override var oppdateringsdato: LocalDate = LocalDate.now()
 
     @Column(name = "sluttdato")
     var sluttdato: LocalDate? = null

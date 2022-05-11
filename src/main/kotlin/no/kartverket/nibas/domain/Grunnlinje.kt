@@ -38,9 +38,6 @@ class Grunnlinje : GrenseMedDokumentasjonsreferanser(), MaritimGrense {
     @Column(name = "datauttaksdato")
     var datauttaksdato: LocalDate? = null
 
-    @Column(name = "oppdateringsdato")
-    override var oppdateringsdato: LocalDate = LocalDate.now()
-
     @ManyToOne
     @JoinColumn(name = "typeendring")
     var typeendring: Typeendring? = null

@@ -42,9 +42,6 @@ class Riksgrense(override val id: String = UUID.randomUUID().toString()) : Grens
     @Column(name = "datauttaksdato")
     var datauttaksdato: LocalDate? = null
 
-    @Column(name = "oppdateringsdato", nullable = false)
-    override var oppdateringsdato: LocalDate = LocalDate.now()
-
     @ManyToOne
     @JoinColumn(name = "typeendring")
     var typeendring: Typeendring? = null
@@ -91,6 +88,7 @@ class Riksgrense(override val id: String = UUID.randomUUID().toString()) : Grens
     fun setAnsvarligeMyndigheter(listToUpdate: List<AnsvarligMyndighetHolder>) {
         doSetAnsvarligeMyndigheter(listToUpdate, riksgrenseAnsvarligeMyndigheter) { RiksgrenseAnsvarligMyndighet(this) }
     }
+
 }
 
 @Table(name = "riksgrense_informasjon")

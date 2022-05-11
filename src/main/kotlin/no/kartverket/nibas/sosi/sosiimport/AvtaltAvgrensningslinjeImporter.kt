@@ -48,7 +48,6 @@ class AvtaltAvgrensningslinjeImporter @Autowired constructor(
                 avtaltavgrensningslinje.opphav = sosiAvtaltAvgrensningslinje.getOpphav()
                 avtaltavgrensningslinje.datauttaksdato = sosiAvtaltAvgrensningslinje.getDataUttaksdato()
                 avtaltavgrensningslinje.landkode = landkoder
-                avtaltavgrensningslinje.oppdateringsdato = sosiAvtaltAvgrensningslinje.getOppdateringsdato()!!
 
                 avtaltavgrensningslinje.gyldigFra = sosiAvtaltAvgrensningslinje.getGyldigFra()
                 avtaltavgrensningslinje.kvalitet = sosiAvtaltAvgrensningslinje.getPosisjonskvalitet(kodelisteService)

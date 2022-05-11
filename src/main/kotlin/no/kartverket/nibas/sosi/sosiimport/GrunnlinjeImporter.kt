@@ -34,7 +34,6 @@ class GrunnlinjeImporter @Autowired constructor(
                 var grunnlinje = Grunnlinje()
                 grunnlinje.updateSosiIdentifikasjon(sosiIdent)
                 grunnlinje.datafangstdato = sosiGrunnlinje.getDatafangstDato()
-                grunnlinje.oppdateringsdato = sosiGrunnlinje.getOppdateringsdato()!!
                 grunnlinje.datauttaksdato = sosiGrunnlinje.getDataUttaksdato()
 
                 grunnlinje.opphav = sosiGrunnlinje.getOpphav()

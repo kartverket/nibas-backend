@@ -1,12 +1,23 @@
 package no.kartverket.nibas.api.v1.common.geojson.metadata
 
-import no.kartverket.nibas.domain.*
+import no.kartverket.nibas.domain.AdministrativGrense
+import no.kartverket.nibas.domain.AnsvarligMyndighetHolder
+import no.kartverket.nibas.domain.Avtaltavgrensningslinje
+import no.kartverket.nibas.domain.CommonMetadataProperties
+import no.kartverket.nibas.domain.Dokumentasjonsreferanse
+import no.kartverket.nibas.domain.DokumentasjonsreferanseDokumentlink
+import no.kartverket.nibas.domain.DokumentasjonsreferanseInternReferanseKartverket
+import no.kartverket.nibas.domain.Grense
+import no.kartverket.nibas.domain.GrenseMedDokumentasjonsreferanser
+import no.kartverket.nibas.domain.Landkode
+import no.kartverket.nibas.domain.MaritimGrense
+import no.kartverket.nibas.domain.Riksgrense
+import no.kartverket.nibas.domain.Territorialgrense
 import no.kartverket.nibas.repository.FastsettingstypeRepository
 import no.kartverket.nibas.repository.GrensestatusRepository
 import no.kartverket.nibas.repository.LandKodeRepository
 import no.kartverket.nibas.repository.NoeyaktighetsklassekodeRepository
 import no.kartverket.nibas.repository.TerrengdetaljkodeRepository
-import java.time.LocalDate
 
 /**
  * Hjelpeklasse/mappinglogikk metadata -> grense.
@@ -99,13 +110,15 @@ class MetadataUpdater(private val landKodeRepository: LandKodeRepository,
         this.setLand(maritimeGrenserMetadata.toListeAvLand())
     }
 
-    // Identifikasjon ignoreres, dette skal ikke kunne oppdateres, burde egentlig ikke være med på tur inn
+    /**
+     * Identifikasjon ignoreres, dette skal ikke kunne oppdateres, burde egentlig ikke være med på tur inn.
+     * Sporingsinformasjon ignoreres også, dette settes av interceptor.
+     */
     private fun CommonMetadataProperties.updateWithCommonMetadata(common: CommonMetadata) {
         this.datafangstdato = common.datafangstdato
         this.gyldigFra = common.gyldigFra
         this.gyldigTil = common.gyldigTil
         this.setInfo(common.informasjon)
-        this.oppdateringsdato = LocalDate.now()
         this.opphav = common.opphav
     }
 

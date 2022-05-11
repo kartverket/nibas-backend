@@ -32,11 +32,7 @@ class RiksgrenseImporter @Autowired constructor(
                 riksgrense.updateSosiIdentifikasjon(sosiIdent)
                 riksgrense.datafangstdato = sosiRiksgrense.getDatafangstDato()
 
-                //Selv om oppdateringsdato står som et påkrevd felt i sosi-modellen mangler dette i de initielle dataene, må derfor gjøre en null-sjekk her
-                val oppdateringsdato = sosiRiksgrense.getOppdateringsdato()
-                if (oppdateringsdato != null) {
-                    riksgrense.oppdateringsdato = oppdateringsdato
-                }
+
 
                 riksgrense.datauttaksdato = sosiRiksgrense.getDataUttaksdato()
 

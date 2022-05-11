@@ -27,7 +27,6 @@ class AdministrativEnhetImporter {
         }
 
         administrativEnhet.updateSosiIdentifikasjon(flate.getIdent())
-        administrativEnhet.oppdateringsdato = flate.getOppdateringsdato()
         administrativEnhet.datauttaksdato = flate.getDataUttaksdato()
         administrativEnhet.opphav = flate.getOpphav()
         administrativEnhet.gyldigfra = flate.getGyldigFra()

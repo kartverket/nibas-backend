@@ -58,7 +58,7 @@ class FylkeBuilder(private val id: String = "1") {
         fylke.navnerom = navnerom
         fylke.fylkesnummer = fylkesnummer
         fylke.samiskforvaltningsomraade = samiskforvaltningsomraade
-        fylke.oppdateringsdato = oppdateringsdato
+        fylke.auditInfo.oppdateringsdato = oppdateringsdato
         fylke.posisjon = GeometryFactory().createPoint(Coordinate(1.0, 1.0))
         fylke.flate = GeometryFactory().createMultiPolygon(arrayOf(GeometryFactory().createPolygon()))
 

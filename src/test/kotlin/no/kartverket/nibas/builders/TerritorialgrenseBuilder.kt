@@ -43,7 +43,7 @@ class TerritorialgrenseBuilder {
         territorialgrense.gyldigFra = gyldigFra
         territorialgrense.gyldigTil = null
         territorialgrense.kvalitet = kvalitet
-        territorialgrense.oppdateringsdato = oppdateringsdato
+        territorialgrense.auditInfo.oppdateringsdato = oppdateringsdato
         territorialgrense.opphav = opphav
         territorialgrense.fastsettingstype = Fastsettingstype().apply { id = fastsettingstypeEnum.name }
         territorialgrense.grensestatus = Grensestatus().apply { id = grensestatusEnum.name }

@@ -1,5 +1,6 @@
 package no.kartverket.nibas.domain
 
+import no.kartverket.nibas.sporing.AuditInfo
 import org.hibernate.envers.Audited
 import org.locationtech.jts.geom.LineString
 import java.util.*
@@ -20,6 +21,9 @@ abstract class Grense : CommonMetadataProperties {
 
     @Column(name = "objtype")
     var objtype: String? = null
+
+    @Embedded
+    override var auditInfo: AuditInfo = AuditInfo()
 
     @Column(name = "lokalid", nullable = false, updatable = false)
     override var lokalid: String = UUID.randomUUID().toString()

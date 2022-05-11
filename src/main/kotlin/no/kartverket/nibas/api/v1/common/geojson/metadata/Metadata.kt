@@ -180,8 +180,8 @@ data class CommonMetadata(
     var gyldigTil: LocalDate? = null,
     @Schema(description = "Generelle opplysninger/merknad")
     var informasjon: String? = null,
-    @Schema(description = "Dato for siste endring på objektdataene")
-    var oppdateringsdato: LocalDate = LocalDate.now(),
+    @Schema(description = "Holder på informasjon om endring av objektet.")
+    var sporingsinformasjon: Sporingsinformasjon = Sporingsinformasjon(),
     @Schema(description = "Referanse til opphavsmaterialet, kildematerialet, organisasjons/publiseringskilde.")
     var opphav: String? = null,
 )
@@ -264,4 +264,11 @@ data class Dokref(
     var rettskildeId: String? = null,
     @Schema(description = "Navn på lov, forskrift, vedtak, dom eller traktat.")
     var rettskildeTittel: String
+)
+
+data class Sporingsinformasjon(
+    @Schema(description = "Dato for siste endring på objektdataene")
+    var oppdateringsdato: LocalDate = LocalDate.now(),
+    @Schema(description = "Angir hvem som endret data på objektet sist.")
+    var endretAv: String? = null
 )

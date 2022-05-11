@@ -39,7 +39,6 @@ class AdministrativGrenseImporter @Autowired constructor(
         grense.datafangstdato = sosiGeometri.getDatafangstDato()
         grense.omtvistet = sosiGeometri.getOmtvistet()
 
-        grense.oppdateringsdato = sosiGeometri.getOppdateringsdato() ?: grense.oppdateringsdato
         grense.kvalitet = sosiGeometri.getPosisjonskvalitet(kodelisteService)
         grense.grensestatus = sosiGeometri.getGrensestatus()
             ?.let { grensestatusRepository.findByIdOrNull(it) ?: throw RuntimeException("Ukjent grensestatus") }

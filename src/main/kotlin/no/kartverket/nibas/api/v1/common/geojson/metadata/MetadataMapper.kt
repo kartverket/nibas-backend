@@ -10,9 +10,7 @@ import no.kartverket.nibas.api.v1.TERRENGDETALJKODE_PATH
 import no.kartverket.nibas.domain.AdministrativGrense
 import no.kartverket.nibas.domain.Avtaltavgrensningslinje
 import no.kartverket.nibas.domain.CommonMetadataProperties
-import no.kartverket.nibas.domain.Delomraadegrense
 import no.kartverket.nibas.domain.Grense
-import no.kartverket.nibas.domain.Grunnkretsgrense
 import no.kartverket.nibas.domain.Grunnlinje
 import no.kartverket.nibas.domain.MaritimGrense
 import no.kartverket.nibas.domain.Riksgrense
@@ -20,6 +18,7 @@ import no.kartverket.nibas.domain.StatistiskGrense
 import no.kartverket.nibas.domain.Territorialgrense
 import no.kartverket.nibas.inndelinger.createKommunenummerFromUUID
 import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.sporing.toSporingsinformasjon
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 
 /**
@@ -98,7 +97,7 @@ class MetadataMapper(private val kodelisteService: KodelisteService,
         gyldigFra = this.gyldigFra,
         gyldigTil = this.gyldigTil,
         informasjon = this.getInfo(),
-        oppdateringsdato = this.oppdateringsdato,
+        sporingsinformasjon = this.auditInfo.toSporingsinformasjon(),
         opphav = this.opphav,
     )
 

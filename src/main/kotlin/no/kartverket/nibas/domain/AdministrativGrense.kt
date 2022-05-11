@@ -21,9 +21,6 @@ abstract class AdministrativGrense : GrenseMedDokumentasjonsreferanser() {
     @Column(name = "datauttaksdato")
     var datauttaksdato: LocalDate? = null
 
-    @Column(name = "oppdateringsdato")
-    override var oppdateringsdato: LocalDate = LocalDate.now()
-
     @Embedded
     var endringsflagg: Endringsflagg? = Endringsflagg()
 

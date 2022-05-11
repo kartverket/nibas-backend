@@ -10,6 +10,7 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.CommonMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Metadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.RiksgrenseMetadata
+import no.kartverket.nibas.api.v1.common.geojson.metadata.Sporingsinformasjon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.TerritorialgrenseMetadata
 import no.kartverket.nibas.inndelinger.GrenseType
 import org.locationtech.jts.geom.Coordinate
@@ -43,7 +44,7 @@ class FeatureBuilder(private val id: String? = "1") {
         if (metadata == null) {
             val commonMetadata = CommonMetadata(
                 identifikasjon = Identifikasjon(lokalid, navnerom),
-                oppdateringsdato = ZonedDateTime.now().toLocalDate()
+                sporingsinformasjon = Sporingsinformasjon(oppdateringsdato = ZonedDateTime.now().toLocalDate())
             )
             metadata = when (grenseType) {
                 GrenseType.Kommunegrense -> AdministrativGrenseMetadata(common = commonMetadata)

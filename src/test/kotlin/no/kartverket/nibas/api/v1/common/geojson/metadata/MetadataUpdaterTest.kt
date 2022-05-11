@@ -212,7 +212,7 @@ internal class MetadataUpdaterTest {
         datafangstdato = dataFanget,
         gyldigFra = gyldigFraTidspunkt,
         gyldigTil = null,
-        oppdateringsdato = oppdDato,
+        sporingsinformasjon = Sporingsinformasjon(oppdateringsdato = oppdDato),
         opphav = "opphav3",
         informasjon = INFORMASJONTEKST
     )
