@@ -55,6 +55,7 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
+import java.util.logging.Logger
 import kotlin.reflect.KClass
 
 @RestController
@@ -150,6 +151,7 @@ class GrenseService @Autowired constructor(
     private val noeyaktighetsklassekodeRepository: NoeyaktighetsklassekodeRepository,
     private val grensestatusRepository: GrensestatusRepository
 ) {
+    private val logger: Logger = Logger.getLogger(this::class.java.name)
 
     @Suppress("UNCHECKED_CAST")
     fun <T : Grense> hentGrense(id: String, kClass: KClass<T>): T? {
@@ -216,6 +218,10 @@ class GrenseService @Autowired constructor(
                 kontekstEgenskaper.id!!
             )
         }
+        oppdaterteGrenser.forEach {
+            val grense = it.grenseMedAttributter.grense
+            logger.info("Lagrer grense: [${grense.objtype} - id ${grense.id}]")
+        }
 
         grenseRepository.saveAll(oppdaterteGrenser.map { it.grenseMedAttributter.grense })
 
@@ -256,18 +262,21 @@ class GrenseService @Autowired constructor(
         repository: CrudRepository<S, String>
     ) {
         val enheter = repository.findAllById(grenser.map { it.kontekstId })
-        repository.saveAll(
-            enheter.map { enhet ->
-                grenser.filter { it.kontekstId == enhet.id }.map { it.grenseMedAttributter }
-                    .forEach { grenseMedAttributter ->
-                        enhet.oppdaterEllerLeggTilGrenseKobling(
-                            grenseMedAttributter.grense,
-                            grenseMedAttributter.attributter
-                        )
-                    }
-                enhet
-            }
-        )
+        val enheterSomSkalLagres = enheter.map { enhet ->
+            grenser.filter { it.kontekstId == enhet.id }
+                .map { it.grenseMedAttributter }
+                .forEach { grenseMedAttributter ->
+                    enhet.oppdaterEllerLeggTilGrenseKobling(
+                        grenseMedAttributter.grense,
+                        grenseMedAttributter.attributter
+                    )
+                }
+            logger.info("Lagrer enhet: [${enhet.type.name} - id ${enhet.id}]")
+
+            enhet
+        }
+
+        repository.saveAll(enheterSomSkalLagres)
     }
 
     @Suppress("UNCHECKED_CAST")
