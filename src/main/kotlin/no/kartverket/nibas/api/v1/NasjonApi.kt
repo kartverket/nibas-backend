@@ -10,7 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.request.NasjonRequest
-import no.kartverket.nibas.api.v1.response.HistorikkRef
+import no.kartverket.nibas.api.v1.response.RevisjonRef
 import no.kartverket.nibas.api.v1.response.NasjonRef
 import no.kartverket.nibas.api.v1.response.NasjonResponse
 import org.springframework.http.MediaType
@@ -72,16 +72,16 @@ interface NasjonApi {
     ): NasjonResponse
 
     @Operation(
-        summary = "Hent historikk for en gitt nasjon",
-        description = "Henter historikken til en nasjon med gitt id"
+        summary = "Hent historiske revisjoner for en gitt nasjon",
+        description = "Henter historiske revisjoner til en nasjon med gitt id"
     )
-    @DefaultHistorikkRefListApiResponses
-    @GetMapping("/{id}/historikk", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentHistorikkForEn(@Parameter(description = "ID-en til nasjonen man vil hente historikk for") @PathVariable id: String): List<HistorikkRef>
+    @DefaultRevisjonRefListApiResponses
+    @GetMapping("/{id}/revisjoner", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun hentNasjonRevisjoner(@Parameter(description = "ID-en til nasjonen man vil hente historiske revisjoner for") @PathVariable id: String): List<RevisjonRef>
 
     @Operation(
         summary = "Hent en historisk versjon av en nasjon",
-        description = "Henter en gitt revisjon av en historisk nasjon"
+        description = "Henter en gitt historisk revisjon av en nasjon"
     )
     @ApiResponses(
         ApiResponse(
@@ -97,9 +97,9 @@ interface NasjonApi {
             description = "Not Found"
         )
     )
-    @GetMapping("/{id}/historikk/{revision}", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentHistorikkRevisjon(
+    @GetMapping("/{id}/revisjoner/{revisjon}", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun hentNasjonRevisjon(
         @Parameter(description = "Id til nasjonen man vil hente") @PathVariable id: String,
-        @Parameter(description = "Id til revisjonen man vil hente") @PathVariable revision: Int
+        @Parameter(description = "Id til revisjonen man vil hente") @PathVariable revisjon: Int
     ): NasjonResponse
 }

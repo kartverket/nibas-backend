@@ -12,7 +12,7 @@ import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
 import no.kartverket.nibas.api.v1.response.GrunnkretsRef
 import no.kartverket.nibas.api.v1.response.GrunnkretsResponse
-import no.kartverket.nibas.api.v1.response.HistorikkRef
+import no.kartverket.nibas.api.v1.response.RevisjonRef
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -75,16 +75,16 @@ interface GrunnkretsApi {
     fun hentGrenser(@Parameter(description = "ID-en til grunnkretsen man vil hente") @PathVariable id: String): FeatureCollection
 
     @Operation(
-        summary = "Hent historikk for en gitt grunnkrets",
-        description = "Henter historikken til en grunnkrets med gitt id"
+        summary = "Hent historiske revisjoner for en gitt grunnkrets",
+        description = "Henter historiske revisjoner til en grunnkrets med gitt id"
     )
-    @DefaultHistorikkRefListApiResponses
-    @GetMapping("/{id}/historikk", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentHistorikkForEn(@Parameter(description = "ID-en til grunnkretsen man vil hente") @PathVariable id: String): List<HistorikkRef>
+    @DefaultRevisjonRefListApiResponses
+    @GetMapping("/{id}/revisjoner", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun hentGrunnkretsRevisjoner(@Parameter(description = "ID-en til grunnkretsen man vil hente") @PathVariable id: String): List<RevisjonRef>
 
     @Operation(
-        summary = "Hent en historisk versjon av en grunnkrets",
-        description = "Henter en gitt revisjon av en historisk grunnkrets"
+        summary = "Hent en historisk revisjon av en grunnkrets",
+        description = "Henter en gitt historisk revisjon av en grunnkrets"
     )
     @ApiResponses(
         ApiResponse(
@@ -102,10 +102,10 @@ interface GrunnkretsApi {
             description = "Not Found"
         )
     )
-    @GetMapping("/{id}/historikk/{revision}", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentHistorikkRevisjon(
+    @GetMapping("/{id}/revisjoner/{revisjon}", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun hentGrunnkretsRevisjon(
         @Parameter(description = "ID-en til grunnkretsen man vil hente") @PathVariable id: String,
-        @Parameter(description = "RevisjonsId til revisjonen man vil hente") @PathVariable revision: Int
+        @Parameter(description = "ID til revisjonen man vil hente") @PathVariable revisjon: Int
     ): GrunnkretsResponse
 
     @Operation(

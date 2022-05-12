@@ -300,28 +300,28 @@
 }
 ``` 
 
-## GET http://localhost:8080/v1/kommuner/1/historikk
+## GET http://localhost:8080/v1/kommuner/1/revisjoner
 ```json
 [
   {
     "id": 1,
-    "href": "http://localhost:8080/v1/kommuner/1/historikk/1"
+    "href": "http://localhost:8080/v1/kommuner/1/revisjoner/1"
   },
   {
     "id": 2,
-    "href": "http://localhost:8080/v1/kommuner/1/historikk/2"
+    "href": "http://localhost:8080/v1/kommuner/1/revisjoner/2"
   }
 ]
 ```
-## GET http://localhost:8080/v1/kommuner/1/historikk/1
+## GET http://localhost:8080/v1/kommuner/1/revisjoner/1
 
 # Grenser
 # Hente grense
 ### GET http://localhost:8080/v1/grenser/kommunegrenser/1
-### GET http://localhost:8080/v1/grenser/kommunegrenser/1/historikk
-### GET http://localhost:8080/v1/grenser/kommunegrenser/1/historikk/1
+### GET http://localhost:8080/v1/grenser/kommunegrenser/1/revisjoner
+### GET http://localhost:8080/v1/grenser/kommunegrenser/1/revisjoner/1
 
-# Hente historikk på grense
+# Hente revisjoner på grense
 
 ## Oppdatere grenser
 ### POST http://localhost:8080/v1/grenser/

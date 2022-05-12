@@ -1,6 +1,6 @@
 package no.kartverket.nibas.inndelinger
 
-import no.kartverket.nibas.api.v1.response.HistorikkRef
+import no.kartverket.nibas.api.v1.response.RevisjonRef
 import org.hibernate.envers.AuditReader
 import org.hibernate.envers.DefaultRevisionEntity
 import org.hibernate.envers.RevisionType
@@ -11,7 +11,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 @Service
 class HistorikkService(val auditReader: AuditReader) {
 
-    fun <T> hentHistorikk(id: String, type: Class<T>): List<Pair<DefaultRevisionEntity, RevisionType>> {
+    fun <T> hentRevisjoner(id: String, type: Class<T>): List<Pair<DefaultRevisionEntity, RevisionType>> {
         return auditReader.createQuery()
             .forRevisionsOfEntity(type, false, false)
             .add(AuditEntity.id().eq(id))
@@ -22,30 +22,30 @@ class HistorikkService(val auditReader: AuditReader) {
     }
 
     @Suppress("UNCHECKED_CAST")
-    fun <T> hentHistorikkRevisjon(id: String, revision: Int, type: Class<T>): T {
-        return auditReader.createQuery().forEntitiesAtRevision(type, revision)
+    fun <T> hentRevisjon(id: String, revisjon: Int, type: Class<T>): T {
+        return auditReader.createQuery().forEntitiesAtRevision(type, revisjon)
             .add(AuditEntity.id().eq(id)).singleResult as T
     }
 }
 
-fun toHistorikkRef(revision: Pair<DefaultRevisionEntity, RevisionType>) =
-    HistorikkRef(
+fun toRevisjonRef(revision: Pair<DefaultRevisionEntity, RevisionType>) =
+    RevisjonRef(
         revision.first.id,
         revision.first.revisionDate,
-        toHistorikkStatus(revision.second),
+        toRevisjonStatus(revision.second),
         ServletUriComponentsBuilder.fromCurrentRequestUri().pathSegment(revision.first.id.toString()).build()
             .toUriString()
     )
 
 
-fun toHistorikkStatus(revType: RevisionType): HistorikkStatus {
+private fun toRevisjonStatus(revType: RevisionType): RevisjonStatus {
     return when (revType) {
-        RevisionType.ADD -> HistorikkStatus.NY
-        RevisionType.MOD -> HistorikkStatus.ENDRET
-        RevisionType.DEL -> HistorikkStatus.SLETTET
+        RevisionType.ADD -> RevisjonStatus.NY
+        RevisionType.MOD -> RevisjonStatus.ENDRET
+        RevisionType.DEL -> RevisjonStatus.SLETTET
     }
 }
 
-enum class HistorikkStatus {
+enum class RevisjonStatus {
     NY, ENDRET, SLETTET
 }

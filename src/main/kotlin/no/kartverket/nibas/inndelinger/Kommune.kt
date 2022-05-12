@@ -5,7 +5,7 @@ import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.request.KommuneRequest
-import no.kartverket.nibas.api.v1.response.HistorikkRef
+import no.kartverket.nibas.api.v1.response.RevisjonRef
 import no.kartverket.nibas.api.v1.response.KommuneRef
 import no.kartverket.nibas.api.v1.response.KommuneResponse
 import no.kartverket.nibas.api.v1.response.Kommunenummer
@@ -60,12 +60,12 @@ class KommuneController @Autowired constructor(
         }
     }
 
-    override fun hentHistorikkForEn(id: String): List<HistorikkRef> =
-        historikkService.hentHistorikk(id, Kommune::class.java).map { toHistorikkRef(it) }
+    override fun hentKommuneRevisjoner(id: String): List<RevisjonRef> =
+        historikkService.hentRevisjoner(id, Kommune::class.java).map { toRevisjonRef(it) }
 
-    override fun hentHistorikkRevisjon(id: String, revision: Int): KommuneResponse {
+    override fun hentKommuneRevisjon(id: String, revisjon: Int): KommuneResponse {
         return toKommuneResponse(
-            historikkService.hentHistorikkRevisjon(id, revision, Kommune::class.java),
+            historikkService.hentRevisjon(id, revisjon, Kommune::class.java),
             kodelisteService
         )
     }

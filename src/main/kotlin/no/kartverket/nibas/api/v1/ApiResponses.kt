@@ -7,7 +7,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
-import no.kartverket.nibas.api.v1.response.HistorikkRef
+import no.kartverket.nibas.api.v1.response.RevisjonRef
 
 
 @ApiResponses(
@@ -29,11 +29,11 @@ annotation class DefaultFeatureApiResponses
         description = "Successful operation",
         content = [Content(
             mediaType = "application/json",
-            array = ArraySchema(schema = Schema(implementation = HistorikkRef::class))
+            array = ArraySchema(schema = Schema(implementation = RevisjonRef::class))
         )]
     )
 )
-annotation class DefaultHistorikkRefListApiResponses
+annotation class DefaultRevisjonRefListApiResponses
 
 @ApiResponses(
     ApiResponse(

@@ -5,7 +5,7 @@ import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.request.NasjonRequest
-import no.kartverket.nibas.api.v1.response.HistorikkRef
+import no.kartverket.nibas.api.v1.response.RevisjonRef
 import no.kartverket.nibas.api.v1.response.NasjonResponse
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Nasjon
@@ -54,12 +54,12 @@ class NasjonController @Autowired constructor(
         }
     }
 
-    override fun hentHistorikkForEn(id: String): List<HistorikkRef> =
-        historikkService.hentHistorikk(id, Nasjon::class.java).map { toHistorikkRef(it) }
+    override fun hentNasjonRevisjoner(id: String): List<RevisjonRef> =
+        historikkService.hentRevisjoner(id, Nasjon::class.java).map { toRevisjonRef(it) }
 
-    override fun hentHistorikkRevisjon(id: String, revision: Int): NasjonResponse {
+    override fun hentNasjonRevisjon(id: String, revisjon: Int): NasjonResponse {
         return toNasjonResponse(
-            historikkService.hentHistorikkRevisjon(id, revision, Nasjon::class.java)
+            historikkService.hentRevisjon(id, revisjon, Nasjon::class.java)
         )
     }
 }

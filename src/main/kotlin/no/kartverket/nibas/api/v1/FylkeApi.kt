@@ -12,7 +12,7 @@ import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.request.FylkeRequest
 import no.kartverket.nibas.api.v1.response.FylkeRef
 import no.kartverket.nibas.api.v1.response.FylkeResponse
-import no.kartverket.nibas.api.v1.response.HistorikkRef
+import no.kartverket.nibas.api.v1.response.RevisjonRef
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -72,16 +72,16 @@ interface FylkeApi {
     ): FylkeResponse
 
     @Operation(
-        summary = "Hent historikk for et gitt fylke",
-        description = "Henter historikken til et fylke med gitt id"
+        summary = "Hent historiske revisjoner for et gitt fylke",
+        description = "Henter historiske revisjoner til et fylke med gitt id"
     )
-    @DefaultHistorikkRefListApiResponses
-    @GetMapping("/{id}/historikk", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentHistorikkForEn(@Parameter(description = "ID-en til fylket man vil hente historikk for") @PathVariable id: String): List<HistorikkRef>
+    @DefaultRevisjonRefListApiResponses
+    @GetMapping("/{id}/revisjoner", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun hentFylkesRevisjoner(@Parameter(description = "ID-en til fylket man vil hente historiske revisjoner for") @PathVariable id: String): List<RevisjonRef>
 
     @Operation(
-        summary = "Hent en historisk versjon av et fylke",
-        description = "Henter en gitt revisjon av et historisk fylke"
+        summary = "Hent en historisk revisjon av et fylke",
+        description = "Henter en gitt historisk revisjon av et fylke"
     )
     @ApiResponses(
         ApiResponse(
@@ -97,9 +97,9 @@ interface FylkeApi {
             description = "Not Found"
         )
     )
-    @GetMapping("/{id}/historikk/{revision}", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentHistorikkRevisjon(
+    @GetMapping("/{id}/revisjoner/{revisjon}", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun hentFylkesRevisjon(
         @Parameter(description = "ID-en til fylket man vil hente") @PathVariable id: String,
-        @Parameter(description = "RevisjonsId til revisjonen man vil hente") @PathVariable revision: Int
+        @Parameter(description = "ID til revisjonen man vil hente") @PathVariable revisjon: Int
     ): FylkeResponse
 }

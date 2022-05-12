@@ -8,7 +8,7 @@ import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.request.FylkeRequest
 import no.kartverket.nibas.api.v1.response.FylkeRef
 import no.kartverket.nibas.api.v1.response.FylkeResponse
-import no.kartverket.nibas.api.v1.response.HistorikkRef
+import no.kartverket.nibas.api.v1.response.RevisjonRef
 import no.kartverket.nibas.domain.Fylke
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.kodelister.KodelisteService
@@ -55,12 +55,12 @@ class FylkeController @Autowired constructor(
         }
     }
 
-    override fun hentHistorikkForEn(id: String): List<HistorikkRef> =
-        historikkService.hentHistorikk(id, Fylke::class.java).map { toHistorikkRef(it) }
+    override fun hentFylkesRevisjoner(id: String): List<RevisjonRef> =
+        historikkService.hentRevisjoner(id, Fylke::class.java).map { toRevisjonRef(it) }
 
-    override fun hentHistorikkRevisjon(id: String, revision: Int): FylkeResponse {
+    override fun hentFylkesRevisjon(id: String, revisjon: Int): FylkeResponse {
         return toFylkeResponse(
-            historikkService.hentHistorikkRevisjon(id, revision, Fylke::class.java),
+            historikkService.hentRevisjon(id, revisjon, Fylke::class.java),
             kodelisteService
         )
     }

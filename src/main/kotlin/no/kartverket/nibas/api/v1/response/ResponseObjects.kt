@@ -5,7 +5,7 @@ import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.common.Fylkesnummer
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
-import no.kartverket.nibas.inndelinger.HistorikkStatus
+import no.kartverket.nibas.inndelinger.RevisjonStatus
 import java.time.LocalDate
 import java.util.*
 
@@ -61,17 +61,17 @@ data class GrunnkretsRef(
     val href: String
 )
 
-@Schema(description = "En referanse til en historisk versjon av en administrativ enhet")
-data class HistorikkRef(
+@Schema(description = "En referanse til en historisk revisjon av en administrativ enhet")
+data class RevisjonRef(
 
     @Schema(description = "IDen til den historiske revisjonen")
-    val revisionId: Int,
+    val revisjonId: Int,
 
     @Schema(description = "Når revisjonen ble opprettet")
-    val revisionDate: Date,
+    val revisjonDato: Date,
 
     @Schema(description = "Angir status for hva som medførte en ny revisjon")
-    val historikkStatus: HistorikkStatus,
+    val revisjonStatus: RevisjonStatus,
 
     @Schema(description = "Referanse til hvor den historiske revisjonen kan finnes")
     val href: String

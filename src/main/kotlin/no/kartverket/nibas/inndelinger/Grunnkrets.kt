@@ -7,7 +7,7 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
 import no.kartverket.nibas.api.v1.response.GrunnkretsRef
 import no.kartverket.nibas.api.v1.response.GrunnkretsResponse
-import no.kartverket.nibas.api.v1.response.HistorikkRef
+import no.kartverket.nibas.api.v1.response.RevisjonRef
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.kodelister.KodelisteService
@@ -60,13 +60,13 @@ class GrunnkretsController @Autowired constructor(
         }
     }
 
-    override fun hentHistorikkForEn(id: String): List<HistorikkRef> =
-        historikkService.hentHistorikk(id, Grunnkrets::class.java).map { toHistorikkRef(it) }
+    override fun hentGrunnkretsRevisjoner(id: String): List<RevisjonRef> =
+        historikkService.hentRevisjoner(id, Grunnkrets::class.java).map { toRevisjonRef(it) }
 
 
-    override fun hentHistorikkRevisjon(id: String, revision: Int): GrunnkretsResponse {
+    override fun hentGrunnkretsRevisjon(id: String, revisjon: Int): GrunnkretsResponse {
         return toGrunnkretsResponse(
-            historikkService.hentHistorikkRevisjon(id, revision, Grunnkrets::class.java)
+            historikkService.hentRevisjon(id, revisjon, Grunnkrets::class.java)
         )
     }
 }

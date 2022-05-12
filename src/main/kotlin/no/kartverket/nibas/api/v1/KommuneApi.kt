@@ -10,7 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.request.KommuneRequest
-import no.kartverket.nibas.api.v1.response.HistorikkRef
+import no.kartverket.nibas.api.v1.response.RevisjonRef
 import no.kartverket.nibas.api.v1.response.KommuneRef
 import no.kartverket.nibas.api.v1.response.KommuneResponse
 import org.springframework.http.MediaType
@@ -72,16 +72,16 @@ interface KommuneApi {
     fun hentGrenser(@Parameter(description = "ID-en til kommunen man vil hente") @PathVariable id: String): FeatureCollection
 
     @Operation(
-        summary = "Hent historikk for en gitt kommune",
-        description = "Henter historikken til en kommune med gitt id"
+        summary = "Hent historiske revisjoner for en gitt kommune",
+        description = "Henter historiske revisjoner til en kommune med gitt id"
     )
-    @DefaultHistorikkRefListApiResponses
-    @GetMapping("/{id}/historikk", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentHistorikkForEn(@Parameter(description = "ID-en til kommunen man vil hente") @PathVariable id: String): List<HistorikkRef>
+    @DefaultRevisjonRefListApiResponses
+    @GetMapping("/{id}/revisjoner", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun hentKommuneRevisjoner(@Parameter(description = "ID-en til kommunen man vil hente historiske revisjoner for") @PathVariable id: String): List<RevisjonRef>
 
     @Operation(
-        summary = "Hent en historisk versjon av en kommune",
-        description = "Henter en gitt revisjon av en historisk kommune"
+        summary = "Hent en historisk revisjon av en kommune",
+        description = "Henter en gitt historisk revisjon av en kommune"
     )
     @ApiResponses(
         ApiResponse(
@@ -97,10 +97,10 @@ interface KommuneApi {
             description = "Not Found"
         )
     )
-    @GetMapping("/{id}/historikk/{revision}", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentHistorikkRevisjon(
+    @GetMapping("/{id}/revisjoner/{revisjon}", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun hentKommuneRevisjon(
         @Parameter(description = "ID-en til kommunen man vil hente") @PathVariable id: String,
-        @Parameter(description = "RevisjonsId til revisjonen man vil hente") @PathVariable revision: Int
+        @Parameter(description = "ID til revisjonen man vil hente") @PathVariable revisjon: Int
     ): KommuneResponse
 
     @Operation(

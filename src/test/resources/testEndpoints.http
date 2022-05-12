@@ -60,10 +60,10 @@ GET http://localhost:8080/v1/nasjoner/1
 GET http://localhost:8080/v1/nasjoner/1/grenser
 
 ###
-GET http://localhost:8080/v1/nasjoner/1/historikk
+GET http://localhost:8080/v1/nasjoner/1/revisjoner
 
 ###
-GET http://localhost:8080/v1/nasjoner/1/historikk/1
+GET http://localhost:8080/v1/nasjoner/1/revisjoner/1
 
 ### GET Fylker
 GET http://localhost:8080/v1/fylker
@@ -75,10 +75,10 @@ GET http://localhost:8080/v1/fylker/1
 GET http://localhost:8080/v1/fylker/1/grenser
 
 ###
-GET http://localhost:8080/v1/fylker/1/historikk
+GET http://localhost:8080/v1/fylker/1/revisjoner
 
 ###
-GET http://localhost:8080/v1/fylker/1/historikk/1
+GET http://localhost:8080/v1/fylker/1/revisjoner/1
 
 ### GET Kommuner
 GET http://localhost:8080/v1/kommuner
@@ -90,40 +90,40 @@ GET http://localhost:8080/v1/kommuner/1
 GET http://localhost:8080/v1/kommuner/1/grenser
 
 ###
-GET http://localhost:8080/v1/kommuner/1/historikk
+GET http://localhost:8080/v1/kommuner/1/revisjoner
 
 ###
-GET http://localhost:8080/v1/kommuner/1/historikk/1
+GET http://localhost:8080/v1/kommuner/1/revisjoner/1
 
 ### GET Grenser
 http://localhost:8080/v1/grenser/riksgrenser/55bfbb2e-496c-4b33-aba4-2ca1d4cb41d6
 
 ###
-http://localhost:8080/v1/grenser/riksgrenser/1/historikk
+http://localhost:8080/v1/grenser/riksgrenser/1/revisjoner
 
 ###
 http://localhost:8080/v1/grenser/fylkesgrenser/46c77dbf-278f-4ef1-908a-d3c4aa2bc103
 
 ###
-http://localhost:8080/v1/grenser/fylkesgrenser/1/historikk
+http://localhost:8080/v1/grenser/fylkesgrenser/1/revisjoner
 
 ###
 http://localhost:8080/v1/grenser/territorialgrenser/1
 
 ###
-http://localhost:8080/v1/grenser/territorialgrenser/1/historikk
+http://localhost:8080/v1/grenser/territorialgrenser/1/revisjoner
 
 ###
 http://localhost:8080/v1/grenser/avtaltavgrensningslinjer/bfbc949b-c110-4f0a-a9ed-179c0eebb54c
 
 ###
-http://localhost:8080/v1/grenser/avtaltavgrensningslinjer/1/historikk
+http://localhost:8080/v1/grenser/avtaltavgrensningslinjer/1/revisjoner
 
 ###
 http://localhost:8080/v1/grenser/kommunegrenser/857fa624-5ba4-42b0-b0aa-f06d25d8f114
 
 ###
-http://localhost:8080/v1/grenser/kommunegrenser/1/historikk
+http://localhost:8080/v1/grenser/kommunegrenser/1/revisjoner
 
 ### Admin-API Invalidate kodelister
 PUT http://localhost:8080/v1/admin/kodelister/invalidate

@@ -12,14 +12,16 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.MetadataMapper
 import no.kartverket.nibas.api.v1.common.geojson.metadata.MetadataUpdater
 import no.kartverket.nibas.api.v1.common.geojson.metadata.RiksgrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.TerritorialgrenseMetadata
-import no.kartverket.nibas.api.v1.response.HistorikkRef
+import no.kartverket.nibas.api.v1.response.RevisjonRef
 import no.kartverket.nibas.domain.AdministrativEnhet
 import no.kartverket.nibas.domain.AdministrativGrense
 import no.kartverket.nibas.domain.Avtaltavgrensningslinje
+import no.kartverket.nibas.domain.Delomraadegrense
 import no.kartverket.nibas.domain.Fylkesgrense
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
+import no.kartverket.nibas.domain.Grunnkretsgrense
 import no.kartverket.nibas.domain.Grunnlinje
 import no.kartverket.nibas.domain.Kommunegrense
 import no.kartverket.nibas.domain.Riksgrense
@@ -27,10 +29,12 @@ import no.kartverket.nibas.domain.StatistiskGrense
 import no.kartverket.nibas.domain.Territorialgrense
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.AvtaltAvgrensningslinjeRepository
+import no.kartverket.nibas.repository.DelomraadegrenseRepository
 import no.kartverket.nibas.repository.FastsettingstypeRepository
 import no.kartverket.nibas.repository.FylkeRepository
 import no.kartverket.nibas.repository.FylkesgrenseRepository
 import no.kartverket.nibas.repository.GrensestatusRepository
+import no.kartverket.nibas.repository.GrunnkretsgrenseRepository
 import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.KommunegrenseRepository
 import no.kartverket.nibas.repository.LandKodeRepository
@@ -69,7 +73,7 @@ class GrenseController @Autowired constructor(
                 GrenseType.Riksgrense -> grenseService.lagreRiksgrenser(entry.value)
                 GrenseType.AvtaltAvgrensningslinje -> grenseService.lagreAvtaltAvgrensningslinjer(entry.value)
                 GrenseType.Territorialgrense -> grenseService.lagreTerritorialgrenser(entry.value)
-                else -> throw RuntimeException("Not yet implemented for grensetype: ${entry.key}")
+                else -> throw RuntimeException("Lagring/oppdatering av grenser er ikke implementert for grensetype: ${entry.key}")
             }
         }
 
@@ -81,6 +85,9 @@ class GrenseController @Autowired constructor(
     override fun hentRiksgrense(id: String): Feature = hentGrense(id, Riksgrense::class)
     override fun hentTerritorialsgrense(id: String): Feature = hentGrense(id, Territorialgrense::class)
     override fun hentAvtaltavgrensningslinje(id: String): Feature = hentGrense(id, Avtaltavgrensningslinje::class)
+    override fun hentGrunnkretsgrense(id: String): Feature = hentGrense(id, Grunnkretsgrense::class)
+    override fun hentDelomraadegrense(id: String): Feature = hentGrense(id, Delomraadegrense::class)
+
     private fun <T : Grense> hentGrense(id: String, type: KClass<T>): Feature {
         return when (val grense = grenseService.hentGrense(id, type)) {
             null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
@@ -88,42 +95,41 @@ class GrenseController @Autowired constructor(
         }
     }
 
-    override fun hentKommunegrenseHistorikk(id: String) = hentGrenseHistorikk(id, Kommunegrense::class.java)
-    override fun hentFylkesgrenseHistorikk(id: String) = hentGrenseHistorikk(id, Fylkesgrense::class.java)
-    override fun hentRiksgrenseHistorikk(id: String) = hentGrenseHistorikk(id, Riksgrense::class.java)
-    override fun hentTerritorialgrenseHistorikk(id: String) = hentGrenseHistorikk(id, Territorialgrense::class.java)
-    override fun hentAvtaltavgrensningslinjeHistorikk(id: String) =
-        hentGrenseHistorikk(id, Avtaltavgrensningslinje::class.java)
+    override fun hentKommunegrenseRevisjoner(id: String) = hentGrenseRevisjoner(id, Kommunegrense::class.java)
+    override fun hentFylkesgrenseRevisjoner(id: String) = hentGrenseRevisjoner(id, Fylkesgrense::class.java)
+    override fun hentRiksgrenseRevisjoner(id: String) = hentGrenseRevisjoner(id, Riksgrense::class.java)
+    override fun hentTerritorialgrenseRevisjoner(id: String) = hentGrenseRevisjoner(id, Territorialgrense::class.java)
+    override fun hentGrunnkretsgrenseRevisjoner(id: String) = hentGrenseRevisjoner(id, Grunnkretsgrense::class.java)
+    override fun hentDelomraadegrenseRevisjoner(id: String) = hentGrenseRevisjoner(id, Delomraadegrense::class.java)
 
-    private fun <T> hentGrenseHistorikk(id: String, type: Class<T>): List<HistorikkRef> {
-        return historikkService.hentHistorikk(id, type).map { pair ->
-            HistorikkRef(
-                pair.first.id,
-                pair.first.revisionDate,
-                toHistorikkStatus(pair.second),
-                ServletUriComponentsBuilder.fromCurrentRequest().pathSegment(pair.first.id.toString()).build()
-                    .toUriString()
-            )
-        }
+    override fun hentAvtaltavgrensningslinjeRevisjoner(id: String) =
+        hentGrenseRevisjoner(id, Avtaltavgrensningslinje::class.java)
+
+    private fun <T> hentGrenseRevisjoner(id: String, type: Class<T>): List<RevisjonRef> {
+        return historikkService.hentRevisjoner(id, type).map { toRevisjonRef(it) }
     }
 
-    override fun hentKommunegrenseRevisjon(id: String, revision: Int) =
-        hentGrenseRevisjon(id, revision, Kommunegrense::class.java)
+    override fun hentKommunegrenseRevisjon(id: String, revisjon: Int) =
+        hentGrenseRevisjon(id, revisjon, Kommunegrense::class.java)
 
-    override fun hentFylkesgrenseRevisjon(id: String, revision: Int): Feature =
-        hentGrenseRevisjon(id, revision, Fylkesgrense::class.java)
+    override fun hentFylkesgrenseRevisjon(id: String, revisjon: Int): Feature =
+        hentGrenseRevisjon(id, revisjon, Fylkesgrense::class.java)
 
-    override fun hentRiksgrenseRevisjon(id: String, revision: Int): Feature =
-        hentGrenseRevisjon(id, revision, Riksgrense::class.java)
+    override fun hentRiksgrenseRevisjon(id: String, revisjon: Int): Feature =
+        hentGrenseRevisjon(id, revisjon, Riksgrense::class.java)
 
-    override fun hentAvtaltavgrensningslinjeRevisjon(id: String, revision: Int): Feature =
-        hentGrenseRevisjon(id, revision, Avtaltavgrensningslinje::class.java)
+    override fun hentAvtaltavgrensningslinjeRevisjon(id: String, revisjon: Int): Feature =
+        hentGrenseRevisjon(id, revisjon, Avtaltavgrensningslinje::class.java)
 
-    override fun hentTerritorialgrenseRevisjon(id: String, revision: Int): Feature =
-        hentGrenseRevisjon(id, revision, Territorialgrense::class.java)
+    override fun hentTerritorialgrenseRevisjon(id: String, revisjon: Int): Feature =
+        hentGrenseRevisjon(id, revisjon, Territorialgrense::class.java)
 
-    private fun <T : Grense> hentGrenseRevisjon(id: String, revision: Int, type: Class<T>): Feature =
-        grenseToFeature(grense = historikkService.hentHistorikkRevisjon(id, revision, type), kodelisteService)
+    override fun hentGrunnkretsgrenseRevisjon(id: String, revisjon: Int): Feature = hentGrenseRevisjon(id, revisjon, Grunnkretsgrense::class.java)
+
+    override fun hentDelomraadegrenseRevisjon(id: String, revisjon: Int): Feature  = hentGrenseRevisjon(id, revisjon, Delomraadegrense::class.java)
+
+    private fun <T : Grense> hentGrenseRevisjon(id: String, revisjon: Int, type: Class<T>): Feature =
+        grenseToFeature(grense = historikkService.hentRevisjon(id, revisjon, type), kodelisteService)
 }
 
 @Service
@@ -133,6 +139,8 @@ class GrenseService @Autowired constructor(
     private val territorialgrenseRepository: TerritorialgrenseRepository,
     private val avtaltAvgrensningslinjeRepository: AvtaltAvgrensningslinjeRepository,
     private val riksgrenseRepository: RiksgrenseRepository,
+    private val grunnkretsgrenseRepository: GrunnkretsgrenseRepository,
+    private val delomraadegrenseRepository: DelomraadegrenseRepository,
     private val kommuneRepository: KommuneRepository,
     private val fylkeRepository: FylkeRepository,
     private val nasjonRepository: NasjonRepository,
@@ -151,6 +159,8 @@ class GrenseService @Autowired constructor(
             Territorialgrense::class -> territorialgrenseRepository
             Avtaltavgrensningslinje::class -> avtaltAvgrensningslinjeRepository
             Riksgrense::class -> riksgrenseRepository
+            Grunnkretsgrense::class -> grunnkretsgrenseRepository
+            Delomraadegrense::class -> delomraadegrenseRepository
             else -> throw RuntimeException("Ukjent grensetype")
         }.findById(id).unwrap() as T?
     }
