@@ -36,7 +36,7 @@ object DependencyVersions {
 }
 
 dependencies {
-    implementation("no.kartverket.aut:aut-lib:0.0.6")
+    implementation("no.kartverket.aut:aut-lib:0.0.9")
 
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-security") // Web-security
