@@ -37,7 +37,7 @@ class WebSecurityConfig @Autowired constructor(
             DefaultJwtValidator(
                 AutModulJwkProvider(
                     AutModulJwkProvider.JwksRetriever(
-                        JwkProviderProperties(autModulHost = environment.getProperty("autModulHost", "http://aut-idporten.test.skip.statkart.no"))
+                        JwkProviderProperties(autModulHost = environment.getProperty("autModulHost", "http://aut-idporten.dev.skip.statkart.no"))
                     )
                 )
             ), DummyNibasAuthorizerPlugin())
