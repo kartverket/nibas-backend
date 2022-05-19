@@ -19,11 +19,11 @@ import javax.persistence.MappedSuperclass
 @Audited
 abstract class AdministrativEnhet(
     @Transient val type: AdministrativEnhetType,
-) : ContainsSosiIdentifikasjon, Sporbar {
+) : Flate, Sporbar {
 
     @Id
     @Column(name = "objid", nullable = false, updatable = false)
-    val id: String = UUID.randomUUID().toString()
+    override val id: String = UUID.randomUUID().toString()
 
     @Embedded
     override var auditInfo: AuditInfo = AuditInfo()
@@ -53,7 +53,7 @@ abstract class AdministrativEnhet(
     var datauttaksdato: LocalDate? = null
 
     @Column(name = "opphav")
-    var opphav: String? = null
+    override var opphav: String? = null
 
     @Column(name = "produkt")
     var produkt: String? = null
@@ -62,10 +62,10 @@ abstract class AdministrativEnhet(
     var versjon: String? = null
 
     @Column(name = "gyldigfra")
-    var gyldigfra: LocalDate? = null
+    override var gyldigFra: LocalDate? = null
 
     @Column(name = "gyldigtil")
-    var gyldigtil: LocalDate? = null
+    override var gyldigTil: LocalDate? = null
 
     @Column(name = "omraadeid")
     var omraadeid: Int? = null
@@ -77,7 +77,7 @@ abstract class AdministrativEnhet(
     var kopidato: LocalDate? = null
 
     @Column(name = "datafangstdato")
-    var datafangstdato: LocalDate? = null
+    override var datafangstdato: LocalDate? = null
 
     @ManyToOne
     @JoinColumn(name = "land")
@@ -104,16 +104,10 @@ abstract class AdministrativEnhet(
     var posisjon: Point? = null
 
     @Column(name = "flate")
-    var flate: MultiPolygon? = null
+    override var flate: MultiPolygon? = null
 
     @javax.persistence.Transient
     var administrativenhetnavn: MutableSet<Administrativenhetnavn> = mutableSetOf()
-
-    abstract fun oppdaterFlate()
-
-    abstract fun oppdaterEllerLeggTilGrenseKobling(grense: Grense, attributter: GrenseKoblingAttributter)
-
-    data class SamlingOgDefault<T : GrenseKobling>(val samling: MutableSet<T>, val default: GrenseKobling)
 
     @Suppress("UNCHECKED_CAST")
     fun <T: GrenseKobling> oppdaterSamling(grense: Grense, attributter: GrenseKoblingAttributter, samling: MutableSet<T>, default: GrenseKobling) {

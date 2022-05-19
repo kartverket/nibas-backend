@@ -3,8 +3,6 @@ package no.kartverket.nibas.domain
 import no.kartverket.nibas.api.v1.common.StatistiskEnhetType
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import org.hibernate.envers.Audited
-import org.locationtech.jts.geom.MultiPolygon
-import org.locationtech.jts.geom.Point
 import java.util.*
 import javax.persistence.CascadeType
 import javax.persistence.Column
@@ -25,12 +23,6 @@ import javax.persistence.Table
 @Entity
 class Grunnkrets(override val id: String = UUID.randomUUID().toString()) :
     StatistiskEnhet(StatistiskEnhetType.GRUNNKRETS) {
-
-    @Column(name = "posisjon")
-    var posisjon: Point? = null
-
-    @Column(name = "flate")
-    var flate: MultiPolygon? = null
 
     @Column(name = "grunnkretsnummer", nullable = false)
     var grunnkretsnummer: String? = null
@@ -69,9 +61,7 @@ class Grunnkrets(override val id: String = UUID.randomUUID().toString()) :
     @OneToMany(mappedBy = "grunnkretsFk", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     var informasjonselementer: MutableSet<GrunnkretsInformasjon> = mutableSetOf()
 
-    override fun getInfo(): String? {
-        return doGetInfoFromSingletonCollection(informasjonselementer)
-    }
+    override fun getInfo(): String? = doGetInfoFromSingletonCollection(informasjonselementer)
 
     override fun setInfo(updatedInfo: String?) {
         doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { GrunnkretsInformasjon(this) }
@@ -85,6 +75,21 @@ class Grunnkrets(override val id: String = UUID.randomUUID().toString()) :
                 + avtaltavgrensningslinjer
                 + territorialgrenser
                 + riksgrenser)
+    }
+
+    override fun oppdaterEllerLeggTilGrenseKobling(grense: Grense, attributter: GrenseKoblingAttributter) {
+        val (samling, default) = when(grense) {
+            is Grunnkretsgrense -> SamlingOgDefault(grunnkretsgrenser, GrunnkretsGrunnkretsgrense(this, grense, attributter))
+            is Delomraadegrense -> SamlingOgDefault(delomraadegrenser, GrunnkretsDelomraadegrense(this, grense, attributter))
+            is Kommunegrense -> SamlingOgDefault(kommunegrenser, GrunnkretsKommunegrense(this, grense, attributter))
+            is Fylkesgrense -> SamlingOgDefault(fylkesgrenser, GrunnkretsFylkesgrense(this, grense, attributter))
+            is Avtaltavgrensningslinje -> SamlingOgDefault(avtaltavgrensningslinjer, GrunnkretsAvtaltavgrensningslinje(this, grense, attributter))
+            is Territorialgrense -> SamlingOgDefault(territorialgrenser, GrunnkretsTerritorialgrense(this, grense, attributter))
+            is Riksgrense -> SamlingOgDefault(riksgrenser, GrunnkretsRiksgrense(this, grense, attributter))
+            else -> throw RuntimeException("Kan ikke legge til ${grense::class.simpleName} på enhet Fylke")
+        }
+
+        oppdaterSamling(grense, attributter, samling, default)
     }
 
     override fun toString(): String {

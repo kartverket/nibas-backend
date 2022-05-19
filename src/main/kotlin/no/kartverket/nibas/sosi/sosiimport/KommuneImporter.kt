@@ -116,7 +116,7 @@ class KommuneImporter @Autowired constructor(
         kommune = kommuneRepository.save(kommune)
 
         if (forsteFlate.getInformasjon() != null) {
-            val kommuneInformasjon = KommuneInformasjon()
+            val kommuneInformasjon = KommuneInformasjon(kommune)
             kommuneInformasjon.informasjon = forsteFlate.getInformasjon()
             kommuneInformasjon.kommuneFk = kommune
             kommuneInformasjonRepository.save(kommuneInformasjon)

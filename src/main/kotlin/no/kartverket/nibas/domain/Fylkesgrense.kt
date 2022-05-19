@@ -29,9 +29,7 @@ class Fylkesgrense(override val id: String = UUID.randomUUID().toString()) : Adm
     @OneToMany(mappedBy = "fylkesgrenseFk", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     var informasjonselementer: MutableSet<FylkesgrenseInformasjon> = mutableSetOf()
 
-    override fun getInfo(): String? {
-        return doGetInfoFromSingletonCollection(informasjonselementer)
-    }
+    override fun getInfo(): String? = doGetInfoFromSingletonCollection(informasjonselementer)
 
     override fun setInfo(updatedInfo: String?) {
         doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { FylkesgrenseInformasjon(this) }

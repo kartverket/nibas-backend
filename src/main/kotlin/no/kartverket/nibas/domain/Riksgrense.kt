@@ -77,9 +77,7 @@ class Riksgrense(override val id: String = UUID.randomUUID().toString()) : Grens
     @OneToMany(mappedBy = "riksgrenseFk", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     var riksgrenseAnsvarligeMyndigheter: MutableSet<RiksgrenseAnsvarligMyndighet> = mutableSetOf()
 
-    override fun getInfo(): String? {
-        return doGetInfoFromSingletonCollection(informasjonselementer)
-    }
+    override fun getInfo(): String? = doGetInfoFromSingletonCollection(informasjonselementer)
 
     override fun setInfo(updatedInfo: String?) {
         doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { RiksgrenseInformasjon(this) }

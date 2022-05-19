@@ -12,15 +12,15 @@ import javax.persistence.Table
 @Table(name = "kommune_informasjon")
 @Audited
 @Entity
-class KommuneInformasjon {
+class KommuneInformasjon(kommune: Kommune) :Info {
     @Id
     @Column(name = "objid", nullable = false, updatable = false)
-    val id: String = UUID.randomUUID().toString()
+    override val id: String = UUID.randomUUID().toString()
 
     @ManyToOne
     @JoinColumn(name = "kommune_fk")
-    var kommuneFk: Kommune? = null
+    var kommuneFk: Kommune? = kommune
 
     @Column(name = "informasjon")
-    var informasjon: String? = null
+    override var informasjon: String? = null
 }

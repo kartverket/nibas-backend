@@ -4,6 +4,8 @@ import no.kartverket.nibas.api.v1.common.StatistiskEnhetType
 import no.kartverket.nibas.sporing.AuditInfo
 import no.kartverket.nibas.sporing.Sporbar
 import org.hibernate.envers.Audited
+import org.locationtech.jts.geom.MultiPolygon
+import org.locationtech.jts.geom.Point
 import java.time.LocalDate
 import java.util.*
 import javax.persistence.Column
@@ -15,10 +17,10 @@ import javax.persistence.MappedSuperclass
 @Audited
 abstract class StatistiskEnhet(
     @Transient val type: StatistiskEnhetType,
-) : CommonMetadataProperties, Sporbar {
+) : Flate, Sporbar {
     @Id
     @Column(name = "objid", nullable = false, updatable = false)
-    val id: String = UUID.randomUUID().toString()
+    override val id: String = UUID.randomUUID().toString()
 
     @Embedded
     override var auditInfo: AuditInfo = AuditInfo()
@@ -71,6 +73,21 @@ abstract class StatistiskEnhet(
     @Embedded
     var kopidata: Kopidata? = Kopidata()
 
-    abstract fun oppdaterFlate()
+    @Column(name = "posisjon")
+    var posisjon: Point? = null
+
+    @Column(name = "flate")
+    override var flate: MultiPolygon? = null
+
+    @Suppress("UNCHECKED_CAST")
+    fun <T: GrenseKobling> oppdaterSamling(grense: Grense, attributter: GrenseKoblingAttributter, samling: MutableSet<T>, default: GrenseKobling) {
+        val kobling: T  = when(val kobling = samling.find { it.getGrense().id == grense.id }) {
+            null -> default as T
+            else -> kobling
+        }
+
+        kobling.oppdaterAttributter(attributter)
+        samling.add(kobling)
+    }
 
 }

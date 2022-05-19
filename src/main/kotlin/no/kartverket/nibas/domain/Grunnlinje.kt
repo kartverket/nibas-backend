@@ -116,9 +116,7 @@ class Grunnlinje : GrenseMedDokumentasjonsreferanser(), MaritimGrense {
         }
     }
 
-    override fun getInfo(): String? {
-        return doGetInfoFromSingletonCollection(informasjonselementer)
-    }
+    override fun getInfo(): String? = doGetInfoFromSingletonCollection(informasjonselementer)
 
     override fun setInfo(updatedInfo: String?) {
         doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { GrunnlinjeInformasjon(this) }

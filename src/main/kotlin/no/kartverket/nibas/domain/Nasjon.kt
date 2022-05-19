@@ -27,6 +27,15 @@ class Nasjon(override val id: String = UUID.randomUUID().toString()) :
     @OneToMany(mappedBy = "nasjon", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     var riksgrenser: MutableSet<NasjonRiksgrense> = mutableSetOf()
 
+    @OneToMany(mappedBy = "nasjonFk", fetch = FetchType.LAZY)
+    var informasjonselementer: MutableSet<NasjonInformasjon> = mutableSetOf()
+
+    override fun getInfo(): String? = doGetInfoFromSingletonCollection(informasjonselementer)
+
+    override fun setInfo(updatedInfo: String?) {
+        doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { NasjonInformasjon(this) }
+    }
+
     override fun oppdaterFlate() {
         flate = SosiGeometryFunctions.beregnFlate(avtaltavgrensningslinjer + territorialgrenser + riksgrenser)
     }

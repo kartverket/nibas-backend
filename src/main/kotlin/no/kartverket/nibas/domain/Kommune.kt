@@ -41,7 +41,16 @@ class Kommune(override val id: String = UUID.randomUUID().toString()) :
     var riksgrenser: MutableSet<KommuneRiksgrense> = mutableSetOf()
 
     @OneToMany(mappedBy = "kommuneFk", fetch = FetchType.LAZY)
+    var informasjonselementer: MutableSet<KommuneInformasjon> = mutableSetOf()
+
+    @OneToMany(mappedBy = "kommuneFk", fetch = FetchType.LAZY)
     override var administrativenhetnavn: MutableSet<Administrativenhetnavn> = mutableSetOf()
+
+    override fun getInfo(): String? = doGetInfoFromSingletonCollection(informasjonselementer)
+
+    override fun setInfo(updatedInfo: String?) {
+        doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { KommuneInformasjon(this) }
+    }
 
     override fun oppdaterFlate() {
         flate = SosiGeometryFunctions.beregnFlate(kommunegrenser + fylkesgrenser + avtaltavgrensningslinjer + territorialgrenser + riksgrenser)

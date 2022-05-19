@@ -76,7 +76,7 @@ class NasjonImporter {
                 nasjon = nasjonRepository.save(nasjon)
 
                 if (flate.getInformasjon() != null) {
-                    val nasjonInformasjon = NasjonInformasjon()
+                    val nasjonInformasjon = NasjonInformasjon(nasjon)
                     nasjonInformasjon.informasjon = flate.getInformasjon()
                     nasjonInformasjon.nasjonFk = nasjon
                     nasjonInformasjonRepository.save(nasjonInformasjon)

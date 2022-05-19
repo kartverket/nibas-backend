@@ -115,9 +115,7 @@ class Territorialgrense : GrenseMedDokumentasjonsreferanser(), MaritimGrense {
         doSetAnsvarligeMyndigheter(ansvarligeMyndigheter, this.ansvarligeMyndigheter) { TerritorialgrenseAnsvarligMyndighet(this) }
     }
 
-    override fun getInfo(): String? {
-        return doGetInfoFromSingletonCollection(informasjonselementer)
-    }
+    override fun getInfo(): String? = doGetInfoFromSingletonCollection(informasjonselementer)
 
     override fun setInfo(updatedInfo: String?) {
         doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { TerritorialgrenseInformasjon(this) }

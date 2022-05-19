@@ -87,9 +87,7 @@ class Lovvirkeomraadegrense : GrenseMedDokumentasjonsreferanser() {
     @ElementCollection
     var kommunenummer: MutableSet<String> = mutableSetOf()
 
-    override fun getInfo(): String? {
-        return doGetInfoFromSingletonCollection(informasjon)
-    }
+    override fun getInfo(): String? = doGetInfoFromSingletonCollection(informasjon)
 
     override fun setInfo(updatedInfo: String?) {
         doSetInfoInSingletonCollection(updatedInfo, informasjon) { LovvirkeomraadegrenseInformasjon(this) }

@@ -11,13 +11,17 @@ import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseMedDokumentasjonsreferanser
 import no.kartverket.nibas.domain.Landkode
 import no.kartverket.nibas.domain.MaritimGrense
+import no.kartverket.nibas.domain.Noeyaktighetsklassekode
 import no.kartverket.nibas.domain.Riksgrense
+import no.kartverket.nibas.domain.StatistiskGrense
+import no.kartverket.nibas.domain.Terrengdetaljkode
 import no.kartverket.nibas.domain.Territorialgrense
 import no.kartverket.nibas.repository.FastsettingstypeRepository
 import no.kartverket.nibas.repository.GrensestatusRepository
 import no.kartverket.nibas.repository.LandKodeRepository
 import no.kartverket.nibas.repository.NoeyaktighetsklassekodeRepository
 import no.kartverket.nibas.repository.TerrengdetaljkodeRepository
+import no.kartverket.nibas.unwrap
 
 /**
  * Hjelpeklasse/mappinglogikk metadata -> grense.
@@ -34,29 +38,8 @@ class MetadataUpdater(private val landKodeRepository: LandKodeRepository,
         updateWithGrenseMetadata(grense, metadata.commonGrense)
         updateDokumentasjonsreferanser(grense, metadata.dokumentasjonsreferanser)
 
-        val terrengdetaljKodeId = metadata.foelgerTerrengdetalj.id
-        grense.foelgerterrengdetalj = if (terrengdetaljKodeId != null) {
-            val terrengdetaljkodeOptional = terrengdetaljkodeRepository.findById(terrengdetaljKodeId)
-            if (terrengdetaljkodeOptional.isEmpty) { // Har sendt inn en ugyldig id fra klienten
-                throw RuntimeException("Ugyldig terrengdetaljKodeId: $terrengdetaljKodeId")
-            } else {
-                terrengdetaljkodeOptional.get()
-            }
-        } else {
-            null
-        }
-
-        val noeyaktighetsklasseId = metadata.noeyaktighetsklasse.id
-        grense.noeyaktighetsklasse = if (noeyaktighetsklasseId != null) {
-            val noeyaktighetsklassekodeOptional = noeyaktighetsklassekodeRepository.findById(noeyaktighetsklasseId)
-            if (noeyaktighetsklassekodeOptional.isEmpty) { // Har sendt inn en ugyldig id fra klienten
-                throw RuntimeException("Ugyldig noeyaktighetsklasseId: $noeyaktighetsklasseId")
-            } else {
-                noeyaktighetsklassekodeOptional.get()
-            }
-        } else {
-            null
-        }
+        grense.foelgerterrengdetalj = hentTerrengDetaljKode(metadata.foelgerTerrengdetalj.id)
+        grense.noeyaktighetsklasse = hentNoeyaktighetsKlasse(metadata.noeyaktighetsklasse.id)
 
         grense.omtvistet = metadata.omtvistet
         return grense
@@ -67,22 +50,37 @@ class MetadataUpdater(private val landKodeRepository: LandKodeRepository,
         updateWithGrenseMetadata(grense, metadata.commonGrense)
         updateDokumentasjonsreferanser(grense, metadata.dokumentasjonsreferanser)
 
-        val terrengdetaljKodeId = metadata.foelgerTerrengdetalj.id
-        grense.foelgerterrengdetalj = if (terrengdetaljKodeId != null) {
-            val terrengdetaljkodeOptional = terrengdetaljkodeRepository.findById(terrengdetaljKodeId)
-            if (terrengdetaljkodeOptional.isEmpty) { // Har sendt inn en ugyldig id fra klienten
-                throw RuntimeException("Ugyldig terrengdetaljKodeId: $terrengdetaljKodeId")
-            } else {
-                terrengdetaljkodeOptional.get()
-            }
-        } else {
-            null
-        }
+        grense.foelgerterrengdetalj = hentTerrengDetaljKode(metadata.foelgerTerrengdetalj.id)
 
         grense.stedfestingverifisert = metadata.stedfestingVerifisert
         grense.setAnsvarligeMyndigheter(toAnsvarligeMyndigheter(metadata.ansvarligeMyndigheter))
         grense.grensegatebredde = metadata.grensegateBredde
         return grense
+    }
+
+    fun updateStatistiskGrense(grense: StatistiskGrense, metadata: StatistiskgrenseMetadata) : StatistiskGrense {
+        grense.updateWithCommonMetadata(metadata.common)
+        updateWithGrenseMetadata(grense, metadata.commonGrense)
+
+        val terrengdetaljKodeId = metadata.foelgerTerrengdetalj.id
+        grense.foelgerterrengdetalj = hentTerrengDetaljKode(terrengdetaljKodeId)
+        grense.noeyaktighetsklasse = hentNoeyaktighetsKlasse(metadata.noeyaktighetsklasse.id)
+
+        return grense
+    }
+
+    private fun hentNoeyaktighetsKlasse(noeyaktighetsklasseId: String?): Noeyaktighetsklassekode? = noeyaktighetsklasseId?.let {
+        when(val noeyaktighetsklassekode = noeyaktighetsklassekodeRepository.findById(noeyaktighetsklasseId).unwrap()) {
+            null -> throw RuntimeException("Ugyldig noeyaktighetsklasseId: $noeyaktighetsklasseId")
+            else -> noeyaktighetsklassekode
+        }
+    }
+
+    private fun hentTerrengDetaljKode(terrengdetaljKodeId: String?): Terrengdetaljkode? = terrengdetaljKodeId?.let{
+        when(val terrengdetaljkode = terrengdetaljkodeRepository.findById(terrengdetaljKodeId).unwrap()) {
+            null -> throw RuntimeException("Ugyldig terrengdetaljKodeId: $terrengdetaljKodeId")
+            else -> terrengdetaljkode
+        }
     }
 
     fun updateAvtaltavgrensningslinje(grense: Avtaltavgrensningslinje, metadata: AvtaltAvgrensningslinjeMetadata): Avtaltavgrensningslinje {

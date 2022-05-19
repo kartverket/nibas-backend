@@ -85,6 +85,13 @@ interface KommuneRepository : CrudRepositoryWithLokalIdFinder<Kommune, String> {
 }
 interface GrunnkretsRepository : CrudRepositoryWithLokalIdFinder<Grunnkrets, String> {
     fun findByKommunenummer(kommunenummer: String): List<Grunnkrets>
+    fun findByGrunnkretsgrenser_Grunnkretsgrense_Id(id: String): List<Grunnkrets>
+    fun findByDelomraadegrenser_Delomraadegrense_Id(id: String): List<Grunnkrets>
+    fun findByKommunegrenser_Kommunegrense_Id(id: String): List<Kommune>
+    fun findByFylkesgrenser_Fylkesgrense_Id(id: String): List<Kommune>
+    fun findByTerritorialgrenser_Territorialgrense_Id(id: String): List<Kommune>
+    fun findByAvtaltavgrensningslinjer_Avtaltavgrensningslinje_Id(id: String): List<Kommune>
+    fun findByRiksgrenser_Riksgrense_Id(id: String): List<Kommune>
 }
 interface GrunnkretsInformasjonRepository : CrudRepository<GrunnkretsInformasjon, String>
 

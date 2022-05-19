@@ -37,12 +37,17 @@ class Fylke(override val id: String = UUID.randomUUID().toString()) :
     @OneToMany(mappedBy = "fylke", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     var riksgrenser: MutableSet<FylkeRiksgrense> = mutableSetOf()
 
-
     @OneToMany(mappedBy = "fylkeFk", fetch = FetchType.LAZY)
-    var informasjon: MutableSet<FylkeInformasjon> = mutableSetOf()
+    var informasjonselementer: MutableSet<FylkeInformasjon> = mutableSetOf()
 
     @OneToMany(mappedBy = "fylkeFk", fetch = FetchType.LAZY)
     override var administrativenhetnavn: MutableSet<Administrativenhetnavn> = mutableSetOf()
+
+    override fun getInfo(): String? = doGetInfoFromSingletonCollection(informasjonselementer)
+
+    override fun setInfo(updatedInfo: String?) {
+        doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { FylkeInformasjon(this) }
+    }
 
     override fun oppdaterFlate() {
         flate = SosiGeometryFunctions.beregnFlate(fylkesgrenser + avtaltavgrensningslinjer + territorialgrenser + riksgrenser)

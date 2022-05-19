@@ -93,7 +93,7 @@ class FylkeImporter @Autowired constructor(
                 fylke = fylkeRepository.save(fylke)
 
                 if (flate.getInformasjon() != null) {
-                    val fylkeInformasjon = FylkeInformasjon()
+                    val fylkeInformasjon = FylkeInformasjon(fylke)
                     fylkeInformasjon.informasjon = flate.getInformasjon()
                     fylkeInformasjon.fylkeFk = fylke
                     fylkeInformasjonRepository.save(fylkeInformasjon)

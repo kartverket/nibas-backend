@@ -22,9 +22,7 @@ class Grunnkretsgrense(override val id: String = UUID.randomUUID().toString()) :
     @OneToMany(mappedBy = "grunnkretsgrenseFk", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     var informasjonselementer: MutableSet<GrunnkretsgrenseInformasjon> = mutableSetOf()
 
-    override fun getInfo(): String? {
-        return doGetInfoFromSingletonCollection(informasjonselementer)
-    }
+    override fun getInfo(): String? = doGetInfoFromSingletonCollection(informasjonselementer)
 
     override fun setInfo(updatedInfo: String?) {
         doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { GrunnkretsgrenseInformasjon(this) }

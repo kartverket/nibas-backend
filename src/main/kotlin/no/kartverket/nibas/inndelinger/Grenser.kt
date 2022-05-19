@@ -11,12 +11,14 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.AvtaltAvgrensningslinj
 import no.kartverket.nibas.api.v1.common.geojson.metadata.MetadataMapper
 import no.kartverket.nibas.api.v1.common.geojson.metadata.MetadataUpdater
 import no.kartverket.nibas.api.v1.common.geojson.metadata.RiksgrenseMetadata
+import no.kartverket.nibas.api.v1.common.geojson.metadata.StatistiskgrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.TerritorialgrenseMetadata
 import no.kartverket.nibas.api.v1.response.RevisjonRef
 import no.kartverket.nibas.domain.AdministrativEnhet
 import no.kartverket.nibas.domain.AdministrativGrense
 import no.kartverket.nibas.domain.Avtaltavgrensningslinje
 import no.kartverket.nibas.domain.Delomraadegrense
+import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.Fylkesgrense
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseKobling
@@ -25,6 +27,7 @@ import no.kartverket.nibas.domain.Grunnkretsgrense
 import no.kartverket.nibas.domain.Grunnlinje
 import no.kartverket.nibas.domain.Kommunegrense
 import no.kartverket.nibas.domain.Riksgrense
+import no.kartverket.nibas.domain.StatistiskEnhet
 import no.kartverket.nibas.domain.StatistiskGrense
 import no.kartverket.nibas.domain.Territorialgrense
 import no.kartverket.nibas.kodelister.KodelisteService
@@ -34,6 +37,7 @@ import no.kartverket.nibas.repository.FastsettingstypeRepository
 import no.kartverket.nibas.repository.FylkeRepository
 import no.kartverket.nibas.repository.FylkesgrenseRepository
 import no.kartverket.nibas.repository.GrensestatusRepository
+import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.GrunnkretsgrenseRepository
 import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.KommunegrenseRepository
@@ -74,6 +78,8 @@ class GrenseController @Autowired constructor(
                 GrenseType.Riksgrense -> grenseService.lagreRiksgrenser(entry.value)
                 GrenseType.AvtaltAvgrensningslinje -> grenseService.lagreAvtaltAvgrensningslinjer(entry.value)
                 GrenseType.Territorialgrense -> grenseService.lagreTerritorialgrenser(entry.value)
+                GrenseType.Grunnkretsgrense -> grenseService.lagreGrunnkretsgrenser(entry.value)
+                GrenseType.Delomraadegrense -> grenseService.lagreDelomraadegrenser(entry.value)
                 else -> throw RuntimeException("Lagring/oppdatering av grenser er ikke implementert for grensetype: ${entry.key}")
             }
         }
@@ -146,6 +152,7 @@ class GrenseService @Autowired constructor(
     private val fylkeRepository: FylkeRepository,
     private val nasjonRepository: NasjonRepository,
     private val landKodeRepository: LandKodeRepository,
+    private val grunnkretsRepository: GrunnkretsRepository,
     private val fastsettingstypeRepository: FastsettingstypeRepository,
     private val terrengdetaljkodeRepository: TerrengdetaljkodeRepository,
     private val noeyaktighetsklassekodeRepository: NoeyaktighetsklassekodeRepository,
@@ -175,6 +182,12 @@ class GrenseService @Autowired constructor(
 
     fun lagreTerritorialgrenser(grenser: List<Feature>) =
         lagreGrenser(grenser, territorialgrenseRepository)
+
+    fun lagreGrunnkretsgrenser(grenser: List<Feature>) =
+        lagreGrenser(grenser, grunnkretsgrenseRepository)
+
+    fun lagreDelomraadegrenser(grenser: List<Feature>) =
+        lagreGrenser(grenser, delomraadegrenseRepository)
 
     fun lagreRiksgrenser(grenser: List<Feature>) = lagreGrenser(grenser, riksgrenseRepository)
     fun lagreAvtaltAvgrensningslinjer(grenser: List<Feature>) =
@@ -227,10 +240,10 @@ class GrenseService @Autowired constructor(
 
         oppdaterteGrenser.groupBy { it.kontekstType }.forEach { entry ->
             when (entry.key) {
-                KontekstEnhetType.KOMMUNE -> oppdaterEnheter(entry.value, kommuneRepository)
-                KontekstEnhetType.FYLKE -> oppdaterEnheter(entry.value, fylkeRepository)
-                KontekstEnhetType.NASJON -> oppdaterEnheter(entry.value, nasjonRepository)
-                KontekstEnhetType.GRUNNKRETS -> throw IllegalArgumentException("Kan ikke oppdatere grunnkretser ennå")
+                KontekstEnhetType.KOMMUNE -> oppdaterFlater(entry.value, kommuneRepository)
+                KontekstEnhetType.FYLKE -> oppdaterFlater(entry.value, fylkeRepository)
+                KontekstEnhetType.NASJON -> oppdaterFlater(entry.value, nasjonRepository)
+                KontekstEnhetType.GRUNNKRETS -> oppdaterFlater(entry.value, grunnkretsRepository)
             }
         }
     }
@@ -252,12 +265,13 @@ class GrenseService @Autowired constructor(
                 is Riksgrense -> metadataUpdater.updateRiksgrense(grense, (featureMetadata as RiksgrenseMetadata))
                 is Avtaltavgrensningslinje -> metadataUpdater.updateAvtaltavgrensningslinje(grense, (featureMetadata as AvtaltAvgrensningslinjeMetadata))
                 is Territorialgrense -> metadataUpdater.updateTerritoritalgrense(grense, (featureMetadata as TerritorialgrenseMetadata))
+                is StatistiskGrense -> metadataUpdater.updateStatistiskGrense(grense, (featureMetadata as StatistiskgrenseMetadata))
             }
         }
         return grense
     }
 
-    private fun <T : Grense, S : AdministrativEnhet> oppdaterEnheter(
+    private fun <T : Grense, S : Flate> oppdaterFlater(
         grenser: List<GrenseMedRetningOgKontekst<T>>,
         repository: CrudRepository<S, String>
     ) {
@@ -302,7 +316,9 @@ enum class GrenseType(val value: String) {
     AvtaltAvgrensningslinje("AvtaltAvgrensningslinje"),
     Territorialgrense("Territorialgrense"),
     Grunnlinje("Grunnlinje"),
-    Lovvirkeomraadegrense("LovVirkeområdeGrense");
+    Lovvirkeomraadegrense("LovVirkeområdeGrense"),
+    Grunnkretsgrense("Grunnkretsgrense"),
+    Delomraadegrense("Delområdegrense");
 
     companion object {
         fun fromValue(valueIn: String): GrenseType {

@@ -22,9 +22,7 @@ class Delomraadegrense(override val id: String = UUID.randomUUID().toString()) :
     @OneToMany(mappedBy = "delomraadegrenseFk", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     var informasjonselementer: MutableSet<DelomraadegrenseInformasjon> = mutableSetOf()
 
-    override fun getInfo(): String? {
-        return doGetInfoFromSingletonCollection(informasjonselementer)
-    }
+    override fun getInfo(): String? = doGetInfoFromSingletonCollection(informasjonselementer)
 
     override fun setInfo(updatedInfo: String?) {
         doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { DelomraadegrenseInformasjon(this) }
