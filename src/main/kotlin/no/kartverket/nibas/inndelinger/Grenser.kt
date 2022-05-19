@@ -285,7 +285,7 @@ class GrenseService @Autowired constructor(
                         grenseMedAttributter.attributter
                     )
                 }
-            logger.info("Lagrer enhet: [${enhet.type.name} - id ${enhet.id}]")
+            logger.info("Lagrer enhet: [${finnEnhetstype(enhet)} - id ${enhet.id}]")
 
             enhet
         }
@@ -303,6 +303,12 @@ class GrenseService @Autowired constructor(
             GrenseType.Territorialgrense -> Territorialgrense()
             else -> throw RuntimeException("Not yet implemented for grensetype: ${feature.properties.type}")
         } as T
+    }
+
+    private fun finnEnhetstype(enhet: Flate): String? = when(enhet) {
+        is AdministrativEnhet -> enhet.type.name
+        is StatistiskEnhet -> enhet.type.name
+        else -> "Ukjent enhetstype"
     }
 }
 
