@@ -1,6 +1,6 @@
 package no.kartverket.nibas.domain
 
-import no.kartverket.nibas.api.v1.common.StatistiskEnhetType
+import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.sporing.AuditInfo
 import no.kartverket.nibas.sporing.Sporbar
 import org.hibernate.envers.Audited
@@ -16,7 +16,7 @@ import javax.persistence.MappedSuperclass
 @MappedSuperclass
 @Audited
 abstract class StatistiskEnhet(
-    @Transient val type: StatistiskEnhetType,
+    @Transient override val type: Flatetype,
 ) : Flate, Sporbar {
     @Id
     @Column(name = "objid", nullable = false, updatable = false)

@@ -2,12 +2,8 @@ package no.kartverket.nibas.api.v1.common
 
 import io.swagger.v3.oas.annotations.media.Schema
 
-enum class AdministrativEnhetType {
-    FYLKE, KOMMUNE, NASJON
-}
-
-enum class StatistiskEnhetType {
-    GRUNNKRETS
+enum class Flatetype {
+    FYLKE, KOMMUNE, NASJON, GRUNNKRETS
 }
 
 // Vurderte å innføre en sealed class som hadde AdministrativEnhet og StatistiskEnhet (ala dette https://stackoverflow.com/a/56771284), men det gjør det litt mer kronglete når man skal gruppere på undertypene senere.

@@ -1,6 +1,6 @@
 package no.kartverket.nibas.domain
 
-import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
+import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.sporing.AuditInfo
 import no.kartverket.nibas.sporing.Sporbar
 import org.hibernate.envers.Audited
@@ -18,7 +18,7 @@ import javax.persistence.MappedSuperclass
 @MappedSuperclass
 @Audited
 abstract class AdministrativEnhet(
-    @Transient val type: AdministrativEnhetType,
+    @Transient override val type: Flatetype,
 ) : Flate, Sporbar {
 
     @Id

@@ -36,7 +36,7 @@ data class Feature(
 @Schema(description = "Egenskaper som beskriver en gitt feature (properties-objektet i geojson-strukturen)")
 data class FeatureProperties(
 
-    @Schema(description = "Definerer hvilken type geometri som leveres")
+    @Schema(description = "Avhengig av hva slags feature man har kan dette være enten grensetype eller geometri-type (posisjon eller flate)")
     val type: String,
 
     @Schema(

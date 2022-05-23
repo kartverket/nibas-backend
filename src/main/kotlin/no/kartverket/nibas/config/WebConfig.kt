@@ -18,10 +18,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 @Configuration
 class WebConfig @Autowired constructor(val configProps: NibasBackendConfigProps) : WebMvcConfigurer {
 
-    override fun addFormatters(registry: FormatterRegistry) {
-        registry.addConverter(StringToEnumConverter())
-    }
-
     @Bean
     fun kodelisteService(landKodeRepository: LandKodeRepository,
                          terrengdetaljkodeRepository: TerrengdetaljkodeRepository,

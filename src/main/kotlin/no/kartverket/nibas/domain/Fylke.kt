@@ -1,6 +1,6 @@
 package no.kartverket.nibas.domain
 
-import no.kartverket.nibas.api.v1.common.AdministrativEnhetType
+import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import org.hibernate.envers.Audited
 import java.util.*
@@ -13,7 +13,7 @@ import javax.persistence.*
 @Audited
 @Entity
 class Fylke(override val id: String = UUID.randomUUID().toString()) :
-    AdministrativEnhet(AdministrativEnhetType.FYLKE) {
+    AdministrativEnhet(Flatetype.FYLKE) {
 
     @Column(name = "fylkesnummer", nullable = false)
     var fylkesnummer: String = ""

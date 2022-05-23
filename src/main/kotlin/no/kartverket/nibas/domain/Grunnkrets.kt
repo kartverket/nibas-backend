@@ -1,6 +1,6 @@
 package no.kartverket.nibas.domain
 
-import no.kartverket.nibas.api.v1.common.StatistiskEnhetType
+import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import org.hibernate.envers.Audited
 import java.util.*
@@ -22,7 +22,7 @@ import javax.persistence.Table
 @Audited
 @Entity
 class Grunnkrets(override val id: String = UUID.randomUUID().toString()) :
-    StatistiskEnhet(StatistiskEnhetType.GRUNNKRETS) {
+    StatistiskEnhet(Flatetype.GRUNNKRETS) {
 
     @Column(name = "grunnkretsnummer", nullable = false)
     var grunnkretsnummer: String? = null
