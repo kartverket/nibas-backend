@@ -30,6 +30,19 @@ repositories {
     }
 }
 
+sourceSets {
+    create("intTest") {
+        compileClasspath += sourceSets.main.get().output
+        runtimeClasspath += sourceSets.main.get().output
+    }
+}
+
+val intTestImplementation: Configuration by configurations.getting {
+    extendsFrom(configurations.implementation.get())
+}
+
+configurations["intTestRuntimeOnly"].extendsFrom(configurations.runtimeOnly.get())
+
 object DependencyVersions {
     const val HIBERNATE_VERSION = "5.6.5.Final"
     const val SPRINGDOC_OPENAPI_VERSION = "1.6.6"
@@ -64,15 +77,17 @@ dependencies {
     implementation("org.springframework.cloud:spring-cloud-starter-vault-config:3.1.1")
     implementation("org.locationtech.jts.io:jts-io-common:${DependencyVersions.JTS_VERSION}")
 
+    testImplementation("org.jetbrains.kotlin:kotlin-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+
     runtimeOnly("org.flywaydb:flyway-core:8.5.11")
     runtimeOnly("org.postgresql:postgresql")
 
-    testImplementation("org.jetbrains.kotlin:kotlin-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-}
-
-configurations.implementation {
-    exclude(group = "junit", module = "junit")
+    intTestImplementation("org.jetbrains.kotlin:kotlin-test")
+    intTestImplementation("org.springframework.boot:spring-boot-starter-test")
+    intTestImplementation("org.testcontainers:postgresql:1.17.1")
+    intTestImplementation("org.testcontainers:junit-jupiter:1.17.1")
+    intTestImplementation("junit:junit:4.13.2")
 }
 
 allOpen {
@@ -92,13 +107,24 @@ tasks.withType<KotlinCompile> {
     }
 }
 
+tasks.getByName<Jar>("jar") {
+    enabled = false
+}
+
+val integrationTest = task<Test>("integrationTest") {
+    description = "Runs integration tests."
+    group = "verification"
+
+    testClassesDirs = sourceSets["intTest"].output.classesDirs
+    classpath = sourceSets["intTest"].runtimeClasspath
+    shouldRunAfter("test")
+}
+
+tasks.check { dependsOn(integrationTest) }
+
 tasks.withType<Test> {
     useJUnitPlatform()
     exclude("**/**IntegrationTest.class")
-}
-
-tasks.getByName<Jar>("jar") {
-    enabled = false
 }
 
 flyway {
