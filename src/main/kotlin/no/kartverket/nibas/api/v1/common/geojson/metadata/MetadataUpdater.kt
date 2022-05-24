@@ -4,11 +4,7 @@ import no.kartverket.nibas.domain.AdministrativGrense
 import no.kartverket.nibas.domain.AnsvarligMyndighetHolder
 import no.kartverket.nibas.domain.Avtaltavgrensningslinje
 import no.kartverket.nibas.domain.CommonMetadataProperties
-import no.kartverket.nibas.domain.Dokumentasjonsreferanse
-import no.kartverket.nibas.domain.DokumentasjonsreferanseDokumentlink
-import no.kartverket.nibas.domain.DokumentasjonsreferanseInternReferanseKartverket
 import no.kartverket.nibas.domain.Grense
-import no.kartverket.nibas.domain.GrenseMedDokumentasjonsreferanser
 import no.kartverket.nibas.domain.Landkode
 import no.kartverket.nibas.domain.MaritimGrense
 import no.kartverket.nibas.domain.Noeyaktighetsklassekode
@@ -36,7 +32,7 @@ class MetadataUpdater(private val landKodeRepository: LandKodeRepository,
     fun updateAdministrativGrense(grense: AdministrativGrense, metadata: AdministrativGrenseMetadata): AdministrativGrense {
         grense.updateWithCommonMetadata(metadata.common)
         updateWithGrenseMetadata(grense, metadata.commonGrense)
-        updateDokumentasjonsreferanser(grense, metadata.dokumentasjonsreferanser)
+        grense.updateDokumentasjonsreferanser(metadata.dokumentasjonsreferanser)
 
         grense.foelgerterrengdetalj = hentTerrengDetaljKode(metadata.foelgerTerrengdetalj.id)
         grense.noeyaktighetsklasse = hentNoeyaktighetsKlasse(metadata.noeyaktighetsklasse.id)
@@ -48,7 +44,7 @@ class MetadataUpdater(private val landKodeRepository: LandKodeRepository,
     fun updateRiksgrense(grense: Riksgrense, metadata: RiksgrenseMetadata): Riksgrense {
         grense.updateWithCommonMetadata(metadata.common)
         updateWithGrenseMetadata(grense, metadata.commonGrense)
-        updateDokumentasjonsreferanser(grense, metadata.dokumentasjonsreferanser)
+        grense.updateDokumentasjonsreferanser(metadata.dokumentasjonsreferanser)
 
         grense.foelgerterrengdetalj = hentTerrengDetaljKode(metadata.foelgerTerrengdetalj.id)
 
@@ -58,7 +54,7 @@ class MetadataUpdater(private val landKodeRepository: LandKodeRepository,
         return grense
     }
 
-    fun updateStatistiskGrense(grense: StatistiskGrense, metadata: StatistiskgrenseMetadata) : StatistiskGrense {
+    fun updateStatistiskGrense(grense: StatistiskGrense, metadata: StatistiskgrenseMetadata): StatistiskGrense {
         grense.updateWithCommonMetadata(metadata.common)
         updateWithGrenseMetadata(grense, metadata.commonGrense)
 
@@ -70,14 +66,14 @@ class MetadataUpdater(private val landKodeRepository: LandKodeRepository,
     }
 
     private fun hentNoeyaktighetsKlasse(noeyaktighetsklasseId: String?): Noeyaktighetsklassekode? = noeyaktighetsklasseId?.let {
-        when(val noeyaktighetsklassekode = noeyaktighetsklassekodeRepository.findById(noeyaktighetsklasseId).unwrap()) {
+        when (val noeyaktighetsklassekode = noeyaktighetsklassekodeRepository.findById(noeyaktighetsklasseId).unwrap()) {
             null -> throw RuntimeException("Ugyldig noeyaktighetsklasseId: $noeyaktighetsklasseId")
             else -> noeyaktighetsklassekode
         }
     }
 
-    private fun hentTerrengDetaljKode(terrengdetaljKodeId: String?): Terrengdetaljkode? = terrengdetaljKodeId?.let{
-        when(val terrengdetaljkode = terrengdetaljkodeRepository.findById(terrengdetaljKodeId).unwrap()) {
+    private fun hentTerrengDetaljKode(terrengdetaljKodeId: String?): Terrengdetaljkode? = terrengdetaljKodeId?.let {
+        when (val terrengdetaljkode = terrengdetaljkodeRepository.findById(terrengdetaljKodeId).unwrap()) {
             null -> throw RuntimeException("Ugyldig terrengdetaljKodeId: $terrengdetaljKodeId")
             else -> terrengdetaljkode
         }
@@ -86,7 +82,7 @@ class MetadataUpdater(private val landKodeRepository: LandKodeRepository,
     fun updateAvtaltavgrensningslinje(grense: Avtaltavgrensningslinje, metadata: AvtaltAvgrensningslinjeMetadata): Avtaltavgrensningslinje {
         grense.updateWithCommonMetadata(metadata.common)
         updateWithGrenseMetadata(grense, metadata.commonGrense)
-        updateDokumentasjonsreferanser(grense, metadata.dokumentasjonsreferanser)
+        grense.updateDokumentasjonsreferanser(metadata.dokumentasjonsreferanser)
         grense.updateWithMaritimeMetadata(metadata.maritimeGrenser)
         return grense
     }
@@ -94,7 +90,7 @@ class MetadataUpdater(private val landKodeRepository: LandKodeRepository,
     fun updateTerritoritalgrense(grense: Territorialgrense, metadata: TerritorialgrenseMetadata): Territorialgrense {
         grense.updateWithCommonMetadata(metadata.common)
         updateWithGrenseMetadata(grense, metadata.commonGrense)
-        updateDokumentasjonsreferanser(grense, metadata.dokumentasjonsreferanser)
+        grense.updateDokumentasjonsreferanser(metadata.dokumentasjonsreferanser)
         grense.updateWithMaritimeMetadata(metadata.maritimeGrenser)
         grense.beregningsdato = metadata.beregningsdato
         return grense
@@ -160,39 +156,4 @@ class MetadataUpdater(private val landKodeRepository: LandKodeRepository,
         }
     }
 
-    private fun updateDokumentasjonsreferanser(grense: GrenseMedDokumentasjonsreferanser, dokRefList: List<Dokref>) {
-        dokRefList.forEach { dokRef ->
-            var dokumentasjonsreferanse = grense.dokumentasjonsreferanser.find { dokumentasjonsreferanse -> dokumentasjonsreferanse.id == dokRef.id }
-            if (dokumentasjonsreferanse == null) { // Legger til ny Dokumentasjonsreferanse hvis ulik id/id er null
-                dokumentasjonsreferanse = Dokumentasjonsreferanse()
-                grense.dokumentasjonsreferanser.add(dokumentasjonsreferanse)
-            }
-
-            dokumentasjonsreferanse.fastsettingsdato = dokRef.fastsettingsdato
-            dokumentasjonsreferanse.fastsettingsmyndighet = dokRef.fastsettingsmyndighet
-            dokumentasjonsreferanse.hjemmel = dokRef.hjemmel
-            dokumentasjonsreferanse.rettskildeid = dokRef.rettskildeId
-            dokumentasjonsreferanse.rettskildetittel = dokRef.rettskildeTittel
-
-            dokRef.dokumentlenker.forEach { dokumentLenkeHolder ->
-                val dokumentlenker = dokumentasjonsreferanse.dokumentlenker
-                var dokumentLink = dokumentlenker.find { dokumentLink -> dokumentLink.id == dokumentLenkeHolder.id }
-                if (dokumentLink == null) { // Hvis ny instans, opprettes den
-                    dokumentLink = DokumentasjonsreferanseDokumentlink()
-                    dokumentlenker.add(dokumentLink)
-                }
-                dokumentLink.dokumentlink = dokumentLenkeHolder.beskrivelse
-            }
-
-            dokRef.internReferanserKartverket.forEach { internRefHolder ->
-                val internReferanser = dokumentasjonsreferanse.internReferanserKartverket
-                var internReferanse = internReferanser.find { internRef -> internRef.id == internRefHolder.id }
-                if (internReferanse == null) { // Hvis ny instans, opprettes den
-                    internReferanse = DokumentasjonsreferanseInternReferanseKartverket()
-                    internReferanser.add(internReferanse)
-                }
-                internReferanse.internReferanseKartverket = internRefHolder.beskrivelse
-            }
-        }
-    }
 }
