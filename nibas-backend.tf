@@ -13,7 +13,6 @@ locals {
 }
 
 variable "nibas_backend_version" {}
-variable "nibas_environment" {}
 
 resource "kubernetes_deployment" "nibas-backend-deployment" {
   metadata {
