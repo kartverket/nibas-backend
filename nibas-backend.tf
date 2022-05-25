@@ -13,6 +13,7 @@ locals {
 }
 
 variable "nibas_backend_version" {}
+variable "nibas_environment" {}
 
 resource "kubernetes_deployment" "nibas-backend-deployment" {
   metadata {
@@ -69,8 +70,7 @@ resource "kubernetes_deployment" "nibas-backend-deployment" {
           }
           env {
             name  = "SPRING_PROFILES_ACTIVE"
-            #TODO: Hente dette fra "et sted"
-            value = "test"
+            value = ENVIRONMENT
           }
           port {
             container_port = 8080

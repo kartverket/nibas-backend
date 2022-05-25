@@ -33,10 +33,11 @@ repositories {
 object DependencyVersions {
     const val HIBERNATE_VERSION = "5.6.5.Final"
     const val SPRINGDOC_OPENAPI_VERSION = "1.6.6"
+    const val JTS_VERSION = "1.18.2"
 }
 
 dependencies {
-    implementation("no.kartverket.aut:aut-lib:0.0.9")
+    implementation("no.kartverket.aut:aut-lib:0.0.12")
 
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-security") // Web-security
@@ -50,10 +51,10 @@ dependencies {
     implementation("org.springdoc:springdoc-openapi-webmvc-core:${DependencyVersions.SPRINGDOC_OPENAPI_VERSION}")
     implementation("org.springdoc:springdoc-openapi-kotlin:${DependencyVersions.SPRINGDOC_OPENAPI_VERSION}")
     implementation("org.springdoc:springdoc-openapi-ui:${DependencyVersions.SPRINGDOC_OPENAPI_VERSION}")
-    implementation("org.locationtech.jts:jts-core:1.18.2")
-    implementation("org.locationtech.jts:jts:1.18.2")
-    implementation("org.locationtech.jts:jts-modules:1.18.2")
-    implementation("org.locationtech.jts:jts-io:1.18.2")
+    implementation("org.locationtech.jts:jts-core:${DependencyVersions.JTS_VERSION}")
+    implementation("org.locationtech.jts:jts:${DependencyVersions.JTS_VERSION}")
+    implementation("org.locationtech.jts:jts-modules:${DependencyVersions.JTS_VERSION}")
+    implementation("org.locationtech.jts:jts-io:${DependencyVersions.JTS_VERSION}")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
 
     implementation("org.locationtech.spatial4j:spatial4j:0.8")
@@ -61,7 +62,7 @@ dependencies {
     implementation("org.hibernate:hibernate-envers:${DependencyVersions.HIBERNATE_VERSION}")
     implementation("org.springframework.cloud:spring-cloud-starter")
     implementation("org.springframework.cloud:spring-cloud-starter-vault-config:3.1.0")
-    implementation("org.locationtech.jts.io:jts-io-common:1.18.2")
+    implementation("org.locationtech.jts.io:jts-io-common:${DependencyVersions.JTS_VERSION}")
 
     runtimeOnly("org.flywaydb:flyway-core:8.5.11")
     runtimeOnly("org.postgresql:postgresql")

@@ -5,13 +5,14 @@ Spring Boot applikasjon som serverer informasjon om administrative grenser.
 # Innholdsfortegnelse
 
 - [Bygge](#bygge)
+- [Kjøre på lokal maskin](#lokal)
 - [Autentisering](#autentisering)
 - [Formatering](#formatering)
 
 # Bygge <a name="bygge"></a>
 `./gradlew assemble`
 
-# Kjøre på lokal maskin
+# Kjøre på lokal maskin <a name="lokal"></a>
 * Hent aut-lib fra github
 ```
 $ ./gradlew clean build -Ppat=<PERSONLIG_PAT> -Pgh_username=<BRUKERNAVN_GITHUB>
@@ -20,15 +21,15 @@ $ ./gradlew clean build -Ppat=<PERSONLIG_PAT> -Pgh_username=<BRUKERNAVN_GITHUB>
 * Definer følgende miljøvariable:
   * VAULT_TOKEN (Logg inn på Vault, og velg "Copy Token" øverst til høyre under profil-menyen)
 
-* Start opp nibas-db. Se [README.md](https://gitlab.statkart.no/nibas/nibas-db/-/blob/master/README.md) i nibas-db
+* Start opp nibas-db. Se [README.md](https://github.com/kartverket/nibas-db) i nibas-db
 
 * Start nibas-backend:
 ```
-./gradlew bootRun --args='--spring.profiles.active=dev'
+./gradlew bootRun --args='--spring.profiles.active=localhost'
 ``` 
 * Dersom du får en sertifikat-feilmelding mot vault under oppstart er det trolig relatert til https://stackoverflow.com/questions/60790118/java-kubernetes-client-sslhandshakeexception-extension-5-should-not-be-present - da må vi spesifisere at TLSv1.2 skal benyttes (propertyen TLSversion settes som system propertyen jdk.tls.client.protocols)
 ```
-./gradlew bootRun -PTLSversion=TLSv1.2 --args='--spring.profiles.active=dev'
+./gradlew bootRun -PTLSversion=TLSv1.2 --args='--spring.profiles.active=localhost'
 ``` 
 
 #Autentisering <a name="autentisering"></a>

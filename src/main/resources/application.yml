@@ -58,7 +58,6 @@ spring:
   # Vault-konfigurasjon
   cloud:
     vault:
-      uri: https://vault.dev.skip.statkart.no/
       ssl:
         trust-store: classpath:ca.jks
         trust-store-type: jks
@@ -77,9 +76,10 @@ nibas:
 spring:
   config:
     activate:
-      on-profile: test
+      on-profile: dev
   cloud:
     vault:
+      uri: https://vault.dev.skip.statkart.no/
       authentication: kubernetes
       kubernetes:
         role: nibas # Er en rolle definert hos skip
@@ -89,10 +89,11 @@ spring:
 spring:
   config:
     activate:
-      on-profile: dev
+      on-profile: localhost
     import: vault://nibas/nibas-backend-local, vault://nibas/nibas-db-local
   cloud:
     vault:
+      uri: https://vault.dev.skip.statkart.no/
       authentication: token
       token: ${VAULT_TOKEN}
       enabled: true

@@ -1,13 +1,8 @@
 package no.kartverket.nibas.config
 
 import no.kartverket.aut.lib.AuthorizerPlugin
-import no.kartverket.aut.lib.jwk.AutModulJwkProvider
-import no.kartverket.aut.lib.jwk.JwkProviderProperties
-import no.kartverket.aut.lib.jwt.impl.DefaultJwtValidator
-import no.kartverket.aut.lib.jwt.impl.JwtAuthenticationRequestFilter
 import no.kartverket.aut.lib.security.DefaultWebSecurityConfig
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.env.Environment
 import org.springframework.http.HttpStatus
@@ -27,21 +22,9 @@ import org.springframework.security.web.authentication.preauth.AbstractPreAuthen
  */
 @Configuration
 @EnableGlobalMethodSecurity(securedEnabled = true)
-class WebSecurityConfig @Autowired constructor(
-    val environment: Environment
-) : DefaultWebSecurityConfig(environment) {
+class WebSecurityConfig @Autowired constructor(environment: Environment) : DefaultWebSecurityConfig(environment) {
 
-    @Bean
-    override fun jwtRequestFilter(): JwtAuthenticationRequestFilter {
-        return JwtAuthenticationRequestFilter(
-            DefaultJwtValidator(
-                AutModulJwkProvider(
-                    AutModulJwkProvider.JwksRetriever(
-                        JwkProviderProperties(autModulHost = environment.getProperty("autModulHost", "http://aut-idporten.dev.skip.statkart.no"))
-                    )
-                )
-            ), DummyNibasAuthorizerPlugin())
-    }
+    override fun getAuthorizerPlugin(): AuthorizerPlugin = DummyNibasAuthorizerPlugin()
 
     @Throws(Exception::class)
     override fun configure(http: HttpSecurity) {
