@@ -25,5 +25,6 @@ class TransformasjonServiceTest : TestWithDbContainer() {
         val transformertGeometry: Geometry = transformasjonService.transformer(geometry, 4258)
 
         assertTrue(geometry.toText() != transformertGeometry.toText())
+        assertTrue(dbContainer.isRunning)
     }
 }

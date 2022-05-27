@@ -5,23 +5,20 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.containers.PostgreSQLContainer
-import org.testcontainers.junit.jupiter.Container
-import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.utility.DockerImageName
 
-@Testcontainers
 @SpringBootTest(webEnvironment = WebEnvironment.NONE)
 class TestWithDbContainer {
-    companion object {
-        val IMAGE_VERSION = "postgis/postgis:13-3.1-alpine"
 
-        @Container
-        val dbContainer = PostgreSQLContainer<Nothing>(
-            DockerImageName.parse(IMAGE_VERSION).asCompatibleSubstituteFor("postgres")
-        ).apply {
+    companion object dbContainer : PostgreSQLContainer<dbContainer>(
+        DockerImageName.parse("postgis/postgis:13-3.1-alpine").asCompatibleSubstituteFor("postgres")
+    ) {
+        init {
             withDatabaseName("postgres")
             withUsername("nibas")
             withPassword("nibas")
+            withCreateContainerCmdModifier { cmd -> cmd.withName("nibas-test-container") }
+            start()
         }
 
         @JvmStatic
