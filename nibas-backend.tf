@@ -62,15 +62,15 @@ resource "kubernetes_deployment" "nibas-backend-deployment" {
           }
           resources {
             requests = {
-              memory = "3Gi"
+              memory = "1Gi"
             }
             limits = {
-              memory = "3Gi"
+              memory = "1Gi"
             }
           }
           env {
             name  = "SPRING_PROFILES_ACTIVE"
-            value = "dev,security-off"
+            value = var.ENVIRONMENT
           }
           port {
             container_port = 8080
