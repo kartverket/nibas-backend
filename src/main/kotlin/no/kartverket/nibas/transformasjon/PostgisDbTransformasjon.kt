@@ -27,6 +27,8 @@ class PostgisDbTransformasjon
     }
 
     private fun createWktReader(srid: Int): WKTReader {
+        // setter antall desimaltall utifra hvilket koordinatsystem som velges.
+        // else for "alle andre" er en veldig forenkling som kun vil være riktig sålenge man forholder seg til sone 32, 33 og 35 som "de andre"
         val scale: Double = when(srid) {
             4258 -> 1000000000.toDouble()
             else -> 1000.toDouble()
