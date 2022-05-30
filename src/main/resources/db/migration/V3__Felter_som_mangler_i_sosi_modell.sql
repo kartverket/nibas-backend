@@ -28,3 +28,9 @@ ALTER TABLE grunnkrets ADD CONSTRAINT enforce_srid_flate CHECK (st_srid(flate) =
 ALTER TABLE grunnkrets add column informasjon text;
 
 ALTER TABLE grunnkretsgrense add column informasjon text;
+
+ALTER TABLE stemmekrets add column flate geometry(MultiPolygon, 25833);
+ALTER TABLE stemmekrets ADD CONSTRAINT enforce_dims_flate CHECK (st_ndims(flate) = 2);
+ALTER TABLE stemmekrets ADD CONSTRAINT enforce_srid_flate CHECK (st_srid(flate) = 25833);
+
+ALTER TABLE stemmekretsgrense add column informasjon text;

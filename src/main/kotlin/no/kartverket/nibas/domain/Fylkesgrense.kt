@@ -34,7 +34,6 @@ class Fylkesgrense(override val id: String = UUID.randomUUID().toString()) : Adm
     override fun setInfo(updatedInfo: String?) {
         doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { FylkesgrenseInformasjon(this) }
     }
-
 }
 
 @Table(name = "fylkesgrense_informasjon")

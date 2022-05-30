@@ -70,9 +70,18 @@ class SosiKoder {
         val KOMMUNE = "Kommune"
         val NASJON = "Nasjon"
         val GRUNNKRETS = "Grunnkrets"
+        val STEMMEKRETS = "Stemmekrets"
 
         val GRUNNKRETSID = "GRUNNKRETSID"
         val GRUNNKRETSNUMMER = "GRUNNKRETSNUMMER"
         val GRUNNKRETSNAVN = "GRUNNKRETSNAVN"
+
+        val STEMMEKRETSID = "STEMMEKRETSID"
+        val STEMMEKRETSNUMMER = "STEMMEKRETSNUMMER"
+        val STEMMEKRETSNAVN = "STEMMEKRETSNAVN"
+        val TELLEKRETSNUMMER = "TELLEKRETSNUMMER"
+        val TELLEKRETSNAVN = "TELLEKRETSNAVN"
+        val VALGDISTRIKTSNUMMER = "VALGDISTRIKTSNUMMER"
+        val STEMMEKRETSGRENSE = "Stemmekretsgrense"
     }
 }

@@ -3,6 +3,7 @@ package no.kartverket.nibas.sosi.model
 import no.kartverket.nibas.domain.PosisjonskvalitetEmbeddable
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.sosi.common.SosiKoder
+import org.locationtech.jts.geom.Coordinate
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -55,6 +56,7 @@ open class SosiGeometri(type: String, niva: Int, verdier: MutableList<SosiVerdi>
     fun getInformasjon(): String? = getVerdiAvBarn(SosiKoder.INFORMASJON)
     fun getKommunenumre(): List<String> = getVerdierAvBarn(SosiKoder.KOMMUNENUMMER)
     fun getKommunenummer(): String? = getVerdiAvBarn(SosiKoder.KOMMUNENUMMER)
+    fun getStemmekretsId(): SosiStemmekretsId? = barn.find { it is SosiStemmekretsId } as? SosiStemmekretsId
 
     fun getPosisjonskvalitet(kodelisteService: KodelisteService): PosisjonskvalitetEmbeddable? {
         val sosiKvalitet = this.getKvalitet()
@@ -69,5 +71,25 @@ open class SosiGeometri(type: String, niva: Int, verdier: MutableList<SosiVerdi>
             )
         }
         return null
+    }
+
+    fun startKoordinat(retningMedKlokken: Boolean): Coordinate {
+        return when(retningMedKlokken) {
+            true -> {
+                val forsteKoordinat = getAlleSosiNordOest().first()
+                return forsteKoordinat.getKoordinater().first().toCoordinate(forsteKoordinat.enhet)
+            }
+            false -> sluttKoordinat(true)
+        }
+    }
+
+    fun sluttKoordinat(retningMedKlokken: Boolean): Coordinate {
+        return when(retningMedKlokken) {
+            true -> {
+                val sisteKoordinat = getAlleSosiNordOest().last()
+                return sisteKoordinat.getKoordinater().last().toCoordinate(sisteKoordinat.enhet)
+            }
+            false -> startKoordinat(true)
+        }
     }
 }

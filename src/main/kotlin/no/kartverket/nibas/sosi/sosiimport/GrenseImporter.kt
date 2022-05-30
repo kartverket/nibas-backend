@@ -37,6 +37,9 @@ class GrenseImporter {
     @Autowired
     lateinit var delomraadegrenseImporter: DelomraadegrenseImporter
 
+    @Autowired
+    lateinit var stemmekretsgrenseImporter: StemmekretsgrenseImporter
+
     fun importerGrense(grense: SosiGeometri): Grense {
         return when (grense.getObjType()) {
             SosiKoder.KOMMUNEGRENSE -> kommunegrenseImporter.importerKommunegrense(grense)
@@ -47,6 +50,7 @@ class GrenseImporter {
             SosiKoder.LOV_VIRKEOMRADEGRENSE -> lovVirkeomraadeGrenseImporter.importLovVirkeomradeGrense(grense as SosiKurve)
             SosiKoder.GRUNNLINJE -> grunnlinjeImporter.importGrunnlinje(grense)
             SosiKoder.GRUNNKRETSGRENSE -> grunnkretsgrenseImporter.importerGrunnkretsgrense(grense)
+            SosiKoder.STEMMEKRETSGRENSE -> stemmekretsgrenseImporter.importerStemmekretsgrense(grense)
             SosiKoder.DELOMRAADEGRENSE -> delomraadegrenseImporter.importerDelomraadegrense(grense)
             else -> throw RuntimeException("Found no importer for ${grense.getObjType()}")
         }

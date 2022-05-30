@@ -1,6 +1,7 @@
 package no.kartverket.nibas.sosi.sosiimport
 
 import no.kartverket.nibas.domain.GrenseKobling
+import no.kartverket.nibas.sosi.model.SosiKoordinat
 import no.kartverket.nibas.sosi.model.SosiNordOest
 import org.locationtech.jts.geom.*
 
@@ -20,7 +21,7 @@ class SosiGeometryFunctions {
                 else -> koordsysToSrid.getOrDefault(koordsys, defaultSrid)
             }
 
-            val geometryFactory = sridToGeometryFactory.getOrDefault(srid, GeometryFactory(PrecisionModel(), srid))
+            val geometryFactory = sridToGeometryFactory.getOrDefault(srid, GeometryFactory(PrecisionModel(100.0), srid))
             if (!sridToGeometryFactory.containsKey(srid)) {
                 sridToGeometryFactory[srid] = geometryFactory
             }
@@ -31,7 +32,7 @@ class SosiGeometryFunctions {
         fun sosiKoordinaterToLineString(sosiNordOest: List<SosiNordOest>, koordsys: String?): LineString {
             val koordinater: List<Coordinate> = sosiNordOest.flatMap { outer ->
                 outer.getKoordinater().map {
-                    Coordinate(it.oest.toDouble() * outer.enhet, it.nord.toDouble() * outer.enhet)
+                    sosiKoordinatToCoordinate(it, outer.enhet)
                 }
             }
 
@@ -41,12 +42,7 @@ class SosiGeometryFunctions {
         fun sosiKoordinatToPoint(sosiNordOest: List<SosiNordOest>, koordsys: String?): Point? {
             return sosiNordOest.firstOrNull()?.let { first ->
                 first.getKoordinater().firstOrNull()?.let { coord ->
-                    getGeometryFactory(koordsys).createPoint(
-                        Coordinate(
-                            coord.oest.toDouble() * first.enhet,
-                            coord.nord.toDouble() * first.enhet
-                        )
-                    )
+                    getGeometryFactory(koordsys).createPoint(sosiKoordinatToCoordinate(coord, first.enhet))
                 }
             }
         }
@@ -58,7 +54,7 @@ class SosiGeometryFunctions {
          * @param hullLineStrings Dobbel liste som inneholder alle hull i et polygon. Hver av listene inneholde linjer som utgjør et lukket polygon.
          */
         fun lagFlate(skallLineStrings: List<LineString>, hullLineStrings: List<List<LineString>>, koordsys: String? = null): Polygon {
-            val skall = GeometryFactory()
+            val skall = getGeometryFactory(koordsys)
                 .createLinearRing(
                     getGeometryFactory(koordsys)
                         .createMultiLineString(skallLineStrings.toTypedArray()).coordinates
@@ -102,6 +98,22 @@ class SosiGeometryFunctions {
             }
 
             return getGeometryFactory().createMultiPolygon(flater.toTypedArray())
+        }
+
+        fun sosiKoordinatToCoordinate(sosiKoordinat: SosiKoordinat, enhet: Double): Coordinate {
+            val x = getGeometryFactory().precisionModel.makePrecise(sosiKoordinat.oest.toDouble() * enhet)
+            val y = getGeometryFactory().precisionModel.makePrecise(sosiKoordinat.nord.toDouble() * enhet)
+            return Coordinate(x, y)
+        }
+
+        fun makePrecise(lineString: LineString): LineString {
+            val gf = getGeometryFactory()
+            val pm = gf.precisionModel
+            val preciseCoordinates = lineString.coordinates.map { coord ->
+                Coordinate(pm.makePrecise(coord.x), pm.makePrecise(coord.y))
+            }.toTypedArray()
+
+            return gf.createLineString(preciseCoordinates)
         }
     }
 }

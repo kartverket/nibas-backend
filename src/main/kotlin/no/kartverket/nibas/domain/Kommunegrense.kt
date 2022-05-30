@@ -2,6 +2,7 @@ package no.kartverket.nibas.domain
 
 import no.kartverket.nibas.inndelinger.GrenseType
 import org.hibernate.envers.Audited
+import org.locationtech.jts.geom.LineString
 import java.util.*
 import javax.persistence.CascadeType
 import javax.persistence.Column

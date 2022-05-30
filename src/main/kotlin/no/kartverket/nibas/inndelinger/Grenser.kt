@@ -316,7 +316,8 @@ enum class GrenseType(val value: String) {
     Grunnlinje("Grunnlinje"),
     Lovvirkeomraadegrense("LovVirkeområdeGrense"),
     Grunnkretsgrense("Grunnkretsgrense"),
-    Delomraadegrense("Delområdegrense");
+    Delomraadegrense("Delområdegrense"),
+    Stemmekretsgrense("Stemmekretsgrense");
 
     companion object {
         fun fromValue(valueIn: String): GrenseType {

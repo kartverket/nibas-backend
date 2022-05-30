@@ -27,6 +27,7 @@ data class GrenseKoblingAttributter(
 ) {
     fun oppdater(grenseKoblingAttributter: GrenseKoblingAttributter): GrenseKoblingAttributter {
         return this.copy(
+            flateIndeks = grenseKoblingAttributter.flateIndeks,
             retningMedKlokken = grenseKoblingAttributter.retningMedKlokken,
             rekkefoelge = grenseKoblingAttributter.rekkefoelge,
             hullIndeks = grenseKoblingAttributter.hullIndeks

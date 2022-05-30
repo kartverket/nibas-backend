@@ -18,13 +18,20 @@ open class SosiObjekt(
     companion object {
         val SOSI_DATOFORMAT = DateTimeFormatter.ofPattern("yyyyMMdd")
     }
-
+    fun harBarn(): Boolean = barn.size > 0
     fun getVerdierAvBarn(type: String): List<String> = barn.filter { it.type == type }.flatMap { it.verdier }.map { it.verdi }
     fun getVerdiAvBarn(type: String): String? = barn.find{ it.type == type}?.verdier?.getOrNull(0)?.verdi
     fun getKurver(): List<SosiKurve> = barn.filter { it is SosiKurve }.map { it as SosiKurve }
     fun getFlater(): List<SosiFlate> = barn.filter { it is SosiFlate }.map { it as SosiFlate }
     fun getBuep(): List<SosiBuep> = barn.filter { it is SosiBuep }.map { it as SosiBuep }
     fun getHode(): SosiHode? = barn.find { it is SosiHode } as? SosiHode
+
+    fun getVerdiMedIndex(index: Int): String? {
+        return when(verdier.size > index) {
+            true -> verdier[index].verdi
+            false -> null
+        }
+    }
 
     fun addBarn(next: SosiObjekt) {
         barn.add(next)

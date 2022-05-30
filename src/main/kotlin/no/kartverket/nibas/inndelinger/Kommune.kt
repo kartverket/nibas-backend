@@ -5,10 +5,10 @@ import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.request.KommuneRequest
-import no.kartverket.nibas.api.v1.response.RevisjonRef
 import no.kartverket.nibas.api.v1.response.KommuneRef
 import no.kartverket.nibas.api.v1.response.KommuneResponse
 import no.kartverket.nibas.api.v1.response.Kommunenummer
+import no.kartverket.nibas.api.v1.response.RevisjonRef
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.kodelister.KodelisteService

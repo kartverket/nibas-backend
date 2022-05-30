@@ -62,10 +62,10 @@ resource "kubernetes_deployment" "nibas-backend-deployment" {
           }
           resources {
             requests = {
-              memory = "1Gi"
+              memory = "3Gi"
             }
             limits = {
-              memory = "1Gi"
+              memory = "3Gi"
             }
           }
           env {

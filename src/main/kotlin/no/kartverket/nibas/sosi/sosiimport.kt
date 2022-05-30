@@ -9,6 +9,7 @@ import no.kartverket.nibas.sosi.deserializer.NibasSosiDeserializer
 import no.kartverket.nibas.sosi.model.SosiFlate
 import no.kartverket.nibas.sosi.model.SosiObjekt
 import no.kartverket.nibas.sosi.sosiimport.GrunnkretsImporter
+import no.kartverket.nibas.sosi.sosiimport.StemmekretsImporter
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.web.bind.annotation.RestController
@@ -47,6 +48,9 @@ class SosiImportService {
     @Autowired
     lateinit var grunnkretsImporter: GrunnkretsImporter
 
+    @Autowired
+    lateinit var stemmekretsImporter: StemmekretsImporter
+
     fun importStream(stream: InputStream) {
         importerFlater(NibasSosiDeserializer().deserialize(stream))
     }
@@ -56,7 +60,8 @@ class SosiImportService {
         val nasjoner = flater.filter { it.getObjType() == SosiKoder.NASJON }
         val fylker = flater.filter { it.getObjType() == SosiKoder.FYLKE }
         val kommuner = flater.filter { it.getObjType() == SosiKoder.KOMMUNE }
-        val grunnkretser = flater.filter{ it.getObjType() == SosiKoder.GRUNNKRETS }
+        val grunnkretser = flater.filter { it.getObjType() == SosiKoder.GRUNNKRETS }
+        val stemmekretser = flater.filter { it.getObjType() == SosiKoder.STEMMEKRETS }
 
         val millis = measureTimeMillis {
             nasjoner.forEachIndexed { index, nasjon ->
@@ -80,6 +85,16 @@ class SosiImportService {
             grupperteGrunnkretser.entries.forEachIndexed { index, entry ->
                 logger.info("Importing grunnkrets ${index + 1} of ${grupperteGrunnkretser.size}")
                 grunnkretsImporter.importerSosiGrunnkrets(entry.value, kurver)
+            }
+
+            data class KommunalKretsKey(val kommunenummer: String, val stemmekretsnummer: String)
+
+            fun SosiFlate.toKommunalKretsKey() = KommunalKretsKey(getKommunenummer()!!, getStemmekretsId()!!.getStemmekretsnummer()!!)
+
+            val grupperteStemmekretser = stemmekretser.groupBy { it.toKommunalKretsKey() }
+            grupperteStemmekretser.entries.forEachIndexed { index, entry ->
+                logger.info("Importing stemmekrets ${index + 1} of ${grupperteStemmekretser.size} (${entry.value.get(0).getId()})")
+                stemmekretsImporter.importerSosiStemmekrets(entry.value, root)
             }
 
         }

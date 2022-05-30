@@ -69,3 +69,26 @@ CREATE TABLE grunnkrets_avtaltavgrensningslinje (grunnkrets_fk text, avtaltavgre
 ALTER TABLE grunnkrets_avtaltavgrensningslinje ADD PRIMARY KEY (grunnkrets_fk, avtaltavgrensningslinje_fk);
 ALTER TABLE grunnkrets_avtaltavgrensningslinje ADD FOREIGN KEY (grunnkrets_fk) REFERENCES grunnkrets(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE grunnkrets_avtaltavgrensningslinje ADD FOREIGN KEY (avtaltavgrensningslinje_fk) REFERENCES avtaltavgrensningslinje(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
+
+-- Manglende kobling fra stemmekrets mot territorialgrense
+CREATE TABLE stemmekrets_territorialgrense (stemmekrets_fk text, territorialgrense_fk text) WITH (OIDS=FALSE);
+ALTER TABLE stemmekrets_territorialgrense ADD PRIMARY KEY (stemmekrets_fk, territorialgrense_fk);
+ALTER TABLE stemmekrets_territorialgrense ADD FOREIGN KEY (stemmekrets_fk) REFERENCES stemmekrets(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE stemmekrets_territorialgrense ADD FOREIGN KEY (territorialgrense_fk) REFERENCES territorialgrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
+
+-- Manglende kobling fra stemmekrets mot riksgrense
+CREATE TABLE stemmekrets_riksgrense (stemmekrets_fk text, riksgrense_fk text) WITH (OIDS=FALSE);
+ALTER TABLE stemmekrets_riksgrense ADD PRIMARY KEY (stemmekrets_fk, riksgrense_fk);
+ALTER TABLE stemmekrets_riksgrense ADD FOREIGN KEY (stemmekrets_fk) REFERENCES stemmekrets(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE stemmekrets_riksgrense ADD FOREIGN KEY (riksgrense_fk) REFERENCES riksgrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
+
+-- Manglende kobling fra stemmekrets mot avtaltavgrensningslinje
+CREATE TABLE stemmekrets_avtaltavgrensningslinje (stemmekrets_fk text, avtaltavgrensningslinje_fk text) WITH (OIDS=FALSE);
+ALTER TABLE stemmekrets_avtaltavgrensningslinje ADD PRIMARY KEY (stemmekrets_fk, avtaltavgrensningslinje_fk);
+ALTER TABLE stemmekrets_avtaltavgrensningslinje ADD FOREIGN KEY (stemmekrets_fk) REFERENCES stemmekrets(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE stemmekrets_avtaltavgrensningslinje ADD FOREIGN KEY (avtaltavgrensningslinje_fk) REFERENCES avtaltavgrensningslinje(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
+
+-- Manglende informasjon for stemmekrets
+CREATE TABLE stemmekretsgrense_informasjon (objid text NOT NULL, stemmekretsgrense_fk text, informasjon text) WITH (OIDS=FALSE);
+ALTER TABLE stemmekretsgrense_informasjon ADD PRIMARY KEY (objid);
+ALTER TABLE stemmekretsgrense_informasjon ADD FOREIGN KEY (stemmekretsgrense_fk) REFERENCES stemmekretsgrense(objid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;

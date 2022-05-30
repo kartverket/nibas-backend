@@ -4,7 +4,14 @@ import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import org.hibernate.envers.Audited
 import java.util.*
-import javax.persistence.*
+import javax.persistence.CascadeType
+import javax.persistence.Column
+import javax.persistence.Entity
+import javax.persistence.FetchType
+import javax.persistence.JoinColumn
+import javax.persistence.ManyToOne
+import javax.persistence.OneToMany
+import javax.persistence.Table
 
 /**
  * id overrides i konstruktør for å kunne overstyre verdi for test.
@@ -67,5 +74,4 @@ class Kommune(override val id: String = UUID.randomUUID().toString()) :
         }
         oppdaterSamling(grense, attributter, samling, default)
     }
-
 }

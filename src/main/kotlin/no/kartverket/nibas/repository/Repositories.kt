@@ -28,6 +28,9 @@ import no.kartverket.nibas.domain.NasjonInformasjon
 import no.kartverket.nibas.domain.Noeyaktighetsklassekode
 import no.kartverket.nibas.domain.Riksgrense
 import no.kartverket.nibas.domain.Spraakkode
+import no.kartverket.nibas.domain.Stemmekrets
+import no.kartverket.nibas.domain.Stemmekretsgrense
+import no.kartverket.nibas.domain.StemmekretsgrenseInformasjon
 import no.kartverket.nibas.domain.Terrengdetaljkode
 import no.kartverket.nibas.domain.Territorialgrense
 import no.kartverket.nibas.domain.Typeendring
@@ -99,4 +102,6 @@ interface GrunnkretsgrenseRepository : CrudRepositoryWithLokalIdFinder<Grunnkret
 interface GrunnkretsgrenseInformasjonRepository : CrudRepository<GrunnkretsgrenseInformasjon, String>
 interface DelomraadegrenseRepository : CrudRepositoryWithLokalIdFinder<Delomraadegrense, String>
 
-
+interface StemmekretsRepository : CrudRepositoryWithLokalIdFinder<Stemmekrets, String>
+interface StemmekretsgrenseRepository : CrudRepositoryWithLokalIdFinder<Stemmekretsgrense, String>
+interface StemmekretsgrenseInformasjonRepository : CrudRepository<StemmekretsgrenseInformasjon, String>

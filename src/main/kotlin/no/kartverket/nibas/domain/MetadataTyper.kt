@@ -90,6 +90,8 @@ interface Info {
     var informasjon: String?
 }
 
+
+
 // Innkommende fra klienten. Id kan være null
 data class AnsvarligMyndighetHolder(val id: String? = null, var ansvarligmyndighet: String? = null)
 

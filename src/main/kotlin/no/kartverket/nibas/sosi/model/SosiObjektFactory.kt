@@ -25,6 +25,7 @@ class SosiObjektFactory {
                 SosiKoder.NASJONNAVN -> SosiNavn(type = SosiKoder.NASJONNAVN, sosiLinje.niva(), sosiLinje.verdier())
                 SosiKoder.DOKUMENTASJONSREFERANSE -> SosiDokumentasjonsReferanse(sosiLinje.niva(), verdier = sosiLinje.verdier())
                 SosiKoder.GRUNNKRETSID -> SosiGrunnkretsId(type = SosiKoder.GRUNNKRETSID, sosiLinje.niva(), sosiLinje.verdier())
+                SosiKoder.STEMMEKRETSID -> SosiStemmekretsId(type = SosiKoder.STEMMEKRETSID, sosiLinje.niva(), verdier = sosiLinje.verdier())
                 else -> SosiObjekt(type = type, niva = sosiLinje.niva(), verdier = sosiLinje.verdier())
             }
         }
