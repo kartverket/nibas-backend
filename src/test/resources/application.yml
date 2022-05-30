@@ -1,13 +1,11 @@
 spring:
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: notarealurl
-    username: notarealuser
+    username: norealuser
     password: notarealpassword
+    url: jdbc:postgresql://notarealhost:5432/notarealdatabase
   jpa:
     database-platform: org.hibernate.spatial.dialect.postgis.PostgisDialect
-    hibernate:
-      ddl-auto: create-drop
   flyway:
     enabled: false
   cloud:

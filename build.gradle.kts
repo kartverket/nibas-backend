@@ -75,7 +75,9 @@ dependencies {
     implementation("org.hibernate:hibernate-envers:${DependencyVersions.HIBERNATE_VERSION}")
     implementation("org.springframework.cloud:spring-cloud-starter")
     implementation("org.springframework.cloud:spring-cloud-starter-vault-config:3.1.1")
-    implementation("org.locationtech.jts.io:jts-io-common:${DependencyVersions.JTS_VERSION}")
+    implementation("org.locationtech.jts.io:jts-io-common:${DependencyVersions.JTS_VERSION}") {
+        exclude(group = "junit", module = "junit")
+    }
 
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
@@ -87,7 +89,6 @@ dependencies {
     intTestImplementation("org.springframework.boot:spring-boot-starter-test")
     intTestImplementation("org.testcontainers:postgresql:1.17.1")
     intTestImplementation("org.testcontainers:junit-jupiter:1.17.1")
-    intTestImplementation("junit:junit:4.13.2")
 }
 
 allOpen {
