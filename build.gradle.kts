@@ -61,7 +61,7 @@ dependencies {
     implementation("org.hibernate:hibernate-spatial:${DependencyVersions.HIBERNATE_VERSION}")
     implementation("org.hibernate:hibernate-envers:${DependencyVersions.HIBERNATE_VERSION}")
     implementation("org.springframework.cloud:spring-cloud-starter")
-    implementation("org.springframework.cloud:spring-cloud-starter-vault-config:3.1.0")
+    implementation("org.springframework.cloud:spring-cloud-starter-vault-config:3.1.1")
     implementation("org.locationtech.jts.io:jts-io-common:${DependencyVersions.JTS_VERSION}")
 
     runtimeOnly("org.flywaydb:flyway-core:8.5.11")
