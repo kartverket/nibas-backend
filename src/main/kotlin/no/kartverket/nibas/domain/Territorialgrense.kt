@@ -120,6 +120,10 @@ class Territorialgrense : GrenseMedDokumentasjonsreferanser(), MaritimGrense {
     override fun setInfo(updatedInfo: String?) {
         doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { TerritorialgrenseInformasjon(this) }
     }
+
+    override fun setDokumentasjonsreferanseTilbakePeker(dokumentasjonsreferanse: Dokumentasjonsreferanse) {
+        dokumentasjonsreferanse.territorialgrenseFk = this
+    }
 }
 
 @Table(name = "territorialgrense_ansvarligmyndighet")

@@ -128,10 +128,15 @@ http://localhost:8080/v1/grenser/kommunegrenser/1/revisjoner
 ### Admin-API Invalidate kodelister
 PUT http://localhost:8080/v1/admin/kodelister/invalidate
 
-### POST Grenser (bytt ut kommunegrenseId i fila med en i din DB)
+### POST Grenser - Kommunegrense (bytt ut kommunegrenseId i fila med en i din DB)
 POST http://localhost:8080/v1/grenser/
 Content-Type: application/json
 
 < ./json/kommunegrense.json
 
-###
+### POST Grenser - Territorialgrense
+POST http://localhost:8080/v1/grenser/
+Content-Type: application/json
+
+< ./json/territorialgrense.json
+

@@ -1,62 +1,77 @@
 {
-  "type" : "FeatureCollection",
-  "features" : [ {
-    "type" : "Feature",
-    "id" : "3e50135f-db16-426e-961e-6a0f9d464db7",
-    "properties" : {
-      "type" : "Kommunegrense",
-      "metadata" : {
-        "discriminator" : "AdministrativGrenseMetadata",
-        "common" : {
-          "identifikasjon" : {
-            "lokalid" : "3b17fa8d-4313-46a3-9c6d-fd6a7f39256e",
-            "navnerom" : "https://data.geonorge.no/sosi/administrativeenheter",
-            "versjonid" : null
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "3e50135f-db16-426e-961e-6a0f9d464db7",
+      "properties": {
+        "type": "Kommunegrense",
+        "metadata": {
+          "discriminator": "AdministrativGrenseMetadata",
+          "common": {
+            "identifikasjon": {
+              "lokalid": "3b17fa8d-4313-46a3-9c6d-fd6a7f39256e",
+              "navnerom": "https://data.geonorge.no/sosi/administrativeenheter",
+              "versjonid": null
+            },
+            "datafangstdato": null,
+            "gyldigFra": "2022-03-29T15:11:54.743390585+02:00",
+            "gyldigTil": null,
+            "informasjon": "Min informasjonstekst",
+            "oppdateringsdato": "2020-06-16T00:00:00+02:00",
+            "opphav": null
           },
-          "datafangstdato" : null,
-          "gyldigFra" : "2022-03-29T15:11:54.743390585+02:00",
-          "gyldigTil" : null,
-          "informasjon" : "Min informasjonstekst",
-          "oppdateringsdato" : "2020-06-16T00:00:00+02:00",
-          "opphav" : null
-        },
-        "commonGrense" : {
-          "dokumentasjonsreferanser" : [ {
-            "id" : null,
-            "dokumentlenker" : [ {
-              "id" : null,
-              "beskrivelse" : "LinkTilMittDokument"
-            } ],
-            "fastsettingsdato" : "2022-03-28",
-            "fastsettingsmyndighet" : "Kartverket",
-            "hjemmel" : null,
-            "internReferanserKartverket" : [ ],
-            "rettskildeId" : "Id 33",
-            "rettskildeTittel" : "Min fine rettskilde!"
-          } ],
-          "posisjonskvalitet" : {
-            "maalemetode" : "",
-            "noeyaktighet" : null
+          "commonGrense": {
+            "dokumentasjonsreferanser": [
+              {
+                "id": null,
+                "dokumentlenker": [
+                  {
+                    "id": null,
+                    "beskrivelse": "LinkTilMittDokument"
+                  }
+                ],
+                "fastsettingsdato": "2022-03-28",
+                "fastsettingsmyndighet": "Kartverket",
+                "hjemmel": null,
+                "internReferanserKartverket": [],
+                "rettskildeId": "Id 33",
+                "rettskildeTittel": "Min fine rettskilde!"
+              }
+            ],
+            "posisjonskvalitet": {
+              "maalemetode": "",
+              "noeyaktighet": null
+            },
+            "grensestatus": null,
+            "fastsettingstype": null
           },
-          "grensestatus" : null,
-          "fastsettingstype" : null
+          "foelgerTerrengdetalj": null,
+          "noeyaktighetsklasse": "MindreNøyaktigeGrenserOgGrenserFraØK",
+          "omtvistet": true
         },
-        "foelgerTerrengdetalj" : null,
-        "noeyaktighetsklasse" : "MindreNøyaktigeGrenserOgGrenserFraØK",
-        "omtvistet" : true
+        "kontekstEgenskaper": {
+          "id": "123",
+          "type": "KOMMUNE",
+          "retningMedKlokken": true,
+          "rekkefoelge": 0,
+          "flateIndeks": 0,
+          "hullIndeks": null
+        }
       },
-      "kontekstEgenskaper" : {
-        "id" : "123",
-        "type" : "KOMMUNE",
-        "retningMedKlokken" : true,
-        "rekkefoelge" : 0,
-        "flateIndeks" : 0,
-        "hullIndeks" : null
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            1.0
+          ]
+        ]
       }
-    },
-    "geometry" : {
-      "type" : "LineString",
-      "coordinates" : [ [ 0.0, 0.0 ], [ 1.0, 1.0 ] ]
     }
-  } ]
+  ]
 }

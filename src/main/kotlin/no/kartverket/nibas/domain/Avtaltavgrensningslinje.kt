@@ -120,6 +120,10 @@ class Avtaltavgrensningslinje : GrenseMedDokumentasjonsreferanser(), MaritimGren
         this.landkode.clear()
         this.landkode.addAll(landkoder)
     }
+
+    override fun setDokumentasjonsreferanseTilbakePeker(dokumentasjonsreferanse: Dokumentasjonsreferanse) {
+        dokumentasjonsreferanse.avtaltavgrensningslinjeFk = this
+    }
 }
 
 @Table(name = "avtaltavgrensningslinje_ansvarligmyndighet")

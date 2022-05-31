@@ -1,0 +1,109 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "a19f3fe0-1d3d-4c33-b767-769e608723d2",
+      "properties": {
+        "type": "Territorialgrense",
+        "metadata": {
+          "discriminator": "TerritorialgrenseMetadata",
+          "common": {
+            "identifikasjon": {
+              "lokalid": "3658347c-562e-490b-98f6-d04afd3de1ef",
+              "navnerom": "https://data.geonorge.no/sosi/administrativeenheter",
+              "versjonid": null
+            },
+            "datafangstdato": "2003-06-27",
+            "gyldigFra": "2004-01-01",
+            "gyldigTil": null,
+            "informasjon": null,
+            "sporingsinformasjon": {
+              "oppdateringsdato": "2022-05-13",
+              "endretAv": null
+            },
+            "opphav": null
+          },
+          "commonGrense": {
+            "posisjonskvalitet": {
+              "maalemetode": {
+                "id": "17bec036-73dd-4547-a4e5-ef2e20ad54f3",
+                "href": "http://localhost:8080/v1/kodeliste/maalemetode-koder"
+              },
+              "noeyaktighet": 1500
+            },
+            "grensestatus": {
+              "id": "Lovfestet",
+              "href": "http://localhost:8080/v1/kodeliste/grensestatuser"
+            },
+            "fastsettingstype": {
+              "id": "Beregnet",
+              "href": "http://localhost:8080/v1/kodeliste/fastsettingstyper"
+            }
+          },
+          "dokumentasjonsreferanser": [
+            {
+              "id": null,
+              "rettskildeTittel": "Territorialfarvannsloven",
+              "fastsettingsdato": "2003-06-27",
+              "fastsettingsmyndighet": "NY TEKST",
+              "hjemmel": "NY HJEMMEL",
+              "rettskildeId": "LOV-2003-06-27-57",
+              "dokumentlenker": [
+                {
+                  "id": null,
+                  "beskrivelse": "URL til lovtekst her"
+                },
+                {
+                  "id": null,
+                  "beskrivelse": "Ny URL"
+                }
+              ],
+              "internReferanserKartverket": [
+                {
+                  "id": null,
+                  "beskrivelse": "En ny URL her også"
+                }
+              ]
+            }
+          ],
+          "maritimeGrenser": {
+            "ansvarligeMyndigheter": [],
+            "gjelderOmraade": null,
+            "transformasjonsdato": null,
+            "virkeomraadenavn": null,
+            "land": {
+              "ids": [
+                "NO"
+              ],
+              "href": "http://localhost:8080/v1/kodeliste/landkoder"
+            }
+          },
+          "beregningsdato": null
+        },
+        "kontekstEgenskaper": {
+          "id": "ad83b973-580d-4907-9ec0-707770f2923b",
+          "type": "FYLKE",
+          "retningMedKlokken": false,
+          "rekkefoelge": 219,
+          "flateIndeks": 0,
+          "hullIndeks": null
+        }
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            1.0
+          ]
+        ]
+      }
+    }
+  ]
+}
+

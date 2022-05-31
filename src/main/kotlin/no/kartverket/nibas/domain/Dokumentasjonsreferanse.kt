@@ -135,6 +135,20 @@ class Dokumentasjonsreferanse {
     @OneToMany(mappedBy = "dokumentasjonsreferanseFk", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     var internReferanserKartverket: MutableSet<DokumentasjonsreferanseInternReferanseKartverket> = mutableSetOf()
 
+    fun addDokumentLenke(): DokumentasjonsreferanseDokumentlink {
+        val dokumentLink = DokumentasjonsreferanseDokumentlink()
+        dokumentlenker.add(dokumentLink)
+        dokumentLink.dokumentasjonsreferanseFk = this
+        return dokumentLink
+    }
+
+    fun addInternReferanse(): DokumentasjonsreferanseInternReferanseKartverket {
+        val internReferanse = DokumentasjonsreferanseInternReferanseKartverket()
+        internReferanserKartverket.add(internReferanse)
+        internReferanse.dokumentasjonsreferanseFk = this
+        return internReferanse
+    }
+
     fun toDokRef(): Dokref = Dokref(
         id = this.id,
         dokumentlenker = this.dokumentlenker

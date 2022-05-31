@@ -130,7 +130,7 @@ class GrenseController @Autowired constructor(
 
     override fun hentGrunnkretsgrenseRevisjon(id: String, revisjon: Int): Feature = hentGrenseRevisjon(id, revisjon, Grunnkretsgrense::class.java)
 
-    override fun hentDelomraadegrenseRevisjon(id: String, revisjon: Int): Feature  = hentGrenseRevisjon(id, revisjon, Delomraadegrense::class.java)
+    override fun hentDelomraadegrenseRevisjon(id: String, revisjon: Int): Feature = hentGrenseRevisjon(id, revisjon, Delomraadegrense::class.java)
 
     private fun <T : Grense> hentGrenseRevisjon(id: String, revisjon: Int, type: Class<T>): Feature =
         grenseToFeature(grense = historikkService.hentRevisjon(id, revisjon, type), kodelisteService)
@@ -201,9 +201,14 @@ class GrenseService @Autowired constructor(
         grenserSomSkalLagres: List<Feature>,
         grenseRepository: CrudRepository<T, String>
     ) {
-        val eksisterendeGrenser = grenseRepository.findAllById(
+        val eksisterendeGrenser: Iterable<T> = grenseRepository.findAllById(
             grenserSomSkalLagres.filter { feature -> feature.id != null }.map { it.id }
         )
+        // Hvis det er innkommende features med id satt som ikke ligger i databasen, kastes 400
+        if ((grenserSomSkalLagres.filter { it.id != null }.map { it.id!! } - eksisterendeGrenser.map { it.id }.toSet()).isNotEmpty()) {
+            logger.warning("Invalid request, non-existing grenseIds were used in request.")
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Non-existing grenseIds")
+        }
 
         val oppdaterteGrenser = grenserSomSkalLagres.map { feature ->
             var grense = when (val grenseId = feature.id) {

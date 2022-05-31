@@ -86,6 +86,11 @@ class Riksgrense(override val id: String = UUID.randomUUID().toString()) : Grens
     fun setAnsvarligeMyndigheter(listToUpdate: List<AnsvarligMyndighetHolder>) {
         doSetAnsvarligeMyndigheter(listToUpdate, riksgrenseAnsvarligeMyndigheter) { RiksgrenseAnsvarligMyndighet(this) }
     }
+
+    override fun setDokumentasjonsreferanseTilbakePeker(dokumentasjonsreferanse: Dokumentasjonsreferanse) {
+        dokumentasjonsreferanse.riksgrenseFk = this
+    }
+
 }
 
 @Table(name = "riksgrense_informasjon")

@@ -92,6 +92,10 @@ class Lovvirkeomraadegrense : GrenseMedDokumentasjonsreferanser() {
     override fun setInfo(updatedInfo: String?) {
         doSetInfoInSingletonCollection(updatedInfo, informasjon) { LovvirkeomraadegrenseInformasjon(this) }
     }
+
+    override fun setDokumentasjonsreferanseTilbakePeker(dokumentasjonsreferanse: Dokumentasjonsreferanse) {
+        dokumentasjonsreferanse.lovvirkeomraadegrenseFk = this
+    }
 }
 
 @Table(name = "lovvirkeomraadegrense_informasjon")

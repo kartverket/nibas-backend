@@ -121,6 +121,10 @@ class Grunnlinje : GrenseMedDokumentasjonsreferanser(), MaritimGrense {
     override fun setInfo(updatedInfo: String?) {
         doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { GrunnlinjeInformasjon(this) }
     }
+
+    override fun setDokumentasjonsreferanseTilbakePeker(dokumentasjonsreferanse: Dokumentasjonsreferanse) {
+        dokumentasjonsreferanse.grunnlinjeFk = this
+    }
 }
 
 @Table(name = "grunnlinje_informasjon")

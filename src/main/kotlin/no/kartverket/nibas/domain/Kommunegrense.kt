@@ -34,6 +34,9 @@ class Kommunegrense(override val id: String = UUID.randomUUID().toString()) : Ad
     override fun setInfo(updatedInfo: String?) {
         doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { KommunegrenseInformasjon(this) }
     }
+    override fun setDokumentasjonsreferanseTilbakePeker(dokumentasjonsreferanse: Dokumentasjonsreferanse) {
+        dokumentasjonsreferanse.kommunegrenseFk = this
+    }
 }
 
 @Table(name = "kommunegrense_informasjon")
