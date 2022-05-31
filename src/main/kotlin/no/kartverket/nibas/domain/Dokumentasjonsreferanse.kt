@@ -42,6 +42,10 @@ class Dokumentasjonsreferanse {
     var fastsettingsdato: LocalDate? = null
 
     @ManyToOne
+    @JoinColumn(name = "grense_fk")
+    var grenseFk: UtflatetGrense? = null
+
+    @ManyToOne
     @JoinColumn(name = "fylkesgrense_fk")
     var fylkesgrenseFk: Fylkesgrense? = null
 

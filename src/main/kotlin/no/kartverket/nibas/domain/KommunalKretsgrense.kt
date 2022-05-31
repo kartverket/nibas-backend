@@ -3,7 +3,6 @@ package no.kartverket.nibas.domain
 import org.hibernate.envers.Audited
 import java.time.LocalDate
 import javax.persistence.Column
-import javax.persistence.Embeddable
 import javax.persistence.Embedded
 import javax.persistence.JoinColumn
 import javax.persistence.ManyToOne
@@ -57,15 +56,3 @@ abstract class KommunalKretsgrense  : Grense() {
     @Embedded
     var foelgerGrunnkretsgrenseIdentifikasjon: FoelgerGrunnkretsgrenseIdentifikasjon? = FoelgerGrunnkretsgrenseIdentifikasjon()
 }
-
-@Embeddable
-data class FoelgerGrunnkretsgrenseIdentifikasjon(
-    @Column(name = "foelgergrunnkretsgrense_lokalid")
-    override var lokalid: String = "",
-
-    @Column(name = "foelgergrunnkretsgrense_navnerom")
-    override var navnerom: String = "",
-
-    @Column(name = "foelgergrunnkretsgrense_versjonid")
-    override var versjonid: String? = null
-) : ContainsSosiIdentifikasjon

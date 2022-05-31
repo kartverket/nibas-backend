@@ -57,6 +57,8 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 import java.util.logging.Logger
+import javax.persistence.AttributeConverter
+import javax.persistence.Converter
 import kotlin.reflect.KClass
 
 @RestController
@@ -310,19 +312,20 @@ class GrenseService @Autowired constructor(
 }
 
 /**
- * Introduserte en value-attributt for å kunne ha norske tegn i verdi, men ikke i enum-konstant-navn.
+ * Introduserte en value-attributt for å kunne ha norske tegn i verdi (ut i klienten), men ikke i enum-konstant-navn.
+ * NB: dbKey brukes som konstant i database-tabellen for grenser (disse må da endres med omhu).
  */
-enum class GrenseType(val value: String) {
-    Kommunegrense("Kommunegrense"),
-    Fylkesgrense("Fylkesgrense"),
-    Riksgrense("Riksgrense"),
-    AvtaltAvgrensningslinje("AvtaltAvgrensningslinje"),
-    Territorialgrense("Territorialgrense"),
-    Grunnlinje("Grunnlinje"),
-    Lovvirkeomraadegrense("LovVirkeområdeGrense"),
-    Grunnkretsgrense("Grunnkretsgrense"),
-    Delomraadegrense("Delområdegrense"),
-    Stemmekretsgrense("Stemmekretsgrense");
+enum class GrenseType(val value: String, val dbKey: String) {
+    Kommunegrense("Kommunegrense", "Kommunegrense"),
+    Fylkesgrense("Fylkesgrense", "Fylkesgrense"),
+    Riksgrense("Riksgrense", "Riksgrense"),
+    AvtaltAvgrensningslinje("AvtaltAvgrensningslinje", "AvtaltAvgrensningslinje"),
+    Territorialgrense("Territorialgrense", "Territorialgrense"),
+    Grunnlinje("Grunnlinje", "Grunnlinje"),
+    Lovvirkeomraadegrense("LovVirkeområdeGrense", "LovVirkeområdeGrense"),
+    Grunnkretsgrense("Grunnkretsgrense", "Grunnkretsgrense"),
+    Delomraadegrense("Delområdegrense", "Delområdegrense"),
+    Stemmekretsgrense("Stemmekretsgrense", "Stemmekretsgrense");
 
     companion object {
         fun fromValue(valueIn: String): GrenseType {
@@ -332,6 +335,25 @@ enum class GrenseType(val value: String) {
                 throw IllegalArgumentException("Invalid value: $valueIn")
             }
         }
+
+        fun fromDbKey(dbKeyIn: String): GrenseType {
+            try {
+                return values().first { it.dbKey == dbKeyIn }
+            } catch (e: NoSuchElementException) {
+                throw IllegalArgumentException("Invalid dbKey: $dbKeyIn")
+            }
+        }
+    }
+}
+
+@Converter(autoApply = true)
+class GrenseTypeConverter : AttributeConverter<GrenseType, String> {
+    override fun convertToDatabaseColumn(attribute: GrenseType): String {
+        return attribute.dbKey
+    }
+
+    override fun convertToEntityAttribute(dbKey: String): GrenseType {
+        return GrenseType.fromDbKey(dbKey)
     }
 }
 

@@ -15,6 +15,16 @@ internal class GrenseTypeTest {
     fun fromValueNotMatching() {
         assertThatThrownBy { GrenseType.fromValue("Grense2") }.isInstanceOf(IllegalArgumentException::class.java)
     }
+
+    @Test
+    fun fromDbKey() {
+        assertThat(GrenseType.fromDbKey("LovVirkeområdeGrense")).isEqualTo(GrenseType.Lovvirkeomraadegrense)
+    }
+
+    @Test
+    fun fromDbKeyNotMatching() {
+        assertThatThrownBy { GrenseType.fromDbKey("Grense2") }.isInstanceOf(IllegalArgumentException::class.java)
+    }
 }
 
 

@@ -57,6 +57,18 @@ data class Registreringsversjon(
     var versjon: String? = null
 )
 
+@Embeddable
+data class FoelgerGrunnkretsgrenseIdentifikasjon(
+    @Column(name = "foelgergrunnkretsgrense_lokalid")
+    override var lokalid: String = "",
+
+    @Column(name = "foelgergrunnkretsgrense_navnerom")
+    override var navnerom: String = "",
+
+    @Column(name = "foelgergrunnkretsgrense_versjonid")
+    override var versjonid: String? = null
+) : ContainsSosiIdentifikasjon
+
 // Felles egenskaper for grenser, adm_enheter, punkter ++
 interface CommonMetadataProperties : ContainsSosiIdentifikasjon, Sporbar {
     var datafangstdato: LocalDate?
