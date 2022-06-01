@@ -87,7 +87,7 @@ dependencies {
 
     intTestImplementation("org.jetbrains.kotlin:kotlin-test")
     intTestImplementation("org.springframework.boot:spring-boot-starter-test")
-    intTestImplementation("org.testcontainers:postgresql:1.17.1")
+    intTestImplementation("org.testcontainers:postgresql:1.17.2")
     intTestImplementation("org.testcontainers:junit-jupiter:1.17.2")
 }
 
