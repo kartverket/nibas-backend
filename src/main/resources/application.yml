@@ -67,6 +67,9 @@ spring:
   config:
     import: vault://nibas/nibas-backend, vault://nibas/nibas-db
 
+  jmx:
+    enabled: true
+
 # Hver dag kl 03
 nibas:
   cron:
