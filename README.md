@@ -10,10 +10,7 @@ Spring Boot applikasjon som serverer informasjon om administrative grenser.
 - [Formatering](#formatering)
 
 # Bygge <a name="bygge"></a>
-`./gradlew assemble`
-
-# Kjøre på lokal maskin <a name="lokal"></a>
-* 
+* Bygge fra command line
 ```
 $ ./gradlew clean build -Ppat=<PERSONLIG_PAT> -Pgh_username=<BRUKERNAVN_GITHUB>
 ```
@@ -26,6 +23,7 @@ gh_username=<BRUKERNAVN_GITHUB>
 ```
 Da vil nedlasting av artifakter (som aut-lib) fra Github fungere og en vil også kunne bruke Gradle Sync fra IntelliJ uten å bygge først. Da vil også source-jaren bli lastet ned.
 
+# Kjøre på lokal maskin <a name="lokal"></a>
 * Definer følgende miljøvariable:
   * VAULT_TOKEN (Logg inn på Vault, og velg "Copy Token" øverst til høyre under profil-menyen)
 
