@@ -24,7 +24,6 @@ class TransformasjonServiceTest : TestWithDbContainer() {
         val geometry: Geometry = wktReader.read(testWkt)
         val transformertGeometry: Geometry = transformasjonService.transformer(geometry, 4258)
 
-        System.out.println("Running integration test")
         assertTrue(geometry.toText() != transformertGeometry.toText())
         assertTrue(dbContainer.isRunning)
     }
