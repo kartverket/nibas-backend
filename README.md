@@ -13,10 +13,18 @@ Spring Boot applikasjon som serverer informasjon om administrative grenser.
 `./gradlew assemble`
 
 # Kjøre på lokal maskin <a name="lokal"></a>
-* Hent aut-lib fra github
+* 
 ```
 $ ./gradlew clean build -Ppat=<PERSONLIG_PAT> -Pgh_username=<BRUKERNAVN_GITHUB>
 ```
+Propertiene pat og gh_username må være tilstede for å kunne hente artifakter som aut-lib fra Github.
+
+Alternativt til å angi Gradle-properties på command line så kan det være kjekt å definere en fil gradle.properties som må legges i katalogen GRADLE_USER_HOME med følgende innhold:
+```
+pat=<PERSONLIG_PAT>
+gh_username=<BRUKERNAVN_GITHUB>
+```
+Da vil nedlasting av artifakter (som aut-lib) fra Github fungere og en vil også kunne bruke Gradle Sync fra IntelliJ uten å bygge først. Da vil også source-jaren bli lastet ned.
 
 * Definer følgende miljøvariable:
   * VAULT_TOKEN (Logg inn på Vault, og velg "Copy Token" øverst til høyre under profil-menyen)
