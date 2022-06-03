@@ -11,10 +11,10 @@ import org.testcontainers.utility.DockerImageName
 class TestWithDbContainer {
 
     companion object dbContainer : PostgreSQLContainer<dbContainer>(
-        DockerImageName.parse("postgis/postgis:13-3.1-alpine").asCompatibleSubstituteFor("postgres")
+        DockerImageName.parse("postgis/postgis:14-3.2-alpine").asCompatibleSubstituteFor("postgres")
     ) {
         init {
-            withDatabaseName("postgres")
+            withDatabaseName("nibas")
             withUsername("nibas")
             withPassword("nibas")
             withCreateContainerCmdModifier { cmd -> cmd.withName("nibas-test-container") }
