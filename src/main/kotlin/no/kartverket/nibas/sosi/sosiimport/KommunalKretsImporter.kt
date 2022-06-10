@@ -23,7 +23,6 @@ class KommunalKretsImporter @Autowired constructor(
 
         krets.updateSosiIdentifikasjon(flate.getIdent())
         krets.datafangstdato = flate.getDatafangstDato()
-        krets.datauttaksdato = flate.getDataUttaksdato()
         krets.endringsflagg?.tidspunktendring = flate.getEndringsflagg()?.getTidspunktEndring()
         krets.endringsflagg?.typeendring = when (val typeendring = flate.getEndringsflagg()?.getTypeEndring()) {
             null -> null

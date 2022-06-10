@@ -42,9 +42,6 @@ abstract class KommunalKrets(@Transient override val type: Flatetype) : Flate, C
     @Column(name = "datafangstdato")
     override var datafangstdato: LocalDate? = null
 
-    @Column(name = "datauttaksdato")
-    var datauttaksdato: LocalDate? = null
-
     @Embedded
     var endringsflagg: Endringsflagg? = Endringsflagg()
 
@@ -58,13 +55,13 @@ abstract class KommunalKrets(@Transient override val type: Flatetype) : Flate, C
     var informasjon: String? = null
 
     @Embedded
-    var kopidata: Kopidata? = Kopidata()
+    override var kopidata: Kopidata? = Kopidata()
 
     @Column(name = "opphav")
     override var opphav: String? = null
 
     @Embedded
-    var registreringsversjon: Registreringsversjon? = Registreringsversjon()
+    override var registreringsversjon: Registreringsversjon? = Registreringsversjon()
 
     @Column(name = "sluttdato")
     var sluttdato: LocalDate? = null

@@ -14,18 +14,24 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.RiksgrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.StatistiskgrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.TerritorialgrenseMetadata
 import no.kartverket.nibas.api.v1.response.RevisjonRef
+import no.kartverket.nibas.domain.AdministrativEnhet
 import no.kartverket.nibas.domain.AdministrativGrense
 import no.kartverket.nibas.domain.Avtaltavgrensningslinje
 import no.kartverket.nibas.domain.Delomraadegrense
 import no.kartverket.nibas.domain.Flate
+import no.kartverket.nibas.domain.Fylke
 import no.kartverket.nibas.domain.Fylkesgrense
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
+import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Grunnkretsgrense
 import no.kartverket.nibas.domain.Grunnlinje
+import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Kommunegrense
+import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.domain.Riksgrense
+import no.kartverket.nibas.domain.StatistiskEnhet
 import no.kartverket.nibas.domain.StatistiskGrense
 import no.kartverket.nibas.domain.Territorialgrense
 import no.kartverket.nibas.kodelister.KodelisteService
@@ -404,5 +410,17 @@ fun grenseToFeature(grense: Grense, kodelisteService: KodelisteService): Feature
 fun posisjonToFeature(posisjon: Point?): Feature =
     Feature(properties = FeatureProperties(type = "Posisjon"), geometry = posisjon!!)
 
-fun flateToFeature(flate: MultiPolygon?): Feature =
-    Feature(properties = FeatureProperties(type = "Flate"), geometry = flate!!)
+fun flateToFeature(flate: Flate, kodelisteService: KodelisteService): Feature  {
+    var featureProperties = FeatureProperties(
+        type = flate.type.name,
+    )
+    val metadataMapper = MetadataMapper(kodelisteService)
+
+    featureProperties = featureProperties.copy(metadata = metadataMapper.toMetadata(flate))
+
+    return Feature(
+        id = flate.id,
+        properties = featureProperties,
+        geometry = flate.flate!!
+    )
+}

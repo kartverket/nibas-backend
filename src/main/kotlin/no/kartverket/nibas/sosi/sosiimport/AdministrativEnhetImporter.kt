@@ -15,9 +15,6 @@ import org.springframework.stereotype.Component
 @Component
 class AdministrativEnhetImporter {
 
-    @Autowired
-    lateinit var landKodeRepository: LandKodeRepository
-
     fun importer(flate: SosiFlate): AdministrativEnhet {
         val administrativEnhet = when (flate.getObjType()) {
             SosiKoder.KOMMUNE -> Kommune()
@@ -27,14 +24,10 @@ class AdministrativEnhetImporter {
         }
 
         administrativEnhet.updateSosiIdentifikasjon(flate.getIdent())
-        administrativEnhet.datauttaksdato = flate.getDataUttaksdato()
         administrativEnhet.opphav = flate.getOpphav()
         administrativEnhet.gyldigFra = flate.getGyldigFra()
         administrativEnhet.gyldigTil = flate.getGyldigTil()
         administrativEnhet.datafangstdato = flate.getDatafangstDato()
-        administrativEnhet.sluttdato = flate.getSluttdato()
-        administrativEnhet.datauttaksdato = flate.getDataUttaksdato()
-        administrativEnhet.land = flate.getLandkode()?.let { landKodeRepository.findByIdOrNull(it) }
         administrativEnhet.posisjon =
             SosiGeometryFunctions.sosiKoordinatToPoint(flate.getAlleSosiNordOest(), flate.koordsys)
 

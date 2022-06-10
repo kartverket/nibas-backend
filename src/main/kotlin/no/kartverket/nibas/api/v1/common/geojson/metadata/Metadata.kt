@@ -9,6 +9,7 @@ import no.kartverket.nibas.domain.ContainsSosiIdentifikasjon
 import no.kartverket.nibas.domain.PosisjonskvalitetEmbeddable
 import java.time.LocalDate
 
+const val FLATE_METADATA_SCHEMA: String = "FlateMetadata"
 const val ADMINISTRATIV_GRENSE_METADATA_SCHEMA: String = "AdministrativGrenseMetadata"
 const val RIKSGRENSE_METADATA_SCHEMA: String = "RiksgrenseMetadata"
 const val TERRITORIALGRENSE_METADATA_SCHEMA: String = "TerritorialgrenseMetadata"
@@ -34,6 +35,7 @@ const val DISCRIMINATOR_FIELD: String = "discriminator"
 @Schema(
     description = "Diverse metadata-felter fra sosi-modellen.",
     subTypes = [
+        FlateMetadata::class,
         AdministrativGrenseMetadata::class,
         RiksgrenseMetadata::class,
         TerritorialgrenseMetadata::class,
@@ -43,6 +45,7 @@ const val DISCRIMINATOR_FIELD: String = "discriminator"
     ],
     discriminatorProperty = DISCRIMINATOR_FIELD,
     discriminatorMapping = [
+        DiscriminatorMapping(value = FLATE_METADATA_SCHEMA, schema = FlateMetadata::class),
         DiscriminatorMapping(value = ADMINISTRATIV_GRENSE_METADATA_SCHEMA, schema = AdministrativGrenseMetadata::class),
         DiscriminatorMapping(value = RIKSGRENSE_METADATA_SCHEMA, schema = RiksgrenseMetadata::class),
         DiscriminatorMapping(value = TERRITORIALGRENSE_METADATA_SCHEMA, schema = TerritorialgrenseMetadata::class),
@@ -56,6 +59,7 @@ const val DISCRIMINATOR_FIELD: String = "discriminator"
 )
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = DISCRIMINATOR_FIELD)
 @JsonSubTypes(
+    JsonSubTypes.Type(value = FlateMetadata::class, name = FLATE_METADATA_SCHEMA),
     JsonSubTypes.Type(value = AdministrativGrenseMetadata::class, name = ADMINISTRATIV_GRENSE_METADATA_SCHEMA),
     JsonSubTypes.Type(value = RiksgrenseMetadata::class, name = RIKSGRENSE_METADATA_SCHEMA),
     JsonSubTypes.Type(value = TerritorialgrenseMetadata::class, name = TERRITORIALGRENSE_METADATA_SCHEMA),
@@ -64,6 +68,15 @@ const val DISCRIMINATOR_FIELD: String = "discriminator"
     JsonSubTypes.Type(value = StatistiskgrenseMetadata::class, name = STATISTISKGRENSE_METADATA_SCHEMA)
 )
 interface Metadata
+
+@Schema(
+    name = FLATE_METADATA_SCHEMA,
+    description = "Metadata for en flate (felles for nasjon, fylke, kommune og grunnkrets)",
+)
+data class FlateMetadata(
+    @Schema(description = "Felles metadata-egenskaper.")
+    val common: CommonMetadata,
+) : Metadata
 
 @Schema(
     name = ADMINISTRATIV_GRENSE_METADATA_SCHEMA,
@@ -156,7 +169,7 @@ data class GrunnlinjeMetadata(
 
 @Schema(
     name = STATISTISKGRENSE_METADATA_SCHEMA,
-    description = "Spesifikk metadata for en statistisk grense (grunnkrets/delområde). Beskrevet i SOSI-modellen her: https://objektkatalog.geonorge.no/Diagram/Index/EAID_A3C68E12_E409_42c0_937D_6C1B62351E42",
+    description = "Spesifikk metadata for en statistisk grense (grunnkrets/delområde). Beskrevet i SOSI-modellen her: https://objektkatalog.geonorge.no/Objekttype/Index/EAID_374BE5B3_5F8B_498a_8F53_9CCA72619C36",
 )
 data class StatistiskgrenseMetadata(
     @Schema(description = "Felles metadata-egenskaper.")

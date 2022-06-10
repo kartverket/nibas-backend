@@ -22,7 +22,7 @@ class TerritorialgrenseBuilder {
         maalemetode = MaalemetodeKodeEnum.TERRENGMAALT.uuid,
         noeyaktighet = 200
     )
-    private var opphav = "opphav3"
+    private var opphav = OPPHAV
     private var fastsettingstypeEnum: FastsettingstypeEnum = FastsettingstypeEnum.BestemteKoordinater
     private var grensestatusEnum: GrensestatusEnum = GrensestatusEnum.Traktat
     private var informasjonstekst = INFORMASJONTEKST

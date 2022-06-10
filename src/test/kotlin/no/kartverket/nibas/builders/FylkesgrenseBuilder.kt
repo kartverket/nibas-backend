@@ -21,6 +21,7 @@ const val LINK_TEKST_1 = "C. Link1"
 const val LINK_TEKST_2 = "D. Link2"
 const val REF_TEKST_1 = "B. Intern 1"
 const val REF_TEKST_2 = "A. Intern 2"
+const val OPPHAV = "Opphav må til"
 
 enum class MaalemetodeKodeEnum(val uuid: String) {
     TERRENGMAALT("7f48625b-e46f-413e-ae4d-0381ac64264b")
@@ -69,7 +70,7 @@ class FylkesgrenseBuilder(private val id: String = "1") {
         maalemetode = MaalemetodeKodeEnum.TERRENGMAALT.uuid,
         noeyaktighet = 200
     )
-    private var opphav = "opphav3"
+    private var opphav = OPPHAV
     private var informasjonstekst = INFORMASJONTEKST
     private var terrengdetaljkode: Terrengdetaljkode? = terrengdetaljkodeAnnetGjerde
     private var noeyaktighetsklassekode: Noeyaktighetsklassekode? = noeyaktighetsklassekodeLite

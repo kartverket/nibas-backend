@@ -4,19 +4,17 @@ import no.kartverket.nibas.builders.DokumentasjonsreferanseBuilder
 import no.kartverket.nibas.builders.FastsettingstypeEnum
 import no.kartverket.nibas.builders.FylkesgrenseBuilder
 import no.kartverket.nibas.builders.GrensestatusEnum
-import no.kartverket.nibas.builders.HJEMMEL_I_LOVEN
+import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.INFORMASJONTEKST
 import no.kartverket.nibas.builders.LINK_TEKST_1
 import no.kartverket.nibas.builders.LINK_TEKST_2
 import no.kartverket.nibas.builders.LOKALID
-import no.kartverket.nibas.builders.MYNDIGHET
 import no.kartverket.nibas.builders.MaalemetodeKodeEnum
 import no.kartverket.nibas.builders.NAVNEROM
 import no.kartverket.nibas.builders.NoeyaktighetsklasseEnum
+import no.kartverket.nibas.builders.OPPHAV
 import no.kartverket.nibas.builders.REF_TEKST_1
 import no.kartverket.nibas.builders.REF_TEKST_2
-import no.kartverket.nibas.builders.RETTSKILDE_ID_1
-import no.kartverket.nibas.builders.TITTEL
 import no.kartverket.nibas.builders.TerrengdetaljEnum
 import no.kartverket.nibas.builders.TerritorialgrenseBuilder
 import no.kartverket.nibas.builders.VERSJON_33
@@ -50,12 +48,13 @@ internal class MetadataMapperTest {
 
     private lateinit var metadataMapper: MetadataMapper
 
-    private val oppdDato: LocalDate = LocalDate.now()
-    private val dataFanget = oppdDato.minusYears(1)
-    private val gyldigFraTidspunkt = oppdDato.minusMonths(6)
-    private val fastsettingsdato: LocalDate = oppdDato.minusMonths(5)
-    private val beregningsdato: LocalDate = oppdDato.minusWeeks(17)
-    private val transformasjonsdato: LocalDate = oppdDato.minusDays(19)
+    private val oppdateringsdato: LocalDate = LocalDate.now()
+    private val dataFanget = oppdateringsdato.minusYears(1)
+    private val gyldigFraTidspunkt = oppdateringsdato.minusMonths(6)
+    private val gyldigTilTidspunkt = oppdateringsdato.plusMonths(12)
+    private val fastsettingsdato: LocalDate = oppdateringsdato.minusMonths(5)
+    private val beregningsdato: LocalDate = oppdateringsdato.minusWeeks(17)
+    private val transformasjonsdato: LocalDate = oppdateringsdato.minusDays(19)
 
     private val link1 = dokLink(LINK_TEKST_1)
     private val link2 = dokLink(LINK_TEKST_2)
@@ -96,7 +95,7 @@ internal class MetadataMapperTest {
     @Test
     fun toAdministrativGrenseMetadata() {
         val fylkesgrense = FylkesgrenseBuilder()
-            .withOppdateringsdato(oppdDato)
+            .withOppdateringsdato(oppdateringsdato)
             .datafangstdato(dataFanget)
             .gyldigFra(gyldigFraTidspunkt)
             .dokRef(dokumentasjonsreferanse)
@@ -125,7 +124,7 @@ internal class MetadataMapperTest {
         mockRussland(landKodeRepositoryMock)
 
         val territorialgrense = TerritorialgrenseBuilder()
-            .withOppdateringsdato(oppdDato)
+            .withOppdateringsdato(oppdateringsdato)
             .datafangstdato(dataFanget)
             .gyldigFra(gyldigFraTidspunkt)
             .dokRef(dokumentasjonsreferanse)
@@ -158,13 +157,28 @@ internal class MetadataMapperTest {
         assertThat(metadata).isEqualTo(territorialgrenseMetadata)
     }
 
+    @Test
+    fun toFlateMetadata() {
+        val grunnkrets = GrunnkretsBuilder()
+            .withDatafangstdato(dataFanget)
+            .withGyldigFra(gyldigFraTidspunkt)
+            .withGyldigTil(gyldigTilTidspunkt)
+            .withOppdateringsdato(oppdateringsdato)
+            .build()
+
+        val expectedFlateMetadata = FlateMetadata(common = expectedCommonMetadata().copy(gyldigTil = gyldigTilTidspunkt))
+
+        val metadata = metadataMapper.toMetadata(grunnkrets)
+        assertThat(metadata).isEqualTo(expectedFlateMetadata)
+    }
+
     private fun expectedCommonMetadata() = CommonMetadata(
         identifikasjon = Identifikasjon(LOKALID, NAVNEROM, VERSJON_33),
         datafangstdato = dataFanget,
         gyldigFra = gyldigFraTidspunkt,
         gyldigTil = null,
-        sporingsinformasjon = Sporingsinformasjon(oppdateringsdato = oppdDato),
-        opphav = "opphav3",
+        sporingsinformasjon = Sporingsinformasjon(oppdateringsdato = oppdateringsdato),
+        opphav = OPPHAV,
         informasjon = INFORMASJONTEKST
     )
 
@@ -176,24 +190,5 @@ internal class MetadataMapperTest {
         fastsettingstype = KodelisteEntry(id = FastsettingstypeEnum.BestemteKoordinater.name, href = fastsettingstypeHref),
         grensestatus = KodelisteEntry(id = GrensestatusEnum.Traktat.name, href = grensestatusHref),
     )
-
-    private fun dokRef(id: String): Dokref {
-        return Dokref(
-            id = id,
-            dokumentlenker = listOf(
-                TekstHolder(link1.id, LINK_TEKST_1),
-                TekstHolder(link2.id, LINK_TEKST_2)
-            ),
-            fastsettingsdato = fastsettingsdato,
-            fastsettingsmyndighet = MYNDIGHET,
-            hjemmel = HJEMMEL_I_LOVEN,
-            internReferanserKartverket = listOf(
-                TekstHolder(referanse2.id, REF_TEKST_2),
-                TekstHolder(referanse1.id, REF_TEKST_1)
-            ),
-            rettskildeId = RETTSKILDE_ID_1,
-            rettskildeTittel = TITTEL
-        )
-    }
 
 }

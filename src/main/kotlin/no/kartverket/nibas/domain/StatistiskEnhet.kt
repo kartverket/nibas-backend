@@ -58,9 +58,6 @@ abstract class StatistiskEnhet(
     @Column(name = "informasjon")
     var informasjon: String? = null
 
-    @Column(name = "datauttaksdato")
-    var datauttaksdato: LocalDate? = null
-
     @Embedded
     var endringsflagg: Endringsflagg? = Endringsflagg()
 
@@ -68,10 +65,10 @@ abstract class StatistiskEnhet(
     override var opphav: String? = null
 
     @Embedded
-    var registreringsversjon: Registreringsversjon? = Registreringsversjon()
+    override var registreringsversjon: Registreringsversjon? = Registreringsversjon()
 
     @Embedded
-    var kopidata: Kopidata? = Kopidata()
+    override var kopidata: Kopidata? = Kopidata()
 
     @Column(name = "posisjon")
     var posisjon: Point? = null

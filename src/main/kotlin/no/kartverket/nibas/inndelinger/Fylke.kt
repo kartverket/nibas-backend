@@ -120,5 +120,5 @@ fun toFylkeResponse(fylke: Fylke, kodelisteService: KodelisteService): FylkeResp
     ),
     samiskforvaltningsomraade = fylke.samiskforvaltningsomraade!!,
     oppdateringsdato = fylke.auditInfo.oppdateringsdato,
-    features = FeatureCollection(features = listOf(posisjonToFeature(fylke.posisjon), flateToFeature(fylke.flate)))
+    features = FeatureCollection(features = listOf(posisjonToFeature(fylke.posisjon), flateToFeature(fylke, kodelisteService)))
 )

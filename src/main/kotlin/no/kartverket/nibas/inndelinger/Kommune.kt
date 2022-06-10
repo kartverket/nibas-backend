@@ -125,7 +125,7 @@ fun toKommuneResponse(kommune: Kommune, kodelisteService: KodelisteService): Kom
     kommunenummer = createKommunenummerFromUUID(kommune.kommunenummer, kodelisteService),
     samiskforvaltningsomraade = kommune.samiskforvaltningsomraade!!,
     oppdateringsdato = kommune.auditInfo.oppdateringsdato,
-    features = FeatureCollection(features = listOf(posisjonToFeature(kommune.posisjon), flateToFeature(kommune.flate)))
+    features = FeatureCollection(features = listOf(posisjonToFeature(kommune.posisjon), flateToFeature(kommune, kodelisteService)))
 )
 
 fun createKommunenummerFromUUID(kommunenrUUID: String, kodelisteService: KodelisteService) = Kommunenummer(

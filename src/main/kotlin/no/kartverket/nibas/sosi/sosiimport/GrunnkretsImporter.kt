@@ -64,7 +64,6 @@ class GrunnkretsImporter @Autowired constructor(
 
             grunnkrets.updateSosiIdentifikasjon(sosiIdent)
             grunnkrets.datafangstdato = flate.getDatafangstDato()
-            grunnkrets.datauttaksdato = flate.getDataUttaksdato()
             grunnkrets.endringsflagg?.tidspunktendring = flate.getEndringsflagg()?.getTidspunktEndring()
             grunnkrets.endringsflagg?.typeendring = when (val typeendring = flate.getEndringsflagg()?.getTypeEndring()) {
                 null -> null

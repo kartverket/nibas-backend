@@ -38,7 +38,7 @@ class GrunnkretsController @Autowired constructor(
     override fun hentEn(id: String): GrunnkretsResponse {
         return when (val kommune = grunnkretsService.hentGrunnkrets(id)) {
             null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
-            else -> toGrunnkretsResponse(kommune)
+            else -> toGrunnkretsResponse(kommune, kodelisteService)
         }
     }
 
@@ -56,7 +56,7 @@ class GrunnkretsController @Autowired constructor(
     override fun oppdaterGrunnkrets(id: String, oppdatertGrunnkrets: GrunnkretsRequest): GrunnkretsResponse {
         return when (val lagret = grunnkretsService.oppdaterGrunnkrets(id, oppdatertGrunnkrets)) {
             null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
-            else -> toGrunnkretsResponse(lagret)
+            else -> toGrunnkretsResponse(lagret, kodelisteService)
         }
     }
 
@@ -66,7 +66,8 @@ class GrunnkretsController @Autowired constructor(
 
     override fun hentGrunnkretsRevisjon(id: String, revisjon: Int): GrunnkretsResponse {
         return toGrunnkretsResponse(
-            historikkService.hentRevisjon(id, revisjon, Grunnkrets::class.java)
+            historikkService.hentRevisjon(id, revisjon, Grunnkrets::class.java),
+            kodelisteService
         )
     }
 }
@@ -109,14 +110,14 @@ fun toGrunnkretsRef(grunnkrets: Grunnkrets): GrunnkretsRef = GrunnkretsRef(
     href = ServletUriComponentsBuilder.fromCurrentRequestUri().pathSegment(grunnkrets.id).build().toUriString()
 )
 
-fun toGrunnkretsResponse(grunnkrets: Grunnkrets): GrunnkretsResponse = GrunnkretsResponse(
+fun toGrunnkretsResponse(grunnkrets: Grunnkrets, kodelisteService: KodelisteService): GrunnkretsResponse = GrunnkretsResponse(
     id = grunnkrets.id,
     navn = grunnkrets.grunnkretsnavn!!,
     grunnkretsnummer = grunnkrets.grunnkretsnummer!!,
     identifikasjon = Identifikasjon(grunnkrets.lokalid, grunnkrets.navnerom, grunnkrets.versjonid),
     kommunenummer = grunnkrets.kommunenummer!!,
     features = FeatureCollection(features = listOf(
-//        posisjonToFeature(grunnkrets.posisjon),
-        flateToFeature(grunnkrets.flate)))
+        posisjonToFeature(grunnkrets.posisjon),
+        flateToFeature(grunnkrets, kodelisteService)))
 )
 

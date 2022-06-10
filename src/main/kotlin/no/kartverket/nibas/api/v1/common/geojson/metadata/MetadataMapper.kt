@@ -7,13 +7,16 @@ import no.kartverket.nibas.api.v1.LANDKODE_PATH
 import no.kartverket.nibas.api.v1.MAALEMETODE_KODE_PATH
 import no.kartverket.nibas.api.v1.NOEYAKTIGHETSKLASSEKODE_PATH
 import no.kartverket.nibas.api.v1.TERRENGDETALJKODE_PATH
+import no.kartverket.nibas.domain.AdministrativEnhet
 import no.kartverket.nibas.domain.AdministrativGrense
 import no.kartverket.nibas.domain.Avtaltavgrensningslinje
 import no.kartverket.nibas.domain.CommonMetadataProperties
+import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.Grunnlinje
 import no.kartverket.nibas.domain.MaritimGrense
 import no.kartverket.nibas.domain.Riksgrense
+import no.kartverket.nibas.domain.StatistiskEnhet
 import no.kartverket.nibas.domain.StatistiskGrense
 import no.kartverket.nibas.domain.Territorialgrense
 import no.kartverket.nibas.inndelinger.createKommunenummerFromUUID
@@ -22,11 +25,15 @@ import no.kartverket.nibas.sporing.toSporingsinformasjon
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 
 /**
- * Hjelpeklasse/mappinglogikk grense -> metadata.
+ * Hjelpeklasse/mappinglogikk grense/flate -> metadata.
  * Skilte ut egen klasse da extension-funksjonene ble avhengig av injectede avhengigheter.
  */
 class MetadataMapper(private val kodelisteService: KodelisteService,
                      private val kodelisteHrefProvider: KodelisteHrefProviderI = KodelisteHrefProvider()) {
+
+    fun toMetadata(flate: Flate): FlateMetadata = FlateMetadata(
+        common = flate.getCommonMetadata()
+    )
 
     fun toMetadata(grense: AdministrativGrense): AdministrativGrenseMetadata = AdministrativGrenseMetadata(
         common = grense.getCommonMetadata(),

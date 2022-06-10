@@ -33,7 +33,7 @@ class NasjonController @Autowired constructor(
     override fun hentEn(id: String): NasjonResponse {
         return when (val nasjon = nasjonService.hentNasjon(id)) {
             null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
-            else -> toNasjonResponse(nasjon)
+            else -> toNasjonResponse(nasjon, kodelisteService)
         }
     }
 
@@ -50,7 +50,7 @@ class NasjonController @Autowired constructor(
     override fun oppdaterNasjon(id: String, oppdatertNasjon: NasjonRequest): NasjonResponse {
         return when (val lagret = nasjonService.oppdaterNasjon(id, oppdatertNasjon)) {
             null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
-            else -> toNasjonResponse(lagret)
+            else -> toNasjonResponse(lagret, kodelisteService)
         }
     }
 
@@ -59,7 +59,8 @@ class NasjonController @Autowired constructor(
 
     override fun hentNasjonRevisjon(id: String, revisjon: Int): NasjonResponse {
         return toNasjonResponse(
-            historikkService.hentRevisjon(id, revisjon, Nasjon::class.java)
+            historikkService.hentRevisjon(id, revisjon, Nasjon::class.java),
+            kodelisteService
         )
     }
 }
@@ -105,10 +106,10 @@ fun toNasjonRef(nasjon: Nasjon): NasjonRefResponse = NasjonRefResponse(
     href = ServletUriComponentsBuilder.fromCurrentRequestUri().pathSegment(nasjon.id).build().toUriString()
 )
 
-fun toNasjonResponse(nasjon: Nasjon): NasjonResponse = NasjonResponse(
+fun toNasjonResponse(nasjon: Nasjon, kodelisteService: KodelisteService): NasjonResponse = NasjonResponse(
     id = nasjon.id,
     administrativenhetnavn = nasjon.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!) },
     lokalid = nasjon.lokalid,
     navnerom = nasjon.navnerom,
-    features = FeatureCollection(features = listOf(posisjonToFeature(nasjon.posisjon), flateToFeature(nasjon.flate)))
+    features = FeatureCollection(features = listOf(posisjonToFeature(nasjon.posisjon), flateToFeature(nasjon, kodelisteService)))
 )

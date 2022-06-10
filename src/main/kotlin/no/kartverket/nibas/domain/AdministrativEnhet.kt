@@ -46,20 +46,11 @@ abstract class AdministrativEnhet(
     @Column(name = "versjonid")
     override var versjonid: String? = null
 
-    @Column(name = "sluttdato")
-    var sluttdato: LocalDate? = null
-
-    @Column(name = "datauttaksdato")
-    var datauttaksdato: LocalDate? = null
-
     @Column(name = "opphav")
     override var opphav: String? = null
 
-    @Column(name = "produkt")
-    var produkt: String? = null
-
-    @Column(name = "versjon")
-    var versjon: String? = null
+    @Embedded
+    override var registreringsversjon: Registreringsversjon? = Registreringsversjon()
 
     @Column(name = "gyldigfra")
     override var gyldigFra: LocalDate? = null
@@ -67,28 +58,11 @@ abstract class AdministrativEnhet(
     @Column(name = "gyldigtil")
     override var gyldigTil: LocalDate? = null
 
-    @Column(name = "omraadeid")
-    var omraadeid: Int? = null
-
-    @Column(name = "originaldatavert")
-    var originaldatavert: String? = null
-
-    @Column(name = "kopidato")
-    var kopidato: LocalDate? = null
+    @Embedded
+    override var kopidata: Kopidata? = Kopidata()
 
     @Column(name = "datafangstdato")
     override var datafangstdato: LocalDate? = null
-
-    @ManyToOne
-    @JoinColumn(name = "land")
-    var land: Landkode? = null
-
-    @ManyToOne
-    @JoinColumn(name = "nivaanummer")
-    var nivaanummer: Nivaanummer? = null
-
-    @Column(name = "navn")
-    var navn: String? = null
 
     @ManyToOne
     @JoinColumn(name = "spraak")
@@ -96,9 +70,6 @@ abstract class AdministrativEnhet(
 
     @Column(name = "rekkefoelge")
     var rekkefoelge: Int? = null
-
-    @Column(name = "administrativkode")
-    var administrativkode: String? = null
 
     @Column(name = "posisjon")
     var posisjon: Point? = null
