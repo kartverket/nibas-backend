@@ -1,11 +1,13 @@
 package no.kartverket.nibas.sporing
 
+import no.kartverket.aut.lib.security.DefaultWebSecurityConfig
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Sporingsinformasjon
 import org.hibernate.event.service.spi.EventListenerRegistry
 import org.hibernate.event.spi.EventType
 import org.hibernate.event.spi.PreUpdateEvent
 import org.hibernate.event.spi.PreUpdateEventListener
 import org.hibernate.internal.SessionFactoryImpl
+import org.springframework.core.env.Environment
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Component
 import java.time.LocalDate
@@ -20,14 +22,22 @@ interface UserFacade {
 }
 
 @Component
-class DefaultUserFacade : UserFacade {
+class DefaultUserFacade constructor(private val environment: Environment) : UserFacade {
 
     override fun getAuthenticatedUser(): String {
+        if (startedWithSecurityOff()) {
+            return "DUMMY"
+        }
+
         val authentication = SecurityContextHolder.getContext().authentication
         if (authentication == null || !authentication.isAuthenticated) {
             throw RuntimeException("Ugyldig tilstand. Har ingen innlogget bruker.")
         }
         return authentication.name
+    }
+
+    private fun startedWithSecurityOff(): Boolean {
+        return listOf(*environment.activeProfiles).contains(DefaultWebSecurityConfig.SECURITY_OFF_PROFILE_STRING)
     }
 
 }

@@ -12,6 +12,9 @@ import org.springframework.web.multipart.MultipartFile
  */
 @RequestMapping("/v1/import")
 interface ImportApi {
+
+    // Er motstander av nullable collections, men fant ingen omvei for ikke-påkrevd parameter. Må kanskje lage wrapperobjekt.
     @PostMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun importer(@RequestParam(name = "file", required = true) file: MultipartFile): String
+    fun importer(@RequestParam file: MultipartFile,
+                 @RequestParam(required = false) fylker: List<String>? = emptyList()): String
 }

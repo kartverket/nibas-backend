@@ -25,8 +25,8 @@ import kotlin.system.measureTimeMillis
 @RestController
 class ImportController @Autowired constructor(private val importService: SosiImportService) : ImportApi {
 
-    override fun importer(file: MultipartFile): String {
-        importService.importStream(file.inputStream)
+    override fun importer(file: MultipartFile, fylker: List<String>?): String {
+        importService.importStream(file.inputStream, fylker?.map { Fylkesnummer.fromValue(it) } ?: emptyList())
         return "OK"
     }
 }
@@ -51,16 +51,22 @@ class SosiImportService {
     @Autowired
     lateinit var stemmekretsImporter: StemmekretsImporter
 
-    fun importStream(stream: InputStream) {
-        importerFlater(NibasSosiDeserializer().deserialize(stream))
+    fun importStream(stream: InputStream, fylkesnumre: List<Fylkesnummer>) {
+        logger.info("Leser inn input stream.")
+        val root: SosiObjekt
+        val millisToRead = measureTimeMillis {
+            root = NibasSosiDeserializer().deserialize(stream)
+        }
+        logger.info("Tok $millisToRead ms å lese inn.")
+        importerFlater(root, fylkesnumre)
     }
 
-    private fun importerFlater(root: SosiObjekt) {
+    private fun importerFlater(root: SosiObjekt, fylkesnumre: List<Fylkesnummer>) {
         val flater = root.getFlater()
         val nasjoner = flater.filter { it.getObjType() == SosiKoder.NASJON }
         val fylker = flater.filter { it.getObjType() == SosiKoder.FYLKE }
         val kommuner = flater.filter { it.getObjType() == SosiKoder.KOMMUNE }
-        val grunnkretser = flater.filter { it.getObjType() == SosiKoder.GRUNNKRETS }
+        val grunnkretser = filtrerGrunnkretser(flater, fylkesnumre)
         val stemmekretser = flater.filter { it.getObjType() == SosiKoder.STEMMEKRETS }
 
         val millis = measureTimeMillis {
@@ -99,5 +105,40 @@ class SosiImportService {
 
         }
         logger.info("Took $millis ms to import")
+    }
+
+    private fun filtrerGrunnkretser(
+        flater: List<SosiFlate>,
+        fylkesnumre: List<Fylkesnummer>
+    ): List<SosiFlate> {
+        var grunnkretser = flater.filter { it.getObjType() == SosiKoder.GRUNNKRETS }
+        if (fylkesnumre.isNotEmpty()) {
+            logger.info("Antall flater av type grunnkrets: ${grunnkretser.size}")
+            logger.info("Filtrerer på fylkene: [${fylkesnumre.joinToString(",")}]")
+
+            grunnkretser = grunnkretser.filter {
+                fylkesnumre.contains(Fylkesnummer.fromValue(it.getGrunnkretsId()?.getGrunnkretsnummer()?.substring(0, 2)!!))
+            }
+            logger.info("Antall grunnkretser etter filtrering: ${grunnkretser.size}")
+        }
+        return grunnkretser
+    }
+}
+
+enum class Fylkesnummer(val fylkesnummer: String) {
+    VIKEN("30"),
+    OSLO("03"),
+    INNLANDET("34"),
+    VESTFOLD_OG_TELEMARK("38"),
+    AGDER("42"),
+    ROGALAND("11"),
+    VESTLAND("46"),
+    MOERE_OG_ROMSDAL("15"),
+    TROENDELAG("50"),
+    NORDLAND("18"),
+    TROMS_OG_FINNMARK("54");
+
+    companion object {
+        fun fromValue(value: String): Fylkesnummer = Fylkesnummer.values().first { it.fylkesnummer == value }
     }
 }
