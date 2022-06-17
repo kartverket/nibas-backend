@@ -1,27 +1,15 @@
 package no.kartverket.nibas.builders
 
 import no.kartverket.nibas.domain.Administrativenhetnavn
-import no.kartverket.nibas.domain.Avtaltavgrensningslinje
 import no.kartverket.nibas.domain.Fylke
-import no.kartverket.nibas.domain.FylkeAvtaltavgrensningslinje
-import no.kartverket.nibas.domain.FylkeFylkesgrense
-import no.kartverket.nibas.domain.FylkeRiksgrense
-import no.kartverket.nibas.domain.FylkeTerritorialgrense
-import no.kartverket.nibas.domain.Fylkesgrense
-import no.kartverket.nibas.domain.GrenseKoblingAttributter
-import no.kartverket.nibas.domain.Riksgrense
+import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Spraakkode
-import no.kartverket.nibas.domain.Territorialgrense
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
 import java.time.LocalDate
 
 class FylkeBuilder(private val id: String = "1") {
-    private var avtaltavgrensningslinjer: MutableSet<Avtaltavgrensningslinje> = mutableSetOf()
     private var objtype: String = "Fylke"
-    private var territorialgrenser: MutableSet<Territorialgrense> = mutableSetOf()
-    private var fylkesgrenser: MutableSet<Fylkesgrense> = mutableSetOf()
-    private var riksgrenser: MutableSet<Riksgrense> = mutableSetOf()
     private var fylkesnummer: String = "UUID-1"
     private var navnerom: String = "ABC"
     private var lokalId: String = "123"
@@ -29,6 +17,7 @@ class FylkeBuilder(private val id: String = "1") {
     private var spraak = "NOR"
     private var samiskforvaltningsomraade = false
     private var oppdateringsdato: LocalDate = LocalDate.now()
+    private var kommune: Kommune = Kommune()
 
     companion object {
         val DEFAULT_FYLKE = FylkeBuilder().build()
@@ -62,10 +51,7 @@ class FylkeBuilder(private val id: String = "1") {
         fylke.posisjon = GeometryFactory().createPoint(Coordinate(1.0, 1.0))
         fylke.flate = GeometryFactory().createMultiPolygon(arrayOf(GeometryFactory().createPolygon()))
 
-        fylke.fylkesgrenser = fylkesgrenser.map { FylkeFylkesgrense(fylke, it, GrenseKoblingAttributter()) }.toMutableSet()
-        fylke.riksgrenser = riksgrenser.map { FylkeRiksgrense(fylke, it, GrenseKoblingAttributter()) }.toMutableSet()
-        fylke.territorialgrenser = territorialgrenser.map { FylkeTerritorialgrense(fylke, it, GrenseKoblingAttributter()) }.toMutableSet()
-        fylke.avtaltavgrensningslinjer = avtaltavgrensningslinjer.map { FylkeAvtaltavgrensningslinje(fylke, it, GrenseKoblingAttributter()) }.toMutableSet()
+        fylke.addKommune(kommune)
 
         return fylke
     }
@@ -85,23 +71,9 @@ class FylkeBuilder(private val id: String = "1") {
         return this
     }
 
-    fun withRiksgrenser(vararg riksgrenser: Riksgrense): FylkeBuilder {
-        this.riksgrenser = riksgrenser.toMutableSet()
+    fun withKommune(kommune: Kommune): FylkeBuilder {
+        this.kommune = kommune
         return this
     }
 
-    fun withFylkesgrenser(vararg fylkesgrenser: Fylkesgrense): FylkeBuilder {
-        this.fylkesgrenser = fylkesgrenser.toMutableSet()
-        return this
-    }
-
-    fun withTerritorialgrenser(vararg territorialgrenser: Territorialgrense): FylkeBuilder {
-        this.territorialgrenser = territorialgrenser.toMutableSet()
-        return this
-    }
-
-    fun withAvtaltavgrensningslinjer(vararg avtaltavgrensningslinjer: Avtaltavgrensningslinje): FylkeBuilder {
-        this.avtaltavgrensningslinjer = avtaltavgrensningslinjer.toMutableSet()
-        return this
-    }
 }

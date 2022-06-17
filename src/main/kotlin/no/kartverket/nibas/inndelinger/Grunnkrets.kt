@@ -1,7 +1,6 @@
 package no.kartverket.nibas.inndelinger
 
 import no.kartverket.nibas.api.v1.GrunnkretsApi
-import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
@@ -44,13 +43,13 @@ class GrunnkretsController @Autowired constructor(
 
     override fun hentGrenser(id: String): FeatureCollection {
         val grenser = grunnkretsService.hentGrenserForGrunnkrets(id)
-        return when (grenser) {
-            null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
-            else -> FeatureCollection(
-                features = grenser.sortedBy { it.grenseKoblingAttributter.rekkefoelge }
-                    .map { grenseKoblingToFeature(id, KontekstEnhetType.GRUNNKRETS, it, kodelisteService) }
-            )
+        if (grenser.isEmpty()) {
+            throw ResponseStatusException(HttpStatus.NOT_FOUND)
         }
+        return FeatureCollection(
+            features = grenser.sortedBy { it.grenseKoblingAttributter.rekkefoelge }
+                .map { grenseKoblingToFeature(it, kodelisteService) }
+        )
     }
 
     override fun oppdaterGrunnkrets(id: String, oppdatertGrunnkrets: GrunnkretsRequest): GrunnkretsResponse {
@@ -73,25 +72,15 @@ class GrunnkretsController @Autowired constructor(
 }
 
 @Service
-class GrunnkretsService @Autowired constructor(
-    private val grunnkretsRepository: GrunnkretsRepository,
-) {
+class GrunnkretsService @Autowired constructor(private val grunnkretsRepository: GrunnkretsRepository) {
 
     fun hentAlleGrunnkretser() = grunnkretsRepository.findAll().toList()
     fun hentGrunnkrets(id: String) = grunnkretsRepository.findById(id).unwrap()
     fun hentGrunnkretserForKommune(kommuneNummer: String) = grunnkretsRepository.findByKommunenummer(kommuneNummer)
 
     @Transactional
-    fun hentGrenserForGrunnkrets(id: String): Set<GrenseKobling>? {
-        return hentGrunnkrets(id)?.let { grunnkrets ->
-            grunnkrets.grunnkretsgrenser +
-                grunnkrets.delomraadegrenser +
-                grunnkrets.kommunegrenser +
-                grunnkrets.fylkesgrenser +
-                grunnkrets.riksgrenser +
-                grunnkrets.territorialgrenser +
-                grunnkrets.avtaltavgrensningslinjer
-        }
+    fun hentGrenserForGrunnkrets(id: String): Set<GrenseKobling> {
+        return hentGrunnkrets(id)?.grenser ?: emptySet()
     }
 
     fun oppdaterGrunnkrets(id: String, oppdatertGrunnkrets: GrunnkretsRequest): Grunnkrets? {

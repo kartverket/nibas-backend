@@ -1,12 +1,16 @@
 package no.kartverket.nibas.inndelinger
 
+import no.kartverket.nibas.api.v1.common.Grensetype
+import no.kartverket.nibas.builders.FylkeBuilder
+import no.kartverket.nibas.builders.GrunnkretsBuilder
+import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.builders.NasjonBuilder
 import no.kartverket.nibas.builders.NasjonRequestBuilder
-import no.kartverket.nibas.domain.Avtaltavgrensningslinje
-import no.kartverket.nibas.domain.Riksgrense
-import no.kartverket.nibas.domain.Territorialgrense
+import no.kartverket.nibas.domain.Grense
+import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.NasjonRepository
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.anyString
 import org.mockito.Mockito.verify
@@ -16,8 +20,14 @@ import org.springframework.boot.test.mock.mockito.MockBean
 import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
-import kotlin.test.fail
 import org.mockito.Mockito.`when` as whenever
+
+fun assertGrensekoblinger(grenseKoblinger: Set<GrenseKobling>, grensetype: Grensetype, size: Int, msg: String) {
+    assertThat(grenseKoblinger.map { it.grense }
+        .filter { it.grensetype == grensetype })
+        .hasSize(size)
+        .withFailMessage(msg)
+}
 
 @SpringBootTest(classes = [NasjonService::class])
 class NasjonServiceTest {
@@ -34,41 +44,35 @@ class NasjonServiceTest {
     @Test
     fun hentGrenserForNasjonReturnsNullWhenNasjonNotFound() {
         whenever(nasjonRepository.findById(anyString())).thenReturn(Optional.empty())
-        assertNull(nasjonService.hentGrenserForNasjon("1"), "Expected to not find the nasjon")
+        assertThat(nasjonService.hentGrenserForNasjon("1")).isEmpty()
     }
 
     @Test
     fun hentGrenserForNasjonReturnsTheCorrectBorders() {
         val nasjon = NasjonBuilder()
-            .withRiksgrenser(Riksgrense(), Riksgrense(), Riksgrense())
-            .withTerritorialgrenser(Territorialgrense(), Territorialgrense())
-            .withAvtaltavgrensningslinjer(Avtaltavgrensningslinje())
+            .withFylke(FylkeBuilder()
+                .withKommune(KommuneBuilder()
+                    .withGrunnkrets(GrunnkretsBuilder()
+                        .withGrenser(
+                            Grense(Grensetype.Riksgrense),
+                            Grense(Grensetype.Riksgrense),
+                            Grense(Grensetype.Riksgrense),
+                            Grense(Grensetype.Territorialgrense),
+                            Grense(Grensetype.Territorialgrense),
+                            Grense(Grensetype.AvtaltAvgrensningslinje),
+                        )
+                        .build())
+                    .build())
+                .build())
             .build()
 
         whenever(nasjonRepository.findById(anyString())).thenReturn(Optional.of(nasjon))
 
-        when (val grenserForNasjon = nasjonService.hentGrenserForNasjon("1")) {
-            null -> fail("Expected grenser to have a value")
-            else -> {
-                assertEquals(6, grenserForNasjon.size, "Expected six borders")
-                val grenseUtenRetning = grenserForNasjon.map { it.getGrense() }
-                assertEquals(
-                    1,
-                    grenseUtenRetning.filterIsInstance<Avtaltavgrensningslinje>().size,
-                    "Expected 1 AvtaltAvgrensningslinje"
-                )
-                assertEquals(
-                    2,
-                    grenseUtenRetning.filterIsInstance<Territorialgrense>().size,
-                    "Expected 2 Territorialgrense"
-                )
-                assertEquals(
-                    3,
-                    grenseUtenRetning.filterIsInstance<Riksgrense>().size,
-                    "Expected 3 Riksgrense"
-                )
-            }
-        }
+        val grenserForNasjon = nasjonService.hentGrenserForNasjon("1")
+        assertEquals(6, grenserForNasjon.size, "Expected six borders")
+        assertGrensekoblinger(grenserForNasjon, Grensetype.AvtaltAvgrensningslinje, 1, "Expected 1 AvtaltAvgrensningslinje")
+        assertGrensekoblinger(grenserForNasjon, Grensetype.Territorialgrense, 2, "Expected 2 Territorialgrense")
+        assertGrensekoblinger(grenserForNasjon, Grensetype.Riksgrense, 3, "Expected 3 Riksgrense")
     }
 
     @Test

@@ -2,7 +2,6 @@ package no.kartverket.nibas.inndelinger
 
 import no.kartverket.nibas.api.v1.KommuneApi
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
-import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.request.KommuneRequest
 import no.kartverket.nibas.api.v1.response.KommuneRef
@@ -13,6 +12,7 @@ import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
+import no.kartverket.nibas.repository.FylkeRepository
 import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.unwrap
 import org.springframework.beans.factory.annotation.Autowired
@@ -44,13 +44,16 @@ class KommuneController @Autowired constructor(
     }
 
     override fun hentGrenser(id: String): FeatureCollection {
-        return when (val grenser = kommuneService.hentGrenserForKommune(id)) {
-            null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
-            else -> FeatureCollection(
-                features = grenser.sortedBy { it.grenseKoblingAttributter.rekkefoelge }
-                    .map { grenseKoblingToFeature(id, KontekstEnhetType.KOMMUNE, it, kodelisteService) }
-            )
+        val grenser = kommuneService.hentGrenserForKommune(id)
+        if (grenser.isEmpty()) {
+            throw ResponseStatusException(HttpStatus.NOT_FOUND)
         }
+        return FeatureCollection(
+            features = grenser
+                // TODO: NIBAS-473 Hvordan sortere grensene nå?
+//                .sortedBy { it.grenseKoblingAttributter.rekkefoelge }
+                .map { grenseKoblingToFeature(it, kodelisteService) }
+        )
     }
 
     override fun oppdaterKommune(id: String, oppdatertKommune: KommuneRequest): KommuneResponse {
@@ -74,21 +77,16 @@ class KommuneController @Autowired constructor(
 @Service
 class KommuneService @Autowired constructor(
     private val kommuneRepository: KommuneRepository,
+    private val fylkeRepository: FylkeRepository,
     private val administrativenhetnavnRepository: AdministrativenhetnavnRepository,
 ) {
 
-    fun hentAlleKommuner() = kommuneRepository.findAll().toList()
-    fun hentKommune(id: String) = kommuneRepository.findById(id).unwrap()
-    fun hentKommunerForFylke(fylkeId: String) = kommuneRepository.findByFylkeFk_Id(fylkeId)
+    fun hentAlleKommuner(): List<Kommune> = kommuneRepository.findAll().toList()
+    fun hentKommune(id: String): Kommune? = kommuneRepository.findById(id).unwrap()
+    fun hentKommunerForFylke(fylkeId: String): List<Kommune> = fylkeRepository.findById(fylkeId).unwrap()!!.kommuner.toList()
 
-    fun hentGrenserForKommune(id: String): Set<GrenseKobling>? {
-        return kommuneRepository.findById(id).unwrap()?.let { kommune ->
-            kommune.kommunegrenser +
-            kommune.fylkesgrenser +
-            kommune.riksgrenser +
-            kommune.territorialgrenser +
-            kommune.avtaltavgrensningslinjer
-        }
+    fun hentGrenserForKommune(id: String): Set<GrenseKobling> {
+        return kommuneRepository.findById(id).unwrap()?.getGrenser() ?: emptySet()
     }
 
     fun oppdaterKommune(id: String, oppdatertKommune: KommuneRequest): Kommune? {

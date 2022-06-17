@@ -3,10 +3,11 @@ package no.kartverket.nibas.inndelinger
 import no.kartverket.nibas.NibasMvcTest
 import no.kartverket.nibas.api.v1.request.KommuneRequest
 import no.kartverket.nibas.builders.GrenseBuilder
+import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.builders.KommuneRequestBuilder
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
-import no.kartverket.nibas.domain.KommuneKommunegrense
+import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.kodelister.KodelisteService
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.anyString
@@ -55,17 +56,16 @@ class KommuneControllerTest : NibasMvcTest() {
         whenever(
             kommuneService.hentGrenserForKommune(anyString())
         ).thenReturn(
-            setOf(KommuneKommunegrense(KommuneBuilder.DEFAULT_KOMMUNE, GrenseBuilder().buildKommunegrense(), GrenseKoblingAttributter()))
+            setOf(GrunnkretsGrenseKobling(grunnkrets = GrunnkretsBuilder().build(), grense = GrenseBuilder().buildKommunegrense(), GrenseKoblingAttributter()))
         )
         get("/v1/kommuner/1/grenser", status().isOk)
     }
 
     @Test
     fun thatHentGrenserReturns404_NotFound() {
-        whenever(kommuneService.hentGrenserForKommune(anyString())).thenReturn(null)
+        whenever(kommuneService.hentGrenserForKommune(anyString())).thenReturn(emptySet())
         get("/v1/kommuner/1/grenser", status().isNotFound)
     }
-
 
     @Test
     fun thatOppdaterKommuneReturns200_Ok() {

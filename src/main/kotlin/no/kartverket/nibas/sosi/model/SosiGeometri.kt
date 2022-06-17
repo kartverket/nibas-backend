@@ -5,8 +5,6 @@ import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.sosi.common.SosiKoder
 import org.locationtech.jts.geom.Coordinate
 import java.time.LocalDate
-import java.time.ZoneId
-import java.time.ZonedDateTime
 
 open class SosiGeometri(type: String, niva: Int, verdier: MutableList<SosiVerdi>) :
     SosiObjekt(type = type, niva, verdier = verdier) {
@@ -55,7 +53,7 @@ open class SosiGeometri(type: String, niva: Int, verdier: MutableList<SosiVerdi>
 
     fun getInformasjon(): String? = getVerdiAvBarn(SosiKoder.INFORMASJON)
     fun getKommunenumre(): List<String> = getVerdierAvBarn(SosiKoder.KOMMUNENUMMER)
-    fun getKommunenummer(): String? = getVerdiAvBarn(SosiKoder.KOMMUNENUMMER)
+    fun getKommunenummer(): String = getVerdiAvBarn(SosiKoder.KOMMUNENUMMER)!!
     fun getStemmekretsId(): SosiStemmekretsId? = barn.find { it is SosiStemmekretsId } as? SosiStemmekretsId
 
     fun getPosisjonskvalitet(kodelisteService: KodelisteService): PosisjonskvalitetEmbeddable? {

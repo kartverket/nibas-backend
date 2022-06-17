@@ -1,14 +1,67 @@
 package no.kartverket.nibas.api.v1.common
 
 import io.swagger.v3.oas.annotations.media.Schema
+import javax.persistence.AttributeConverter
+import javax.persistence.Converter
 
+/**
+ * Definerer flatene/enhetene i domenet.
+ */
 enum class Flatetype {
     FYLKE, KOMMUNE, NASJON, GRUNNKRETS, STEMMEKRETS, SKOLEKRETS
 }
 
-// Vurderte å innføre en sealed class som hadde AdministrativEnhet og StatistiskEnhet (ala dette https://stackoverflow.com/a/56771284), men det gjør det litt mer kronglete når man skal gruppere på undertypene senere.
+/**
+ * Definerer hvilken kontekst en skal se grense/feature i.
+ */
 enum class KontekstEnhetType {
-    FYLKE, KOMMUNE, NASJON, GRUNNKRETS
+    GRUNNKRETS, STEMMEKRETS
+}
+
+/**
+ * Introduserte en value-attributt for å kunne ha norske tegn i verdi (ut i klienten), men ikke i enum-konstant-navn.
+ * NB: dbKey brukes som konstant i database-tabellen for grenser (disse må da endres med omhu).
+ */
+enum class Grensetype(val value: String, val dbKey: String) {
+    Kommunegrense("Kommunegrense", "Kommunegrense"),
+    Fylkesgrense("Fylkesgrense", "Fylkesgrense"),
+    Riksgrense("Riksgrense", "Riksgrense"),
+    AvtaltAvgrensningslinje("AvtaltAvgrensningslinje", "AvtaltAvgrensningslinje"),
+    Territorialgrense("Territorialgrense", "Territorialgrense"),
+    Grunnlinje("Grunnlinje", "Grunnlinje"),
+    Lovvirkeomraadegrense("LovVirkeområdeGrense", "LovVirkeområdeGrense"),
+    Grunnkretsgrense("Grunnkretsgrense", "Grunnkretsgrense"),
+    Delomraadegrense("Delområdegrense", "Delområdegrense"),
+    Stemmekretsgrense("Stemmekretsgrense", "Stemmekretsgrense");
+
+    companion object {
+        fun fromValue(valueIn: String): Grensetype {
+            try {
+                return values().first { it.value == valueIn }
+            } catch (e: NoSuchElementException) {
+                throw IllegalArgumentException("Invalid value: $valueIn")
+            }
+        }
+
+        fun fromDbKey(dbKeyIn: String): Grensetype {
+            try {
+                return values().first { it.dbKey == dbKeyIn }
+            } catch (e: NoSuchElementException) {
+                throw IllegalArgumentException("Invalid dbKey: $dbKeyIn")
+            }
+        }
+    }
+}
+
+@Converter(autoApply = true)
+class GrenseTypeConverter : AttributeConverter<Grensetype, String> {
+    override fun convertToDatabaseColumn(attribute: Grensetype): String {
+        return attribute.dbKey
+    }
+
+    override fun convertToEntityAttribute(dbKey: String): Grensetype {
+        return Grensetype.fromDbKey(dbKey)
+    }
 }
 
 @Schema(description = "Representasjon av et fylkesnummer")

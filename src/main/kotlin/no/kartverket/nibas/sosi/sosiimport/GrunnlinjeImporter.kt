@@ -1,14 +1,12 @@
 package no.kartverket.nibas.sosi.sosiimport
 
+import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.domain.Grense
-import no.kartverket.nibas.domain.Grunnlinje
-import no.kartverket.nibas.domain.GrunnlinjeInformasjon
 import no.kartverket.nibas.domain.updateSosiIdentifikasjon
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.FastsettingstypeRepository
+import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.GrensestatusRepository
-import no.kartverket.nibas.repository.GrunnlinjeInformasjonRepository
-import no.kartverket.nibas.repository.GrunnlinjeRepository
 import no.kartverket.nibas.sosi.model.SosiGeometri
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
@@ -20,8 +18,7 @@ class GrunnlinjeImporter @Autowired constructor(
     private val kodelisteService: KodelisteService,
     private val grensestatusRepository: GrensestatusRepository,
     private val fastsettingstypeRepository: FastsettingstypeRepository,
-    private val grunnlinjeRepository: GrunnlinjeRepository,
-    private val grunnlinjeInformasjonRepository: GrunnlinjeInformasjonRepository,
+    private val grenseRepository: GrenseRepository,
     private val dokumentasjonsreferanseImporter: DokumentasjonsreferanseImporter
 ) {
 
@@ -29,9 +26,9 @@ class GrunnlinjeImporter @Autowired constructor(
 
     fun importGrunnlinje(sosiGrunnlinje: SosiGeometri): Grense {
         val sosiIdent = sosiGrunnlinje.getIdent()
-        return when (val existing = grunnlinjeRepository.findByLokalid(sosiIdent?.getLokalId()!!)) {
+        return when (val existing = grenseRepository.findByLokalid(sosiIdent?.getLokalId()!!)) {
             null -> {
-                var grunnlinje = Grunnlinje()
+                var grunnlinje = Grense(Grensetype.Grunnlinje)
                 grunnlinje.updateSosiIdentifikasjon(sosiIdent)
                 grunnlinje.datafangstdato = sosiGrunnlinje.getDatafangstDato()
                 grunnlinje.datauttaksdato = sosiGrunnlinje.getDataUttaksdato()
@@ -41,14 +38,12 @@ class GrunnlinjeImporter @Autowired constructor(
                 grunnlinje.gyldigTil = sosiGrunnlinje.getGyldigTil()
 
                 //Her kan kommunenr være optional
-                grunnlinje.kommunenummerId =
-                    sosiGrunnlinje.getKommunenummer()?.let { kodelisteService.getKommunenummerIdByCodeValue(it) }
+                grunnlinje.kommunenummerId = kodelisteService.getKommunenummerIdByCodeValue(sosiGrunnlinje.getKommunenummer())
 
                 grunnlinje.kvalitet = sosiGrunnlinje.getPosisjonskvalitet(kodelisteService)
                 grunnlinje.grensestatus = when (val grenseStatus = sosiGrunnlinje.getGrensestatus()) {
                     null -> null
-                    else -> grensestatusRepository.findByIdOrNull(grenseStatus)
-                        ?: throw RuntimeException("Ukjent grensestatus")
+                    else -> grensestatusRepository.findByIdOrNull(grenseStatus) ?: throw RuntimeException("Ukjent grensestatus")
                 }
 
                 grunnlinje.fastsettingstype = when (val fastsettingstype = sosiGrunnlinje.getFastsettingstype()) {
@@ -60,18 +55,13 @@ class GrunnlinjeImporter @Autowired constructor(
                     sosiGrunnlinje.getAlleSosiNordOest(),
                     sosiGrunnlinje.koordsys
                 )
-                grunnlinje = grunnlinjeRepository.save(grunnlinje)
+                grunnlinje = grenseRepository.save(grunnlinje)
 
                 sosiGrunnlinje.getDokumentasjonsReferanse().forEach { sosiDokRef ->
                     dokumentasjonsreferanseImporter.importerDokumentasjonsreferanse(sosiDokRef, grunnlinje)
                 }
 
-
-                if (sosiGrunnlinje.getInformasjon() != null) {
-                    val grunnlinjeInformasjon = GrunnlinjeInformasjon(grunnlinje)
-                    grunnlinjeInformasjon.informasjon = sosiGrunnlinje.getInformasjon()
-                    grunnlinjeInformasjonRepository.save(grunnlinjeInformasjon)
-                }
+                grunnlinje.informasjonstekst = sosiGrunnlinje.getInformasjon()
                 return grunnlinje
             }
             else -> existing

@@ -1,18 +1,26 @@
 package no.kartverket.nibas.domain
 
 import no.kartverket.nibas.api.v1.common.Flatetype
+import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
+import org.hibernate.envers.Audited
+import java.io.Serializable
 import java.util.*
 import javax.persistence.CascadeType
 import javax.persistence.Column
+import javax.persistence.Embedded
 import javax.persistence.Entity
-import javax.persistence.FetchType
+import javax.persistence.Id
+import javax.persistence.IdClass
+import javax.persistence.JoinColumn
+import javax.persistence.ManyToOne
 import javax.persistence.OneToMany
 import javax.persistence.Table
 
-@Entity
 @Table(name = "stemmekrets")
-class Stemmekrets(override val id: String = UUID.randomUUID().toString()) : KommunalKrets(Flatetype.STEMMEKRETS) {
+@Audited
+@Entity
+class Stemmekrets(override val id: String = UUID.randomUUID().toString()) : KommunalKrets(Flatetype.STEMMEKRETS), KobletTilGrense {
 
     override var objtype: String? = Flatetype.STEMMEKRETS.name
 
@@ -37,40 +45,43 @@ class Stemmekrets(override val id: String = UUID.randomUUID().toString()) : Komm
     @Column(name = "kommunenummer", nullable = false)
     var kommunenummer: String? = null
 
-    @OneToMany(mappedBy = "stemmekrets", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
-    var fylkesgrenser: MutableSet<StemmekretsFylkesgrense> = Collections.synchronizedSet(mutableSetOf())
+    @OneToMany(mappedBy = "stemmekrets", cascade = [CascadeType.ALL])
+    var grenser: MutableSet<StemmekretsGrenseKobling> = Collections.synchronizedSet(mutableSetOf())
 
-    @OneToMany(mappedBy = "stemmekrets", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
-    var avtaltavgrensningslinjer: MutableSet<StemmekretsAvtaltavgrensningslinje> = Collections.synchronizedSet(mutableSetOf())
+    @ManyToOne
+    @JoinColumn(name = "kommune_fk")
+    var kommune: Kommune? = null
 
-    @OneToMany(mappedBy = "stemmekrets", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
-    var kommunegrenser: MutableSet<StemmekretsKommunegrense> = Collections.synchronizedSet(mutableSetOf())
+    fun getGrenserAvTyper(grensetyper: Set<Grensetype>): Set<GrenseKobling> {
+        return grenser
+            .filter { grensetyper.contains(it.grense.grensetype) }
+            .toSet()
+    }
 
-    @OneToMany(mappedBy = "stemmekrets", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
-    var riksgrenser: MutableSet<StemmekretsRiksgrense> = Collections.synchronizedSet(mutableSetOf())
+    fun getGrenserAvType(grensetype: Grensetype): Set<GrenseKobling> = getGrenserAvTyper(setOf(grensetype))
 
-    @OneToMany(mappedBy = "stemmekrets", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
-    var stemmekretsgrenser: MutableSet<StemmekretsStemmekretsgrense> = Collections.synchronizedSet(mutableSetOf())
-
-    @OneToMany(mappedBy = "stemmekrets", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
-    var territorialgrenser: MutableSet<StemmekretsTerritorialgrense> = Collections.synchronizedSet(mutableSetOf())
 
     override fun oppdaterFlate() {
         flate = SosiGeometryFunctions.beregnFlate(alleGrenser())
     }
 
-    override fun oppdaterEllerLeggTilGrenseKobling(grense: Grense, attributter: GrenseKoblingAttributter) {
-        val (samling, default) = when(grense) {
-            is Stemmekretsgrense -> SamlingOgDefault(stemmekretsgrenser, StemmekretsStemmekretsgrense(this, grense, attributter.retningMedKlokken, attributter.rekkefoelge, attributter.flateIndeks, attributter.hullIndeks))
-            is Kommunegrense -> SamlingOgDefault(kommunegrenser, StemmekretsKommunegrense(this, grense, attributter))
-            is Fylkesgrense -> SamlingOgDefault(fylkesgrenser, StemmekretsFylkesgrense(this, grense, attributter))
-            is Avtaltavgrensningslinje -> SamlingOgDefault(avtaltavgrensningslinjer, StemmekretsAvtaltavgrensningslinje(this, grense, attributter))
-            is Territorialgrense -> SamlingOgDefault(territorialgrenser, StemmekretsTerritorialgrense(this, grense, attributter))
-            is Riksgrense -> SamlingOgDefault(riksgrenser, StemmekretsRiksgrense(this, grense, attributter))
-            else -> throw RuntimeException("Kan ikke legge til ${grense::class.simpleName} på enhet Fylke")
+    override fun oppdaterEllerLeggTilGrenseKobling(grenseMedAttributter: GrenseMedAttributter) {
+        val grense = grenseMedAttributter.grense
+        val attributter = grenseMedAttributter.attributter
+
+        if (!tillatteGrensetyper().contains(grense.grensetype)) {
+            throw RuntimeException("Kan ikke oppdatere/legge til ${grense.grensetype.name} på enhet Stemmekrets")
         }
 
-        oppdaterSamling(grense, attributter, samling, default)
+        oppdaterSamling(
+            grense = grense,
+            attributter = attributter,
+            samling = grenser,
+            default = StemmekretsGrenseKobling(
+                stemmekrets = this,
+                grense = grense,
+                grenseKoblingAttributter = attributter))
+
     }
 
     override fun getInfo(): String? = informasjon
@@ -78,9 +89,62 @@ class Stemmekrets(override val id: String = UUID.randomUUID().toString()) : Komm
         informasjon = updatedInfo
     }
 
+    fun addGrensekobling(grense: Grense, grenseKoblingAttributter: GrenseKoblingAttributter) {
+        grenser.add(
+            StemmekretsGrenseKobling(
+                stemmekrets = this,
+                grense = grense,
+                grenseKoblingAttributter = grenseKoblingAttributter
+            )
+        )
+    }
+
     override fun toString(): String {
         return "Stemmekrets(id='$id', stemmekretsnummer=$stemmekretsnummer, stemmekretsnavn=$stemmekretsnavn, tellekretsnummer=$tellekretsnummer, tellekretsnavn=$tellekretsnavn, valgdistriktsnummer=$valgdistriktsnummer, fylkesnummer=$fylkesnummer, kommunenummer=$kommunenummer)"
     }
 
-    fun alleGrenser() = stemmekretsgrenser + kommunegrenser + fylkesgrenser + avtaltavgrensningslinjer + territorialgrenser + riksgrenser
+    fun alleGrenser() = getGrenserAvTyper(tillatteGrensetyper())
+
+    private fun tillatteGrensetyper(): Set<Grensetype> = setOf(
+        Grensetype.Stemmekretsgrense,
+        Grensetype.Kommunegrense,
+        Grensetype.Fylkesgrense,
+        Grensetype.AvtaltAvgrensningslinje,
+        Grensetype.Territorialgrense,
+        Grensetype.Riksgrense)
+
+
 }
+
+/**
+ * Koblingstabell mellom Stemmekrets - Grense
+ */
+@Table(name = "stemmekrets_grense")
+@Audited
+@Entity
+@IdClass(StemmekretsGrenseId::class)
+class StemmekretsGrenseKobling(
+    @Id
+    @ManyToOne
+    @JoinColumn(name = "stemmekrets_fk")
+    var stemmekrets: Stemmekrets,
+
+    @Id
+    @ManyToOne
+    @JoinColumn(name = "grense_fk")
+    override var grense: Grense,
+
+    @Embedded
+    override var grenseKoblingAttributter: GrenseKoblingAttributter
+) : GrenseKobling {
+    override fun oppdaterAttributter(nyeAttributter: GrenseKoblingAttributter) {
+        grenseKoblingAttributter = grenseKoblingAttributter.oppdater(nyeAttributter)
+    }
+
+    override fun getEnhetKobletTilGrense(): KobletTilGrense {
+        return stemmekrets
+    }
+}
+
+data class StemmekretsGrenseId(val stemmekrets: String = "", val grense: String = "") : Serializable
+

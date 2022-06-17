@@ -1,13 +1,13 @@
 package no.kartverket.nibas.inndelinger
 
+import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.builders.FylkeBuilder
 import no.kartverket.nibas.builders.FylkeRequestBuilder
-import no.kartverket.nibas.domain.Avtaltavgrensningslinje
-import no.kartverket.nibas.domain.Fylkesgrense
-import no.kartverket.nibas.domain.Riksgrense
-import no.kartverket.nibas.domain.Territorialgrense
+import no.kartverket.nibas.builders.GrunnkretsBuilder
+import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.FylkeRepository
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito.verify
@@ -17,7 +17,6 @@ import org.springframework.boot.test.mock.mockito.MockBean
 import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
-import kotlin.test.fail
 import org.mockito.Mockito.`when` as whenever
 
 @SpringBootTest(classes = [FylkeService::class])
@@ -33,49 +32,34 @@ class FylkeServiceTest {
     private lateinit var administrativenhetnavnRepository: AdministrativenhetnavnRepository
 
     @Test
-    fun hentGrenserForFylkeReturnsNullWhenFylkeNotFound() {
+    fun hentGrenserForFylkeReturnsEmptyCollectionWhenFylkeNotFound() {
         whenever(fylkeRepository.findById(anyString())).thenReturn(Optional.empty())
-        assertNull(fylkeService.hentGrenserForFylke("1"), "Expected to not find the fylke")
+        assertThat(fylkeService.hentGrenserForFylke("1")).isEmpty()
     }
 
     @Test
     fun hentGrenserForFylkeReturnsTheCorrectBorders() {
         val fylke = FylkeBuilder()
-            .withFylkesgrenser(Fylkesgrense(), Fylkesgrense(), Fylkesgrense(), Fylkesgrense())
-            .withRiksgrenser(Riksgrense(), Riksgrense(), Riksgrense())
-            .withTerritorialgrenser(Territorialgrense(), Territorialgrense())
-            .withAvtaltavgrensningslinjer(Avtaltavgrensningslinje())
+            .withKommune(KommuneBuilder()
+                .withGrunnkrets(GrunnkretsBuilder()
+                    .withRandomGrenser(
+                        Pair(Grensetype.Fylkesgrense, 4),
+                        Pair(Grensetype.Riksgrense, 3),
+                        Pair(Grensetype.Territorialgrense, 2),
+                        Pair(Grensetype.AvtaltAvgrensningslinje, 1))
+                    .build())
+                .build())
             .build()
 
         whenever(fylkeRepository.findById(anyString())).thenReturn(Optional.of(fylke))
 
-        when (val grenserForFylke = fylkeService.hentGrenserForFylke("1")) {
-            null -> fail("Expected grenser to have a value")
-            else -> {
-                assertEquals(10, grenserForFylke.size, "Expected ten borders")
-                val grenserUtenRetning = grenserForFylke.map { it.getGrense() }
-                assertEquals(
-                    1,
-                    grenserUtenRetning.filterIsInstance<Avtaltavgrensningslinje>().size,
-                    "Expected 1 AvtaltAvgrensningslinje"
-                )
-                assertEquals(
-                    2,
-                    grenserUtenRetning.filterIsInstance<Territorialgrense>().size,
-                    "Expected 2 Territorialgrense"
-                )
-                assertEquals(
-                    3,
-                    grenserUtenRetning.filterIsInstance<Riksgrense>().size,
-                    "Expected 3 Riksgrense"
-                )
-                assertEquals(
-                    4,
-                    grenserUtenRetning.filterIsInstance<Fylkesgrense>().size,
-                    "Expected 4 Fylkesgrense"
-                )
-            }
-        }
+        val grenserForFylke = fylkeService.hentGrenserForFylke("1")
+        assertEquals(10, grenserForFylke.size, "Expected ten borders")
+
+        assertGrensekoblinger(grenserForFylke, Grensetype.AvtaltAvgrensningslinje, 1, "Expected 1 AvtaltAvgrensningslinje")
+        assertGrensekoblinger(grenserForFylke, Grensetype.Territorialgrense, 2, "Expected 2 Territorialgrense")
+        assertGrensekoblinger(grenserForFylke, Grensetype.Riksgrense, 3, "Expected 3 Riksgrense")
+        assertGrensekoblinger(grenserForFylke, Grensetype.Fylkesgrense, 4, "Expected 4 Fylkesgrense")
     }
 
     @Test

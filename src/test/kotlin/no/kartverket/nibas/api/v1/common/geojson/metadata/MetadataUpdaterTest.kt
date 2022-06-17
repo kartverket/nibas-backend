@@ -27,9 +27,8 @@ import no.kartverket.nibas.builders.terrengdetaljkodeAnnetGjerde
 import no.kartverket.nibas.domain.AnsvarligMyndighetHolder
 import no.kartverket.nibas.domain.DokumentasjonsreferanseDokumentlink
 import no.kartverket.nibas.domain.DokumentasjonsreferanseInternReferanseKartverket
-import no.kartverket.nibas.domain.Fylkesgrense
+import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.Landkode
-import no.kartverket.nibas.domain.Territorialgrense
 import no.kartverket.nibas.repository.FastsettingstypeRepository
 import no.kartverket.nibas.repository.GrensestatusRepository
 import no.kartverket.nibas.repository.LandKodeRepository
@@ -172,7 +171,7 @@ internal class MetadataUpdaterTest {
                 gyldigFra = newGyldigFraDato,
             )
         )
-        val updatedFylkesgrense: Fylkesgrense = metadataUpdater.updateAdministrativGrense(fylkesgrense, updatedMetadata) as Fylkesgrense
+        val updatedFylkesgrense: Grense = metadataUpdater.updateAdministrativGrense(fylkesgrense, updatedMetadata)
         assertThat(updatedFylkesgrense.gyldigFra).isEqualTo(newGyldigFraDato)
         assertThat(updatedFylkesgrense.foelgerterrengdetalj).isNotNull
     }
@@ -189,8 +188,7 @@ internal class MetadataUpdaterTest {
             .withNoeyaktighetsklassekode(null)
             .build()
 
-        val updatedFylkesgrense: Fylkesgrense = metadataUpdater.updateAdministrativGrense(fylkesgrenseWithNullKodetyper, administrativGrenseMetadata) as
-            Fylkesgrense
+        val updatedFylkesgrense: Grense = metadataUpdater.updateAdministrativGrense(fylkesgrenseWithNullKodetyper, administrativGrenseMetadata)
         assertThat(updatedFylkesgrense.foelgerterrengdetalj).isNotNull
         assertThat(updatedFylkesgrense.noeyaktighetsklasse).isNotNull
     }
@@ -247,7 +245,7 @@ internal class MetadataUpdaterTest {
 
 }
 
-fun Territorialgrense.findIdForAnsvarligMyndighet(myndighet: String): String {
+fun Grense.findIdForAnsvarligMyndighet(myndighet: String): String {
     return this.ansvarligeMyndigheter.first { it.ansvarligmyndighet == myndighet }.id
 }
 

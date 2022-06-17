@@ -1,13 +1,14 @@
 package no.kartverket.nibas.domain
 
 import no.kartverket.nibas.api.v1.common.Flatetype
+import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import org.hibernate.envers.Audited
 import java.util.*
 import javax.persistence.CascadeType
 import javax.persistence.Column
 import javax.persistence.Entity
-import javax.persistence.FetchType
+import javax.persistence.Id
 import javax.persistence.JoinColumn
 import javax.persistence.ManyToOne
 import javax.persistence.OneToMany
@@ -19,8 +20,7 @@ import javax.persistence.Table
 @Table(name = "kommune")
 @Audited
 @Entity
-class Kommune(override val id: String = UUID.randomUUID().toString()) :
-    AdministrativEnhet(Flatetype.KOMMUNE) {
+class Kommune(override val id: String = UUID.randomUUID().toString()) : AdministrativEnhet(Flatetype.KOMMUNE) {
 
     @Column(name = "kommunenummer", nullable = false)
     var kommunenummer: String = ""
@@ -30,28 +30,19 @@ class Kommune(override val id: String = UUID.randomUUID().toString()) :
 
     @ManyToOne
     @JoinColumn(name = "fylke_fk")
-    var fylkeFk: Fylke? = null
+    lateinit var fylke: Fylke
 
-    @OneToMany(mappedBy = "kommune", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
-    var kommunegrenser: MutableSet<KommuneKommunegrense> = mutableSetOf()
-
-    @OneToMany(mappedBy = "kommune", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
-    var fylkesgrenser: MutableSet<KommuneFylkesgrense> = mutableSetOf()
-
-    @OneToMany(mappedBy = "kommune", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
-    var avtaltavgrensningslinjer: MutableSet<KommuneAvtaltavgrensningslinje> = mutableSetOf()
-
-    @OneToMany(mappedBy = "kommune", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
-    var territorialgrenser: MutableSet<KommuneTerritorialgrense> = mutableSetOf()
-
-    @OneToMany(mappedBy = "kommune", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
-    var riksgrenser: MutableSet<KommuneRiksgrense> = mutableSetOf()
-
-    @OneToMany(mappedBy = "kommuneFk", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "kommuneFk")
     var informasjonselementer: MutableSet<KommuneInformasjon> = mutableSetOf()
 
-    @OneToMany(mappedBy = "kommuneFk", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "kommuneFk")
     override var administrativenhetnavn: MutableSet<Administrativenhetnavn> = mutableSetOf()
+
+    @OneToMany(mappedBy = "kommune", cascade = [CascadeType.ALL])
+    var grunnkretser: MutableSet<Grunnkrets> = mutableSetOf()
+
+    @OneToMany(mappedBy = "kommune", cascade = [CascadeType.ALL])
+    var stemmekretser: MutableSet<Stemmekrets> = mutableSetOf()
 
     override fun getInfo(): String? = doGetInfoFromSingletonCollection(informasjonselementer)
 
@@ -60,18 +51,44 @@ class Kommune(override val id: String = UUID.randomUUID().toString()) :
     }
 
     override fun oppdaterFlate() {
-        flate = SosiGeometryFunctions.beregnFlate(kommunegrenser + fylkesgrenser + avtaltavgrensningslinjer + territorialgrenser + riksgrenser)
+        flate = SosiGeometryFunctions.beregnFlate(getGrenser())
     }
 
-    override fun oppdaterEllerLeggTilGrenseKobling(grense: Grense, attributter: GrenseKoblingAttributter) {
-        val (samling, default) = when(grense) {
-            is Kommunegrense -> SamlingOgDefault(kommunegrenser, KommuneKommunegrense(this, grense, attributter))
-            is Fylkesgrense -> SamlingOgDefault(fylkesgrenser, KommuneFylkesgrense(this, grense, attributter))
-            is Avtaltavgrensningslinje -> SamlingOgDefault(avtaltavgrensningslinjer, KommuneAvtaltavgrensningslinje(this, grense, attributter))
-            is Territorialgrense -> SamlingOgDefault(territorialgrenser, KommuneTerritorialgrense(this, grense, attributter))
-            is Riksgrense -> SamlingOgDefault(riksgrenser, KommuneRiksgrense(this, grense, attributter))
-            else -> throw RuntimeException("Kan ikke legge til ${grense::class.simpleName} på enhet Kommune")
-        }
-        oppdaterSamling(grense, attributter, samling, default)
+    fun getGrenser(): Set<GrenseKobling> {
+        return grunnkretser
+            .flatMap { it.getGrenserAvTyper(tillatteGrensetyper()) }
+            .toSet()
     }
+
+    fun kommunegrenser(): Set<GrenseKobling> {
+        return getGrenser().filter { it.grense.grensetype == Grensetype.Kommunegrense }.toSet()
+    }
+
+    fun addGrunnkrets(grunnkrets: Grunnkrets) {
+        grunnkrets.kommune = this
+        grunnkretser.add(grunnkrets)
+    }
+
+    private fun tillatteGrensetyper(): Set<Grensetype> = setOf(
+        Grensetype.Kommunegrense,
+        Grensetype.Fylkesgrense,
+        Grensetype.AvtaltAvgrensningslinje,
+        Grensetype.Territorialgrense,
+        Grensetype.Riksgrense)
+}
+
+@Table(name = "kommune_informasjon")
+@Audited
+@Entity
+class KommuneInformasjon(kommune: Kommune) : Info {
+    @Id
+    @Column(name = "objid", nullable = false, updatable = false)
+    override val id: String = UUID.randomUUID().toString()
+
+    @ManyToOne
+    @JoinColumn(name = "kommune_fk")
+    var kommuneFk: Kommune? = kommune
+
+    @Column(name = "informasjon")
+    override var informasjon: String? = null
 }

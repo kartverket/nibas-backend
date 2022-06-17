@@ -3,7 +3,6 @@ package no.kartverket.nibas.inndelinger
 import no.kartverket.nibas.api.v1.FylkeApi
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.common.Fylkesnummer
-import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.request.FylkeRequest
 import no.kartverket.nibas.api.v1.response.FylkeRef
@@ -39,13 +38,16 @@ class FylkeController @Autowired constructor(
     }
 
     override fun hentGrenser(id: String): FeatureCollection {
-        return when (val grenser = fylkeService.hentGrenserForFylke(id)) {
-            null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
-            else -> FeatureCollection(
-                features = grenser.sortedBy { it.grenseKoblingAttributter.rekkefoelge }
-                    .map { grenseKoblingToFeature(id, KontekstEnhetType.FYLKE, it, kodelisteService) }
-            )
+        val grenser = fylkeService.hentGrenserForFylke(id)
+        if (grenser.isEmpty()) {
+            throw ResponseStatusException(HttpStatus.NOT_FOUND)
         }
+        return FeatureCollection(
+            features = grenser
+                // TODO: NIBAS-473 Hvordan sortere grensene nå?
+//                .sortedBy { it.grenseKoblingAttributter.rekkefoelge }
+                .map { grenseKoblingToFeature(it, kodelisteService) }
+        )
     }
 
     override fun oppdaterFylke(id: String, oppdatertFylke: FylkeRequest): FylkeResponse {
@@ -75,13 +77,8 @@ class FylkeService @Autowired constructor(
     fun hentAlleFylker() = fylkeRepository.findAll().toList()
     fun hentFylke(id: String) = fylkeRepository.findById(id).unwrap()
 
-    fun hentGrenserForFylke(id: String): Set<GrenseKobling>? {
-        return fylkeRepository.findById(id).unwrap()?.let { fylke ->
-            fylke.fylkesgrenser +
-                fylke.riksgrenser +
-                fylke.territorialgrenser +
-                fylke.avtaltavgrensningslinjer
-        }
+    fun hentGrenserForFylke(id: String): Set<GrenseKobling> {
+        return fylkeRepository.findById(id).unwrap()?.getGrenser() ?: emptySet()
     }
 
     fun oppdaterFylke(id: String, oppdatertFylke: FylkeRequest): Fylke? {

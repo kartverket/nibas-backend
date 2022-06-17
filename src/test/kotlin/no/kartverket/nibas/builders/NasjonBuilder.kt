@@ -1,6 +1,9 @@
 package no.kartverket.nibas.builders
 
-import no.kartverket.nibas.domain.*
+import no.kartverket.nibas.domain.Administrativenhetnavn
+import no.kartverket.nibas.domain.Fylke
+import no.kartverket.nibas.domain.Nasjon
+import no.kartverket.nibas.domain.Spraakkode
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
 
@@ -10,9 +13,7 @@ class NasjonBuilder(private val id: String = "1") {
     private var spraak: String = "nor"
     private var navnerom: String = "ABC"
     private var lokalId: String = "123"
-    private var avtaltavgrensningslinjer: MutableSet<Avtaltavgrensningslinje> = mutableSetOf()
-    private var territorialgrenser: MutableSet<Territorialgrense> = mutableSetOf()
-    private var riksgrenser: MutableSet<Riksgrense> = mutableSetOf()
+    private var fylke: Fylke = Fylke()
 
     companion object {
         val DEFAULT_NASJON = NasjonBuilder().build()
@@ -39,26 +40,14 @@ class NasjonBuilder(private val id: String = "1") {
         nasjon.posisjon = GeometryFactory().createPoint(Coordinate(1.0, 1.0))
         nasjon.flate = GeometryFactory().createMultiPolygon(arrayOf(GeometryFactory().createPolygon()))
 
-        nasjon.riksgrenser = riksgrenser.map { NasjonRiksgrense(nasjon, it, GrenseKoblingAttributter()) }.toMutableSet()
-        nasjon.territorialgrenser = territorialgrenser.map { NasjonTerritorialgrense(nasjon, it, GrenseKoblingAttributter()) }.toMutableSet()
-        nasjon.avtaltavgrensningslinjer = avtaltavgrensningslinjer.map { NasjonAvtaltavgrensningslinje(nasjon, it, GrenseKoblingAttributter()) }.toMutableSet()
+        nasjon.addFylke(fylke)
+
         return nasjon
     }
 
-    fun withRiksgrenser(vararg riksgrenser: Riksgrense): NasjonBuilder {
-        this.riksgrenser = riksgrenser.toMutableSet()
+    fun withFylke(fylke: Fylke): NasjonBuilder {
+        this.fylke = fylke
         return this
     }
-
-    fun withTerritorialgrenser(vararg territorialgrenser: Territorialgrense): NasjonBuilder {
-        this.territorialgrenser = territorialgrenser.toMutableSet()
-        return this
-    }
-
-    fun withAvtaltavgrensningslinjer(vararg avtaltavgrensningslinjer: Avtaltavgrensningslinje): NasjonBuilder {
-        this.avtaltavgrensningslinjer = avtaltavgrensningslinjer.toMutableSet()
-        return this
-    }
-
 
 }

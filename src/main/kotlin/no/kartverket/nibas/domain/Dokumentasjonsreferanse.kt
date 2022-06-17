@@ -43,31 +43,11 @@ class Dokumentasjonsreferanse {
 
     @ManyToOne
     @JoinColumn(name = "grense_fk")
-    var grenseFk: UtflatetGrense? = null
-
-    @ManyToOne
-    @JoinColumn(name = "fylkesgrense_fk")
-    var fylkesgrenseFk: Fylkesgrense? = null
-
-    @ManyToOne
-    @JoinColumn(name = "kommunegrense_fk")
-    var kommunegrenseFk: Kommunegrense? = null
-
-    @ManyToOne
-    @JoinColumn(name = "riksgrense_fk")
-    var riksgrenseFk: Riksgrense? = null
+    var grenseFk: Grense? = null
 
     @ManyToOne
     @JoinColumn(name = "lovvirkeomraade_fk")
     var lovvirkeomraadeFk: Lovvirkeomraade? = null
-
-    @ManyToOne
-    @JoinColumn(name = "lovvirkeomraadegrense_fk")
-    var lovvirkeomraadegrenseFk: Lovvirkeomraadegrense? = null
-
-    @ManyToOne
-    @JoinColumn(name = "avtaltavgrensningslinje_fk")
-    var avtaltavgrensningslinjeFk: Avtaltavgrensningslinje? = null
 
     @ManyToOne
     @JoinColumn(name = "detsaerskilteomraadet_fk")
@@ -80,18 +60,6 @@ class Dokumentasjonsreferanse {
     @ManyToOne
     @JoinColumn(name = "fiskevernsone_fk")
     var fiskevernsoneFk: Fiskevernsone? = null
-
-    @ManyToOne
-    @JoinColumn(name = "grense200nautiskemil_fk")
-    var grense200nautiskemilFk: Grense200nautiskemil? = null
-
-    @ManyToOne
-    @JoinColumn(name = "grunnlinje_fk")
-    var grunnlinjeFk: Grunnlinje? = null
-
-    @ManyToOne
-    @JoinColumn(name = "graasonegrense_fk")
-    var graasonegrenseFk: Graasonegrense? = null
 
     @ManyToOne
     @JoinColumn(name = "graasonen_fk")
@@ -118,20 +86,8 @@ class Dokumentasjonsreferanse {
     var territorialfarvannFk: Territorialfarvann? = null
 
     @ManyToOne
-    @JoinColumn(name = "territorialgrense_fk")
-    var territorialgrenseFk: Territorialgrense? = null
-
-    @ManyToOne
     @JoinColumn(name = "tilstoetendesone_fk")
     var tilstoetendesoneFk: Tilstoetendesone? = null
-
-    @ManyToOne
-    @JoinColumn(name = "yttergrensesokkel_fk")
-    var yttergrensesokkelFk: Yttergrensesokkel? = null
-
-    @ManyToOne
-    @JoinColumn(name = "yttergrensetilstoetendesone_fk")
-    var yttergrensetilstoetendesoneFk: Yttergrensetilstoetendesone? = null
 
     @OneToMany(mappedBy = "dokumentasjonsreferanseFk", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     var dokumentlenker: MutableSet<DokumentasjonsreferanseDokumentlink> = mutableSetOf()
@@ -169,4 +125,36 @@ class Dokumentasjonsreferanse {
         rettskildeId = this.rettskildeid,
         rettskildeTittel = this.rettskildetittel!!
     )
+}
+
+@Table(name = "dokumentasjonsreferanse_dokumentlink")
+@Audited
+@Entity
+class DokumentasjonsreferanseDokumentlink {
+    @Id
+    @Column(name = "objid", nullable = false, updatable = false)
+    val id: String = UUID.randomUUID().toString()
+
+    @ManyToOne
+    @JoinColumn(name = "dokumentasjonsreferanse_fk")
+    var dokumentasjonsreferanseFk: Dokumentasjonsreferanse? = null
+
+    @Column(name = "dokumentlink")
+    var dokumentlink: String? = null
+}
+
+@Table(name = "dokumentasjonsreferanse_internreferansekartverket")
+@Audited
+@Entity
+class DokumentasjonsreferanseInternReferanseKartverket {
+    @Id
+    @Column(name = "objid", nullable = false, updatable = false)
+    val id: String = UUID.randomUUID().toString()
+
+    @ManyToOne
+    @JoinColumn(name = "dokumentasjonsreferanse_fk")
+    var dokumentasjonsreferanseFk: Dokumentasjonsreferanse? = null
+
+    @Column(name = "internreferansekartverket")
+    var internReferanseKartverket: String? = null
 }

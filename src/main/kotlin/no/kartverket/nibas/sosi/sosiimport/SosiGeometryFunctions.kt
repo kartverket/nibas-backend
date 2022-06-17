@@ -1,9 +1,16 @@
 package no.kartverket.nibas.sosi.sosiimport
 
+import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.sosi.model.SosiKoordinat
 import no.kartverket.nibas.sosi.model.SosiNordOest
-import org.locationtech.jts.geom.*
+import org.locationtech.jts.geom.Coordinate
+import org.locationtech.jts.geom.GeometryFactory
+import org.locationtech.jts.geom.LineString
+import org.locationtech.jts.geom.MultiPolygon
+import org.locationtech.jts.geom.Point
+import org.locationtech.jts.geom.Polygon
+import org.locationtech.jts.geom.PrecisionModel
 
 class SosiGeometryFunctions {
     companion object {
@@ -79,17 +86,19 @@ class SosiGeometryFunctions {
                 val hullKoblinger: Map<Int, List<GrenseKobling>> = (koblingerForFlate - skallKoblinger).groupBy { it.grenseKoblingAttributter.hullIndeks!! }
 
                 val skall: List<LineString> = skallKoblinger.sortedBy { it.grenseKoblingAttributter.rekkefoelge }.map {
+                    val grense: Grense = it.grense
                     when (it.grenseKoblingAttributter.retningMedKlokken) {
-                        true -> it.getGrense().grense!!
-                        false -> it.getGrense().grense!!.reverse()
+                        true -> grense.grense
+                        false -> grense.grense.reverse()
                     }
                 }
 
                 val hull: List<List<LineString>> = hullKoblinger.map { h ->
                     h.value.sortedBy { it.grenseKoblingAttributter.rekkefoelge }.map {
+                        val grense: Grense = it.grense
                         when (it.grenseKoblingAttributter.retningMedKlokken) {
-                            true -> it.getGrense().grense!!
-                            false -> it.getGrense().grense!!.reverse()
+                            true -> grense.grense
+                            false -> grense.grense.reverse()
                         }
                     }
                 }

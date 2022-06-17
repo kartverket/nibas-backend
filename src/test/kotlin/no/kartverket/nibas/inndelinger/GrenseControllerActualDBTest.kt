@@ -1,12 +1,14 @@
 package no.kartverket.nibas.inndelinger
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
+import no.kartverket.nibas.api.v1.common.geojson.metadata.AdministrativGrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Dokref
 import no.kartverket.nibas.api.v1.common.geojson.metadata.MetadataMapper
 import no.kartverket.nibas.api.v1.common.geojson.metadata.TekstHolder
 import no.kartverket.nibas.builders.FeatureBuilder
-import no.kartverket.nibas.domain.Kommunegrense
+import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.kodelister.KodelisteService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -57,7 +59,7 @@ class GrenseControllerActualDBTest {
 
         // Konverterer til metadataObjekt og endrer noen egenskaper
         val metadataMapper = MetadataMapper(kodelisteService)
-        val metadata = metadataMapper.toMetadata(kommunegrense)
+        val metadata: AdministrativGrenseMetadata = metadataMapper.toMetadataForAdministrativGrense(kommunegrense)
         val gyldigFra = LocalDate.now().plusDays(1)
         val dokumentLink = "LinkTilMittDokument"
         val fastsettingsmyndighet = "Kartverket"
@@ -84,7 +86,7 @@ class GrenseControllerActualDBTest {
         val featureCollection = FeatureCollection(
             features = listOf(
                 FeatureBuilder(id = kommunegrenseId)
-                    .withGrensetype(GrenseType.Kommunegrense)
+                    .withGrensetype(Grensetype.Kommunegrense)
                     .withMetadata(updatedMetadata)
                     .build()
             )
@@ -103,8 +105,7 @@ class GrenseControllerActualDBTest {
         kommunegrense = fetchKommunegrense()
         assertThat(kommunegrense.omtvistet).isTrue
         assertThat(kommunegrense.gyldigFra).isEqualTo(gyldigFra)
-        assertThat(kommunegrense.informasjonselementer).hasSize(1)
-        assertThat(kommunegrense.informasjonselementer.first().informasjon).isEqualTo(beskrivelse)
+        assertThat(kommunegrense.informasjonstekst).isEqualTo(beskrivelse)
 
         assertThat(kommunegrense.dokumentasjonsreferanser).hasSize(1)
         val dokumentasjonsreferanse = kommunegrense.dokumentasjonsreferanser.first()
@@ -115,8 +116,8 @@ class GrenseControllerActualDBTest {
         assertThat(dokumentasjonsreferanse.rettskildetittel).isEqualTo(rettskildeTittel)
     }
 
-    private fun fetchKommunegrense(): Kommunegrense {
-        val kommunegrense = grenseService.hentGrense(kommunegrenseId, Kommunegrense::class)
+    private fun fetchKommunegrense(): Grense {
+        val kommunegrense = grenseService.hentGrense(kommunegrenseId)
         assertThat(kommunegrense).isNotNull
         return kommunegrense!!
     }

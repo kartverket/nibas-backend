@@ -1,13 +1,14 @@
 package no.kartverket.nibas.domain
 
+import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import javax.persistence.Column
 import javax.persistence.Embeddable
 
 interface GrenseKobling {
     var grenseKoblingAttributter: GrenseKoblingAttributter
-
-    fun getGrense(): Grense
+    var grense: Grense
     fun oppdaterAttributter(nyeAttributter: GrenseKoblingAttributter)
+    fun getEnhetKobletTilGrense(): KobletTilGrense
 }
 
 @Embeddable
@@ -34,3 +35,12 @@ data class GrenseKoblingAttributter(
         )
     }
 }
+
+class GrenseMedAttributter(val grense: Grense, val attributter: GrenseKoblingAttributter)
+
+data class GrenseMedRetningOgKontekst(
+    val grenseMedAttributter: GrenseMedAttributter,
+    val kontekstType: KontekstEnhetType,
+    val kontekstId: String
+)
+

@@ -1,19 +1,20 @@
 package no.kartverket.nibas.inndelinger
 
+import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.builders.FeatureBuilder
-import no.kartverket.nibas.builders.FylkeBuilder
 import no.kartverket.nibas.builders.GrenseBuilder
-import no.kartverket.nibas.builders.KommuneBuilder
-import no.kartverket.nibas.domain.Fylkesgrense
-import no.kartverket.nibas.domain.Kommunegrense
-import no.kartverket.nibas.repository.FylkeRepository
-import no.kartverket.nibas.repository.FylkesgrenseRepository
-import no.kartverket.nibas.repository.KommuneRepository
-import no.kartverket.nibas.repository.KommunegrenseRepository
+import no.kartverket.nibas.builders.GrunnkretsBuilder
+import no.kartverket.nibas.builders.StemmekretsBuilder
+import no.kartverket.nibas.domain.Grense
+import no.kartverket.nibas.domain.Grunnkrets
+import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
+import no.kartverket.nibas.repository.GrenseRepository
+import no.kartverket.nibas.repository.GrunnkretsRepository
+import no.kartverket.nibas.repository.StemmekretsRepository
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
 import org.mockito.ArgumentCaptor
@@ -22,8 +23,8 @@ import org.mockito.Mockito.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.mock.mockito.MockBean
+import org.springframework.web.server.ResponseStatusException
 import java.util.*
-import kotlin.test.assertEquals
 import org.mockito.Mockito.`when` as whenever
 
 @SpringBootTest
@@ -33,97 +34,170 @@ class GrenseServiceTest {
     lateinit var grenseService: GrenseService
 
     @MockBean
-    private lateinit var kommunegrenseRepositoryMock: KommunegrenseRepository
+    private lateinit var grenseRepositoryMock: GrenseRepository
 
     @MockBean
-    private lateinit var fylkesgrenseRepositoryMock: FylkesgrenseRepository
+    private lateinit var grunnkretsRepositoryMock: GrunnkretsRepository
 
     @MockBean
-    private lateinit var kommuneRepositoryMock: KommuneRepository
-
-    @MockBean
-    private lateinit var fylkeRepositoryMock: FylkeRepository
+    private lateinit var stemmekretsRepositoryMock: StemmekretsRepository
 
     @Captor
-    var fylkesgrenseCaptor: ArgumentCaptor<List<Fylkesgrense>>? = null
+    lateinit var fylkesgrenseCaptor: ArgumentCaptor<List<Grense>>
 
+    /**
+     * Har 1 Stemmekrets med 1 Grense (type Fylkesgrense) tilknyttet
+     * Har 1 Grunnkrets med 3 Grense (type Fylkesgrense) tilknyttet
+     * Sender inn 4 Features til lagreGrenser for de 4 grensene.
+     * Grensekoblingene skal da bli oppdatert.
+     */
     @Test
-    fun thatOppdaterGrenseOppdatererEksisterendeOgOppretterNye() {
+    fun thatLagreGrenserOppdatererEksisterende() {
         val oppdatertGeometri = GeometryFactory().createLineString(arrayOf(Coordinate(1.0, 1.0), Coordinate(2.0, 2.0)))
 
         val nyGrenseGeometri = GeometryFactory().createLineString(arrayOf(Coordinate(2.0, 2.0), Coordinate(3.0, 3.0)))
         val nyGrenseGeometri2 = GeometryFactory().createLineString(arrayOf(Coordinate(3.0, 3.0), Coordinate(4.0, 4.0)))
         val nyGrenseGeometri3 = GeometryFactory().createLineString(arrayOf(Coordinate(4.0, 4.0), Coordinate(5.0, 5.0)))
 
-        val eksisterendeGrense = GrenseBuilder("1").buildFylkesgrense()
+        val grenseId1 = "1"
+        val grenseId2 = "2"
+        val grenseId3 = "3"
+        val grenseId4 = "4"
+        val eksisterendeGrense: Grense = GrenseBuilder(grenseId1).buildFylkesgrense()
+        val eksisterendeGrense2: Grense = GrenseBuilder(grenseId2).buildFylkesgrense()
+        val eksisterendeGrense3: Grense = GrenseBuilder(grenseId3).buildFylkesgrense()
+        val eksisterendeGrense4: Grense = GrenseBuilder(grenseId4).buildFylkesgrense()
 
-        val oppdatertGrensefeature = FeatureBuilder("1").withGrensetype(GrenseType.Fylkesgrense).withGeometry(oppdatertGeometri).build()
-        val nyFylkesgrensefeatureForFylke = FeatureBuilder(null)
-            .withKontekstType(KontekstEnhetType.FYLKE)
-            .withKontekstId("1")
-            .withGrensetype(GrenseType.Fylkesgrense)
-            .withGeometry(nyGrenseGeometri).build()
-        val nyFylkesgrensefeatureForKommune = FeatureBuilder(null)
-            .withKontekstType(KontekstEnhetType.KOMMUNE)
-            .withKontekstId("1")
-            .withGrensetype(GrenseType.Fylkesgrense)
-            .withGeometry(nyGrenseGeometri2).build()
-        val nyFylkesgrensefeature2ForKommune = FeatureBuilder(null)
-            .withKontekstType(KontekstEnhetType.KOMMUNE)
-            .withKontekstId("1")
-            .withGrensetype(GrenseType.Fylkesgrense)
-            .withGeometry(nyGrenseGeometri3).build()
+        val stemmekretsId = "55"
+        val grunnkretsId = "18"
 
-        val fylkeSomSkalOppdateres = FylkeBuilder.DEFAULT_FYLKE
-        val kommuneSomSkalOppdateres = KommuneBuilder.DEFAULT_KOMMUNE
+        val oppdatertFylkesgrensefeatureForStemmekrets = FeatureBuilder(grenseId2)
+            .withKontekstType(KontekstEnhetType.STEMMEKRETS)
+            .withKontekstId(stemmekretsId)
+            .withGrensetype(Grensetype.Fylkesgrense)
+            .withGeometry(nyGrenseGeometri)
+            .build()
 
-        whenever(fylkesgrenseRepositoryMock.findAllById(anyCollection())).thenReturn(listOf(eksisterendeGrense))
-        whenever(fylkeRepositoryMock.findAllById(anyCollection())).thenReturn(listOf(fylkeSomSkalOppdateres))
-        whenever(kommuneRepositoryMock.findAllById(anyCollection())).thenReturn(listOf(kommuneSomSkalOppdateres))
-        grenseService.lagreFylkesgrenser(
+        val oppdatertGrensefeature = FeatureBuilder(grenseId1)
+            .withKontekstType(KontekstEnhetType.GRUNNKRETS)
+            .withKontekstId(grunnkretsId)
+            .withGrensetype(Grensetype.Fylkesgrense)
+            .withGeometry(oppdatertGeometri)
+            .withRekkefoelge(0)
+            .build()
+        val oppdatertFylkesgrensefeatureForGrunnkrets = FeatureBuilder(grenseId3)
+            .withKontekstType(KontekstEnhetType.GRUNNKRETS)
+            .withKontekstId(grunnkretsId)
+            .withGrensetype(Grensetype.Fylkesgrense)
+            .withGeometry(nyGrenseGeometri2)
+            .withRekkefoelge(1)
+            .build()
+        val oppdatertFylkesgrensefeature2ForGrunnkrets = FeatureBuilder(grenseId4)
+            .withKontekstType(KontekstEnhetType.GRUNNKRETS)
+            .withKontekstId(grunnkretsId)
+            .withGrensetype(Grensetype.Fylkesgrense)
+            .withGeometry(nyGrenseGeometri3)
+            .withRekkefoelge(2)
+            .withRetning(false)
+            .build()
+
+        val stemmekretsSomSkalOppdateres = StemmekretsBuilder(stemmekretsId)
+            .withGrenser(eksisterendeGrense2)
+            .build()
+        val grunnkretsSomSkalOppdateres = GrunnkretsBuilder(grunnkretsId)
+            .withGrenser(eksisterendeGrense, eksisterendeGrense3, eksisterendeGrense4)
+            .build()
+
+        whenever(grenseRepositoryMock.findAllById(anyCollection())).thenReturn(listOf(eksisterendeGrense, eksisterendeGrense2,
+            eksisterendeGrense3, eksisterendeGrense4))
+        whenever(stemmekretsRepositoryMock.findAllById(anyCollection())).thenReturn(listOf(stemmekretsSomSkalOppdateres))
+        whenever(grunnkretsRepositoryMock.findAllById(anyCollection())).thenReturn(listOf(grunnkretsSomSkalOppdateres))
+
+        grenseService.lagreGrenser(
             listOf(
+                oppdatertFylkesgrensefeatureForStemmekrets,
                 oppdatertGrensefeature,
-                nyFylkesgrensefeatureForFylke,
-                nyFylkesgrensefeatureForKommune,
-                nyFylkesgrensefeature2ForKommune
+                oppdatertFylkesgrensefeatureForGrunnkrets,
+                oppdatertFylkesgrensefeature2ForGrunnkrets
             )
         )
 
-        verify(fylkesgrenseRepositoryMock, times(1)).saveAll(fylkesgrenseCaptor!!.capture())
+        verify(grenseRepositoryMock, times(1)).saveAll(fylkesgrenseCaptor.capture())
+        val lagredeGrenser: MutableList<List<Grense>> = fylkesgrenseCaptor.allValues
+        assertThat(lagredeGrenser.flatten()).hasSize(4).withFailMessage("Skal lagre 4 grenser til databasen")
 
-        val lagredeGrenser: MutableList<List<Fylkesgrense>> = fylkesgrenseCaptor!!.allValues
-        assertEquals(4, lagredeGrenser.flatten().size, "Skal lagre 4 grenser til databasen")
+        assertThat(stemmekretsSomSkalOppdateres.getGrenserAvType(Grensetype.Fylkesgrense))
+            .hasSize(1)
+            .withFailMessage("Stemmekrets skal ha en fylkesgrense")
 
-        verify(fylkeRepositoryMock).saveAll(listOf(fylkeSomSkalOppdateres))
-        assertEquals(1, fylkeSomSkalOppdateres.fylkesgrenser.size, "Fylket skal ha fått en fylkesgrense")
+        val fylkesgrenser = grunnkretsSomSkalOppdateres.getGrenserAvType(Grensetype.Fylkesgrense)
+        assertThat(fylkesgrenser)
+            .hasSize(3)
+            .withFailMessage("Grunnkrets skal ha tre fylkesgrenser")
+        val lineStrings = fylkesgrenser.map { it.grense.grense }.toSet()
+        assertThat(lineStrings).isEqualTo(setOf(oppdatertGeometri, nyGrenseGeometri2, nyGrenseGeometri3))
 
-        verify(kommuneRepositoryMock).saveAll(listOf(kommuneSomSkalOppdateres))
-        assertEquals(2, kommuneSomSkalOppdateres.fylkesgrenser.size, "Kommunen skal ha fått to fylkesgrenser")
+        val grunnkretsGrenseKobling1 = grunnkretsGrenseKobling(grunnkretsSomSkalOppdateres, grenseId1)
+        val grunnkretsGrenseKobling2 = grunnkretsGrenseKobling(grunnkretsSomSkalOppdateres, grenseId3)
+        val grunnkretsGrenseKobling3 = grunnkretsGrenseKobling(grunnkretsSomSkalOppdateres, grenseId4)
+
+        assertRekkefoelge(grunnkretsGrenseKobling1, 0)
+        assertRekkefoelge(grunnkretsGrenseKobling2, 1)
+        assertRekkefoelge(grunnkretsGrenseKobling3, 2)
+        assertRetningMotKlokka(grunnkretsGrenseKobling3)
+    }
+
+    private fun assertRekkefoelge(grunnkretsGrenseKobling: GrunnkretsGrenseKobling, rekkefoelge: Int) {
+        assertThat(grunnkretsGrenseKobling.grenseKoblingAttributter.rekkefoelge).isEqualTo(rekkefoelge)
+    }
+
+    private fun assertRetningMotKlokka(grunnkretsGrenseKobling: GrunnkretsGrenseKobling) {
+        assertThat(grunnkretsGrenseKobling.grenseKoblingAttributter.retningMedKlokken).isEqualTo(false)
+    }
+
+    private fun grunnkretsGrenseKobling(grunnkretsSomSkalOppdateres: Grunnkrets, grenseId: String): GrunnkretsGrenseKobling =
+        grunnkretsSomSkalOppdateres.grenser.first { it.grense.id == grenseId }
+
+    @Test
+    fun thatIncomingFeatureWithoutIdThrowsException() {
+        // Innkommende feature uten id
+        val nyStemmekretsgrensefeatureForGrunnkrets = FeatureBuilder(null)
+            .withKontekstType(KontekstEnhetType.GRUNNKRETS)
+            .withKontekstId("1")
+            .withGrensetype(Grensetype.Stemmekretsgrense)
+            .build()
+
+        assertThatThrownBy {
+            grenseService.lagreGrenser(listOf(nyStemmekretsgrensefeatureForGrunnkrets))
+        }
+            .isInstanceOf(ResponseStatusException::class.java)
+            .hasMessageContaining("Missing feature id")
     }
 
     @Test
-    fun thatKommunegrenseIkkeKanLeggesTilFylke() {
-        val nyKommunegrensefeatureForFylke = FeatureBuilder(null)
-            .withKontekstType(KontekstEnhetType.FYLKE)
+    fun thatIncomingFeatureWithUnknownIdThrowsException() {
+        // Har en grunnkretsgrense med id 34
+        whenever(grenseRepositoryMock.findAllById(anyCollection())).thenReturn(listOf(
+            GrenseBuilder("34")
+                .buildGrunnkretsgrense()))
+
+        // Innkommende feature på ukjent grenseId
+        val featureWithUnknownId = FeatureBuilder("33")
+            .withKontekstType(KontekstEnhetType.GRUNNKRETS)
             .withKontekstId("1")
-            .withGrensetype(GrenseType.Kommunegrense)
+            .withGrensetype(Grensetype.Grunnkretsgrense)
             .build()
 
-        whenever(fylkeRepositoryMock.findAllById(anyCollection())).thenReturn(listOf(FylkeBuilder.DEFAULT_FYLKE))
-
-        val exception =
-            assertThrows<RuntimeException>("Skal kaste exception når det legges til en ny kommunegrense på et fylke") {
-                grenseService.lagreKommunegrenser(listOf(nyKommunegrensefeatureForFylke))
-            }
-
-        assertEquals("Kan ikke legge til Kommunegrense på enhet Fylke", exception.message)
+        assertThatThrownBy { grenseService.lagreGrenser(listOf(featureWithUnknownId)) }
+            .isInstanceOf(ResponseStatusException::class.java)
+            .hasMessageContaining("Non-existing grenseIds")
     }
 
     @Test
     fun hentGrenseReturnsNullInCaseOfNoMatch() {
-        val emptyKommunegrense = Optional.empty<Kommunegrense>()
-        whenever(kommunegrenseRepositoryMock.findById(anyString())).thenReturn(emptyKommunegrense)
-        assertThat(grenseService.hentGrense("1", Kommunegrense::class)).isNull()
+        val emptyKommunegrense = Optional.empty<Grense>()
+        whenever(grenseRepositoryMock.findById(anyString())).thenReturn(emptyKommunegrense)
+        assertThat(grenseService.hentGrense("1")).isNull()
     }
 
 }

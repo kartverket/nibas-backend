@@ -1,6 +1,6 @@
 package no.kartverket.nibas.kodelister
 
-import no.kartverket.nibas.inndelinger.GrenseType
+import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.repository.FastsettingstypeRepository
 import no.kartverket.nibas.repository.GrensestatusRepository
 import no.kartverket.nibas.repository.LandKodeRepository
@@ -99,7 +99,7 @@ class DefaultKodelisteService constructor(private val kodelisteFetcher: Kodelist
     override fun getGrensetyper(): KodelisteRespons {
         return KodelisteRespons(
             type = KodelisteType.GRENSETYPE,
-            items = GrenseType.values()
+            items = Grensetype.values()
                 .map { KodelisteItem(id = it.value, label = it.name) }
                 .sortedBy { it.id })
     }

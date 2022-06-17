@@ -1,10 +1,18 @@
 package no.kartverket.nibas.domain
 
 import no.kartverket.nibas.api.v1.common.Flatetype
+import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import org.hibernate.envers.Audited
 import java.util.*
-import javax.persistence.*
+import javax.persistence.CascadeType
+import javax.persistence.Column
+import javax.persistence.Entity
+import javax.persistence.Id
+import javax.persistence.JoinColumn
+import javax.persistence.ManyToOne
+import javax.persistence.OneToMany
+import javax.persistence.Table
 
 /**
  * id overrides i konstruktør for å kunne overstyre verdi for test.
@@ -12,8 +20,7 @@ import javax.persistence.*
 @Table(name = "fylke")
 @Audited
 @Entity
-class Fylke(override val id: String = UUID.randomUUID().toString()) :
-    AdministrativEnhet(Flatetype.FYLKE) {
+class Fylke(override val id: String = UUID.randomUUID().toString()) : AdministrativEnhet(Flatetype.FYLKE) {
 
     @Column(name = "fylkesnummer", nullable = false)
     var fylkesnummer: String = ""
@@ -23,25 +30,16 @@ class Fylke(override val id: String = UUID.randomUUID().toString()) :
 
     @ManyToOne
     @JoinColumn(name = "nasjon_fk")
-    var nasjonFk: Nasjon? = null
+    lateinit var nasjon: Nasjon
 
-    @OneToMany(mappedBy = "fylke", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
-    var fylkesgrenser: MutableSet<FylkeFylkesgrense> = mutableSetOf()
-
-    @OneToMany(mappedBy = "fylke", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
-    var avtaltavgrensningslinjer: MutableSet<FylkeAvtaltavgrensningslinje> = mutableSetOf()
-
-    @OneToMany(mappedBy = "fylke", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
-    var territorialgrenser: MutableSet<FylkeTerritorialgrense> = mutableSetOf()
-
-    @OneToMany(mappedBy = "fylke", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
-    var riksgrenser: MutableSet<FylkeRiksgrense> = mutableSetOf()
-
-    @OneToMany(mappedBy = "fylkeFk", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "fylkeFk")
     var informasjonselementer: MutableSet<FylkeInformasjon> = mutableSetOf()
 
-    @OneToMany(mappedBy = "fylkeFk", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "fylkeFk")
     override var administrativenhetnavn: MutableSet<Administrativenhetnavn> = mutableSetOf()
+
+    @OneToMany(mappedBy = "fylke", cascade = [CascadeType.ALL])
+    var kommuner: MutableSet<Kommune> = mutableSetOf()
 
     override fun getInfo(): String? = doGetInfoFromSingletonCollection(informasjonselementer)
 
@@ -50,18 +48,40 @@ class Fylke(override val id: String = UUID.randomUUID().toString()) :
     }
 
     override fun oppdaterFlate() {
-        flate = SosiGeometryFunctions.beregnFlate(fylkesgrenser + avtaltavgrensningslinjer + territorialgrenser + riksgrenser)
+        flate = SosiGeometryFunctions.beregnFlate(getGrenser())
     }
 
-    override fun oppdaterEllerLeggTilGrenseKobling(grense: Grense, attributter: GrenseKoblingAttributter) {
-        val (samling, default) = when(grense) {
-            is Fylkesgrense -> SamlingOgDefault(fylkesgrenser, FylkeFylkesgrense(this, grense, attributter))
-            is Avtaltavgrensningslinje -> SamlingOgDefault(avtaltavgrensningslinjer, FylkeAvtaltavgrensningslinje(this, grense, attributter))
-            is Territorialgrense -> SamlingOgDefault(territorialgrenser, FylkeTerritorialgrense(this, grense, attributter))
-            is Riksgrense -> SamlingOgDefault(riksgrenser, FylkeRiksgrense(this, grense, attributter))
-            else -> throw RuntimeException("Kan ikke legge til ${grense::class.simpleName} på enhet Fylke")
-        }
-
-        oppdaterSamling(grense, attributter, samling, default)
+    fun getGrenser(): Set<GrenseKobling> {
+        return kommuner
+            .flatMap { it.grunnkretser }
+            .flatMap { it.getGrenserAvTyper(tillatteGrensetyper()) }
+            .toSet()
     }
+
+    fun addKommune(kommune: Kommune) {
+        kommune.fylke = this
+        kommuner.add(kommune)
+    }
+
+    private fun tillatteGrensetyper(): Set<Grensetype> = setOf(
+        Grensetype.Fylkesgrense,
+        Grensetype.AvtaltAvgrensningslinje,
+        Grensetype.Territorialgrense,
+        Grensetype.Riksgrense)
+}
+
+@Table(name = "fylke_informasjon")
+@Audited
+@Entity
+class FylkeInformasjon(fylke: Fylke) : Info {
+    @Id
+    @Column(name = "objid", nullable = false, updatable = false)
+    override val id: String = UUID.randomUUID().toString()
+
+    @ManyToOne
+    @JoinColumn(name = "fylke_fk")
+    var fylkeFk: Fylke? = fylke
+
+    @Column(name = "informasjon")
+    override var informasjon: String? = null
 }

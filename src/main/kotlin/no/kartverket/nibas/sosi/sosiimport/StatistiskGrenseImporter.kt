@@ -1,8 +1,7 @@
 package no.kartverket.nibas.sosi.sosiimport
 
-import no.kartverket.nibas.domain.Delomraadegrense
-import no.kartverket.nibas.domain.Grunnkretsgrense
-import no.kartverket.nibas.domain.StatistiskGrense
+import no.kartverket.nibas.api.v1.common.Grensetype
+import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.updateSosiIdentifikasjon
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.NoeyaktighetsklassekodeRepository
@@ -22,10 +21,10 @@ class StatistiskGrenseImporter @Autowired constructor(
     private val noeyaktighetsklassekodeRepository: NoeyaktighetsklassekodeRepository,
 ) {
 
-    fun importer(sosiGeometri: SosiGeometri): StatistiskGrense {
+    fun importer(sosiGeometri: SosiGeometri): Grense {
         val grense = when (sosiGeometri.getObjType()) {
-            SosiKoder.GRUNNKRETSGRENSE -> Grunnkretsgrense()
-            SosiKoder.DELOMRAADEGRENSE -> Delomraadegrense()
+            SosiKoder.GRUNNKRETSGRENSE -> Grense(Grensetype.Grunnkretsgrense)
+            SosiKoder.DELOMRAADEGRENSE -> Grense(Grensetype.Delomraadegrense)
             else -> throw RuntimeException("Ukjent grensetype (${sosiGeometri.getObjType()}) for statistisk grense")
         }
 
@@ -33,13 +32,13 @@ class StatistiskGrenseImporter @Autowired constructor(
         grense.datafangstdato = sosiGeometri.getDatafangstDato()
         grense.datauttaksdato = sosiGeometri.getDataUttaksdato()
         grense.endringsflagg?.tidspunktendring = sosiGeometri.getEndringsflagg()?.getTidspunktEndring()
-        grense.endringsflagg?.typeendring = when(val typeendring = sosiGeometri.getEndringsflagg()?.getTypeEndring()) {
+        grense.endringsflagg?.typeendring = when (val typeendring = sosiGeometri.getEndringsflagg()?.getTypeEndring()) {
             null -> null
             else -> typeendringRepository.findByIdOrNull(typeendring)
         }
         grense.gyldigFra = sosiGeometri.getGyldigFra()
         grense.gyldigTil = sosiGeometri.getGyldigTil()
-        grense.informasjon = sosiGeometri.getInformasjon()
+        grense.informasjonstekst = sosiGeometri.getInformasjon()
 
         grense.kopidata?.kopidato = sosiGeometri.getKopidata()?.getKopidato()
         grense.kopidata?.omraadeid = sosiGeometri.getKopidata()?.getOmraadeId()
@@ -58,8 +57,12 @@ class StatistiskGrenseImporter @Autowired constructor(
 
         // TODO: Avventer tilbakemelding på hva følgerTeiggrense heter i sosi-modellen.
         // grunnkretsgrense.foelgerteiggrense = sosiGrunnkretsgrense.getFoelgerTeiggrense()
-        grense.foelgerterrengdetalj = sosiGeometri.getFolgerTerrengdetalj()?.let { terrengdetaljkodeRepository.findByIdOrNull(it) ?: throw RuntimeException("Ukjent terrengdetalj") }
-        grense.noeyaktighetsklasse = sosiGeometri.getNoyaktighetsklasse()?.let { noeyaktighetsklassekodeRepository.findByIdOrNull(it) ?: throw RuntimeException("Ukjent nøyaktighetsklasse") }
+        grense.foelgerterrengdetalj = sosiGeometri.getFolgerTerrengdetalj()?.let {
+            terrengdetaljkodeRepository.findByIdOrNull(it) ?: throw RuntimeException("Ukjent terrengdetalj")
+        }
+        grense.noeyaktighetsklasse = sosiGeometri.getNoyaktighetsklasse()?.let {
+            noeyaktighetsklassekodeRepository.findByIdOrNull(it) ?: throw RuntimeException("Ukjent nøyaktighetsklasse")
+        }
 
         grense.grense = SosiGeometryFunctions.sosiKoordinaterToLineString(
             sosiGeometri.getAlleSosiNordOest(),

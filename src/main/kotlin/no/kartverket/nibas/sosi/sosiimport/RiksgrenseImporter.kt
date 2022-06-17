@@ -1,12 +1,12 @@
 package no.kartverket.nibas.sosi.sosiimport
 
+import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.domain.Grense
-import no.kartverket.nibas.domain.Riksgrense
 import no.kartverket.nibas.domain.updateSosiIdentifikasjon
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.FastsettingstypeRepository
+import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.GrensestatusRepository
-import no.kartverket.nibas.repository.RiksgrenseRepository
 import no.kartverket.nibas.sosi.model.SosiGeometri
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
@@ -15,7 +15,7 @@ import java.util.logging.Logger
 
 @Component
 class RiksgrenseImporter @Autowired constructor(
-    private val riksgrenseRepository: RiksgrenseRepository,
+    private val grenseRepository: GrenseRepository,
     private val grensestatusRepository: GrensestatusRepository,
     private val fastsettingstypeRepository: FastsettingstypeRepository,
     private val dokumentasjonsreferanseImporter: DokumentasjonsreferanseImporter,
@@ -26,13 +26,11 @@ class RiksgrenseImporter @Autowired constructor(
 
     fun importSosiRiksgrense(sosiRiksgrense: SosiGeometri): Grense {
         val sosiIdent = sosiRiksgrense.getIdent()
-        return when (val existing = riksgrenseRepository.findByLokalid(sosiIdent?.getLokalId()!!)) {
+        return when (val existing = grenseRepository.findByLokalid(sosiIdent?.getLokalId()!!)) {
             null -> {
-                var riksgrense = Riksgrense()
+                var riksgrense = Grense(Grensetype.Riksgrense)
                 riksgrense.updateSosiIdentifikasjon(sosiIdent)
                 riksgrense.datafangstdato = sosiRiksgrense.getDatafangstDato()
-
-
 
                 riksgrense.datauttaksdato = sosiRiksgrense.getDataUttaksdato()
 
@@ -57,7 +55,7 @@ class RiksgrenseImporter @Autowired constructor(
                     sosiRiksgrense.koordsys
                 )
 
-                riksgrense = riksgrenseRepository.save(riksgrense)
+                riksgrense = grenseRepository.save(riksgrense)
 
                 sosiRiksgrense.getDokumentasjonsReferanse().forEach {
                     dokumentasjonsreferanseImporter.importerDokumentasjonsreferanse(it, riksgrense)

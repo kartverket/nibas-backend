@@ -113,7 +113,7 @@ internal class MetadataMapperTest {
             omtvistet = true
         )
 
-        val metadata = metadataMapper.toMetadata(fylkesgrense)
+        val metadata: AdministrativGrenseMetadata = metadataMapper.toMetadataForAdministrativGrense(fylkesgrense)
         assertThat(metadata).isEqualTo(administrativGrenseMetadata)
     }
 
@@ -153,7 +153,7 @@ internal class MetadataMapperTest {
             beregningsdato = beregningsdato
         )
 
-        val metadata = metadataMapper.toMetadata(territorialgrense)
+        val metadata: TerritorialgrenseMetadata = metadataMapper.toMetadataForTerritorialgrense(territorialgrense)
         assertThat(metadata).isEqualTo(territorialgrenseMetadata)
     }
 

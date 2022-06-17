@@ -3,10 +3,11 @@ package no.kartverket.nibas.inndelinger
 import no.kartverket.nibas.NibasMvcTest
 import no.kartverket.nibas.api.v1.request.NasjonRequest
 import no.kartverket.nibas.builders.GrenseBuilder
+import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.NasjonBuilder
 import no.kartverket.nibas.builders.NasjonRequestBuilder
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
-import no.kartverket.nibas.domain.NasjonRiksgrense
+import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.kodelister.KodelisteService
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyString
@@ -50,17 +51,16 @@ class NasjonControllerTest : NibasMvcTest() {
         whenever(
             nasjonService.hentGrenserForNasjon(anyString())
         ).thenReturn(
-            setOf(NasjonRiksgrense(NasjonBuilder.DEFAULT_NASJON, GrenseBuilder().buildRiksgrense(), GrenseKoblingAttributter()))
+            setOf(GrunnkretsGrenseKobling(grunnkrets = GrunnkretsBuilder().build(), grense = GrenseBuilder().buildRiksgrense(), GrenseKoblingAttributter()))
         )
         get("/v1/nasjoner/1/grenser", status().isOk)
     }
 
     @Test
     fun thatHentGrenserReturns404_NotFound() {
-        whenever(nasjonService.hentGrenserForNasjon(anyString())).thenReturn(null)
+        whenever(nasjonService.hentGrenserForNasjon(anyString())).thenReturn(emptySet())
         get("/v1/nasjoner/1/grenser", status().isNotFound)
     }
-
 
     @Test
     fun thatOppdaterNasjonReturns200_Ok() {

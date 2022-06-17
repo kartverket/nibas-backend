@@ -1,8 +1,13 @@
 package no.kartverket.nibas.api.v1
 
+import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
-import no.kartverket.nibas.domain.*
+import no.kartverket.nibas.domain.Grense
+import no.kartverket.nibas.domain.GrenseKobling
+import no.kartverket.nibas.domain.GrenseKoblingAttributter
+import no.kartverket.nibas.domain.Grunnkrets
+import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import org.junit.jupiter.api.Test
 import org.locationtech.jts.geom.LineString
@@ -49,12 +54,12 @@ class KommuneApiIntegrationTest {
         // FYI, bryr oss ikke om hvilken type grense det er, skal bare verifisere at polygoner blir laget riktig
         val ke = feature.properties.kontekstEgenskaper!!
 
-        val kommunegrense = Kommunegrense()
-        kommunegrense.grense = feature.geometry as LineString
+        val grunnkretsgrense = Grense(Grensetype.Grunnkretsgrense)
+        grunnkretsgrense.grense = feature.geometry as LineString
 
-        return KommuneKommunegrense(
-            Kommune(),
-            kommunegrense,
+        return GrunnkretsGrenseKobling(
+            Grunnkrets(),
+            grunnkretsgrense,
             GrenseKoblingAttributter(ke.retningMedKlokken, ke.rekkefoelge, ke.flateIndeks, ke.hullIndeks)
         )
     }

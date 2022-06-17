@@ -1,8 +1,7 @@
 package no.kartverket.nibas.sosi.sosiimport
 
-import no.kartverket.nibas.domain.Fylkesgrense
 import no.kartverket.nibas.domain.Grense
-import no.kartverket.nibas.repository.FylkesgrenseRepository
+import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.sosi.model.SosiGeometri
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
@@ -14,7 +13,7 @@ class FylkesgrenseImporter {
     val logger = Logger.getLogger(this::class.java.name)
 
     @Autowired
-    lateinit var fylkesgrenseRepository: FylkesgrenseRepository
+    lateinit var grenseRepository: GrenseRepository
 
     @Autowired
     lateinit var administrativGrenseImporter: AdministrativGrenseImporter
@@ -23,10 +22,10 @@ class FylkesgrenseImporter {
     lateinit var dokumentasjonsreferanseImporter: DokumentasjonsreferanseImporter
 
     fun importerFylkesgrense(sosiFylkesgrense: SosiGeometri): Grense {
-        return when (val existing = fylkesgrenseRepository.findByLokalid(sosiFylkesgrense.getIdent()?.getLokalId()!!)) {
+        return when (val existing = grenseRepository.findByLokalid(sosiFylkesgrense.getIdent()?.getLokalId()!!)) {
             null -> {
-                val fylkesgrense = fylkesgrenseRepository.save(
-                    administrativGrenseImporter.importer(sosiFylkesgrense) as Fylkesgrense
+                val fylkesgrense = grenseRepository.save(
+                    administrativGrenseImporter.importer(sosiFylkesgrense)
                 )
 
                 sosiFylkesgrense.getDokumentasjonsReferanse().forEach { sosiDokRef ->

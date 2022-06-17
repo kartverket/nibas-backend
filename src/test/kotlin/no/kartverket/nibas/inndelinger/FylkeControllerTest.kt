@@ -5,8 +5,9 @@ import no.kartverket.nibas.api.v1.request.FylkeRequest
 import no.kartverket.nibas.builders.FylkeBuilder
 import no.kartverket.nibas.builders.FylkeRequestBuilder
 import no.kartverket.nibas.builders.GrenseBuilder
-import no.kartverket.nibas.domain.FylkeFylkesgrense
+import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
+import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.kodelister.KodelisteService
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyString
@@ -64,14 +65,14 @@ class FylkeControllerTest : NibasMvcTest() {
         whenever(
             fylkeService.hentGrenserForFylke(anyString())
         ).thenReturn(
-            setOf(FylkeFylkesgrense(FylkeBuilder.DEFAULT_FYLKE, GrenseBuilder().buildFylkesgrense(), GrenseKoblingAttributter()))
+            setOf(GrunnkretsGrenseKobling(grunnkrets = GrunnkretsBuilder().build(), grense = GrenseBuilder().buildFylkesgrense(), GrenseKoblingAttributter()))
         )
         get("/v1/fylker/1/grenser", status().isOk)
     }
 
     @Test
     fun thatHentGrenserReturns404_NotFound() {
-        whenever(fylkeService.hentGrenserForFylke(anyString())).thenReturn(null)
+        whenever(fylkeService.hentGrenserForFylke(anyString())).thenReturn(emptySet())
         get("/v1/fylker/1/grenser", status().isNotFound)
     }
 

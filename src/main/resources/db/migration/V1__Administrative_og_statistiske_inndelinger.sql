@@ -1302,7 +1302,6 @@ CREATE TABLE stemmekrets (
                              tellekretsnummer text,
                              tellekretsnavn text,
                              valgdistriktsnummer text,
-                             fylkesnummer text,
                              kommunenummer text NOT NULL)
     WITH (OIDS=FALSE);
 

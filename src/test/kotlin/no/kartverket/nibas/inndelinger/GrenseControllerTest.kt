@@ -1,10 +1,10 @@
 package no.kartverket.nibas.inndelinger
 
 import no.kartverket.nibas.NibasMvcTest
+import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.builders.FeatureBuilder
 import no.kartverket.nibas.builders.GrenseBuilder
-import no.kartverket.nibas.domain.Kommunegrense
 import no.kartverket.nibas.kodelister.KodelisteService
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.verify
@@ -30,33 +30,33 @@ class GrenseControllerTest : NibasMvcTest() {
     private lateinit var kodelisteServiceMock: KodelisteService
 
     @Test
-    fun thatHentKommunegrenseReturns200_OK() {
-        whenever(grenseService.hentGrense("1", Kommunegrense::class))
+    fun thatHentGrenseReturns200_OK() {
+        whenever(grenseService.hentGrense("1"))
             .thenReturn(GrenseBuilder().buildKommunegrense())
 
-        get("/v1/grenser/kommunegrenser/1", status().isOk)
+        get("/v1/grenser/1", status().isOk)
     }
 
     @Test
-    fun thatHentKommunegrenseReturns404_NotFound() {
-        whenever(grenseService.hentGrense("1", Kommunegrense::class))
+    fun thatHentGrenseReturns404_NotFound() {
+        whenever(grenseService.hentGrense("1"))
             .thenReturn(null)
 
-        get("/v1/grenser/kommunegrenser/1", status().isNotFound)
+        get("/v1/grenser/1", status().isNotFound)
     }
 
     @Test
     fun thatOppdaterGrenserUpdatesCorrectly() {
-        val kommunegrense1 = FeatureBuilder("1").withGrensetype(GrenseType.Kommunegrense).build()
-        val kommunegrense2 = FeatureBuilder("2").withGrensetype(GrenseType.Kommunegrense).build()
-        val fylkesgrense1 = FeatureBuilder("1").withGrensetype(GrenseType.Fylkesgrense).build()
-        val fylkesgrense2 = FeatureBuilder("2").withGrensetype(GrenseType.Fylkesgrense).build()
+        val kommunegrense1 = FeatureBuilder("1").withGrensetype(Grensetype.Kommunegrense).build()
+        val kommunegrense2 = FeatureBuilder("2").withGrensetype(Grensetype.Kommunegrense).build()
+        val fylkesgrense1 = FeatureBuilder("1").withGrensetype(Grensetype.Fylkesgrense).build()
+        val fylkesgrense2 = FeatureBuilder("2").withGrensetype(Grensetype.Fylkesgrense).build()
 
         val featureCollection =
             FeatureCollection(features = listOf(kommunegrense1, kommunegrense2, fylkesgrense1, fylkesgrense2))
 
         post("/v1/grenser/", featureCollection, status().isOk)
-        verify(grenseService).lagreKommunegrenser(listOf(kommunegrense1, kommunegrense2))
-        verify(grenseService).lagreFylkesgrenser(listOf(fylkesgrense1, fylkesgrense2))
+        verify(grenseService).lagreGrenser(listOf(kommunegrense1, kommunegrense2))
+        verify(grenseService).lagreGrenser(listOf(fylkesgrense1, fylkesgrense2))
     }
 }

@@ -1,12 +1,13 @@
 package no.kartverket.nibas.builders
 
+import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.domain.AnsvarligMyndighetHolder
 import no.kartverket.nibas.domain.Dokumentasjonsreferanse
 import no.kartverket.nibas.domain.Fastsettingstype
+import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.Grensestatus
 import no.kartverket.nibas.domain.Landkode
 import no.kartverket.nibas.domain.PosisjonskvalitetEmbeddable
-import no.kartverket.nibas.domain.Territorialgrense
 import java.time.LocalDate
 
 class TerritorialgrenseBuilder {
@@ -34,8 +35,8 @@ class TerritorialgrenseBuilder {
     private var landkoder: MutableList<Landkode> = mutableListOf(ru)
     private var beregningsdato: LocalDate = LocalDate.now()
 
-    fun build(): Territorialgrense {
-        val territorialgrense = Territorialgrense()
+    fun build(): Grense {
+        val territorialgrense = Grense(Grensetype.Territorialgrense)
         territorialgrense.lokalid = lokalid
         territorialgrense.navnerom = navnerom
         territorialgrense.versjonid = versjonid

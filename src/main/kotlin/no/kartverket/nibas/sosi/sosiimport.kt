@@ -1,14 +1,14 @@
 package no.kartverket.nibas.sosi
 
 import no.kartverket.nibas.api.v1.ImportApi
-import no.kartverket.nibas.sosi.sosiimport.FylkeImporter
-import no.kartverket.nibas.sosi.sosiimport.KommuneImporter
-import no.kartverket.nibas.sosi.sosiimport.NasjonImporter
 import no.kartverket.nibas.sosi.common.SosiKoder
 import no.kartverket.nibas.sosi.deserializer.NibasSosiDeserializer
 import no.kartverket.nibas.sosi.model.SosiFlate
 import no.kartverket.nibas.sosi.model.SosiObjekt
+import no.kartverket.nibas.sosi.sosiimport.FylkeImporter
 import no.kartverket.nibas.sosi.sosiimport.GrunnkretsImporter
+import no.kartverket.nibas.sosi.sosiimport.KommuneImporter
+import no.kartverket.nibas.sosi.sosiimport.NasjonImporter
 import no.kartverket.nibas.sosi.sosiimport.StemmekretsImporter
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -89,7 +89,7 @@ class SosiImportService {
 
             data class KommunalKretsKey(val kommunenummer: String, val stemmekretsnummer: String)
 
-            fun SosiFlate.toKommunalKretsKey() = KommunalKretsKey(getKommunenummer()!!, getStemmekretsId()!!.getStemmekretsnummer()!!)
+            fun SosiFlate.toKommunalKretsKey() = KommunalKretsKey(getKommunenummer(), getStemmekretsId()!!.getStemmekretsnummer()!!)
 
             val grupperteStemmekretser = stemmekretser.groupBy { it.toKommunalKretsKey() }
             grupperteStemmekretser.entries.forEachIndexed { index, entry ->

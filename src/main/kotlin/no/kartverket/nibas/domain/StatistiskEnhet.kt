@@ -15,9 +15,7 @@ import javax.persistence.MappedSuperclass
 
 @MappedSuperclass
 @Audited
-abstract class StatistiskEnhet(
-    @Transient override val type: Flatetype,
-) : Flate, Sporbar {
+abstract class StatistiskEnhet(@Transient override val type: Flatetype) : Flate, Sporbar {
     @Id
     @Column(name = "objid", nullable = false, updatable = false)
     override val id: String = UUID.randomUUID().toString()
@@ -77,8 +75,8 @@ abstract class StatistiskEnhet(
     override var flate: MultiPolygon? = null
 
     @Suppress("UNCHECKED_CAST")
-    fun <T: GrenseKobling> oppdaterSamling(grense: Grense, attributter: GrenseKoblingAttributter, samling: MutableSet<T>, default: GrenseKobling) {
-        val kobling: T  = when(val kobling = samling.find { it.getGrense().id == grense.id }) {
+    fun <T : GrenseKobling> oppdaterSamling(grense: Grense, attributter: GrenseKoblingAttributter, samling: MutableSet<T>, default: GrenseKobling) {
+        val kobling: T = when (val kobling = samling.find { it.grense.id == grense.id }) {
             null -> default as T
             else -> kobling
         }

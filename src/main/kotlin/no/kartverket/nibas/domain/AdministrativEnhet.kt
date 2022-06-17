@@ -80,14 +80,4 @@ abstract class AdministrativEnhet(
     @javax.persistence.Transient
     var administrativenhetnavn: MutableSet<Administrativenhetnavn> = mutableSetOf()
 
-    @Suppress("UNCHECKED_CAST")
-    fun <T: GrenseKobling> oppdaterSamling(grense: Grense, attributter: GrenseKoblingAttributter, samling: MutableSet<T>, default: GrenseKobling) {
-        val kobling: T  = when(val kobling = samling.find { it.getGrense().id == grense.id }) {
-            null -> default as T
-            else -> kobling
-        }
-
-        kobling.oppdaterAttributter(attributter)
-        samling.add(kobling)
-    }
 }

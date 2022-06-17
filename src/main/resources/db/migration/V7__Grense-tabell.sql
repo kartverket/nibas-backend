@@ -35,7 +35,10 @@ CREATE TABLE grense (
                               foelgerteiggrense boolean,
                               foelgergrunnkretsgrense_lokalid text,
                               foelgergrunnkretsgrense_navnerom text,
-                              foelgergrunnkretsgrense_versjonid text
+                              foelgergrunnkretsgrense_versjonid text,
+                              beregningsdato date,
+                              stedfestingverifisert boolean,
+                              grensegatebredde double precision
 )
     WITH (OIDS=FALSE);
 
@@ -51,12 +54,20 @@ CREATE TABLE grense_grensepunktsjoe (
 
 CREATE TABLE stemmekrets_grense (
                                           stemmekrets_fk text,
-                                          grense_fk text)
+                                          grense_fk text,
+                                          retning_med_klokken boolean not null default true,
+                                          rekkefoelge         int     not null default 0,
+                                          flate_indeks        int     not null default 0,
+                                          hull_indeks         int)
     WITH (OIDS=FALSE);
 
 CREATE TABLE grunnkrets_grense (
                                          grunnkrets_fk text,
-                                         grense_fk text)
+                                         grense_fk text,
+                                         retning_med_klokken boolean not null default true,
+                                         rekkefoelge         int     not null default 0,
+                                         flate_indeks        int     not null default 0,
+                                         hull_indeks         int)
     WITH (OIDS=FALSE);
 
 CREATE TABLE grense_grensemerkeland (

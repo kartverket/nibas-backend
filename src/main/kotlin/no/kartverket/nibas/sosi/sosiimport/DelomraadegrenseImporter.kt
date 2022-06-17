@@ -1,15 +1,14 @@
 package no.kartverket.nibas.sosi.sosiimport
 
-import no.kartverket.nibas.domain.Delomraadegrense
 import no.kartverket.nibas.domain.Grense
-import no.kartverket.nibas.repository.*
+import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.sosi.model.SosiGeometri
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
 @Component
 class DelomraadegrenseImporter @Autowired constructor(
-    private val delomraadegrenseRepository: DelomraadegrenseRepository
+    private val grenseRepository: GrenseRepository
 ) {
 
     @Autowired
@@ -17,9 +16,9 @@ class DelomraadegrenseImporter @Autowired constructor(
 
     fun importerDelomraadegrense(sosiDelomraadegrense: SosiGeometri): Grense {
         val sosiIdent = sosiDelomraadegrense.getIdent()
-        return when(val eksisterende = delomraadegrenseRepository.findByLokalid(sosiIdent?.getLokalId()!!)) {
+        return when (val eksisterende = grenseRepository.findByLokalid(sosiIdent?.getLokalId()!!)) {
             null -> {
-                return delomraadegrenseRepository.save(statistiskGrenseImporter.importer(sosiDelomraadegrense) as Delomraadegrense)
+                return grenseRepository.save(statistiskGrenseImporter.importer(sosiDelomraadegrense))
             }
             else -> eksisterende
         }

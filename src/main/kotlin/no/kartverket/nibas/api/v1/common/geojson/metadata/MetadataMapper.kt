@@ -7,18 +7,10 @@ import no.kartverket.nibas.api.v1.LANDKODE_PATH
 import no.kartverket.nibas.api.v1.MAALEMETODE_KODE_PATH
 import no.kartverket.nibas.api.v1.NOEYAKTIGHETSKLASSEKODE_PATH
 import no.kartverket.nibas.api.v1.TERRENGDETALJKODE_PATH
-import no.kartverket.nibas.domain.AdministrativEnhet
-import no.kartverket.nibas.domain.AdministrativGrense
-import no.kartverket.nibas.domain.Avtaltavgrensningslinje
 import no.kartverket.nibas.domain.CommonMetadataProperties
 import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.Grense
-import no.kartverket.nibas.domain.Grunnlinje
 import no.kartverket.nibas.domain.MaritimGrense
-import no.kartverket.nibas.domain.Riksgrense
-import no.kartverket.nibas.domain.StatistiskEnhet
-import no.kartverket.nibas.domain.StatistiskGrense
-import no.kartverket.nibas.domain.Territorialgrense
 import no.kartverket.nibas.inndelinger.createKommunenummerFromUUID
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.sporing.toSporingsinformasjon
@@ -35,7 +27,7 @@ class MetadataMapper(private val kodelisteService: KodelisteService,
         common = flate.getCommonMetadata()
     )
 
-    fun toMetadata(grense: AdministrativGrense): AdministrativGrenseMetadata = AdministrativGrenseMetadata(
+    fun toMetadataForAdministrativGrense(grense: Grense): AdministrativGrenseMetadata = AdministrativGrenseMetadata(
         common = grense.getCommonMetadata(),
         commonGrense = getCommonGrenseMetadata(grense),
         dokumentasjonsreferanser = grense.dokumentasjonsreferanser.map { it.toDokRef() },
@@ -44,26 +36,26 @@ class MetadataMapper(private val kodelisteService: KodelisteService,
         omtvistet = grense.omtvistet
     )
 
-    fun toMetadata(grense: Riksgrense): RiksgrenseMetadata = RiksgrenseMetadata(
+    fun toMetadataForRiksgrense(grense: Grense): RiksgrenseMetadata = RiksgrenseMetadata(
         common = grense.getCommonMetadata(),
         commonGrense = getCommonGrenseMetadata(grense),
         dokumentasjonsreferanser = grense.dokumentasjonsreferanser.map { it.toDokRef() },
         foelgerTerrengdetalj = KodelisteEntry(id = grense.foelgerterrengdetalj?.id, href = kodelisteHrefProvider.terrengDetaljHref()),
         stedfestingVerifisert = grense.stedfestingverifisert,
-        ansvarligeMyndigheter = grense.riksgrenseAnsvarligeMyndigheter
+        ansvarligeMyndigheter = grense.getAnsvarligeMyndigheter()
             .filter { it.ansvarligmyndighet != null }
             .map { TekstHolder(it.id, it.ansvarligmyndighet!!) },
         grensegateBredde = grense.grensegatebredde
     )
 
-    fun toMetadata(grense: Avtaltavgrensningslinje): AvtaltAvgrensningslinjeMetadata = AvtaltAvgrensningslinjeMetadata(
+    fun toMetadataForAvtaltAvgrensningslinje(grense: Grense): AvtaltAvgrensningslinjeMetadata = AvtaltAvgrensningslinjeMetadata(
         common = grense.getCommonMetadata(),
         commonGrense = getCommonGrenseMetadata(grense),
         dokumentasjonsreferanser = grense.dokumentasjonsreferanser.map { it.toDokRef() },
         maritimeGrenser = grense.getMaritimeMetadata()
     )
 
-    fun toMetadata(grense: Territorialgrense): TerritorialgrenseMetadata = TerritorialgrenseMetadata(
+    fun toMetadataForTerritorialgrense(grense: Grense): TerritorialgrenseMetadata = TerritorialgrenseMetadata(
         common = grense.getCommonMetadata(),
         commonGrense = getCommonGrenseMetadata(grense),
         dokumentasjonsreferanser = grense.dokumentasjonsreferanser.map { it.toDokRef() },
@@ -71,7 +63,7 @@ class MetadataMapper(private val kodelisteService: KodelisteService,
         beregningsdato = grense.beregningsdato
     )
 
-    fun toMetadata(grense: Grunnlinje): GrunnlinjeMetadata {
+    fun toMetadataForGrunnlinje(grense: Grense): GrunnlinjeMetadata {
         val grunnlinjeMetadata = GrunnlinjeMetadata(
             common = grense.getCommonMetadata(),
             commonGrense = getCommonGrenseMetadata(grense),
@@ -85,7 +77,7 @@ class MetadataMapper(private val kodelisteService: KodelisteService,
         return grunnlinjeMetadata
     }
 
-    fun toMetadata(grense: StatistiskGrense): StatistiskgrenseMetadata = StatistiskgrenseMetadata(
+    fun toMetadataForStatistiskGrense(grense: Grense): StatistiskgrenseMetadata = StatistiskgrenseMetadata(
         common = grense.getCommonMetadata(),
         commonGrense = getCommonGrenseMetadata(grense),
         foelgerTerrengdetalj = KodelisteEntry(id = grense.foelgerterrengdetalj?.id, href = kodelisteHrefProvider.terrengDetaljHref()),

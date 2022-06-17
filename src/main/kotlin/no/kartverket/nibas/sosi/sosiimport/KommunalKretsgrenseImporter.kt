@@ -1,7 +1,7 @@
 package no.kartverket.nibas.sosi.sosiimport
 
-import no.kartverket.nibas.domain.KommunalKretsgrense
-import no.kartverket.nibas.domain.Stemmekretsgrense
+import no.kartverket.nibas.api.v1.common.Grensetype
+import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.updateSosiIdentifikasjon
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.NoeyaktighetsklassekodeRepository
@@ -21,9 +21,9 @@ class KommunalKretsgrenseImporter @Autowired constructor(
     private val noeyaktighetsklassekodeRepository: NoeyaktighetsklassekodeRepository,
 ) {
 
-    fun importer(sosiGeometri: SosiGeometri): KommunalKretsgrense {
+    fun importer(sosiGeometri: SosiGeometri): Grense {
         val grense = when (sosiGeometri.getObjType()) {
-            SosiKoder.STEMMEKRETSGRENSE -> Stemmekretsgrense()
+            SosiKoder.STEMMEKRETSGRENSE -> Grense(Grensetype.Stemmekretsgrense)
             else -> throw RuntimeException("Ukjent grensetype (${sosiGeometri.getObjType()}) for kommunal kretsgrense")
         }
 
@@ -31,7 +31,7 @@ class KommunalKretsgrenseImporter @Autowired constructor(
         grense.datafangstdato = sosiGeometri.getDatafangstDato()
         grense.datauttaksdato = sosiGeometri.getDataUttaksdato()
         grense.endringsflagg?.tidspunktendring = sosiGeometri.getEndringsflagg()?.getTidspunktEndring()
-        grense.endringsflagg?.typeendring = when(val typeendring = sosiGeometri.getEndringsflagg()?.getTypeEndring()) {
+        grense.endringsflagg?.typeendring = when (val typeendring = sosiGeometri.getEndringsflagg()?.getTypeEndring()) {
             null -> null
             else -> typeendringRepository.findByIdOrNull(typeendring)
         }
@@ -52,8 +52,12 @@ class KommunalKretsgrenseImporter @Autowired constructor(
 
         grense.sluttdato = sosiGeometri.getSluttdato()
 
-        grense.foelgerterrengdetalj = sosiGeometri.getFolgerTerrengdetalj()?.let { terrengdetaljkodeRepository.findByIdOrNull(it) ?: throw RuntimeException("Ukjent terrengdetalj") }
-        grense.noeyaktighetsklasse = sosiGeometri.getNoyaktighetsklasse()?.let { noeyaktighetsklassekodeRepository.findByIdOrNull(it) ?: throw RuntimeException("Ukjent nøyaktighetsklasse") }
+        grense.foelgerterrengdetalj = sosiGeometri.getFolgerTerrengdetalj()?.let {
+            terrengdetaljkodeRepository.findByIdOrNull(it) ?: throw RuntimeException("Ukjent terrengdetalj")
+        }
+        grense.noeyaktighetsklasse = sosiGeometri.getNoyaktighetsklasse()?.let {
+            noeyaktighetsklassekodeRepository.findByIdOrNull(it) ?: throw RuntimeException("Ukjent nøyaktighetsklasse")
+        }
 
         grense.grense = SosiGeometryFunctions.sosiKoordinaterToLineString(
             sosiGeometri.getAlleSosiNordOest(),

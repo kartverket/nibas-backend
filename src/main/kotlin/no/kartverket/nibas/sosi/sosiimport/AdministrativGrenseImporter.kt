@@ -1,8 +1,7 @@
 package no.kartverket.nibas.sosi.sosiimport
 
-import no.kartverket.nibas.domain.AdministrativGrense
-import no.kartverket.nibas.domain.Fylkesgrense
-import no.kartverket.nibas.domain.Kommunegrense
+import no.kartverket.nibas.api.v1.common.Grensetype
+import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.updateSosiIdentifikasjon
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.FastsettingstypeRepository
@@ -24,10 +23,10 @@ class AdministrativGrenseImporter @Autowired constructor(
     private val kodelisteService: KodelisteService
 ) {
 
-    fun importer(sosiGeometri: SosiGeometri): AdministrativGrense {
+    fun importer(sosiGeometri: SosiGeometri): Grense {
         val grense = when (sosiGeometri.getObjType()) {
-            SosiKoder.FYLKESGRENSE -> Fylkesgrense()
-            SosiKoder.KOMMUNEGRENSE -> Kommunegrense()
+            SosiKoder.FYLKESGRENSE -> Grense(Grensetype.Fylkesgrense)
+            SosiKoder.KOMMUNEGRENSE -> Grense(Grensetype.Kommunegrense)
             else -> throw RuntimeException("Ukjent grensetype for import av administrativ grense")
         }
 

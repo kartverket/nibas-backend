@@ -1,12 +1,15 @@
 package no.kartverket.nibas.builders
 
+import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.domain.Dokumentasjonsreferanse
 import no.kartverket.nibas.domain.Fastsettingstype
-import no.kartverket.nibas.domain.Fylkesgrense
+import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.Grensestatus
 import no.kartverket.nibas.domain.Noeyaktighetsklassekode
 import no.kartverket.nibas.domain.PosisjonskvalitetEmbeddable
 import no.kartverket.nibas.domain.Terrengdetaljkode
+import org.locationtech.jts.geom.GeometryFactory
+import org.locationtech.jts.geom.LineString
 import java.time.LocalDate
 
 const val LOKALID = "lokalId1"
@@ -76,9 +79,10 @@ class FylkesgrenseBuilder(private val id: String = "1") {
     private var noeyaktighetsklassekode: Noeyaktighetsklassekode? = noeyaktighetsklassekodeLite
     private var grensestatus: Grensestatus? = grensestatusTraktat
     private var fastsettingstype: Fastsettingstype = fastsettingstypeBestemteKoordinater
+    private var grenseGeometri: LineString = GeometryFactory().createLineString()
 
-    fun build(): Fylkesgrense {
-        val fylkesgrense = Fylkesgrense(id = this.id)
+    fun build(): Grense {
+        val fylkesgrense = Grense(Grensetype.Fylkesgrense, id = this.id)
         fylkesgrense.lokalid = lokalid
         fylkesgrense.navnerom = navnerom
         fylkesgrense.versjonid = versjonid
@@ -94,6 +98,7 @@ class FylkesgrenseBuilder(private val id: String = "1") {
         fylkesgrense.fastsettingstype = fastsettingstype
         fylkesgrense.grensestatus = grensestatus
         fylkesgrense.setInfo(informasjonstekst)
+        fylkesgrense.grense = grenseGeometri
 
         fylkesgrense.dokumentasjonsreferanser.addAll(dokumentasjonsreferanser)
         return fylkesgrense

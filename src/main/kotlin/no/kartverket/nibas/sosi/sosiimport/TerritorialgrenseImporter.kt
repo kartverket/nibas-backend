@@ -1,13 +1,13 @@
 package no.kartverket.nibas.sosi.sosiimport
 
+import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.domain.Grense
-import no.kartverket.nibas.domain.Territorialgrense
 import no.kartverket.nibas.domain.updateSosiIdentifikasjon
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.FastsettingstypeRepository
+import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.GrensestatusRepository
 import no.kartverket.nibas.repository.LandKodeRepository
-import no.kartverket.nibas.repository.TerritorialgrenseRepository
 import no.kartverket.nibas.sosi.model.SosiGeometri
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
@@ -16,7 +16,7 @@ import java.util.logging.Logger
 
 @Component
 class TerritorialgrenseImporter @Autowired constructor(
-    private val territorialgrenseRepository: TerritorialgrenseRepository,
+    private val grenseRepository: GrenseRepository,
     private val landKodeRepository: LandKodeRepository,
     private val grensestatusRepository: GrensestatusRepository,
     private val fastsettingstypeRepository: FastsettingstypeRepository,
@@ -29,9 +29,9 @@ class TerritorialgrenseImporter @Autowired constructor(
     fun importSosiTerritorialgrense(sosiTerritorialgrense: SosiGeometri): Grense {
         val sosiIdent = sosiTerritorialgrense.getIdent()
         return when (val existing =
-            territorialgrenseRepository.findByLokalid(sosiIdent?.getLokalId()!!)) {
+            grenseRepository.findByLokalid(sosiIdent?.getLokalId()!!)) {
             null -> {
-                var territorialgrense = Territorialgrense()
+                var territorialgrense = Grense(Grensetype.Territorialgrense)
                 territorialgrense.updateSosiIdentifikasjon(sosiIdent)
                 territorialgrense.datafangstdato = sosiTerritorialgrense.getDatafangstDato()
 
@@ -56,16 +56,17 @@ class TerritorialgrenseImporter @Autowired constructor(
                             ?: throw RuntimeException("Ukjent fastsettingstype")
                     }
 
-                territorialgrense.land = when (val landkode = sosiTerritorialgrense.getLandkode()) {
-                    null -> null
-                    else -> landKodeRepository.findByIdOrNull(landkode) ?: throw RuntimeException("Ukjent landkode")
+                val landkode = sosiTerritorialgrense.getLandkode()
+                if (landkode != null) {
+                    territorialgrense.setLand(listOf(
+                        landKodeRepository.findByIdOrNull(landkode) ?: throw RuntimeException("Ukjent landkode")))
                 }
 
                 territorialgrense.grense = SosiGeometryFunctions.sosiKoordinaterToLineString(
                     sosiTerritorialgrense.getAlleSosiNordOest(),
                     sosiTerritorialgrense.koordsys
                 )
-                territorialgrense = territorialgrenseRepository.save(territorialgrense)
+                territorialgrense = grenseRepository.save(territorialgrense)
 
                 sosiTerritorialgrense.getDokumentasjonsReferanse().forEach { sosiDokRef ->
                     dokumentasjonsreferanseImporter.importerDokumentasjonsreferanse(sosiDokRef, territorialgrense)

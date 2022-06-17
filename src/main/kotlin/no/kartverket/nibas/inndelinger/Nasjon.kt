@@ -2,11 +2,10 @@ package no.kartverket.nibas.inndelinger
 
 import no.kartverket.nibas.api.v1.NasjonApi
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
-import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.request.NasjonRequest
-import no.kartverket.nibas.api.v1.response.RevisjonRef
 import no.kartverket.nibas.api.v1.response.NasjonResponse
+import no.kartverket.nibas.api.v1.response.RevisjonRef
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.kodelister.KodelisteService
@@ -38,13 +37,16 @@ class NasjonController @Autowired constructor(
     }
 
     override fun hentGrenser(id: String): FeatureCollection {
-        return when (val grenser = nasjonService.hentGrenserForNasjon(id)) {
-            null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
-            else -> FeatureCollection(
-                features = grenser.sortedBy { it.grenseKoblingAttributter.rekkefoelge }
-                    .map { grenseKoblingToFeature(id, KontekstEnhetType.NASJON, it, kodelisteService) }
-            )
+        val grenser = nasjonService.hentGrenserForNasjon(id)
+        if (grenser.isEmpty()) {
+            throw ResponseStatusException(HttpStatus.NOT_FOUND)
         }
+        return FeatureCollection(
+            features = grenser
+                // TODO: NIBAS-473 Hvordan sortere grensene nå?
+//                .sortedBy { it.grenseKoblingAttributter.rekkefoelge }
+                .map { grenseKoblingToFeature(it, kodelisteService) }
+        )
     }
 
     override fun oppdaterNasjon(id: String, oppdatertNasjon: NasjonRequest): NasjonResponse {
@@ -74,13 +76,8 @@ class NasjonService @Autowired constructor(
     fun hentAlleNasjoner() = nasjonRepository.findAll().toList()
     fun hentNasjon(id: String) = nasjonRepository.findById(id).unwrap()
 
-    fun hentGrenserForNasjon(id: String): Set<GrenseKobling>? {
-        return nasjonRepository.findById(id).unwrap()?.let { nasjon ->
-            nasjon.riksgrenser +
-                    nasjon.territorialgrenser +
-                    nasjon.avtaltavgrensningslinjer
-        }
-
+    fun hentGrenserForNasjon(id: String): Set<GrenseKobling> {
+        return nasjonRepository.findById(id).unwrap()?.getGrenser() ?: emptySet()
     }
 
     fun oppdaterNasjon(id: String, oppdatertNasjon: NasjonRequest): Nasjon? {

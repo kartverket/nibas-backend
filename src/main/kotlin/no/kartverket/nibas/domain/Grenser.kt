@@ -1,7 +1,7 @@
 package no.kartverket.nibas.domain
 
+import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Dokref
-import no.kartverket.nibas.inndelinger.GrenseType
 import no.kartverket.nibas.sporing.AuditInfo
 import org.hibernate.envers.Audited
 import org.locationtech.jts.geom.LineString
@@ -12,6 +12,7 @@ import java.util.*
 import java.util.logging.Logger
 import javax.persistence.CascadeType
 import javax.persistence.Column
+import javax.persistence.ElementCollection
 import javax.persistence.Embedded
 import javax.persistence.Entity
 import javax.persistence.Id
@@ -22,20 +23,22 @@ import javax.persistence.ManyToOne
 import javax.persistence.OneToMany
 import javax.persistence.Table
 
+/**
+ * Felles Grense-tabell som holder på samtlige typer av grenser skilt på Grensetype.
+ */
 @Table(name = "grense")
 @Audited
 @Entity
-class UtflatetGrense : CommonMetadataProperties, MaritimGrense {
-
-    @Transient
-    private val logger: Logger = Logger.getLogger(this::class.java.name)
+class Grense(
+    // Blir mappet av Converter
+    var grensetype: Grensetype,
 
     @Id
     @Column(name = "objid", nullable = false, updatable = false)
-    val id: String = UUID.randomUUID().toString()
+    val id: String = UUID.randomUUID().toString()) : CommonMetadataProperties, MaritimGrense {
 
-    // Blir mappet av Converter
-    lateinit var grensetype: GrenseType
+    @Transient
+    private val logger: Logger = Logger.getLogger(this::class.java.name)
 
     @Embedded
     override var auditInfo: AuditInfo = AuditInfo()
@@ -101,9 +104,24 @@ class UtflatetGrense : CommonMetadataProperties, MaritimGrense {
     @Column(name = "transformasjonsdato")
     override var transformasjonsdato: LocalDate? = null
 
+    @Column(name = "beregningsdato")
+    var beregningsdato: LocalDate? = null
+
+    @Column(name = "stedfestingverifisert")
+    var stedfestingverifisert: Boolean? = null
+
+    @Column(name = "grensegatebredde")
+    var grensegatebredde: Double? = null
+
     // UUID
     @Column(name = "kommunenummer")
     var kommunenummerId: String? = null
+
+    // Holder på liste av kommunenummer-UUIDs grensen er tilknyttet
+    // Uten at vi behøver definere egen entity for dette.
+    // Brukes av grenser av type Lovvirkeomraadegrense
+    @ElementCollection
+    var kommunenummer: MutableSet<String> = mutableSetOf()
 
     // For statistiske grenser
     @Column(name = "foelgerteiggrense")
@@ -131,6 +149,14 @@ class UtflatetGrense : CommonMetadataProperties, MaritimGrense {
     @OneToMany(mappedBy = "grenseFk", cascade = [CascadeType.ALL])
     var ansvarligeMyndigheter: MutableSet<GrenseAnsvarligMyndighet> = mutableSetOf()
 
+    // Relasjon oppover i treet til Grunnkrets
+    @OneToMany(mappedBy = "grense")
+    var grunnkretser: MutableSet<GrunnkretsGrenseKobling> = mutableSetOf()
+
+    // Relasjon oppover i treet til Stemmekrets
+    @OneToMany(mappedBy = "grense")
+    var stemmekretser: MutableSet<StemmekretsGrenseKobling> = mutableSetOf()
+
     @ManyToMany(cascade = [CascadeType.ALL])
     @JoinTable(
         schema = "nibas",
@@ -139,6 +165,21 @@ class UtflatetGrense : CommonMetadataProperties, MaritimGrense {
         inverseJoinColumns = [JoinColumn(name = "landkode_fk")]
     )
     var landkoder: MutableSet<Landkode> = mutableSetOf()
+
+    fun grunnkretser(): Set<Grunnkrets> = grunnkretser.map { it.grunnkrets }.toSet()
+    fun kommuner(): Set<Kommune> = grunnkretser().map { it.kommune }.toSet()
+
+    fun fylker(): Set<Fylke> = kommuner().map { it.fylke }.toSet()
+
+    fun nasjoner(): Set<Nasjon> = fylker().map { it.nasjon }.toSet()
+
+    fun finnFlaterOppTilGrunnkrets(): Set<Flate> = grunnkretser()
+
+    fun finnFlaterOppTilKommune(): Set<Flate> = HashSet(finnFlaterOppTilGrunnkrets() + kommuner())
+
+    fun finnFlaterOppTilFylke(): Set<Flate> = HashSet(finnFlaterOppTilKommune() + fylker())
+
+    fun finnFlaterOppTilNasjon(): Set<Flate> = HashSet(finnFlaterOppTilFylke() + nasjoner())
 
     override fun getInfo(): String? {
         return informasjonstekst
@@ -230,7 +271,7 @@ class GrenseAnsvarligMyndighet : AnsvarligMyndighet {
 
     @ManyToOne
     @JoinColumn(name = "grense_fk")
-    var grenseFk: UtflatetGrense? = null
+    var grenseFk: Grense? = null
 
     @Column(name = "ansvarligmyndighet")
     override var ansvarligmyndighet: String? = null

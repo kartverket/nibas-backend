@@ -6,23 +6,9 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import no.kartverket.nibas.domain.Avtaltavgrensningslinje
-import no.kartverket.nibas.domain.Delomraadegrense
-import no.kartverket.nibas.domain.Fylkesgrense
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.Grunnkrets
-import no.kartverket.nibas.domain.GrunnkretsAvtaltavgrensningslinje
-import no.kartverket.nibas.domain.GrunnkretsDelomraadegrense
-import no.kartverket.nibas.domain.GrunnkretsFylkesgrense
-import no.kartverket.nibas.domain.GrunnkretsGrunnkretsgrense
-import no.kartverket.nibas.domain.GrunnkretsKommunegrense
-import no.kartverket.nibas.domain.GrunnkretsRiksgrense
-import no.kartverket.nibas.domain.GrunnkretsTerritorialgrense
-import no.kartverket.nibas.domain.Grunnkretsgrense
-import no.kartverket.nibas.domain.Kommunegrense
-import no.kartverket.nibas.domain.Riksgrense
-import no.kartverket.nibas.domain.Territorialgrense
 import no.kartverket.nibas.domain.updateSosiIdentifikasjon
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.GrunnkretsRepository
@@ -87,6 +73,13 @@ class GrunnkretsImporter @Autowired constructor(
 
             grunnkrets.posisjon = SosiGeometryFunctions.sosiKoordinatToPoint(flate.getAlleSosiNordOest(), flate.koordsys)
 
+            // Setter kommunenummerId fra GeoNorge samt kobling til kommune
+            val kommunenummerId = kodelisteService.getKommunenummerIdByCodeValue(flate.getKommunenummer())
+            grunnkrets.kommunenummer = kommunenummerId
+            grunnkrets.kommune = kommuneRepository.findByKommunenummer(kommunenummerId)!!
+
+            grunnkrets.informasjon = flate.getInformasjon()
+
             runBlocking {
                 withContext(Dispatchers.Default) {
                     flater.forEachIndexed { skall_index, flate ->
@@ -109,26 +102,20 @@ class GrunnkretsImporter @Autowired constructor(
                     }
                 }
             }
-            val antallReferanser = grunnkrets.grunnkretsgrenser.size +
-                grunnkrets.delomraadegrenser.size +
-                grunnkrets.kommunegrenser.size +
-                grunnkrets.fylkesgrenser.size +
-                grunnkrets.riksgrenser.size +
-                grunnkrets.territorialgrenser.size +
-                grunnkrets.avtaltavgrensningslinjer.size
+            val antallReferanser = grunnkrets.grunnkretsgrenser().size +
+                grunnkrets.delomraadegrenser().size +
+                grunnkrets.kommunegrenser().size +
+                grunnkrets.fylkesgrenser().size +
+                grunnkrets.riksgrenser().size +
+                grunnkrets.territorialgrenser().size +
+                grunnkrets.avtaltavgrensningslinjer().size
             if (flate.getHullReferanser().isEmpty() && antallReferanser != flate.getSkallReferanser().size) {
                 logger.info("Noe er galt, antall skall-refs (${flate.getSkallReferanser().size}) er ikke likt med grenser på grunnkretsen (${antallReferanser})")
             }
 
             grunnkrets.oppdaterFlate()
-            grunnkrets.kommunenummer = flate.getKommunenummer()?.let { kodelisteService.getKommunenummerIdByCodeValue(it) }
 
             grunnkretsRepository.save(grunnkrets)
-
-            if (flate.getInformasjon() != null) {
-
-            }
-
         }
     }
 
@@ -143,63 +130,13 @@ class GrunnkretsImporter @Autowired constructor(
 
         val referanse = ref.getVerdiUtenRetningOgParentes()
 
-        when (val grenseRef = kurver.find{it.getId() == referanse}) {
+        when (val grenseRef = kurver.find { it.getId() == referanse }) {
             null -> throw RuntimeException("Finner ikke grense som refereres til. Feil i datagrunnlaget. Ref: $referanse")
             else -> {
                 //                logger.info("Importerer grense ${importertGrense.lokalid}, grensetype: ${importertGrense.objtype}, referanse ${referanse}")
-                when (val importertGrense = grenseImporter.importerGrense(grenseRef)) {
-                    is Grunnkretsgrense -> grunnkrets.grunnkretsgrenser.add(
-                        GrunnkretsGrunnkretsgrense(
-                            grunnkrets,
-                            importertGrense,
-                            GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, skallIndex, hullIndex)
-                        )
-                    )
-
-                    is Delomraadegrense -> grunnkrets.delomraadegrenser.add(
-                        GrunnkretsDelomraadegrense(
-                            grunnkrets,
-                            importertGrense,
-                            GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, skallIndex, hullIndex)
-                        )
-                    )
-
-                    is Kommunegrense -> grunnkrets.kommunegrenser.add(
-                        GrunnkretsKommunegrense(
-                            grunnkrets,
-                            importertGrense,
-                            GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, skallIndex, hullIndex)
-                        )
-                    )
-                    is Fylkesgrense -> grunnkrets.fylkesgrenser.add(
-                        GrunnkretsFylkesgrense(
-                            grunnkrets,
-                            importertGrense,
-                            GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, skallIndex, hullIndex)
-                        )
-                    )
-                    is Avtaltavgrensningslinje -> grunnkrets.avtaltavgrensningslinjer.add(
-                        GrunnkretsAvtaltavgrensningslinje(
-                            grunnkrets,
-                            importertGrense,
-                            GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, skallIndex, hullIndex)
-                        )
-                    )
-                    is Territorialgrense -> grunnkrets.territorialgrenser.add(
-                        GrunnkretsTerritorialgrense(
-                            grunnkrets,
-                            importertGrense,
-                            GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, skallIndex, hullIndex)
-                        )
-                    )
-                    is Riksgrense -> grunnkrets.riksgrenser.add(
-                        GrunnkretsRiksgrense(
-                            grunnkrets,
-                            importertGrense,
-                            GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, skallIndex, hullIndex)
-                        )
-                    )
-                }
+                grunnkrets.addGrensekobling(
+                    grense = grenseImporter.importerGrense(grenseRef),
+                    grenseKoblingAttributter = GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, skallIndex, hullIndex))
             }
         }
     }
@@ -210,23 +147,24 @@ class GrunnkretsImporter @Autowired constructor(
         var antallBom = 0
         val tidBrukt = measureTimeMillis {
             grunnkretser.forEachIndexed { index, grunnkrets ->
-                logger.info("Matcher grunnkrets: ${grunnkrets.grunnkretsnavn}, antall kommunegrenser i grunnkrets: ${grunnkrets.kommunegrenser.size}, index: $index")
+                val grunnkretsensKommunegrenser = grunnkrets.kommunegrenser()
+                logger.info("Matcher grunnkrets: ${grunnkrets.grunnkretsnavn}, antall kommunegrenser i grunnkrets: ${grunnkretsensKommunegrenser.size}, index: $index")
                 val kommune = kommuneRepository.findByKommunenummer(grunnkrets.kommunenummer!!)
-                logger.info("Antall kommunegrenser i kommunen (${kommune?.administrativenhetnavn?.first()?.navn}): ${kommune?.kommunegrenser?.size}")
+                logger.info("Antall kommunegrenser i kommunen (${kommune?.administrativenhetnavn?.first()?.navn}): ${kommune?.kommunegrenser()?.size}")
 
-                val kommunegrenser: List<Kommunegrense>? = kommune?.kommunegrenser?.sortedWith(
+                val kommunegrenser: List<Grense>? = kommune?.kommunegrenser()?.sortedWith(
                     compareBy(
                         { it.grenseKoblingAttributter.flateIndeks },
                         { it.grenseKoblingAttributter.hullIndeks },
                         { it.grenseKoblingAttributter.rekkefoelge }
                     )
-                )?.map { it.kommunegrense }
+                )?.map { it.grense }
 
-                if (grunnkrets.kommunegrenser.isNotEmpty() && kommunegrenser != null && kommunegrenser.isEmpty()) {
+                if (grunnkretsensKommunegrenser.isNotEmpty() && kommunegrenser != null && kommunegrenser.isEmpty()) {
                     logger.warning("Grunnkrets har kommunegrenser, men kommunen den ligger i har ikke kommunegrenser, dette bør ikke være mulig")
                 } else {
-                    grunnkrets.kommunegrenser.forEach { grunnkretsKommunegrense ->
-                        if (segmenterSomDekkerNyGrense(kommunegrenser!!, grunnkretsKommunegrense.kommunegrense).isEmpty()) {
+                    grunnkretsensKommunegrenser.forEach { grunnkretsKommunegrense ->
+                        if (segmenterSomDekkerNyGrense(kommunegrenser!!, grunnkretsKommunegrense.grense).isEmpty()) {
                             antallBom++
                         }
                     }
@@ -248,7 +186,7 @@ class GrunnkretsImporter @Autowired constructor(
             newWindow
         }
 
-    fun segmenterSomDekkerNyGrense(skalSjekkesMot: List<Grense>, grense: Kommunegrense): List<Grense> {
+    fun segmenterSomDekkerNyGrense(skalSjekkesMot: List<Grense>, grense: Grense): List<Grense> {
         val initialWindowSize = 1
         val maxWindowSize = min(skalSjekkesMot.size, 20)
         var currentWindowSize = initialWindowSize
@@ -256,9 +194,8 @@ class GrunnkretsImporter @Autowired constructor(
         while (currentWindowSize <= maxWindowSize) {
             val windows = skalSjekkesMot.overlappedWindow(currentWindowSize)
             val grenserSomDekker: List<Grense>? = windows.find { grenserIVindu ->
-                val grensesegmenter: List<LineString> = grenserIVindu.fold(emptyList()) {
-                    list, element ->
-                    list.plus(element.grense!!)
+                val grensesegmenter: List<LineString> = grenserIVindu.fold(emptyList()) { list, element ->
+                    list.plus(element.grense)
                 }
                 val segment =
                     SosiGeometryFunctions.getGeometryFactory().createMultiLineString(grensesegmenter.toTypedArray())

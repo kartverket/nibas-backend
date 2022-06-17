@@ -1,23 +1,8 @@
 package no.kartverket.nibas.sosi.sosiimport
 
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import no.kartverket.nibas.domain.Administrativenhetnavn
-import no.kartverket.nibas.domain.Avtaltavgrensningslinje
 import no.kartverket.nibas.domain.Fylke
-import no.kartverket.nibas.domain.FylkeAvtaltavgrensningslinje
-import no.kartverket.nibas.domain.FylkeFylkesgrense
 import no.kartverket.nibas.domain.FylkeInformasjon
-import no.kartverket.nibas.domain.FylkeRiksgrense
-import no.kartverket.nibas.domain.FylkeTerritorialgrense
-import no.kartverket.nibas.domain.Fylkesgrense
-import no.kartverket.nibas.domain.GrenseKoblingAttributter
-import no.kartverket.nibas.domain.Riksgrense
-import no.kartverket.nibas.domain.Territorialgrense
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.FylkeInformasjonRepository
@@ -25,8 +10,6 @@ import no.kartverket.nibas.repository.FylkeRepository
 import no.kartverket.nibas.repository.SpraakkodeRepository
 import no.kartverket.nibas.sosi.model.SosiFlate
 import no.kartverket.nibas.sosi.model.SosiObjekt
-import no.kartverket.nibas.sosi.model.SosiReferanse
-import org.locationtech.jts.geom.LineString
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component
@@ -61,35 +44,36 @@ class FylkeImporter @Autowired constructor(
                     )
                 fylke.samiskforvaltningsomraade = flate.isSamiskForvaltningsomrade()
 
-                runBlocking {
-                    withContext(Dispatchers.Default) {
-                        val deferredSkall: List<Deferred<FylkeReferanseImportResult>> = flate.getSkallReferanser().mapIndexed { rekkefoelge, ref ->
-                            async {
-                                importerFylkeRef(fylke, ref, root, rekkefoelge)
-                            }
-                        }
+//                runBlocking {
+//                    withContext(Dispatchers.Default) {
+//                        val deferredSkall: List<Deferred<FylkeReferanseImportResult>> = flate.getSkallReferanser().mapIndexed { rekkefoelge, ref ->
+//                            async {
+//                                importerFylkeRef(fylke, ref, root, rekkefoelge)
+//                            }
+//                        }
+//
+//                        val deferredHull: List<List<Deferred<FylkeReferanseImportResult>>> =
+//                            flate.getHullReferanser().mapIndexed { hullIndex, liste ->
+//                                liste.mapIndexed { rekkefoelge, ref ->
+//                                    async {
+//                                        importerFylkeRef(fylke, ref, root, rekkefoelge, hullIndex)
+//                                    }
+//                                }
+//                            }
+//
+//                        val hull = deferredHull.map { it.awaitAll() }
+//                        val skall = deferredSkall.awaitAll()
+//
+//                        fylke.fylkesgrenser = (skall.flatMap { it.fylkesgrenser } + hull.flatMap { it.flatMap { i -> i.fylkesgrenser } }).toMutableSet()
+//                        fylke.avtaltavgrensningslinjer = (skall.flatMap { it.avtaltavgrensningslinjer } + hull.flatMap { it.flatMap { i -> i.avtaltavgrensningslinjer } }).toMutableSet()
+//                        fylke.territorialgrenser = (skall.flatMap { it.territorialgrenser } + hull.flatMap { it.flatMap { i -> i.territorialgrenser } }).toMutableSet()
+//                        fylke.riksgrenser = (skall.flatMap { it.riksgrenser } + hull.flatMap { it.flatMap { i -> i.riksgrenser } }).toMutableSet()
+//
+//                        fylke.oppdaterFlate()
+//                    }
+//                }
 
-                        val deferredHull: List<List<Deferred<FylkeReferanseImportResult>>> =
-                            flate.getHullReferanser().mapIndexed { hullIndex, liste ->
-                                liste.mapIndexed { rekkefoelge, ref ->
-                                    async {
-                                        importerFylkeRef(fylke, ref, root, rekkefoelge, hullIndex)
-                                    }
-                                }
-                            }
-
-                        val hull = deferredHull.map { it.awaitAll() }
-                        val skall = deferredSkall.awaitAll()
-
-                        fylke.fylkesgrenser = (skall.flatMap { it.fylkesgrenser } + hull.flatMap { it.flatMap { i -> i.fylkesgrenser } }).toMutableSet()
-                        fylke.avtaltavgrensningslinjer = (skall.flatMap { it.avtaltavgrensningslinjer } + hull.flatMap { it.flatMap { i -> i.avtaltavgrensningslinjer } }).toMutableSet()
-                        fylke.territorialgrenser = (skall.flatMap { it.territorialgrenser } + hull.flatMap { it.flatMap { i -> i.territorialgrenser } }).toMutableSet()
-                        fylke.riksgrenser = (skall.flatMap { it.riksgrenser } + hull.flatMap { it.flatMap { i -> i.riksgrenser } }).toMutableSet()
-
-                        fylke.oppdaterFlate()
-                    }
-                }
-
+                // TODO: Sette kobling til nasjon
                 fylke = fylkeRepository.save(fylke)
 
                 if (flate.getInformasjon() != null) {
@@ -112,33 +96,33 @@ class FylkeImporter @Autowired constructor(
         }
     }
 
-    private fun importerFylkeRef(fylke: Fylke, ref: SosiReferanse, root: SosiObjekt, rekkefoelge: Int, hullIndex: Int? = null): FylkeReferanseImportResult {
-        val referanse = ref.getVerdiUtenRetningOgParentes()
-        when (val grenseRef = root.getObjektMedId(referanse)) {
-            null -> throw RuntimeException("Finner ikke grense som refereres til. Feil i datagrunnlaget. Ref: $referanse")
-            else -> {
-                val importertGrense = grenseImporter.importerGrense(grenseRef)
-                val result = FylkeReferanseImportResult()
-                when (importertGrense) {
-                    is Fylkesgrense -> result.fylkesgrenser.add(FylkeFylkesgrense(fylke, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, 0, hullIndex)))
-                    is Avtaltavgrensningslinje -> result.avtaltavgrensningslinjer.add(FylkeAvtaltavgrensningslinje(fylke, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, 0, hullIndex)))
-                    is Territorialgrense -> result.territorialgrenser.add(FylkeTerritorialgrense(fylke, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, 0, hullIndex)))
-                    is Riksgrense -> result.riksgrenser.add(FylkeRiksgrense(fylke, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, 0, hullIndex)))
-                }
-                when (ref.erRetningMedKlokken()) {
-                    true -> result.lineString = importertGrense.grense!!
-                    false -> result.lineString = importertGrense.grense!!.reverse()
-                }
-                return result
-            }
-        }
-    }
+//    private fun importerFylkeRef(fylke: Fylke, ref: SosiReferanse, root: SosiObjekt, rekkefoelge: Int, hullIndex: Int? = null): FylkeReferanseImportResult {
+//        val referanse = ref.getVerdiUtenRetningOgParentes()
+//        when (val grenseRef = root.getObjektMedId(referanse)) {
+//            null -> throw RuntimeException("Finner ikke grense som refereres til. Feil i datagrunnlaget. Ref: $referanse")
+//            else -> {
+//                val importertGrense = grenseImporter.importerGrense(grenseRef)
+//                val result = FylkeReferanseImportResult()
+//                when (importertGrense) {
+//                    is Fylkesgrense -> result.fylkesgrenser.add(FylkeFylkesgrense(fylke, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, 0, hullIndex)))
+//                    is Avtaltavgrensningslinje -> result.avtaltavgrensningslinjer.add(FylkeAvtaltavgrensningslinje(fylke, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, 0, hullIndex)))
+//                    is Territorialgrense -> result.territorialgrenser.add(FylkeTerritorialgrense(fylke, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, 0, hullIndex)))
+//                    is Riksgrense -> result.riksgrenser.add(FylkeRiksgrense(fylke, importertGrense, GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, 0, hullIndex)))
+//                }
+//                when (ref.erRetningMedKlokken()) {
+//                    true -> result.lineString = importertGrense.grense!!
+//                    false -> result.lineString = importertGrense.grense!!.reverse()
+//                }
+//                return result
+//            }
+//        }
+//    }
 }
 
-data class FylkeReferanseImportResult(
-    val fylkesgrenser: MutableSet<FylkeFylkesgrense> = mutableSetOf(),
-    val avtaltavgrensningslinjer: MutableSet<FylkeAvtaltavgrensningslinje> = mutableSetOf(),
-    val territorialgrenser: MutableSet<FylkeTerritorialgrense> = mutableSetOf(),
-    val riksgrenser: MutableSet<FylkeRiksgrense> = mutableSetOf(),
-    var lineString: LineString? = null
-)
+//data class FylkeReferanseImportResult(
+//    val fylkesgrenser: MutableSet<FylkeFylkesgrense> = mutableSetOf(),
+//    val avtaltavgrensningslinjer: MutableSet<FylkeAvtaltavgrensningslinje> = mutableSetOf(),
+//    val territorialgrenser: MutableSet<FylkeTerritorialgrense> = mutableSetOf(),
+//    val riksgrenser: MutableSet<FylkeRiksgrense> = mutableSetOf(),
+//    var lineString: LineString? = null
+//)

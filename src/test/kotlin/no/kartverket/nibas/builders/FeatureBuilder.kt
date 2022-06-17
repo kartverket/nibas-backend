@@ -1,5 +1,6 @@
 package no.kartverket.nibas.builders
 
+import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureProperties
@@ -11,8 +12,8 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Metadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.RiksgrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Sporingsinformasjon
+import no.kartverket.nibas.api.v1.common.geojson.metadata.StatistiskgrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.TerritorialgrenseMetadata
-import no.kartverket.nibas.inndelinger.GrenseType
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.GeometryFactory
@@ -23,12 +24,14 @@ class FeatureBuilder(private val id: String? = "1") {
         val DEFAULT_FEATURE = FeatureBuilder().build()
     }
 
-    private var grenseType: GrenseType = GrenseType.Kommunegrense
+    private var grenseType: Grensetype = Grensetype.Kommunegrense
     private var metadata: Metadata? = null
     private var lokalid: String = "123"
     private var navnerom: String = "ABC"
     private var kontekstId: String = "123"
-    private var kontekstType: KontekstEnhetType = KontekstEnhetType.KOMMUNE
+    private var kontekstType: KontekstEnhetType = KontekstEnhetType.GRUNNKRETS
+    private var retningMedKlokka: Boolean = true
+    private var rekkefoelge: Int = 0
     private var geometry: Geometry =
         GeometryFactory().createLineString(arrayOf(Coordinate(0.0, 0.0), Coordinate(1.0, 1.0)))
 
@@ -37,7 +40,9 @@ class FeatureBuilder(private val id: String? = "1") {
             type = grenseType.toString(),
             kontekstEgenskaper = KontekstEgenskaper(
                 id = kontekstId,
-                type = kontekstType
+                type = kontekstType,
+                retningMedKlokken = retningMedKlokka,
+                rekkefoelge = rekkefoelge
             )
         )
 
@@ -47,11 +52,14 @@ class FeatureBuilder(private val id: String? = "1") {
                 sporingsinformasjon = Sporingsinformasjon(oppdateringsdato = ZonedDateTime.now().toLocalDate())
             )
             metadata = when (grenseType) {
-                GrenseType.Kommunegrense -> AdministrativGrenseMetadata(common = commonMetadata)
-                GrenseType.Fylkesgrense -> AdministrativGrenseMetadata(common = commonMetadata)
-                GrenseType.Riksgrense -> RiksgrenseMetadata(common = commonMetadata)
-                GrenseType.Territorialgrense -> TerritorialgrenseMetadata(common = commonMetadata)
-                GrenseType.AvtaltAvgrensningslinje -> AvtaltAvgrensningslinjeMetadata(common = commonMetadata)
+                Grensetype.Kommunegrense -> AdministrativGrenseMetadata(common = commonMetadata)
+                Grensetype.Fylkesgrense -> AdministrativGrenseMetadata(common = commonMetadata)
+                Grensetype.Riksgrense -> RiksgrenseMetadata(common = commonMetadata)
+                Grensetype.Territorialgrense -> TerritorialgrenseMetadata(common = commonMetadata)
+                Grensetype.AvtaltAvgrensningslinje -> AvtaltAvgrensningslinjeMetadata(common = commonMetadata)
+                // TODO: Mangler Metadata for Stemmekretsgrense
+                Grensetype.Stemmekretsgrense -> AdministrativGrenseMetadata(common = commonMetadata)
+                Grensetype.Grunnkretsgrense -> StatistiskgrenseMetadata(common = commonMetadata)
                 else -> throw RuntimeException("Not implemented yet.")
             }
         }
@@ -64,7 +72,7 @@ class FeatureBuilder(private val id: String? = "1") {
         )
     }
 
-    fun withGrensetype(grenseType: GrenseType): FeatureBuilder {
+    fun withGrensetype(grenseType: Grensetype): FeatureBuilder {
         this.grenseType = grenseType
         return this
     }
@@ -86,6 +94,16 @@ class FeatureBuilder(private val id: String? = "1") {
 
     fun withMetadata(metadata: Metadata): FeatureBuilder {
         this.metadata = metadata
+        return this
+    }
+
+    fun withRetning(retningMedKlokka: Boolean): FeatureBuilder {
+        this.retningMedKlokka = retningMedKlokka
+        return this
+    }
+
+    fun withRekkefoelge(rekkefoelge: Int): FeatureBuilder {
+        this.rekkefoelge = rekkefoelge
         return this
     }
 }

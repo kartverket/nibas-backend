@@ -1,6 +1,8 @@
 package no.kartverket.nibas.sosi.sosiimport
 
-import no.kartverket.nibas.domain.*
+import no.kartverket.nibas.domain.Dokumentasjonsreferanse
+import no.kartverket.nibas.domain.DokumentasjonsreferanseDokumentlink
+import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.repository.DokumentasjonsreferanseDokumentlinkRepository
 import no.kartverket.nibas.repository.DokumentasjonsreferanseRepository
 import no.kartverket.nibas.sosi.model.SosiDokumentasjonsReferanse
@@ -22,15 +24,7 @@ class DokumentasjonsreferanseImporter {
         dokRef.rettskildetittel = sosiDokRef.getRettskildeTittel()
 
         dokRef.fastsettingsdato = sosiDokRef.getFastsettingsdato()
-        when(grense) {
-            is Fylkesgrense -> dokRef.fylkesgrenseFk = grense
-            is Kommunegrense -> dokRef.kommunegrenseFk = grense
-            is Avtaltavgrensningslinje -> dokRef.avtaltavgrensningslinjeFk = grense
-            is Territorialgrense -> dokRef.territorialgrenseFk = grense
-            is Grunnlinje -> dokRef.grunnlinjeFk = grense
-            is Riksgrense -> dokRef.riksgrenseFk = grense
-            is Lovvirkeomraadegrense -> dokRef.lovvirkeomraadegrenseFk = grense
-        }
+        dokRef.grenseFk = grense
 
         dokRef = dokumentasjonsreferanseRepository.save(dokRef)
 

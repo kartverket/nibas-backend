@@ -1,11 +1,14 @@
 spring:
   datasource:
-    driver-class-name: org.postgresql.Driver
-    username: norealuser
-    password: notarealpassword
-    url: jdbc:postgresql://notarealhost:5432/notarealdatabase
+    driver-class-name: org.h2.Driver
+    username: nibas
+    password: nibas
+    url: jdbc:h2:mem:nibas;MODE=PostgreSQL;INIT=CREATE SCHEMA IF NOT EXISTS NIBAS\;SET SCHEMA NIBAS
   jpa:
     database-platform: org.hibernate.spatial.dialect.postgis.PostgisDialect
+    hibernate:
+      # For at H2-basen skal opprettes med tabeller i skjemaet
+      ddl-auto: update
   flyway:
     enabled: false
   cloud:

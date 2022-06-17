@@ -79,11 +79,13 @@ dependencies {
         exclude(group = "junit", module = "junit")
     }
 
+    runtimeOnly("org.flywaydb:flyway-core:8.5.12")
+    runtimeOnly("org.postgresql:postgresql")
+
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 
-    runtimeOnly("org.flywaydb:flyway-core:8.5.12")
-    runtimeOnly("org.postgresql:postgresql")
+    testRuntimeOnly("com.h2database:h2")
 
     intTestImplementation("org.jetbrains.kotlin:kotlin-test")
     intTestImplementation("org.springframework.boot:spring-boot-starter-test")
