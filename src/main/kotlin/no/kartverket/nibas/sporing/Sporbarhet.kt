@@ -8,6 +8,7 @@ import org.hibernate.event.spi.PreUpdateEvent
 import org.hibernate.event.spi.PreUpdateEventListener
 import org.hibernate.internal.SessionFactoryImpl
 import org.springframework.core.env.Environment
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Component
 import java.time.LocalDate
 import javax.annotation.PostConstruct
@@ -24,16 +25,15 @@ interface UserFacade {
 class DefaultUserFacade constructor(private val environment: Environment) : UserFacade {
 
     override fun getAuthenticatedUser(): String {
-        return "IMPORT"
-//        if (startedWithSecurityOff()) {
-//            return "DUMMY"
-//        }
-//
-//        val authentication = SecurityContextHolder.getContext().authentication
-//        if (authentication == null || !authentication.isAuthenticated) {
-//            throw RuntimeException("Ugyldig tilstand. Har ingen innlogget bruker.")
-//        }
-//        return authentication.name
+        if (startedWithSecurityOff()) {
+            return "DUMMY"
+        }
+
+        val authentication = SecurityContextHolder.getContext().authentication
+        if (authentication == null || !authentication.isAuthenticated) {
+            throw RuntimeException("Ugyldig tilstand. Har ingen innlogget bruker.")
+        }
+        return authentication.name
     }
 
     private fun startedWithSecurityOff(): Boolean {
