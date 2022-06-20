@@ -79,7 +79,7 @@ dependencies {
         exclude(group = "junit", module = "junit")
     }
 
-    runtimeOnly("org.flywaydb:flyway-core:8.5.12")
+    runtimeOnly("org.flywaydb:flyway-core:8.5.13")
     runtimeOnly("org.postgresql:postgresql")
 
     testImplementation("org.jetbrains.kotlin:kotlin-test")
