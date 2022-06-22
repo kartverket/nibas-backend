@@ -58,7 +58,10 @@ data class GrunnkretsRef(
     val navn: String,
 
     @Schema(description = "URL til full representasjon av grunnkretsen")
-    val href: String
+    val href: String,
+
+    @Schema(description = "Nummeret til grunnkretsen")
+    val grunnkretsnummer: String,
 )
 
 @Schema(description = "En referanse til en historisk revisjon av en administrativ enhet")

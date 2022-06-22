@@ -87,6 +87,7 @@ class GrunnkretsService constructor(private val grunnkretsRepository: Grunnkrets
 fun toGrunnkretsRef(grunnkrets: Grunnkrets): GrunnkretsRef = GrunnkretsRef(
     id = grunnkrets.id,
     navn = grunnkrets.grunnkretsnavn!!,
+    grunnkretsnummer = grunnkrets.grunnkretsnummer!!,
     href = ServletUriComponentsBuilder.fromCurrentRequestUri().pathSegment(grunnkrets.id).build().toUriString()
 )
 
