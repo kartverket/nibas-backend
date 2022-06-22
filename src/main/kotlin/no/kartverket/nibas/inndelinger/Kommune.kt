@@ -4,11 +4,13 @@ import no.kartverket.nibas.api.v1.KommuneApi
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.request.KommuneRequest
+import no.kartverket.nibas.api.v1.response.GrunnkretsRef
 import no.kartverket.nibas.api.v1.response.KommuneRef
 import no.kartverket.nibas.api.v1.response.KommuneResponse
 import no.kartverket.nibas.api.v1.response.Kommunenummer
 import no.kartverket.nibas.api.v1.response.RevisjonRef
 import no.kartverket.nibas.domain.GrenseKobling
+import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
@@ -72,6 +74,10 @@ class KommuneController @Autowired constructor(
             kodelisteService
         )
     }
+
+    override fun hentKommunesGrunnkretser(id: String): List<GrunnkretsRef> {
+        return kommuneService.hentKommunesGrunnkretser(id).map { toGrunnkretsRef(it) }
+    }
 }
 
 @Service
@@ -106,6 +112,10 @@ class KommuneService @Autowired constructor(
 
             kommuneRepository.save(gammel)
         }
+    }
+
+    fun hentKommunesGrunnkretser(id: String): List<Grunnkrets> {
+        return hentKommune(id)?.grunnkretser?.toList() ?: emptyList()
     }
 }
 

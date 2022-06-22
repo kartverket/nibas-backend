@@ -2,7 +2,6 @@ package no.kartverket.nibas.api.v1
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
-import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -10,7 +9,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
-import no.kartverket.nibas.api.v1.response.GrunnkretsRef
 import no.kartverket.nibas.api.v1.response.GrunnkretsResponse
 import no.kartverket.nibas.api.v1.response.RevisjonRef
 import org.springframework.http.MediaType
@@ -19,7 +17,6 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
 
 @RequestMapping("/v1/grunnkretser")
 @Tag(
@@ -27,27 +24,6 @@ import org.springframework.web.bind.annotation.RequestParam
     description = "Endepunkter for å hente informasjon om grunnkretser i Nasjonal inndelingsbase"
 )
 interface GrunnkretsApi {
-
-    @Operation(summary = "Hent alle grunnkretser", description = "Henter alle grunnkretser i Nasjonal inndelingsbase.")
-    @ApiResponses(
-        ApiResponse(
-            responseCode = "200",
-            description = "Successful operation",
-            content = [
-                Content(
-                    mediaType = "application/json",
-                    array = ArraySchema(schema = Schema(implementation = GrunnkretsRef::class))
-                )
-            ]
-        )
-    )
-    @GetMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentAlle(
-        @Parameter(description = "Valgfri kommunenummer til en kommune for å filtrere grunnkretser innenfor en kommune") @RequestParam(
-            name = "kommunenummer",
-            required = false
-        ) kommunenummer: String?
-    ): List<GrunnkretsRef>
 
     @Operation(summary = "Hent en grunnkrets med gitt id", description = "Henter grunnkrets med gitt id")
     @ApiResponses(

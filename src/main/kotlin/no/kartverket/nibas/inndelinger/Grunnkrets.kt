@@ -27,17 +27,10 @@ class GrunnkretsController @Autowired constructor(
     private val historikkService: HistorikkService
 ) : GrunnkretsApi {
 
-    override fun hentAlle(kommunenummer: String?): List<GrunnkretsRef> {
-        return when (kommunenummer) {
-            null -> grunnkretsService.hentAlleGrunnkretser().map { toGrunnkretsRef(it) }
-            else -> grunnkretsService.hentGrunnkretserForKommune(kommunenummer).map { toGrunnkretsRef(it) }
-        }
-    }
-
     override fun hentEn(id: String): GrunnkretsResponse {
-        return when (val kommune = grunnkretsService.hentGrunnkrets(id)) {
+        return when (val grunnkrets = grunnkretsService.hentGrunnkrets(id)) {
             null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
-            else -> toGrunnkretsResponse(kommune, kodelisteService)
+            else -> toGrunnkretsResponse(grunnkrets, kodelisteService)
         }
     }
 
@@ -72,11 +65,9 @@ class GrunnkretsController @Autowired constructor(
 }
 
 @Service
-class GrunnkretsService @Autowired constructor(private val grunnkretsRepository: GrunnkretsRepository) {
+class GrunnkretsService constructor(private val grunnkretsRepository: GrunnkretsRepository) {
 
-    fun hentAlleGrunnkretser() = grunnkretsRepository.findAll().toList()
     fun hentGrunnkrets(id: String) = grunnkretsRepository.findById(id).unwrap()
-    fun hentGrunnkretserForKommune(kommuneNummer: String) = grunnkretsRepository.findByKommunenummer(kommuneNummer)
 
     @Transactional
     fun hentGrenserForGrunnkrets(id: String): Set<GrenseKobling> {

@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.request.KommuneRequest
+import no.kartverket.nibas.api.v1.response.GrunnkretsRef
 import no.kartverket.nibas.api.v1.response.RevisjonRef
 import no.kartverket.nibas.api.v1.response.KommuneRef
 import no.kartverket.nibas.api.v1.response.KommuneResponse
@@ -65,7 +66,7 @@ interface KommuneApi {
 
     @Operation(
         summary = "Hent grensene til en gitt kommune",
-        description = "Henter grensene til en kommune med gitt id"
+        description = "Henter grensene til en kommune med gitt id",
     )
     @DefaultFeatureCollectionApiResponses
     @GetMapping("/{id}/grenser", produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -127,4 +128,19 @@ interface KommuneApi {
         @RequestBody oppdatertKommune: KommuneRequest
     ): KommuneResponse
 
+    @Operation(summary = "Hent kommunes grunnkretser", description = "Henter alle grunnkretser som tilhører en kommune.")
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            description = "Successful operation",
+            content = [Content(
+                mediaType = "application/json",
+                array = ArraySchema(schema = Schema(implementation = GrunnkretsRef::class))
+            )]
+        )
+    )
+    @GetMapping("/{id}/grunnkretser", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun hentKommunesGrunnkretser(
+        @Parameter(description = "ID til kommunen man vil hente grunnkretsene til") @PathVariable id: String
+    ): List<GrunnkretsRef>
 }
