@@ -26,6 +26,16 @@ class HistorikkService(val auditReader: AuditReader) {
         return auditReader.createQuery().forEntitiesAtRevision(type, revisjon)
             .add(AuditEntity.id().eq(id)).singleResult as T
     }
+
+    fun <T> hentGjeldendeRevisjonsId(id: String, type: Class<T>): Int {
+        val revisionData = auditReader.createQuery()
+            .forRevisionsOfEntity(type, false, false)
+            .add(AuditEntity.id().eq(id))
+            .singleResult as Array<*>
+
+        return (revisionData[1] as DefaultRevisionEntity).id
+
+    }
 }
 
 fun toRevisjonRef(revision: Pair<DefaultRevisionEntity, RevisionType>) =

@@ -70,6 +70,18 @@ spring:
   jmx:
     enabled: true
 
+  kafka:
+    bootstrap-servers: nibas-kafka:9092
+    producer:
+      properties:
+        spring:
+          json:
+            add:
+              type:
+                headers: false
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
 # Hver dag kl 03
 nibas:
   cron:
@@ -100,4 +112,10 @@ spring:
       authentication: token
       token: ${VAULT_TOKEN}
       enabled: true
+  kafka:
+    bootstrap-servers: localhost:29092
+
+nibas:
+  kafka:
+    enabled: false
 

@@ -78,6 +78,7 @@ dependencies {
     implementation("org.locationtech.jts.io:jts-io-common:${DependencyVersions.JTS_VERSION}") {
         exclude(group = "junit", module = "junit")
     }
+    implementation("org.springframework.kafka:spring-kafka")
 
     runtimeOnly("org.flywaydb:flyway-core:8.5.13")
     runtimeOnly("org.postgresql:postgresql")
