@@ -31,6 +31,7 @@ class HistorikkService(val auditReader: AuditReader) {
         val revisionData = auditReader.createQuery()
             .forRevisionsOfEntity(type, false, false)
             .add(AuditEntity.id().eq(id))
+            .add(AuditEntity.revisionNumber().maximize())
             .singleResult as Array<*>
 
         return (revisionData[1] as DefaultRevisionEntity).id
