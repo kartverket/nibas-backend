@@ -2,6 +2,7 @@ package no.kartverket.nibas.inndelinger
 
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.KontekstEnhetType
+import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.builders.FeatureBuilder
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
@@ -110,16 +111,20 @@ class GrenseServiceTest {
 
         whenever(grenseRepositoryMock.findAllById(anyCollection())).thenReturn(listOf(eksisterendeGrense, eksisterendeGrense2,
             eksisterendeGrense3, eksisterendeGrense4))
+        whenever(grenseRepositoryMock.findById(grenseId1)).thenReturn(Optional.of(eksisterendeGrense))
+        whenever(grenseRepositoryMock.findById(grenseId2)).thenReturn(Optional.of(eksisterendeGrense2))
+        whenever(grenseRepositoryMock.findById(grenseId3)).thenReturn(Optional.of(eksisterendeGrense3))
+        whenever(grenseRepositoryMock.findById(grenseId4)).thenReturn(Optional.of(eksisterendeGrense4))
         whenever(stemmekretsRepositoryMock.findAllById(anyCollection())).thenReturn(listOf(stemmekretsSomSkalOppdateres))
         whenever(grunnkretsRepositoryMock.findAllById(anyCollection())).thenReturn(listOf(grunnkretsSomSkalOppdateres))
 
         grenseService.lagreGrenser(
-            listOf(
+            FeatureCollection(features = listOf(
                 oppdatertFylkesgrensefeatureForStemmekrets,
                 oppdatertGrensefeature,
                 oppdatertFylkesgrensefeatureForGrunnkrets,
                 oppdatertFylkesgrensefeature2ForGrunnkrets
-            )
+            ))
         )
 
         verify(grenseRepositoryMock, times(1)).saveAll(fylkesgrenseCaptor.capture())
@@ -168,7 +173,7 @@ class GrenseServiceTest {
             .build()
 
         assertThatThrownBy {
-            grenseService.lagreGrenser(listOf(nyStemmekretsgrensefeatureForGrunnkrets))
+            grenseService.lagreGrenser(FeatureCollection(features = listOf(nyStemmekretsgrensefeatureForGrunnkrets)))
         }
             .isInstanceOf(ResponseStatusException::class.java)
             .hasMessageContaining("Missing feature id")
@@ -188,7 +193,7 @@ class GrenseServiceTest {
             .withGrensetype(Grensetype.Grunnkretsgrense)
             .build()
 
-        assertThatThrownBy { grenseService.lagreGrenser(listOf(featureWithUnknownId)) }
+        assertThatThrownBy { grenseService.lagreGrenser(FeatureCollection(features = listOf(featureWithUnknownId))) }
             .isInstanceOf(ResponseStatusException::class.java)
             .hasMessageContaining("Non-existing grenseIds")
     }

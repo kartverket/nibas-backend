@@ -1,26 +1,30 @@
 package no.kartverket.nibas.sosi.sosiimport
 
-import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseKobling
+import no.kartverket.nibas.domain.getGrenseJustertForRetning
 import no.kartverket.nibas.sosi.model.SosiKoordinat
 import no.kartverket.nibas.sosi.model.SosiNordOest
 import org.locationtech.jts.geom.Coordinate
+import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.GeometryFactory
 import org.locationtech.jts.geom.LineString
+import org.locationtech.jts.geom.LinearRing
 import org.locationtech.jts.geom.MultiPolygon
 import org.locationtech.jts.geom.Point
 import org.locationtech.jts.geom.Polygon
 import org.locationtech.jts.geom.PrecisionModel
+import org.locationtech.jts.operation.valid.IsValidOp
+import org.locationtech.jts.operation.valid.TopologyValidationError
 
 class SosiGeometryFunctions {
     companion object {
 
-        val defaultSrid = 25833
-        val koordsysToSrid = mapOf(
+        private const val defaultSrid = 25833
+        private val koordsysToSrid = mapOf(
             Pair("23", 25833)
         )
 
-        val sridToGeometryFactory = mutableMapOf<Int, GeometryFactory>()
+        private val sridToGeometryFactory = mutableMapOf<Int, GeometryFactory>()
 
         fun getGeometryFactory(koordsys: String? = null): GeometryFactory {
             val srid = when (koordsys) {
@@ -54,59 +58,33 @@ class SosiGeometryFunctions {
             }
         }
 
-        /**
-         * Lager en flate (Polygon) basert på skall og hull.
-         *
-         * @param skallLineStrings Linjene som utgjør ytre del av et polygon. Disse linjene må forme et lukket Polygon
-         * @param hullLineStrings Dobbel liste som inneholder alle hull i et polygon. Hver av listene inneholde linjer som utgjør et lukket polygon.
-         */
-        fun lagFlate(skallLineStrings: List<LineString>, hullLineStrings: List<List<LineString>>, koordsys: String? = null): Polygon {
-            val skall = getGeometryFactory(koordsys)
-                .createLinearRing(
-                    getGeometryFactory(koordsys)
-                        .createMultiLineString(skallLineStrings.toTypedArray()).coordinates
-                )
-
-            val hull = hullLineStrings.map { liste ->
-                getGeometryFactory(koordsys)
-                    .createLinearRing(
-                        getGeometryFactory(koordsys)
-                            .createMultiLineString(liste.toTypedArray()).coordinates
-                    )
-            }.toTypedArray()
-
-            return getGeometryFactory(koordsys).createPolygon(skall, hull)
-        }
-
         fun beregnFlate(grenseKoblinger: Set<GrenseKobling>): MultiPolygon {
-            val flater: List<Polygon> = grenseKoblinger.groupBy { it.grenseKoblingAttributter.flateIndeks }.map { entry ->
-                val koblingerForFlate = entry.value
+            val flater: List<Polygon> = grenseKoblinger
+                .groupBy { it.grenseKoblingAttributter.flateIndeks }
+                .map { entry ->
+                    val koblingerForFlate = entry.value
 
-                val skallKoblinger = koblingerForFlate.filterTo(HashSet()) { it.grenseKoblingAttributter.hullIndeks == null }
-                val hullKoblinger: Map<Int, List<GrenseKobling>> = (koblingerForFlate - skallKoblinger).groupBy { it.grenseKoblingAttributter.hullIndeks!! }
+                    val skallKoblinger = koblingerForFlate.filterTo(HashSet()) { it.grenseKoblingAttributter.hullIndeks == null }
+                    val hullKoblinger: Map<Int, List<GrenseKobling>> = (koblingerForFlate - skallKoblinger).groupBy { it.grenseKoblingAttributter.hullIndeks!! }
 
-                val skall: List<LineString> = skallKoblinger.sortedBy { it.grenseKoblingAttributter.rekkefoelge }.map {
-                    val grense: Grense = it.grense
-                    when (it.grenseKoblingAttributter.retningMedKlokken) {
-                        true -> grense.grense
-                        false -> grense.grense.reverse()
+                    val skall: List<LineString> = skallKoblinger
+                        .sortedBy { it.grenseKoblingAttributter.rekkefoelge }
+                        .map { it.getGrenseJustertForRetning() }
+
+                    val hull: List<List<LineString>> = hullKoblinger.map { hullkobling ->
+                        hullkobling.value
+                            .sortedBy { it.grenseKoblingAttributter.rekkefoelge }
+                            .map { it.getGrenseJustertForRetning() }
                     }
+
+                    val flate = lagFlate(skall, hull)
+                    validateGeometry(flate) // Validerer hvert polygon for seg
+                    flate
                 }
 
-                val hull: List<List<LineString>> = hullKoblinger.map { h ->
-                    h.value.sortedBy { it.grenseKoblingAttributter.rekkefoelge }.map {
-                        val grense: Grense = it.grense
-                        when (it.grenseKoblingAttributter.retningMedKlokken) {
-                            true -> grense.grense
-                            false -> grense.grense.reverse()
-                        }
-                    }
-                }
-
-                lagFlate(skall, hull)
-            }
-
-            return getGeometryFactory().createMultiPolygon(flater.toTypedArray())
+            val multiPolygon = getGeometryFactory().createMultiPolygon(flater.toTypedArray())
+            validateGeometry(multiPolygon) // Validerer også multipolygonet
+            return multiPolygon
         }
 
         fun sosiKoordinatToCoordinate(sosiKoordinat: SosiKoordinat, enhet: Double): Coordinate {
@@ -124,5 +102,36 @@ class SosiGeometryFunctions {
 
             return gf.createLineString(preciseCoordinates)
         }
+
+        /**
+         * Lager en flate (Polygon) basert på skall og hull.
+         *
+         * @param skallLineStrings Linjene som utgjør ytre del av et polygon. Disse linjene må forme et lukket Polygon
+         * @param hullLineStrings Dobbel liste som inneholder alle hull i et polygon. Hver av listene inneholde linjer som utgjør et lukket polygon.
+         */
+        private fun lagFlate(skallLineStrings: List<LineString>, hullLineStrings: List<List<LineString>>, koordsys: String? = null): Polygon {
+            val geometryFactory = getGeometryFactory(koordsys)
+            val skall = geometryFactory.createLinearRingFromLineStrings(skallLineStrings)
+            val hull = hullLineStrings.map { liste -> geometryFactory.createLinearRingFromLineStrings(liste) }.toTypedArray()
+
+            return geometryFactory.createPolygon(skall, hull)
+        }
+
+        /**
+         * Kjører en isValid-sjekk på geometri, se javadoc på IsValidOp for detaljer.
+         */
+        private fun validateGeometry(geometry: Geometry) {
+            val validationError = IsValidOp(geometry).validationError
+            if (validationError != null) {
+                throw UgyldigGeometriException(geometry, validationError)
+            }
+        }
+
+        private fun GeometryFactory.createLinearRingFromLineStrings(lineStrings: List<LineString>): LinearRing = createLinearRing(createMultiLineString(lineStrings.toTypedArray()).coordinates)
+
     }
 }
+
+class UgyldigGeometriException(val geometry: Geometry,
+                               val topologyValidationError: TopologyValidationError)
+    : RuntimeException("Geometri-objekt er ikke gyldig: $geometry. Validation-feil: ${topologyValidationError.message}. Feil-lokasjon: ${topologyValidationError.coordinate}")

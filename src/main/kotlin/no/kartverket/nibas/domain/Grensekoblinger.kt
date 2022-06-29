@@ -1,6 +1,7 @@
 package no.kartverket.nibas.domain
 
 import no.kartverket.nibas.api.v1.common.KontekstEnhetType
+import org.locationtech.jts.geom.LineString
 import javax.persistence.Column
 import javax.persistence.Embeddable
 
@@ -9,6 +10,14 @@ interface GrenseKobling {
     var grense: Grense
     fun oppdaterAttributter(nyeAttributter: GrenseKoblingAttributter)
     fun getEnhetKobletTilGrense(): KobletTilGrense
+}
+
+fun GrenseKobling.getGrenseJustertForRetning(): LineString {
+    val lineString = this.grense.grense
+    return when (this.grenseKoblingAttributter.retningMedKlokken) {
+        true -> lineString
+        false -> lineString.reverse()
+    }
 }
 
 @Embeddable

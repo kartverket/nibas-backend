@@ -33,7 +33,6 @@ import no.kartverket.nibas.repository.TerrengdetaljkodeRepository
 import no.kartverket.nibas.unwrap
 import org.locationtech.jts.geom.LineString
 import org.locationtech.jts.geom.Point
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -42,18 +41,17 @@ import org.springframework.web.server.ResponseStatusException
 import java.util.logging.Logger
 
 @RestController
-class GrenseController @Autowired constructor(
+class GrenseController(
     private val grenseService: GrenseService,
     private val historikkService: HistorikkService,
-    private val flateService: FlateService,
     private val kodelisteService: KodelisteService
 ) : GrenseApi {
 
+    /**
+     * Siden GrenseService.lagreGrenser er transactional vil kallet til lagreGrenser rulles tilbake dersom en RuntimeEx krysser transaksjonsgrensa.
+     */
     override fun lagreGrenser(grenser: FeatureCollection) {
-        grenser.features.groupBy { it.properties.type }.forEach { mapEntry ->
-            grenseService.lagreGrenser(mapEntry.value)
-        }
-        flateService.beregnFlaterFor(grenser.features)
+        grenseService.lagreGrenser(grenser)
     }
 
     override fun hentGrense(id: String): Feature = when (val grense = grenseService.hentGrense(id)) {
@@ -70,7 +68,7 @@ class GrenseController @Autowired constructor(
 }
 
 @Service
-class GrenseService @Autowired constructor(
+class GrenseService(
     private val grenseRepository: GrenseRepository,
     private val landKodeRepository: LandKodeRepository,
     private val grunnkretsRepository: GrunnkretsRepository,
@@ -78,7 +76,8 @@ class GrenseService @Autowired constructor(
     private val fastsettingstypeRepository: FastsettingstypeRepository,
     private val terrengdetaljkodeRepository: TerrengdetaljkodeRepository,
     private val noeyaktighetsklassekodeRepository: NoeyaktighetsklassekodeRepository,
-    private val grensestatusRepository: GrensestatusRepository
+    private val grensestatusRepository: GrensestatusRepository,
+    private val flateService: FlateService,
 ) {
     private val logger: Logger = Logger.getLogger(this::class.java.name)
 
@@ -87,7 +86,17 @@ class GrenseService @Autowired constructor(
     }
 
     @Transactional
-    fun lagreGrenser(features: List<Feature>) {
+    fun lagreGrenser(grenser: FeatureCollection) {
+        val features = grenser.features
+        features
+            .groupBy { it.properties.type }
+            .forEach { mapEntry ->
+                doLagreGrenser(mapEntry.value)
+            }
+        flateService.beregnFlaterFor(features)
+    }
+
+    private fun doLagreGrenser(features: List<Feature>) {
         // Hvis det er innkommende features med id ikke satt kastes HTTP 400
         if (features.any { feature -> feature.id == null }) {
             logger.warning("Invalid request: Missing feature id.")

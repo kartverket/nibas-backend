@@ -6,6 +6,7 @@ import no.kartverket.nibas.api.v1.common.Fylkesnummer
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.inndelinger.RevisjonStatus
+import org.springframework.http.HttpStatus
 import java.time.LocalDate
 import java.util.*
 
@@ -183,3 +184,25 @@ data class Kommunenummer(
     @Schema(description = "Det faktiske kommunenummeret")
     val kodeverdi: Int?
 )
+
+@Schema(description = "Respons-type for geometrifeil")
+data class GeometriErrorResponse(
+
+    @Schema(description = "HttpStatus for responsen")
+    val httpStatus: HttpStatus = HttpStatus.BAD_REQUEST,
+
+    @Schema(description = "Type geometriobjekt")
+    val geometryType: String,
+
+    @Schema(description = "Valideringsfeil")
+    val validationError: String,
+
+    @Schema(description = "Beskriver lokasjonen for feilen")
+    val feilLokasjon: Koordinat,
+
+    @Schema(description = "Generell beskrivelse")
+    val message: String,
+)
+
+@Schema(description = "Holder for en x og y.")
+data class Koordinat(val x: Double, val y: Double)

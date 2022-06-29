@@ -26,13 +26,16 @@ open class NibasMvcTest {
     fun getWithToken(url: String, token: String, matcher: ResultMatcher) = perform(MockMvcRequestBuilders.get(url).header("Authorization", token), matcher)
     fun put(url: String, expected: ResultMatcher) =
         perform(MockMvcRequestBuilders.put(url), expected)
+
     fun put(url: String, request: Any, expected: ResultMatcher) =
         perform(MockMvcRequestBuilders.put(url).content(this.mapper.writeValueAsString(request)), expected)
-    fun post(url: String, request: Any, expected: ResultMatcher) =
-        perform(MockMvcRequestBuilders.post(url).content(this.mapper.writeValueAsString(request)), expected)
 
-    private fun perform(action: MockHttpServletRequestBuilder, expected: ResultMatcher) {
-        mvc.perform(action.contentType(MediaType.APPLICATION_JSON)).andExpect(expected)
+    fun post(url: String, request: Any, vararg matchers: ResultMatcher) =
+        perform(MockMvcRequestBuilders.post(url).content(this.mapper.writeValueAsString(request)), matchers = matchers)
+
+    private fun perform(action: MockHttpServletRequestBuilder, vararg matchers: ResultMatcher) {
+        val resultActions = mvc.perform(action.contentType(MediaType.APPLICATION_JSON))
+        matchers.forEach { resultActions.andExpect(it) }
     }
 
     fun <T> any(clazz: Class<T>): T = Mockito.any(clazz)

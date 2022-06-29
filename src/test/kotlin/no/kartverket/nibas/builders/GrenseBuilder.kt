@@ -2,6 +2,7 @@ package no.kartverket.nibas.builders
 
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.domain.Grense
+import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
 import org.locationtech.jts.geom.LineString
 
@@ -41,6 +42,11 @@ class GrenseBuilder(private val id: String = "1") {
 
     fun withLokalId(lokalId: String): GrenseBuilder {
         this.lokalId = lokalId
+        return this
+    }
+
+    fun withGrenseGeometri(coordinates: List<Coordinate>): GrenseBuilder {
+        this.grenseGeometri = GeometryFactory().createLineString(coordinates.toTypedArray())
         return this
     }
 
