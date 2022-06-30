@@ -3,7 +3,11 @@ package no.kartverket.nibas.api.v1.common.geojson
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.SerializerProvider
-import org.locationtech.jts.geom.*
+import org.locationtech.jts.geom.Geometry
+import org.locationtech.jts.geom.LineString
+import org.locationtech.jts.geom.MultiPolygon
+import org.locationtech.jts.geom.Point
+import org.locationtech.jts.geom.Polygon
 import org.locationtech.spatial4j.io.jackson.GeometryAsGeoJSONSerializer
 import java.io.IOException
 

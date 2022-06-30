@@ -19,9 +19,9 @@ import org.locationtech.jts.operation.valid.TopologyValidationError
 class SosiGeometryFunctions {
     companion object {
 
-        private const val defaultSrid = 25833
-        private val koordsysToSrid = mapOf(
-            Pair("23", 25833)
+        const val defaultSrid = 25833
+        private val koordsysToSrid: Map<String, Int> = mapOf(
+            Pair("23", defaultSrid)
         )
 
         private val sridToGeometryFactory = mutableMapOf<Int, GeometryFactory>()
@@ -88,19 +88,14 @@ class SosiGeometryFunctions {
         }
 
         fun sosiKoordinatToCoordinate(sosiKoordinat: SosiKoordinat, enhet: Double): Coordinate {
-            val x = getGeometryFactory().precisionModel.makePrecise(sosiKoordinat.oest.toDouble() * enhet)
-            val y = getGeometryFactory().precisionModel.makePrecise(sosiKoordinat.nord.toDouble() * enhet)
+            val precisionModel = getGeometryFactory().precisionModel
+            val x = precisionModel.makePrecise(sosiKoordinat.oest.toDouble() * enhet)
+            val y = precisionModel.makePrecise(sosiKoordinat.nord.toDouble() * enhet)
             return Coordinate(x, y)
         }
 
-        fun makePrecise(lineString: LineString): LineString {
-            val gf = getGeometryFactory()
-            val pm = gf.precisionModel
-            val preciseCoordinates = lineString.coordinates.map { coord ->
-                Coordinate(pm.makePrecise(coord.x), pm.makePrecise(coord.y))
-            }.toTypedArray()
-
-            return gf.createLineString(preciseCoordinates)
+        fun coordinateToPoint(coordinate: Coordinate): Point {
+            return getGeometryFactory().createPoint(coordinate)
         }
 
         /**

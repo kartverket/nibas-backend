@@ -1,7 +1,6 @@
 package no.kartverket.nibas.config
 
 import no.kartverket.nibas.api.v1.response.GeometriErrorResponse
-import no.kartverket.nibas.api.v1.response.Koordinat
 import no.kartverket.nibas.kodelister.DefaultKodelisteService
 import no.kartverket.nibas.kodelister.KodelisteFetcher
 import no.kartverket.nibas.kodelister.KodelisteService
@@ -10,6 +9,7 @@ import no.kartverket.nibas.repository.GrensestatusRepository
 import no.kartverket.nibas.repository.LandKodeRepository
 import no.kartverket.nibas.repository.NoeyaktighetsklassekodeRepository
 import no.kartverket.nibas.repository.TerrengdetaljkodeRepository
+import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import no.kartverket.nibas.sosi.sosiimport.UgyldigGeometriException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
@@ -66,7 +66,7 @@ class CustomRestExceptionHandler : ResponseEntityExceptionHandler() {
         val errorResponse = GeometriErrorResponse(
             geometryType = ugyldigGEx.geometry::class.java.simpleName,
             validationError = topologyValidationError.message,
-            feilLokasjon = Koordinat(coordinate.x, coordinate.y),
+            feilLokasjon = SosiGeometryFunctions.coordinateToPoint(coordinate),
             message = message
         )
         return ResponseEntity<GeometriErrorResponse>(errorResponse, HttpHeaders(), errorResponse.httpStatus)

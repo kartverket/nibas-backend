@@ -77,16 +77,18 @@ class GrenseControllerTest : NibasMvcTest() {
 
         val feature1 = kommunegrenseFeature("1")
         val feature2 = kommunegrenseFeature("2")
-        val featureCollection =
-            FeatureCollection(features = listOf(feature1, feature2))
+        val featureCollection = FeatureCollection(features = listOf(feature1, feature2))
 
         val expectedHttpStatus = status().isBadRequest
         val geometryTypeMatcher = jsonPath("$.geometryType").value("Polygon")
         val validationErrorMatcher = jsonPath("$.validationError").value("Ring Self-intersection")
-        val feilLokasjonMatcherX = jsonPath("$.feilLokasjon.x").value("0.0")
-        val feilLokasjonMatcherY = jsonPath("$.feilLokasjon.y").value("1.0")
+        val feilLokasjonMatcherType = jsonPath("$.feilLokasjon.type").value("Point")
+        val feilLokasjonMatcherSrid = jsonPath("$.feilLokasjon.srid").value("25833")
+        val feilLokasjonMatcherCoordinatesX = jsonPath("$.feilLokasjon.coordinates[0]").value("0.0")
+        val feilLokasjonMatcherCoordinatesY = jsonPath("$.feilLokasjon.coordinates[1]").value("1.0")
 
-        post("/v1/grenser/", featureCollection, expectedHttpStatus, geometryTypeMatcher, validationErrorMatcher, feilLokasjonMatcherX, feilLokasjonMatcherY)
+        post("/v1/grenser/", featureCollection, expectedHttpStatus, geometryTypeMatcher, validationErrorMatcher, feilLokasjonMatcherType,
+            feilLokasjonMatcherSrid, feilLokasjonMatcherCoordinatesX, feilLokasjonMatcherCoordinatesY)
 
         verify(grenseServiceMock).lagreGrenser(featureCollection)
     }
