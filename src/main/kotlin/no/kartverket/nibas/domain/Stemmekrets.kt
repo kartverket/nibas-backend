@@ -39,9 +39,6 @@ class Stemmekrets(override val id: String = UUID.randomUUID().toString()) : Komm
     @Column(name = "valgdistriktsnummer")
     var valgdistriktsnummer: String? = null
 
-    @Column(name = "fylkesnummer")
-    var fylkesnummer: String? = null
-
     @Column(name = "kommunenummer", nullable = false)
     var kommunenummer: String? = null
 
@@ -100,7 +97,7 @@ class Stemmekrets(override val id: String = UUID.randomUUID().toString()) : Komm
     }
 
     override fun toString(): String {
-        return "Stemmekrets(id='$id', stemmekretsnummer=$stemmekretsnummer, stemmekretsnavn=$stemmekretsnavn, tellekretsnummer=$tellekretsnummer, tellekretsnavn=$tellekretsnavn, valgdistriktsnummer=$valgdistriktsnummer, fylkesnummer=$fylkesnummer, kommunenummer=$kommunenummer)"
+        return "Stemmekrets(id='$id', stemmekretsnummer=$stemmekretsnummer, stemmekretsnavn=$stemmekretsnavn, tellekretsnummer=$tellekretsnummer, tellekretsnavn=$tellekretsnavn, valgdistriktsnummer=$valgdistriktsnummer, kommunenummer=$kommunenummer)"
     }
 
     fun alleGrenser() = getGrenserAvTyper(tillatteGrensetyper())

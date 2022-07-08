@@ -84,6 +84,13 @@ class MetadataMapper(private val kodelisteService: KodelisteService,
         noeyaktighetsklasse = KodelisteEntry(id = grense.noeyaktighetsklasse?.id, href = kodelisteHrefProvider.noeyaktighetsklasseHref()),
     )
 
+    fun toMetadataForKommunalKretsgrense(grense: Grense): KommunalKretsgrenseMetadata = KommunalKretsgrenseMetadata(
+        common = grense.getCommonMetadata(),
+        commonGrense = getCommonGrenseMetadata(grense),
+        foelgerTerrengdetalj = KodelisteEntry(id = grense.foelgerterrengdetalj?.id, href = kodelisteHrefProvider.terrengDetaljHref()),
+        noeyaktighetsklasse = KodelisteEntry(id = grense.noeyaktighetsklasse?.id, href = kodelisteHrefProvider.noeyaktighetsklasseHref()),
+    )
+
     private fun getCommonGrenseMetadata(grense: Grense): CommonGrenseMetadata = CommonGrenseMetadata(
         posisjonskvalitet = grense.kvalitet?.toKvalitet(kodelisteHrefProvider),
         fastsettingstype = KodelisteEntry(id = grense.fastsettingstype?.id, href = kodelisteHrefProvider.fastsettingstypeKodeHref()),

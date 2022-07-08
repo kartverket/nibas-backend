@@ -224,6 +224,7 @@ fun grenseToFeature(grense: Grense, kodelisteService: KodelisteService): Feature
         Grensetype.Grunnlinje -> featureProperties.copy(metadata = metadataMapper.toMetadataForGrunnlinje(grense))
         Grensetype.Delomraadegrense -> featureProperties.copy(metadata = metadataMapper.toMetadataForStatistiskGrense(grense))
         Grensetype.Grunnkretsgrense -> featureProperties.copy(metadata = metadataMapper.toMetadataForStatistiskGrense(grense))
+        Grensetype.Stemmekretsgrense -> featureProperties.copy(metadata = metadataMapper.toMetadataForKommunalKretsgrense(grense))
         else -> throw RuntimeException("Ikke støttet å mappe til metadata for grensetype: " + grense.grensetype.name)
     }
 

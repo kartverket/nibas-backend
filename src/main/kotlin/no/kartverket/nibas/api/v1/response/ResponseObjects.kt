@@ -68,6 +68,19 @@ data class GrunnkretsRef(
     val grunnkretsnummer: String,
 )
 
+@Schema(description = "En referanse til en stemmekrets")
+data class StemmekretsRef(
+
+    @Schema(description = "ID-en til stemmekretsen")
+    val id: String,
+
+    @Schema(description = "Navnet på stemmekretsen")
+    val navn: String,
+
+    @Schema(description = "URL til full representasjon av stemmekrets")
+    val href: String
+)
+
 @Schema(description = "En referanse til en historisk revisjon av en administrativ enhet")
 data class RevisjonRef(
 
@@ -175,6 +188,36 @@ data class GrunnkretsResponse(
     val kommunenummer: String,
 
     @Schema(description = "Geometrien til grunnkretsen, dvs representasjonspunkt og flaten")
+    val features: FeatureCollection
+)
+
+@Schema(description = "Representasjon av en stemmekrets")
+data class StemmekretsResponse(
+    @Schema(description = "ID-en til stemmekretsen")
+    val id: String,
+
+    @Schema(description = "Navnet på stemmekretsen")
+    val stemmekretsnavn: String,
+
+    @Schema(description = "Stemmekretsnummeret til stemmekretsen")
+    val stemmekretsnummer: String,
+
+    @Schema(description = "Identifikasjon av stemmekretsen")
+    val identifikasjon: Identifikasjon,
+
+    @Schema(description = "Kommunenummeret til stemmekretsen")
+    val kommunenummer: String,
+
+    @Schema(description = "Tellekretsnummer til stemmekretsen")
+    var tellekretsnummer: String? = null,
+
+    @Schema(description = "Tellekretsnavn til stemmekretsen")
+    var tellekretsnavn: String? = null,
+
+    @Schema(description = "Valgdistriktsnummer til stemmekretsen")
+    var valgdistriktsnummer: String? = null,
+
+    @Schema(description = "Geometrien til stemmekretsen, dvs representasjonspunkt og flaten")
     val features: FeatureCollection
 )
 

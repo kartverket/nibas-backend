@@ -16,6 +16,7 @@ const val TERRITORIALGRENSE_METADATA_SCHEMA: String = "TerritorialgrenseMetadata
 const val AVTALT_AVGRENSNINGSLINJE_METADATA_SCHEMA: String = "AvtaltAvgrensningslinjeMetadata"
 const val GRUNNLINJE_METADATA_SCHEMA: String = "GrunnlinjeMetadata"
 const val STATISTISKGRENSE_METADATA_SCHEMA: String = "StatistiskgrenseMetadata"
+const val KOMMUNAL_KRETSGRENSE_METADATA_SCHEMA: String = "KommunalKretsgrenseMetadata"
 
 const val DISCRIMINATOR_FIELD: String = "discriminator"
 
@@ -181,6 +182,21 @@ data class StatistiskgrenseMetadata(
     @Schema(description = "Klassifikasjon av stedfestingsnøyaktighet på grenser, og er basert på dårligste nøyaktighet til grensepunktene til grensen.")
     var noeyaktighetsklasse: KodelisteEntry = KodelisteEntry(),
 ) : Metadata
+
+@Schema(
+    name = KOMMUNAL_KRETSGRENSE_METADATA_SCHEMA,
+    description = "Spesifikk metadata for en kommunal kretsgrense (stemmekretsgrense/valgdistriktgrense/skolekretsgrense)"
+)
+data class KommunalKretsgrenseMetadata(
+    @Schema(description = "Felles metadata-egenskaper.")
+    val common: CommonMetadata,
+    @Schema(description = "Felles metadata-egenskaper for grenser.")
+    val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
+    @Schema(description = "Opplysning om at grense følger naturlige skillelinjer i terrenget.")
+    var foelgerTerrengdetalj: KodelisteEntry = KodelisteEntry(),
+    @Schema(description = "Klassifikasjon av stedfestingsnøyaktighet på grenser, og er basert på dårligste nøyaktighet til grensepunktene til grensen.")
+    var noeyaktighetsklasse: KodelisteEntry = KodelisteEntry(),
+): Metadata
 
 data class CommonMetadata(
     @Schema(description = "Unik identifikasjon av et objekt")

@@ -73,3 +73,28 @@ data class GrunnkretsRequest(
     @Schema(description = "Identifikasjon av grunnkretsen")
     val identifikasjon: Identifikasjon
 )
+
+@Schema(description = "Representasjon av en stemmekrets")
+data class StemmekretsRequest(
+
+    @Schema(description = "Stemmekretsnummeret til stemmekretsen")
+    var stemmekretsnummer: String? = null,
+
+    @Schema(description = "Identifikasjon av stemmekretsen")
+    val identifikasjon: Identifikasjon,
+
+    @Schema(description = "Stemmekretsnavnet til stemmekretsen")
+    var stemmekretsnavn: String? = null,
+
+    @Schema(description = "Tellekretsnummeret til stemmekretsen")
+    var tellekretsnummer: String? = null,
+
+    @Schema(description = "Tellekretsnavnet til stemmekretsen")
+    var tellekretsnavn: String? = null,
+
+    @Schema(description = "Valgdistriktsnummeret til stemmekretsen")
+    var valgdistriktsnummer: String? = null,
+
+    @Schema(description = "Kommunenummeret stemmekretsen tilhører til")
+    var kommunenummer: String? = null,
+)
