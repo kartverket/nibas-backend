@@ -80,7 +80,7 @@ dependencies {
     }
     implementation("org.springframework.kafka:spring-kafka")
 
-    runtimeOnly("org.flywaydb:flyway-core:8.5.13")
+    runtimeOnly("org.flywaydb:flyway-core:9.0.4")
     runtimeOnly("org.postgresql:postgresql")
 
     testImplementation("org.jetbrains.kotlin:kotlin-test")
