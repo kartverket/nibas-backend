@@ -5,7 +5,7 @@ plugins {
     id("org.springframework.boot") version "2.7.1"
     id("io.spring.dependency-management") version "1.0.12.RELEASE"
     kotlin("jvm") version "1.7.0"
-    kotlin("plugin.spring") version "1.7.0"
+    kotlin("plugin.spring") version "1.7.10"
     kotlin("plugin.jpa") version "1.7.0"
     kotlin("plugin.allopen") version "1.7.10"
     id("org.flywaydb.flyway") version "8.5.13"
