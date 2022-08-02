@@ -47,10 +47,12 @@ object DependencyVersions {
     const val HIBERNATE_VERSION = "5.6.5.Final"
     const val SPRINGDOC_OPENAPI_VERSION = "1.6.6"
     const val JTS_VERSION = "1.18.2"
+    const val TEST_CONTAINER_VERSION = "1.17.3"
+    const val AUT_LIB_VERSION = "0.0.21"
 }
 
 dependencies {
-    implementation("no.kartverket.aut:aut-lib:0.0.12")
+    implementation("no.kartverket.aut:aut-lib:${DependencyVersions.AUT_LIB_VERSION}")
 
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-security") // Web-security
@@ -68,16 +70,15 @@ dependencies {
     implementation("org.locationtech.jts:jts:${DependencyVersions.JTS_VERSION}")
     implementation("org.locationtech.jts:jts-modules:${DependencyVersions.JTS_VERSION}")
     implementation("org.locationtech.jts:jts-io:${DependencyVersions.JTS_VERSION}")
+    implementation("org.locationtech.jts.io:jts-io-common:${DependencyVersions.JTS_VERSION}") {
+        exclude(group = "junit", module = "junit")
+    }
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
-
     implementation("org.locationtech.spatial4j:spatial4j:0.8")
     implementation("org.hibernate:hibernate-spatial:${DependencyVersions.HIBERNATE_VERSION}")
     implementation("org.hibernate:hibernate-envers:${DependencyVersions.HIBERNATE_VERSION}")
     implementation("org.springframework.cloud:spring-cloud-starter")
     implementation("org.springframework.cloud:spring-cloud-starter-vault-config:3.1.1")
-    implementation("org.locationtech.jts.io:jts-io-common:${DependencyVersions.JTS_VERSION}") {
-        exclude(group = "junit", module = "junit")
-    }
     implementation("org.springframework.kafka:spring-kafka")
 
     runtimeOnly("org.flywaydb:flyway-core:8.5.13")
@@ -90,8 +91,8 @@ dependencies {
 
     intTestImplementation("org.jetbrains.kotlin:kotlin-test")
     intTestImplementation("org.springframework.boot:spring-boot-starter-test")
-    intTestImplementation("org.testcontainers:postgresql:1.17.3")
-    intTestImplementation("org.testcontainers:junit-jupiter:1.17.3")
+    intTestImplementation("org.testcontainers:postgresql:${DependencyVersions.TEST_CONTAINER_VERSION}")
+    intTestImplementation("org.testcontainers:junit-jupiter:${DependencyVersions.TEST_CONTAINER_VERSION}")
 }
 
 allOpen {

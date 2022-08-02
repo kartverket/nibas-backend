@@ -54,8 +54,8 @@ class WebSecurityConfig @Autowired constructor(environment: Environment) : Defau
     @Throws(Exception::class)
     override fun configure(web: WebSecurity) {
         web.ignoring().antMatchers(
-            "/actuator/health", 
-            "/actuator/info", 
+            "/actuator/health",
+            "/actuator/info",
             "/api-docs/**",
             "/swagger-ui/**"
         )
