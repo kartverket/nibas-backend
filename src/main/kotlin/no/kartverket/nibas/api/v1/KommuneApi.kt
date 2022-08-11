@@ -14,6 +14,7 @@ import no.kartverket.nibas.api.v1.response.GrunnkretsRef
 import no.kartverket.nibas.api.v1.response.RevisjonRef
 import no.kartverket.nibas.api.v1.response.KommuneRef
 import no.kartverket.nibas.api.v1.response.KommuneResponse
+import no.kartverket.nibas.api.v1.response.StemmekretsRef
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -143,4 +144,9 @@ interface KommuneApi {
     fun hentKommunesGrunnkretser(
         @Parameter(description = "ID til kommunen man vil hente grunnkretsene til") @PathVariable id: String
     ): List<GrunnkretsRef>
+
+    @GetMapping("/{id}/stemmekretser", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun hentKommunesStemmekretser(
+        @Parameter(description = "ID til kommunen man vil hente stemmekretsene til") @PathVariable id: String
+    ): List<StemmekretsRef>
 }

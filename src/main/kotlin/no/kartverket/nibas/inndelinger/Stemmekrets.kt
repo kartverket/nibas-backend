@@ -28,13 +28,6 @@ class StemmekretsController @Autowired constructor(
     private val historikkService: HistorikkService
 ) : StemmekretsApi {
 
-    override fun hentAlle(kommuneid: String?): List<StemmekretsRef> {
-        return when (kommuneid) {
-            null -> stemmekretsService.hentAlleStemmekretser().map { toStemmekretsRef(it) }
-            else -> stemmekretsService.hentStemmekretserForKommune(kommuneid).map { toStemmekretsRef(it) }
-        }
-    }
-
     override fun hentEn(id: String): StemmekretsResponse {
         return when (val stemmekrets = stemmekretsService.hentStemmekrets(id)) {
             null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
@@ -75,14 +68,7 @@ class StemmekretsController @Autowired constructor(
 @Service
 class StemmekretsService @Autowired constructor(private val stemmekretsRepository: StemmekretsRepository, private val kommuneRepository: KommuneRepository) {
 
-    fun hentAlleStemmekretser() = stemmekretsRepository.findAll().toList()
     fun hentStemmekrets(id: String) = stemmekretsRepository.findById(id).unwrap()
-    fun hentStemmekretserForKommune(kommuneid: String): List<Stemmekrets> {
-        return when (val kommune = kommuneRepository.findById(kommuneid).unwrap()) {
-            null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
-            else -> kommune.stemmekretser.toList()
-        }
-    }
 
     @Transactional
     fun hentGrenserForStemmekrets(id: String): Set<GrenseKobling> {

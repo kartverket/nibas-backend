@@ -28,27 +28,6 @@ import org.springframework.web.bind.annotation.RequestParam
 )
 interface StemmekretsApi {
 
-    @Operation(summary = "Hent alle stemmekretser", description = "Henter alle stemmekretser i Nasjonal inndelingsbase.")
-    @ApiResponses(
-        ApiResponse(
-            responseCode = "200",
-            description = "Successful operation",
-            content = [
-                Content(
-                    mediaType = "application/json",
-                    array = ArraySchema(schema = Schema(implementation = StemmekretsRef::class))
-                )
-            ]
-        )
-    )
-    @GetMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentAlle(
-        @Parameter(description = "Valgfri kommune-ID til en kommune for å filtrere stemmekretser innenfor en kommune") @RequestParam(
-            name = "kommuneid",
-            required = false
-        ) kommuneid: String?
-    ): List<StemmekretsRef>
-
     @Operation(summary = "Hent en stemmekrets med gitt id", description = "Henter stemmekrets med gitt id")
     @ApiResponses(
         ApiResponse(

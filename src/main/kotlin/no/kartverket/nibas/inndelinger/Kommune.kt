@@ -9,9 +9,11 @@ import no.kartverket.nibas.api.v1.response.KommuneRef
 import no.kartverket.nibas.api.v1.response.KommuneResponse
 import no.kartverket.nibas.api.v1.response.Kommunenummer
 import no.kartverket.nibas.api.v1.response.RevisjonRef
+import no.kartverket.nibas.api.v1.response.StemmekretsRef
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
+import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.FylkeRepository
@@ -78,6 +80,10 @@ class KommuneController @Autowired constructor(
     override fun hentKommunesGrunnkretser(id: String): List<GrunnkretsRef> {
         return kommuneService.hentKommunesGrunnkretser(id).map { toGrunnkretsRef(it) }
     }
+
+    override fun hentKommunesStemmekretser(id: String): List<StemmekretsRef> {
+        return kommuneService.hentKommunesStemmekretser(id).map{ toStemmekretsRef(it) }
+    }
 }
 
 @Service
@@ -116,6 +122,10 @@ class KommuneService @Autowired constructor(
 
     fun hentKommunesGrunnkretser(id: String): List<Grunnkrets> {
         return hentKommune(id)?.grunnkretser?.toList() ?: emptyList()
+    }
+
+    fun hentKommunesStemmekretser(id: String): List<Stemmekrets> {
+        return hentKommune(id)?.stemmekretser?.toList() ?: emptyList()
     }
 }
 
