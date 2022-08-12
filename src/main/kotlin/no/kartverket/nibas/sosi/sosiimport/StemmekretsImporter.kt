@@ -33,48 +33,53 @@ class StemmekretsImporter @Autowired constructor(private val kommunalKretsImport
         // Henter egenskaper fra første flate. Antar at all metadata er lik
         val forsteFlate = flater.first()
 
-        val stemmekrets = kommunalKretsImporter.importer(forsteFlate) as Stemmekrets
-        val stemmekretsId = forsteFlate.getStemmekretsId()
-        stemmekrets.stemmekretsnummer = stemmekretsId?.getStemmekretsnummer()
-        stemmekrets.stemmekretsnavn = stemmekretsId?.getStemmekretsnavn()
-        stemmekrets.tellekretsnummer = stemmekretsId?.getTellekretsnummer()
-        stemmekrets.tellekretsnavn = stemmekretsId?.getTellekretsnavn()
-        stemmekrets.valgdistriktsnummer = stemmekretsId?.getValgdistriktsnummer()
+        val sosiIdent = forsteFlate.getIdent()
+        if (stemmekretsRepository.findByLokalid(sosiIdent?.getLokalId()!!) != null) {
+            logger.info("Stemmekrets med lokalId ${sosiIdent.getLokalId()!!} er allerede importert.")
+        } else {
+            val stemmekrets = kommunalKretsImporter.importer(forsteFlate) as Stemmekrets
+            val stemmekretsId = forsteFlate.getStemmekretsId()
+            stemmekrets.stemmekretsnummer = stemmekretsId?.getStemmekretsnummer()
+            stemmekrets.stemmekretsnavn = stemmekretsId?.getStemmekretsnavn()
+            stemmekrets.tellekretsnummer = stemmekretsId?.getTellekretsnummer()
+            stemmekrets.tellekretsnavn = stemmekretsId?.getTellekretsnavn()
+            stemmekrets.valgdistriktsnummer = stemmekretsId?.getValgdistriktsnummer()
 
-        stemmekrets.posisjon = SosiGeometryFunctions.sosiKoordinatToPoint(forsteFlate.getAlleSosiNordOest(), forsteFlate.koordsys)
+            stemmekrets.posisjon = SosiGeometryFunctions.sosiKoordinatToPoint(forsteFlate.getAlleSosiNordOest(), forsteFlate.koordsys)
 
-        // Setter kommunenummerId fra GeoNorge samt kobling til kommune
-        val kommunenummerId = kodelisteService.getKommunenummerIdByCodeValue(forsteFlate.getKommunenummer())
-        stemmekrets.kommunenummer = kommunenummerId
-        stemmekrets.kommune = kommuneRepository.findByKommunenummer(kommunenummerId)!!
+            // Setter kommunenummerId fra GeoNorge samt kobling til kommune
+            val kommunenummerId = kodelisteService.getKommunenummerIdByCodeValue(forsteFlate.getKommunenummer())
+            stemmekrets.kommunenummer = kommunenummerId
+            stemmekrets.kommune = kommuneRepository.findByKommunenummer(kommunenummerId)!!
 
-        stemmekrets.informasjon = forsteFlate.getInformasjon()
+            stemmekrets.informasjon = forsteFlate.getInformasjon()
 
-        runBlocking {
-            withContext(Dispatchers.Default) {
-                flater.forEachIndexed { skall_index, flate ->
-                    val skall: List<Job> = flate.getSkallReferanser().mapIndexed { rekkefoelge, ref ->
-                        launch {
-                            importerStemmekretsRef(stemmekrets, ref, root, skall_index, rekkefoelge, null)
-                        }
-                    }
-
-                    val hull: List<List<Job>> = flate.getHullReferanser().mapIndexed { hullIndex, liste ->
-                        liste.mapIndexed { rekkefoelge, ref ->
+            runBlocking {
+                withContext(Dispatchers.Default) {
+                    flater.forEachIndexed { skall_index, flate ->
+                        val skall: List<Job> = flate.getSkallReferanser().mapIndexed { rekkefoelge, ref ->
                             launch {
-                                importerStemmekretsRef(stemmekrets, ref, root, skall_index, rekkefoelge, hullIndex)
+                                importerStemmekretsRef(stemmekrets, ref, root, skall_index, rekkefoelge, null)
                             }
                         }
-                    }
 
-                    skall.joinAll()
-                    hull.forEach { it.joinAll() }
+                        val hull: List<List<Job>> = flate.getHullReferanser().mapIndexed { hullIndex, liste ->
+                            liste.mapIndexed { rekkefoelge, ref ->
+                                launch {
+                                    importerStemmekretsRef(stemmekrets, ref, root, skall_index, rekkefoelge, hullIndex)
+                                }
+                            }
+                        }
+
+                        skall.joinAll()
+                        hull.forEach { it.joinAll() }
+                    }
                 }
             }
-        }
 
-        stemmekrets.oppdaterFlate()
-        stemmekretsRepository.save(stemmekrets)
+            stemmekrets.oppdaterFlate()
+            stemmekretsRepository.save(stemmekrets)
+        }
     }
 
     fun importerStemmekretsRef(stemmekrets: Stemmekrets, ref: SosiReferanse, root: SosiObjekt, flateIndex: Int, rekkefoelge: Int, hullIndex: Int? = null) {
