@@ -9,6 +9,7 @@ import no.kartverket.nibas.repository.GrensestatusRepository
 import no.kartverket.nibas.repository.LandKodeRepository
 import no.kartverket.nibas.repository.NoeyaktighetsklassekodeRepository
 import no.kartverket.nibas.repository.TerrengdetaljkodeRepository
+import no.kartverket.nibas.sosi.sosiimport.GeometriFailedToBeCreatedException
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import no.kartverket.nibas.sosi.sosiimport.UgyldigGeometriException
 import org.springframework.beans.factory.annotation.Autowired
@@ -67,6 +68,18 @@ class CustomRestExceptionHandler : ResponseEntityExceptionHandler() {
             geometryType = ugyldigGEx.geometry::class.java.simpleName,
             validationError = topologyValidationError.message,
             feilLokasjon = SosiGeometryFunctions.coordinateToPoint(coordinate),
+            message = message
+        )
+        return ResponseEntity<GeometriErrorResponse>(errorResponse, HttpHeaders(), errorResponse.httpStatus)
+    }
+
+    @ExceptionHandler(value = [GeometriFailedToBeCreatedException::class])
+    fun handleGeometriFailedToBeCreatedException(ex: GeometriFailedToBeCreatedException): ResponseEntity<GeometriErrorResponse> {
+        val message = ex.message!!
+        logger.warn("Håndterer GeometriFailedToBeCreatedException. Detaljer: [$message]")
+
+        val errorResponse = GeometriErrorResponse(
+            feilLokasjon = ex.point,
             message = message
         )
         return ResponseEntity<GeometriErrorResponse>(errorResponse, HttpHeaders(), errorResponse.httpStatus)

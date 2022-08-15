@@ -7,6 +7,8 @@ import no.kartverket.nibas.builders.FeatureBuilder
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.GrenseRepository
+import no.kartverket.nibas.sosi.sosiimport.GeometriFailedToBeCreatedException
+import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import no.kartverket.nibas.sosi.sosiimport.UgyldigGeometriException
 import org.junit.jupiter.api.Test
 import org.locationtech.jts.geom.Coordinate
@@ -82,6 +84,29 @@ class GrenseControllerTest : NibasMvcTest() {
         val expectedHttpStatus = status().isBadRequest
         val geometryTypeMatcher = jsonPath("$.geometryType").value("Polygon")
         val validationErrorMatcher = jsonPath("$.validationError").value("Ring Self-intersection")
+        val feilLokasjonMatcherType = jsonPath("$.feilLokasjon.type").value("Point")
+        val feilLokasjonMatcherSrid = jsonPath("$.feilLokasjon.srid").value("25833")
+        val feilLokasjonMatcherCoordinatesX = jsonPath("$.feilLokasjon.coordinates[0]").value("0.0")
+        val feilLokasjonMatcherCoordinatesY = jsonPath("$.feilLokasjon.coordinates[1]").value("1.0")
+
+        post("/v1/grenser/", featureCollection, expectedHttpStatus, geometryTypeMatcher, validationErrorMatcher, feilLokasjonMatcherType,
+            feilLokasjonMatcherSrid, feilLokasjonMatcherCoordinatesX, feilLokasjonMatcherCoordinatesY)
+
+        verify(grenseServiceMock).lagreGrenser(featureCollection)
+    }
+
+    @Test
+    fun thatLagreGrenserMedIkkeSluttetRingGirHTTP400() {
+        whenever(grenseServiceMock.lagreGrenser(any(FeatureCollection::class.java))).thenThrow(
+            GeometriFailedToBeCreatedException(point = SosiGeometryFunctions.coordinateToPoint(Coordinate(0.0, 1.0))))
+
+        val feature1 = kommunegrenseFeature("1")
+        val feature2 = kommunegrenseFeature("2")
+        val featureCollection = FeatureCollection(features = listOf(feature1, feature2))
+
+        val expectedHttpStatus = status().isBadRequest
+        val geometryTypeMatcher = jsonPath("$.geometryType").value(null)
+        val validationErrorMatcher = jsonPath("$.validationError").value(null)
         val feilLokasjonMatcherType = jsonPath("$.feilLokasjon.type").value("Point")
         val feilLokasjonMatcherSrid = jsonPath("$.feilLokasjon.srid").value("25833")
         val feilLokasjonMatcherCoordinatesX = jsonPath("$.feilLokasjon.coordinates[0]").value("0.0")

@@ -238,10 +238,10 @@ data class GeometriErrorResponse(
     val httpStatus: HttpStatus = HttpStatus.BAD_REQUEST,
 
     @Schema(description = "Type geometriobjekt")
-    val geometryType: String,
+    val geometryType: String? = null,
 
     @Schema(description = "Valideringsfeil")
-    val validationError: String,
+    val validationError: String? = null,
 
     @JsonSerialize(using = NibasGeometryAsGeoJSONSerializer::class)
     @Schema(description = "Beskriver lokasjonen for feilen")

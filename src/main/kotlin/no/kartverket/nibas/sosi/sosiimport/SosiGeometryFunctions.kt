@@ -77,7 +77,7 @@ class SosiGeometryFunctions {
                             .map { it.getGrenseJustertForRetning() }
                     }
 
-                    val flate = lagFlate(skall, hull)
+                    val flate: Polygon = lagFlate(skall, hull)
                     validateGeometry(flate) // Validerer hvert polygon for seg
                     flate
                 }
@@ -106,10 +106,16 @@ class SosiGeometryFunctions {
          */
         private fun lagFlate(skallLineStrings: List<LineString>, hullLineStrings: List<List<LineString>>, koordsys: String? = null): Polygon {
             val geometryFactory = getGeometryFactory(koordsys)
-            val skall = geometryFactory.createLinearRingFromLineStrings(skallLineStrings)
-            val hull = hullLineStrings.map { liste -> geometryFactory.createLinearRingFromLineStrings(liste) }.toTypedArray()
+            val skall: LinearRing = geometryFactory.createLinearRingFromLineStrings(skallLineStrings)
+            val hull: Array<LinearRing> = hullLineStrings
+                .map { liste -> geometryFactory.createLinearRingFromLineStrings(liste) }
+                .toTypedArray()
 
-            return geometryFactory.createPolygon(skall, hull)
+            try {
+                return geometryFactory.createPolygon(skall, hull)
+            } catch (ex: Exception) { // Skall og hull bør ikke være ugyldige her, men for sikkerhets skyld håndteres også her
+                throw GeometriFailedToBeCreatedException(coordinateToPoint(skall.coordinate))
+            }
         }
 
         /**
@@ -122,10 +128,24 @@ class SosiGeometryFunctions {
             }
         }
 
-        private fun GeometryFactory.createLinearRingFromLineStrings(lineStrings: List<LineString>): LinearRing = createLinearRing(createMultiLineString(lineStrings.toTypedArray()).coordinates)
+        /**
+         *@throws GeometriFailedToBeCreatedException dersom linearRing ikke kunne dannes
+         */
+        private fun GeometryFactory.createLinearRingFromLineStrings(lineStrings: List<LineString>): LinearRing {
+            val coordinates: Array<Coordinate> = createMultiLineString(lineStrings.toTypedArray()).coordinates
+            try {
+                return createLinearRing(coordinates)
+            } catch (exception: Exception) {
+                throw GeometriFailedToBeCreatedException(coordinateToPoint(coordinates[0]))
+            }
+        }
 
     }
 }
+
+class GeometriFailedToBeCreatedException(val point: Point)
+    : RuntimeException("Geometri-objekt kunne ikke opprettes. Feil-lokasjon: ${point.coordinate}")
+
 
 class UgyldigGeometriException(val geometry: Geometry,
                                val topologyValidationError: TopologyValidationError)
