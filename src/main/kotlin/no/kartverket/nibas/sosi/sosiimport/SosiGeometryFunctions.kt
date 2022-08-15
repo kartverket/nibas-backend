@@ -78,12 +78,12 @@ class SosiGeometryFunctions {
                     }
 
                     val flate = lagFlate(skall, hull)
-//                    validateGeometry(flate) // Validerer hvert polygon for seg
+                    validateGeometry(flate) // Validerer hvert polygon for seg
                     flate
                 }
 
             val multiPolygon = getGeometryFactory().createMultiPolygon(flater.toTypedArray())
-//            validateGeometry(multiPolygon) // Validerer også multipolygonet
+            validateGeometry(multiPolygon) // Validerer også multipolygonet
             return multiPolygon
         }
 

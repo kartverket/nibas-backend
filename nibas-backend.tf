@@ -70,7 +70,7 @@ resource "kubernetes_deployment" "nibas-backend-deployment" {
           }
           env {
             name  = "SPRING_PROFILES_ACTIVE"
-            value = "dev,security-off"
+            value = var.ENVIRONMENT
           }
           port {
             container_port = 8080
