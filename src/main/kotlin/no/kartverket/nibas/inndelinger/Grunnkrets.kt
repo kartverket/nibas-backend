@@ -12,7 +12,6 @@ import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.unwrap
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -21,17 +20,15 @@ import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 
 @RestController
-class GrunnkretsController @Autowired constructor(
+class GrunnkretsController(
     private val grunnkretsService: GrunnkretsService,
     private val kodelisteService: KodelisteService,
-    private val historikkService: HistorikkService
+    private val historikkService: HistorikkService,
+    private val grunnkretsControllerService: GrunnkretsControllerService
 ) : GrunnkretsApi {
 
     override fun hentEn(id: String): GrunnkretsResponse {
-        return when (val grunnkrets = grunnkretsService.hentGrunnkrets(id)) {
-            null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
-            else -> toGrunnkretsResponse(grunnkrets, kodelisteService)
-        }
+        return grunnkretsControllerService.hentEn(id)
     }
 
     override fun hentGrenser(id: String): FeatureCollection {
@@ -63,6 +60,18 @@ class GrunnkretsController @Autowired constructor(
         )
     }
 }
+
+@Service
+class GrunnkretsControllerService(private val grunnkretsService: GrunnkretsService,
+                                  private val kodelisteService: KodelisteService) {
+    fun hentEn(id: String): GrunnkretsResponse {
+        return when (val grunnkrets = grunnkretsService.hentGrunnkrets(id)) {
+            null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
+            else -> toGrunnkretsResponse(grunnkrets, kodelisteService)
+        }
+    }
+}
+
 
 @Service
 class GrunnkretsService constructor(private val grunnkretsRepository: GrunnkretsRepository) {

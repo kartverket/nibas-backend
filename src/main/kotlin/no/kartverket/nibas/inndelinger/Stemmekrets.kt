@@ -4,9 +4,9 @@ import no.kartverket.nibas.api.v1.StemmekretsApi
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.request.StemmekretsRequest
+import no.kartverket.nibas.api.v1.response.RevisjonRef
 import no.kartverket.nibas.api.v1.response.StemmekretsRef
 import no.kartverket.nibas.api.v1.response.StemmekretsResponse
-import no.kartverket.nibas.api.v1.response.RevisjonRef
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.kodelister.KodelisteService
@@ -22,17 +22,15 @@ import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 
 @RestController
-class StemmekretsController @Autowired constructor(
+class StemmekretsController(
     private val stemmekretsService: StemmekretsService,
     private val kodelisteService: KodelisteService,
-    private val historikkService: HistorikkService
+    private val historikkService: HistorikkService,
+    private val stemmekretsControllerService: StemmekretsControllerService
 ) : StemmekretsApi {
 
     override fun hentEn(id: String): StemmekretsResponse {
-        return when (val stemmekrets = stemmekretsService.hentStemmekrets(id)) {
-            null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
-            else -> toStemmekretsResponse(stemmekrets, kodelisteService)
-        }
+        return stemmekretsControllerService.hentEn(id)
     }
 
     override fun hentGrenser(id: String): FeatureCollection {
@@ -62,6 +60,17 @@ class StemmekretsController @Autowired constructor(
             historikkService.hentRevisjon(id, revisjon, Stemmekrets::class.java),
             kodelisteService
         )
+    }
+}
+
+@Service
+class StemmekretsControllerService(private val stemmekretsService: StemmekretsService,
+                                   private val kodelisteService: KodelisteService) {
+    fun hentEn(id: String): StemmekretsResponse {
+        return when (val stemmekrets = stemmekretsService.hentStemmekrets(id)) {
+            null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
+            else -> toStemmekretsResponse(stemmekrets, kodelisteService)
+        }
     }
 }
 

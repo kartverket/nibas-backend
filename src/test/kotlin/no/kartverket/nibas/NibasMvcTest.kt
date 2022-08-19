@@ -1,8 +1,10 @@
 package no.kartverket.nibas
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import no.kartverket.nibas.config.WebSecurityConfig
 import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
@@ -13,6 +15,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 
 
 @ActiveProfiles("dev", "security-off")
+@ImportAutoConfiguration(WebSecurityConfig::class)
 @WebMvcTest
 open class NibasMvcTest {
 

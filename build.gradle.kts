@@ -48,7 +48,7 @@ object DependencyVersions {
     const val SPRINGDOC_OPENAPI_VERSION = "1.6.6"
     const val JTS_VERSION = "1.18.2"
     const val TEST_CONTAINER_VERSION = "1.17.3"
-    const val AUT_LIB_VERSION = "0.0.21"
+    const val AUT_LIB_VERSION = "0.0.25"
 }
 
 dependencies {
