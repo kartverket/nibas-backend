@@ -15,10 +15,13 @@ import no.kartverket.nibas.sosi.sosiimport.UgyldigGeometriException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.log.LogFormatUtils
 import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
+import org.springframework.web.context.request.WebRequest
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
@@ -54,37 +57,44 @@ class WebConfig @Autowired constructor(val configProps: NibasBackendConfigProps)
     }
 }
 
+/**
+ * Custom global exception handler på tvers av applikasjonen.
+ * Denne overstyrer default exception handler i Spring Boot (DefaultHandlerExceptionResolver).
+ */
 @ControllerAdvice
 class CustomRestExceptionHandler : ResponseEntityExceptionHandler() {
 
     @ExceptionHandler(value = [UgyldigGeometriException::class])
-    fun handleUgyldigGeometriException(ugyldigGEx: UgyldigGeometriException): ResponseEntity<GeometriErrorResponse> {
-        val message = ugyldigGEx.message!!
-        logger.warn("Håndterer UgyldigGeometriException. Detaljer: [$message]")
-
+    fun handleUgyldigGeometriException(ugyldigGEx: UgyldigGeometriException, request: WebRequest): ResponseEntity<Any> {
         val topologyValidationError = ugyldigGEx.topologyValidationError
-        val coordinate = topologyValidationError.coordinate
         val errorResponse = GeometriErrorResponse(
             geometryType = ugyldigGEx.geometry::class.java.simpleName,
             validationError = topologyValidationError.message,
-            feilLokasjon = SosiGeometryFunctions.coordinateToPoint(coordinate),
-            message = message
+            feilLokasjon = SosiGeometryFunctions.coordinateToPoint(topologyValidationError.coordinate),
+            message = ugyldigGEx.message!!
         )
-        return ResponseEntity<GeometriErrorResponse>(errorResponse, HttpHeaders(), errorResponse.httpStatus)
+        return handleExceptionInternal(ugyldigGEx, errorResponse, HttpHeaders(), errorResponse.httpStatus, request)
     }
 
     @ExceptionHandler(value = [GeometriFailedToBeCreatedException::class])
-    fun handleGeometriFailedToBeCreatedException(ex: GeometriFailedToBeCreatedException): ResponseEntity<GeometriErrorResponse> {
-        val message = ex.message!!
-        logger.warn("Håndterer GeometriFailedToBeCreatedException. Detaljer: [$message]")
-
+    fun handleGeometriFailedToBeCreatedException(ex: GeometriFailedToBeCreatedException, request: WebRequest): ResponseEntity<Any> {
         val errorResponse = GeometriErrorResponse(
             feilLokasjon = ex.point,
-            message = message
+            message = ex.message!!
         )
-        return ResponseEntity<GeometriErrorResponse>(errorResponse, HttpHeaders(), errorResponse.httpStatus)
+        return handleExceptionInternal(ex, errorResponse, HttpHeaders(), errorResponse.httpStatus, request)
+    }
+
+    override fun handleExceptionInternal(ex: Exception, body: Any?, headers: HttpHeaders, status: HttpStatus, request: WebRequest): ResponseEntity<Any> {
+        if (this.logger.isWarnEnabled) {
+            this.logger.warn(buildLogMessage(ex))
+        }
+        return super.handleExceptionInternal(ex, body, headers, status, request);
+    }
+
+    private fun buildLogMessage(ex: Exception): String {
+        return "Resolved [" + LogFormatUtils.formatValue(ex, -1, true) + "]"
     }
 
 }
-
 
