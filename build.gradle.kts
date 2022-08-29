@@ -81,7 +81,7 @@ dependencies {
     implementation("org.springframework.cloud:spring-cloud-starter-vault-config:3.1.1")
     implementation("org.springframework.kafka:spring-kafka")
 
-    runtimeOnly("org.flywaydb:flyway-core:8.5.13")
+    runtimeOnly("org.flywaydb:flyway-core:9.2.0")
     runtimeOnly("org.postgresql:postgresql")
 
     testImplementation("org.jetbrains.kotlin:kotlin-test")
