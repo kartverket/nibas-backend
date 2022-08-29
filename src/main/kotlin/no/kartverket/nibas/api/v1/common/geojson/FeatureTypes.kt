@@ -1,12 +1,79 @@
 package no.kartverket.nibas.api.v1.common.geojson
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
-import com.fasterxml.jackson.databind.annotation.JsonSerialize
+import com.fasterxml.jackson.annotation.JsonSubTypes
+import com.fasterxml.jackson.annotation.JsonTypeInfo
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping
 import io.swagger.v3.oas.annotations.media.Schema
 import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Metadata
-import org.locationtech.jts.geom.Geometry
+import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
+
+const val DISCRIMINATOR_FIELD: String = "type"
+const val POINT_SCHEMA: String = "Point"
+const val LINE_STRING_SCHEMA: String = "LineString"
+const val MULTI_POLYGON_SCHEMA: String = "MultiPolygon"
+
+@Schema(
+    description = "Geometry-typene vi støtter i NIBAS.",
+    subTypes = [
+        Point::class,
+        LineString::class,
+        MultiPolygon::class
+    ],
+    discriminatorProperty = DISCRIMINATOR_FIELD,
+    discriminatorMapping = [
+        DiscriminatorMapping(value = POINT_SCHEMA, schema = Point::class),
+        DiscriminatorMapping(value = LINE_STRING_SCHEMA, schema = LineString::class),
+        DiscriminatorMapping(value = MULTI_POLYGON_SCHEMA, schema = MultiPolygon::class)
+    ]
+)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = DISCRIMINATOR_FIELD)
+@JsonSubTypes(
+    JsonSubTypes.Type(value = Point::class, name = POINT_SCHEMA),
+    JsonSubTypes.Type(value = LineString::class, name = LINE_STRING_SCHEMA),
+    JsonSubTypes.Type(value = MultiPolygon::class, name = MULTI_POLYGON_SCHEMA)
+)
+interface Geometry
+
+@Schema(
+    name = POINT_SCHEMA,
+    description = "Wrapper-objekt rundt en JTS Point.",
+)
+data class Point(
+    @Schema(description = "Geometriens type. Diskriminator.")
+    val type: String = POINT_SCHEMA,
+    @Schema(description = "Koordinatsystemet. Defaulter til 25833.")
+    val srid: String = SosiGeometryFunctions.defaultSrid.toString(),
+    @Schema(description = "X og y som liste.")
+    val coordinates: List<Double>)
+    : Geometry
+
+@Schema(
+    name = LINE_STRING_SCHEMA,
+    description = "Wrapper-objekt rundt en JTS LineString.",
+)
+data class LineString(
+    @Schema(description = "Geometriens type. Diskriminator.")
+    val type: String = LINE_STRING_SCHEMA,
+    @Schema(description = "Koordinatsystemet. Defaulter til 25833.")
+    val srid: String = SosiGeometryFunctions.defaultSrid.toString(),
+    @Schema(description = "Liste av (x og y som liste).")
+    val coordinates: List<List<Double>>)
+    : Geometry
+
+@Schema(
+    name = MULTI_POLYGON_SCHEMA,
+    description = "Wrapper-objekt rundt et JTS MultiPolygon.",
+)
+data class MultiPolygon(
+    @Schema(description = "Geometriens type. Diskriminator.")
+    val type: String = MULTI_POLYGON_SCHEMA,
+    @Schema(description = "Koordinatsystemet. Defaulter til 25833.")
+    val srid: String = SosiGeometryFunctions.defaultSrid.toString(),
+    @Schema(description = "Liste av polygonenes liste av LinearRings som igjen har liste av koordinater som er liste av x og y.")
+    val coordinates: List<List<List<List<Double>>>>)
+    : Geometry
 
 data class FeatureCollection(
     @Schema(description = "Toppnivå for geojson-strukturen, definert av en konstant med navn type og verdi FeatureCollection")
@@ -27,8 +94,6 @@ data class Feature(
     @JsonProperty("properties")
     var properties: FeatureProperties,
 
-    @JsonSerialize(using = NibasGeometryAsGeoJSONSerializer::class)
-    @JsonDeserialize(using = NibasGeometryDeserializer::class)
     @Schema(description = "Geometrien til denne featuren.")
     var geometry: Geometry
 )

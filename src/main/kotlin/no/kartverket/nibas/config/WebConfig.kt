@@ -1,6 +1,7 @@
 package no.kartverket.nibas.config
 
 import no.kartverket.nibas.api.v1.response.GeometriErrorResponse
+import no.kartverket.nibas.inndelinger.toDto
 import no.kartverket.nibas.kodelister.DefaultKodelisteService
 import no.kartverket.nibas.kodelister.KodelisteFetcher
 import no.kartverket.nibas.kodelister.KodelisteService
@@ -70,7 +71,7 @@ class CustomRestExceptionHandler : ResponseEntityExceptionHandler() {
         val errorResponse = GeometriErrorResponse(
             geometryType = ugyldigGEx.geometry::class.java.simpleName,
             validationError = topologyValidationError.message,
-            feilLokasjon = SosiGeometryFunctions.coordinateToPoint(topologyValidationError.coordinate),
+            feilLokasjon = SosiGeometryFunctions.coordinateToPoint(topologyValidationError.coordinate).toDto(),
             message = ugyldigGEx.message!!
         )
         return handleExceptionInternal(ugyldigGEx, errorResponse, HttpHeaders(), errorResponse.httpStatus, request)
@@ -79,7 +80,7 @@ class CustomRestExceptionHandler : ResponseEntityExceptionHandler() {
     @ExceptionHandler(value = [GeometriFailedToBeCreatedException::class])
     fun handleGeometriFailedToBeCreatedException(ex: GeometriFailedToBeCreatedException, request: WebRequest): ResponseEntity<Any> {
         val errorResponse = GeometriErrorResponse(
-            feilLokasjon = ex.point,
+            feilLokasjon = ex.point.toDto(),
             message = ex.message!!
         )
         return handleExceptionInternal(ex, errorResponse, HttpHeaders(), errorResponse.httpStatus, request)

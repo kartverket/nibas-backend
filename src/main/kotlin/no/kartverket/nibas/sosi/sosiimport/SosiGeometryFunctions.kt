@@ -31,12 +31,14 @@ class SosiGeometryFunctions {
                 null -> defaultSrid
                 else -> koordsysToSrid.getOrDefault(koordsys, defaultSrid)
             }
+            return createGeometryFactoryFromSrid(srid)
+        }
 
+        private fun createGeometryFactoryFromSrid(srid: Int): GeometryFactory {
             val geometryFactory = sridToGeometryFactory.getOrDefault(srid, GeometryFactory(PrecisionModel(100.0), srid))
             if (!sridToGeometryFactory.containsKey(srid)) {
                 sridToGeometryFactory[srid] = geometryFactory
             }
-
             return geometryFactory
         }
 
@@ -48,6 +50,13 @@ class SosiGeometryFunctions {
             }
 
             return getGeometryFactory(koordsys).createLineString(koordinater.toTypedArray())
+        }
+
+        fun koordinaterToLineString(coordinates: List<List<Double>>, srid: String = defaultSrid.toString()): LineString {
+            return createGeometryFactoryFromSrid(srid.toInt()).createLineString(
+                coordinates
+                    .map { Coordinate(it[0], it[1]) }
+                    .toTypedArray())
         }
 
         fun sosiKoordinatToPoint(sosiNordOest: List<SosiNordOest>, koordsys: String?): Point? {

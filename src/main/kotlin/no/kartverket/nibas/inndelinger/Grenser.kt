@@ -31,7 +31,6 @@ import no.kartverket.nibas.repository.NoeyaktighetsklassekodeRepository
 import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.repository.TerrengdetaljkodeRepository
 import no.kartverket.nibas.unwrap
-import org.locationtech.jts.geom.LineString
 import org.locationtech.jts.geom.Point
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
@@ -114,7 +113,7 @@ class GrenseService(
         val grenserMedRetningOgKontekst = features.map { feature ->
             var grense: Grense = eksisterendeGrenser.find { it.id == feature.id }!!
 
-            grense.grense = feature.geometry as LineString
+            grense.grense = feature.geometry.toLineString()
             grense = updateMetadataOnGrense(feature, grense)
 
             val kontekstEgenskaper = feature.properties.kontekstEgenskaper!!
@@ -231,12 +230,12 @@ fun grenseToFeature(grense: Grense, kodelisteService: KodelisteService): Feature
     return Feature(
         id = grense.id,
         properties = featureProperties,
-        geometry = grense.grense
+        geometry = grense.grense.toDto()
     )
 }
 
 fun posisjonToFeature(posisjon: Point?): Feature =
-    Feature(properties = FeatureProperties(type = "Posisjon"), geometry = posisjon!!)
+    Feature(properties = FeatureProperties(type = "Posisjon"), geometry = posisjon!!.toDto())
 
 fun flateToFeature(flate: Flate, kodelisteService: KodelisteService): Feature {
     var featureProperties = FeatureProperties(
@@ -249,6 +248,6 @@ fun flateToFeature(flate: Flate, kodelisteService: KodelisteService): Feature {
     return Feature(
         id = flate.id,
         properties = featureProperties,
-        geometry = flate.flate!!
+        geometry = flate.flate!!.toDto()
     )
 }

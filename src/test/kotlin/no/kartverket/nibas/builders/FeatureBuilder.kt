@@ -14,6 +14,7 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.RiksgrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Sporingsinformasjon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.StatistiskgrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.TerritorialgrenseMetadata
+import no.kartverket.nibas.inndelinger.toDto
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.GeometryFactory
@@ -68,7 +69,7 @@ class FeatureBuilder(private val id: String? = "1") {
         return Feature(
             id = id,
             properties = properties,
-            geometry = geometry
+            geometry = geometry.toDto()
         )
     }
 

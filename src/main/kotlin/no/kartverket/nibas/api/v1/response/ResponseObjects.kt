@@ -1,14 +1,12 @@
 package no.kartverket.nibas.api.v1.response
 
-import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import io.swagger.v3.oas.annotations.media.Schema
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.common.Fylkesnummer
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
-import no.kartverket.nibas.api.v1.common.geojson.NibasGeometryAsGeoJSONSerializer
+import no.kartverket.nibas.api.v1.common.geojson.Point
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.inndelinger.RevisjonStatus
-import org.locationtech.jts.geom.Point
 import org.springframework.http.HttpStatus
 import java.time.LocalDate
 import java.util.*
@@ -243,7 +241,6 @@ data class GeometriErrorResponse(
     @Schema(description = "Valideringsfeil")
     val validationError: String? = null,
 
-    @JsonSerialize(using = NibasGeometryAsGeoJSONSerializer::class)
     @Schema(description = "Beskriver lokasjonen for feilen")
     val feilLokasjon: Point,
 
