@@ -93,8 +93,16 @@ class CustomRestExceptionHandler : ResponseEntityExceptionHandler() {
     }
 
     private fun buildLogMessage(ex: Exception): String {
-        return "Resolved [" + LogFormatUtils.formatValue(ex, -1, true) + "]"
+        val builder = StringBuilder("Resolved ${prettyPrintEx(ex)}")
+        val cause = ex.cause
+        if (cause != null) {
+            builder.appendLine()
+                .appendLine("--> Cause ${prettyPrintEx(cause)}")
+        }
+        return builder.toString()
     }
+
+    private fun prettyPrintEx(ex: Throwable): String = "[" + LogFormatUtils.formatValue(ex, -1, true) + "]"
 
 }
 

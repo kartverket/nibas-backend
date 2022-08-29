@@ -114,7 +114,7 @@ class SosiGeometryFunctions {
             try {
                 return geometryFactory.createPolygon(skall, hull)
             } catch (ex: Exception) { // Skall og hull bør ikke være ugyldige her, men for sikkerhets skyld håndteres også her
-                throw GeometriFailedToBeCreatedException(coordinateToPoint(skall.coordinate))
+                throw GeometriFailedToBeCreatedException(coordinateToPoint(skall.coordinate), ex)
             }
         }
 
@@ -136,16 +136,15 @@ class SosiGeometryFunctions {
             try {
                 return createLinearRing(coordinates)
             } catch (exception: Exception) {
-                throw GeometriFailedToBeCreatedException(coordinateToPoint(coordinates[0]))
+                throw GeometriFailedToBeCreatedException(coordinateToPoint(coordinates[0]), exception)
             }
         }
 
     }
 }
 
-class GeometriFailedToBeCreatedException(val point: Point)
-    : RuntimeException("Geometri-objekt kunne ikke opprettes. Feil-lokasjon: ${point.coordinate}")
-
+class GeometriFailedToBeCreatedException(val point: Point, rootEx: Exception? = null)
+    : RuntimeException("Geometri-objekt kunne ikke opprettes. Feil-lokasjon: ${point.coordinate}", rootEx)
 
 class UgyldigGeometriException(val geometry: Geometry,
                                val topologyValidationError: TopologyValidationError)
