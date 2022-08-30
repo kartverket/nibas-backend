@@ -9,6 +9,7 @@ import no.kartverket.nibas.api.v1.NOEYAKTIGHETSKLASSEKODE_PATH
 import no.kartverket.nibas.api.v1.TERRENGDETALJKODE_PATH
 import no.kartverket.nibas.domain.CommonMetadataProperties
 import no.kartverket.nibas.domain.Flate
+import no.kartverket.nibas.domain.FoelgerGrunnkretsgrenseIdentifikasjon
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.MaritimGrense
 import no.kartverket.nibas.inndelinger.createKommunenummerFromUUID
@@ -89,6 +90,7 @@ class MetadataMapper(private val kodelisteService: KodelisteService,
         commonGrense = getCommonGrenseMetadata(grense),
         foelgerTerrengdetalj = KodelisteEntry(id = grense.foelgerterrengdetalj?.id, href = kodelisteHrefProvider.terrengDetaljHref()),
         noeyaktighetsklasse = KodelisteEntry(id = grense.noeyaktighetsklasse?.id, href = kodelisteHrefProvider.noeyaktighetsklasseHref()),
+        foelgerGrunnkretsgrense = grense.foelgerGrunnkretsgrenseIdentifikasjon?.toIdentifikasjon()
     )
 
     private fun getCommonGrenseMetadata(grense: Grense): CommonGrenseMetadata = CommonGrenseMetadata(
@@ -118,6 +120,9 @@ class MetadataMapper(private val kodelisteService: KodelisteService,
             ids = this.getLandIds().sorted(),
             href = kodelisteHrefProvider.landkodeHref())
     )
+
+    private fun FoelgerGrunnkretsgrenseIdentifikasjon.toIdentifikasjon(): Identifikasjon =
+        Identifikasjon(this.lokalid, this.navnerom, this.versjonid)
 
 }
 

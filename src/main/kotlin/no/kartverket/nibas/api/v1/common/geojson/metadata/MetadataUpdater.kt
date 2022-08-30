@@ -2,6 +2,7 @@ package no.kartverket.nibas.api.v1.common.geojson.metadata
 
 import no.kartverket.nibas.domain.AnsvarligMyndighetHolder
 import no.kartverket.nibas.domain.CommonMetadataProperties
+import no.kartverket.nibas.domain.FoelgerGrunnkretsgrenseIdentifikasjon
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.Landkode
 import no.kartverket.nibas.domain.MaritimGrense
@@ -56,6 +57,23 @@ class MetadataUpdater(private val landKodeRepository: LandKodeRepository,
         val terrengdetaljKodeId = metadata.foelgerTerrengdetalj.id
         grense.foelgerterrengdetalj = hentTerrengDetaljKode(terrengdetaljKodeId)
         grense.noeyaktighetsklasse = hentNoeyaktighetsKlasse(metadata.noeyaktighetsklasse.id)
+
+        return grense
+    }
+
+    fun updateKommunalKretsgrense(grense: Grense, metadata: KommunalKretsgrenseMetadata): Grense {
+        grense.updateWithCommonMetadata(metadata.common)
+        updateWithGrenseMetadata(grense, metadata.commonGrense)
+
+        grense.foelgerterrengdetalj = hentTerrengDetaljKode(metadata.foelgerTerrengdetalj.id)
+        grense.noeyaktighetsklasse = hentNoeyaktighetsKlasse(metadata.noeyaktighetsklasse.id)
+        metadata.foelgerGrunnkretsgrense?.let {
+            grense.foelgerGrunnkretsgrenseIdentifikasjon = FoelgerGrunnkretsgrenseIdentifikasjon(
+                it.lokalid,
+                it.navnerom,
+                it.versjonid
+            )
+        }
 
         return grense
     }

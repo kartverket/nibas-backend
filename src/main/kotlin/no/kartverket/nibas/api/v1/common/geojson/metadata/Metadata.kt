@@ -196,6 +196,8 @@ data class KommunalKretsgrenseMetadata(
     var foelgerTerrengdetalj: KodelisteEntry = KodelisteEntry(),
     @Schema(description = "Klassifikasjon av stedfestingsnøyaktighet på grenser, og er basert på dårligste nøyaktighet til grensepunktene til grensen.")
     var noeyaktighetsklasse: KodelisteEntry = KodelisteEntry(),
+    @Schema(description = "Angir om grensen følger grunnkretsgrense og i så fall hvilken grunnkretsgrense")
+    var foelgerGrunnkretsgrense: Identifikasjon?
 ): Metadata
 
 data class CommonMetadata(
