@@ -21,7 +21,9 @@ $ ./gradlew clean build -Ppat=<PERSONLIG_PAT> -Pgh_username=<BRUKERNAVN_GITHUB>
 Propertiene pat og gh_username må være tilstede for å kunne hente artifakter som aut-lib fra Github.
 
 Alternativt til å angi Gradle-properties på command line så kan det være kjekt å definere en fil gradle.properties som må legges i katalogen GRADLE_USER_HOME
-med følgende innhold:
+eller på rot i mappen for prosjektet. Denne filen skal ligge i `.gitignore` og skal ikke sjekkes inn i prosjektet.
+
+Filen skal ha følgende innhold:
 
 ```
 pat=<PERSONLIG_PAT>
@@ -33,11 +35,18 @@ source-jaren bli lastet ned.
 
 ## Kjøre på lokal maskin <a name="lokal"></a>
 
+Den letteste måten å kjøre det opp lokalt på egen maskin er ved å starte opp databasen og vault
+via docker-compose. Om man kjører docker-compose med filen `docker-compose-local.yml` vil starte
+vault og database i egne containere.
+
+Om man bruker intelliJ kan man da starte main-metoden i `NibasBackendApplication.kt`. Husk å sette
+aktiv spring-profil til `localhost`. Dette gjøres under "Run/Debug Configurations".
+
+Alternativt kan man også starte applikasjonen via terminalen:
+
 * Definer følgende miljøvariable:
     * VAULT_TOKEN (Logg inn på Vault, og velg "Copy Token" øverst til høyre under profil-menyen)
     * VAULT_ADDR https://vault.dev.skip.statkart.no
-
-* Start opp nibas-db. Se [README.md](https://github.com/kartverket/nibas-db) i nibas-db
 
 * Start nibas-backend:
 

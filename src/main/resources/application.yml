@@ -105,10 +105,14 @@ spring:
     vault:
       uri: ${VAULT_ADDR:https://vault.dev.skip.statkart.no/}
       authentication: token
-      token: ${VAULT_TOKEN}
+      token: ${VAULT_TOKEN:myroot}
       enabled: true
   kafka:
     bootstrap-servers: localhost:29092
+  datasource:
+    url: ${DB_CONNECTION_STRING:jdbc:postgresql://localhost:5432/nibas}
+    username: ${DB_USER:nibas}
+    password: ${DB_PASSWORD:nibas}
 
 nibas:
   kafka:

@@ -1,6 +1,8 @@
 HELP.md
 .gradle
+gradle.properties
 build/
+sosi/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
