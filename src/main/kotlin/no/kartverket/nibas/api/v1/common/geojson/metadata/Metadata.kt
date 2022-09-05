@@ -66,7 +66,8 @@ const val DISCRIMINATOR_FIELD: String = "discriminator"
     JsonSubTypes.Type(value = TerritorialgrenseMetadata::class, name = TERRITORIALGRENSE_METADATA_SCHEMA),
     JsonSubTypes.Type(value = AvtaltAvgrensningslinjeMetadata::class, name = AVTALT_AVGRENSNINGSLINJE_METADATA_SCHEMA),
     JsonSubTypes.Type(value = GrunnlinjeMetadata::class, name = GRUNNLINJE_METADATA_SCHEMA),
-    JsonSubTypes.Type(value = StatistiskgrenseMetadata::class, name = STATISTISKGRENSE_METADATA_SCHEMA)
+    JsonSubTypes.Type(value = StatistiskgrenseMetadata::class, name = STATISTISKGRENSE_METADATA_SCHEMA),
+    JsonSubTypes.Type(value = KommunalKretsgrenseMetadata::class, name = KOMMUNAL_KRETSGRENSE_METADATA_SCHEMA)
 )
 interface Metadata
 

@@ -167,6 +167,7 @@ class Grense(
     var landkoder: MutableSet<Landkode> = mutableSetOf()
 
     fun grunnkretser(): Set<Grunnkrets> = grunnkretser.map { it.grunnkrets }.toSet()
+    fun stemmekretser(): Set<Stemmekrets> = stemmekretser.map { it.stemmekrets }.toSet()
     fun kommuner(): Set<Kommune> = grunnkretser().map { it.kommune }.toSet()
 
     fun fylker(): Set<Fylke> = kommuner().map { it.fylke }.toSet()
@@ -180,6 +181,8 @@ class Grense(
     fun finnFlaterOppTilFylke(): Set<Flate> = HashSet(finnFlaterOppTilKommune() + fylker())
 
     fun finnFlaterOppTilNasjon(): Set<Flate> = HashSet(finnFlaterOppTilFylke() + nasjoner())
+
+    fun finnFlaterOppTilStemmekrets(): Set<Flate> = stemmekretser()
 
     override fun getInfo(): String? {
         return informasjonstekst

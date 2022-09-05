@@ -9,11 +9,13 @@ import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Nasjon
+import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.repository.FylkeRepository
 import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.NasjonRepository
+import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.unwrap
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -25,6 +27,7 @@ class FlateService @Autowired constructor(
     private val fylkeRepository: FylkeRepository,
     private val nasjonRepository: NasjonRepository,
     private val grunnkretsRepository: GrunnkretsRepository,
+    private val stemmekretsRepository: StemmekretsRepository,
     private val grenseRepository: GrenseRepository
 ) {
 
@@ -41,6 +44,7 @@ class FlateService @Autowired constructor(
                 Grensetype.Territorialgrense -> grense.finnFlaterOppTilNasjon()
                 Grensetype.Grunnkretsgrense -> grense.finnFlaterOppTilGrunnkrets()
                 Grensetype.Delomraadegrense -> grense.finnFlaterOppTilGrunnkrets()
+                Grensetype.Stemmekretsgrense -> grense.finnFlaterOppTilStemmekrets()
                 else -> throw RuntimeException("Not yet implemented for grensetype: ${it.properties.type}")
             }
         }.toSet()
@@ -53,6 +57,7 @@ class FlateService @Autowired constructor(
                 is Fylke -> fylkeRepository.save(enhet)
                 is Nasjon -> nasjonRepository.save(enhet)
                 is Grunnkrets -> grunnkretsRepository.save(enhet)
+                is Stemmekrets -> stemmekretsRepository.save(enhet)
             }
         }
     }

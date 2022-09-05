@@ -1,6 +1,7 @@
 package no.kartverket.nibas.inndelinger
 
 import no.kartverket.nibas.api.v1.StemmekretsApi
+import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.request.StemmekretsRequest
@@ -40,7 +41,7 @@ class StemmekretsController(
         }
         return FeatureCollection(
             features = grenser.sortedBy { it.grenseKoblingAttributter.rekkefoelge }
-                .map { grenseKoblingToFeature(it, kodelisteService) }
+                .map { grenseKoblingToFeature(it, kodelisteService, KontekstEnhetType.STEMMEKRETS) }
         )
     }
 
