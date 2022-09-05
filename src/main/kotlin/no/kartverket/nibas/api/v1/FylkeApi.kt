@@ -39,7 +39,7 @@ interface FylkeApi {
         )
     )
     @GetMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentAlle(): List<FylkeRef>
+    fun hentFylker(): List<FylkeRef>
 
     @Operation(summary = "Hent et fylke med gitt id", description = "Henter fylke med gitt id")
     @ApiResponses(
@@ -54,7 +54,7 @@ interface FylkeApi {
         )
     )
     @GetMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentEn(@Parameter(description = "ID-en til fylket man vil hente") @PathVariable id: String): FylkeResponse
+    fun hentFylke(@Parameter(description = "ID-en til fylket man vil hente") @PathVariable id: String): FylkeResponse
 
     @Operation(
         summary = "Hent grensene til et gitt fylke",
@@ -62,7 +62,7 @@ interface FylkeApi {
     )
     @DefaultFeatureCollectionApiResponses
     @GetMapping("/{id}/grenser", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentGrenser(@Parameter(description = "ID-en til fylket man vil hente") @PathVariable id: String): FeatureCollection
+    fun hentGrenserForFylke(@Parameter(description = "ID-en til fylket man vil hente") @PathVariable id: String): FeatureCollection
 
 
     @PutMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])

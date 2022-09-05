@@ -40,7 +40,7 @@ interface GrunnkretsApi {
         ApiResponse(responseCode = "404", description = "Not Found")
     )
     @GetMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentEn(@Parameter(description = "ID-en til grunnkretsen man vil hente") @PathVariable id: String): GrunnkretsResponse
+    fun hentGrunnkrets(@Parameter(description = "ID-en til grunnkretsen man vil hente") @PathVariable id: String): GrunnkretsResponse
 
     @Operation(
         summary = "Hent grensene til en gitt grunnkrets",
@@ -48,7 +48,7 @@ interface GrunnkretsApi {
     )
     @DefaultFeatureCollectionApiResponses
     @GetMapping("/{id}/grenser", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentGrenser(@Parameter(description = "ID-en til grunnkretsen man vil hente") @PathVariable id: String): FeatureCollection
+    fun hentGrenserForGrunnkrets(@Parameter(description = "ID-en til grunnkretsen man vil hente") @PathVariable id: String): FeatureCollection
 
     @Operation(
         summary = "Hent historiske revisjoner for en gitt grunnkrets",

@@ -2,7 +2,6 @@ package no.kartverket.nibas.api.v1
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
-import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -10,7 +9,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.request.StemmekretsRequest
-import no.kartverket.nibas.api.v1.response.StemmekretsRef
 import no.kartverket.nibas.api.v1.response.StemmekretsResponse
 import no.kartverket.nibas.api.v1.response.RevisjonRef
 import org.springframework.http.MediaType
@@ -19,7 +17,6 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
 
 @RequestMapping("/v1/stemmekretser")
 @Tag(
@@ -43,7 +40,7 @@ interface StemmekretsApi {
         ApiResponse(responseCode = "404", description = "Not Found")
     )
     @GetMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentEn(@Parameter(description = "ID-en til stemmekretsen man vil hente") @PathVariable id: String): StemmekretsResponse
+    fun hentStemmekrets(@Parameter(description = "ID-en til stemmekretsen man vil hente") @PathVariable id: String): StemmekretsResponse
 
     @Operation(
         summary = "Hent grensene til en gitt stemmekrets",
@@ -51,7 +48,7 @@ interface StemmekretsApi {
     )
     @DefaultFeatureCollectionApiResponses
     @GetMapping("/{id}/grenser", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentGrenser(@Parameter(description = "ID-en til stemmekretsen man vil hente") @PathVariable id: String): FeatureCollection
+    fun hentGrenserForStemmekrets(@Parameter(description = "ID-en til stemmekretsen man vil hente") @PathVariable id: String): FeatureCollection
 
     @Operation(
         summary = "Hent historiske revisjoner for en gitt stemmekrets",

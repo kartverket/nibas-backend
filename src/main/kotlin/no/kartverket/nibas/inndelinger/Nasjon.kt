@@ -27,16 +27,16 @@ class NasjonController @Autowired constructor(
     private val kodelisteService: KodelisteService
 ) : NasjonApi {
 
-    override fun hentAlle(): List<NasjonRefResponse> = nasjonService.hentAlleNasjoner().map { toNasjonRef(it) }
+    override fun hentNasjoner(): List<NasjonRefResponse> = nasjonService.hentAlleNasjoner().map { toNasjonRef(it) }
 
-    override fun hentEn(id: String): NasjonResponse {
+    override fun hentNasjon(id: String): NasjonResponse {
         return when (val nasjon = nasjonService.hentNasjon(id)) {
             null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
             else -> toNasjonResponse(nasjon, kodelisteService)
         }
     }
 
-    override fun hentGrenser(id: String): FeatureCollection {
+    override fun hentGrenserForNasjon(id: String): FeatureCollection {
         val grenser = nasjonService.hentGrenserForNasjon(id)
         if (grenser.isEmpty()) {
             throw ResponseStatusException(HttpStatus.NOT_FOUND)

@@ -27,11 +27,11 @@ class GrunnkretsController(
     private val grunnkretsControllerService: GrunnkretsControllerService
 ) : GrunnkretsApi {
 
-    override fun hentEn(id: String): GrunnkretsResponse {
+    override fun hentGrunnkrets(id: String): GrunnkretsResponse {
         return grunnkretsControllerService.hentEn(id)
     }
 
-    override fun hentGrenser(id: String): FeatureCollection {
+    override fun hentGrenserForGrunnkrets(id: String): FeatureCollection {
         val grenser = grunnkretsService.hentGrenserForGrunnkrets(id)
         if (grenser.isEmpty()) {
             throw ResponseStatusException(HttpStatus.NOT_FOUND)

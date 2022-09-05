@@ -29,11 +29,11 @@ class StemmekretsController(
     private val stemmekretsControllerService: StemmekretsControllerService
 ) : StemmekretsApi {
 
-    override fun hentEn(id: String): StemmekretsResponse {
+    override fun hentStemmekrets(id: String): StemmekretsResponse {
         return stemmekretsControllerService.hentEn(id)
     }
 
-    override fun hentGrenser(id: String): FeatureCollection {
+    override fun hentGrenserForStemmekrets(id: String): FeatureCollection {
         val grenser = stemmekretsService.hentGrenserForStemmekrets(id)
         if (grenser.isEmpty()) {
             throw ResponseStatusException(HttpStatus.NOT_FOUND)

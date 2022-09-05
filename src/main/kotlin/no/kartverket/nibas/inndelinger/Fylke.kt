@@ -28,16 +28,16 @@ class FylkeController @Autowired constructor(
     private val historikkService: HistorikkService
 ) : FylkeApi {
 
-    override fun hentAlle(): List<FylkeRef> = fylkeService.hentAlleFylker().map { toFylkeRef(it) }
+    override fun hentFylker(): List<FylkeRef> = fylkeService.hentAlleFylker().map { toFylkeRef(it) }
 
-    override fun hentEn(id: String): FylkeResponse {
+    override fun hentFylke(id: String): FylkeResponse {
         return when (val fylke = fylkeService.hentFylke(id)) {
             null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
             else -> toFylkeResponse(fylke, kodelisteService)
         }
     }
 
-    override fun hentGrenser(id: String): FeatureCollection {
+    override fun hentGrenserForFylke(id: String): FeatureCollection {
         val grenser = fylkeService.hentGrenserForFylke(id)
         if (grenser.isEmpty()) {
             throw ResponseStatusException(HttpStatus.NOT_FOUND)

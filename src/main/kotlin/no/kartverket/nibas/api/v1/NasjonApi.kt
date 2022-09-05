@@ -39,7 +39,7 @@ interface NasjonApi {
         )
     )
     @GetMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentAlle(): List<NasjonRef>
+    fun hentNasjoner(): List<NasjonRef>
 
     @Operation(summary = "Hent en nasjon med gitt id", description = "Henter nasjon med gitt id")
     @ApiResponses(
@@ -54,7 +54,7 @@ interface NasjonApi {
         )
     )
     @GetMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentEn(@Parameter(description = "ID-en til nasjonen man vil hente") @PathVariable id: String): NasjonResponse
+    fun hentNasjon(@Parameter(description = "ID-en til nasjonen man vil hente") @PathVariable id: String): NasjonResponse
 
     @Operation(
         summary = "Hent grensene til en gitt nasjon",
@@ -62,7 +62,7 @@ interface NasjonApi {
     )
     @DefaultFeatureCollectionApiResponses
     @GetMapping("/{id}/grenser", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentGrenser(@Parameter(description = "ID-en til nasjonen man vil hente") @PathVariable id: String): FeatureCollection
+    fun hentGrenserForNasjon(@Parameter(description = "ID-en til nasjonen man vil hente") @PathVariable id: String): FeatureCollection
 
 
     @PutMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])

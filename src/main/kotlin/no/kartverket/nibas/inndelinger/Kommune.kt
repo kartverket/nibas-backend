@@ -33,21 +33,21 @@ class KommuneController @Autowired constructor(
     private val historikkService: HistorikkService
 ) : KommuneApi {
 
-    override fun hentAlle(fylkeId: String?): List<KommuneRef> {
+    override fun hentKommuner(fylkeId: String?): List<KommuneRef> {
         return when (fylkeId) {
             null -> kommuneService.hentAlleKommuner().map { toKommuneRef(it) }
             else -> kommuneService.hentKommunerForFylke(fylkeId).map { toKommuneRef(it) }
         }
     }
 
-    override fun hentEn(id: String): KommuneResponse {
+    override fun hentKommune(id: String): KommuneResponse {
         return when (val kommune = kommuneService.hentKommune(id)) {
             null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
             else -> toKommuneResponse(kommune, kodelisteService)
         }
     }
 
-    override fun hentGrenser(id: String): FeatureCollection {
+    override fun hentGrenserForKommune(id: String): FeatureCollection {
         val grenser = kommuneService.hentGrenserForKommune(id)
         if (grenser.isEmpty()) {
             throw ResponseStatusException(HttpStatus.NOT_FOUND)

@@ -43,7 +43,7 @@ interface KommuneApi {
         )
     )
     @GetMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentAlle(
+    fun hentKommuner(
         @Parameter(description = "Valgfri id til et fylke for å filtrere kommuner innenfor et fylke") @RequestParam(
             name = "fylkeid",
             required = false
@@ -63,7 +63,7 @@ interface KommuneApi {
         ApiResponse(responseCode = "404", description = "Not Found")
     )
     @GetMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentEn(@Parameter(description = "ID-en til kommunen man vil hente") @PathVariable id: String): KommuneResponse
+    fun hentKommune(@Parameter(description = "ID-en til kommunen man vil hente") @PathVariable id: String): KommuneResponse
 
     @Operation(
         summary = "Hent grensene til en gitt kommune",
@@ -71,7 +71,7 @@ interface KommuneApi {
     )
     @DefaultFeatureCollectionApiResponses
     @GetMapping("/{id}/grenser", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentGrenser(@Parameter(description = "ID-en til kommunen man vil hente") @PathVariable id: String): FeatureCollection
+    fun hentGrenserForKommune(@Parameter(description = "ID-en til kommunen man vil hente") @PathVariable id: String): FeatureCollection
 
     @Operation(
         summary = "Hent historiske revisjoner for en gitt kommune",
