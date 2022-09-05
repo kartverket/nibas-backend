@@ -19,6 +19,7 @@ import no.kartverket.nibas.domain.Spraakkode
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.Terrengdetaljkode
 import no.kartverket.nibas.domain.Typeendring
+import no.kartverket.nibas.domain.Utkast
 import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.NoRepositoryBean
 
@@ -57,3 +58,4 @@ interface StemmekretsRepository : CrudRepositoryWithLokalIdFinder<Stemmekrets, S
 
 interface GrenseRepository : CrudRepositoryWithLokalIdFinder<Grense, String>
 
+interface UtkastRepository : CrudRepository<Utkast, String>
