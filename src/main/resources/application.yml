@@ -108,7 +108,7 @@ spring:
     import: vault://nibas/nibas-backend-local, vault://nibas/nibas-db-local
   cloud:
     vault:
-      uri: https://vault.dev.skip.statkart.no/
+      uri: ${VAULT_ADDR:https://vault.dev.skip.statkart.no/}
       authentication: token
       token: ${VAULT_TOKEN}
       enabled: true

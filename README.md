@@ -35,6 +35,7 @@ source-jaren bli lastet ned.
 
 * Definer følgende miljøvariable:
     * VAULT_TOKEN (Logg inn på Vault, og velg "Copy Token" øverst til høyre under profil-menyen)
+    * VAULT_ADDR https://vault.dev.skip.statkart.no
 
 * Start opp nibas-db. Se [README.md](https://github.com/kartverket/nibas-db) i nibas-db
 
