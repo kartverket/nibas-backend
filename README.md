@@ -117,7 +117,7 @@ Databasen migreres ved oppstart av applikasjonen, men dersom du ønsker å gjør
 
 ## Starte med tom database (ved lokal testing) - flywayClean
 
-`./gradlew -Dflyway.user=nibas -Dflyway.password=<se passord i vault> -Dflyway.url=jdbc:postgresql://localhost:5432/nibas flywayClean`
+`./gradlew -Dflyway.user=nibas -Dflyway.password=<se passord i vault> -Dflyway.url=jdbc:postgresql://localhost:5432/nibas -Dflyway.cleanDisabled="false" flywayClean`
 
 ## Ressurser
 
