@@ -3,11 +3,16 @@ package no.kartverket.nibas.sosi.model
 import no.kartverket.nibas.domain.PosisjonskvalitetEmbeddable
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.sosi.common.SosiKoder
+import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import org.locationtech.jts.geom.Coordinate
+import org.locationtech.jts.geom.LineString
 import java.time.LocalDate
 
 open class SosiGeometri(type: String, niva: Int, verdier: MutableList<SosiVerdi>) :
     SosiObjekt(type = type, niva, verdier = verdier) {
+
+    lateinit var splittetGrense: LineString
+    var erRetningMedKlokken: Boolean = true
 
     fun getId(): String? = verdier.getOrNull(0)?.verdi?.replace(":", "")
     fun getObjType(): String? = getVerdiAvBarn(SosiKoder.OBJTYPE)
@@ -71,8 +76,11 @@ open class SosiGeometri(type: String, niva: Int, verdier: MutableList<SosiVerdi>
         return null
     }
 
-    fun startKoordinat(retningMedKlokken: Boolean): Coordinate {
-        return when(retningMedKlokken) {
+    fun koordinater() = SosiGeometryFunctions.sosiKoordinaterToCoordinates(getAlleSosiNordOest())
+    fun asLineString() = SosiGeometryFunctions.sosiKoordinaterToLineString(getAlleSosiNordOest(), koordsys)
+
+    fun startKoordinat(erRetningMedKlokken: Boolean): Coordinate {
+        return when(erRetningMedKlokken) {
             true -> {
                 val forsteKoordinat = getAlleSosiNordOest().first()
                 return forsteKoordinat.getKoordinater().first().toCoordinate(forsteKoordinat.enhet)

@@ -21,14 +21,14 @@ class FylkesgrenseImporter {
     @Autowired
     lateinit var dokumentasjonsreferanseImporter: DokumentasjonsreferanseImporter
 
-    fun importerFylkesgrense(sosiFylkesgrense: SosiGeometri): Grense {
-        return when (val existing = grenseRepository.findByLokalid(sosiFylkesgrense.getIdent()?.getLokalId()!!)) {
+    fun importerFylkesgrense(sosiFylkesgrense: SplitTilImport): Grense {
+        return when (val existing = grenseRepository.findByLokalid(sosiFylkesgrense.lokalId())) {
             null -> {
                 val fylkesgrense = grenseRepository.save(
                     administrativGrenseImporter.importer(sosiFylkesgrense)
                 )
 
-                sosiFylkesgrense.getDokumentasjonsReferanse().forEach { sosiDokRef ->
+                sosiFylkesgrense.splitRef.basertPaGrense.getDokumentasjonsReferanse().forEach { sosiDokRef ->
                     dokumentasjonsreferanseImporter.importerDokumentasjonsreferanse(sosiDokRef, fylkesgrense)
                 }
                 return fylkesgrense

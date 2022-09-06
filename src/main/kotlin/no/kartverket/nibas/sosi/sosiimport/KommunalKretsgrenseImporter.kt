@@ -21,13 +21,15 @@ class KommunalKretsgrenseImporter @Autowired constructor(
     private val noeyaktighetsklassekodeRepository: NoeyaktighetsklassekodeRepository,
 ) {
 
-    fun importer(sosiGeometri: SosiGeometri): Grense {
+    fun importer(skalImporteres: SplitTilImport): Grense {
+        val sosiGeometri = skalImporteres.splitRef.basertPaGrense
         val grense = when (sosiGeometri.getObjType()) {
             SosiKoder.STEMMEKRETSGRENSE -> Grense(Grensetype.Stemmekretsgrense)
             else -> throw RuntimeException("Ukjent grensetype (${sosiGeometri.getObjType()}) for kommunal kretsgrense")
         }
 
         grense.updateSosiIdentifikasjon(sosiGeometri.getIdent())
+        grense.lokalid = skalImporteres.lokalId()
         grense.datafangstdato = sosiGeometri.getDatafangstDato()
         grense.datauttaksdato = sosiGeometri.getDataUttaksdato()
         grense.endringsflagg?.tidspunktendring = sosiGeometri.getEndringsflagg()?.getTidspunktEndring()
@@ -59,10 +61,7 @@ class KommunalKretsgrenseImporter @Autowired constructor(
             noeyaktighetsklassekodeRepository.findByIdOrNull(it) ?: throw RuntimeException("Ukjent nøyaktighetsklasse")
         }
 
-        grense.grense = SosiGeometryFunctions.sosiKoordinaterToLineString(
-            sosiGeometri.getAlleSosiNordOest(),
-            sosiGeometri.koordsys
-        )
+        grense.grense = skalImporteres.splitRef.splittetGrense
 
         return grense
 

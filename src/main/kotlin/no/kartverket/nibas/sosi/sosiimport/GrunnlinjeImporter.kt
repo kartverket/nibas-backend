@@ -24,12 +24,13 @@ class GrunnlinjeImporter @Autowired constructor(
 
     val logger = Logger.getLogger(this::class.java.name)
 
-    fun importGrunnlinje(sosiGrunnlinje: SosiGeometri): Grense {
-        val sosiIdent = sosiGrunnlinje.getIdent()
-        return when (val existing = grenseRepository.findByLokalid(sosiIdent?.getLokalId()!!)) {
+    fun importGrunnlinje(skalImporteres: SplitTilImport): Grense {
+        val sosiGrunnlinje = skalImporteres.splitRef.basertPaGrense
+        return when (val existing = grenseRepository.findByLokalid(skalImporteres.lokalId())) {
             null -> {
                 var grunnlinje = Grense(Grensetype.Grunnlinje)
-                grunnlinje.updateSosiIdentifikasjon(sosiIdent)
+                grunnlinje.updateSosiIdentifikasjon(sosiGrunnlinje.getIdent())
+                grunnlinje.lokalid = skalImporteres.lokalId()
                 grunnlinje.datafangstdato = sosiGrunnlinje.getDatafangstDato()
                 grunnlinje.datauttaksdato = sosiGrunnlinje.getDataUttaksdato()
 
@@ -51,10 +52,7 @@ class GrunnlinjeImporter @Autowired constructor(
                     else -> fastsettingstypeRepository.findByIdOrNull(fastsettingstype)
                         ?: throw RuntimeException("Ukjent fastsettingstype")
                 }
-                grunnlinje.grense = SosiGeometryFunctions.sosiKoordinaterToLineString(
-                    sosiGrunnlinje.getAlleSosiNordOest(),
-                    sosiGrunnlinje.koordsys
-                )
+                grunnlinje.grense = skalImporteres.splitRef.splittetGrense
                 grunnlinje = grenseRepository.save(grunnlinje)
 
                 sosiGrunnlinje.getDokumentasjonsReferanse().forEach { sosiDokRef ->

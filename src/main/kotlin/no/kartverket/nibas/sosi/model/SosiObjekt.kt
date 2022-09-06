@@ -73,6 +73,12 @@ open class SosiObjekt(
         return barn.find { it is SosiGeometri && it.getId() == objId } as? SosiGeometri
     }
 
+    fun getSosiGeometriForReferanse(ref: SosiReferanse): SosiGeometri? {
+        val geometri = barn.find { it is SosiGeometri && it.getId() == ref.getVerdiUtenRetningOgParentes() } as? SosiGeometri
+        geometri?.erRetningMedKlokken = ref.erRetningMedKlokken()
+        return geometri
+    }
+
     protected fun stringAsDate(verdi: String?): LocalDate? = when (verdi) {
         null -> null
         else -> LocalDate.parse(verdi.substring(0,8), SOSI_DATOFORMAT)

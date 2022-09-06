@@ -22,13 +22,14 @@ class LovVirkeomraadeGrenseImporter @Autowired constructor(
 
     val logger: Logger = Logger.getLogger(this::class.java.name)
 
-    fun importLovVirkeomradeGrense(sosiLovvirkeomraadegrense: SosiKurve): Grense {
-        val sosiIdent = sosiLovvirkeomraadegrense.getIdent()
+    fun importLovVirkeomradeGrense(skalImporteres: SplitTilImport): Grense {
+        val sosiLovvirkeomraadegrense = skalImporteres.splitRef.basertPaGrense
         return when (val existing =
-            grenseRepository.findByLokalid(sosiIdent?.getLokalId()!!)) {
+            grenseRepository.findByLokalid(skalImporteres.lokalId())) {
             null -> {
                 var lovvirkeomraadegrense = Grense(Grensetype.Lovvirkeomraadegrense)
-                lovvirkeomraadegrense.updateSosiIdentifikasjon(sosiIdent)
+                lovvirkeomraadegrense.updateSosiIdentifikasjon(sosiLovvirkeomraadegrense.getIdent())
+                lovvirkeomraadegrense.lokalid = skalImporteres.lokalId()
                 lovvirkeomraadegrense.datafangstdato = sosiLovvirkeomraadegrense.getDatafangstDato()
                 lovvirkeomraadegrense.datauttaksdato = sosiLovvirkeomraadegrense.getDataUttaksdato()
                 lovvirkeomraadegrense.kommunenummer = sosiLovvirkeomraadegrense.getKommunenumre().map { sosiKommunenummer ->
@@ -46,10 +47,7 @@ class LovVirkeomraadeGrenseImporter @Autowired constructor(
                             ?: throw RuntimeException("Ukjent fastsettingstype")
                     }
 
-                lovvirkeomraadegrense.grense = SosiGeometryFunctions.sosiKoordinaterToLineString(
-                    sosiLovvirkeomraadegrense.getAlleSosiNordOest(),
-                    sosiLovvirkeomraadegrense.koordsys
-                )
+                lovvirkeomraadegrense.grense = skalImporteres.splitRef.splittetGrense
                 lovvirkeomraadegrense = grenseRepository.save(lovvirkeomraadegrense)
 
                 lovvirkeomraadegrense.informasjonstekst = sosiLovvirkeomraadegrense.getInformasjon()

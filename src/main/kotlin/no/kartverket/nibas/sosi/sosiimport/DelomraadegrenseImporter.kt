@@ -14,11 +14,10 @@ class DelomraadegrenseImporter @Autowired constructor(
     @Autowired
     lateinit var statistiskGrenseImporter: StatistiskGrenseImporter
 
-    fun importerDelomraadegrense(sosiDelomraadegrense: SosiGeometri): Grense {
-        val sosiIdent = sosiDelomraadegrense.getIdent()
-        return when (val eksisterende = grenseRepository.findByLokalid(sosiIdent?.getLokalId()!!)) {
+    fun importerDelomraadegrense(skalImporteres: SplitTilImport): Grense {
+        return when (val eksisterende = grenseRepository.findByLokalid(skalImporteres.lokalId())) {
             null -> {
-                return grenseRepository.save(statistiskGrenseImporter.importer(sosiDelomraadegrense))
+                return grenseRepository.save(statistiskGrenseImporter.importer(skalImporteres))
             }
             else -> eksisterende
         }

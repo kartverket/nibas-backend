@@ -24,12 +24,14 @@ class RiksgrenseImporter @Autowired constructor(
 
     val logger: Logger = Logger.getLogger(this::class.java.name)
 
-    fun importSosiRiksgrense(sosiRiksgrense: SosiGeometri): Grense {
-        val sosiIdent = sosiRiksgrense.getIdent()
-        return when (val existing = grenseRepository.findByLokalid(sosiIdent?.getLokalId()!!)) {
+    fun importSosiRiksgrense(skalImporteres: SplitTilImport): Grense {
+        val sosiRiksgrense = skalImporteres.splitRef.basertPaGrense
+
+        return when (val existing = grenseRepository.findByLokalid(skalImporteres.lokalId())) {
             null -> {
                 var riksgrense = Grense(Grensetype.Riksgrense)
-                riksgrense.updateSosiIdentifikasjon(sosiIdent)
+                riksgrense.updateSosiIdentifikasjon(sosiRiksgrense.getIdent())
+                riksgrense.lokalid = skalImporteres.lokalId()
                 riksgrense.datafangstdato = sosiRiksgrense.getDatafangstDato()
 
                 riksgrense.datauttaksdato = sosiRiksgrense.getDataUttaksdato()
@@ -50,10 +52,7 @@ class RiksgrenseImporter @Autowired constructor(
                     else -> fastsettingstypeRepository.findByIdOrNull(fastsettingstype)
                         ?: throw RuntimeException("Ukjent fastsettingstype")
                 }
-                riksgrense.grense = SosiGeometryFunctions.sosiKoordinaterToLineString(
-                    sosiRiksgrense.getAlleSosiNordOest(),
-                    sosiRiksgrense.koordsys
-                )
+                riksgrense.grense = skalImporteres.splitRef.splittetGrense
 
                 riksgrense = grenseRepository.save(riksgrense)
 

@@ -49,11 +49,6 @@ spring:
   flyway:
     schemas: nibas
 
-  #TODO: Remove when proper s3-integration is ready
-  servlet:
-    multipart:
-      max-file-size: 128MB
-      max-request-size: 128MB
 
   # Vault-konfigurasjon
   cloud:

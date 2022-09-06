@@ -42,13 +42,15 @@ class SosiGeometryFunctions {
             return geometryFactory
         }
 
-        fun sosiKoordinaterToLineString(sosiNordOest: List<SosiNordOest>, koordsys: String?): LineString {
-            val koordinater: List<Coordinate> = sosiNordOest.flatMap { outer ->
+        fun sosiKoordinaterToCoordinates(sosiNordOest: List<SosiNordOest>): List<Coordinate> {
+            return sosiNordOest.flatMap { outer ->
                 outer.getKoordinater().map {
                     sosiKoordinatToCoordinate(it, outer.enhet)
                 }
             }
-
+        }
+        fun sosiKoordinaterToLineString(sosiNordOest: List<SosiNordOest>, koordsys: String?): LineString {
+            val koordinater = sosiKoordinaterToCoordinates(sosiNordOest)
             return getGeometryFactory(koordsys).createLineString(koordinater.toTypedArray())
         }
 
@@ -65,6 +67,10 @@ class SosiGeometryFunctions {
                     getGeometryFactory(koordsys).createPoint(sosiKoordinatToCoordinate(coord, first.enhet))
                 }
             }
+        }
+
+        fun dekker(geometriSomSkalDekke: Geometry, geometriSomSkalDekkes: Geometry): Boolean {
+            return geometriSomSkalDekke.buffer(5.0).covers(geometriSomSkalDekkes)
         }
 
         fun beregnFlate(grenseKoblinger: Set<GrenseKobling>): MultiPolygon {

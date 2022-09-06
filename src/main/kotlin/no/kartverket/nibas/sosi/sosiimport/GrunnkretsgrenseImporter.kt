@@ -14,11 +14,11 @@ class GrunnkretsgrenseImporter @Autowired constructor(
     @Autowired
     lateinit var statistiskGrenseImporter: StatistiskGrenseImporter
 
-    fun importerGrunnkretsgrense(sosiGrunnkretsgrense: SosiGeometri): Grense {
-        val sosiIdent = sosiGrunnkretsgrense.getIdent()
-        return when(val eksisterende = grenseRepository.findByLokalid(sosiIdent?.getLokalId()!!)) {
+    fun importerGrunnkretsgrense(skalImporteres: SplitTilImport): Grense {
+        val sosiGrunnkretsgrense = skalImporteres.splitRef.basertPaGrense
+        return when(val eksisterende = grenseRepository.findByLokalid(skalImporteres.lokalId())) {
             null -> {
-                var grunnkretsgrense = statistiskGrenseImporter.importer(sosiGrunnkretsgrense)
+                var grunnkretsgrense = statistiskGrenseImporter.importer(skalImporteres)
                 grunnkretsgrense = grenseRepository.save(grunnkretsgrense)
                 grunnkretsgrense.informasjonstekst = sosiGrunnkretsgrense.getInformasjon()
 

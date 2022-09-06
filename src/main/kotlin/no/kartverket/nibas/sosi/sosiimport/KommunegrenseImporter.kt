@@ -21,14 +21,14 @@ class KommunegrenseImporter {
     @Autowired
     lateinit var dokumentasjonsreferanseImporter: DokumentasjonsreferanseImporter
 
-    fun importerKommunegrense(sosiKommunegrense: SosiGeometri): Grense {
-        return when (val existing = grenseRepository.findByLokalid(sosiKommunegrense.getIdent()?.getLokalId()!!)) {
+    fun importerKommunegrense(sosiKommunegrense: SplitTilImport): Grense {
+        return when (val existing = grenseRepository.findByLokalid(sosiKommunegrense.lokalId())) {
             null -> {
                 val kommunegrense = grenseRepository.save(
                     administrativGrenseImporter.importer(sosiKommunegrense)
                 )
 
-                sosiKommunegrense.getDokumentasjonsReferanse().forEach { sosiDokRef ->
+                sosiKommunegrense.splitRef.basertPaGrense.getDokumentasjonsReferanse().forEach { sosiDokRef ->
                     dokumentasjonsreferanseImporter.importerDokumentasjonsreferanse(sosiDokRef, kommunegrense)
                 }
                 return kommunegrense

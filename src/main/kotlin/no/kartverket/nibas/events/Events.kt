@@ -34,7 +34,7 @@ class NibasEventListener constructor(private val kafkaTemplate: KafkaTemplate<St
         if(kafkaEnabled) {
             kafkaTemplate.send("nibas-events", "key-${System.currentTimeMillis()}", event)
         } else {
-            log.info("Kafka disabled - not sending event for ${event.id} - ${event.type} - ${event.target}")
+            log.fine("Kafka disabled - not sending event for ${event.id} - ${event.type} - ${event.target}")
         }
     }
 }

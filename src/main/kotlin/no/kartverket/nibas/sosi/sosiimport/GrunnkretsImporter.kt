@@ -8,14 +8,18 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
+import no.kartverket.nibas.domain.GrenseMedAttributter
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.updateSosiIdentifikasjon
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.TypeendringRepository
+import no.kartverket.nibas.sosi.common.SosiKoder
 import no.kartverket.nibas.sosi.model.SosiFlate
+import no.kartverket.nibas.sosi.model.SosiGeometri
 import no.kartverket.nibas.sosi.model.SosiKurve
+import no.kartverket.nibas.sosi.model.SosiObjekt
 import no.kartverket.nibas.sosi.model.SosiReferanse
 import org.locationtech.jts.geom.LineString
 import org.springframework.beans.factory.annotation.Autowired
@@ -23,6 +27,7 @@ import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import java.util.logging.Logger
+import kotlin.math.log
 import kotlin.math.min
 import kotlin.system.measureTimeMillis
 
@@ -38,8 +43,7 @@ class GrunnkretsImporter @Autowired constructor(
     val logger: Logger = Logger.getLogger(this::class.java.name)
 
     @Transactional
-    fun importerSosiGrunnkrets(flater: List<SosiFlate>, kurver: List<SosiKurve>) {
-
+    fun importerSosiGrunnkrets(flater: List<SosiFlate>, kurver: List<SosiKurve>, admenhetRoot: SosiObjekt) {
         // Henter egenskapene bare fra første flate. Egenskapene er/skal være like på tvers av flatene.
         val flate = flater.first()
         val sosiIdent = flate.getIdent()
@@ -47,6 +51,13 @@ class GrunnkretsImporter @Autowired constructor(
             logger.info("Bruker eksisterende flate")
         } else {
             val grunnkrets = Grunnkrets()
+            val kommunenummerId = kodelisteService.getKommunenummerIdByCodeValue(flate.getKommunenummer())
+            grunnkrets.kommunenummer = kommunenummerId
+            grunnkrets.kommune = kommuneRepository.findByKommunenummer(kommunenummerId)!!
+
+            // Hent grensene til kommunen som grunnkretsen er en del av (for å kun gjøre oppslaget èn gang)
+            val kommuneFlater = admenhetRoot.getFlater().filter { it.getObjType() == SosiKoder.KOMMUNE && it.getKommunenummer() == flate.getKommunenummer() }
+            kommuneFlater.forEach { it.lastReferanser(admenhetRoot) }
 
             grunnkrets.updateSosiIdentifikasjon(sosiIdent)
             grunnkrets.datafangstdato = flate.getDatafangstDato()
@@ -73,144 +84,23 @@ class GrunnkretsImporter @Autowired constructor(
 
             grunnkrets.posisjon = SosiGeometryFunctions.sosiKoordinatToPoint(flate.getAlleSosiNordOest(), flate.koordsys)
 
-            // Setter kommunenummerId fra GeoNorge samt kobling til kommune
-            val kommunenummerId = kodelisteService.getKommunenummerIdByCodeValue(flate.getKommunenummer())
-            grunnkrets.kommunenummer = kommunenummerId
-            grunnkrets.kommune = kommuneRepository.findByKommunenummer(kommunenummerId)!!
-
             grunnkrets.informasjon = flate.getInformasjon()
 
-            runBlocking {
-                withContext(Dispatchers.Default) {
-                    flater.forEachIndexed { skall_index, flate ->
-                        val skall: List<Job> = flate.getSkallReferanser().mapIndexed { rekkefoelge, ref ->
-                            launch {
-                                importerGrunnkretsRef(grunnkrets, ref, kurver, skall_index, rekkefoelge)
-                            }
-                        }
+            flater.forEachIndexed { skall_index, gkFlate ->
+                gkFlate.getSkallReferanser().forEachIndexed { rekkefoelge, ref ->
+                    grenseImporter.importerGrenseRef(grunnkrets, ref, kurver, kommuneFlater, skall_index, rekkefoelge)
+                }
 
-                        val hull: List<List<Job>> = flate.getHullReferanser().mapIndexed { hullIndex, liste ->
-                            liste.mapIndexed { rekkefoelge, ref ->
-                                launch {
-                                    importerGrunnkretsRef(grunnkrets, ref, kurver, skall_index, rekkefoelge, hullIndex)
-                                }
-                            }
-                        }
+                gkFlate.getHullReferanser().forEachIndexed { hullIndex, liste ->
+                    liste.forEachIndexed { rekkefoelge, ref ->
+                        grenseImporter.importerGrenseRef(grunnkrets, ref, kurver, kommuneFlater, skall_index, rekkefoelge, hullIndex)
 
-                        skall.joinAll()
-                        hull.forEach { it.joinAll() }
                     }
                 }
-            }
-            val antallReferanser = grunnkrets.grunnkretsgrenser().size +
-                grunnkrets.delomraadegrenser().size +
-                grunnkrets.kommunegrenser().size +
-                grunnkrets.fylkesgrenser().size +
-                grunnkrets.riksgrenser().size +
-                grunnkrets.territorialgrenser().size +
-                grunnkrets.avtaltavgrensningslinjer().size
-            if (flate.getHullReferanser().isEmpty() && antallReferanser != flate.getSkallReferanser().size) {
-                logger.info("Noe er galt, antall skall-refs (${flate.getSkallReferanser().size}) er ikke likt med grenser på grunnkretsen (${antallReferanser})")
             }
 
             grunnkrets.oppdaterFlate()
-
             grunnkretsRepository.save(grunnkrets)
         }
-    }
-
-    private fun importerGrunnkretsRef(
-        grunnkrets: Grunnkrets,
-        ref: SosiReferanse,
-        kurver: List<SosiKurve>,
-        skallIndex: Int,
-        rekkefoelge: Int,
-        hullIndex: Int? = null
-    ) {
-
-        val referanse = ref.getVerdiUtenRetningOgParentes()
-
-        when (val grenseRef = kurver.find { it.getId() == referanse }) {
-            null -> throw RuntimeException("Finner ikke grense som refereres til. Feil i datagrunnlaget. Ref: $referanse")
-            else -> {
-                //                logger.info("Importerer grense ${importertGrense.lokalid}, grensetype: ${importertGrense.objtype}, referanse ${referanse}")
-                grunnkrets.addGrensekobling(
-                    grense = grenseImporter.importerGrense(grenseRef),
-                    grenseKoblingAttributter = GrenseKoblingAttributter(ref.erRetningMedKlokken(), rekkefoelge, skallIndex, hullIndex))
-            }
-        }
-    }
-
-    //TODO: Denne skal skrives om til å kjøre når grenser importeres, venter på NIBAS-304. Dette er kode som ble kjørt i etterkant for å teste ut algoritmen.
-    fun match() {
-        val grunnkretser = grunnkretsRepository.findAll()
-        var antallBom = 0
-        val tidBrukt = measureTimeMillis {
-            grunnkretser.forEachIndexed { index, grunnkrets ->
-                val grunnkretsensKommunegrenser = grunnkrets.kommunegrenser()
-                logger.info("Matcher grunnkrets: ${grunnkrets.grunnkretsnavn}, antall kommunegrenser i grunnkrets: ${grunnkretsensKommunegrenser.size}, index: $index")
-                val kommune = kommuneRepository.findByKommunenummer(grunnkrets.kommunenummer!!)
-                logger.info("Antall kommunegrenser i kommunen (${kommune?.administrativenhetnavn?.first()?.navn}): ${kommune?.kommunegrenser()?.size}")
-
-                val kommunegrenser: List<Grense>? = kommune?.kommunegrenser()?.sortedWith(
-                    compareBy(
-                        { it.grenseKoblingAttributter.flateIndeks },
-                        { it.grenseKoblingAttributter.hullIndeks },
-                        { it.grenseKoblingAttributter.rekkefoelge }
-                    )
-                )?.map { it.grense }
-
-                if (grunnkretsensKommunegrenser.isNotEmpty() && kommunegrenser != null && kommunegrenser.isEmpty()) {
-                    logger.warning("Grunnkrets har kommunegrenser, men kommunen den ligger i har ikke kommunegrenser, dette bør ikke være mulig")
-                } else {
-                    grunnkretsensKommunegrenser.forEach { grunnkretsKommunegrense ->
-                        if (segmenterSomDekkerNyGrense(kommunegrenser!!, grunnkretsKommunegrense.grense).isEmpty()) {
-                            antallBom++
-                        }
-                    }
-                }
-            }
-        }
-
-        logger.info("Ferdig med matching, antall bom: $antallBom, total tid brukt: $tidBrukt")
-    }
-
-    fun <T> List<T>.overlappedWindow(windowSize: Int, step: Int = 1): List<List<T>> =
-        windowed(windowSize, step, true).map { window ->
-            var newWindow = window
-            repeat(windowSize - window.size) { index ->
-                if (index < size) {
-                    newWindow = newWindow.plus(get(index))
-                }
-            }
-            newWindow
-        }
-
-    fun segmenterSomDekkerNyGrense(skalSjekkesMot: List<Grense>, grense: Grense): List<Grense> {
-        val initialWindowSize = 1
-        val maxWindowSize = min(skalSjekkesMot.size, 20)
-        var currentWindowSize = initialWindowSize
-
-        while (currentWindowSize <= maxWindowSize) {
-            val windows = skalSjekkesMot.overlappedWindow(currentWindowSize)
-            val grenserSomDekker: List<Grense>? = windows.find { grenserIVindu ->
-                val grensesegmenter: List<LineString> = grenserIVindu.fold(emptyList()) { list, element ->
-                    list.plus(element.grense)
-                }
-                val segment =
-                    SosiGeometryFunctions.getGeometryFactory().createMultiLineString(grensesegmenter.toTypedArray())
-
-                segment.buffer(5.0).covers(grense.grense)
-            }
-
-            if (grenserSomDekker != null) {
-                logger.info("Fant treff for ${grense.lokalid} med vindustørrelse $currentWindowSize")
-                return grenserSomDekker
-            }
-            currentWindowSize += 1
-        }
-
-        logger.info("Fant ikke treff for ${grense.lokalid}, vindustørrelse $currentWindowSize")
-        return emptyList()
     }
 }

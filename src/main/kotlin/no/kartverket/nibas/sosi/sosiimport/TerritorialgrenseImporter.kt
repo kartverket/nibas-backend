@@ -26,13 +26,15 @@ class TerritorialgrenseImporter @Autowired constructor(
 
     val logger: Logger = Logger.getLogger(this::class.java.name)
 
-    fun importSosiTerritorialgrense(sosiTerritorialgrense: SosiGeometri): Grense {
-        val sosiIdent = sosiTerritorialgrense.getIdent()
+    fun importSosiTerritorialgrense(skalImporteres: SplitTilImport): Grense {
+        val sosiTerritorialgrense = skalImporteres.splitRef.basertPaGrense
         return when (val existing =
-            grenseRepository.findByLokalid(sosiIdent?.getLokalId()!!)) {
+            grenseRepository.findByLokalid(skalImporteres.lokalId())) {
             null -> {
                 var territorialgrense = Grense(Grensetype.Territorialgrense)
+                val sosiIdent = sosiTerritorialgrense.getIdent()
                 territorialgrense.updateSosiIdentifikasjon(sosiIdent)
+                territorialgrense.lokalid = skalImporteres.lokalId()
                 territorialgrense.datafangstdato = sosiTerritorialgrense.getDatafangstDato()
 
                 territorialgrense.datauttaksdato = sosiTerritorialgrense.getDataUttaksdato()
@@ -62,10 +64,7 @@ class TerritorialgrenseImporter @Autowired constructor(
                         landKodeRepository.findByIdOrNull(landkode) ?: throw RuntimeException("Ukjent landkode")))
                 }
 
-                territorialgrense.grense = SosiGeometryFunctions.sosiKoordinaterToLineString(
-                    sosiTerritorialgrense.getAlleSosiNordOest(),
-                    sosiTerritorialgrense.koordsys
-                )
+                territorialgrense.grense = skalImporteres.splitRef.splittetGrense
                 territorialgrense = grenseRepository.save(territorialgrense)
 
                 sosiTerritorialgrense.getDokumentasjonsReferanse().forEach { sosiDokRef ->

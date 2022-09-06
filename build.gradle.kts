@@ -1,5 +1,6 @@
 import io.gitlab.arturbosch.detekt.Detekt
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.springframework.boot.gradle.tasks.bundling.BootJar
 
 plugins {
     id("org.springframework.boot") version "2.7.3"
@@ -88,6 +89,7 @@ dependencies {
 
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.batch:spring-batch-test")
 
     testRuntimeOnly("com.h2database:h2")
 
@@ -103,8 +105,16 @@ allOpen {
     annotation("javax.persistence.Embeddable")
 }
 
+tasks.named<BootJar>("bootJar") {
+    mainClass.set("no.kartverket.nibas.NibasBackendApplication")
+}
+
 tasks.getByName<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
     findProperty("TLSversion")?.let { systemProperty("jdk.tls.client.protocols", it) }
+    when(findProperty("Import")) {
+        null -> mainClass.set("no.kartverket.nibas.NibasBackendApplication")
+        else -> mainClass.set("no.kartverket.nibas.NibasImportApplication")
+    }
 }
 
 tasks.withType<KotlinCompile> {

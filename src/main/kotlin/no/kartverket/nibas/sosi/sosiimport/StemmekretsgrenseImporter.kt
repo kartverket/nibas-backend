@@ -12,11 +12,11 @@ class StemmekretsgrenseImporter @Autowired constructor(
     private val grenseRepository: GrenseRepository,
 ) {
 
-    fun importerStemmekretsgrense(sosiStemmekretsgrense: SosiGeometri): Grense {
-        val sosiIdent = sosiStemmekretsgrense.getIdent()
-        return when (val eksisterende = grenseRepository.findByLokalid(sosiIdent?.getLokalId()!!)) {
+    fun importerStemmekretsgrense(skalImporteres: SplitTilImport): Grense {
+        val sosiStemmekretsgrense = skalImporteres.splitRef.basertPaGrense
+        return when (val eksisterende = grenseRepository.findByLokalid(skalImporteres.lokalId())) {
             null -> {
-                val stemmekretsgrense = kommunalKretsgrenseImporter.importer(sosiStemmekretsgrense)
+                val stemmekretsgrense = kommunalKretsgrenseImporter.importer(skalImporteres)
                 grenseRepository.save(stemmekretsgrense)
 
                 stemmekretsgrense.informasjonstekst = sosiStemmekretsgrense.getInformasjon()

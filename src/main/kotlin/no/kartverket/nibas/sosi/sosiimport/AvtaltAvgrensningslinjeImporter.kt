@@ -26,13 +26,15 @@ class AvtaltAvgrensningslinjeImporter @Autowired constructor(
 ) {
     val logger: Logger = Logger.getLogger(this::class.java.name)
 
-    fun importAvtaltAvgrensningslinje(sosiAvtaltAvgrensningslinje: SosiGeometri): Grense {
-        val sosiIdent = sosiAvtaltAvgrensningslinje.getIdent()
+    fun importAvtaltAvgrensningslinje(skalImporteres: SplitTilImport): Grense {
+        val sosiAvtaltAvgrensningslinje = skalImporteres.splitRef.basertPaGrense
+
         return when (val existing =
-            grenseRepository.findByLokalid(sosiIdent?.getLokalId()!!)) {
+            grenseRepository.findByLokalid(skalImporteres.lokalId())) {
             null -> {
                 var avtaltavgrensningslinje = Grense(Grensetype.AvtaltAvgrensningslinje)
-                avtaltavgrensningslinje.updateSosiIdentifikasjon(sosiIdent)
+                avtaltavgrensningslinje.updateSosiIdentifikasjon(sosiAvtaltAvgrensningslinje.getIdent())
+                avtaltavgrensningslinje.lokalid = skalImporteres.lokalId()
                 avtaltavgrensningslinje.opphav = sosiAvtaltAvgrensningslinje.getOpphav()
                 avtaltavgrensningslinje.datauttaksdato = sosiAvtaltAvgrensningslinje.getDataUttaksdato()
 
@@ -59,10 +61,7 @@ class AvtaltAvgrensningslinjeImporter @Autowired constructor(
                             ?: throw RuntimeException("Ukjent fastsettingstype")
                     }
 
-                avtaltavgrensningslinje.grense = SosiGeometryFunctions.sosiKoordinaterToLineString(
-                    sosiAvtaltAvgrensningslinje.getAlleSosiNordOest(),
-                    sosiAvtaltAvgrensningslinje.koordsys
-                )
+                avtaltavgrensningslinje.grense = skalImporteres.splitRef.splittetGrense
                 avtaltavgrensningslinje = grenseRepository.save(avtaltavgrensningslinje)
 
                 avtaltavgrensningslinje.informasjonstekst = sosiAvtaltAvgrensningslinje.getInformasjon()

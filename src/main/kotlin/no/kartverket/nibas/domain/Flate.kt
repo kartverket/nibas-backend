@@ -18,4 +18,5 @@ interface KobletTilGrense {
     val id: String
 
     fun oppdaterEllerLeggTilGrenseKobling(grenseMedAttributter: GrenseMedAttributter)
+    fun antallGrenser(): Int
 }

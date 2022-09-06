@@ -162,29 +162,27 @@ Enable rules og Enable formatting. Under Configuration Files, legg til stien til
 
 ## Import <a name="import"></a>
 
-Sosi-importen nås på endpoint: http://HOST-URL/v1/import
-
-Pga ytelse er det lurt å kjøre denne med følgende setting i application.yml. For kjøring i dev-miljøet må en også endre minnesetting i nibas-backend.tf til
-3Gig.
-
+Sosi-import kan kjøres på lokal maskin mot gitt miljø med følgende kommando:
 ```
-open-in-view: false
+./gradlew bootRun -PImport --args='--spring.profiles.active=<miljø>,security-off,import'
 ```
 
-Eksempel på kjøring med security påskrudd mot dev-miljø (må da sende med jwt):
+* Filen `application-import.yml` spesifiserer detaljer for importen. 
+* Feltet `fylkesnumre` spesifiserer en kommaseparert liste. Kun stemmekretser og grunnkretser i angitte fylker vil da importeres.
+* Feltet `targets` spesifiserer en kommaseparert liste for å angi om kun grunnkretser, stemmekretser eller begge skal importeres.
+
+Eksempel på import mot dev-miljø for både stemmekretser og grunnkretser i fylkene Agder og Rogaland:
+
+application-import.yml:
+```application-import.yml
+nibas:
+  import:
+    fylkesnumre: 42,11
+    targets: grunnkrets,stemmekrets
 
 ```
-curl http://nibas.dev.skip.statkart.no/v1/import -F file=@ADM_Enheter_Norge.sos -H "Authorization: Bearer JWT_TOKEN_LEGGES_VED_HER"
 ```
-
-### Import-jobb for grunnkretser
-
-Det er mulig å sende med et parameter fylker. Da vil en kun importere grunnkretsene for de angitte fylker. Se enum Fylkesnummer for mulige verdier. Hvis en
-ikke angir fylkesparameter kjøres jobben for alle 14.000 grunnkretser. Før en kjører import for grunnkretser må en ha kjørt import for administrative enheter.
-Eksempel på kjøring for fylkene Agder + Rogaland:
-
-```
-curl http://localhost:8080/v1/import -F file=@STAT_enheter_grunnkretser.sos -F fylker=42,11
+./gradlew bootRun -PImport --args='--spring.profiles.active=dev,security-off,import'
 ```
 
 

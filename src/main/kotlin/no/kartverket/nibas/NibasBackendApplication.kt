@@ -18,11 +18,12 @@ class NibasBackendApplication {
     fun openApiDef(): OpenAPI {
         return OpenAPI().info(Info().title("NIBAS Server API").description("API for å hente administrative enheter"))
     }
+    companion object {
+        @JvmStatic
+        fun main(args: Array<String>) {
+            runApplication<NibasBackendApplication>(*args)
+        }
+    }
 }
-
-fun main(args: Array<String>) {
-    runApplication<NibasBackendApplication>(*args)
-}
-
 
 fun <T> Optional<T>.unwrap(): T? = orElse(null)

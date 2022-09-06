@@ -23,7 +23,8 @@ class AdministrativGrenseImporter @Autowired constructor(
     private val kodelisteService: KodelisteService
 ) {
 
-    fun importer(sosiGeometri: SosiGeometri): Grense {
+    fun importer(skalImporteres: SplitTilImport): Grense {
+        val sosiGeometri = skalImporteres.splitRef.basertPaGrense
         val grense = when (sosiGeometri.getObjType()) {
             SosiKoder.FYLKESGRENSE -> Grense(Grensetype.Fylkesgrense)
             SosiKoder.KOMMUNEGRENSE -> Grense(Grensetype.Kommunegrense)
@@ -31,6 +32,7 @@ class AdministrativGrenseImporter @Autowired constructor(
         }
 
         grense.updateSosiIdentifikasjon(sosiGeometri.getIdent())
+        grense.lokalid = skalImporteres.lokalId()
         grense.datauttaksdato = sosiGeometri.getDataUttaksdato()
         grense.opphav = sosiGeometri.getOpphav()
         grense.gyldigFra = sosiGeometri.getGyldigFra()
@@ -49,8 +51,7 @@ class AdministrativGrenseImporter @Autowired constructor(
             noeyaktighetsklassekodeRepository.findByIdOrNull(it) ?: throw RuntimeException("Ukjent nøyaktighetsklasse")
         }
 
-        grense.grense =
-            SosiGeometryFunctions.sosiKoordinaterToLineString(sosiGeometri.getAlleSosiNordOest(), sosiGeometri.koordsys)
+        grense.grense = skalImporteres.splitRef.splittetGrense
 
         return grense
     }

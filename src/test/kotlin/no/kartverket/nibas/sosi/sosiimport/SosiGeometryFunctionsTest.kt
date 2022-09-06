@@ -4,6 +4,7 @@ import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
+import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.locationtech.jts.geom.Coordinate
@@ -50,6 +51,18 @@ internal class SosiGeometryFunctionsTest {
         assertThatThrownBy { SosiGeometryFunctions.beregnFlate(grenseKoblinger) }
             .isInstanceOf(GeometriFailedToBeCreatedException::class.java)
             .hasMessageContaining("Geometri-objekt kunne ikke opprettes. Feil-lokasjon: (167390.0, 6524000.0, NaN)")
+    }
+
+    @Test
+    fun thatDekkerReturnsTrueWhenCoverdByBothInBufferAndOnGeometry() {
+        val skalDekke = SosiGeometryFunctions.getGeometryFactory().createLineString(arrayOf(Coordinate(0.0,0.0), Coordinate(0.0, 1.0), Coordinate(0.0, 2.0), Coordinate(0.0, 3.0)))
+        val paaLinjen = SosiGeometryFunctions.getGeometryFactory().createPoint(Coordinate(0.0, 1.0))
+        val innenforBuffer = SosiGeometryFunctions.getGeometryFactory().createPoint(Coordinate(0.0, 8.0))
+        val utenforBuffer = SosiGeometryFunctions.getGeometryFactory().createPoint(Coordinate(0.0, 8.5))
+
+        assertThat(SosiGeometryFunctions.dekker(skalDekke, paaLinjen)).isTrue
+        assertThat(SosiGeometryFunctions.dekker(skalDekke, innenforBuffer)).isTrue
+        assertThat(SosiGeometryFunctions.dekker(skalDekke, utenforBuffer)).isFalse
     }
 
     private fun grunnkretsGrenseKobling(coordinates: List<Coordinate>, rekkefoelge: Int) =

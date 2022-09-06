@@ -81,6 +81,8 @@ class Stemmekrets(override val id: String = UUID.randomUUID().toString()) : Komm
 
     }
 
+    override fun antallGrenser(): Int = grenser.size
+
     override fun getInfo(): String? = informasjon
     override fun setInfo(updatedInfo: String?) {
         informasjon = updatedInfo

@@ -72,6 +72,8 @@ class Grunnkrets(override val id: String = UUID.randomUUID().toString()) : Stati
             default = GrunnkretsGrenseKobling(grunnkrets = this, grense = grense, grenseKoblingAttributter = attributter))
     }
 
+    override fun antallGrenser(): Int = grenser.size
+
     fun getGrenserAvTyper(grensetyper: Set<Grensetype>): Set<GrenseKobling> {
         return grenser
             .filter { grensetyper.contains(it.grense.grensetype) }
