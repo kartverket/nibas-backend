@@ -84,7 +84,7 @@ dependencies {
     // This library provides Hibernate 5.5+ Json column support, which is not natively supported by Hibernate
     implementation("com.vladmihalcea:hibernate-types-55:2.19.0")
 
-    runtimeOnly("org.flywaydb:flyway-core:9.2.2")
+    runtimeOnly("org.flywaydb:flyway-core:9.2.3")
     runtimeOnly("org.postgresql:postgresql")
 
     testImplementation("org.jetbrains.kotlin:kotlin-test")
