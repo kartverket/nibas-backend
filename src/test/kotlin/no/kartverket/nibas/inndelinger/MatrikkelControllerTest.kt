@@ -12,8 +12,8 @@ import no.kartverket.nibas.config.ApiKeyWebSecurityConfig
 import no.kartverket.nibas.kodelister.KodelisteService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito.anySet
 import org.mockito.Mockito.anyString
-import org.mockito.invocation.InvocationOnMock
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
@@ -27,12 +27,16 @@ import org.mockito.Mockito.`when` as whenever
 const val GRUNNKRETSER_ENDPOINT = "/v1/ekstern/matrikkel/grunnkretser"
 const val STEMMEKRETSER_ENDPOINT = "/v1/ekstern/matrikkel/stemmekretser"
 
+
 /**
  * Tester med security-off at tjenestene returnerer som forventet.
  */
 @ImportAutoConfiguration(ApiKeyWebSecurityConfig::class)
 @WebMvcTest(MatrikkelController::class)
 internal class MatrikkelControllerTest : NibasMvcTest() {
+
+    @MockBean
+    private lateinit var matrikkelService: MatrikkelService
 
     @MockBean
     private lateinit var grunnkretsControllerServiceMock: GrunnkretsControllerService
@@ -49,9 +53,9 @@ internal class MatrikkelControllerTest : NibasMvcTest() {
     @Test
     fun hentStemmekretserForEnIdGir200_OK() {
         val stemmekretsResponse = stemmekretsResponse("1")
-        whenever(stemmekretsControllerServiceMock.hentEn(anyString()))
-            .thenReturn(stemmekretsResponse)
-        val expectedResponseAsJson = asJson(listOf(stemmekretsResponse))
+        val stemmekretsResponseList = listOf(stemmekretsResponse)
+        whenever(matrikkelService.hentStemmekretserForIds(anySet())).thenReturn(stemmekretsResponseList)
+        val expectedResponseAsJson = asJson(stemmekretsResponseList)
 
         val responseAsString = invokeAndExpectStatusOK("$STEMMEKRETSER_ENDPOINT?id=1")
         assertThat(responseAsString).isEqualTo(expectedResponseAsJson)
@@ -64,23 +68,9 @@ internal class MatrikkelControllerTest : NibasMvcTest() {
     fun hentStemmekretserForToIdsGir200_OK() {
         val stemmekretsResponse1 = stemmekretsResponse("1")
         val stemmekretsResponse2 = stemmekretsResponse("2")
-        whenever(stemmekretsControllerServiceMock.hentEn(anyString()))
-            .thenAnswer { invocation: InvocationOnMock ->
-                when (invocation.getArgument<String>(0)) {
-                    "1" -> {
-                        stemmekretsResponse1
-                    }
-
-                    "2" -> {
-                        stemmekretsResponse2
-                    }
-
-                    else -> {
-                        throw RuntimeException("Ugyldig id.")
-                    }
-                }
-            }
-        val expectedResponseAsJson = asJson(listOf(stemmekretsResponse1, stemmekretsResponse2))
+        val stemmekretsResponseList = listOf(stemmekretsResponse1, stemmekretsResponse2)
+        whenever(matrikkelService.hentStemmekretserForIds(anySet())).thenReturn(stemmekretsResponseList)
+        val expectedResponseAsJson = asJson(stemmekretsResponseList)
 
         val responseAsString = invokeAndExpectStatusOK("$STEMMEKRETSER_ENDPOINT?id=2,1")
         assertThat(responseAsString).isEqualTo(expectedResponseAsJson)
@@ -89,9 +79,9 @@ internal class MatrikkelControllerTest : NibasMvcTest() {
     @Test
     fun hentGrunnkretserForEnIdGir200_OK() {
         val grunnkretsResponse = grunnkretsResponse("1")
-        whenever(grunnkretsControllerServiceMock.hentEn(anyString()))
-            .thenReturn(grunnkretsResponse)
-        val expectedResponseAsJson = asJson(listOf(grunnkretsResponse))
+        val grunnkretsResponseList = listOf(grunnkretsResponse)
+        whenever(matrikkelService.hentGrunnkretserForIds(anySet())).thenReturn(grunnkretsResponseList)
+        val expectedResponseAsJson = asJson(grunnkretsResponseList)
 
         val responseAsString = invokeAndExpectStatusOK("$GRUNNKRETSER_ENDPOINT?id=1")
         assertThat(responseAsString).isEqualTo(expectedResponseAsJson)
@@ -104,25 +94,31 @@ internal class MatrikkelControllerTest : NibasMvcTest() {
     fun hentGrunnkretserForToIdsGir200_OK() {
         val grunnkretsResponse1 = grunnkretsResponse("a5")
         val grunnkretsResponse2 = grunnkretsResponse("b7")
-        whenever(grunnkretsControllerServiceMock.hentEn(anyString()))
-            .thenAnswer { invocation: InvocationOnMock ->
-                when (invocation.getArgument<String>(0)) {
-                    "a5" -> {
-                        grunnkretsResponse1
-                    }
-
-                    "b7" -> {
-                        grunnkretsResponse2
-                    }
-
-                    else -> {
-                        throw RuntimeException("Ugyldig id.")
-                    }
-                }
-            }
-        val expectedResponseAsJson = asJson(listOf(grunnkretsResponse1, grunnkretsResponse2))
+        val grunnkretsResponseList = listOf(grunnkretsResponse1, grunnkretsResponse2)
+        whenever(matrikkelService.hentGrunnkretserForIds(anySet())).thenReturn(grunnkretsResponseList)
+        val expectedResponseAsJson = asJson(grunnkretsResponseList)
 
         val responseAsString = invokeAndExpectStatusOK("$GRUNNKRETSER_ENDPOINT?id=b7,a5")
+        assertThat(responseAsString).isEqualTo(expectedResponseAsJson)
+    }
+
+    @Test
+    fun hentAlleStemmekretserForKommuneGir200_OK() {
+        val stemmekretsResponseList = listOf(stemmekretsResponse("1"), stemmekretsResponse("2"))
+        whenever(matrikkelService.hentAlleStemmekretserForKommune(anyString())).thenReturn(stemmekretsResponseList)
+        val expectedResponseAsJson = asJson(stemmekretsResponseList)
+
+        val responseAsString = invokeAndExpectStatusOK("/v1/ekstern/matrikkel/kommuner/0301/stemmekretser")
+        assertThat(responseAsString).isEqualTo(expectedResponseAsJson)
+    }
+
+    @Test
+    fun hentAlleGrunnkretserForKommuneGir200_OK() {
+        val grunnkretsResponseList = listOf(grunnkretsResponse("a5"), grunnkretsResponse("b7"))
+        whenever(matrikkelService.hentAlleGrunnkretserForKommune(anyString())).thenReturn(grunnkretsResponseList)
+        val expectedResponseAsJson = asJson(grunnkretsResponseList)
+
+        val responseAsString = invokeAndExpectStatusOK("/v1/ekstern/matrikkel/kommuner/0301/grunnkretser")
         assertThat(responseAsString).isEqualTo(expectedResponseAsJson)
     }
 

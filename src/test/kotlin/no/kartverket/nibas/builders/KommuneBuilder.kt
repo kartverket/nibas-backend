@@ -4,6 +4,7 @@ import no.kartverket.nibas.domain.Administrativenhetnavn
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Spraakkode
+import no.kartverket.nibas.domain.Stemmekrets
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
 import java.time.LocalDate
@@ -16,7 +17,8 @@ class KommuneBuilder(private val id: String = "1") {
     private var spraak = "NOR"
     private var samiskforvaltningsomraade = false
     private var oppdateringsdato: LocalDate = LocalDate.now()
-    private var grunnkrets: Grunnkrets = Grunnkrets()
+    private var grunnkretser: MutableList<Grunnkrets> = mutableListOf()
+    private var stemmekretser: MutableList<Stemmekrets> = mutableListOf()
 
     companion object {
         val DEFAULT_KOMMUNE = KommuneBuilder().build()
@@ -49,7 +51,8 @@ class KommuneBuilder(private val id: String = "1") {
         kommune.posisjon = GeometryFactory().createPoint(Coordinate(1.0, 1.0))
         kommune.flate = GeometryFactory().createMultiPolygon(arrayOf(GeometryFactory().createPolygon()))
 
-        kommune.addGrunnkrets(grunnkrets)
+        grunnkretser.forEach { kommune.addGrunnkrets(it) }
+        stemmekretser.forEach { kommune.addStemmekrets(it) }
 
         return kommune
     }
@@ -65,7 +68,12 @@ class KommuneBuilder(private val id: String = "1") {
     }
 
     fun withGrunnkrets(grunnkrets: Grunnkrets): KommuneBuilder {
-        this.grunnkrets = grunnkrets
+        this.grunnkretser.add(grunnkrets)
+        return this
+    }
+
+    fun withStemmekrets(stemmekrets: Stemmekrets): KommuneBuilder {
+        this.stemmekretser.add(stemmekrets)
         return this
     }
 

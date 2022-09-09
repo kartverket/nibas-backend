@@ -1,0 +1,105 @@
+package no.kartverket.nibas.inndelinger
+
+import no.kartverket.nibas.api.v1.response.GrunnkretsResponse
+import no.kartverket.nibas.api.v1.response.StemmekretsResponse
+import no.kartverket.nibas.builders.GrunnkretsBuilder
+import no.kartverket.nibas.builders.GrunnkretsResponseBuilder
+import no.kartverket.nibas.builders.KommuneBuilder
+import no.kartverket.nibas.builders.StemmekretsBuilder
+import no.kartverket.nibas.builders.StemmekretsResponseBuilder
+import no.kartverket.nibas.domain.Grunnkrets
+import no.kartverket.nibas.domain.Stemmekrets
+import no.kartverket.nibas.kodelister.KodelisteService
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.mockito.Mock
+import org.mockito.Mockito.anyString
+import org.mockito.MockitoAnnotations
+import java.time.LocalDate
+import java.time.Month
+import org.mockito.Mockito.`when` as whenever
+
+
+internal class MatrikkelServiceTest {
+
+    @Mock
+    private lateinit var grunnkretsControllerServiceMock: GrunnkretsControllerService
+
+    @Mock
+    private lateinit var stemmekretsControllerServiceMock: StemmekretsControllerService
+
+    @Mock
+    private lateinit var kodelisteServiceMock: KodelisteService
+
+    @Mock
+    private lateinit var kommuneServiceMock: KommuneService
+
+    private lateinit var matrikkelService: MatrikkelService
+
+    @BeforeEach
+    fun beforeEach() {
+        MockitoAnnotations.openMocks(this)
+        matrikkelService = MatrikkelService(grunnkretsControllerServiceMock, stemmekretsControllerServiceMock, kodelisteServiceMock, kommuneServiceMock)
+    }
+
+    @Test
+    fun hentAlleStemmekretserForKommune() {
+        whenever(kodelisteServiceMock.getKommunenummerIdByCodeValue(anyString())).thenReturn("23b34165-bd8b-4eae-9356-4237ca68f287")
+        val stemmekrets1 = StemmekretsBuilder(id = "1")
+            .withGyldigFra(LocalDate.of(2023, Month.JANUARY, 1))
+            .build()
+        val stemmekrets2 = StemmekretsBuilder(id = "2")
+            .withGyldigFra(LocalDate.of(2024, Month.JANUARY, 1))
+            .build()
+        whenever(kommuneServiceMock.hentKommuneByKommunenummer(anyString())).thenReturn(
+            KommuneBuilder()
+                .withNavn("Oslo")
+                .withStemmekrets(stemmekrets1)
+                .withStemmekrets(stemmekrets2)
+                .build())
+
+        val stemmekretser = matrikkelService.hentAlleStemmekretserForKommune("0301")
+        assertThat(stemmekretser).isEqualTo(
+            listOf(
+                stemmekretsResponse(stemmekrets1),
+                stemmekretsResponse(stemmekrets2))
+        )
+    }
+
+    @Test
+    fun hentAlleGrunnkretserForKommune() {
+        whenever(kodelisteServiceMock.getKommunenummerIdByCodeValue(anyString())).thenReturn("23b34165-bd8b-4eae-9356-4237ca68f287")
+        val gk1 = GrunnkretsBuilder(id = "1")
+            .withGyldigFra(LocalDate.of(2023, Month.JANUARY, 1))
+            .build()
+        val gk2 = GrunnkretsBuilder(id = "2")
+            .withGyldigFra(LocalDate.of(2024, Month.JANUARY, 1))
+            .build()
+        whenever(kommuneServiceMock.hentKommuneByKommunenummer(anyString())).thenReturn(
+            KommuneBuilder()
+                .withNavn("Hole")
+                .withGrunnkrets(gk1)
+                .withGrunnkrets(gk2)
+                .build())
+
+        val grunnkretser = matrikkelService.hentAlleGrunnkretserForKommune("1787")
+        assertThat(grunnkretser).isEqualTo(
+            listOf(
+                grunnkretsResponse(gk1),
+                grunnkretsResponse(gk2))
+        )
+    }
+
+    private fun stemmekretsResponse(stemmekrets: Stemmekrets): StemmekretsResponse {
+        return StemmekretsResponseBuilder(kodelisteServiceMock)
+            .forStemmekrets(stemmekrets)
+            .build()
+    }
+
+    private fun grunnkretsResponse(grunnkrets: Grunnkrets): GrunnkretsResponse {
+        return GrunnkretsResponseBuilder(kodelisteServiceMock)
+            .forGrunnkrets(grunnkrets)
+            .build()
+    }
+}

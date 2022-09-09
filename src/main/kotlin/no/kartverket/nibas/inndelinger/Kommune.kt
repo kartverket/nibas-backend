@@ -82,7 +82,7 @@ class KommuneController @Autowired constructor(
     }
 
     override fun hentKommunesStemmekretser(id: String): List<StemmekretsRef> {
-        return kommuneService.hentKommunesStemmekretser(id).map{ toStemmekretsRef(it) }
+        return kommuneService.hentKommunesStemmekretser(id).map { toStemmekretsRef(it) }
     }
 }
 
@@ -95,6 +95,9 @@ class KommuneService @Autowired constructor(
 
     fun hentAlleKommuner(): List<Kommune> = kommuneRepository.findAll().toList()
     fun hentKommune(id: String): Kommune? = kommuneRepository.findById(id).unwrap()
+
+    fun hentKommuneByKommunenummer(kommunenummerUuid: String): Kommune? = kommuneRepository.findByKommunenummer(kommunenummerUuid)
+
     fun hentKommunerForFylke(fylkeId: String): List<Kommune> = fylkeRepository.findById(fylkeId).unwrap()!!.kommuner.toList()
 
     fun hentGrenserForKommune(id: String): Set<GrenseKobling> {

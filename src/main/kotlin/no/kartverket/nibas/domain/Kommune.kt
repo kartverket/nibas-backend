@@ -69,6 +69,11 @@ class Kommune(override val id: String = UUID.randomUUID().toString()) : Administ
         grunnkretser.add(grunnkrets)
     }
 
+    fun addStemmekrets(stemmekrets: Stemmekrets) {
+        stemmekrets.kommune = this
+        stemmekretser.add(stemmekrets)
+    }
+
     private fun tillatteGrensetyper(): Set<Grensetype> = setOf(
         Grensetype.Kommunegrense,
         Grensetype.Fylkesgrense,
