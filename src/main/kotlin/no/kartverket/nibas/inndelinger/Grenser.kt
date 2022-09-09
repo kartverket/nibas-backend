@@ -93,7 +93,7 @@ class GrenseService(
             .forEach { mapEntry ->
                 doLagreGrenser(mapEntry.value)
             }
-        flateService.beregnFlaterFor(features)
+//        flateService.beregnFlaterFor(features)
     }
 
     private fun doLagreGrenser(features: List<Feature>) {
