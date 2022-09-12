@@ -82,7 +82,7 @@ dependencies {
     implementation("org.springframework.cloud:spring-cloud-starter-vault-config:3.1.1")
     implementation("org.springframework.kafka:spring-kafka")
     // This library provides Hibernate 5.5+ Json column support, which is not natively supported by Hibernate
-    implementation("com.vladmihalcea:hibernate-types-55:2.19.0")
+    implementation("com.vladmihalcea:hibernate-types-55:2.19.1")
 
     runtimeOnly("org.flywaydb:flyway-core:9.3.0")
     runtimeOnly("org.postgresql:postgresql")
