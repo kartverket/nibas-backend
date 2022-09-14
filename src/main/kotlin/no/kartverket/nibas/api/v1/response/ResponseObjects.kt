@@ -247,3 +247,10 @@ data class GeometriErrorResponse(
     @Schema(description = "Generell beskrivelse")
     val message: String,
 )
+
+@Schema(description = "Returtype for opprettelse av utkast")
+data class UtkastOpprettetResponse(
+
+    @Schema(description = "Unik uuid for utkastet")
+    val id: String
+)

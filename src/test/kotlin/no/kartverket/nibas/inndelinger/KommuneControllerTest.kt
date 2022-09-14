@@ -8,7 +8,6 @@ import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.builders.KommuneRequestBuilder
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
-import no.kartverket.nibas.kodelister.KodelisteService
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.anyString
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
@@ -23,8 +22,6 @@ class KommuneControllerTest : NibasMvcTest() {
     private lateinit var kommuneService: KommuneService
 
     //Disse ubrukte servicene må være tilstede for å få bygget konteksten
-    @MockBean
-    private lateinit var kodelisteServiceMock: KodelisteService
 
     @MockBean
     private lateinit var historikkService: HistorikkService

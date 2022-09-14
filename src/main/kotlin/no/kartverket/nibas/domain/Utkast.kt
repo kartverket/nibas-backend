@@ -1,6 +1,8 @@
 package no.kartverket.nibas.domain
 
 import com.vladmihalcea.hibernate.type.json.JsonBinaryType
+import no.kartverket.nibas.api.v1.common.UtkastEndringstype
+import no.kartverket.nibas.api.v1.common.UtkastStatus
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.request.FylkeRequest
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
@@ -33,42 +35,39 @@ import javax.persistence.Version
 class Utkast(
     @Id
     @Column(name = "id", nullable = false, updatable = false)
-    private val id: String = UUID.randomUUID().toString()
+    val id: String = UUID.randomUUID().toString(),
+
+    @Column(name = "navn")
+    var navn: String,
+
+    @Type(type = "jsonb")
+    @Column(columnDefinition = "jsonb", name = "utkast")
+    val operasjoner: OperasjonerIUtkastet = OperasjonerIUtkastet()
 ) : Sporbar {
 
     @Version
     var version: Int = 1
 
     @Column(name = "opprettet_dato", updatable = false)
-    private val opprettetDato: ZonedDateTime = ZonedDateTime.now()
+    val opprettetDato: ZonedDateTime = ZonedDateTime.now()
 
     @Embedded
     override var auditInfo: AuditInfo = AuditInfo()
 
-    @Column(name = "navn")
-    var navn: String = "Utkast_" + UUID.randomUUID().toString().substring(IntRange(0, 6))
-
     @Column(name = "gyldig_fra")
-    var gyldigFra: LocalDate = LocalDate.now().plusYears(100)
+    var gyldigFra: LocalDate = LocalDate.now().plusYears(10)
 
     @Enumerated(EnumType.STRING)
-    var endringstype: Endringstype = Endringstype.IKKE_DEFINERT
+    var endringstype: UtkastEndringstype = UtkastEndringstype.IKKE_DEFINERT
 
     @Enumerated(EnumType.STRING)
     var status: UtkastStatus = UtkastStatus.OPPRETTET
 
-    @Type(type = "jsonb")
-    @Column(columnDefinition = "jsonb")
-    var utkast: UtkastStruktur = UtkastStruktur(id)
-
 }
 
-enum class Endringstype { IKKE_DEFINERT, VEDTATT_GRENSEENDRING, VEDTATT_SAMMENSLAAING }
-enum class UtkastStatus { OPPRETTET, PUBLISERT, FORKASTET }
-
 // TODO: Utvide med felter for sammenslåing og oppsplitting
-data class UtkastStruktur(
-    val id: String,
+// Typen er Serializable for persistering i jsonb-kolonne
+data class OperasjonerIUtkastet(
     val metadataEndringer: MetadataEndringer = MetadataEndringer(),
     val grensejusteringer: Grensejusteringer = Grensejusteringer()
 ) : Serializable
@@ -84,3 +83,74 @@ data class MetadataEndringer(
 data class Grensejusteringer(
     val featureCollections: List<FeatureCollection> = emptyList()
 ) : Serializable
+
+class UtkastBuilder private constructor(val navn: String) {
+
+    private var endringstype: UtkastEndringstype = UtkastEndringstype.IKKE_DEFINERT
+    private var gyldigFra: LocalDate = LocalDate.now().plusYears(10)
+    private val nasjonRequests: List<NasjonRequest> = emptyList()
+    private val fylkeRequests: List<FylkeRequest> = emptyList()
+    private val kommmuneRequests: List<KommuneRequest> = emptyList()
+    private val grunnkretsRequests: List<GrunnkretsRequest> = emptyList()
+    private val stemmekretsRequests: List<StemmekretsRequest> = emptyList()
+    private val endredeFeatures: List<FeatureCollection> = emptyList()
+
+    companion object {
+        fun builder(navn: String): UtkastBuilder {
+            return UtkastBuilder(navn)
+        }
+    }
+
+    fun build(): Utkast {
+        val utkast = Utkast(
+            navn = navn,
+            operasjoner = OperasjonerIUtkastet(
+                metadataEndringer = MetadataEndringer(nasjonRequests, fylkeRequests, kommmuneRequests, grunnkretsRequests, stemmekretsRequests),
+                grensejusteringer = Grensejusteringer(endredeFeatures)
+            ))
+        utkast.gyldigFra = this.gyldigFra
+        utkast.endringstype = this.endringstype
+        return utkast
+    }
+
+    fun withGyldigFra(gyldigFra: LocalDate): UtkastBuilder {
+        this.gyldigFra = gyldigFra
+        return this
+    }
+
+    fun withEndringstype(endringstype: UtkastEndringstype): UtkastBuilder {
+        this.endringstype = endringstype
+        return this
+    }
+
+    fun withNasjonRequests(nasjonRequests: List<NasjonRequest>): UtkastBuilder {
+        this.nasjonRequests.plus(nasjonRequests)
+        return this
+    }
+
+    fun withFylkeRequests(fylkeRequests: List<FylkeRequest>): UtkastBuilder {
+        this.fylkeRequests.plus(fylkeRequests)
+        return this
+    }
+
+    fun withKommuneRequests(kommuneRequests: List<KommuneRequest>): UtkastBuilder {
+        this.kommmuneRequests.plus(kommuneRequests)
+        return this
+    }
+
+    fun withGrunnkretsRequests(grunnkretsRequests: List<GrunnkretsRequest>): UtkastBuilder {
+        this.grunnkretsRequests.plus(grunnkretsRequests)
+        return this
+    }
+
+    fun withStemmekretsRequests(stemmekretsRequests: List<StemmekretsRequest>): UtkastBuilder {
+        this.stemmekretsRequests.plus(stemmekretsRequests)
+        return this
+    }
+
+    fun withEndredeFeatures(endredeFeatures: List<FeatureCollection>): UtkastBuilder {
+        this.endredeFeatures.plus(endredeFeatures)
+        return this
+    }
+
+}

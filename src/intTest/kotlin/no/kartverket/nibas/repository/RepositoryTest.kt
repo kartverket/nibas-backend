@@ -1,7 +1,7 @@
 package no.kartverket.nibas.repository
 
 import no.kartverket.nibas.domain.Spraakkode
-import no.kartverket.nibas.domain.Utkast
+import no.kartverket.nibas.domain.UtkastBuilder
 import no.kartverket.nibas.sporing.UserFacade
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import org.assertj.core.api.Assertions.assertThat
@@ -32,18 +32,20 @@ class RepositoryTest : TestWithDbContainer() {
 
     @Test
     fun saveUtkast() {
-        utkastRepository.save(Utkast(id = "1"))
-        assertThat(utkastRepository.findById("1").isPresent).isTrue
+        val utkast = UtkastBuilder.builder("Utkast 1").build()
+        utkastRepository.save(utkast)
+        assertThat(utkastRepository.findById(utkast.id).isPresent).isTrue
     }
 
     @Test
     fun saveUtkastWithOldVersionTriggersOptimisticLockException() {
-        val utkastId2 = Utkast(id = "2")
-        val savedUtkast = utkastRepository.save(utkastId2)
+        val utkast = UtkastBuilder.builder("Et foreløpig utkast").build()
+
+        val savedUtkast = utkastRepository.save(utkast)
         assertThat(savedUtkast.version).isEqualTo(1)
         savedUtkast.navn = "Navn 1"
 
-        val fetchedUtkast = utkastRepository.findById("2").get()
+        val fetchedUtkast = utkastRepository.findById(utkast.id).get()
         fetchedUtkast.navn = "Navn 2"
 
         //Versjon skal øke til 2

@@ -1,11 +1,11 @@
 package no.kartverket.nibas.inndelinger
 
+import no.kartverket.nibas.MockResponseAsserts
 import no.kartverket.nibas.NibasMvcTest
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.builders.FeatureBuilder
 import no.kartverket.nibas.builders.GrenseBuilder
-import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.sosi.sosiimport.GeometriFailedToBeCreatedException
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
@@ -35,9 +35,6 @@ class GrenseControllerTest : NibasMvcTest() {
     private lateinit var flateService: FlateService
 
     @MockBean
-    private lateinit var kodelisteServiceMock: KodelisteService
-
-    @MockBean
     private lateinit var grenseRepositoryMock: GrenseRepository
 
     @Test
@@ -65,7 +62,13 @@ class GrenseControllerTest : NibasMvcTest() {
         val featureCollection =
             FeatureCollection(features = listOf(feature1, feature2, feature3, feature4))
 
-        post("/v1/grenser/", featureCollection, status().isOk)
+        post(
+            url = "/v1/grenser/",
+            requestObject = featureCollection,
+            responseAsserts = MockResponseAsserts(
+                expectedContentType = null,
+                resultMatchers = listOf(status().isOk))
+        )
 
         verify(grenseServiceMock).lagreGrenser(featureCollection)
     }
@@ -89,8 +92,14 @@ class GrenseControllerTest : NibasMvcTest() {
         val feilLokasjonMatcherCoordinatesX = jsonPath("$.feilLokasjon.coordinates[0]").value("0.0")
         val feilLokasjonMatcherCoordinatesY = jsonPath("$.feilLokasjon.coordinates[1]").value("1.0")
 
-        post("/v1/grenser/", featureCollection, expectedHttpStatus, geometryTypeMatcher, validationErrorMatcher, feilLokasjonMatcherType,
-            feilLokasjonMatcherSrid, feilLokasjonMatcherCoordinatesX, feilLokasjonMatcherCoordinatesY)
+        post(
+            url = "/v1/grenser/",
+            requestObject = featureCollection,
+            responseAsserts = MockResponseAsserts(
+                resultMatchers = listOf(
+                    expectedHttpStatus, geometryTypeMatcher, validationErrorMatcher, feilLokasjonMatcherType,
+                    feilLokasjonMatcherSrid, feilLokasjonMatcherCoordinatesX, feilLokasjonMatcherCoordinatesY))
+        )
 
         verify(grenseServiceMock).lagreGrenser(featureCollection)
     }
@@ -112,8 +121,12 @@ class GrenseControllerTest : NibasMvcTest() {
         val feilLokasjonMatcherCoordinatesX = jsonPath("$.feilLokasjon.coordinates[0]").value("0.0")
         val feilLokasjonMatcherCoordinatesY = jsonPath("$.feilLokasjon.coordinates[1]").value("1.0")
 
-        post("/v1/grenser/", featureCollection, expectedHttpStatus, geometryTypeMatcher, validationErrorMatcher, feilLokasjonMatcherType,
-            feilLokasjonMatcherSrid, feilLokasjonMatcherCoordinatesX, feilLokasjonMatcherCoordinatesY)
+        post(
+            url = "/v1/grenser/",
+            requestObject = featureCollection,
+            responseAsserts = MockResponseAsserts(
+                resultMatchers = listOf(expectedHttpStatus, geometryTypeMatcher, validationErrorMatcher, feilLokasjonMatcherType,
+                    feilLokasjonMatcherSrid, feilLokasjonMatcherCoordinatesX, feilLokasjonMatcherCoordinatesY)))
 
         verify(grenseServiceMock).lagreGrenser(featureCollection)
     }

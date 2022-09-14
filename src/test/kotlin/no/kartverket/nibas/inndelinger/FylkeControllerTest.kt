@@ -8,7 +8,6 @@ import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
-import no.kartverket.nibas.kodelister.KodelisteService
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyString
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
@@ -23,9 +22,6 @@ class FylkeControllerTest : NibasMvcTest() {
     private lateinit var fylkeService: FylkeService
 
     @MockBean
-    private lateinit var kodelisteService: KodelisteService
-
-    @MockBean
     private lateinit var historikkService: HistorikkService
 
     @Test
@@ -35,7 +31,7 @@ class FylkeControllerTest : NibasMvcTest() {
             .build()
 
         whenever(fylkeService.hentAlleFylker()).thenReturn(listOf(fylke))
-        whenever(kodelisteService.getCodeValueByFylkesnummerId(anyString())).thenReturn("1")
+        whenever(kodelisteServiceMock.getCodeValueByFylkesnummerId(anyString())).thenReturn("1")
         get("/v1/fylker", status().isOk)
     }
 
@@ -50,7 +46,7 @@ class FylkeControllerTest : NibasMvcTest() {
                 .build()
         )
 
-        whenever(kodelisteService.getCodeValueByFylkesnummerId(anyString())).thenReturn("1")
+        whenever(kodelisteServiceMock.getCodeValueByFylkesnummerId(anyString())).thenReturn("1")
         get("/v1/fylker/1", status().isOk)
     }
 
@@ -82,7 +78,7 @@ class FylkeControllerTest : NibasMvcTest() {
         whenever(
             fylkeService.oppdaterFylke(anyString(), any(FylkeRequest::class.java))
         ).thenReturn(FylkeBuilder().build())
-        whenever(kodelisteService.getCodeValueByFylkesnummerId(anyString())).thenReturn("1")
+        whenever(kodelisteServiceMock.getCodeValueByFylkesnummerId(anyString())).thenReturn("1")
         put("/v1/fylker/1", FylkeRequestBuilder.DEFAULT_REQUEST, status().isOk)
     }
 

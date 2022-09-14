@@ -9,7 +9,6 @@ import no.kartverket.nibas.builders.GrunnkretsResponseBuilder
 import no.kartverket.nibas.builders.StemmekretsBuilder
 import no.kartverket.nibas.builders.StemmekretsResponseBuilder
 import no.kartverket.nibas.config.ApiKeyWebSecurityConfig
-import no.kartverket.nibas.kodelister.KodelisteService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.anySet
@@ -43,9 +42,6 @@ internal class MatrikkelControllerTest : NibasMvcTest() {
 
     @MockBean
     private lateinit var stemmekretsControllerServiceMock: StemmekretsControllerService
-
-    @MockBean
-    private lateinit var kodelisteServiceMock: KodelisteService
 
     @Autowired
     private lateinit var objectMapper: ObjectMapper

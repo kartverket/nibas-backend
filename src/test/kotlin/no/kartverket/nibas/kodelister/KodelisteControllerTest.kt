@@ -3,19 +3,15 @@ package no.kartverket.nibas.kodelister
 import no.kartverket.nibas.NibasMvcTest
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
-import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.mockito.Mockito.`when` as whenever
 
 @WebMvcTest(KodelisteController::class)
 class KodelisteControllerTest : NibasMvcTest() {
 
-    @MockBean
-    private lateinit var kodelisteService: KodelisteService
-
     @Test
     fun fetchKommunenumreReturns200_OK() {
-        whenever(kodelisteService.getKommunenumre()).thenReturn(
+        whenever(kodelisteServiceMock.getKommunenumre()).thenReturn(
             KodelisteRespons(
                 type = KodelisteType.KOMMUNENUMMER,
                 items = listOf(
