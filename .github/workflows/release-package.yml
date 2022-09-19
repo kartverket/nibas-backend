@@ -58,21 +58,19 @@ jobs:
 
       - name: Build docker and push
         id: build
-        uses: whoan/docker-build-with-cache-action@v5
+        uses: docker/build-push-action@v3
         with:
           context: .
-          username: ${{ github.actor }}
-          password: ${{ github.token }}
-          registry: ${{ env.registry }}
-          image_tag: ${{ steps.tag_version.outputs.new_tag }}
-          image_name: ${{ github.repository }}
-          build_extra_args: '{"--build-arg": "project_version_arg=${{ steps.tag_version.outputs.new_tag }}"}'
+          push: true
+          tags: ${{ env.registry }}/${{ github.repository }}:${{ steps.tag_version.outputs.new_tag }}
+          build-args: |
+            project_version_arg=${{ steps.tag_version.outputs.new_tag }}
 
       - name: Run Trivy vulnerability scanner
         id: securityscan
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: '${{ steps.build.outputs.full_image_name }}:${{ steps.tag_version.outputs.new_tag }}'
+          image-ref: '${{ env.registry }}/${{ github.repository }}:${{ steps.tag_version.outputs.new_tag }}'
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
