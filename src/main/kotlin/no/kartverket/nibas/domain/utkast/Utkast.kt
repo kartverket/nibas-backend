@@ -1,8 +1,6 @@
-package no.kartverket.nibas.domain
+package no.kartverket.nibas.domain.utkast
 
 import com.vladmihalcea.hibernate.type.json.JsonBinaryType
-import no.kartverket.nibas.api.v1.common.UtkastEndringstype
-import no.kartverket.nibas.api.v1.common.UtkastStatus
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.request.FylkeRequest
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
@@ -22,12 +20,13 @@ import java.util.*
 import javax.persistence.Column
 import javax.persistence.Embedded
 import javax.persistence.Entity
-import javax.persistence.EnumType
-import javax.persistence.Enumerated
 import javax.persistence.Id
 import javax.persistence.Table
 import javax.persistence.Version
 
+/**
+ * Navn og endringstype settes i konstruktør da de er påkrevd ved opprettelse av utkastet.
+ */
 @Table(name = "utkast")
 @Audited
 @TypeDefs(TypeDef(name = "jsonb", typeClass = JsonBinaryType::class))
@@ -39,6 +38,9 @@ class Utkast(
 
     @Column(name = "navn")
     var navn: String,
+
+    // Blir mappet av Converter
+    var endringstype: UtkastEndringstype,
 
     @Type(type = "jsonb")
     @Column(columnDefinition = "jsonb", name = "utkast")
@@ -57,10 +59,7 @@ class Utkast(
     @Column(name = "gyldig_fra")
     var gyldigFra: LocalDate = LocalDate.now().plusYears(10)
 
-    @Enumerated(EnumType.STRING)
-    var endringstype: UtkastEndringstype = UtkastEndringstype.IKKE_DEFINERT
-
-    @Enumerated(EnumType.STRING)
+    // Blir mappet av Converter
     var status: UtkastStatus = UtkastStatus.OPPRETTET
 
 }
@@ -84,32 +83,34 @@ data class Grensejusteringer(
     val featureCollections: List<FeatureCollection> = emptyList()
 ) : Serializable
 
-class UtkastBuilder private constructor(val navn: String) {
+class UtkastBuilder private constructor(val navn: String, private val endringstype: UtkastEndringstype = UtkastEndringstype.KVALITETSHEVING) {
 
-    private var endringstype: UtkastEndringstype = UtkastEndringstype.IKKE_DEFINERT
     private var gyldigFra: LocalDate = LocalDate.now().plusYears(10)
-    private val nasjonRequests: List<NasjonRequest> = emptyList()
-    private val fylkeRequests: List<FylkeRequest> = emptyList()
-    private val kommmuneRequests: List<KommuneRequest> = emptyList()
-    private val grunnkretsRequests: List<GrunnkretsRequest> = emptyList()
-    private val stemmekretsRequests: List<StemmekretsRequest> = emptyList()
-    private val endredeFeatures: List<FeatureCollection> = emptyList()
+    private var nasjonRequests: List<NasjonRequest> = listOf()
+    private var fylkeRequests: List<FylkeRequest> = listOf()
+    private var kommmuneRequests: List<KommuneRequest> = listOf()
+    private var grunnkretsRequests: List<GrunnkretsRequest> = listOf()
+    private var stemmekretsRequests: List<StemmekretsRequest> = listOf()
+    private var endredeFeatures: List<FeatureCollection> = listOf()
+    private var auditInfo: AuditInfo? = null
 
     companion object {
-        fun builder(navn: String): UtkastBuilder {
-            return UtkastBuilder(navn)
+        fun builder(navn: String, endringstype: UtkastEndringstype = UtkastEndringstype.KVALITETSHEVING): UtkastBuilder {
+            return UtkastBuilder(navn, endringstype)
         }
     }
 
     fun build(): Utkast {
         val utkast = Utkast(
             navn = navn,
+            endringstype = this.endringstype,
             operasjoner = OperasjonerIUtkastet(
                 metadataEndringer = MetadataEndringer(nasjonRequests, fylkeRequests, kommmuneRequests, grunnkretsRequests, stemmekretsRequests),
                 grensejusteringer = Grensejusteringer(endredeFeatures)
             ))
         utkast.gyldigFra = this.gyldigFra
-        utkast.endringstype = this.endringstype
+        auditInfo?.let { utkast.auditInfo = it }
+
         return utkast
     }
 
@@ -118,38 +119,38 @@ class UtkastBuilder private constructor(val navn: String) {
         return this
     }
 
-    fun withEndringstype(endringstype: UtkastEndringstype): UtkastBuilder {
-        this.endringstype = endringstype
-        return this
-    }
-
     fun withNasjonRequests(nasjonRequests: List<NasjonRequest>): UtkastBuilder {
-        this.nasjonRequests.plus(nasjonRequests)
+        this.nasjonRequests += nasjonRequests
         return this
     }
 
     fun withFylkeRequests(fylkeRequests: List<FylkeRequest>): UtkastBuilder {
-        this.fylkeRequests.plus(fylkeRequests)
+        this.fylkeRequests += fylkeRequests
         return this
     }
 
     fun withKommuneRequests(kommuneRequests: List<KommuneRequest>): UtkastBuilder {
-        this.kommmuneRequests.plus(kommuneRequests)
+        this.kommmuneRequests += kommuneRequests
         return this
     }
 
     fun withGrunnkretsRequests(grunnkretsRequests: List<GrunnkretsRequest>): UtkastBuilder {
-        this.grunnkretsRequests.plus(grunnkretsRequests)
+        this.grunnkretsRequests += grunnkretsRequests
         return this
     }
 
     fun withStemmekretsRequests(stemmekretsRequests: List<StemmekretsRequest>): UtkastBuilder {
-        this.stemmekretsRequests.plus(stemmekretsRequests)
+        this.stemmekretsRequests += stemmekretsRequests
         return this
     }
 
     fun withEndredeFeatures(endredeFeatures: List<FeatureCollection>): UtkastBuilder {
-        this.endredeFeatures.plus(endredeFeatures)
+        this.endredeFeatures += endredeFeatures
+        return this
+    }
+
+    fun withAuditInfo(auditInfo: AuditInfo): UtkastBuilder {
+        this.auditInfo = auditInfo
         return this
     }
 

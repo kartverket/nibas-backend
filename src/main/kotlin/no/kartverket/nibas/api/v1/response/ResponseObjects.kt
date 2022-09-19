@@ -6,9 +6,15 @@ import no.kartverket.nibas.api.v1.common.Fylkesnummer
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.Point
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
+import no.kartverket.nibas.api.v1.request.FylkeRequest
+import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
+import no.kartverket.nibas.api.v1.request.KommuneRequest
+import no.kartverket.nibas.api.v1.request.NasjonRequest
+import no.kartverket.nibas.api.v1.request.StemmekretsRequest
 import no.kartverket.nibas.inndelinger.RevisjonStatus
 import org.springframework.http.HttpStatus
 import java.time.LocalDate
+import java.time.ZonedDateTime
 import java.util.*
 
 @Schema(description = "En referanse til en nasjon")
@@ -250,7 +256,45 @@ data class GeometriErrorResponse(
 
 @Schema(description = "Returtype for opprettelse av utkast")
 data class UtkastOpprettetResponse(
-
     @Schema(description = "Unik uuid for utkastet")
     val id: String
 )
+
+@Schema(description = "Representasjon av utkast")
+data class UtkastResponse(
+    @Schema(description = "Unik uuid for utkastet")
+    val id: String,
+    @Schema(description = "Arbeidsnavnet til utkastet.")
+    val navn: String,
+    @Schema(description = "Typen endring utkastet representerer.")
+    val endringstype: String,
+    @Schema(description = "Status for utkastet.")
+    val status: String,
+    @Schema(description = "Tidspunktet utkastet skal være gyldig fra.")
+    val gyldigFra: LocalDate,
+    @Schema(description = "Liste av endringer på nasjon.")
+    val nasjonsendringer: List<NasjonRequest> = emptyList(),
+    @Schema(description = "Liste av endringer på fylke.")
+    val fylkesendringer: List<FylkeRequest> = emptyList(),
+    @Schema(description = "Liste av endringer på kommune.")
+    val kommuneendringer: List<KommuneRequest> = emptyList(),
+    @Schema(description = "Liste av endringer på grunnkrets.")
+    val grunnkretsendringer: List<GrunnkretsRequest> = emptyList(),
+    @Schema(description = "Liste av endringer på stemmekrets.")
+    val stemmekretsendringer: List<StemmekretsRequest> = emptyList(),
+    @Schema(description = "Liste av endringer på grenser.")
+    val endredeFeatures: List<FeatureCollection> = emptyList(),
+    @Schema(description = "Da utkastet ble opprettet.")
+    val opprettetDato: ZonedDateTime,
+    @Schema(description = "Info om endringer på utkast.")
+    val auditInfoResponse: AuditInfoResponse
+)
+
+@Schema(description = "Representasjon av audit info for et objekt.")
+data class AuditInfoResponse(
+    @Schema(description = "Da objektet sist ble oppdatert.")
+    val oppdateringsdato: LocalDate,
+    @Schema(description = "Den som sist endret objektet.")
+    val endretAv: String
+)
+

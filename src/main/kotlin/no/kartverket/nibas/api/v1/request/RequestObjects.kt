@@ -2,7 +2,6 @@ package no.kartverket.nibas.api.v1.request
 
 import io.swagger.v3.oas.annotations.media.Schema
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
-import no.kartverket.nibas.api.v1.common.UtkastEndringstype
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import java.time.LocalDate
@@ -107,7 +106,7 @@ data class UtkastRequest(
     @Schema(description = "Arbeidsnavnet til utkastet.")
     val navn: String,
     @Schema(description = "Typen endring utkastet representerer.")
-    val endringstype: UtkastEndringstype,
+    val endringstype: String,
     @Schema(description = "Tidspunktet utkastet skal være gyldig fra.")
     val gyldigFra: LocalDate = LocalDate.now().plusYears(10),
     @Schema(description = "Liste av endringer på nasjon.")

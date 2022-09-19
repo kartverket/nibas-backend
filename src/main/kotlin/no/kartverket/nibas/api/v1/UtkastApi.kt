@@ -9,8 +9,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import no.kartverket.nibas.api.v1.request.UtkastRequest
 import no.kartverket.nibas.api.v1.response.UtkastOpprettetResponse
+import no.kartverket.nibas.api.v1.response.UtkastResponse
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -41,5 +44,16 @@ interface UtkastApi {
     fun opprettUtkast(@Parameter(description = "Utkastet som ønskes opprettet")
                       @RequestBody utkastRequest: UtkastRequest
     ): UtkastOpprettetResponse
+
+    @Operation(summary = "Hent et utkast med gitt id", description = "Henter utkast med gitt id")
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            description = "Successful operation",
+        ),
+        ApiResponse(responseCode = "404", description = "Not Found")
+    )
+    @GetMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun hentUtkast(@Parameter(description = "ID-en til utkastet man vil hente") @PathVariable id: String): UtkastResponse
 
 }

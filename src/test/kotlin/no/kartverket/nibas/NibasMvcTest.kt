@@ -32,7 +32,15 @@ open class NibasMvcTest {
     @MockBean
     lateinit var kodelisteServiceMock: KodelisteService
 
-    fun get(url: String, matcher: ResultMatcher) = perform(MockMvcRequestBuilders.get(url), matcher)
+    fun get(url: String, matcher: ResultMatcher) {
+        perform(MockMvcRequestBuilders.get(url), matcher)
+    }
+
+    fun get(url: String, responseAsserts: MockResponseAsserts) {
+        val mvcResult = perform(MockMvcRequestBuilders.get(url), matchers = responseAsserts.resultMatchers)
+        assertResponseObject(mvcResult, responseAsserts)
+    }
+
     fun getWithToken(url: String, token: String, matcher: ResultMatcher) = perform(MockMvcRequestBuilders.get(url).header("Authorization", token), matcher)
     fun put(url: String, expected: ResultMatcher) =
         perform(MockMvcRequestBuilders.put(url), expected)
@@ -46,12 +54,7 @@ open class NibasMvcTest {
                 .post(url)
                 .content(asJson(requestObject)),
             matchers = responseAsserts.resultMatchers)
-        val mockHttpServletResponse = mvcResult.response
-        assertThat(mockHttpServletResponse.contentType).isEqualTo(responseAsserts.expectedContentType)
-        val expectedResponseObject = responseAsserts.expectedResponseObject
-        if (expectedResponseObject != null) {
-            assertThat(mockHttpServletResponse.getContentAsString(Charsets.UTF_8)).isEqualTo(asJson(expectedResponseObject))
-        }
+        assertResponseObject(mvcResult, responseAsserts)
     }
 
     private fun perform(action: MockHttpServletRequestBuilder, matcher: ResultMatcher): MvcResult {
@@ -68,6 +71,17 @@ open class NibasMvcTest {
 
     private fun asJson(someObject: Any): String = mapper.writeValueAsString(someObject)
 
+    private fun assertResponseObject(
+        mvcResult: MvcResult,
+        responseAsserts: MockResponseAsserts
+    ) {
+        val mockHttpServletResponse = mvcResult.response
+        assertThat(mockHttpServletResponse.contentType).isEqualTo(responseAsserts.expectedContentType)
+        val expectedResponseObject = responseAsserts.expectedResponseObject
+        if (expectedResponseObject != null) {
+            assertThat(mockHttpServletResponse.getContentAsString(Charsets.UTF_8)).isEqualTo(asJson(expectedResponseObject))
+        }
+    }
 }
 
 data class MockResponseAsserts(

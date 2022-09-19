@@ -1,8 +1,9 @@
 package no.kartverket.nibas.utkast
 
+import no.kartverket.nibas.builders.FylkeRequestBuilder
 import no.kartverket.nibas.builders.UtkastRequestBuilder
-import no.kartverket.nibas.domain.Utkast
-import no.kartverket.nibas.domain.UtkastBuilder
+import no.kartverket.nibas.domain.utkast.Utkast
+import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.repository.UtkastRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -27,8 +28,8 @@ internal class UtkastServiceTest {
     @Test
     fun opprettUtkast() {
         val navn = "Grenseendring i Oslo"
-        val utkast = UtkastBuilder
-            .builder(navn)
+        val utkast = UtkastBuilder.builder(navn)
+            .withFylkeRequests(listOf( FylkeRequestBuilder.DEFAULT_REQUEST))
             .build()
         whenever(utkastRepositoryMock.save(any(Utkast::class.java))).thenReturn(utkast)
 

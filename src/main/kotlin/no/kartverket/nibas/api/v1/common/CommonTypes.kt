@@ -83,8 +83,3 @@ data class AdministrativEnhetNavn(
     @Schema(description = "Språkkoden til det administrative navnet")
     val spraak: String
 )
-
-@Schema(description = "Representasjon av ulike former for endring som kan gjøres i kontekst av utkast.")
-enum class UtkastEndringstype { IKKE_DEFINERT, VEDTATT_GRENSEENDRING, VEDTATT_SAMMENSLAAING }
-@Schema(description = "Definerer tillatte statuser for utkast.")
-enum class UtkastStatus { OPPRETTET, PUBLISERT, FORKASTET }
