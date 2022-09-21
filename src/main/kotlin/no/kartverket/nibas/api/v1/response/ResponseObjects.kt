@@ -3,14 +3,10 @@ package no.kartverket.nibas.api.v1.response
 import io.swagger.v3.oas.annotations.media.Schema
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.common.Fylkesnummer
+import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.Point
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
-import no.kartverket.nibas.api.v1.request.FylkeRequest
-import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
-import no.kartverket.nibas.api.v1.request.KommuneRequest
-import no.kartverket.nibas.api.v1.request.NasjonRequest
-import no.kartverket.nibas.api.v1.request.StemmekretsRequest
 import no.kartverket.nibas.inndelinger.RevisjonStatus
 import org.springframework.http.HttpStatus
 import java.time.LocalDate
@@ -272,22 +268,12 @@ data class UtkastResponse(
     val status: String,
     @Schema(description = "Tidspunktet utkastet skal være gyldig fra.")
     val gyldigFra: LocalDate,
-    @Schema(description = "Liste av endringer på nasjon.")
-    val nasjonsendringer: List<NasjonRequest> = emptyList(),
-    @Schema(description = "Liste av endringer på fylke.")
-    val fylkesendringer: List<FylkeRequest> = emptyList(),
-    @Schema(description = "Liste av endringer på kommune.")
-    val kommuneendringer: List<KommuneRequest> = emptyList(),
-    @Schema(description = "Liste av endringer på grunnkrets.")
-    val grunnkretsendringer: List<GrunnkretsRequest> = emptyList(),
-    @Schema(description = "Liste av endringer på stemmekrets.")
-    val stemmekretsendringer: List<StemmekretsRequest> = emptyList(),
-    @Schema(description = "Liste av endringer på grenser.")
-    val endredeFeatures: List<FeatureCollection> = emptyList(),
     @Schema(description = "Da utkastet ble opprettet.")
     val opprettetDato: ZonedDateTime,
     @Schema(description = "Info om endringer på utkast.")
-    val auditInfoResponse: AuditInfoResponse
+    val auditInfoResponse: AuditInfoResponse,
+    @Schema(description = "Representasjon av endringene som er utført i utkastet.")
+    val operasjoner: Operasjoner = Operasjoner()
 )
 
 @Schema(description = "Representasjon av audit info for et objekt.")

@@ -29,7 +29,7 @@ internal class UtkastServiceTest {
     fun opprettUtkast() {
         val navn = "Grenseendring i Oslo"
         val utkast = UtkastBuilder.builder(navn)
-            .withFylkeRequests(listOf( FylkeRequestBuilder.DEFAULT_REQUEST))
+            .withFylkeRequests(mapOf("UUID-1" to FylkeRequestBuilder.DEFAULT_REQUEST))
             .build()
         whenever(utkastRepositoryMock.save(any(Utkast::class.java))).thenReturn(utkast)
 

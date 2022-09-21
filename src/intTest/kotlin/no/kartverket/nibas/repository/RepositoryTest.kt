@@ -62,14 +62,14 @@ class RepositoryTest : TestWithDbContainer() {
         assertThatThrownBy { utkastRepository.save(fetchedUtkast) }.isInstanceOf(ObjectOptimisticLockingFailureException::class.java)
     }
 
-    private fun kommuneRequests(): List<KommuneRequest> {
+    private fun kommuneRequests(): Map<String, KommuneRequest> {
         val navn = "Oslo"
         val spraak = "NOR"
         val lokalId = "123"
         val navnerom = "A.B.C"
         val kommunenummer = "123"
         val samiskforvaltningsomraade = false
-        return listOf(KommuneRequest(
+        return mapOf("UUID-1" to KommuneRequest(
             administrativenhetnavn = listOf(AdministrativEnhetNavn(navn, spraak)),
             lokalid = lokalId,
             navnerom = navnerom,

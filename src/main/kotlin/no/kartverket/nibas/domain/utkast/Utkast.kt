@@ -1,19 +1,15 @@
 package no.kartverket.nibas.domain.utkast
 
 import com.vladmihalcea.hibernate.type.json.JsonBinaryType
-import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
+import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.request.FylkeRequest
-import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
 import no.kartverket.nibas.api.v1.request.KommuneRequest
-import no.kartverket.nibas.api.v1.request.NasjonRequest
-import no.kartverket.nibas.api.v1.request.StemmekretsRequest
 import no.kartverket.nibas.sporing.AuditInfo
 import no.kartverket.nibas.sporing.Sporbar
 import org.hibernate.annotations.Type
 import org.hibernate.annotations.TypeDef
 import org.hibernate.annotations.TypeDefs
 import org.hibernate.envers.Audited
-import java.io.Serializable
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.*
@@ -44,7 +40,7 @@ class Utkast(
 
     @Type(type = "jsonb")
     @Column(columnDefinition = "jsonb", name = "utkast")
-    val operasjoner: OperasjonerIUtkastet = OperasjonerIUtkastet()
+    val operasjoner: Operasjoner = Operasjoner()
 ) : Sporbar {
 
     @Version
@@ -64,34 +60,10 @@ class Utkast(
 
 }
 
-// TODO: Utvide med felter for sammenslåing og oppsplitting
-// Typen er Serializable for persistering i jsonb-kolonne
-data class OperasjonerIUtkastet(
-    val metadataEndringer: MetadataEndringer = MetadataEndringer(),
-    val grensejusteringer: Grensejusteringer = Grensejusteringer()
-) : Serializable
-
-data class MetadataEndringer(
-    val nasjonsendringer: List<NasjonRequest> = emptyList(),
-    val fylkesendringer: List<FylkeRequest> = emptyList(),
-    val kommuneendringer: List<KommuneRequest> = emptyList(),
-    val grunnkretsendringer: List<GrunnkretsRequest> = emptyList(),
-    val stemmekretsendringer: List<StemmekretsRequest> = emptyList()
-) : Serializable
-
-data class Grensejusteringer(
-    val featureCollections: List<FeatureCollection> = emptyList()
-) : Serializable
-
 class UtkastBuilder private constructor(val navn: String, private val endringstype: UtkastEndringstype = UtkastEndringstype.KVALITETSHEVING) {
 
+    private var operasjoner: Operasjoner = Operasjoner()
     private var gyldigFra: LocalDate = LocalDate.now().plusYears(10)
-    private var nasjonRequests: List<NasjonRequest> = listOf()
-    private var fylkeRequests: List<FylkeRequest> = listOf()
-    private var kommmuneRequests: List<KommuneRequest> = listOf()
-    private var grunnkretsRequests: List<GrunnkretsRequest> = listOf()
-    private var stemmekretsRequests: List<StemmekretsRequest> = listOf()
-    private var endredeFeatures: List<FeatureCollection> = listOf()
     private var auditInfo: AuditInfo? = null
 
     companion object {
@@ -104,10 +76,8 @@ class UtkastBuilder private constructor(val navn: String, private val endringsty
         val utkast = Utkast(
             navn = navn,
             endringstype = this.endringstype,
-            operasjoner = OperasjonerIUtkastet(
-                metadataEndringer = MetadataEndringer(nasjonRequests, fylkeRequests, kommmuneRequests, grunnkretsRequests, stemmekretsRequests),
-                grensejusteringer = Grensejusteringer(endredeFeatures)
-            ))
+            operasjoner = this.operasjoner
+        )
         utkast.gyldigFra = this.gyldigFra
         auditInfo?.let { utkast.auditInfo = it }
 
@@ -119,38 +89,25 @@ class UtkastBuilder private constructor(val navn: String, private val endringsty
         return this
     }
 
-    fun withNasjonRequests(nasjonRequests: List<NasjonRequest>): UtkastBuilder {
-        this.nasjonRequests += nasjonRequests
-        return this
-    }
-
-    fun withFylkeRequests(fylkeRequests: List<FylkeRequest>): UtkastBuilder {
-        this.fylkeRequests += fylkeRequests
-        return this
-    }
-
-    fun withKommuneRequests(kommuneRequests: List<KommuneRequest>): UtkastBuilder {
-        this.kommmuneRequests += kommuneRequests
-        return this
-    }
-
-    fun withGrunnkretsRequests(grunnkretsRequests: List<GrunnkretsRequest>): UtkastBuilder {
-        this.grunnkretsRequests += grunnkretsRequests
-        return this
-    }
-
-    fun withStemmekretsRequests(stemmekretsRequests: List<StemmekretsRequest>): UtkastBuilder {
-        this.stemmekretsRequests += stemmekretsRequests
-        return this
-    }
-
-    fun withEndredeFeatures(endredeFeatures: List<FeatureCollection>): UtkastBuilder {
-        this.endredeFeatures += endredeFeatures
-        return this
-    }
-
     fun withAuditInfo(auditInfo: AuditInfo): UtkastBuilder {
         this.auditInfo = auditInfo
+        return this
+    }
+
+    fun withOperasjoner(operasjoner: Operasjoner): UtkastBuilder {
+        this.operasjoner = operasjoner
+        return this
+    }
+
+    fun withKommuneRequests(kommuneRequests: Map<String, KommuneRequest>): UtkastBuilder {
+        val metadataEndringerCopy = operasjoner.metadataendringer!!.copy(kommuneendringer = kommuneRequests)
+        operasjoner = operasjoner.copy(metadataendringer = metadataEndringerCopy)
+        return this
+    }
+
+    fun withFylkeRequests(fylkeRequests: Map<String, FylkeRequest>): UtkastBuilder {
+        val metadataEndringerCopy = operasjoner.metadataendringer!!.copy(fylkesendringer = fylkeRequests)
+        operasjoner = operasjoner.copy(metadataendringer = metadataEndringerCopy)
         return this
     }
 

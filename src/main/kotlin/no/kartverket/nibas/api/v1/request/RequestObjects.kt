@@ -2,7 +2,7 @@ package no.kartverket.nibas.api.v1.request
 
 import io.swagger.v3.oas.annotations.media.Schema
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
-import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
+import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import java.time.LocalDate
 import javax.validation.constraints.NotBlank
@@ -108,17 +108,7 @@ data class UtkastRequest(
     @Schema(description = "Typen endring utkastet representerer.")
     val endringstype: String,
     @Schema(description = "Tidspunktet utkastet skal være gyldig fra.")
-    val gyldigFra: LocalDate = LocalDate.now().plusYears(10),
-    @Schema(description = "Liste av endringer på nasjon.")
-    val nasjonsendringer: List<NasjonRequest> = emptyList(),
-    @Schema(description = "Liste av endringer på fylke.")
-    val fylkesendringer: List<FylkeRequest> = emptyList(),
-    @Schema(description = "Liste av endringer på kommune.")
-    val kommuneendringer: List<KommuneRequest> = emptyList(),
-    @Schema(description = "Liste av endringer på grunnkrets.")
-    val grunnkretsendringer: List<GrunnkretsRequest> = emptyList(),
-    @Schema(description = "Liste av endringer på stemmekrets.")
-    val stemmekretsendringer: List<StemmekretsRequest> = emptyList(),
-    @Schema(description = "Liste av endringer på grenser.")
-    val endredeFeatures: List<FeatureCollection> = emptyList(),
+    val gyldigFra: LocalDate? = LocalDate.now().plusYears(10),
+    @Schema(description = "Representasjon av endringene som er utført i utkastet.")
+    val operasjoner: Operasjoner = Operasjoner()
 )

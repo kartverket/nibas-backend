@@ -51,12 +51,13 @@ internal class UtkastControllerTest : NibasMvcTest() {
         val syvendeJuli = LocalDate.of(2022, Month.JULY, 7)
         val dummy = "DUMMY"
         val foersteJanuar = LocalDate.of(2024, Month.JANUARY, 1)
-        val kommuneRequests = listOf(KommuneRequestBuilder.DEFAULT_REQUEST)
+        val kommuneRequests = mapOf("UUID-1" to KommuneRequestBuilder.DEFAULT_REQUEST)
         val utkast = UtkastBuilder.builder(navn)
             .withKommuneRequests(kommuneRequests)
             .withAuditInfo(AuditInfo(syvendeJuli, dummy))
             .withGyldigFra(foersteJanuar)
             .build()
+        val operasjoner = utkast.operasjoner
         val utkastId = utkast.id
         val opprettetTidspunkt = utkast.opprettetDato
         whenever(utkastServiceMock.hentUtkast(anyString())).thenReturn(utkast)
@@ -72,7 +73,7 @@ internal class UtkastControllerTest : NibasMvcTest() {
             ),
             opprettetDato = opprettetTidspunkt,
             gyldigFra = foersteJanuar,
-            kommuneendringer = kommuneRequests
+            operasjoner = operasjoner
         )
         get("/v1/utkast/$utkastId", responseAsserts = MockResponseAsserts(
             expectedResponseObject = expectedUtkastResponse,

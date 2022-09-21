@@ -1,6 +1,13 @@
 package no.kartverket.nibas.api.v1.common
 
 import io.swagger.v3.oas.annotations.media.Schema
+import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
+import no.kartverket.nibas.api.v1.request.FylkeRequest
+import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
+import no.kartverket.nibas.api.v1.request.KommuneRequest
+import no.kartverket.nibas.api.v1.request.NasjonRequest
+import no.kartverket.nibas.api.v1.request.StemmekretsRequest
+import java.io.Serializable
 import javax.persistence.AttributeConverter
 import javax.persistence.Converter
 
@@ -83,3 +90,33 @@ data class AdministrativEnhetNavn(
     @Schema(description = "Språkkoden til det administrative navnet")
     val spraak: String
 )
+
+// TODO: Utvide med felter for sammenslåing og oppsplitting
+// Typen er Serializable for persistering i jsonb-kolonne
+@Schema(description = "Representasjon av operasjoner/handlinger som er utført i klienten.")
+data class Operasjoner(
+    @Schema(description = "Endringer på metadata.")
+    val metadataendringer: Metadataendringer? = Metadataendringer(),
+    @Schema(description = "Endringer på grenser.")
+    val grenseendringer: Grenseendringer? = Grenseendringer()
+) : Serializable
+
+@Schema(description = "Representasjon av endringer på metadata.")
+data class Metadataendringer(
+    @Schema(description = "Endringer på nasjon.")
+    val nasjonsendringer: Map<String, NasjonRequest>? = emptyMap(),
+    @Schema(description = "Endringer på fylke.")
+    val fylkesendringer: Map<String, FylkeRequest>? = emptyMap(),
+    @Schema(description = "Endringer på kommune.")
+    val kommuneendringer: Map<String, KommuneRequest>? = emptyMap(),
+    @Schema(description = "Endringer på grunnkrets.")
+    val grunnkretsendringer: Map<String, GrunnkretsRequest>? = emptyMap(),
+    @Schema(description = "Endringer på stemmekrets.")
+    val stemmekretsendringer: Map<String, StemmekretsRequest>? = emptyMap()
+) : Serializable
+
+@Schema(description = "Representasjon av endringer på grensegeometri.")
+data class Grenseendringer(
+    @Schema(description = "Endringer på features.")
+    val endredeFeatures: List<FeatureCollection>? = emptyList()
+) : Serializable
