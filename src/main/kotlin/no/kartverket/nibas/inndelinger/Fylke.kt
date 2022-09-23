@@ -14,7 +14,6 @@ import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.FylkeRepository
 import no.kartverket.nibas.unwrap
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.bind.annotation.RestController
@@ -22,20 +21,16 @@ import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 
 @RestController
-class FylkeController @Autowired constructor(
+class FylkeController(
     private val fylkeService: FylkeService,
     private val kodelisteService: KodelisteService,
-    private val historikkService: HistorikkService
+    private val historikkService: HistorikkService,
 ) : FylkeApi {
 
     override fun hentFylker(): List<FylkeRef> = fylkeService.hentAlleFylker().map { toFylkeRef(it) }
 
-    override fun hentFylke(id: String): FylkeResponse {
-        return when (val fylke = fylkeService.hentFylke(id)) {
-            null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
-            else -> toFylkeResponse(fylke, kodelisteService)
-        }
-    }
+    override fun hentFylke(id: String): FylkeResponse =
+        fylkeService.hentFylke(id)?.toFylkeResponse(kodelisteService) ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
 
     override fun hentGrenserForFylke(id: String): FeatureCollection {
         val grenser = fylkeService.hentGrenserForFylke(id)
@@ -51,25 +46,19 @@ class FylkeController @Autowired constructor(
     }
 
     override fun oppdaterFylke(id: String, oppdatertFylke: FylkeRequest): FylkeResponse {
-        return when (val lagret = fylkeService.oppdaterFylke(id, oppdatertFylke)) {
-            null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
-            else -> toFylkeResponse(lagret, kodelisteService)
-        }
+        return fylkeService.oppdaterFylke(id, oppdatertFylke)?.toFylkeResponse(kodelisteService) ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
     }
 
     override fun hentFylkesRevisjoner(id: String): List<RevisjonRef> =
         historikkService.hentRevisjoner(id, Fylke::class.java).map { toRevisjonRef(it) }
 
-    override fun hentFylkesRevisjon(id: String, revisjon: Int): FylkeResponse {
-        return toFylkeResponse(
-            historikkService.hentRevisjon(id, revisjon, Fylke::class.java),
-            kodelisteService
-        )
-    }
+    override fun hentFylkesRevisjon(id: String, revisjon: Int): FylkeResponse =
+        historikkService.hentRevisjon(id, revisjon, Fylke::class.java).toFylkeResponse(kodelisteService)
+
 }
 
 @Service
-class FylkeService @Autowired constructor(
+class FylkeService(
     private val fylkeRepository: FylkeRepository,
     private val administrativenhetnavnRepository: AdministrativenhetnavnRepository
 ) {
@@ -106,16 +95,16 @@ fun toFylkeRef(fylke: Fylke): FylkeRef = FylkeRef(
     href = ServletUriComponentsBuilder.fromCurrentRequestUri().pathSegment(fylke.id).build().toUriString()
 )
 
-fun toFylkeResponse(fylke: Fylke, kodelisteService: KodelisteService): FylkeResponse = FylkeResponse(
-    id = fylke.id,
-    administrativenhetnavn = fylke.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!) },
-    lokalid = fylke.lokalid,
-    navnerom = fylke.navnerom,
+fun Fylke.toFylkeResponse(kodelisteService: KodelisteService): FylkeResponse = FylkeResponse(
+    id = this.id,
+    administrativenhetnavn = this.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!) },
+    lokalid = this.lokalid,
+    navnerom = this.navnerom,
     fylkesnummer = Fylkesnummer(
-        id = fylke.fylkesnummer,
-        kodeverdi = kodelisteService.getCodeValueByFylkesnummerId(fylke.fylkesnummer)?.toInt()!!
+        id = this.fylkesnummer,
+        kodeverdi = kodelisteService.getCodeValueByFylkesnummerId(this.fylkesnummer)?.toInt()!!
     ),
-    samiskforvaltningsomraade = fylke.samiskforvaltningsomraade!!,
-    oppdateringsdato = fylke.auditInfo.oppdateringsdato,
-    features = FeatureCollection(features = listOf(posisjonToFeature(fylke.posisjon), flateToFeature(fylke, kodelisteService)))
+    samiskforvaltningsomraade = this.samiskforvaltningsomraade!!,
+    oppdateringsdato = this.auditInfo.oppdateringsdato,
+    features = FeatureCollection(features = listOf(posisjonToFeature(this.posisjon), flateToFeature(this, kodelisteService)))
 )

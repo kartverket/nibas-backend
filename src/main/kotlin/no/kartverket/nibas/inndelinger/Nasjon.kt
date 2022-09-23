@@ -12,7 +12,6 @@ import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.NasjonRepository
 import no.kartverket.nibas.unwrap
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.bind.annotation.RestController
@@ -21,20 +20,16 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import no.kartverket.nibas.api.v1.response.NasjonRef as NasjonRefResponse
 
 @RestController
-class NasjonController @Autowired constructor(
+class NasjonController(
     private val nasjonService: NasjonService,
     private val historikkService: HistorikkService,
-    private val kodelisteService: KodelisteService
+    private val kodelisteService: KodelisteService,
 ) : NasjonApi {
 
     override fun hentNasjoner(): List<NasjonRefResponse> = nasjonService.hentAlleNasjoner().map { toNasjonRef(it) }
 
-    override fun hentNasjon(id: String): NasjonResponse {
-        return when (val nasjon = nasjonService.hentNasjon(id)) {
-            null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
-            else -> toNasjonResponse(nasjon, kodelisteService)
-        }
-    }
+    override fun hentNasjon(id: String): NasjonResponse =
+        nasjonService.hentNasjon(id)?.toNasjonResponse(kodelisteService) ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
 
     override fun hentGrenserForNasjon(id: String): FeatureCollection {
         val grenser = nasjonService.hentGrenserForNasjon(id)
@@ -50,25 +45,19 @@ class NasjonController @Autowired constructor(
     }
 
     override fun oppdaterNasjon(id: String, oppdatertNasjon: NasjonRequest): NasjonResponse {
-        return when (val lagret = nasjonService.oppdaterNasjon(id, oppdatertNasjon)) {
-            null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
-            else -> toNasjonResponse(lagret, kodelisteService)
-        }
+        return nasjonService.oppdaterNasjon(id, oppdatertNasjon)?.toNasjonResponse(kodelisteService) ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
     }
 
     override fun hentNasjonRevisjoner(id: String): List<RevisjonRef> =
         historikkService.hentRevisjoner(id, Nasjon::class.java).map { toRevisjonRef(it) }
 
-    override fun hentNasjonRevisjon(id: String, revisjon: Int): NasjonResponse {
-        return toNasjonResponse(
-            historikkService.hentRevisjon(id, revisjon, Nasjon::class.java),
-            kodelisteService
-        )
-    }
+    override fun hentNasjonRevisjon(id: String, revisjon: Int): NasjonResponse =
+        historikkService.hentRevisjon(id, revisjon, Nasjon::class.java).toNasjonResponse(kodelisteService)
+
 }
 
 @Service
-class NasjonService @Autowired constructor(
+class NasjonService(
     private val nasjonRepository: NasjonRepository,
     private val administrativenhetnavnRepository: AdministrativenhetnavnRepository
 ) {
@@ -103,10 +92,10 @@ fun toNasjonRef(nasjon: Nasjon): NasjonRefResponse = NasjonRefResponse(
     href = ServletUriComponentsBuilder.fromCurrentRequestUri().pathSegment(nasjon.id).build().toUriString()
 )
 
-fun toNasjonResponse(nasjon: Nasjon, kodelisteService: KodelisteService): NasjonResponse = NasjonResponse(
-    id = nasjon.id,
-    administrativenhetnavn = nasjon.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!) },
-    lokalid = nasjon.lokalid,
-    navnerom = nasjon.navnerom,
-    features = FeatureCollection(features = listOf(posisjonToFeature(nasjon.posisjon), flateToFeature(nasjon, kodelisteService)))
+fun Nasjon.toNasjonResponse(kodelisteService: KodelisteService): NasjonResponse = NasjonResponse(
+    id = this.id,
+    administrativenhetnavn = this.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!) },
+    lokalid = this.lokalid,
+    navnerom = this.navnerom,
+    features = FeatureCollection(features = listOf(posisjonToFeature(this.posisjon), flateToFeature(this, kodelisteService)))
 )

@@ -50,7 +50,7 @@ class MatrikkelService(private val grunnkretsControllerService: GrunnkretsContro
 
     fun hentAlleStemmekretserForKommune(numeriskKommunenummer: String): List<StemmekretsResponse> {
         return hentKommuneFraNumeriskNummer(numeriskKommunenummer).stemmekretser
-            .map { toStemmekretsResponse(it, kodelisteService) }
+            .map { it.toStemmekretsResponse(kodelisteService) }
             .sortedBy { it.id }
     }
 
@@ -60,7 +60,7 @@ class MatrikkelService(private val grunnkretsControllerService: GrunnkretsContro
 
     fun hentAlleGrunnkretserForKommune(kommunenummer: String): List<GrunnkretsResponse> {
         return hentKommuneFraNumeriskNummer(kommunenummer).grunnkretser
-            .map { toGrunnkretsResponse(it, kodelisteService) }
+            .map { it.toGrunnkretsResponse(kodelisteService) }
             .sortedBy { it.id }
     }
 

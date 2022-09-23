@@ -11,10 +11,8 @@ import no.kartverket.nibas.api.v1.response.StemmekretsResponse
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.kodelister.KodelisteService
-import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.unwrap
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -46,37 +44,30 @@ class StemmekretsController(
     }
 
     override fun oppdaterStemmekrets(id: String, oppdatertStemmekrets: StemmekretsRequest): StemmekretsResponse {
-        return when (val lagret = stemmekretsService.oppdaterStemmekrets(id, oppdatertStemmekrets)) {
-            null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
-            else -> toStemmekretsResponse(lagret, kodelisteService)
-        }
+        return stemmekretsService.oppdaterStemmekrets(id, oppdatertStemmekrets)?.toStemmekretsResponse(kodelisteService)
+            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
     }
 
     override fun hentStemmekretsRevisjoner(id: String): List<RevisjonRef> =
         historikkService.hentRevisjoner(id, Stemmekrets::class.java).map { toRevisjonRef(it) }
 
 
-    override fun hentStemmekretsRevisjon(id: String, revisjon: Int): StemmekretsResponse {
-        return toStemmekretsResponse(
-            historikkService.hentRevisjon(id, revisjon, Stemmekrets::class.java),
-            kodelisteService
-        )
-    }
+    override fun hentStemmekretsRevisjon(id: String, revisjon: Int): StemmekretsResponse =
+        historikkService.hentRevisjon(id, revisjon, Stemmekrets::class.java).toStemmekretsResponse(kodelisteService)
+
 }
 
 @Service
 class StemmekretsControllerService(private val stemmekretsService: StemmekretsService,
                                    private val kodelisteService: KodelisteService) {
-    fun hentEn(id: String): StemmekretsResponse {
-        return when (val stemmekrets = stemmekretsService.hentStemmekrets(id)) {
-            null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
-            else -> toStemmekretsResponse(stemmekrets, kodelisteService)
-        }
-    }
+    fun hentEn(id: String): StemmekretsResponse =
+        stemmekretsService.hentStemmekrets(id)?.toStemmekretsResponse(kodelisteService)
+            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
+
 }
 
 @Service
-class StemmekretsService @Autowired constructor(private val stemmekretsRepository: StemmekretsRepository, private val kommuneRepository: KommuneRepository) {
+class StemmekretsService(private val stemmekretsRepository: StemmekretsRepository) {
 
     fun hentStemmekrets(id: String) = stemmekretsRepository.findById(id).unwrap()
 
@@ -104,17 +95,17 @@ fun toStemmekretsRef(stemmekrets: Stemmekrets): StemmekretsRef = StemmekretsRef(
     href = ServletUriComponentsBuilder.fromCurrentRequestUri().pathSegment(stemmekrets.id).build().toUriString()
 )
 
-fun toStemmekretsResponse(stemmekrets: Stemmekrets, kodelisteService: KodelisteService): StemmekretsResponse = StemmekretsResponse(
-    id = stemmekrets.id,
-    stemmekretsnavn = stemmekrets.stemmekretsnavn!!,
-    stemmekretsnummer = stemmekrets.stemmekretsnummer!!,
-    identifikasjon = Identifikasjon(stemmekrets.lokalid, stemmekrets.navnerom, stemmekrets.versjonid),
-    kommunenummer = stemmekrets.kommunenummer!!,
-    valgdistriktsnummer = stemmekrets.valgdistriktsnummer,
-    tellekretsnavn = stemmekrets.tellekretsnavn,
-    tellekretsnummer = stemmekrets.tellekretsnummer,
+fun Stemmekrets.toStemmekretsResponse(kodelisteService: KodelisteService): StemmekretsResponse = StemmekretsResponse(
+    id = this.id,
+    stemmekretsnavn = this.stemmekretsnavn!!,
+    stemmekretsnummer = this.stemmekretsnummer!!,
+    identifikasjon = Identifikasjon(this.lokalid, this.navnerom, this.versjonid),
+    kommunenummer = this.kommunenummer!!,
+    valgdistriktsnummer = this.valgdistriktsnummer,
+    tellekretsnavn = this.tellekretsnavn,
+    tellekretsnummer = this.tellekretsnummer,
     features = FeatureCollection(features = listOf(
-        posisjonToFeature(stemmekrets.posisjon),
-        flateToFeature(stemmekrets, kodelisteService)))
+        posisjonToFeature(this.posisjon),
+        flateToFeature(this, kodelisteService)))
 )
 

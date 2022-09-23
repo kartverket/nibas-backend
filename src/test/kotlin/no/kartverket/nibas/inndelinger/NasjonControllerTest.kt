@@ -21,9 +21,6 @@ class NasjonControllerTest : NibasMvcTest() {
     @MockBean
     private lateinit var nasjonService: NasjonService
 
-    @MockBean
-    private lateinit var historikkService: HistorikkService
-
     @Test
     fun thatHentAlleReturns200_OK() {
         whenever(nasjonService.hentAlleNasjoner()).thenReturn(listOf(NasjonBuilder.DEFAULT_NASJON))

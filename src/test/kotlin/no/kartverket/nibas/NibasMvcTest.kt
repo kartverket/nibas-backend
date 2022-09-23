@@ -2,6 +2,7 @@ package no.kartverket.nibas
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import no.kartverket.nibas.config.WebSecurityConfig
+import no.kartverket.nibas.inndelinger.HistorikkService
 import no.kartverket.nibas.kodelister.KodelisteService
 import org.assertj.core.api.Assertions.assertThat
 import org.mockito.Mockito
@@ -31,6 +32,9 @@ open class NibasMvcTest {
 
     @MockBean
     lateinit var kodelisteServiceMock: KodelisteService
+
+    @MockBean
+    lateinit var historikkService: HistorikkService
 
     fun get(url: String, matcher: ResultMatcher) {
         perform(MockMvcRequestBuilders.get(url), matcher)

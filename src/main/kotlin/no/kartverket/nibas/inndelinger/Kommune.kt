@@ -19,7 +19,6 @@ import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.FylkeRepository
 import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.unwrap
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.bind.annotation.RestController
@@ -27,7 +26,7 @@ import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 
 @RestController
-class KommuneController @Autowired constructor(
+class KommuneController(
     private val kommuneService: KommuneService,
     private val kodelisteService: KodelisteService,
     private val historikkService: HistorikkService
@@ -40,12 +39,9 @@ class KommuneController @Autowired constructor(
         }
     }
 
-    override fun hentKommune(id: String): KommuneResponse {
-        return when (val kommune = kommuneService.hentKommune(id)) {
-            null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
-            else -> toKommuneResponse(kommune, kodelisteService)
-        }
-    }
+    override fun hentKommune(id: String): KommuneResponse =
+        kommuneService.hentKommune(id)?.toKommuneResponse(kodelisteService)
+            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
 
     override fun hentGrenserForKommune(id: String): FeatureCollection {
         val grenser = kommuneService.hentGrenserForKommune(id)
@@ -61,21 +57,16 @@ class KommuneController @Autowired constructor(
     }
 
     override fun oppdaterKommune(id: String, oppdatertKommune: KommuneRequest): KommuneResponse {
-        return when (val lagret = kommuneService.oppdaterKommune(id, oppdatertKommune)) {
-            null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
-            else -> toKommuneResponse(lagret, kodelisteService)
-        }
+        return kommuneService.oppdaterKommune(id, oppdatertKommune)?.toKommuneResponse(kodelisteService)
+            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
     }
 
     override fun hentKommuneRevisjoner(id: String): List<RevisjonRef> =
         historikkService.hentRevisjoner(id, Kommune::class.java).map { toRevisjonRef(it) }
 
-    override fun hentKommuneRevisjon(id: String, revisjon: Int): KommuneResponse {
-        return toKommuneResponse(
-            historikkService.hentRevisjon(id, revisjon, Kommune::class.java),
-            kodelisteService
-        )
-    }
+    override fun hentKommuneRevisjon(id: String, revisjon: Int): KommuneResponse =
+        historikkService.hentRevisjon(id, revisjon, Kommune::class.java).toKommuneResponse(kodelisteService)
+
 
     override fun hentKommunesGrunnkretser(id: String): List<GrunnkretsRef> {
         return kommuneService.hentKommunesGrunnkretser(id).map { toGrunnkretsRef(it) }
@@ -87,7 +78,7 @@ class KommuneController @Autowired constructor(
 }
 
 @Service
-class KommuneService @Autowired constructor(
+class KommuneService(
     private val kommuneRepository: KommuneRepository,
     private val fylkeRepository: FylkeRepository,
     private val administrativenhetnavnRepository: AdministrativenhetnavnRepository,
@@ -138,15 +129,15 @@ fun toKommuneRef(kommune: Kommune): KommuneRef = KommuneRef(
     href = ServletUriComponentsBuilder.fromCurrentRequestUri().pathSegment(kommune.id).build().toUriString()
 )
 
-fun toKommuneResponse(kommune: Kommune, kodelisteService: KodelisteService): KommuneResponse = KommuneResponse(
-    id = kommune.id,
-    administrativenhetnavn = kommune.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!) },
-    lokalid = kommune.lokalid,
-    navnerom = kommune.navnerom,
-    kommunenummer = createKommunenummerFromUUID(kommune.kommunenummer, kodelisteService),
-    samiskforvaltningsomraade = kommune.samiskforvaltningsomraade!!,
-    oppdateringsdato = kommune.auditInfo.oppdateringsdato,
-    features = FeatureCollection(features = listOf(posisjonToFeature(kommune.posisjon), flateToFeature(kommune, kodelisteService)))
+fun Kommune.toKommuneResponse(kodelisteService: KodelisteService): KommuneResponse = KommuneResponse(
+    id = this.id,
+    administrativenhetnavn = this.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!) },
+    lokalid = this.lokalid,
+    navnerom = this.navnerom,
+    kommunenummer = createKommunenummerFromUUID(this.kommunenummer, kodelisteService),
+    samiskforvaltningsomraade = this.samiskforvaltningsomraade!!,
+    oppdateringsdato = this.auditInfo.oppdateringsdato,
+    features = FeatureCollection(features = listOf(posisjonToFeature(this.posisjon), flateToFeature(this, kodelisteService)))
 )
 
 fun createKommunenummerFromUUID(kommunenrUUID: String, kodelisteService: KodelisteService) = Kommunenummer(

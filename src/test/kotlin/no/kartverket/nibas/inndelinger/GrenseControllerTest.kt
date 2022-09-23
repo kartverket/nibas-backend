@@ -29,9 +29,6 @@ class GrenseControllerTest : NibasMvcTest() {
     private lateinit var grenseServiceMock: GrenseService
 
     @MockBean
-    private lateinit var historikkService: HistorikkService
-
-    @MockBean
     private lateinit var flateService: FlateService
 
     @MockBean

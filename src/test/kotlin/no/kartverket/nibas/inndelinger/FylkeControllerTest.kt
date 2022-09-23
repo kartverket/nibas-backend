@@ -21,9 +21,6 @@ class FylkeControllerTest : NibasMvcTest() {
     @MockBean
     private lateinit var fylkeService: FylkeService
 
-    @MockBean
-    private lateinit var historikkService: HistorikkService
-
     @Test
     fun thatHentAlleReturns200_OK() {
         val fylke = FylkeBuilder()
@@ -71,7 +68,6 @@ class FylkeControllerTest : NibasMvcTest() {
         whenever(fylkeService.hentGrenserForFylke(anyString())).thenReturn(emptySet())
         get("/v1/fylker/1/grenser", status().isNotFound)
     }
-
 
     @Test
     fun thatOppdaterFylkeReturns200_Ok() {

@@ -43,38 +43,31 @@ class GrunnkretsController(
     }
 
     override fun oppdaterGrunnkrets(id: String, oppdatertGrunnkrets: GrunnkretsRequest): GrunnkretsResponse {
-        return when (val lagret = grunnkretsService.oppdaterGrunnkrets(id, oppdatertGrunnkrets)) {
-            null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
-            else -> toGrunnkretsResponse(lagret, kodelisteService)
-        }
+        return grunnkretsService.oppdaterGrunnkrets(id, oppdatertGrunnkrets)?.toGrunnkretsResponse(kodelisteService)
+            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
     }
 
     override fun hentGrunnkretsRevisjoner(id: String): List<RevisjonRef> =
         historikkService.hentRevisjoner(id, Grunnkrets::class.java).map { toRevisjonRef(it) }
 
 
-    override fun hentGrunnkretsRevisjon(id: String, revisjon: Int): GrunnkretsResponse {
-        return toGrunnkretsResponse(
-            historikkService.hentRevisjon(id, revisjon, Grunnkrets::class.java),
-            kodelisteService
-        )
-    }
+    override fun hentGrunnkretsRevisjon(id: String, revisjon: Int): GrunnkretsResponse =
+        historikkService.hentRevisjon(id, revisjon, Grunnkrets::class.java).toGrunnkretsResponse(kodelisteService)
+
 }
 
 @Service
 class GrunnkretsControllerService(private val grunnkretsService: GrunnkretsService,
                                   private val kodelisteService: KodelisteService) {
-    fun hentEn(id: String): GrunnkretsResponse {
-        return when (val grunnkrets = grunnkretsService.hentGrunnkrets(id)) {
-            null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
-            else -> toGrunnkretsResponse(grunnkrets, kodelisteService)
-        }
-    }
+    fun hentEn(id: String): GrunnkretsResponse =
+        grunnkretsService.hentGrunnkrets(id)?.toGrunnkretsResponse(kodelisteService)
+            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
+
 }
 
 
 @Service
-class GrunnkretsService constructor(private val grunnkretsRepository: GrunnkretsRepository) {
+class GrunnkretsService(private val grunnkretsRepository: GrunnkretsRepository) {
 
     fun hentGrunnkrets(id: String) = grunnkretsRepository.findById(id).unwrap()
 
@@ -100,14 +93,14 @@ fun toGrunnkretsRef(grunnkrets: Grunnkrets): GrunnkretsRef = GrunnkretsRef(
     href = ServletUriComponentsBuilder.fromCurrentRequestUri().pathSegment(grunnkrets.id).build().toUriString()
 )
 
-fun toGrunnkretsResponse(grunnkrets: Grunnkrets, kodelisteService: KodelisteService): GrunnkretsResponse = GrunnkretsResponse(
-    id = grunnkrets.id,
-    navn = grunnkrets.grunnkretsnavn!!,
-    grunnkretsnummer = grunnkrets.grunnkretsnummer!!,
-    identifikasjon = Identifikasjon(grunnkrets.lokalid, grunnkrets.navnerom, grunnkrets.versjonid),
-    kommunenummer = grunnkrets.kommunenummer!!,
+fun Grunnkrets.toGrunnkretsResponse(kodelisteService: KodelisteService): GrunnkretsResponse = GrunnkretsResponse(
+    id = this.id,
+    navn = this.grunnkretsnavn!!,
+    grunnkretsnummer = this.grunnkretsnummer!!,
+    identifikasjon = Identifikasjon(this.lokalid, this.navnerom, this.versjonid),
+    kommunenummer = this.kommunenummer!!,
     features = FeatureCollection(features = listOf(
-        posisjonToFeature(grunnkrets.posisjon),
-        flateToFeature(grunnkrets, kodelisteService)))
+        posisjonToFeature(this.posisjon),
+        flateToFeature(this, kodelisteService)))
 )
 

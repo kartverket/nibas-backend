@@ -21,11 +21,6 @@ class KommuneControllerTest : NibasMvcTest() {
     @MockBean
     private lateinit var kommuneService: KommuneService
 
-    //Disse ubrukte servicene må være tilstede for å få bygget konteksten
-
-    @MockBean
-    private lateinit var historikkService: HistorikkService
-
     @Test
     fun thatHentAlleReturns200_OK() {
         val kommune = KommuneBuilder("1")
