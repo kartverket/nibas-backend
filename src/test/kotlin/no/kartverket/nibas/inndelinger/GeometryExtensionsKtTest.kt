@@ -29,7 +29,6 @@ internal class GeometryExtensionsKtTest {
         val resultDto = multiPolygon.toDto()
 
         val expectedDto = MultiPolygon(
-            srid = "25833",
             coordinates =
             listOf(
                 listOf(

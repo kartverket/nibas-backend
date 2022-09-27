@@ -13,11 +13,11 @@ import no.kartverket.nibas.api.v1.common.geojson.LineString as LineStringDto
 import no.kartverket.nibas.api.v1.common.geojson.MultiPolygon as MultiPolygonDto
 import no.kartverket.nibas.api.v1.common.geojson.Point as PointDto
 
-fun GeometryDto.toLineString(): LineString {
+fun GeometryDto.toLineString(srid: Number): LineString {
     if (this !is LineStringDto) {
         throw RuntimeException("Geometry kan ikke utledes til en LineString. Geometry var av type: $this")
     }
-    return SosiGeometryFunctions.koordinaterToLineString(this.coordinates, this.srid)
+    return SosiGeometryFunctions.koordinaterToLineString(this.coordinates, srid.toString())
 }
 
 fun Geometry.toDto(): GeometryDto {
@@ -29,15 +29,11 @@ fun Geometry.toDto(): GeometryDto {
     }
 }
 
-fun Geometry.sridAsString(): String = this.srid.toString()
-
 fun Point.toDto() = PointDto(
-    srid = this.sridAsString(),
     coordinates = listOf(this.x, this.y)
 )
 
 fun LineString.toDto() = LineStringDto(
-    srid = this.sridAsString(),
     coordinates = this.coordinates.map { listOf(it.x, it.y) })
 
 fun MultiPolygon.toDto(): MultiPolygonDto {
@@ -57,7 +53,6 @@ fun MultiPolygon.toDto(): MultiPolygonDto {
         listOfPolygons.add(listOfRings)
     }
     return MultiPolygonDto(
-        srid = this.sridAsString(),
         coordinates = listOfPolygons
     )
 }

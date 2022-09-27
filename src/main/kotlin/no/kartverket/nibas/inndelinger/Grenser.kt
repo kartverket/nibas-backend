@@ -31,6 +31,7 @@ import no.kartverket.nibas.repository.LandKodeRepository
 import no.kartverket.nibas.repository.NoeyaktighetsklassekodeRepository
 import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.repository.TerrengdetaljkodeRepository
+import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import no.kartverket.nibas.unwrap
 import org.locationtech.jts.geom.Point
 import org.springframework.http.HttpStatus
@@ -54,10 +55,10 @@ class GrenseController(
         grenseService.lagreGrenser(grenser)
     }
 
-    override fun hentGrense(id: String): Feature = when (val grense = grenseService.hentGrense(id)) {
-        null -> throw ResponseStatusException(HttpStatus.NOT_FOUND)
-        else -> grenseToFeature(grense = grense, kodelisteService)
-    }
+    override fun hentGrense(id: String): Feature =
+        grenseService.hentGrense(id)
+            ?.let { grenseToFeature(grense = it, kodelisteService) }
+            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
 
     override fun hentGrenseRevisjon(id: String, revisjon: Int): Feature =
         grenseToFeature(grense = historikkService.hentRevisjon(id, revisjon, Grense::class.java), kodelisteService)
@@ -114,7 +115,7 @@ class GrenseService(
         val grenserMedRetningOgKontekst = features.map { feature ->
             var grense: Grense = eksisterendeGrenser.find { it.id == feature.id }!!
 
-            grense.grense = feature.geometry.toLineString()
+            grense.grense = feature.geometry.toLineString(feature.properties.srid)
             grense = updateMetadataOnGrense(feature, grense)
 
             val kontekstEgenskaper = feature.properties.kontekstEgenskaper!!
@@ -214,7 +215,7 @@ fun grenseKoblingToFeature(
 }
 
 fun grenseToFeature(grense: Grense, kodelisteService: KodelisteService): Feature {
-    var featureProperties = FeatureProperties(type = grense.grensetype.value)
+    var featureProperties = FeatureProperties(type = grense.grensetype.value, srid = grense.grense.srid)
     val metadataMapper = MetadataMapper(kodelisteService)
     featureProperties = when (grense.grensetype) {
         Grensetype.Fylkesgrense -> featureProperties.copy(metadata = metadataMapper.toMetadataForAdministrativGrense(grense))
@@ -237,11 +238,15 @@ fun grenseToFeature(grense: Grense, kodelisteService: KodelisteService): Feature
 }
 
 fun posisjonToFeature(posisjon: Point?): Feature =
-    Feature(properties = FeatureProperties(type = "Posisjon"), geometry = posisjon!!.toDto())
+    Feature(
+        properties = FeatureProperties(type = "Posisjon", srid = posisjon!!.srid),
+        geometry = posisjon.toDto()
+    )
 
 fun flateToFeature(flate: Flate, kodelisteService: KodelisteService): Feature {
     var featureProperties = FeatureProperties(
         type = flate.type.name,
+        srid = flate.flate?.srid ?: SosiGeometryFunctions.defaultSrid
     )
     val metadataMapper = MetadataMapper(kodelisteService)
 

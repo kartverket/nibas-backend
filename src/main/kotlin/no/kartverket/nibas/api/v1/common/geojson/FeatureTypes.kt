@@ -43,8 +43,6 @@ interface Geometry
 data class Point(
     @Schema(description = "Geometriens type. Diskriminator.")
     val type: String = POINT_SCHEMA,
-    @Schema(description = "Koordinatsystemet. Defaulter til 25833.")
-    val srid: String = SosiGeometryFunctions.defaultSrid.toString(),
     @Schema(description = "X og y som liste.")
     val coordinates: List<Double>)
     : Geometry
@@ -56,8 +54,6 @@ data class Point(
 data class LineString(
     @Schema(description = "Geometriens type. Diskriminator.")
     val type: String = LINE_STRING_SCHEMA,
-    @Schema(description = "Koordinatsystemet. Defaulter til 25833.")
-    val srid: String = SosiGeometryFunctions.defaultSrid.toString(),
     @Schema(description = "Liste av (x og y som liste).")
     val coordinates: List<List<Double>>)
     : Geometry
@@ -69,8 +65,6 @@ data class LineString(
 data class MultiPolygon(
     @Schema(description = "Geometriens type. Diskriminator.")
     val type: String = MULTI_POLYGON_SCHEMA,
-    @Schema(description = "Koordinatsystemet. Defaulter til 25833.")
-    val srid: String = SosiGeometryFunctions.defaultSrid.toString(),
     @Schema(description = "Liste av polygonenes liste av LinearRings som igjen har liste av koordinater som er liste av x og y.")
     val coordinates: List<List<List<List<Double>>>>)
     : Geometry
@@ -103,6 +97,9 @@ data class FeatureProperties(
 
     @Schema(description = "Avhengig av hva slags feature man har kan dette være enten grensetype eller geometri-type (posisjon eller flate)")
     val type: String,
+
+    @Schema(description = "Koordinatsystemet. Defaulter til 25833.")
+    val srid: Int = SosiGeometryFunctions.defaultSrid,
 
     @Schema(
         description = "Diverse metadata-felter fra sosi-modellen.",

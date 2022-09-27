@@ -15,6 +15,7 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.Sporingsinformasjon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.StatistiskgrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.TerritorialgrenseMetadata
 import no.kartverket.nibas.inndelinger.toDto
+import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.GeometryFactory
@@ -33,12 +34,14 @@ class FeatureBuilder(private val id: String? = "1") {
     private var kontekstType: KontekstEnhetType = KontekstEnhetType.GRUNNKRETS
     private var retningMedKlokka: Boolean = true
     private var rekkefoelge: Int = 0
+    private var srid: Int = SosiGeometryFunctions.defaultSrid
     private var geometry: Geometry =
         GeometryFactory().createLineString(arrayOf(Coordinate(0.0, 0.0), Coordinate(1.0, 1.0)))
 
     fun build(): Feature {
         var properties = FeatureProperties(
             type = grenseType.toString(),
+            srid = this.srid,
             kontekstEgenskaper = KontekstEgenskaper(
                 id = kontekstId,
                 type = kontekstType,
@@ -105,6 +108,11 @@ class FeatureBuilder(private val id: String? = "1") {
 
     fun withRekkefoelge(rekkefoelge: Int): FeatureBuilder {
         this.rekkefoelge = rekkefoelge
+        return this
+    }
+
+    fun withSrid(srid: Int): FeatureBuilder {
+        this.srid = srid
         return this
     }
 }
