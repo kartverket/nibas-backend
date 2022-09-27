@@ -1,7 +1,7 @@
 package no.kartverket.nibas.api.v1.common
 
 import io.swagger.v3.oas.annotations.media.Schema
-import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
+import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.request.FylkeRequest
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
 import no.kartverket.nibas.api.v1.request.KommuneRequest
@@ -118,5 +118,5 @@ data class Metadataendringer(
 @Schema(description = "Representasjon av endringer på grensegeometri.")
 data class Grenseendringer(
     @Schema(description = "Endringer på features.")
-    val endredeFeatures: List<FeatureCollection>? = emptyList()
+    val endredeFeatures: Map<String, Feature>? = emptyMap()
 ) : Serializable
