@@ -40,7 +40,7 @@ class Utkast(
 
     @Type(type = "jsonb")
     @Column(columnDefinition = "jsonb", name = "utkast")
-    val operasjoner: Operasjoner = Operasjoner()
+    var operasjoner: Operasjoner = Operasjoner()
 ) : Sporbar {
 
     @Version

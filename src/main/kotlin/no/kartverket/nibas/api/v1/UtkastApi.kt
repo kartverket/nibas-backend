@@ -15,6 +15,7 @@ import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
@@ -56,4 +57,23 @@ interface UtkastApi {
     @GetMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun hentUtkast(@Parameter(description = "ID-en til utkastet man vil hente") @PathVariable id: String): UtkastResponse
 
+    @Operation(
+        summary = "Oppdater angitt utkast.",
+        description = "Oppdaterer angitt utkast. Returnerer oppdatert utkast."
+    )
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            description = "Successful operation"
+        ),
+        ApiResponse(
+            responseCode = "400",
+            description = "Bad request. Check the request body and path"
+        )
+    )
+    @PutMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun oppdaterUtkast(
+        @Parameter(description = "ID til utkastet man vil oppdatere") @PathVariable id: String,
+        @RequestBody utkast: UtkastRequest
+    ): UtkastResponse
 }

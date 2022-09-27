@@ -29,6 +29,11 @@ class UtkastController(private val utkastService: UtkastService) : UtkastApi {
             ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
     }
 
+    override fun oppdaterUtkast(id: String, utkast: UtkastRequest): UtkastResponse {
+        return utkastService.oppdaterUtkast(id, utkast)?.toUtkastResponse()
+            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
+    }
+
 }
 
 @Transactional
@@ -43,6 +48,16 @@ class UtkastService(private val utkastRepository: UtkastRepository) {
     @Transactional(readOnly = true)
     fun hentUtkast(id: String): Utkast? {
         return utkastRepository.findById(id).unwrap()
+    }
+
+    fun oppdaterUtkast(id: String, request: UtkastRequest): Utkast? {
+        return hentUtkast(id)?.let { utkast ->
+            utkast.navn = request.navn
+            utkast.endringstype = UtkastEndringstype.fromValue(request.endringstype)
+            utkast.gyldigFra = request.gyldigFra!!
+            utkast.operasjoner = request.operasjoner
+            utkastRepository.save(utkast)
+        }
     }
 
 }

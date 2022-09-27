@@ -52,6 +52,15 @@ open class NibasMvcTest {
     fun put(url: String, request: Any, expected: ResultMatcher) =
         perform(MockMvcRequestBuilders.put(url).content(asJson(request)), expected)
 
+    fun put(url: String, requestObject: Any, responseAsserts: MockResponseAsserts) {
+        val mvcResult = perform(
+            MockMvcRequestBuilders
+                .put(url)
+                .content(asJson(requestObject)),
+            matchers = responseAsserts.resultMatchers)
+        assertResponseObject(mvcResult, responseAsserts)
+    }
+
     fun post(url: String, requestObject: Any, responseAsserts: MockResponseAsserts) {
         val mvcResult = perform(
             MockMvcRequestBuilders
