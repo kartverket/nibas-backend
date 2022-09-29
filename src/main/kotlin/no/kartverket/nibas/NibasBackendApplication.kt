@@ -15,9 +15,14 @@ import java.util.*
 @SpringBootApplication
 class NibasBackendApplication {
     @Bean
-    fun openApiDef(): OpenAPI {
-        return OpenAPI().info(Info().title("NIBAS Server API").description("API for å hente administrative enheter"))
-    }
+    fun openApiDef(): OpenAPI =
+        OpenAPI().info(
+            Info().apply {
+                title = "NIBAS Server API"
+                description = "API for å hente administrative enheter"
+                version = "1.0.0"
+            }
+        )
     companion object {
         @JvmStatic
         fun main(args: Array<String>) {
