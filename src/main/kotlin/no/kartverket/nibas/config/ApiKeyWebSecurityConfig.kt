@@ -69,6 +69,7 @@ class ApiKeyWebSecurityConfig(private val environment: Environment) {
 
     // Filtere skal være ukjent for containeren så de bør ikke opprettes som Bean. Ref: https://spring.io/guides/topicals/spring-security-architecture#web-security
     fun apiKeyFilter(): ApiKeyAuthenticationFilter {
+        logger.info("Creating api key request filter.")
         return ApiKeyAuthenticationFilter({ environment.getRequiredProperty("api.key.matrikkel") })
     }
 
