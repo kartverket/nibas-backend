@@ -2,7 +2,11 @@ package no.kartverket.nibas.config
 
 import no.kartverket.aut.lib.AuthorizerPlugin
 import no.kartverket.aut.lib.jwk.JwksRetriever
+import no.kartverket.aut.lib.jwt.JwtValidator
+import no.kartverket.aut.lib.jwt.impl.JwtAuthenticationRequestFilter
 import no.kartverket.aut.lib.security.DefaultWebSecurityConfig
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -12,15 +16,19 @@ import org.springframework.http.HttpStatus
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
+import org.springframework.security.core.AuthenticationException
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
+import org.springframework.security.web.AuthenticationEntryPoint
 import org.springframework.security.web.SecurityFilterChain
-import org.springframework.security.web.authentication.HttpStatusEntryPoint
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import javax.servlet.FilterChain
+import javax.servlet.http.HttpServletRequest
+import javax.servlet.http.HttpServletResponse
 
 
 /**
@@ -63,8 +71,8 @@ class WebSecurityConfig @Autowired constructor(private val environment: Environm
                     it.anyRequest().hasRole("NIBAS")
                 }
                 .addFilterAfter(jwtRequestFilter(), AbstractPreAuthenticatedProcessingFilter::class.java)
-                .exceptionHandling()
-                .authenticationEntryPoint(HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
+                // Defaulter til 401 Unauthorized dersom det kastes exception i filterkjeden
+                .exceptionHandling().authenticationEntryPoint(UnauthorizedEntryPoint("JWT_FILTER_CHAIN"))
                 .and()
                 // Slår av CSRF
                 .csrf().disable()
@@ -73,6 +81,11 @@ class WebSecurityConfig @Autowired constructor(private val environment: Environm
                 .and()
                 .build()
         }
+    }
+
+    override fun jwtRequestFilter(): JwtAuthenticationRequestFilter {
+        LOGGER.info("Creating jwt request filter.")
+        return NibasJwtAuthenticationRequestFilter(jwtValidator(), getAuthorizerPlugin())
     }
 
     override fun getAuthorizerPlugin(): AuthorizerPlugin = DummyNibasAuthorizerPlugin()
@@ -118,4 +131,23 @@ class DummyNibasAuthorizerPlugin : AuthorizerPlugin {
         return emptyList()
     }
 
+}
+
+class UnauthorizedEntryPoint(private val nameOfFilterChain: String) : AuthenticationEntryPoint {
+    private val logger: Logger = LoggerFactory.getLogger(UnauthorizedEntryPoint::class.java)
+
+    override fun commence(request: HttpServletRequest, response: HttpServletResponse, authException: AuthenticationException) {
+        logger.info("Returnerer 401 Unauthorized for filterkjede '$nameOfFilterChain'")
+        response.status = HttpStatus.UNAUTHORIZED.value()
+    }
+
+}
+
+class NibasJwtAuthenticationRequestFilter(jwtValidator: JwtValidator, authorizerPlugin: AuthorizerPlugin) :
+    JwtAuthenticationRequestFilter(jwtValidator, authorizerPlugin) {
+
+    override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain) {
+        logger.info("Traff filter $this for request: ${request.servletPath}")
+        super.doFilterInternal(request, response, filterChain)
+    }
 }

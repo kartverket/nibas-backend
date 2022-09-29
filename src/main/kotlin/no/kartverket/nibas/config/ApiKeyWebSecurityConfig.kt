@@ -11,13 +11,11 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
 import org.springframework.core.env.Environment
-import org.springframework.http.HttpStatus
 import org.springframework.security.authentication.AbstractAuthenticationToken
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.SecurityFilterChain
-import org.springframework.security.web.authentication.HttpStatusEntryPoint
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter
 import org.springframework.util.StringUtils
 import org.springframework.web.filter.OncePerRequestFilter
@@ -55,7 +53,7 @@ class ApiKeyWebSecurityConfig(private val environment: Environment) {
             return httpSecurity.antMatcher("/v1/ekstern/matrikkel/**")
                 .addFilterAfter(apiKeyFilter(), AbstractPreAuthenticatedProcessingFilter::class.java)
                 // Defaulter til 401 Unauthorized dersom det kastes exception i filterkjeden
-                .exceptionHandling().authenticationEntryPoint(HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
+                .exceptionHandling().authenticationEntryPoint(UnauthorizedEntryPoint("API_KEY_FILTER_CHAIN"))
                 .and()
                 // Slår av CSRF
                 .csrf().disable()
@@ -88,6 +86,7 @@ class ApiKeyAuthenticationFilter(private val validApiKeySupplier: Supplier<Strin
     : OncePerRequestFilter() {
 
     override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain) {
+        logger.info("Traff filter $this for request: ${request.servletPath}")
         val authorizationHeader = request.getHeader("Authorization")
         if (StringUtils.hasText(authorizationHeader) && authorizationHeader.startsWith("Basic ")) {
             val apiKey = authorizationHeader.substring(6)
