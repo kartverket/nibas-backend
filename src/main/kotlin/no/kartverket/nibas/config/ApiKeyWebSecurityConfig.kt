@@ -32,11 +32,11 @@ import javax.servlet.http.HttpServletResponse
  */
 @EnableWebSecurity
 @Configuration
-@Order(SecurityConstants.ORDER_OF_API_KEY_FILTER_CHAIN)
 class ApiKeyWebSecurityConfig(private val environment: Environment) {
 
     private val logger: Logger = LoggerFactory.getLogger(ApiKeyWebSecurityConfig::class.java)
 
+    @Order(SecurityConstants.ORDER_OF_API_KEY_FILTER_CHAIN)
     @Bean
     fun securityFilterChainApiKey(httpSecurity: HttpSecurity): SecurityFilterChain {
         if (startedWithSecurityOff()) {

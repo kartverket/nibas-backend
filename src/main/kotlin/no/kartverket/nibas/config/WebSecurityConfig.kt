@@ -38,12 +38,12 @@ import javax.servlet.http.HttpServletResponse
  */
 @Configuration
 @EnableGlobalMethodSecurity(securedEnabled = true)
-@Order(SecurityConstants.ORDER_OF_JWT_FILTER_CHAIN)
 class WebSecurityConfig @Autowired constructor(private val environment: Environment) : DefaultWebSecurityConfig(environment) {
 
     /**
      * Fra Spring Security 5.7 skal HttpSecurity defineres ved å registrere en SecurityFilterChain-bean.
      */
+    @Order(SecurityConstants.ORDER_OF_JWT_FILTER_CHAIN)
     @Bean
     fun securityFilterChain(httpSecurity: HttpSecurity): SecurityFilterChain {
         if (startedWithSecurityOff()) {
