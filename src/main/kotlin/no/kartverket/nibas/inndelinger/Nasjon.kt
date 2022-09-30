@@ -11,6 +11,8 @@ import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.NasjonRepository
+import no.kartverket.nibas.repository.OptimistiskLaasException
+import no.kartverket.nibas.repository.verifiserOptimistiskLaas
 import no.kartverket.nibas.unwrap
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
@@ -71,12 +73,14 @@ class NasjonService(
 
     fun oppdaterNasjon(id: String, oppdatertNasjon: NasjonRequest): Nasjon? {
         return hentNasjon(id)?.let { gammel ->
+            verifiserOptimistiskLaas(oppdatertNasjon.version, gammel)?.let { throw OptimistiskLaasException(it) }
             gammel.navnerom = oppdatertNasjon.navnerom
             gammel.lokalid = oppdatertNasjon.lokalid
 
             // Finner basert på språkkode, og oppdaterer den
             oppdatertNasjon.administrativenhetnavn.forEach { navn ->
                 gammel.administrativenhetnavn.first { it.spraak?.id == navn.spraak }.let { gammeltNavn ->
+                    verifiserOptimistiskLaas(navn.version, gammeltNavn)?.let { throw OptimistiskLaasException(it) }
                     gammeltNavn.navn = navn.navn
                     administrativenhetnavnRepository.save(gammeltNavn)
                 }
@@ -88,14 +92,15 @@ class NasjonService(
 
 fun toNasjonRef(nasjon: Nasjon): NasjonRefResponse = NasjonRefResponse(
     id = nasjon.id,
-    navn = nasjon.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!) },
+    navn = nasjon.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version) },
     href = ServletUriComponentsBuilder.fromCurrentRequestUri().pathSegment(nasjon.id).build().toUriString()
 )
 
 fun Nasjon.toNasjonResponse(kodelisteService: KodelisteService): NasjonResponse = NasjonResponse(
     id = this.id,
-    administrativenhetnavn = this.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!) },
+    administrativenhetnavn = this.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version) },
     lokalid = this.lokalid,
     navnerom = this.navnerom,
-    features = FeatureCollection(features = listOf(posisjonToFeature(this.posisjon), flateToFeature(this, kodelisteService)))
+    features = FeatureCollection(features = listOf(posisjonToFeature(this.posisjon, this.version), flateToFeature(this, kodelisteService, this.version))),
+    version = this.version
 )

@@ -8,6 +8,7 @@ import no.kartverket.nibas.domain.Grensestatus
 import no.kartverket.nibas.domain.Noeyaktighetsklassekode
 import no.kartverket.nibas.domain.PosisjonskvalitetEmbeddable
 import no.kartverket.nibas.domain.Terrengdetaljkode
+import no.kartverket.nibas.sporing.Gyldighet
 import org.locationtech.jts.geom.GeometryFactory
 import org.locationtech.jts.geom.LineString
 import java.time.LocalDate
@@ -90,8 +91,7 @@ class FylkesgrenseBuilder(private val id: String = "1") {
         fylkesgrense.noeyaktighetsklasse = noeyaktighetsklassekode
         fylkesgrense.omtvistet = omtvistet
         fylkesgrense.datafangstdato = datafangstdato
-        fylkesgrense.gyldigFra = gyldigFra
-        fylkesgrense.gyldigTil = null
+        fylkesgrense.gyldighet = Gyldighet(gyldigFra, null)
         fylkesgrense.kvalitet = kvalitet
         fylkesgrense.auditInfo.oppdateringsdato = oppdateringsdato
         fylkesgrense.opphav = opphav

@@ -15,9 +15,10 @@ class NasjonRequestBuilder {
     private var navnerom: String = "ABC"
 
     fun build(): NasjonRequest = NasjonRequest(
-        listOf(AdministrativEnhetNavn(navn, spraak)),
-        lokalId,
-        navnerom)
+        listOf(AdministrativEnhetNavn(navn, spraak, version = 1)),
+        lokalid = lokalId,
+        navnerom = navnerom,
+        version = 1)
 
     fun withNavnerom(navnerom: String): NasjonRequestBuilder {
         this.navnerom = navnerom

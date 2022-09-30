@@ -18,6 +18,10 @@ data class NasjonRequest(
 
     @Schema(description = "Navnerommet for nasjonen")
     val navnerom: String,
+
+    @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
+    @NotNull
+    val version: Int
 )
 
 data class FylkeRequest(
@@ -38,6 +42,10 @@ data class FylkeRequest(
     @Schema(description = "Angir om fylket er et samisk forvaltningsområde")
     @NotNull
     val samiskforvaltningsomraade: Boolean,
+
+    @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
+    @NotNull
+    val version: Int
 )
 
 @Schema(description = "Representasjon av en kommune")
@@ -61,6 +69,10 @@ data class KommuneRequest(
     @Schema(description = "Angir om kommunen er et samisk forvaltningsområde")
     @NotNull
     val samiskforvaltningsomraade: Boolean,
+
+    @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
+    @NotNull
+    val version: Int
 )
 
 @Schema(description = "Representasjon av en grunnkrets")
@@ -73,7 +85,11 @@ data class GrunnkretsRequest(
     val grunnkretsnummer: String,
 
     @Schema(description = "Identifikasjon av grunnkretsen")
-    val identifikasjon: Identifikasjon
+    val identifikasjon: Identifikasjon,
+
+    @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
+    @NotNull
+    val version: Int
 )
 
 @Schema(description = "Representasjon av en stemmekrets")
@@ -99,6 +115,10 @@ data class StemmekretsRequest(
 
     @Schema(description = "Kommunenummeret stemmekretsen tilhører til")
     var kommunenummer: String? = null,
+
+    @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
+    @NotNull
+    val version: Int
 )
 
 @Schema(description = "Representasjon av et utkast")

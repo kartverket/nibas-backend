@@ -18,6 +18,8 @@ import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.FylkeRepository
 import no.kartverket.nibas.repository.KommuneRepository
+import no.kartverket.nibas.repository.OptimistiskLaasException
+import no.kartverket.nibas.repository.verifiserOptimistiskLaas
 import no.kartverket.nibas.unwrap
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
@@ -97,6 +99,8 @@ class KommuneService(
 
     fun oppdaterKommune(id: String, oppdatertKommune: KommuneRequest): Kommune? {
         return hentKommune(id)?.let { gammel ->
+            verifiserOptimistiskLaas(oppdatertKommune.version, gammel)?.let { throw OptimistiskLaasException(it) }
+
             gammel.samiskforvaltningsomraade = oppdatertKommune.samiskforvaltningsomraade
             gammel.kommunenummer = oppdatertKommune.kommunenummerId
             gammel.navnerom = oppdatertKommune.navnerom!!
@@ -105,6 +109,7 @@ class KommuneService(
             // Finner basert på språkkode, og oppdaterer den
             oppdatertKommune.administrativenhetnavn.forEach { navn ->
                 gammel.administrativenhetnavn.first { it.spraak?.id == navn.spraak }.let { gammeltNavn ->
+                    verifiserOptimistiskLaas(navn.version, gammeltNavn)?.let { throw OptimistiskLaasException(it) }
                     gammeltNavn.navn = navn.navn
                     administrativenhetnavnRepository.save(gammeltNavn)
                 }
@@ -125,19 +130,20 @@ class KommuneService(
 
 fun toKommuneRef(kommune: Kommune): KommuneRef = KommuneRef(
     id = kommune.id,
-    navn = kommune.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!) },
+    navn = kommune.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version) },
     href = ServletUriComponentsBuilder.fromCurrentRequestUri().pathSegment(kommune.id).build().toUriString()
 )
 
 fun Kommune.toKommuneResponse(kodelisteService: KodelisteService): KommuneResponse = KommuneResponse(
     id = this.id,
-    administrativenhetnavn = this.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!) },
+    administrativenhetnavn = this.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version) },
     lokalid = this.lokalid,
     navnerom = this.navnerom,
     kommunenummer = createKommunenummerFromUUID(this.kommunenummer, kodelisteService),
     samiskforvaltningsomraade = this.samiskforvaltningsomraade!!,
     oppdateringsdato = this.auditInfo.oppdateringsdato,
-    features = FeatureCollection(features = listOf(posisjonToFeature(this.posisjon), flateToFeature(this, kodelisteService)))
+    features = FeatureCollection(features = listOf(posisjonToFeature(this.posisjon, this.version), flateToFeature(this, kodelisteService, this.version))),
+    version = this.version
 )
 
 fun createKommunenummerFromUUID(kommunenrUUID: String, kodelisteService: KodelisteService) = Kommunenummer(

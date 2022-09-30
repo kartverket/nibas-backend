@@ -16,11 +16,12 @@ class FylkeRequestBuilder() {
     private var samiskforvaltningsomraade = false
 
     fun build(): FylkeRequest = FylkeRequest(
-        administrativenhetnavn = listOf(AdministrativEnhetNavn(navn, spraak)),
+        administrativenhetnavn = listOf(AdministrativEnhetNavn(navn, spraak, version = 1)),
         lokalid = lokalId,
         navnerom = navnerom,
         fylkesnummerId = fylkesnummerUuid,
-        samiskforvaltningsomraade = samiskforvaltningsomraade
+        samiskforvaltningsomraade = samiskforvaltningsomraade,
+        version = 1
     )
 
     fun withNavn(navn: String): FylkeRequestBuilder {

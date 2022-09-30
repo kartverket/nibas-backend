@@ -1,6 +1,7 @@
 package no.kartverket.nibas.config
 
 import no.kartverket.nibas.api.v1.response.GeometriErrorResponse
+import no.kartverket.nibas.api.v1.response.ConflictResponse
 import no.kartverket.nibas.inndelinger.toDto
 import no.kartverket.nibas.kodelister.DefaultKodelisteService
 import no.kartverket.nibas.kodelister.KodelisteFetcher
@@ -9,6 +10,7 @@ import no.kartverket.nibas.repository.FastsettingstypeRepository
 import no.kartverket.nibas.repository.GrensestatusRepository
 import no.kartverket.nibas.repository.LandKodeRepository
 import no.kartverket.nibas.repository.NoeyaktighetsklassekodeRepository
+import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.repository.TerrengdetaljkodeRepository
 import no.kartverket.nibas.sosi.sosiimport.GeometriFailedToBeCreatedException
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
@@ -84,6 +86,20 @@ class CustomRestExceptionHandler : ResponseEntityExceptionHandler() {
             message = ex.message!!
         )
         return handleExceptionInternal(ex, errorResponse, HttpHeaders(), errorResponse.httpStatus, request)
+    }
+
+    @ExceptionHandler(value = [OptimistiskLaasException::class])
+    fun handleOptimisticLockException(ex: OptimistiskLaasException, request: WebRequest): ResponseEntity<Any> {
+        val errors = ex.konflikter.map { conflict ->
+            ConflictResponse(
+                id = conflict.eksisterende.id,
+                type = conflict.eksisterende::class.java.simpleName,
+                gjeldendeVersjon = conflict.eksisterende.version,
+                versjon = conflict.nyVersjon,
+                melding = conflict.getMessage()
+            )
+        }
+        return handleExceptionInternal(ex, errors, HttpHeaders(), HttpStatus.CONFLICT, request)
     }
 
     override fun handleExceptionInternal(ex: Exception, body: Any?, headers: HttpHeaders, status: HttpStatus, request: WebRequest): ResponseEntity<Any> {

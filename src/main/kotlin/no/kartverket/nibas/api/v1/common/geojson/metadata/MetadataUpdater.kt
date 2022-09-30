@@ -13,6 +13,7 @@ import no.kartverket.nibas.repository.GrensestatusRepository
 import no.kartverket.nibas.repository.LandKodeRepository
 import no.kartverket.nibas.repository.NoeyaktighetsklassekodeRepository
 import no.kartverket.nibas.repository.TerrengdetaljkodeRepository
+import no.kartverket.nibas.sporing.Gyldighet
 import no.kartverket.nibas.unwrap
 
 /**
@@ -109,8 +110,7 @@ class MetadataUpdater(private val landKodeRepository: LandKodeRepository,
      */
     private fun CommonMetadataProperties.updateWithCommonMetadata(common: CommonMetadata) {
         this.datafangstdato = common.datafangstdato
-        this.gyldigFra = common.gyldigFra
-        this.gyldigTil = common.gyldigTil
+        this.gyldighet = Gyldighet(common.gyldigFra, common.gyldigTil)
         this.setInfo(common.informasjon)
         this.opphav = common.opphav
     }

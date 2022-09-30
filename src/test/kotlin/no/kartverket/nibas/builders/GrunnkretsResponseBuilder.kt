@@ -26,8 +26,8 @@ class GrunnkretsResponseBuilder(private val kodelisteService: KodelisteService) 
             kommunenummer = grunnkrets.kommunenummer!!,
             features = FeatureCollection(
                 features = listOf(
-                    posisjonToFeature(grunnkrets.posisjon),
-                    flateToFeature(grunnkrets, kodelisteService)
+                    posisjonToFeature(grunnkrets.posisjon, grunnkrets.version),
+                    flateToFeature(grunnkrets, kodelisteService, grunnkrets.version)
                 )
             )
         )

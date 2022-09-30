@@ -12,6 +12,7 @@ import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.request.FylkeRequest
 import no.kartverket.nibas.api.v1.response.FylkeRef
 import no.kartverket.nibas.api.v1.response.FylkeResponse
+import no.kartverket.nibas.api.v1.response.ConflictResponse
 import no.kartverket.nibas.api.v1.response.RevisjonRef
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
@@ -66,6 +67,17 @@ interface FylkeApi {
 
 
     @PutMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])
+    @Operation(summary = "Oppdater fylke med gitt id", description = "Oppdaterer og lagrer metadata for fylket")
+    @ApiResponses(
+        ApiResponse(responseCode = "200", description = "Successful operation"),
+        ApiResponse(
+            responseCode = "409",
+            description = "Conflict",
+            content = [Content(
+                mediaType = "application/json",
+                array = ArraySchema(schema = Schema(implementation = ConflictResponse::class))
+            )]
+        ))
     fun oppdaterFylke(
         @Parameter(description = "ID til fylket man vil oppdatere") @PathVariable id: String,
         @RequestBody oppdatertFylke: FylkeRequest

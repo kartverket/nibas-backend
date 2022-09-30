@@ -94,6 +94,12 @@ interface Sporbar {
     var auditInfo: AuditInfo
 }
 
+interface Laasbar {
+    var version: Int
+    val id: String
+    var objtype: String?
+}
+
 @Embeddable
 data class AuditInfo(
     @Column(name = "oppdateringsdato", nullable = false) var oppdateringsdato: LocalDate = LocalDate.now(),
@@ -104,6 +110,17 @@ data class AuditInfo(
         oppdateringsdato = LocalDate.now()
     }
 }
+
+interface Gyldig {
+    var gyldighet: Gyldighet
+}
+data class Gyldighet(
+    @Column(name = "gyldigfra")
+    var gyldigFra: LocalDate = LocalDate.now(),
+
+    @Column(name = "gyldigtil")
+    var gyldigTil: LocalDate? = null
+)
 
 fun AuditInfo.toSporingsinformasjon(): Sporingsinformasjon {
     return Sporingsinformasjon(

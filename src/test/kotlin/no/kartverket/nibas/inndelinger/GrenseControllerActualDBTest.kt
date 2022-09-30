@@ -104,7 +104,7 @@ class GrenseControllerActualDBTest {
         // Henter kommunegrense på nytt og asserter
         kommunegrense = fetchKommunegrense()
         assertThat(kommunegrense.omtvistet).isTrue
-        assertThat(kommunegrense.gyldigFra).isEqualTo(gyldigFra)
+        assertThat(kommunegrense.gyldighet.gyldigFra).isEqualTo(gyldigFra)
         assertThat(kommunegrense.informasjonstekst).isEqualTo(beskrivelse)
 
         assertThat(kommunegrense.dokumentasjonsreferanser).hasSize(1)

@@ -172,7 +172,7 @@ internal class MetadataUpdaterTest {
             )
         )
         val updatedFylkesgrense: Grense = metadataUpdater.updateAdministrativGrense(fylkesgrense, updatedMetadata)
-        assertThat(updatedFylkesgrense.gyldigFra).isEqualTo(newGyldigFraDato)
+        assertThat(updatedFylkesgrense.gyldighet.gyldigFra).isEqualTo(newGyldigFraDato)
         assertThat(updatedFylkesgrense.foelgerterrengdetalj).isNotNull
     }
 

@@ -70,11 +70,12 @@ class RepositoryTest : TestWithDbContainer() {
         val kommunenummer = "123"
         val samiskforvaltningsomraade = false
         return mapOf("UUID-1" to KommuneRequest(
-            administrativenhetnavn = listOf(AdministrativEnhetNavn(navn, spraak)),
+            administrativenhetnavn = listOf(AdministrativEnhetNavn(navn, spraak, version = 1)),
             lokalid = lokalId,
             navnerom = navnerom,
             kommunenummerId = kommunenummer,
-            samiskforvaltningsomraade = samiskforvaltningsomraade
+            samiskforvaltningsomraade = samiskforvaltningsomraade,
+            version = 1
         ))
     }
 

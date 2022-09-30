@@ -21,6 +21,7 @@ import no.kartverket.nibas.sosi.model.SosiGeometri
 import no.kartverket.nibas.sosi.model.SosiKurve
 import no.kartverket.nibas.sosi.model.SosiObjekt
 import no.kartverket.nibas.sosi.model.SosiReferanse
+import no.kartverket.nibas.sporing.Gyldighet
 import org.locationtech.jts.geom.LineString
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
@@ -66,8 +67,7 @@ class GrunnkretsImporter @Autowired constructor(
                 null -> null
                 else -> typeendringRepository.findByIdOrNull(typeendring)
             }
-            grunnkrets.gyldigFra = flate.getGyldigFra()
-            grunnkrets.gyldigTil = flate.getGyldigTil()
+            grunnkrets.gyldighet = Gyldighet(flate.getGyldigFra(), flate.getGyldigTil())
             grunnkrets.informasjon = flate.getInformasjon()
             grunnkrets.kopidata?.kopidato = flate.getKopidata()?.getKopidato()
             grunnkrets.kopidata?.omraadeid = flate.getKopidata()?.getOmraadeId()

@@ -13,6 +13,8 @@ import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.FylkeRepository
+import no.kartverket.nibas.repository.OptimistiskLaasException
+import no.kartverket.nibas.repository.verifiserOptimistiskLaas
 import no.kartverket.nibas.unwrap
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
@@ -72,6 +74,7 @@ class FylkeService(
 
     fun oppdaterFylke(id: String, oppdatertFylke: FylkeRequest): Fylke? {
         return hentFylke(id)?.let { gammel ->
+            verifiserOptimistiskLaas(oppdatertFylke.version, gammel)?.let { throw OptimistiskLaasException(it) }
             gammel.samiskforvaltningsomraade = oppdatertFylke.samiskforvaltningsomraade
             gammel.fylkesnummer = oppdatertFylke.fylkesnummerId
             gammel.navnerom = oppdatertFylke.navnerom
@@ -80,6 +83,7 @@ class FylkeService(
             // Finner basert på språkkode, og oppdaterer den
             oppdatertFylke.administrativenhetnavn.forEach { navn ->
                 gammel.administrativenhetnavn.first { it.spraak?.id == navn.spraak }.let { gammeltNavn ->
+                    verifiserOptimistiskLaas(navn.version, gammeltNavn)?.let { throw OptimistiskLaasException(it) }
                     gammeltNavn.navn = navn.navn
                     administrativenhetnavnRepository.save(gammeltNavn)
                 }
@@ -91,13 +95,13 @@ class FylkeService(
 
 fun toFylkeRef(fylke: Fylke): FylkeRef = FylkeRef(
     id = fylke.id,
-    navn = fylke.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!) },
+    navn = fylke.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version) },
     href = ServletUriComponentsBuilder.fromCurrentRequestUri().pathSegment(fylke.id).build().toUriString()
 )
 
 fun Fylke.toFylkeResponse(kodelisteService: KodelisteService): FylkeResponse = FylkeResponse(
     id = this.id,
-    administrativenhetnavn = this.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!) },
+    administrativenhetnavn = this.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version) },
     lokalid = this.lokalid,
     navnerom = this.navnerom,
     fylkesnummer = Fylkesnummer(
@@ -106,5 +110,6 @@ fun Fylke.toFylkeResponse(kodelisteService: KodelisteService): FylkeResponse = F
     ),
     samiskforvaltningsomraade = this.samiskforvaltningsomraade!!,
     oppdateringsdato = this.auditInfo.oppdateringsdato,
-    features = FeatureCollection(features = listOf(posisjonToFeature(this.posisjon), flateToFeature(this, kodelisteService)))
+    features = FeatureCollection(features = listOf(posisjonToFeature(this.posisjon, this.version), flateToFeature(this, kodelisteService, this.version))),
+    version = this.version
 )

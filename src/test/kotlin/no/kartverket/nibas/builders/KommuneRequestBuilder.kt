@@ -17,11 +17,12 @@ class KommuneRequestBuilder {
     private var samiskforvaltningsomraade = false
 
     fun build(): KommuneRequest = KommuneRequest(
-        administrativenhetnavn = listOf(AdministrativEnhetNavn(navn, spraak)),
+        administrativenhetnavn = listOf(AdministrativEnhetNavn(navn, spraak, version = 1)),
         lokalid = lokalId,
         navnerom = navnerom,
         kommunenummerId = kommunenummer,
-        samiskforvaltningsomraade = samiskforvaltningsomraade
+        samiskforvaltningsomraade = samiskforvaltningsomraade,
+        version = 1
     )
 
     fun withNavn(navn: String): KommuneRequestBuilder {

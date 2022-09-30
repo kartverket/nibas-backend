@@ -39,7 +39,7 @@ open class SosiGeometri(type: String, niva: Int, verdier: MutableList<SosiVerdi>
         barn.filter { it is SosiNavn && it.type == SosiKoder.NASJONNAVN }.map { it as SosiNavn }
 
     fun getFastsettingstype(): String? = getVerdiAvBarn(SosiKoder.FASTSETTINGSTYPE)
-    fun getGyldigFra(): LocalDate? = stringAsDate(getVerdiAvBarn(SosiKoder.GYLDIGFRA))
+    fun getGyldigFra(): LocalDate = stringAsDate(getVerdiAvBarn(SosiKoder.GYLDIGFRA)) ?: LocalDate.now()
     fun getGyldigTil(): LocalDate? = stringAsDate(getVerdiAvBarn(SosiKoder.GYLDIGTIL))
     fun getSluttdato(): LocalDate? = stringAsDate(getVerdiAvBarn(SosiKoder.SLUTTDATO))
     fun getDatafangstDato(): LocalDate? = stringAsDate(getVerdiAvBarn(SosiKoder.DATAFANGSTDATO))

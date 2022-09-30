@@ -9,7 +9,7 @@ import no.kartverket.nibas.repository.GrensestatusRepository
 import no.kartverket.nibas.repository.NoeyaktighetsklassekodeRepository
 import no.kartverket.nibas.repository.TerrengdetaljkodeRepository
 import no.kartverket.nibas.sosi.common.SosiKoder
-import no.kartverket.nibas.sosi.model.SosiGeometri
+import no.kartverket.nibas.sporing.Gyldighet
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component
@@ -35,8 +35,7 @@ class AdministrativGrenseImporter @Autowired constructor(
         grense.lokalid = skalImporteres.lokalId()
         grense.datauttaksdato = sosiGeometri.getDataUttaksdato()
         grense.opphav = sosiGeometri.getOpphav()
-        grense.gyldigFra = sosiGeometri.getGyldigFra()
-        grense.gyldigTil = sosiGeometri.getGyldigTil()
+        grense.gyldighet = Gyldighet(sosiGeometri.getGyldigFra(), sosiGeometri.getGyldigTil())
         grense.datafangstdato = sosiGeometri.getDatafangstDato()
         grense.omtvistet = sosiGeometri.getOmtvistet()
 

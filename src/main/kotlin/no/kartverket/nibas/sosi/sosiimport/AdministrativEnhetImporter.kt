@@ -5,11 +5,9 @@ import no.kartverket.nibas.domain.Fylke
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.domain.updateSosiIdentifikasjon
-import no.kartverket.nibas.repository.LandKodeRepository
 import no.kartverket.nibas.sosi.common.SosiKoder
 import no.kartverket.nibas.sosi.model.SosiFlate
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.data.repository.findByIdOrNull
+import no.kartverket.nibas.sporing.Gyldighet
 import org.springframework.stereotype.Component
 
 @Component
@@ -25,8 +23,7 @@ class AdministrativEnhetImporter {
 
         administrativEnhet.updateSosiIdentifikasjon(flate.getIdent())
         administrativEnhet.opphav = flate.getOpphav()
-        administrativEnhet.gyldigFra = flate.getGyldigFra()
-        administrativEnhet.gyldigTil = flate.getGyldigTil()
+        administrativEnhet.gyldighet = Gyldighet(flate.getGyldigFra(), flate.getGyldigTil())
         administrativEnhet.datafangstdato = flate.getDatafangstDato()
         administrativEnhet.posisjon =
             SosiGeometryFunctions.sosiKoordinatToPoint(flate.getAlleSosiNordOest(), flate.koordsys)

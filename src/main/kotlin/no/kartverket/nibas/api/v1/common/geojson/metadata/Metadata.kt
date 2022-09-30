@@ -207,7 +207,7 @@ data class CommonMetadata(
     @Schema(description = "Dato når objektet siste gang ble registrert/observert/målt i terrenget")
     var datafangstdato: LocalDate? = null,
     @Schema(description = "Tidspunktet når objektet oppstod i den virkelige verden")
-    var gyldigFra: LocalDate? = null,
+    var gyldigFra: LocalDate,
     @Schema(description = "Tidspunktet når objektet opphørte å eksistere i den virkelige verden")
     var gyldigTil: LocalDate? = null,
     @Schema(description = "Generelle opplysninger/merknad")

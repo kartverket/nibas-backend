@@ -8,6 +8,7 @@ import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.Grensestatus
 import no.kartverket.nibas.domain.Landkode
 import no.kartverket.nibas.domain.PosisjonskvalitetEmbeddable
+import no.kartverket.nibas.sporing.Gyldighet
 import java.time.LocalDate
 
 class TerritorialgrenseBuilder {
@@ -41,8 +42,7 @@ class TerritorialgrenseBuilder {
         territorialgrense.navnerom = navnerom
         territorialgrense.versjonid = versjonid
         territorialgrense.datafangstdato = datafangstdato
-        territorialgrense.gyldigFra = gyldigFra
-        territorialgrense.gyldigTil = null
+        territorialgrense.gyldighet = Gyldighet(gyldigFra, null)
         territorialgrense.kvalitet = kvalitet
         territorialgrense.auditInfo.oppdateringsdato = oppdateringsdato
         territorialgrense.opphav = opphav

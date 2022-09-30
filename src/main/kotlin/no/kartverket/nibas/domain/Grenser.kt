@@ -3,6 +3,8 @@ package no.kartverket.nibas.domain
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Dokref
 import no.kartverket.nibas.sporing.AuditInfo
+import no.kartverket.nibas.sporing.Gyldighet
+import no.kartverket.nibas.sporing.Laasbar
 import org.hibernate.envers.Audited
 import org.locationtech.jts.geom.LineString
 import org.springframework.http.HttpStatus
@@ -22,6 +24,7 @@ import javax.persistence.ManyToMany
 import javax.persistence.ManyToOne
 import javax.persistence.OneToMany
 import javax.persistence.Table
+import javax.persistence.Version
 
 /**
  * Felles Grense-tabell som holder på samtlige typer av grenser skilt på Grensetype.
@@ -35,13 +38,16 @@ class Grense(
 
     @Id
     @Column(name = "objid", nullable = false, updatable = false)
-    val id: String = UUID.randomUUID().toString()) : CommonMetadataProperties, MaritimGrense {
+    override val id: String = UUID.randomUUID().toString()) : CommonMetadataProperties, MaritimGrense, Laasbar {
 
     @Transient
     private val logger: Logger = Logger.getLogger(this::class.java.name)
 
     @Embedded
     override var auditInfo: AuditInfo = AuditInfo()
+
+    @Embedded
+    override var gyldighet: Gyldighet = Gyldighet()
 
     @Embedded
     var endringsflagg: Endringsflagg? = Endringsflagg()
@@ -59,6 +65,11 @@ class Grense(
     @Embedded
     var foelgerGrunnkretsgrenseIdentifikasjon: FoelgerGrunnkretsgrenseIdentifikasjon? = FoelgerGrunnkretsgrenseIdentifikasjon()
 
+    @Version
+    override var version: Int = 1
+
+    override var objtype: String? = grensetype.value
+
     @Column(name = "lokalid", nullable = false, updatable = false)
     override var lokalid: String = UUID.randomUUID().toString()
 
@@ -70,12 +81,6 @@ class Grense(
 
     @Column(name = "datafangstdato")
     override var datafangstdato: LocalDate? = null
-
-    @Column(name = "gyldigfra")
-    override var gyldigFra: LocalDate? = null
-
-    @Column(name = "gyldigtil")
-    override var gyldigTil: LocalDate? = null
 
     @Column(name = "opphav")
     override var opphav: String? = null

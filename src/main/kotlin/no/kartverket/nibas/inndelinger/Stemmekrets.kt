@@ -11,7 +11,9 @@ import no.kartverket.nibas.api.v1.response.StemmekretsResponse
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.repository.StemmekretsRepository
+import no.kartverket.nibas.repository.verifiserOptimistiskLaas
 import no.kartverket.nibas.unwrap
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
@@ -78,6 +80,7 @@ class StemmekretsService(private val stemmekretsRepository: StemmekretsRepositor
 
     fun oppdaterStemmekrets(id: String, oppdatertStemmekrets: StemmekretsRequest): Stemmekrets? {
         return hentStemmekrets(id)?.let { gammel: Stemmekrets ->
+            verifiserOptimistiskLaas(oppdatertStemmekrets.version, gammel)?.let { throw OptimistiskLaasException(it) }
             gammel.stemmekretsnavn = oppdatertStemmekrets.stemmekretsnavn
             gammel.stemmekretsnummer = oppdatertStemmekrets.stemmekretsnummer
             gammel.tellekretsnavn = oppdatertStemmekrets.tellekretsnavn
@@ -105,7 +108,7 @@ fun Stemmekrets.toStemmekretsResponse(kodelisteService: KodelisteService): Stemm
     tellekretsnavn = this.tellekretsnavn,
     tellekretsnummer = this.tellekretsnummer,
     features = FeatureCollection(features = listOf(
-        posisjonToFeature(this.posisjon),
-        flateToFeature(this, kodelisteService)))
+        posisjonToFeature(this.posisjon, this.version),
+        flateToFeature(this, kodelisteService, this.version)))
 )
 

@@ -29,8 +29,8 @@ class StemmekretsResponseBuilder(private val kodelisteService: KodelisteService)
             valgdistriktsnummer = stemmekrets.valgdistriktsnummer,
             features = FeatureCollection(
                 features = listOf(
-                    posisjonToFeature(stemmekrets.posisjon),
-                    flateToFeature(stemmekrets, kodelisteService)
+                    posisjonToFeature(stemmekrets.posisjon, stemmekrets.version),
+                    flateToFeature(stemmekrets, kodelisteService, stemmekrets.version)
                 )
             )
         )

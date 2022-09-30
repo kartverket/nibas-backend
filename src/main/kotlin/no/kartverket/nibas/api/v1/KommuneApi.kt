@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.request.KommuneRequest
+import no.kartverket.nibas.api.v1.response.ConflictResponse
 import no.kartverket.nibas.api.v1.response.GrunnkretsRef
 import no.kartverket.nibas.api.v1.response.RevisjonRef
 import no.kartverket.nibas.api.v1.response.KommuneRef
@@ -113,14 +114,18 @@ interface KommuneApi {
         ApiResponse(
             responseCode = "200",
             description = "Successful operation",
-            content = [Content(
-                mediaType = "application/json",
-                schema = Schema(implementation = KommuneResponse::class)
-            )]
         ),
         ApiResponse(
             responseCode = "400",
             description = "Bad request. Check the request body and path"
+        ),
+        ApiResponse(
+            responseCode = "409",
+            description = "Conflict",
+            content = [Content(
+                mediaType = "application/json",
+                array = ArraySchema(schema = Schema(implementation = ConflictResponse::class))
+            )]
         )
     )
     @PutMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])

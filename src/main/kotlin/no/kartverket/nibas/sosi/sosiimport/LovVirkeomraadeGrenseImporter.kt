@@ -7,6 +7,7 @@ import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.FastsettingstypeRepository
 import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.sosi.model.SosiKurve
+import no.kartverket.nibas.sporing.Gyldighet
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component
@@ -36,8 +37,7 @@ class LovVirkeomraadeGrenseImporter @Autowired constructor(
                     kodelisteService.getKommunenummerIdByCodeValue(sosiKommunenummer)
                 }.toMutableSet()
                 lovvirkeomraadegrense.opphav = sosiLovvirkeomraadegrense.getOpphav()
-                lovvirkeomraadegrense.gyldigFra = sosiLovvirkeomraadegrense.getGyldigFra()
-                lovvirkeomraadegrense.gyldigTil = sosiLovvirkeomraadegrense.getGyldigTil()
+                lovvirkeomraadegrense.gyldighet = Gyldighet(sosiLovvirkeomraadegrense.getGyldigFra(), sosiLovvirkeomraadegrense.getGyldigTil())
 
                 lovvirkeomraadegrense.kvalitet = sosiLovvirkeomraadegrense.getPosisjonskvalitet(kodelisteService)
                 lovvirkeomraadegrense.fastsettingstype =

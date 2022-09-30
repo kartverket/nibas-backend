@@ -4,6 +4,7 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.KodelisteEntry
 import no.kartverket.nibas.api.v1.common.geojson.metadata.KodelisteHrefProvider
 import no.kartverket.nibas.api.v1.common.geojson.metadata.KodelisteHrefProviderI
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Posisjonskvalitet
+import no.kartverket.nibas.sporing.Gyldig
 import no.kartverket.nibas.sporing.Sporbar
 import java.time.LocalDate
 import java.util.function.Supplier
@@ -70,10 +71,8 @@ data class FoelgerGrunnkretsgrenseIdentifikasjon(
 ) : ContainsSosiIdentifikasjon
 
 // Felles egenskaper for grenser, adm_enheter, punkter ++
-interface CommonMetadataProperties : ContainsSosiIdentifikasjon, Sporbar {
+interface CommonMetadataProperties : ContainsSosiIdentifikasjon, Sporbar, Gyldig {
     var datafangstdato: LocalDate?
-    var gyldigFra: LocalDate?
-    var gyldigTil: LocalDate?
     var opphav: String?
     fun getInfo(): String?
     fun setInfo(updatedInfo: String?)

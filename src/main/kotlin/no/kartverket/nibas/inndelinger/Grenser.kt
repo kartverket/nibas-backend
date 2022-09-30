@@ -7,6 +7,7 @@ import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.FeatureProperties
 import no.kartverket.nibas.api.v1.common.geojson.KontekstEgenskaper
+import no.kartverket.nibas.api.v1.common.geojson.MultiPolygon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.AdministrativGrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.AvtaltAvgrensningslinjeMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.KommunalKretsgrenseMetadata
@@ -29,8 +30,10 @@ import no.kartverket.nibas.repository.GrensestatusRepository
 import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.LandKodeRepository
 import no.kartverket.nibas.repository.NoeyaktighetsklassekodeRepository
+import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.repository.TerrengdetaljkodeRepository
+import no.kartverket.nibas.repository.verifiserOptimistiskLaas
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import no.kartverket.nibas.unwrap
 import org.locationtech.jts.geom.Point
@@ -109,6 +112,14 @@ class GrenseService(
         if (grenseIdDiffs.isNotEmpty()) {
             logger.warning("Invalid request: Non-existing grenseIds were used in request.")
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Non-existing grenseIds")
+        }
+
+        val utdaterteGrenser = features.mapNotNull { feature ->
+            verifiserOptimistiskLaas(feature.properties.version, eksisterendeGrenser.find { it.id == feature.id }!!)
+        }
+
+        if(utdaterteGrenser.isNotEmpty()) {
+            throw OptimistiskLaasException(*utdaterteGrenser.toTypedArray())
         }
 
         val grenserMedRetningOgKontekst = features.map { feature ->
@@ -214,7 +225,7 @@ fun grenseKoblingToFeature(
 }
 
 fun grenseToFeature(grense: Grense, kodelisteService: KodelisteService): Feature {
-    var featureProperties = FeatureProperties(type = grense.grensetype.value, srid = grense.grense.srid)
+    var featureProperties = FeatureProperties(type = grense.grensetype.value, srid = grense.grense.srid, version = grense.version)
     val metadataMapper = MetadataMapper(kodelisteService)
     featureProperties = when (grense.grensetype) {
         Grensetype.Fylkesgrense -> featureProperties.copy(metadata = metadataMapper.toMetadataForAdministrativGrense(grense))
@@ -236,16 +247,17 @@ fun grenseToFeature(grense: Grense, kodelisteService: KodelisteService): Feature
     )
 }
 
-fun posisjonToFeature(posisjon: Point?): Feature =
+fun posisjonToFeature(posisjon: Point?, version: Int): Feature =
     Feature(
-        properties = FeatureProperties(type = "Posisjon", srid = posisjon!!.srid),
+        properties = FeatureProperties(type = "Posisjon", srid = posisjon!!.srid, version = version),
         geometry = posisjon.toDto()
     )
 
-fun flateToFeature(flate: Flate, kodelisteService: KodelisteService): Feature {
+fun flateToFeature(flate: Flate, kodelisteService: KodelisteService, version: Int): Feature {
     var featureProperties = FeatureProperties(
         type = flate.type.name,
-        srid = flate.flate?.srid ?: SosiGeometryFunctions.defaultSrid
+        srid = flate.flate?.srid ?: SosiGeometryFunctions.defaultSrid,
+	    version = version
     )
     val metadataMapper = MetadataMapper(kodelisteService)
 
@@ -254,6 +266,6 @@ fun flateToFeature(flate: Flate, kodelisteService: KodelisteService): Feature {
     return Feature(
         id = flate.id,
         properties = featureProperties,
-        geometry = flate.flate!!.toDto()
+        geometry = MultiPolygon(coordinates = emptyList()),
     )
 }

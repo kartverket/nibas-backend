@@ -8,6 +8,7 @@ import no.kartverket.nibas.repository.FastsettingstypeRepository
 import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.GrensestatusRepository
 import no.kartverket.nibas.sosi.model.SosiGeometri
+import no.kartverket.nibas.sporing.Gyldighet
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component
@@ -37,8 +38,7 @@ class RiksgrenseImporter @Autowired constructor(
                 riksgrense.datauttaksdato = sosiRiksgrense.getDataUttaksdato()
 
                 riksgrense.opphav = sosiRiksgrense.getOpphav()
-                riksgrense.gyldigFra = sosiRiksgrense.getGyldigFra()
-                riksgrense.gyldigTil = sosiRiksgrense.getGyldigTil()
+                riksgrense.gyldighet = Gyldighet(sosiRiksgrense.getGyldigFra(), sosiRiksgrense.getGyldigTil())
 
                 riksgrense.kvalitet = sosiRiksgrense.getPosisjonskvalitet(kodelisteService)
                 riksgrense.grensestatus = when (val grenseStatus = sosiRiksgrense.getGrensestatus()) {

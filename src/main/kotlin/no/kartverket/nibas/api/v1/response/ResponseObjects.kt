@@ -112,7 +112,10 @@ data class NasjonResponse(
     val navnerom: String,
 
     @Schema(description = "Geometrien til nasjonen. Ikke grenser")
-    val features: FeatureCollection
+    val features: FeatureCollection,
+
+    @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
+    val version: Int
 )
 
 @Schema(description = "Representasjon av et fylke")
@@ -140,7 +143,10 @@ data class FylkeResponse(
     val oppdateringsdato: LocalDate,
 
     @Schema(description = "Geometrien til fylket. Ikke grenser")
-    val features: FeatureCollection
+    val features: FeatureCollection,
+
+    @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
+    val version: Int
 )
 
 @Schema(description = "")
@@ -167,7 +173,10 @@ data class KommuneResponse(
     val oppdateringsdato: LocalDate,
 
     @Schema(description = "Geometrien til kommunen. Ikke grenser")
-    val features: FeatureCollection
+    val features: FeatureCollection,
+
+    @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
+    val version: Int
 )
 
 @Schema(description = "Representasjon av en grunnkrets")
@@ -282,5 +291,25 @@ data class AuditInfoResponse(
     val oppdateringsdato: LocalDate,
     @Schema(description = "Den som sist endret objektet.")
     val endretAv: String
+)
+
+data class ConflictResponse(
+    @Schema(description = "HttpStatus for responsen.")
+    val httpStatus: HttpStatus = HttpStatus.CONFLICT,
+
+    @Schema(description = "Identifikatoren til objektet som er utdatert.")
+    val id: String,
+
+    @Schema(description = "Typen til objektet som er utdatert.")
+    val type: String,
+
+    @Schema(description = "Versjon som prøves å oppdateres.")
+    val versjon: Int,
+
+    @Schema(description = "Versjon som er gjeldende for objektet nå.")
+    val gjeldendeVersjon: Int,
+
+    @Schema(description = "Beskrivelse av hva som har gått galt.")
+    val melding: String?
 )
 

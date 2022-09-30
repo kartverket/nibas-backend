@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Metadata
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
+import javax.validation.constraints.NotNull
 
 const val DISCRIMINATOR_FIELD: String = "type"
 const val POINT_SCHEMA: String = "Point"
@@ -107,7 +108,11 @@ data class FeatureProperties(
     val metadata: Metadata? = null,
 
     @Schema(description = "Egenskaper til konteksten til grensen.")
-    val kontekstEgenskaper: KontekstEgenskaper? = null
+    val kontekstEgenskaper: KontekstEgenskaper? = null,
+
+    @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
+    @NotNull
+    val version: Int
 )
 
 @Schema(description = "Egenskaper som beskriver konteksten som grensen sees i.")

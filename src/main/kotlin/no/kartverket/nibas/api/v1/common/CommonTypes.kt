@@ -10,6 +10,7 @@ import no.kartverket.nibas.api.v1.request.StemmekretsRequest
 import java.io.Serializable
 import javax.persistence.AttributeConverter
 import javax.persistence.Converter
+import javax.validation.constraints.NotNull
 
 /**
  * Definerer flatene/enhetene i domenet.
@@ -88,7 +89,11 @@ data class AdministrativEnhetNavn(
     val navn: String,
 
     @Schema(description = "Språkkoden til det administrative navnet")
-    val spraak: String
+    val spraak: String,
+
+    @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
+    @NotNull
+    val version: Int
 )
 
 // TODO: Utvide med felter for sammenslåing og oppsplitting

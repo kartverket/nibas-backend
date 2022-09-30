@@ -8,7 +8,7 @@ import no.kartverket.nibas.repository.FastsettingstypeRepository
 import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.GrensestatusRepository
 import no.kartverket.nibas.repository.LandKodeRepository
-import no.kartverket.nibas.sosi.model.SosiGeometri
+import no.kartverket.nibas.sporing.Gyldighet
 import no.kartverket.nibas.unwrap
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
@@ -45,7 +45,7 @@ class AvtaltAvgrensningslinjeImporter @Autowired constructor(
                     }
                 })
 
-                avtaltavgrensningslinje.gyldigFra = sosiAvtaltAvgrensningslinje.getGyldigFra()
+                avtaltavgrensningslinje.gyldighet = Gyldighet(sosiAvtaltAvgrensningslinje.getGyldigFra(), sosiAvtaltAvgrensningslinje.getGyldigTil())
                 avtaltavgrensningslinje.kvalitet = sosiAvtaltAvgrensningslinje.getPosisjonskvalitet(kodelisteService)
                 avtaltavgrensningslinje.grensestatus =
                     when (val grenseStatus = sosiAvtaltAvgrensningslinje.getGrensestatus()) {

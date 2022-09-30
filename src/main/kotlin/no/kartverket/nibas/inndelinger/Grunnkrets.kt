@@ -11,6 +11,8 @@ import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.GrunnkretsRepository
+import no.kartverket.nibas.repository.OptimistiskLaasException
+import no.kartverket.nibas.repository.verifiserOptimistiskLaas
 import no.kartverket.nibas.unwrap
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
@@ -78,6 +80,7 @@ class GrunnkretsService(private val grunnkretsRepository: GrunnkretsRepository) 
 
     fun oppdaterGrunnkrets(id: String, oppdatertGrunnkrets: GrunnkretsRequest): Grunnkrets? {
         return hentGrunnkrets(id)?.let { gammel: Grunnkrets ->
+            verifiserOptimistiskLaas(oppdatertGrunnkrets.version, gammel)?.let { throw OptimistiskLaasException(it) }
             gammel.grunnkretsnavn = oppdatertGrunnkrets.navn
             gammel.grunnkretsnummer = oppdatertGrunnkrets.grunnkretsnummer
 
@@ -100,7 +103,7 @@ fun Grunnkrets.toGrunnkretsResponse(kodelisteService: KodelisteService): Grunnkr
     identifikasjon = Identifikasjon(this.lokalid, this.navnerom, this.versjonid),
     kommunenummer = this.kommunenummer!!,
     features = FeatureCollection(features = listOf(
-        posisjonToFeature(this.posisjon),
-        flateToFeature(this, kodelisteService)))
+        posisjonToFeature(this.posisjon, this.version),
+        flateToFeature(this, kodelisteService, this.version)))
 )
 

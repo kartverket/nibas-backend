@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.request.NasjonRequest
+import no.kartverket.nibas.api.v1.response.ConflictResponse
 import no.kartverket.nibas.api.v1.response.RevisjonRef
 import no.kartverket.nibas.api.v1.response.NasjonRef
 import no.kartverket.nibas.api.v1.response.NasjonResponse
@@ -66,6 +67,18 @@ interface NasjonApi {
 
 
     @PutMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])
+    @Operation(summary = "Oppdater nasjon", description = "Oppdaterer og lagrer metadata for nasjonen")
+    @ApiResponses(
+        ApiResponse(responseCode = "200", description = "Successful operation"),
+        ApiResponse(
+            responseCode = "409",
+            description = "Conflict",
+            content = [Content(
+                mediaType = "application/json",
+                array = ArraySchema(schema = Schema(implementation = ConflictResponse::class))
+            )]
+        )
+    )
     fun oppdaterNasjon(
         @Parameter(description = "ID til nasjonen man vil oppdatere") @PathVariable id: String,
         @RequestBody oppdatertNasjon: NasjonRequest

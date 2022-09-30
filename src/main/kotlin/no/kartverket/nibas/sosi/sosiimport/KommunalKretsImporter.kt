@@ -6,6 +6,7 @@ import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.updateSosiIdentifikasjon
 import no.kartverket.nibas.repository.TypeendringRepository
 import no.kartverket.nibas.sosi.model.SosiFlate
+import no.kartverket.nibas.sporing.Gyldighet
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component
@@ -29,8 +30,7 @@ class KommunalKretsImporter @Autowired constructor(
             else -> typeendringRepository.findByIdOrNull(typeendring)
         }
 
-        krets.gyldigFra = flate.getGyldigFra()
-        krets.gyldigTil = flate.getGyldigTil()
+        krets.gyldighet = Gyldighet(flate.getGyldigFra(), flate.getGyldigTil())
         krets.informasjon = flate.getInformasjon()
         krets.kopidata?.kopidato = flate.getKopidata()?.getKopidato()
         krets.kopidata?.omraadeid = flate.getKopidata()?.getOmraadeId()

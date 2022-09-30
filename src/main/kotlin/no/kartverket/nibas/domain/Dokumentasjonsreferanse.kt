@@ -2,6 +2,7 @@ package no.kartverket.nibas.domain
 
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Dokref
 import no.kartverket.nibas.api.v1.common.geojson.metadata.TekstHolder
+import no.kartverket.nibas.sporing.Laasbar
 import org.hibernate.envers.Audited
 import java.time.LocalDate
 import java.util.*
@@ -14,17 +15,21 @@ import javax.persistence.JoinColumn
 import javax.persistence.ManyToOne
 import javax.persistence.OneToMany
 import javax.persistence.Table
+import javax.persistence.Version
 
 @Table(name = "dokumentasjonsreferanse")
 @Audited
 @Entity
-class Dokumentasjonsreferanse {
+class Dokumentasjonsreferanse : Laasbar {
     @Id
     @Column(name = "objid", nullable = false, updatable = false)
-    val id: String = UUID.randomUUID().toString()
+    override val id: String = UUID.randomUUID().toString()
 
     @Column(name = "objtype")
-    var objtype: String? = null
+    override var objtype: String? = null
+
+    @Version
+    override var version: Int = 1
 
     @Column(name = "rettskildetittel", nullable = false)
     var rettskildetittel: String? = null

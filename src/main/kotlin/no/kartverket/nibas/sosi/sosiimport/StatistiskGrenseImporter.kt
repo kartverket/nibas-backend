@@ -9,6 +9,7 @@ import no.kartverket.nibas.repository.TerrengdetaljkodeRepository
 import no.kartverket.nibas.repository.TypeendringRepository
 import no.kartverket.nibas.sosi.common.SosiKoder
 import no.kartverket.nibas.sosi.model.SosiGeometri
+import no.kartverket.nibas.sporing.Gyldighet
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component
@@ -38,8 +39,7 @@ class StatistiskGrenseImporter @Autowired constructor(
             null -> null
             else -> typeendringRepository.findByIdOrNull(typeendring)
         }
-        grense.gyldigFra = sosiGeometri.getGyldigFra()
-        grense.gyldigTil = sosiGeometri.getGyldigTil()
+        grense.gyldighet = Gyldighet(sosiGeometri.getGyldigFra(), sosiGeometri.getGyldigTil())
         grense.informasjonstekst = sosiGeometri.getInformasjon()
 
         grense.kopidata?.kopidato = sosiGeometri.getKopidata()?.getKopidato()

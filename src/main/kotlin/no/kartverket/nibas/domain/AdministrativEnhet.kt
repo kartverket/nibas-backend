@@ -2,6 +2,8 @@ package no.kartverket.nibas.domain
 
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.sporing.AuditInfo
+import no.kartverket.nibas.sporing.Gyldighet
+import no.kartverket.nibas.sporing.Laasbar
 import no.kartverket.nibas.sporing.Sporbar
 import org.hibernate.envers.Audited
 import org.locationtech.jts.geom.MultiPolygon
@@ -14,12 +16,13 @@ import javax.persistence.Id
 import javax.persistence.JoinColumn
 import javax.persistence.ManyToOne
 import javax.persistence.MappedSuperclass
+import javax.persistence.Version
 
 @MappedSuperclass
 @Audited
 abstract class AdministrativEnhet(
     @Transient override val type: Flatetype,
-) : Flate, Sporbar {
+) : Flate, Sporbar, Laasbar {
 
     @Id
     @Column(name = "objid", nullable = false, updatable = false)
@@ -28,8 +31,14 @@ abstract class AdministrativEnhet(
     @Embedded
     override var auditInfo: AuditInfo = AuditInfo()
 
+    @Embedded
+    override var gyldighet: Gyldighet = Gyldighet()
+
+    @Version
+    override var version: Int = 1
+
     @Column(name = "objtype")
-    var objtype: String? = null
+    override var objtype: String? = null
 
     /**
      * Må være satt og skal aldri endre seg i objektets levetid. Så burde ideelt vært immutable.
@@ -51,12 +60,6 @@ abstract class AdministrativEnhet(
 
     @Embedded
     override var registreringsversjon: Registreringsversjon? = Registreringsversjon()
-
-    @Column(name = "gyldigfra")
-    override var gyldigFra: LocalDate? = null
-
-    @Column(name = "gyldigtil")
-    override var gyldigTil: LocalDate? = null
 
     @Embedded
     override var kopidata: Kopidata? = Kopidata()

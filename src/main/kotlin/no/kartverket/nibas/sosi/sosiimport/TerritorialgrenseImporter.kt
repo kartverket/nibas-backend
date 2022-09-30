@@ -9,6 +9,7 @@ import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.GrensestatusRepository
 import no.kartverket.nibas.repository.LandKodeRepository
 import no.kartverket.nibas.sosi.model.SosiGeometri
+import no.kartverket.nibas.sporing.Gyldighet
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component
@@ -40,8 +41,7 @@ class TerritorialgrenseImporter @Autowired constructor(
                 territorialgrense.datauttaksdato = sosiTerritorialgrense.getDataUttaksdato()
 
                 territorialgrense.opphav = sosiTerritorialgrense.getOpphav()
-                territorialgrense.gyldigFra = sosiTerritorialgrense.getGyldigFra()
-                territorialgrense.gyldigTil = sosiTerritorialgrense.getGyldigTil()
+                territorialgrense.gyldighet = Gyldighet(sosiTerritorialgrense.getGyldigFra(), sosiTerritorialgrense.getGyldigTil())
 
                 territorialgrense.kvalitet = sosiTerritorialgrense.getPosisjonskvalitet(kodelisteService)
 

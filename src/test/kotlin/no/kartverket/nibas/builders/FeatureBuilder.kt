@@ -19,6 +19,7 @@ import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.GeometryFactory
+import java.time.LocalDate
 import java.time.ZonedDateTime
 
 class FeatureBuilder(private val id: String? = "1") {
@@ -27,6 +28,7 @@ class FeatureBuilder(private val id: String? = "1") {
     }
 
     private var grenseType: Grensetype = Grensetype.Kommunegrense
+    private var grenseVersjon = 1
     private var metadata: Metadata? = null
     private var lokalid: String = "123"
     private var navnerom: String = "ABC"
@@ -42,6 +44,7 @@ class FeatureBuilder(private val id: String? = "1") {
         var properties = FeatureProperties(
             type = grenseType.toString(),
             srid = this.srid,
+	    version = grenseVersjon,
             kontekstEgenskaper = KontekstEgenskaper(
                 id = kontekstId,
                 type = kontekstType,
@@ -53,7 +56,8 @@ class FeatureBuilder(private val id: String? = "1") {
         if (metadata == null) {
             val commonMetadata = CommonMetadata(
                 identifikasjon = Identifikasjon(lokalid, navnerom),
-                sporingsinformasjon = Sporingsinformasjon(oppdateringsdato = ZonedDateTime.now().toLocalDate())
+                sporingsinformasjon = Sporingsinformasjon(oppdateringsdato = ZonedDateTime.now().toLocalDate()),
+                gyldigFra = LocalDate.now()
             )
             metadata = when (grenseType) {
                 Grensetype.Kommunegrense -> AdministrativGrenseMetadata(common = commonMetadata)

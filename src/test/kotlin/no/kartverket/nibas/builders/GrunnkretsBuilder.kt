@@ -4,6 +4,7 @@ import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.Grunnkrets
+import no.kartverket.nibas.sporing.Gyldighet
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
 import java.time.LocalDate
@@ -43,8 +44,7 @@ class GrunnkretsBuilder(private val id: String = "1") {
         grunnkrets.auditInfo.oppdateringsdato = oppdateringsdato
 
         grunnkrets.auditInfo.oppdateringsdato = oppdateringsdato
-        grunnkrets.gyldigFra = gyldigFra
-        grunnkrets.gyldigTil = gyldigTil
+        grunnkrets.gyldighet = Gyldighet(gyldigFra, gyldigTil)
         grunnkrets.setInfo(informasjonstekst)
         grunnkrets.opphav = opphav
 

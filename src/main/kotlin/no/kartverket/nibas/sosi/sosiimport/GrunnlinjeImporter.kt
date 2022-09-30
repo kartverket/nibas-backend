@@ -8,6 +8,7 @@ import no.kartverket.nibas.repository.FastsettingstypeRepository
 import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.GrensestatusRepository
 import no.kartverket.nibas.sosi.model.SosiGeometri
+import no.kartverket.nibas.sporing.Gyldighet
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component
@@ -35,8 +36,7 @@ class GrunnlinjeImporter @Autowired constructor(
                 grunnlinje.datauttaksdato = sosiGrunnlinje.getDataUttaksdato()
 
                 grunnlinje.opphav = sosiGrunnlinje.getOpphav()
-                grunnlinje.gyldigFra = sosiGrunnlinje.getGyldigFra()
-                grunnlinje.gyldigTil = sosiGrunnlinje.getGyldigTil()
+                grunnlinje.gyldighet = Gyldighet(sosiGrunnlinje.getGyldigFra(), sosiGrunnlinje.getGyldigTil())
 
                 //Her kan kommunenr være optional
                 grunnlinje.kommunenummerId = kodelisteService.getKommunenummerIdByCodeValue(sosiGrunnlinje.getKommunenummer())

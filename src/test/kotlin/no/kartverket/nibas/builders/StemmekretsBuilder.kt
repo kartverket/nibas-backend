@@ -4,6 +4,7 @@ import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.Stemmekrets
+import no.kartverket.nibas.sporing.Gyldighet
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
 import java.time.LocalDate
@@ -50,8 +51,7 @@ class StemmekretsBuilder(private val id: String = "1") {
         stemmekrets.auditInfo.oppdateringsdato = oppdateringsdato
 
         stemmekrets.auditInfo.oppdateringsdato = oppdateringsdato
-        stemmekrets.gyldigFra = gyldigFra
-        stemmekrets.gyldigTil = gyldigTil
+        stemmekrets.gyldighet = Gyldighet(gyldigFra, gyldigTil)
         stemmekrets.setInfo(informasjonstekst)
         stemmekrets.opphav = opphav
 
