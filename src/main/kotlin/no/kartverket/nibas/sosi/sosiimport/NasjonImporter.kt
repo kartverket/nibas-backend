@@ -3,7 +3,6 @@ package no.kartverket.nibas.sosi.sosiimport
 import no.kartverket.nibas.domain.Administrativenhetnavn
 import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
-import no.kartverket.nibas.repository.NasjonInformasjonRepository
 import no.kartverket.nibas.repository.NasjonRepository
 import no.kartverket.nibas.repository.SpraakkodeRepository
 import no.kartverket.nibas.sosi.model.SosiFlate
@@ -23,22 +22,16 @@ class NasjonImporter {
     lateinit var nasjonRepository: NasjonRepository
 
     @Autowired
-    lateinit var nasjonInformasjonRepository: NasjonInformasjonRepository
-
-    @Autowired
     lateinit var spraakkodeRepository: SpraakkodeRepository
 
     @Autowired
     lateinit var administrativenhetnavnRepository: AdministrativenhetnavnRepository
 
     @Autowired
-    lateinit var grenseImporter: GrenseImporter
-
-    @Autowired
     lateinit var administrativEnhetImporter: AdministrativEnhetImporter
 
     @Transactional
-    fun importerSosiNasjon(flate: SosiFlate, root: SosiObjekt) {
+    fun importerSosiNasjon(flate: SosiFlate) {
         when (nasjonRepository.findByLokalid(flate.getIdent()?.getLokalId()!!)) {
             null -> {
                 var nasjon = administrativEnhetImporter.importer(flate) as Nasjon

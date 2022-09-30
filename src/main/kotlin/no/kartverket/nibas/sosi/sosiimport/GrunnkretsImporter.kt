@@ -87,13 +87,13 @@ class GrunnkretsImporter @Autowired constructor(
             grunnkrets.informasjon = flate.getInformasjon()
 
             flater.forEachIndexed { skall_index, gkFlate ->
-                gkFlate.getSkallReferanser().forEachIndexed { rekkefoelge, ref ->
-                    grenseImporter.importerGrenseRef(grunnkrets, ref, kurver, kommuneFlater, skall_index, rekkefoelge)
+                gkFlate.getSkallReferanser().forEachIndexed { _, ref ->
+                    grenseImporter.importerGrenseRef(grunnkrets, ref, kurver, kommuneFlater, skall_index)
                 }
 
                 gkFlate.getHullReferanser().forEachIndexed { hullIndex, liste ->
-                    liste.forEachIndexed { rekkefoelge, ref ->
-                        grenseImporter.importerGrenseRef(grunnkrets, ref, kurver, kommuneFlater, skall_index, rekkefoelge, hullIndex)
+                    liste.forEachIndexed { _, ref ->
+                        grenseImporter.importerGrenseRef(grunnkrets, ref, kurver, kommuneFlater, skall_index, hullIndex)
 
                     }
                 }

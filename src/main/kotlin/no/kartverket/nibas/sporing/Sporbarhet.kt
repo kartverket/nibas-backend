@@ -51,6 +51,7 @@ class AuditComponent(private val jpaEntityManagerFactory: EntityManagerFactory,
                      private val auditPreUpdateEventListener: AuditPreUpdateEventListener) {
     // Litt omstendelig, men må registrere event listeners i EventListenerRegistry
     @PostConstruct
+    @Suppress("UnusedPrivateMember")
     private fun postConstruct() {
         val eventListenerRegistry = jpaEntityManagerFactory
             .unwrap(SessionFactoryImpl::class.java)

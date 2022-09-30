@@ -77,8 +77,7 @@ class GrenseService(
     private val fastsettingstypeRepository: FastsettingstypeRepository,
     private val terrengdetaljkodeRepository: TerrengdetaljkodeRepository,
     private val noeyaktighetsklassekodeRepository: NoeyaktighetsklassekodeRepository,
-    private val grensestatusRepository: GrensestatusRepository,
-    private val flateService: FlateService,
+    private val grensestatusRepository: GrensestatusRepository
 ) {
     private val logger: Logger = Logger.getLogger(this::class.java.name)
 

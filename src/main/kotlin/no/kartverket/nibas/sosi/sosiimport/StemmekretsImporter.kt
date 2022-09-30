@@ -61,13 +61,13 @@ class StemmekretsImporter @Autowired constructor(private val kommunalKretsImport
             stemmekrets.informasjon = forsteFlate.getInformasjon()
 
             flater.forEachIndexed { skall_index, gkFlate ->
-                gkFlate.getSkallReferanser().forEachIndexed { rekkefoelge, ref ->
-                    grenseImporter.importerGrenseRef(stemmekrets, ref, kurver, kommuneFlater, skall_index, rekkefoelge)
+                gkFlate.getSkallReferanser().forEachIndexed { _, ref ->
+                    grenseImporter.importerGrenseRef(stemmekrets, ref, kurver, kommuneFlater, skall_index)
                 }
 
                 gkFlate.getHullReferanser().forEachIndexed { hullIndex, liste ->
                     liste.forEachIndexed { rekkefoelge, ref ->
-                        grenseImporter.importerGrenseRef(stemmekrets, ref, kurver, kommuneFlater, skall_index, rekkefoelge, hullIndex)
+                        grenseImporter.importerGrenseRef(stemmekrets, ref, kurver, kommuneFlater, skall_index, hullIndex)
                     }
                 }
             }

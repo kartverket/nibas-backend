@@ -31,7 +31,7 @@ class KommuneImporter @Autowired constructor(
     val logger: Logger = Logger.getLogger(this::class.java.name)
 
     @Transactional
-    fun importerSosiKommune(flater: List<SosiFlate>, root: SosiObjekt) {
+    fun importerSosiKommune(flater: List<SosiFlate>) {
 
         // Henter egenskapene bare fra første flate. Egenskapene er/skal være like på tvers av flatene.
         val forsteFlate = flater.first()

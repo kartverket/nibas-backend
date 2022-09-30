@@ -80,7 +80,7 @@ class SosiImportService {
 
         admEnhetRoot?.let { importerAdministrativeEnheter(admEnhetRoot) }
         grunnkretsRoot?.let { importerGrunnkretser(grunnkretsRoot, admEnhetRoot!!, fylkesnumre) }
-        stemmekretsRoot?.let { importerStemmekretser(stemmekretsRoot, admEnhetRoot!!, fylkesnumre) }
+        stemmekretsRoot?.let { importerStemmekretser(stemmekretsRoot, admEnhetRoot!!) }
     }
 
     fun importerAdministrativeEnheter(root: SosiObjekt) {
@@ -93,18 +93,18 @@ class SosiImportService {
         val millis = measureTimeMillis {
             nasjoner.forEachIndexed { index, nasjon ->
                 logger.info("Importing nasjon ${index + 1} of ${nasjoner.size}")
-                nasjonImporter.importerSosiNasjon(nasjon, root)
+                nasjonImporter.importerSosiNasjon(nasjon)
             }
 
             fylker.forEachIndexed { index, fylke ->
                 logger.info("Importing fylke ${index + 1} of ${fylker.size}")
-                fylkeImporter.importerSosiFylke(fylke, root)
+                fylkeImporter.importerSosiFylke(fylke)
             }
 
             val gruppertKommune: Map<String?, List<SosiFlate>> = kommuner.groupBy { it.getKommunenummer() }
             gruppertKommune.entries.forEachIndexed { index, entry ->
                 logger.info("Importing kommune ${index + 1} of ${gruppertKommune.size}")
-                kommuneImporter.importerSosiKommune(entry.value, root)
+                kommuneImporter.importerSosiKommune(entry.value)
             }
         }
         logger.info("Took $millis ms to import")
@@ -128,7 +128,7 @@ class SosiImportService {
         }
     }
 
-    fun importerStemmekretser(stemmekretsRoot: SosiObjekt, admenhetRoot: SosiObjekt, fylkernumre: List<String>) {
+    fun importerStemmekretser(stemmekretsRoot: SosiObjekt, admenhetRoot: SosiObjekt) {
         logger.info("Importing stemmekretser")
         data class KommunalKretsKey(val kommunenummer: String, val stemmekretsnummer: String)
 

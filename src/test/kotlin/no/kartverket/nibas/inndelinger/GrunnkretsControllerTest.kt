@@ -23,5 +23,4 @@ internal class GrunnkretsControllerTest : NibasMvcTest() {
         whenever(grunnkretsService.hentGrunnkrets(anyString())).thenReturn(GrunnkretsBuilder.DEFAULT_GRUNNKRETS)
         get("/v1/grunnkretser/1", status().isOk)
     }
-
 }

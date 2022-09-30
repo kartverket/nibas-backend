@@ -24,14 +24,13 @@ class FylkeImporter @Autowired constructor(
     private val fylkeInformasjonRepository: FylkeInformasjonRepository,
     private val administrativenhetnavnRepository: AdministrativenhetnavnRepository,
     private val spraakkodeRepository: SpraakkodeRepository,
-    private val grenseImporter: GrenseImporter,
     private val administrativEnhetImporter: AdministrativEnhetImporter
 ) {
 
     val logger: Logger = Logger.getLogger(this::class.java.name)
 
     @Transactional
-    fun importerSosiFylke(flate: SosiFlate, root: SosiObjekt) {
+    fun importerSosiFylke(flate: SosiFlate) {
         val lokalid = flate.getIdent()?.getLokalId()!!
         when (fylkeRepository.findByLokalid(lokalid)) {
             null -> {

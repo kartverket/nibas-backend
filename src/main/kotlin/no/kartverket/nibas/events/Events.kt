@@ -81,6 +81,7 @@ class HibernateEntitySavesListener constructor(
     }
 
     @PostConstruct
+    @Suppress("UnusedPrivateMember")
     private fun postConstruct() {
         val eventListenerRegistry = jpaEntityManagerFactory.unwrap(SessionFactoryImpl::class.java)
             .serviceRegistry.getService(EventListenerRegistry::class.java)

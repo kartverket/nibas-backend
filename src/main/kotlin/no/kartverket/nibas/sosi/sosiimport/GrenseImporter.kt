@@ -51,7 +51,6 @@ class GrenseImporter {
         kurver: List<SosiKurve>,
         kommuneFlater: List<SosiFlate>,
         skallIndex: Int,
-        rekkefoelge: Int,
         hullIndex: Int? = null
     ) {
 
