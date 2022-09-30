@@ -6,6 +6,7 @@ import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.anyString
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
@@ -18,6 +19,11 @@ class KommuneControllerTest : NibasMvcTest() {
 
     @MockBean
     private lateinit var kommuneService: KommuneService
+
+    @BeforeEach
+    fun mockKodelisteService() {
+        whenever(kodelisteServiceMock.getCodeValueByKommunenummerId(anyString())).thenReturn("0301")
+    }
 
     @Test
     fun thatHentAlleReturns200_OK() {

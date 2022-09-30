@@ -6,7 +6,7 @@ interface KodelisteService {
      */
     fun getKommunenummerIdByCodeValue(codeValue: String): String
 
-    fun getCodeValueByKommunenummerId(kommunenummerId: String): String?
+    fun getCodeValueByKommunenummerId(kommunenummerId: String): String
 
     fun getCodeValueByFylkesnummerId(fylkesnummerId: String): String?
 

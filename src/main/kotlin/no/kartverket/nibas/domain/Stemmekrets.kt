@@ -39,15 +39,12 @@ class Stemmekrets(override val id: String = UUID.randomUUID().toString()) : Komm
     @Column(name = "valgdistriktsnummer")
     var valgdistriktsnummer: String? = null
 
-    @Column(name = "kommunenummer", nullable = false)
-    var kommunenummer: String? = null
-
     @OneToMany(mappedBy = "stemmekrets", cascade = [CascadeType.ALL])
     var grenser: MutableSet<StemmekretsGrenseKobling> = Collections.synchronizedSet(mutableSetOf())
 
     @ManyToOne
     @JoinColumn(name = "kommune_fk")
-    var kommune: Kommune? = null
+    lateinit var kommune: Kommune
 
     @ManyToOne
     @JoinColumn(name = "utledetfra")
@@ -103,7 +100,8 @@ class Stemmekrets(override val id: String = UUID.randomUUID().toString()) : Komm
     }
 
     override fun toString(): String {
-        return "Stemmekrets(id='$id', stemmekretsnummer=$stemmekretsnummer, stemmekretsnavn=$stemmekretsnavn, tellekretsnummer=$tellekretsnummer, tellekretsnavn=$tellekretsnavn, valgdistriktsnummer=$valgdistriktsnummer, kommunenummer=$kommunenummer)"
+        return "Stemmekrets(id='$id', stemmekretsnummer=$stemmekretsnummer, stemmekretsnavn=$stemmekretsnavn, tellekretsnummer=$tellekretsnummer, " +
+            "tellekretsnavn=$tellekretsnavn, valgdistriktsnummer=$valgdistriktsnummer)"
     }
 
     fun alleGrenser() = getGrenserAvTyper(tillatteGrensetyper())

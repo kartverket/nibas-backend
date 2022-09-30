@@ -11,6 +11,7 @@ import no.kartverket.nibas.api.v1.response.StemmekretsResponse
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.kodelister.createKommunenummerFromUUID
 import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
@@ -99,7 +100,7 @@ fun Stemmekrets.toStemmekretsResponse(kodelisteService: KodelisteService): Stemm
     stemmekretsnavn = this.stemmekretsnavn!!,
     stemmekretsnummer = this.stemmekretsnummer!!,
     identifikasjon = Identifikasjon(this.lokalid, this.navnerom, this.versjonid),
-    kommunenummer = this.kommunenummer!!,
+    kommunenummer = kodelisteService.createKommunenummerFromUUID(this.kommune.kommunenummer),
     valgdistriktsnummer = this.valgdistriktsnummer,
     tellekretsnavn = this.tellekretsnavn,
     tellekretsnummer = this.tellekretsnummer,

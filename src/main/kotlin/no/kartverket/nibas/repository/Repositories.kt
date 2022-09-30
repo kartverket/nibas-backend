@@ -52,9 +52,7 @@ interface KommuneRepository : CrudRepositoryWithLokalIdFinder<Kommune, String> {
     fun findByKommunenummer(kommunenummer: String): Kommune?
 }
 
-interface GrunnkretsRepository : CrudRepositoryWithLokalIdFinder<Grunnkrets, String> {
-    fun findByKommunenummer(kommunenummer: String): List<Grunnkrets>
-}
+interface GrunnkretsRepository : CrudRepositoryWithLokalIdFinder<Grunnkrets, String>
 
 interface StemmekretsRepository : CrudRepositoryWithLokalIdFinder<Stemmekrets, String>
 

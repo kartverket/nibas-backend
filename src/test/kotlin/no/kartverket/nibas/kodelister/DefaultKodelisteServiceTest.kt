@@ -13,6 +13,7 @@ import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
 import org.mockito.MockitoAnnotations
+import java.util.UUID
 
 internal class DefaultKodelisteServiceTest {
 
@@ -90,6 +91,13 @@ internal class DefaultKodelisteServiceTest {
         doMockMalemetoder()
         assertThatThrownBy { kodelisteService.getMalemetodeIdByCodeValue("43") }
             .isInstanceOf(NoSuchElementException::class.java)
+    }
+
+    @Test
+    fun getCodeValueByKommunenummerId_NotCachedThrowsException() {
+
+        assertThatThrownBy { kodelisteService.getCodeValueByKommunenummerId(UUID.randomUUID().toString()) }
+            .isInstanceOf(MissingKodelisteItemException::class.java)
     }
 
     private fun doMockKommunenummer() {
