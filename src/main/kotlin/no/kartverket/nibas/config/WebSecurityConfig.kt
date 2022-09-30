@@ -3,7 +3,9 @@ package no.kartverket.nibas.config
 import no.kartverket.aut.lib.AuthorizerPlugin
 import no.kartverket.aut.lib.jwk.JwksRetriever
 import no.kartverket.aut.lib.jwt.JwtValidator
+import no.kartverket.aut.lib.jwt.impl.DefaultSecurityContextUpdater
 import no.kartverket.aut.lib.jwt.impl.JwtAuthenticationRequestFilter
+import no.kartverket.aut.lib.jwt.impl.SecurityContextUpdater
 import no.kartverket.aut.lib.security.DefaultWebSecurityConfig
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -13,8 +15,10 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
 import org.springframework.core.env.Environment
 import org.springframework.http.HttpStatus
+import org.springframework.security.authentication.AbstractAuthenticationToken
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.core.AuthenticationException
 import org.springframework.security.core.GrantedAuthority
@@ -22,39 +26,76 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.web.AuthenticationEntryPoint
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter
+import org.springframework.util.StringUtils
+import org.springframework.web.filter.OncePerRequestFilter
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.util.function.Supplier
 import javax.servlet.FilterChain
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
 
 /**
- * Sikkerhetskonfigurasjon for sikring av endepunkter. Matcher generell path "/'**".
- * Bruker foreløpig en hardkodet liste over brukere som kan autentisere seg.
- * Dersom man ikke vil ha på sikkerhet kan man kjøre med spring-profilen security-off.
+ * Sikkerhetskonfigurasjon for sikring av endepunkter.
+ * Requester evalueres mot 2 SecurityFilterChain:
+ * - SecurityFilterChain for path "/v1/ekstern/matrikkel/'**" (høyest pri)
+ * - SecurityFilterChain for øvrige pather (lavest pri)
+ * En får kun match mot 1 av disse.
+ *
+ * Dersom man ikke vil ha på sikkerhet kan man kjøre med spring-profilen 'security-off'.
+ * EnableWebSecurity slår på Spring Security.
+ * EnableGlobalMethodSecurity gir oss mulighet til å bruke Secured-annotasjoner på metodene.
  */
 @Configuration
+@EnableWebSecurity
 @EnableGlobalMethodSecurity(securedEnabled = true)
 class WebSecurityConfig @Autowired constructor(private val environment: Environment) : DefaultWebSecurityConfig(environment) {
 
     /**
-     * Fra Spring Security 5.7 skal HttpSecurity defineres ved å registrere en SecurityFilterChain-bean.
+     * Sikkerhetskonfigurasjon for path "/v1/ekstern/matrikkel/'**".
+     * Har høyest prioritet (lavest Order).
+     *
+     * Requestene må ha tilstedeværelse av Basic Authorization-header med gyldig apiKey.
+     */
+    @Order(SecurityConstants.ORDER_OF_API_KEY_FILTER_CHAIN)
+    @Bean
+    fun apiKeySecurityFilterChain(httpSecurity: HttpSecurity): SecurityFilterChain {
+        if (startedWithSecurityOff()) {
+            return filterChainForSecurityOff(httpSecurity)
+        } else {
+            // Request-matcher for filter-kjede: Kun for denne pathen denne SecurityFilterChain vil brukes
+            return httpSecurity.antMatcher("/v1/ekstern/matrikkel/**")
+                .addFilterAfter(apiKeyFilter(), AbstractPreAuthenticatedProcessingFilter::class.java)
+                // Defaulter til 401 Unauthorized dersom det kastes exception i filterkjeden
+                .exceptionHandling().authenticationEntryPoint(UnauthorizedEntryPoint("API_KEY_FILTER_CHAIN"))
+                .and()
+                // Slår av CSRF
+                .csrf().disable()
+                // Ingen sesjon vil opprettes eller brukes av Spring Security
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                // Krever bare at alle requester er authenticated (ingen rolle)
+                .authorizeRequests().anyRequest().authenticated()
+                .and()
+                .build()
+        }
+    }
+
+    /**
+     * Sikkerhetskonfigurasjon for generell path "/'**".
+     * Har lavere prioritet enn apiKeySecurityFilterChain (høyest Order).
+     *
+     * Requestene må ha tilstedeværelse av Bearer Authorization-header med gyldig jwt.
+     * Bruker foreløpig en hardkodet liste over brukere som kan autentisere seg.
      */
     @Order(SecurityConstants.ORDER_OF_JWT_FILTER_CHAIN)
     @Bean
-    fun securityFilterChain(httpSecurity: HttpSecurity): SecurityFilterChain {
+    fun jwtSecurityFilterChain(httpSecurity: HttpSecurity): SecurityFilterChain {
         if (startedWithSecurityOff()) {
-            if (inProduction()) {
-                throw RuntimeException("Tjener er feilkonfigurert. Kan ikke starte med profil $SECURITY_OFF_PROFILE_STRING i prod.")
-            } else { //Tillater det i andre miljøer
-                LOGGER.warn("\n\n\n---------\nOBS!! Started app with SECURITY SWITCHED OFF!\n---------\n\n")
-                return httpSecurity
-                    .csrf().disable()
-                    .build()
-            }
+            return filterChainForSecurityOff(httpSecurity)
         } else {
             // Request-matcher for filter-kjede: Alle pather skal inn i jwt-filter
             return httpSecurity.antMatcher("/**")
@@ -81,6 +122,23 @@ class WebSecurityConfig @Autowired constructor(private val environment: Environm
                 .and()
                 .build()
         }
+    }
+
+    private fun filterChainForSecurityOff(httpSecurity: HttpSecurity): SecurityFilterChain {
+        if (inProduction()) {
+            throw RuntimeException("Tjener er feilkonfigurert. Kan ikke starte med profil $SECURITY_OFF_PROFILE_STRING i prod.")
+        } else { //Tillater det i andre miljøer
+            LOGGER.warn("\n\n\n---------\nOBS!! Started app with SECURITY SWITCHED OFF!\n---------\n\n")
+            return httpSecurity
+                .csrf().disable()
+                .build()
+        }
+    }
+
+    // Filtere skal være ukjent for containeren så de bør ikke opprettes som Bean. Ref: https://spring.io/guides/topicals/spring-security-architecture#web-security
+    fun apiKeyFilter(): ApiKeyAuthenticationFilter {
+        LOGGER.info("Creating api key request filter.")
+        return ApiKeyAuthenticationFilter({ environment.getRequiredProperty("api.key.matrikkel") })
     }
 
     override fun jwtRequestFilter(): JwtAuthenticationRequestFilter {
@@ -114,6 +172,9 @@ class WebSecurityConfig @Autowired constructor(private val environment: Environm
 
 }
 
+/**
+ * En midlertidig AuthorizerPlugin-implementasjon som hardkoder bruker-rolle-tilknytninger.
+ */
 class DummyNibasAuthorizerPlugin : AuthorizerPlugin {
     private val nibasSingletonList = listOf("NIBAS")
     private val authoritiesByPidMap = mapOf(
@@ -133,21 +194,65 @@ class DummyNibasAuthorizerPlugin : AuthorizerPlugin {
 
 }
 
+/**
+ * AuthenticationEntryPoint som setter status til 401 Unauthorized. Gir mulighet til å logge utfall.
+ */
 class UnauthorizedEntryPoint(private val nameOfFilterChain: String) : AuthenticationEntryPoint {
-    private val logger: Logger = LoggerFactory.getLogger(UnauthorizedEntryPoint::class.java)
+    private val logger: Logger = LoggerFactory.getLogger(this::class.java)
 
     override fun commence(request: HttpServletRequest, response: HttpServletResponse, authException: AuthenticationException) {
-        logger.info("Returnerer 401 Unauthorized for filterkjede '$nameOfFilterChain'")
+        logger.debug("Returnerer 401 Unauthorized for filterkjede '$nameOfFilterChain'")
         response.status = HttpStatus.UNAUTHORIZED.value()
     }
 
 }
 
+/**
+ * Tynn wrapper rundt JwtAuthenticationRequestFilter for å ha mulighet til å logge.
+ */
 class NibasJwtAuthenticationRequestFilter(jwtValidator: JwtValidator, authorizerPlugin: AuthorizerPlugin) :
     JwtAuthenticationRequestFilter(jwtValidator, authorizerPlugin) {
 
     override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain) {
-        logger.info("Traff filter $this for request: ${request.servletPath}")
+        logger.debug("Traff filter $this for request: ${request.servletPath}")
         super.doFilterInternal(request, response, filterChain)
+    }
+}
+
+/**
+ * Filter som autentiserer innkommende requests som inneholder gyldig api key. Sender api-nøkkel inn som en supplier, da er det først hvis en ønsker å bruke
+ * filteret at verdien vil resolves.
+ */
+class ApiKeyAuthenticationFilter(private val validApiKeySupplier: Supplier<String>,
+                                 private val securityContextUpdater: SecurityContextUpdater = DefaultSecurityContextUpdater())
+    : OncePerRequestFilter() {
+
+    override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain) {
+        logger.debug("Traff filter $this for request: ${request.servletPath}")
+        val authorizationHeader = request.getHeader("Authorization")
+        if (StringUtils.hasText(authorizationHeader) && authorizationHeader.startsWith("Basic ")) {
+            val apiKey = authorizationHeader.substring(6)
+            if (StringUtils.hasText(apiKey) && apiKey == validApiKeySupplier.get()) {
+                val authentication = ApiKeyAuthenticationToken(apiKey)
+                authentication.isAuthenticated = true
+                securityContextUpdater.setAuthentication(authentication)
+                logger.debug("Authenticated api key-user.")
+            }
+        }
+        filterChain.doFilter(request, response)
+    }
+}
+
+/**
+ * En Authentication-implementasjon for vellykket autentisering for et api-key-kall.
+ */
+class ApiKeyAuthenticationToken(private val apiKey: String) : AbstractAuthenticationToken(emptyList()) {
+    override fun getCredentials(): Any {
+        return apiKey
+    }
+
+    // Vi har ikke noe fornuftig principal/brukernavn her nå
+    override fun getPrincipal(): Any {
+        return "api-key-user"
     }
 }

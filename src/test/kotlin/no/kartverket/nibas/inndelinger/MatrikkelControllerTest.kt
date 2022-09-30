@@ -8,7 +8,7 @@ import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.GrunnkretsResponseBuilder
 import no.kartverket.nibas.builders.StemmekretsBuilder
 import no.kartverket.nibas.builders.StemmekretsResponseBuilder
-import no.kartverket.nibas.config.ApiKeyWebSecurityConfig
+import no.kartverket.nibas.config.WebSecurityConfig
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.anySet
@@ -30,7 +30,7 @@ const val STEMMEKRETSER_ENDPOINT = "/v1/ekstern/matrikkel/stemmekretser"
 /**
  * Tester med security-off at tjenestene returnerer som forventet.
  */
-@ImportAutoConfiguration(ApiKeyWebSecurityConfig::class)
+@ImportAutoConfiguration(WebSecurityConfig::class)
 @WebMvcTest(MatrikkelController::class)
 internal class MatrikkelControllerTest : NibasMvcTest() {
 
