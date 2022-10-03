@@ -89,6 +89,8 @@ interface MatrikkelApi {
         ApiResponse(responseCode = "404", description = "Not Found")
     )
     @GetMapping("/kommuner/{kommunenummer}/grunnkretser", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentAlleGrunnkretserForKommune(@Parameter(description = "Kommunenummer for kommune man ønsker å hente grunnkretsene til") @PathVariable kommunenummer: String): List<GrunnkretsResponse>
+    fun hentAlleGrunnkretserForKommune(
+        @Parameter(description = "Kommunenummer for kommune man ønsker å hente grunnkretsene til") @PathVariable kommunenummer: String
+    ): List<GrunnkretsResponse>
 
 }

@@ -26,6 +26,7 @@ class NibasBackendApplication {
     companion object {
         @JvmStatic
         fun main(args: Array<String>) {
+            @Suppress("SpreadOperator")
             runApplication<NibasBackendApplication>(*args)
         }
     }

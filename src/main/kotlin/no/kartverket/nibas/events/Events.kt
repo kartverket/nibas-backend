@@ -66,12 +66,15 @@ class HibernateEntitySavesListener constructor(
     override fun requiresPostCommitHandling(persister: EntityPersister?): Boolean = true
 
     override fun onPostDelete(event: PostDeleteEvent) = publish(event.entity, EventType.DELETED)
+    @Suppress("EmptyFunctionBlock")
     override fun onPostDeleteCommitFailed(event: PostDeleteEvent) {}
 
     override fun onPostUpdate(event: PostUpdateEvent) = publish(event.entity, EventType.MODIFIED)
+    @Suppress("EmptyFunctionBlock")
     override fun onPostUpdateCommitFailed(event: PostUpdateEvent) {}
 
     override fun onPostInsert(event: PostInsertEvent) = publish(event.entity, EventType.ADDED)
+    @Suppress("EmptyFunctionBlock")
     override fun onPostInsertCommitFailed(event: PostInsertEvent) {}
 
     private fun publish(entity: Any, eventType: EventType) {

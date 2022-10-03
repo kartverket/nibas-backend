@@ -68,7 +68,14 @@ class GrenseImporter {
                     grunnkrets.oppdaterEllerLeggTilGrenseKobling(
                         GrenseMedAttributter(
                             grense = importerGrense(it),
-                            attributter = GrenseKoblingAttributter(it.splitRef.basertPaGrense.erRetningMedKlokken, grunnkrets.antallGrenser(), skallIndex, hullIndex)))
+                            attributter = GrenseKoblingAttributter(
+                                retningMedKlokken = it.splitRef.basertPaGrense.erRetningMedKlokken,
+                                rekkefoelge = grunnkrets.antallGrenser(),
+                                flateIndeks = skallIndex,
+                                hullIndeks = hullIndex
+                            )
+                        )
+                    )
                 }
             }
         }

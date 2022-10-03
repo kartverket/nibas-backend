@@ -18,6 +18,7 @@ class NibasImportApplication(val sosiImportService: SosiImportService) : Command
 
     companion object {
         @JvmStatic fun main(args: Array<String>) {
+            @Suppress("SpreadOperator")
             exitProcess(exit(run(NibasImportApplication::class.java, *args)))
         }
     }

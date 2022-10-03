@@ -490,11 +490,12 @@ style:
   MandatoryBracesLoops:
     active: false
   MaxLineLength:
-    active: true
+    active: false
     maxLineLength: 160
     excludePackageStatements: true
     excludeImportStatements: true
     excludeCommentStatements: false
+    excludes: ['**/test/**']
   MayBeConst:
     active: true
   ModifierOrder:
@@ -535,7 +536,7 @@ style:
   SafeCast:
     active: true
   SerialVersionUIDInSerializableClass:
-    active: true
+    active: false
   SpacingBetweenPackageAndImports:
     active: false
   ThrowsCount:
@@ -607,7 +608,5 @@ style:
   VarCouldBeVal:
     active: true
   WildcardImport:
-    active: true
-    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/jsTest/**', '**/iosTest/**']
-    excludeImports:
-      - 'java.util.*'
+    active: false
+    excludes: ['**/test/**']

@@ -50,7 +50,9 @@ class StemmekretsImporter @Autowired constructor(private val kommunalKretsImport
             stemmekrets.posisjon = SosiGeometryFunctions.sosiKoordinatToPoint(forsteFlate.getAlleSosiNordOest(), forsteFlate.koordsys)
 
             // Hent grensene til kommunen som stemmekretsen er en del av (for å kun gjøre oppslaget èn gang)
-            val kommuneFlater = admenhetRoot.getFlater().filter { it.getObjType() == SosiKoder.KOMMUNE && it.getKommunenummer() == forsteFlate.getKommunenummer() }
+            val kommuneFlater = admenhetRoot.getFlater().filter {
+                it.getObjType() == SosiKoder.KOMMUNE && it.getKommunenummer() == forsteFlate.getKommunenummer()
+            }
             kommuneFlater.forEach { it.lastReferanser(admenhetRoot) }
 
             // Setter kommunenummerId fra GeoNorge samt kobling til kommune
@@ -66,7 +68,7 @@ class StemmekretsImporter @Autowired constructor(private val kommunalKretsImport
                 }
 
                 gkFlate.getHullReferanser().forEachIndexed { hullIndex, liste ->
-                    liste.forEachIndexed { rekkefoelge, ref ->
+                    liste.forEachIndexed { _, ref ->
                         grenseImporter.importerGrenseRef(stemmekrets, ref, kurver, kommuneFlater, skall_index, hullIndex)
                     }
                 }

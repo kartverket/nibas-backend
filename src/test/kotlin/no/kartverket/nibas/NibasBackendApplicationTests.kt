@@ -9,6 +9,7 @@ import org.springframework.test.context.ActiveProfiles
 class NibasBackendApplicationTests {
 
 	@Test
+    @Suppress("EmptyFunctionBlock")
 	fun contextLoads() {
 	}
 
