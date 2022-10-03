@@ -32,6 +32,10 @@ class Fylke(override val id: String = UUID.randomUUID().toString()) : Administra
     @JoinColumn(name = "nasjon_fk")
     lateinit var nasjon: Nasjon
 
+    @ManyToOne
+    @JoinColumn(name = "utledetfra")
+    var utledetFra: Fylke? = null
+
     @OneToMany(mappedBy = "fylkeFk")
     var informasjonselementer: MutableSet<FylkeInformasjon> = mutableSetOf()
 

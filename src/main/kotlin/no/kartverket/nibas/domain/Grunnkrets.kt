@@ -43,6 +43,10 @@ class Grunnkrets(override val id: String = UUID.randomUUID().toString()) : Stati
     @JoinColumn(name = "kommune_fk")
     lateinit var kommune: Kommune
 
+    @ManyToOne
+    @JoinColumn(name = "utledetfra")
+    var utledetFra: Grunnkrets? = null
+
     @OneToMany(mappedBy = "grunnkrets", cascade = [CascadeType.ALL])
     var informasjonselementer: MutableSet<GrunnkretsInformasjon> = mutableSetOf()
 

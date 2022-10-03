@@ -44,6 +44,10 @@ class Kommune(override val id: String = UUID.randomUUID().toString()) : Administ
     @OneToMany(mappedBy = "kommune", cascade = [CascadeType.ALL])
     var stemmekretser: MutableSet<Stemmekrets> = mutableSetOf()
 
+    @ManyToOne
+    @JoinColumn(name = "utledetfra")
+    var utledetFra: Kommune? = null
+
     override fun getInfo(): String? = doGetInfoFromSingletonCollection(informasjonselementer)
 
     override fun setInfo(updatedInfo: String?) {

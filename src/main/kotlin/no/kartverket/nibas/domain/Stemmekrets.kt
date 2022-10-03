@@ -49,6 +49,10 @@ class Stemmekrets(override val id: String = UUID.randomUUID().toString()) : Komm
     @JoinColumn(name = "kommune_fk")
     var kommune: Kommune? = null
 
+    @ManyToOne
+    @JoinColumn(name = "utledetfra")
+    var utledetFra: Stemmekrets? = null
+
     fun getGrenserAvTyper(grensetyper: Set<Grensetype>): Set<GrenseKobling> {
         return grenser
             .filter { grensetyper.contains(it.grense.grensetype) }
