@@ -6,6 +6,7 @@ metadata:
 spec:
   selector:
     istio: ingressgateway # only internal ingress
+    ingress: internal
   servers:
   - port:
       number: 80
