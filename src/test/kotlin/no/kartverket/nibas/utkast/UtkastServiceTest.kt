@@ -2,6 +2,7 @@ package no.kartverket.nibas.utkast
 
 import no.kartverket.nibas.builders.FylkeRequestBuilder
 import no.kartverket.nibas.builders.KommuneRequestBuilder
+import no.kartverket.nibas.builders.OpprettUtkastRequestBuilder
 import no.kartverket.nibas.builders.UtkastRequestBuilder
 import no.kartverket.nibas.domain.utkast.Utkast
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
@@ -39,7 +40,7 @@ internal class UtkastServiceTest {
         whenever(utkastRepositoryMock.save(any(Utkast::class.java))).thenReturn(utkast)
 
         val idForOpprettetUtkast = utkastService.opprettUtkast(
-            UtkastRequestBuilder()
+            OpprettUtkastRequestBuilder()
                 .withNavn(navn)
                 .build())
         assertThat(utkast.id).isEqualTo(idForOpprettetUtkast)

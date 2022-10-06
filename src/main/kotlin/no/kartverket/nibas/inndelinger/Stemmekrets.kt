@@ -109,6 +109,7 @@ fun Stemmekrets.toStemmekretsResponse(kodelisteService: KodelisteService): Stemm
     tellekretsnummer = this.tellekretsnummer,
     features = FeatureCollection(features = listOf(
         posisjonToFeature(this.posisjon, this.version),
-        flateToFeature(this, kodelisteService, this.version)))
+        flateToFeature(this, kodelisteService, this.version))),
+    version = this.version
 )
 

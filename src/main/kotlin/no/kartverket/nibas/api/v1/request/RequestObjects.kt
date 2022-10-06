@@ -121,8 +121,18 @@ data class StemmekretsRequest(
     val version: Int
 )
 
-@Schema(description = "Representasjon av et utkast")
-data class UtkastRequest(
+@Schema(description = "Representasjon for opprettelse av utkast")
+data class OpprettUtkastRequest(
+    @Schema(description = "Arbeidsnavnet til utkastet.")
+    val navn: String,
+    @Schema(description = "Typen endring utkastet representerer.")
+    val endringstype: String,
+    @Schema(description = "Representasjon av endringene som er grunnlaget for å opprette utkastet.")
+    val operasjoner: Operasjoner = Operasjoner()
+)
+
+@Schema(description = "Representasjon for oppdatering av utkast")
+data class OppdaterUtkastRequest(
     @Schema(description = "Arbeidsnavnet til utkastet.")
     val navn: String,
     @Schema(description = "Typen endring utkastet representerer.")

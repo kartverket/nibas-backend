@@ -11,6 +11,7 @@ import no.kartverket.nibas.kodelister.KodelisteService
 class GrunnkretsResponseBuilder(private val kodelisteService: KodelisteService) {
 
     private var grunnkrets: Grunnkrets = GrunnkretsBuilder().build()
+    private var version: Int = 1
 
     fun forGrunnkrets(grunnkrets: Grunnkrets): GrunnkretsResponseBuilder {
         this.grunnkrets = grunnkrets
@@ -29,7 +30,8 @@ class GrunnkretsResponseBuilder(private val kodelisteService: KodelisteService) 
                     posisjonToFeature(grunnkrets.posisjon, grunnkrets.version),
                     flateToFeature(grunnkrets, kodelisteService, grunnkrets.version)
                 )
-            )
+            ),
+            version = version
         )
     }
 

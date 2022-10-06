@@ -1,7 +1,8 @@
 package no.kartverket.nibas.utkast
 
 import no.kartverket.nibas.api.v1.UtkastApi
-import no.kartverket.nibas.api.v1.request.UtkastRequest
+import no.kartverket.nibas.api.v1.request.OppdaterUtkastRequest
+import no.kartverket.nibas.api.v1.request.OpprettUtkastRequest
 import no.kartverket.nibas.api.v1.response.AuditInfoResponse
 import no.kartverket.nibas.api.v1.response.UtkastOpprettetResponse
 import no.kartverket.nibas.api.v1.response.UtkastResponse
@@ -20,16 +21,15 @@ import org.springframework.web.server.ResponseStatusException
 @RestController
 class UtkastController(private val utkastService: UtkastService) : UtkastApi {
 
-    override fun opprettUtkast(utkastRequest: UtkastRequest): UtkastOpprettetResponse {
-        return UtkastOpprettetResponse(id = utkastService.opprettUtkast(utkastRequest))
-    }
+    override fun opprettUtkast(opprettUtkastRequest: OpprettUtkastRequest): UtkastOpprettetResponse =
+        UtkastOpprettetResponse(id = utkastService.opprettUtkast(opprettUtkastRequest))
 
     override fun hentUtkast(id: String): UtkastResponse {
         return utkastService.hentUtkast(id)?.toUtkastResponse()
             ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
     }
 
-    override fun oppdaterUtkast(id: String, utkast: UtkastRequest): UtkastResponse {
+    override fun oppdaterUtkast(id: String, utkast: OppdaterUtkastRequest): UtkastResponse {
         return utkastService.oppdaterUtkast(id, utkast)?.toUtkastResponse()
             ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
     }
@@ -40,17 +40,13 @@ class UtkastController(private val utkastService: UtkastService) : UtkastApi {
 @Service
 class UtkastService(private val utkastRepository: UtkastRepository) {
 
-    fun opprettUtkast(utkastRequest: UtkastRequest): String {
-        val savedUtkast = utkastRepository.save(utkastRequest.createUtkast())
-        return savedUtkast.id
-    }
+    fun opprettUtkast(opprettUtkastRequest: OpprettUtkastRequest): String =
+        utkastRepository.save(opprettUtkastRequest.createUtkast()).id
 
     @Transactional(readOnly = true)
-    fun hentUtkast(id: String): Utkast? {
-        return utkastRepository.findById(id).unwrap()
-    }
+    fun hentUtkast(id: String): Utkast? = utkastRepository.findById(id).unwrap()
 
-    fun oppdaterUtkast(id: String, request: UtkastRequest): Utkast? {
+    fun oppdaterUtkast(id: String, request: OppdaterUtkastRequest): Utkast? {
         return hentUtkast(id)?.let { utkast ->
             utkast.navn = request.navn
             utkast.endringstype = UtkastEndringstype.fromValue(request.endringstype)
@@ -62,9 +58,8 @@ class UtkastService(private val utkastRepository: UtkastRepository) {
 
 }
 
-private fun UtkastRequest.createUtkast(): Utkast =
+private fun OpprettUtkastRequest.createUtkast(): Utkast =
     UtkastBuilder.builder(this.navn, UtkastEndringstype.fromValue(this.endringstype))
-        .withGyldigFra(this.gyldigFra!!)
         .withOperasjoner(this.operasjoner)
         .build()
 

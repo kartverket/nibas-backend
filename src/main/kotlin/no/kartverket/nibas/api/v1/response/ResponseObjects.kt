@@ -197,7 +197,10 @@ data class GrunnkretsResponse(
     val kommunenummer: String,
 
     @Schema(description = "Geometrien til grunnkretsen, dvs representasjonspunkt og flaten")
-    val features: FeatureCollection
+    val features: FeatureCollection,
+
+    @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
+    val version: Int
 )
 
 @Schema(description = "Representasjon av en stemmekrets")
@@ -227,7 +230,10 @@ data class StemmekretsResponse(
     var valgdistriktsnummer: String? = null,
 
     @Schema(description = "Geometrien til stemmekretsen, dvs representasjonspunkt og flaten")
-    val features: FeatureCollection
+    val features: FeatureCollection,
+
+    @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
+    val version: Int
 )
 
 @Schema(description = "Representasjon av et kommunenummer")

@@ -2,7 +2,8 @@ package no.kartverket.nibas.utkast
 
 import no.kartverket.nibas.MockResponseAsserts
 import no.kartverket.nibas.NibasMvcTest
-import no.kartverket.nibas.api.v1.request.UtkastRequest
+import no.kartverket.nibas.api.v1.request.OppdaterUtkastRequest
+import no.kartverket.nibas.api.v1.request.OpprettUtkastRequest
 import no.kartverket.nibas.api.v1.response.AuditInfoResponse
 import no.kartverket.nibas.api.v1.response.UtkastOpprettetResponse
 import no.kartverket.nibas.api.v1.response.UtkastResponse
@@ -31,14 +32,14 @@ internal class UtkastControllerTest : NibasMvcTest() {
     @Test
     fun opprettUtkastGir201Created() {
         val id = "b469a516-9ea4-4162-b8b8-ab1e1f165f40"
-        whenever(utkastServiceMock.opprettUtkast(any(UtkastRequest::class.java))).thenReturn(id)
-        val requestBody = UtkastRequest(
+        whenever(utkastServiceMock.opprettUtkast(any(OpprettUtkastRequest::class.java))).thenReturn(id)
+        val opprettUtkastRequest = OpprettUtkastRequest(
             navn = "Mitt utkast",
             endringstype = UtkastEndringstype.KVALITETSHEVING.value
         )
         post(
             url = "/v1/utkast",
-            requestObject = requestBody,
+            requestObject = opprettUtkastRequest,
             responseAsserts = MockResponseAsserts(
                 expectedResponseObject = UtkastOpprettetResponse(id),
                 resultMatchers = listOf(status().isCreated)
@@ -105,9 +106,9 @@ internal class UtkastControllerTest : NibasMvcTest() {
         val operasjoner = utkastEtterOppdatering.operasjoner
         val opprettetDato = utkastEtterOppdatering.opprettetDato
         val utkastId = utkastEtterOppdatering.id
-        whenever(utkastServiceMock.oppdaterUtkast(anyString(), any(UtkastRequest::class.java))).thenReturn(utkastEtterOppdatering)
+        whenever(utkastServiceMock.oppdaterUtkast(anyString(), any(OppdaterUtkastRequest::class.java))).thenReturn(utkastEtterOppdatering)
 
-        val requestBody = UtkastRequest(
+        val requestBody = OppdaterUtkastRequest(
             navn = utkastNavn,
             endringstype = UtkastEndringstype.KVALITETSHEVING.value,
             gyldigFra = gyldigFra,

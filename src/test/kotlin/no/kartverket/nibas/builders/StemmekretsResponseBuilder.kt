@@ -11,6 +11,7 @@ import no.kartverket.nibas.kodelister.KodelisteService
 class StemmekretsResponseBuilder(private val kodelisteService: KodelisteService) {
 
     private var stemmekrets: Stemmekrets = StemmekretsBuilder().build()
+    private var version: Int = 1
 
     fun forStemmekrets(stemmekrets: Stemmekrets): StemmekretsResponseBuilder {
         this.stemmekrets = stemmekrets
@@ -32,7 +33,8 @@ class StemmekretsResponseBuilder(private val kodelisteService: KodelisteService)
                     posisjonToFeature(stemmekrets.posisjon, stemmekrets.version),
                     flateToFeature(stemmekrets, kodelisteService, stemmekrets.version)
                 )
-            )
+            ),
+            version = version
         )
     }
 }

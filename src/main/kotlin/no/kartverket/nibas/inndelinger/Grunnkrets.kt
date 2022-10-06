@@ -104,6 +104,7 @@ fun Grunnkrets.toGrunnkretsResponse(kodelisteService: KodelisteService): Grunnkr
     kommunenummer = this.kommunenummer!!,
     features = FeatureCollection(features = listOf(
         posisjonToFeature(this.posisjon, this.version),
-        flateToFeature(this, kodelisteService, this.version)))
+        flateToFeature(this, kodelisteService, this.version))),
+    version = this.version
 )
 

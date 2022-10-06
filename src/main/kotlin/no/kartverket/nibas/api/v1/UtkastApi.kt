@@ -7,7 +7,8 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
-import no.kartverket.nibas.api.v1.request.UtkastRequest
+import no.kartverket.nibas.api.v1.request.OppdaterUtkastRequest
+import no.kartverket.nibas.api.v1.request.OpprettUtkastRequest
 import no.kartverket.nibas.api.v1.response.UtkastOpprettetResponse
 import no.kartverket.nibas.api.v1.response.UtkastResponse
 import org.springframework.http.HttpStatus
@@ -43,7 +44,7 @@ interface UtkastApi {
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
     fun opprettUtkast(@Parameter(description = "Utkastet som ønskes opprettet")
-                      @RequestBody utkastRequest: UtkastRequest
+                      @RequestBody opprettUtkastRequest: OpprettUtkastRequest
     ): UtkastOpprettetResponse
 
     @Operation(summary = "Hent et utkast med gitt id", description = "Henter utkast med gitt id")
@@ -74,6 +75,6 @@ interface UtkastApi {
     @PutMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun oppdaterUtkast(
         @Parameter(description = "ID til utkastet man vil oppdatere") @PathVariable id: String,
-        @RequestBody utkast: UtkastRequest
+        @RequestBody utkast: OppdaterUtkastRequest
     ): UtkastResponse
 }
