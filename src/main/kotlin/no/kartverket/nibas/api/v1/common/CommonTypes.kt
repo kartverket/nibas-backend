@@ -98,31 +98,31 @@ data class AdministrativEnhetNavn(
 
 // TODO: Utvide med felter for sammenslåing og oppsplitting
 // Typen (og undertyper) er Serializable for persistering i jsonb-kolonne
-// Typene under operasjoner er påkrevet, men har defaults. Siden Schema settes til nullable kan de settes til null i typescript.
+// Typene under operasjoner er påkrevet, men har defaults.
 @Schema(description = "Representasjon av operasjoner/handlinger som er utført i klienten.")
 data class Operasjoner(
-    @Schema(description = "Endringer på metadata.", nullable = true)
+    @Schema(description = "Endringer på metadata.")
     val metadataendringer: Metadataendringer = Metadataendringer(),
-    @Schema(description = "Endringer på grenser.", nullable = true)
+    @Schema(description = "Endringer på grenser.")
     val grenseendringer: Grenseendringer = Grenseendringer()
 ) : Serializable
 
 @Schema(description = "Representasjon av endringer på metadata.")
 data class Metadataendringer(
-    @Schema(description = "Endringer på nasjon.", nullable = true)
+    @Schema(description = "Endringer på nasjon.")
     val nasjonsendringer: Map<String, NasjonRequest> = emptyMap(),
-    @Schema(description = "Endringer på fylke.", nullable = true)
+    @Schema(description = "Endringer på fylke.")
     val fylkesendringer: Map<String, FylkeRequest> = emptyMap(),
-    @Schema(description = "Endringer på kommune.", nullable = true)
+    @Schema(description = "Endringer på kommune.")
     val kommuneendringer: Map<String, KommuneRequest> = emptyMap(),
-    @Schema(description = "Endringer på grunnkrets.", nullable = true)
+    @Schema(description = "Endringer på grunnkrets.")
     val grunnkretsendringer: Map<String, GrunnkretsRequest> = emptyMap(),
-    @Schema(description = "Endringer på stemmekrets.", nullable = true)
+    @Schema(description = "Endringer på stemmekrets.")
     val stemmekretsendringer: Map<String, StemmekretsRequest> = emptyMap()
 ) : Serializable
 
 @Schema(description = "Representasjon av endringer på grensegeometri.")
 data class Grenseendringer(
-    @Schema(description = "Endringer på features.", nullable = true)
+    @Schema(description = "Endringer på features.")
     val endredeFeatures: Map<String, Feature> = emptyMap()
 ) : Serializable
