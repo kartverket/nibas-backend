@@ -109,16 +109,16 @@ class UtkastService(private val utkastRepository: UtkastRepository,
         logger.debug(utkast.publiseringsInfo())
 
         val operasjoner = utkast.operasjoner
-        val metadata: Metadataendringer = operasjoner.metadataendringer!!
-        val grenseendringer = operasjoner.grenseendringer!!
+        val metadata: Metadataendringer = operasjoner.metadataendringer
+        val grenseendringer = operasjoner.grenseendringer
 
-        metadata.nasjonsendringer!!.forEach { nasjonService.oppdaterNasjon(it.key, it.value) }
-        metadata.fylkesendringer!!.forEach { fylkeService.oppdaterFylke(it.key, it.value) }
-        metadata.kommuneendringer!!.forEach { kommuneService.oppdaterKommune(it.key, it.value) }
-        metadata.grunnkretsendringer!!.forEach { grunnkretsService.oppdaterGrunnkrets(it.key, it.value) }
-        metadata.stemmekretsendringer!!.forEach { stemmekretsService.oppdaterStemmekrets(it.key, it.value) }
+        metadata.nasjonsendringer.forEach { nasjonService.oppdaterNasjon(it.key, it.value) }
+        metadata.fylkesendringer.forEach { fylkeService.oppdaterFylke(it.key, it.value) }
+        metadata.kommuneendringer.forEach { kommuneService.oppdaterKommune(it.key, it.value) }
+        metadata.grunnkretsendringer.forEach { grunnkretsService.oppdaterGrunnkrets(it.key, it.value) }
+        metadata.stemmekretsendringer.forEach { stemmekretsService.oppdaterStemmekrets(it.key, it.value) }
 
-        val endredeFeatures = grenseendringer.endredeFeatures!!
+        val endredeFeatures = grenseendringer.endredeFeatures
         if (endredeFeatures.isNotEmpty()) {
             grenseService.lagreGrenser(FeatureCollection(features = endredeFeatures.map { it.value }))
         }
@@ -142,19 +142,19 @@ private fun Utkast.publiseringsInfo(): String {
     val operasjoner = this.operasjoner
     val logBuilder = StringBuilder("Publiserer utkast '${this.navn}' (id: ${this.id}): ")
     return logBuilder
-        .append(operasjoner.metadataendringer!!.logFriendlyString())
-        .append(operasjoner.grenseendringer!!.logFriendlyString())
+        .append(operasjoner.metadataendringer.logFriendlyString())
+        .append(operasjoner.grenseendringer.logFriendlyString())
         .append("\n")
         .toString()
 }
 
 private fun Metadataendringer.logFriendlyString(): String {
     val logBuilder = StringBuilder("")
-    val nasjon = this.nasjonsendringer!!
-    val fylke = this.fylkesendringer!!
-    val kommune = this.kommuneendringer!!
-    val grunnkrets = this.grunnkretsendringer!!
-    val stemmekrets = this.stemmekretsendringer!!
+    val nasjon = this.nasjonsendringer
+    val fylke = this.fylkesendringer
+    val kommune = this.kommuneendringer
+    val grunnkrets = this.grunnkretsendringer
+    val stemmekrets = this.stemmekretsendringer
     val newLine = "\n -> "
     if (nasjon.isNotEmpty()) {
         logBuilder.append(newLine).append("Nasjonsendringer: ${nasjon.size}")
@@ -177,7 +177,7 @@ private fun Metadataendringer.logFriendlyString(): String {
 private fun Grenseendringer.logFriendlyString(): String {
     val logBuilder = StringBuilder("")
     val newLine = "\n -> "
-    val endredeFeatures = this.endredeFeatures!!
+    val endredeFeatures = this.endredeFeatures
     if (endredeFeatures.isNotEmpty()) {
         logBuilder.append(newLine).append("Grenseendringer: ${endredeFeatures.size}")
     }
@@ -188,13 +188,13 @@ private fun Grenseendringer.logFriendlyString(): String {
  * Feltene er nullable for klientens skyld, men minst en av typene må ha en verdi.
  */
 private fun Operasjoner.inValidState(): Boolean {
-    val metadata = this.metadataendringer!!
-    return metadata.nasjonsendringer!!.isNotEmpty() ||
-        metadata.fylkesendringer!!.isNotEmpty() ||
-        metadata.kommuneendringer!!.isNotEmpty() ||
-        metadata.grunnkretsendringer!!.isNotEmpty() ||
-        metadata.stemmekretsendringer!!.isNotEmpty() ||
-        this.grenseendringer!!.endredeFeatures!!.isNotEmpty()
+    val metadata = this.metadataendringer
+    return metadata.nasjonsendringer.isNotEmpty() ||
+        metadata.fylkesendringer.isNotEmpty() ||
+        metadata.kommuneendringer.isNotEmpty() ||
+        metadata.grunnkretsendringer.isNotEmpty() ||
+        metadata.stemmekretsendringer.isNotEmpty() ||
+        this.grenseendringer.endredeFeatures.isNotEmpty()
 }
 
 private fun OpprettUtkastRequest.createUtkast(): Utkast =
