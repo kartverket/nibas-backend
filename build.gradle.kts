@@ -1,14 +1,17 @@
+
 import io.gitlab.arturbosch.detekt.Detekt
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.springframework.boot.gradle.tasks.bundling.BootJar
 
 plugins {
+    val kotlinPluginVersion = "1.7.20"
+
     id("org.springframework.boot") version "2.7.4"
     id("io.spring.dependency-management") version "1.0.14.RELEASE"
-    kotlin("jvm") version "1.7.10"
-    kotlin("plugin.spring") version "1.7.10"
-    kotlin("plugin.jpa") version "1.7.10"
-    kotlin("plugin.allopen") version "1.7.10"
+    kotlin("jvm") version kotlinPluginVersion
+    kotlin("plugin.spring") version kotlinPluginVersion
+    kotlin("plugin.jpa") version kotlinPluginVersion
+    kotlin("plugin.allopen") version kotlinPluginVersion
     id("org.flywaydb.flyway") version "9.4.0"
     id("io.gitlab.arturbosch.detekt") version "1.21.0"
 }
