@@ -9,6 +9,10 @@ ENV USER_ID=199
 
 RUN addgroup -g ${GROUP_ID} ${GROUP_NAME} && adduser --uid ${USER_ID} --disabled-password --gecos '' ${USER_NAME} --ingroup ${GROUP_NAME}
 
+# Set timezone to Oslo
+RUN apk add --no-cache tzdata
+ENV TZ=Europe/Oslo
+
 EXPOSE 8080
 RUN mkdir /nibas-backend
 COPY build/libs/*.jar /nibas-backend/app.jar
