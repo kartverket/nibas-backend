@@ -14,6 +14,7 @@ import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
 import no.kartverket.nibas.unwrap
+import no.kartverket.nibas.utkast.NotFoundException
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -44,11 +45,6 @@ class GrunnkretsController(
         )
     }
 
-    override fun oppdaterGrunnkrets(id: String, oppdatertGrunnkrets: GrunnkretsRequest): GrunnkretsResponse {
-        return grunnkretsService.oppdaterGrunnkrets(id, oppdatertGrunnkrets)?.toGrunnkretsResponse(kodelisteService)
-            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
-    }
-
     override fun hentGrunnkretsRevisjoner(id: String): List<RevisjonRef> =
         historikkService.hentRevisjoner(id, Grunnkrets::class.java).map { toRevisjonRef(it) }
 
@@ -63,7 +59,7 @@ class GrunnkretsControllerService(private val grunnkretsService: GrunnkretsServi
                                   private val kodelisteService: KodelisteService) {
     fun hentEn(id: String): GrunnkretsResponse =
         grunnkretsService.hentGrunnkrets(id)?.toGrunnkretsResponse(kodelisteService)
-            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
+            ?: throw NotFoundException("Grunnkrets med id '$id' ble ikke funnet.")
 
 }
 

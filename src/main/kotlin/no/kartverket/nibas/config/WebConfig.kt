@@ -1,7 +1,8 @@
 package no.kartverket.nibas.config
 
-import no.kartverket.nibas.api.v1.response.GeometriErrorResponse
+import no.kartverket.nibas.api.v1.response.ApiErrorResponse
 import no.kartverket.nibas.api.v1.response.ConflictResponse
+import no.kartverket.nibas.api.v1.response.GeometriErrorResponse
 import no.kartverket.nibas.inndelinger.toDto
 import no.kartverket.nibas.kodelister.DefaultKodelisteService
 import no.kartverket.nibas.kodelister.KodelisteFetcher
@@ -15,6 +16,8 @@ import no.kartverket.nibas.repository.TerrengdetaljkodeRepository
 import no.kartverket.nibas.sosi.sosiimport.GeometriFailedToBeCreatedException
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import no.kartverket.nibas.sosi.sosiimport.UgyldigGeometriException
+import no.kartverket.nibas.utkast.BadRequestException
+import no.kartverket.nibas.utkast.NotFoundException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -90,7 +93,7 @@ class CustomRestExceptionHandler : ResponseEntityExceptionHandler() {
 
     @ExceptionHandler(value = [OptimistiskLaasException::class])
     fun handleOptimisticLockException(ex: OptimistiskLaasException, request: WebRequest): ResponseEntity<Any> {
-        val errors = ex.konflikter.map { conflict ->
+        val errors: List<ConflictResponse> = ex.konflikter.map { conflict ->
             ConflictResponse(
                 id = conflict.eksisterende.id,
                 type = conflict.eksisterende::class.java.simpleName,
@@ -102,11 +105,21 @@ class CustomRestExceptionHandler : ResponseEntityExceptionHandler() {
         return handleExceptionInternal(ex, errors, HttpHeaders(), HttpStatus.CONFLICT, request)
     }
 
+    @ExceptionHandler(value = [NotFoundException::class])
+    fun handleNotFoundException(ex: NotFoundException, request: WebRequest): ResponseEntity<Any> {
+        val httpStatus = HttpStatus.NOT_FOUND
+        return handleExceptionInternal(ex, ApiErrorResponse(httpStatus, ex.message), HttpHeaders(), httpStatus, request)
+    }
+
+    @ExceptionHandler(value = [BadRequestException::class])
+    fun handleBadRequestException(ex: BadRequestException, request: WebRequest): ResponseEntity<Any> {
+        val httpStatus = HttpStatus.BAD_REQUEST
+        return handleExceptionInternal(ex, ApiErrorResponse(httpStatus, ex.message), HttpHeaders(), httpStatus, request)
+    }
+
     override fun handleExceptionInternal(ex: Exception, body: Any?, headers: HttpHeaders, status: HttpStatus, request: WebRequest): ResponseEntity<Any> {
-        if (this.logger.isWarnEnabled) {
-            this.logger.warn(buildLogMessage(ex))
-        }
-        return super.handleExceptionInternal(ex, body, headers, status, request);
+        this.logger.warn(buildLogMessage(ex))
+        return super.handleExceptionInternal(ex, body, headers, status, request)
     }
 
     private fun buildLogMessage(ex: Exception): String {

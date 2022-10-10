@@ -25,7 +25,7 @@ abstract class KommunalKrets(@Transient override val type: Flatetype) : Flate, S
     override val id: String = UUID.randomUUID().toString()
 
     @Column(name = "objtype")
-    override var objtype: String? = type.name
+    var objtype: String? = type.name
 
     @Embedded
     override var auditInfo: AuditInfo = AuditInfo()

@@ -4,19 +4,33 @@ import no.kartverket.nibas.MockResponseAsserts
 import no.kartverket.nibas.NibasMvcTest
 import no.kartverket.nibas.api.v1.request.OppdaterUtkastRequest
 import no.kartverket.nibas.api.v1.request.OpprettUtkastRequest
+import no.kartverket.nibas.api.v1.response.ApiErrorResponse
 import no.kartverket.nibas.api.v1.response.AuditInfoResponse
+import no.kartverket.nibas.api.v1.response.ConflictResponse
 import no.kartverket.nibas.api.v1.response.UtkastOpprettetResponse
 import no.kartverket.nibas.api.v1.response.UtkastResponse
+import no.kartverket.nibas.builders.FylkeBuilder
 import no.kartverket.nibas.builders.KommuneRequestBuilder
 import no.kartverket.nibas.builders.UtkastRequestBuilder
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastEndringstype
 import no.kartverket.nibas.domain.utkast.UtkastStatus
+import no.kartverket.nibas.repository.KonfliktVersjon
+import no.kartverket.nibas.repository.OptimistiskLaasException
+import no.kartverket.nibas.sosi.sosiimport.GeometriFailedToBeCreatedException
+import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
+import no.kartverket.nibas.sosi.sosiimport.UgyldigGeometriException
 import no.kartverket.nibas.sporing.AuditInfo
 import org.junit.jupiter.api.Test
+import org.locationtech.jts.geom.Coordinate
+import org.locationtech.jts.geom.GeometryFactory
+import org.locationtech.jts.operation.valid.TopologyValidationError
 import org.mockito.Mockito.anyString
+import org.mockito.Mockito.verify
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.boot.test.mock.mockito.MockBean
+import org.springframework.http.HttpStatus
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.time.LocalDate
 import java.time.Month
@@ -25,6 +39,8 @@ import org.mockito.Mockito.`when` as whenever
 
 @WebMvcTest(UtkastController::class)
 internal class UtkastControllerTest : NibasMvcTest() {
+
+    private val publiserUrl = "/v1/utkast/123/publiser"
 
     @MockBean
     private lateinit var utkastServiceMock: UtkastService
@@ -75,7 +91,8 @@ internal class UtkastControllerTest : NibasMvcTest() {
             ),
             opprettetDato = opprettetTidspunkt,
             gyldigFra = foersteJanuar,
-            operasjoner = operasjoner
+            operasjoner = operasjoner,
+            version = 1
         )
         get("/v1/utkast/$utkastId", responseAsserts = MockResponseAsserts(
             expectedResponseObject = expectedUtkastResponse,
@@ -108,12 +125,12 @@ internal class UtkastControllerTest : NibasMvcTest() {
         val utkastId = utkastEtterOppdatering.id
         whenever(utkastServiceMock.oppdaterUtkast(anyString(), any(OppdaterUtkastRequest::class.java))).thenReturn(utkastEtterOppdatering)
 
-        val requestBody = OppdaterUtkastRequest(
-            navn = utkastNavn,
-            endringstype = UtkastEndringstype.KVALITETSHEVING.value,
-            gyldigFra = gyldigFra,
-            operasjoner = operasjoner
-        )
+        val requestBody = UtkastRequestBuilder()
+            .withNavn(utkastNavn)
+            .withEndringstype(UtkastEndringstype.KVALITETSHEVING)
+            .withGyldigFra(gyldigFra)
+            .withOperasjoner(operasjoner)
+            .build()
 
         val expectedUtkastResponse = UtkastResponse(
             id = utkastId,
@@ -126,7 +143,8 @@ internal class UtkastControllerTest : NibasMvcTest() {
             ),
             opprettetDato = opprettetDato,
             gyldigFra = gyldigFra,
-            operasjoner = operasjoner
+            operasjoner = operasjoner,
+            version = 1
         )
 
         put(
@@ -140,7 +158,120 @@ internal class UtkastControllerTest : NibasMvcTest() {
 
     @Test
     fun oppdaterUtkastMedUkjentIdGir404NotFound() {
-        whenever(utkastServiceMock.hentUtkast(anyString())).thenReturn(null)
+        whenever(utkastServiceMock.oppdaterUtkast(anyString(), any(OppdaterUtkastRequest::class.java))).thenReturn(null)
         put("/v1/utkast/123", UtkastRequestBuilder.DEFAULT_REQUEST, status().isNotFound)
     }
+
+    @Test
+    fun publiserUtkastGir200OK() {
+        post(
+            url = publiserUrl,
+            expected = status().isOk
+        )
+        verify(utkastServiceMock).publiserUtkast(anyString())
+    }
+
+    @Test
+    fun publiserUtkastIkkeFunnetGir404NotFound() {
+        val errorMsg = "Utkast ble ikke funnet for id: 123"
+        whenever(utkastServiceMock.publiserUtkast(anyString())).thenThrow(NotFoundException(errorMsg))
+        post(
+            url = publiserUrl,
+            responseAsserts = MockResponseAsserts(
+                expectedResponseObject = ApiErrorResponse(HttpStatus.NOT_FOUND, errorMsg),
+                resultMatchers = listOf(status().isNotFound)
+            )
+        )
+        verify(utkastServiceMock).publiserUtkast(anyString())
+    }
+
+    @Test
+    fun publiserUtkastIFeilStatusGir400BadRequest() {
+        val msg = "Kan ikke publisere et utkast i status FORKASTET."
+        whenever(utkastServiceMock.publiserUtkast(anyString())).thenThrow(BadRequestException(msg))
+        post(
+            url = publiserUrl,
+            responseAsserts = MockResponseAsserts(
+                expectedResponseObject = ApiErrorResponse(HttpStatus.BAD_REQUEST, msg),
+                resultMatchers = listOf(status().isBadRequest)
+            )
+        )
+        verify(utkastServiceMock).publiserUtkast(anyString())
+    }
+
+    @Test
+    fun publiserUtkastOppdateringAvFylkeGir409Conflict() {
+        val eksisterendeFylke = FylkeBuilder()
+            .withVersion(4)
+            .build()
+        val fylkeId = eksisterendeFylke.id
+
+        whenever(utkastServiceMock.publiserUtkast(anyString())).thenThrow(OptimistiskLaasException(KonfliktVersjon(
+            nyVersjon = 3,
+            eksisterende = eksisterendeFylke)))
+
+        post(
+            url = publiserUrl,
+            responseAsserts = MockResponseAsserts(
+                expectedResponseObject = listOf(
+                    ConflictResponse(
+                        id = fylkeId,
+                        type = "Fylke",
+                        gjeldendeVersjon = 4,
+                        versjon = 3,
+                        melding = "Det er ikke samsvar med versjon. Ønsket versjon = 3, eksisterende versjon = 4 for objekt med id = $fylkeId"
+                    )
+                ),
+                resultMatchers = listOf(status().isConflict)
+            )
+        )
+        verify(utkastServiceMock).publiserUtkast(anyString())
+    }
+
+    @Test
+    fun publiserUtkastMedUgyldigGeometriGirHTTP400() {
+        whenever(utkastServiceMock.publiserUtkast(anyString())).thenThrow(
+            UgyldigGeometriException(
+                geometry = GeometryFactory().createPolygon(),
+                topologyValidationError = TopologyValidationError(6, Coordinate(0.0, 1.0))))
+
+        val expectedHttpStatus = status().isBadRequest
+        val geometryTypeMatcher = MockMvcResultMatchers.jsonPath("$.geometryType").value("Polygon")
+        val validationErrorMatcher = MockMvcResultMatchers.jsonPath("$.validationError").value("Ring Self-intersection")
+        val feilLokasjonMatcherType = MockMvcResultMatchers.jsonPath("$.feilLokasjon.type").value("Point")
+        val feilLokasjonMatcherCoordinatesX = MockMvcResultMatchers.jsonPath("$.feilLokasjon.coordinates[0]").value("0.0")
+        val feilLokasjonMatcherCoordinatesY = MockMvcResultMatchers.jsonPath("$.feilLokasjon.coordinates[1]").value("1.0")
+
+        post(
+            url = publiserUrl,
+            responseAsserts = MockResponseAsserts(
+                resultMatchers = listOf(
+                    expectedHttpStatus, geometryTypeMatcher, validationErrorMatcher, feilLokasjonMatcherType,
+                    feilLokasjonMatcherCoordinatesX, feilLokasjonMatcherCoordinatesY))
+        )
+
+        verify(utkastServiceMock).publiserUtkast(anyString())
+    }
+
+    @Test
+    fun publiserUtkastMedIkkeSluttetRingGirHTTP400() {
+        whenever(utkastServiceMock.publiserUtkast(anyString())).thenThrow(
+            GeometriFailedToBeCreatedException(point = SosiGeometryFunctions.coordinateToPoint(Coordinate(0.0, 1.0))))
+
+        val expectedHttpStatus = status().isBadRequest
+        val geometryTypeMatcher = MockMvcResultMatchers.jsonPath("$.geometryType").value(null)
+        val validationErrorMatcher = MockMvcResultMatchers.jsonPath("$.validationError").value(null)
+        val feilLokasjonMatcherType = MockMvcResultMatchers.jsonPath("$.feilLokasjon.type").value("Point")
+        val feilLokasjonMatcherCoordinatesX = MockMvcResultMatchers.jsonPath("$.feilLokasjon.coordinates[0]").value("0.0")
+        val feilLokasjonMatcherCoordinatesY = MockMvcResultMatchers.jsonPath("$.feilLokasjon.coordinates[1]").value("1.0")
+
+        post(
+            url = publiserUrl,
+            responseAsserts = MockResponseAsserts(
+                resultMatchers = listOf(expectedHttpStatus, geometryTypeMatcher, validationErrorMatcher, feilLokasjonMatcherType,
+                    feilLokasjonMatcherCoordinatesX, feilLokasjonMatcherCoordinatesY)))
+
+        verify(utkastServiceMock).publiserUtkast(anyString())
+    }
+
 }

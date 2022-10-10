@@ -5,6 +5,7 @@ import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.request.FylkeRequest
 import no.kartverket.nibas.api.v1.request.KommuneRequest
 import no.kartverket.nibas.sporing.AuditInfo
+import no.kartverket.nibas.sporing.Laasbar
 import no.kartverket.nibas.sporing.Sporbar
 import org.hibernate.annotations.Type
 import org.hibernate.annotations.TypeDef
@@ -20,6 +21,8 @@ import javax.persistence.Id
 import javax.persistence.Table
 import javax.persistence.Version
 
+private const val DEFAULT_GYLDIG_FRA_YEARS: Long = 10
+
 /**
  * Navn og endringstype settes i konstruktør da de er påkrevd ved opprettelse av utkastet.
  */
@@ -30,7 +33,7 @@ import javax.persistence.Version
 class Utkast(
     @Id
     @Column(name = "id", nullable = false, updatable = false)
-    val id: String = UUID.randomUUID().toString(),
+    override val id: String = UUID.randomUUID().toString(),
 
     @Column(name = "navn")
     var navn: String,
@@ -41,10 +44,10 @@ class Utkast(
     @Type(type = "jsonb")
     @Column(columnDefinition = "jsonb", name = "utkast")
     var operasjoner: Operasjoner = Operasjoner()
-) : Sporbar {
+) : Sporbar, Laasbar {
 
     @Version
-    var version: Int = 1
+    override var version: Int = 1
 
     @Column(name = "opprettet_dato", updatable = false)
     val opprettetDato: ZonedDateTime = ZonedDateTime.now()
@@ -53,7 +56,7 @@ class Utkast(
     override var auditInfo: AuditInfo = AuditInfo()
 
     @Column(name = "gyldig_fra")
-    var gyldigFra: LocalDate = LocalDate.now().plusYears(10)
+    var gyldigFra: LocalDate = LocalDate.now().plusYears(DEFAULT_GYLDIG_FRA_YEARS)
 
     // Blir mappet av Converter
     var status: UtkastStatus = UtkastStatus.OPPRETTET
@@ -62,8 +65,9 @@ class Utkast(
 
 class UtkastBuilder private constructor(val navn: String, private val endringstype: UtkastEndringstype = UtkastEndringstype.KVALITETSHEVING) {
 
+    private var status: UtkastStatus = UtkastStatus.OPPRETTET
     private var operasjoner: Operasjoner = Operasjoner()
-    private var gyldigFra: LocalDate = LocalDate.now().plusYears(10)
+    private var gyldigFra: LocalDate = LocalDate.now().plusYears(DEFAULT_GYLDIG_FRA_YEARS)
     private var auditInfo: AuditInfo? = null
 
     companion object {
@@ -80,6 +84,7 @@ class UtkastBuilder private constructor(val navn: String, private val endringsty
         )
         utkast.gyldigFra = this.gyldigFra
         auditInfo?.let { utkast.auditInfo = it }
+        utkast.status = status
 
         return utkast
     }
@@ -111,4 +116,8 @@ class UtkastBuilder private constructor(val navn: String, private val endringsty
         return this
     }
 
+    fun withStatus(status: UtkastStatus): UtkastBuilder {
+        this.status = status
+        return this
+    }
 }

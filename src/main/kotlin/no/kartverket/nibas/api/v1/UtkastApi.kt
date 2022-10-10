@@ -2,6 +2,7 @@ package no.kartverket.nibas.api.v1
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -9,6 +10,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import no.kartverket.nibas.api.v1.request.OppdaterUtkastRequest
 import no.kartverket.nibas.api.v1.request.OpprettUtkastRequest
+import no.kartverket.nibas.api.v1.response.ApiErrorResponse
+import no.kartverket.nibas.api.v1.response.ConflictResponse
 import no.kartverket.nibas.api.v1.response.UtkastOpprettetResponse
 import no.kartverket.nibas.api.v1.response.UtkastResponse
 import org.springframework.http.HttpStatus
@@ -49,11 +52,15 @@ interface UtkastApi {
 
     @Operation(summary = "Hent et utkast med gitt id", description = "Henter utkast med gitt id")
     @ApiResponses(
-        ApiResponse(
-            responseCode = "200",
-            description = "Successful operation",
-        ),
-        ApiResponse(responseCode = "404", description = "Not Found")
+        ApiResponse(responseCode = "200", description = "Successful operation"),
+        ApiResponse(responseCode = "404", description = "Not Found",
+            content = [
+                Content(
+                    mediaType = "application/json",
+                    schema = Schema(implementation = ApiErrorResponse::class)
+                )
+            ]
+        )
     )
     @GetMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun hentUtkast(@Parameter(description = "ID-en til utkastet man vil hente") @PathVariable id: String): UtkastResponse
@@ -63,13 +70,21 @@ interface UtkastApi {
         description = "Oppdaterer angitt utkast. Returnerer oppdatert utkast."
     )
     @ApiResponses(
-        ApiResponse(
-            responseCode = "200",
-            description = "Successful operation"
+        ApiResponse(responseCode = "200", description = "Successful operation"),
+        ApiResponse(responseCode = "404", description = "Not Found",
+            content = [
+                Content(
+                    mediaType = "application/json",
+                    schema = Schema(implementation = ApiErrorResponse::class)
+                )
+            ]
         ),
         ApiResponse(
-            responseCode = "400",
-            description = "Bad request. Check the request body and path"
+            responseCode = "409", description = "Conflict",
+            content = [Content(
+                mediaType = "application/json",
+                array = ArraySchema(schema = Schema(implementation = ConflictResponse::class))
+            )]
         )
     )
     @PutMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -77,4 +92,33 @@ interface UtkastApi {
         @Parameter(description = "ID til utkastet man vil oppdatere") @PathVariable id: String,
         @RequestBody utkast: OppdaterUtkastRequest
     ): UtkastResponse
+
+    @Operation(summary = "Publiserer utkastet med gitt id.", description = "Publiserer utkastet med gitt id.")
+    @ApiResponses(
+        ApiResponse(responseCode = "200", description = "Successful operation"),
+        ApiResponse(responseCode = "400", description = "Bad request. Check the request body and path",
+            content = [
+                Content(
+                    mediaType = "application/json",
+                    schema = Schema(implementation = ApiErrorResponse::class)
+                )
+            ]),
+        ApiResponse(responseCode = "404", description = "Not Found",
+            content = [
+                Content(
+                    mediaType = "application/json",
+                    schema = Schema(implementation = ApiErrorResponse::class)
+                )
+            ]
+        ),
+        ApiResponse(
+            responseCode = "409", description = "Conflict",
+            content = [Content(
+                mediaType = "application/json",
+                array = ArraySchema(schema = Schema(implementation = ConflictResponse::class))
+            )]
+        )
+    )
+    @PostMapping("/{id}/publiser", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun publiserUtkast(@Parameter(description = "ID-en til utkastet man vil publisere") @PathVariable id: String)
 }

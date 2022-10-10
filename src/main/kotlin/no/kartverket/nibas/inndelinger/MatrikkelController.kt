@@ -5,13 +5,12 @@ import no.kartverket.nibas.api.v1.response.GrunnkretsResponse
 import no.kartverket.nibas.api.v1.response.StemmekretsResponse
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.utkast.NotFoundException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
 
 @RestController
 class MatrikkelController(private val matrikkelService: MatrikkelService)
@@ -67,14 +66,10 @@ class MatrikkelService(private val grunnkretsControllerService: GrunnkretsContro
     private fun hentKommuneFraNumeriskNummer(numeriskKommunenummer: String): Kommune {
         try {
             val kommunenummerUUID = kodelisteService.getKommunenummerIdByCodeValue(numeriskKommunenummer)
-            val kommune = kommuneService.hentKommuneByKommunenummer(kommunenummerUUID)
-            if (kommune == null) {
-                logger.debug("Fant ikke kommune med nummer: $numeriskKommunenummer")
-                throw ResponseStatusException(HttpStatus.NOT_FOUND)
-            }
-            return kommune
+            return kommuneService.hentKommuneByKommunenummer(kommunenummerUUID)
+                ?: throw NotFoundException("Fant ikke kommune med nummer: $numeriskKommunenummer")
         } catch (ex: NoSuchElementException) {
-            throw ResponseStatusException(HttpStatus.NOT_FOUND)
+            throw NotFoundException("Fant ikke kommunenummer-id for $numeriskKommunenummer")
         }
     }
 }

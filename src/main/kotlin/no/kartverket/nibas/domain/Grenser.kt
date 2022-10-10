@@ -5,10 +5,9 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.Dokref
 import no.kartverket.nibas.sporing.AuditInfo
 import no.kartverket.nibas.sporing.Gyldighet
 import no.kartverket.nibas.sporing.Laasbar
+import no.kartverket.nibas.utkast.BadRequestException
 import org.hibernate.envers.Audited
 import org.locationtech.jts.geom.LineString
-import org.springframework.http.HttpStatus
-import org.springframework.web.server.ResponseStatusException
 import java.time.LocalDate
 import java.util.*
 import java.util.logging.Logger
@@ -68,7 +67,7 @@ class Grense(
     @Version
     override var version: Int = 1
 
-    override var objtype: String? = grensetype.value
+    var objtype: String? = grensetype.value
 
     @Column(name = "lokalid", nullable = false, updatable = false)
     override var lokalid: String = UUID.randomUUID().toString()
@@ -223,11 +222,11 @@ class Grense(
 
     fun updateDokumentasjonsreferanser(dokRefList: List<Dokref>) {
         dokRefList.forEach { dokRef ->
-            var dokumentasjonsreferanse = this.dokumentasjonsreferanser.find { dokumentasjonsreferanse -> dokumentasjonsreferanse.id == dokRef.id }
+            val dokRefId = dokRef.id
+            var dokumentasjonsreferanse = this.dokumentasjonsreferanser.find { dokumentasjonsreferanse -> dokumentasjonsreferanse.id == dokRefId }
             if (dokumentasjonsreferanse == null) { // Legger til ny Dokumentasjonsreferanse hvis id er null
-                if (dokRef.id != null) { // Har sendt inn ikke-eksisterende id: Kaster HTTP 400
-                    logger.warning("Invalid request - non-existing Dokumentasjonsreferanse-id.")
-                    throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Non-existing Dokumentasjonsreferanse-id")
+                if (dokRefId != null) { // Har sendt inn ikke-eksisterende id: Kaster HTTP 400
+                    throw BadRequestException("Non-existing Dokumentasjonsreferanse-id: $dokRefId")
                 }
                 dokumentasjonsreferanse = addDokumentasjonsreferanse()
             }
@@ -244,8 +243,7 @@ class Grense(
                 var dokumentLink = dokumentlenker.find { dokumentLink -> dokumentLink.id == dokumentLenkeHolderId }
                 if (dokumentLink == null) { // Hvis ny instans, opprettes den
                     if (dokumentLenkeHolderId != null) { // Har sendt inn ikke-eksisterende id: Kaster HTTP 400
-                        logger.warning("Invalid request - non-existing DokumentasjonsreferanseDokumentlink-id.")
-                        throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Non-existing DokumentasjonsreferanseDokumentlink-id")
+                        throw BadRequestException("Non-existing DokumentasjonsreferanseDokumentlink-id: $dokumentLenkeHolderId")
                     }
                     dokumentLink = dokumentasjonsreferanse.addDokumentLenke()
                 }
@@ -258,8 +256,7 @@ class Grense(
                 var internReferanse = internReferanser.find { internRef -> internRef.id == internRefHolderId }
                 if (internReferanse == null) { // Hvis ny instans, opprettes den
                     if (internRefHolderId != null) { // Har sendt inn ikke-eksisterende id: Kaster HTTP 400
-                        logger.warning("Invalid request - non-existing DokumentasjonsreferanseInternReferanseKartverket-id.")
-                        throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Non-existing DokumentasjonsreferanseInternReferanseKartverket-id")
+                        throw BadRequestException("Non-existing DokumentasjonsreferanseInternReferanseKartverket-id: $internRefHolderId")
                     }
                     internReferanse = dokumentasjonsreferanse.addInternReferanse()
                 }

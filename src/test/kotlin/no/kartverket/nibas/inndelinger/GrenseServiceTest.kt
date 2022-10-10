@@ -13,6 +13,7 @@ import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.StemmekretsRepository
+import no.kartverket.nibas.utkast.BadRequestException
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -24,7 +25,6 @@ import org.mockito.Mockito.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.mock.mockito.MockBean
-import org.springframework.web.server.ResponseStatusException
 import java.util.*
 import org.mockito.Mockito.`when` as whenever
 
@@ -175,7 +175,7 @@ class GrenseServiceTest {
         assertThatThrownBy {
             grenseService.lagreGrenser(FeatureCollection(features = listOf(nyStemmekretsgrensefeatureForGrunnkrets)))
         }
-            .isInstanceOf(ResponseStatusException::class.java)
+            .isInstanceOf(BadRequestException::class.java)
             .hasMessageContaining("Missing feature id")
     }
 
@@ -194,8 +194,8 @@ class GrenseServiceTest {
             .build()
 
         assertThatThrownBy { grenseService.lagreGrenser(FeatureCollection(features = listOf(featureWithUnknownId))) }
-            .isInstanceOf(ResponseStatusException::class.java)
-            .hasMessageContaining("Non-existing grenseIds")
+            .isInstanceOf(BadRequestException::class.java)
+            .hasMessageContaining("Non-existing grenseIds: [33]")
     }
 
     @Test

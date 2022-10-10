@@ -22,7 +22,7 @@ enum class UtkastEndringstype(val value: String, val dbKey: String) {
             try {
                 return values().first { it.value == valueIn }
             } catch (e: NoSuchElementException) {
-                throw IllegalArgumentException("Invalid value: $valueIn")
+                throw IllegalArgumentException("Invalid value: $valueIn", e)
             }
         }
 
@@ -30,7 +30,7 @@ enum class UtkastEndringstype(val value: String, val dbKey: String) {
             try {
                 return values().first { it.dbKey == dbKeyIn }
             } catch (e: NoSuchElementException) {
-                throw IllegalArgumentException("Invalid dbKey: $dbKeyIn")
+                throw IllegalArgumentException("Invalid dbKey: $dbKeyIn", e)
             }
         }
     }

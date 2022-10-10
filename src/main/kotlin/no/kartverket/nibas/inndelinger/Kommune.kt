@@ -58,11 +58,6 @@ class KommuneController(
         )
     }
 
-    override fun oppdaterKommune(id: String, oppdatertKommune: KommuneRequest): KommuneResponse {
-        return kommuneService.oppdaterKommune(id, oppdatertKommune)?.toKommuneResponse(kodelisteService)
-            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
-    }
-
     override fun hentKommuneRevisjoner(id: String): List<RevisjonRef> =
         historikkService.hentRevisjoner(id, Kommune::class.java).map { toRevisjonRef(it) }
 

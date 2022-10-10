@@ -61,11 +61,28 @@ open class NibasMvcTest {
         assertResponseObject(mvcResult, responseAsserts)
     }
 
+    fun post(url: String, expected: ResultMatcher) = perform(MockMvcRequestBuilders.post(url), expected)
+
+    // Teste post uten request-objekt, og kunne teste respons-body
+    fun post(url: String, responseAsserts: MockResponseAsserts) {
+        testPost(url, null, responseAsserts)
+    }
+
     fun post(url: String, requestObject: Any, responseAsserts: MockResponseAsserts) {
+        testPost(url, requestObject, responseAsserts)
+    }
+
+    private fun testPost(
+        url: String,
+        requestObject: Any?,
+        responseAsserts: MockResponseAsserts
+    ) {
+        val postRequest = MockMvcRequestBuilders.post(url)
+        if (requestObject != null) {
+            postRequest.content(asJson(requestObject))
+        }
         val mvcResult = perform(
-            MockMvcRequestBuilders
-                .post(url)
-                .content(asJson(requestObject)),
+            action = postRequest,
             matchers = responseAsserts.resultMatchers)
         assertResponseObject(mvcResult, responseAsserts)
     }
@@ -86,13 +103,15 @@ open class NibasMvcTest {
 
     private fun assertResponseObject(
         mvcResult: MvcResult,
-        responseAsserts: MockResponseAsserts
+        asserts: MockResponseAsserts
     ) {
         val mockHttpServletResponse = mvcResult.response
-        assertThat(mockHttpServletResponse.contentType).isEqualTo(responseAsserts.expectedContentType)
-        val expectedResponseObject = responseAsserts.expectedResponseObject
+        assertThat(mockHttpServletResponse.contentType).isEqualTo(asserts.expectedContentType)
+
+        val expectedResponseObject = asserts.expectedResponseObject
         if (expectedResponseObject != null) {
-            assertThat(mockHttpServletResponse.getContentAsString(Charsets.UTF_8)).isEqualTo(asJson(expectedResponseObject))
+            val contentAsString = mockHttpServletResponse.getContentAsString(Charsets.UTF_8)
+            assertThat(contentAsString).isEqualTo(asJson(expectedResponseObject))
         }
     }
 }

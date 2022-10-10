@@ -33,7 +33,7 @@ abstract class StatistiskEnhet(@Transient override val type: Flatetype) : Flate,
     override var version: Int = 1
 
     @Column(name = "objtype")
-    override var objtype: String? = null
+    var objtype: String? = null
 
     /**
      * Må være satt og skal aldri endre seg i objektets levetid. Så burde ideelt vært immutable.

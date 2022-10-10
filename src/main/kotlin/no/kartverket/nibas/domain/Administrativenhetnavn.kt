@@ -19,9 +19,9 @@ class Administrativenhetnavn : Laasbar {
     @Id
     @Column(name = "objid", nullable = false, updatable = false)
     override val id: String = UUID.randomUUID().toString()
-    
+
     @Column(name = "objtype")
-    override var objtype: String? = null
+    var objtype: String? = null
 
     @Version
     override var version: Int = 1

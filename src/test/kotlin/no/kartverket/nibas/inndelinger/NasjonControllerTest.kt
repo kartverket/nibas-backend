@@ -1,11 +1,9 @@
 package no.kartverket.nibas.inndelinger
 
 import no.kartverket.nibas.NibasMvcTest
-import no.kartverket.nibas.api.v1.request.NasjonRequest
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.NasjonBuilder
-import no.kartverket.nibas.builders.NasjonRequestBuilder
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import org.junit.jupiter.api.Test
@@ -55,19 +53,4 @@ class NasjonControllerTest : NibasMvcTest() {
         get("/v1/nasjoner/1/grenser", status().isNotFound)
     }
 
-    @Test
-    fun thatOppdaterNasjonReturns200_Ok() {
-        whenever(
-            nasjonService.oppdaterNasjon(anyString(), any(NasjonRequest::class.java))
-        ).thenReturn(NasjonBuilder.DEFAULT_NASJON)
-        put("/v1/nasjoner/1", NasjonRequestBuilder.DEFAULT_NASJON, status().isOk)
-    }
-
-    @Test
-    fun thatOppdaterNasjonReturns404_NotFound() {
-        whenever(
-            nasjonService.oppdaterNasjon(anyString(), any(NasjonRequest::class.java))
-        ).thenReturn(null)
-        put("/v1/nasjoner/1", NasjonRequestBuilder.DEFAULT_NASJON, status().isNotFound)
-    }
 }

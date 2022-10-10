@@ -1,9 +1,7 @@
 package no.kartverket.nibas.inndelinger
 
 import no.kartverket.nibas.NibasMvcTest
-import no.kartverket.nibas.api.v1.request.FylkeRequest
 import no.kartverket.nibas.builders.FylkeBuilder
-import no.kartverket.nibas.builders.FylkeRequestBuilder
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
@@ -69,20 +67,4 @@ class FylkeControllerTest : NibasMvcTest() {
         get("/v1/fylker/1/grenser", status().isNotFound)
     }
 
-    @Test
-    fun thatOppdaterFylkeReturns200_Ok() {
-        whenever(
-            fylkeService.oppdaterFylke(anyString(), any(FylkeRequest::class.java))
-        ).thenReturn(FylkeBuilder().build())
-        whenever(kodelisteServiceMock.getCodeValueByFylkesnummerId(anyString())).thenReturn("1")
-        put("/v1/fylker/1", FylkeRequestBuilder.DEFAULT_REQUEST, status().isOk)
-    }
-
-    @Test
-    fun thatOppdaterFylkeReturns404_NotFound() {
-        whenever(
-            fylkeService.oppdaterFylke(anyString(), any(FylkeRequest::class.java))
-        ).thenReturn(null)
-        put("/v1/fylker/1", FylkeRequestBuilder.DEFAULT_REQUEST, status().isNotFound)
-    }
 }

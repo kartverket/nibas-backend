@@ -288,7 +288,9 @@ data class UtkastResponse(
     @Schema(description = "Info om endringer på utkast.")
     val auditInfoResponse: AuditInfoResponse,
     @Schema(description = "Representasjon av endringene som er utført i utkastet.")
-    val operasjoner: Operasjoner = Operasjoner()
+    val operasjoner: Operasjoner = Operasjoner(),
+    @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
+    val version: Int
 )
 
 @Schema(description = "Representasjon av audit info for et objekt.")
@@ -319,3 +321,10 @@ data class ConflictResponse(
     val melding: String?
 )
 
+data class ApiErrorResponse(
+    @Schema(description = "HttpStatus for responsen.")
+    val httpStatus: HttpStatus,
+
+    @Schema(description = "Beskrivelse av hva som har gått galt.")
+    val melding: String?
+)

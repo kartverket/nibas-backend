@@ -47,10 +47,6 @@ class FylkeController(
         )
     }
 
-    override fun oppdaterFylke(id: String, oppdatertFylke: FylkeRequest): FylkeResponse {
-        return fylkeService.oppdaterFylke(id, oppdatertFylke)?.toFylkeResponse(kodelisteService) ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
-    }
-
     override fun hentFylkesRevisjoner(id: String): List<RevisjonRef> =
         historikkService.hentRevisjoner(id, Fylke::class.java).map { toRevisjonRef(it) }
 

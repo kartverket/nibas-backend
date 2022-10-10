@@ -97,7 +97,6 @@ interface Sporbar {
 interface Laasbar {
     var version: Int
     val id: String
-    var objtype: String?
 }
 
 @Embeddable
@@ -114,6 +113,7 @@ data class AuditInfo(
 interface Gyldig {
     var gyldighet: Gyldighet
 }
+
 data class Gyldighet(
     @Column(name = "gyldigfra")
     var gyldigFra: LocalDate = LocalDate.now(),

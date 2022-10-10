@@ -28,6 +28,7 @@ import no.kartverket.nibas.repository.FastsettingstypeRepository
 import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.GrensestatusRepository
 import no.kartverket.nibas.repository.GrunnkretsRepository
+import no.kartverket.nibas.repository.KonfliktVersjon
 import no.kartverket.nibas.repository.LandKodeRepository
 import no.kartverket.nibas.repository.NoeyaktighetsklassekodeRepository
 import no.kartverket.nibas.repository.OptimistiskLaasException
@@ -36,6 +37,7 @@ import no.kartverket.nibas.repository.TerrengdetaljkodeRepository
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import no.kartverket.nibas.unwrap
+import no.kartverket.nibas.utkast.BadRequestException
 import org.locationtech.jts.geom.Point
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
@@ -50,13 +52,6 @@ class GrenseController(
     private val historikkService: HistorikkService,
     private val kodelisteService: KodelisteService
 ) : GrenseApi {
-
-    /**
-     * Siden GrenseService.lagreGrenser er transactional vil kallet til lagreGrenser rulles tilbake dersom en RuntimeEx krysser transaksjonsgrensa.
-     */
-    override fun lagreGrenser(grenser: FeatureCollection) {
-        grenseService.lagreGrenser(grenser)
-    }
 
     override fun hentGrense(id: String): Feature =
         grenseService.hentGrense(id)
@@ -102,24 +97,21 @@ class GrenseService(
     private fun doLagreGrenser(features: List<Feature>) {
         // Hvis det er innkommende features med id ikke satt kastes HTTP 400
         if (features.any { feature -> feature.id == null }) {
-            logger.warning("Invalid request: Missing feature id.")
-            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing feature id.")
+            throw BadRequestException("Missing feature id.")
         }
         val eksisterendeGrenser: Iterable<Grense> = grenseRepository.findAllById(features.map { it.id })
 
         // Hvis det er innkommende features med id som ikke ligger i databasen kastes HTTP 400
         val grenseIdDiffs: List<String> = features.map { it.id!! } - eksisterendeGrenser.map { it.id }.toSet()
         if (grenseIdDiffs.isNotEmpty()) {
-            logger.warning("Invalid request: Non-existing grenseIds were used in request.")
-            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Non-existing grenseIds")
+            throw BadRequestException("Non-existing grenseIds: [${grenseIdDiffs.joinToString(",")}]")
         }
 
-        val utdaterteGrenser = features.mapNotNull { feature ->
+        val konflikterIGrenser: List<KonfliktVersjon> = features.mapNotNull { feature ->
             verifiserOptimistiskLaas(feature.properties.version, eksisterendeGrenser.find { it.id == feature.id }!!)
         }
-
-        if(utdaterteGrenser.isNotEmpty()) {
-            throw OptimistiskLaasException(*utdaterteGrenser.toTypedArray())
+        if (konflikterIGrenser.isNotEmpty()) {
+            throw OptimistiskLaasException(*konflikterIGrenser.toTypedArray())
         }
 
         val grenserMedRetningOgKontekst = features.map { feature ->
@@ -260,7 +252,7 @@ fun flateToFeature(flate: Flate, kodelisteService: KodelisteService, version: In
     var featureProperties = FeatureProperties(
         type = flate.type.name,
         srid = flate.flate?.srid ?: SosiGeometryFunctions.defaultSrid,
-	    version = version
+        version = version
     )
     val metadataMapper = MetadataMapper(kodelisteService)
 

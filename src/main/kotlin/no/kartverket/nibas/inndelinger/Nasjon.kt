@@ -46,10 +46,6 @@ class NasjonController(
         )
     }
 
-    override fun oppdaterNasjon(id: String, oppdatertNasjon: NasjonRequest): NasjonResponse {
-        return nasjonService.oppdaterNasjon(id, oppdatertNasjon)?.toNasjonResponse(kodelisteService) ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
-    }
-
     override fun hentNasjonRevisjoner(id: String): List<RevisjonRef> =
         historikkService.hentRevisjoner(id, Nasjon::class.java).map { toRevisjonRef(it) }
 

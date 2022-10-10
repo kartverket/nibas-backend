@@ -8,15 +8,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
-import no.kartverket.nibas.api.v1.request.StemmekretsRequest
-import no.kartverket.nibas.api.v1.response.ConflictResponse
-import no.kartverket.nibas.api.v1.response.StemmekretsResponse
 import no.kartverket.nibas.api.v1.response.RevisjonRef
+import no.kartverket.nibas.api.v1.response.StemmekretsResponse
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 
 @RequestMapping("/v1/stemmekretser")
@@ -85,27 +81,4 @@ interface StemmekretsApi {
         @Parameter(description = "ID til revisjonen man vil hente") @PathVariable revisjon: Int
     ): StemmekretsResponse
 
-    @Operation(
-        summary = "Oppdater angitt stemmekrets",
-        description = "Oppdaterer angitt stemmekrets. Returnerer den oppdaterte stemmekretsen"
-    )
-    @ApiResponses(
-        ApiResponse(
-            responseCode = "200",
-            description = "Successful operation"
-        ),
-        ApiResponse(
-            responseCode = "400",
-            description = "Bad request. Check the request body and path"
-        ),
-        ApiResponse(
-            responseCode = "409",
-            description = "Conflict",
-            content = [Content(mediaType = "application/json", schema = Schema(implementation = ConflictResponse::class))])
-    )
-    @PutMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun oppdaterStemmekrets(
-        @Parameter(description = "ID til stemmekretsen man vil oppdatere") @PathVariable id: String,
-        @RequestBody oppdatertStemmekrets: StemmekretsRequest
-    ): StemmekretsResponse
 }

@@ -15,6 +15,7 @@ import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
 import no.kartverket.nibas.unwrap
+import no.kartverket.nibas.utkast.NotFoundException
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -45,11 +46,6 @@ class StemmekretsController(
         )
     }
 
-    override fun oppdaterStemmekrets(id: String, oppdatertStemmekrets: StemmekretsRequest): StemmekretsResponse {
-        return stemmekretsService.oppdaterStemmekrets(id, oppdatertStemmekrets)?.toStemmekretsResponse(kodelisteService)
-            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
-    }
-
     override fun hentStemmekretsRevisjoner(id: String): List<RevisjonRef> =
         historikkService.hentRevisjoner(id, Stemmekrets::class.java).map { toRevisjonRef(it) }
 
@@ -64,7 +60,7 @@ class StemmekretsControllerService(private val stemmekretsService: StemmekretsSe
                                    private val kodelisteService: KodelisteService) {
     fun hentEn(id: String): StemmekretsResponse =
         stemmekretsService.hentStemmekrets(id)?.toStemmekretsResponse(kodelisteService)
-            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
+            ?: throw NotFoundException("Stemmekrets med id '$id' ble ikke funnet.")
 
 }
 

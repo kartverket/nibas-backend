@@ -9,16 +9,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
-import no.kartverket.nibas.api.v1.request.FylkeRequest
 import no.kartverket.nibas.api.v1.response.FylkeRef
 import no.kartverket.nibas.api.v1.response.FylkeResponse
-import no.kartverket.nibas.api.v1.response.ConflictResponse
 import no.kartverket.nibas.api.v1.response.RevisjonRef
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 
 @RequestMapping("/v1/fylker")
@@ -64,24 +60,6 @@ interface FylkeApi {
     @DefaultFeatureCollectionApiResponses
     @GetMapping("/{id}/grenser", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun hentGrenserForFylke(@Parameter(description = "ID-en til fylket man vil hente") @PathVariable id: String): FeatureCollection
-
-
-    @PutMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])
-    @Operation(summary = "Oppdater fylke med gitt id", description = "Oppdaterer og lagrer metadata for fylket")
-    @ApiResponses(
-        ApiResponse(responseCode = "200", description = "Successful operation"),
-        ApiResponse(
-            responseCode = "409",
-            description = "Conflict",
-            content = [Content(
-                mediaType = "application/json",
-                array = ArraySchema(schema = Schema(implementation = ConflictResponse::class))
-            )]
-        ))
-    fun oppdaterFylke(
-        @Parameter(description = "ID til fylket man vil oppdatere") @PathVariable id: String,
-        @RequestBody oppdatertFylke: FylkeRequest
-    ): FylkeResponse
 
     @Operation(
         summary = "Hent historiske revisjoner for et gitt fylke",

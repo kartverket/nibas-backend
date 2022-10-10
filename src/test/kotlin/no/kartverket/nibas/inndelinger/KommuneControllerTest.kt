@@ -1,11 +1,9 @@
 package no.kartverket.nibas.inndelinger
 
 import no.kartverket.nibas.NibasMvcTest
-import no.kartverket.nibas.api.v1.request.KommuneRequest
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
-import no.kartverket.nibas.builders.KommuneRequestBuilder
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import org.junit.jupiter.api.Test
@@ -59,19 +57,4 @@ class KommuneControllerTest : NibasMvcTest() {
         get("/v1/kommuner/1/grenser", status().isNotFound)
     }
 
-    @Test
-    fun thatOppdaterKommuneReturns200_Ok() {
-        whenever(
-            kommuneService.oppdaterKommune(anyString(), any(KommuneRequest::class.java))
-        ).thenReturn(KommuneBuilder.DEFAULT_KOMMUNE)
-        put("/v1/kommuner/1", KommuneRequestBuilder.DEFAULT_REQUEST, status().isOk)
-    }
-
-    @Test
-    fun thatOppdaterFylkeReturns404_NotFound() {
-        whenever(
-            kommuneService.oppdaterKommune(anyString(), any(KommuneRequest::class.java))
-        ).thenReturn(null)
-        put("/v1/kommuner/1", KommuneRequestBuilder.DEFAULT_REQUEST, status().isNotFound)
-    }
 }

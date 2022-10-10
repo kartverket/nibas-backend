@@ -18,6 +18,7 @@ class UtkastRequestBuilder {
             kommuneendringer = mapOf("6n49a68e-bb52-49f4-b668-48cabb0b8585" to KommuneRequestBuilder.DEFAULT_REQUEST)
         )
     )
+    private var version: Int = 1
 
     companion object {
         val DEFAULT_REQUEST = UtkastRequestBuilder().build()
@@ -29,6 +30,7 @@ class UtkastRequestBuilder {
             endringstype = this.endringstype.value,
             gyldigFra = this.gyldigFra,
             operasjoner = this.operasjoner,
+            version = version
         )
     }
 
@@ -39,6 +41,16 @@ class UtkastRequestBuilder {
 
     fun withGyldigFra(gyldigFra: LocalDate): UtkastRequestBuilder {
         this.gyldigFra = gyldigFra
+        return this
+    }
+
+    fun withEndringstype(endringstype: UtkastEndringstype): UtkastRequestBuilder {
+        this.endringstype = endringstype
+        return this
+    }
+
+    fun withOperasjoner(operasjoner: Operasjoner): UtkastRequestBuilder {
+        this.operasjoner = operasjoner
         return this
     }
 
