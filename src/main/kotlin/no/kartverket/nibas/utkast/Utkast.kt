@@ -9,6 +9,7 @@ import no.kartverket.nibas.api.v1.request.OppdaterUtkastRequest
 import no.kartverket.nibas.api.v1.request.OpprettUtkastRequest
 import no.kartverket.nibas.api.v1.response.AuditInfoResponse
 import no.kartverket.nibas.api.v1.response.UtkastOpprettetResponse
+import no.kartverket.nibas.api.v1.response.UtkastRef
 import no.kartverket.nibas.api.v1.response.UtkastResponse
 import no.kartverket.nibas.domain.utkast.Utkast
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
@@ -28,16 +29,19 @@ import no.kartverket.nibas.unwrap
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
+import org.springframework.stereotype.Component
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 
 class NotFoundException(msg: String) : RuntimeException(msg)
 class BadRequestException(msg: String) : RuntimeException(msg)
 
 @RestController
-class UtkastController(private val utkastService: UtkastService) : UtkastApi {
+class UtkastController(private val utkastService: UtkastService,
+                       private val hrefProvider: HrefProvider) : UtkastApi {
 
     override fun opprettUtkast(opprettUtkastRequest: OpprettUtkastRequest): UtkastOpprettetResponse {
         return UtkastOpprettetResponse(id = utkastService.opprettUtkast(opprettUtkastRequest))
@@ -55,6 +59,10 @@ class UtkastController(private val utkastService: UtkastService) : UtkastApi {
 
     override fun publiserUtkast(id: String) {
         utkastService.publiserUtkast(id)
+    }
+
+    override fun hentUtkastIStatusOpprettet(): List<UtkastRef> {
+        return utkastService.hentUtkastIStatusOpprettet().map { it.toUtkastRef(hrefProvider) }.sortedBy { it.navn }
     }
 
 }
@@ -76,6 +84,11 @@ class UtkastService(private val utkastRepository: UtkastRepository,
 
     @Transactional(readOnly = true)
     fun hentUtkast(id: String): Utkast? = utkastRepository.findById(id).unwrap()
+
+    @Transactional(readOnly = true)
+    fun hentUtkastIStatusOpprettet(): List<Utkast> {
+        return utkastRepository.findAllByStatus(UtkastStatus.OPPRETTET)
+    }
 
     fun oppdaterUtkast(id: String, request: OppdaterUtkastRequest): Utkast? {
         return hentUtkast(id)?.let { eksisterendeUtkast ->
@@ -200,6 +213,20 @@ private fun Utkast.toUtkastResponse(): UtkastResponse = UtkastResponse(
     auditInfoResponse = this.auditInfo.toAuditInfoResponse(),
     version = this.version
 )
+
+private fun Utkast.toUtkastRef(hrefProvider: HrefProvider): UtkastRef = UtkastRef(
+    id = id,
+    navn = navn,
+    href = hrefProvider.getHref(id)
+)
+
+/**
+ * Gir mulighet til å overstyre statisk spring-web metode. Tryggere for test.
+ */
+@Component
+class HrefProvider {
+    fun getHref(id: String): String = ServletUriComponentsBuilder.fromCurrentRequestUri().pathSegment(id).build().toUriString()
+}
 
 fun AuditInfo.toAuditInfoResponse(): AuditInfoResponse = AuditInfoResponse(this.oppdateringsdato, this.endretAv!!)
 

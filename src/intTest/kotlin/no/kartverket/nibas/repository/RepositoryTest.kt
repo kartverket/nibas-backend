@@ -4,6 +4,7 @@ import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.request.KommuneRequest
 import no.kartverket.nibas.domain.Spraakkode
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
+import no.kartverket.nibas.domain.utkast.UtkastStatus
 import no.kartverket.nibas.sporing.UserFacade
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import org.assertj.core.api.Assertions.assertThat
@@ -60,6 +61,21 @@ class RepositoryTest : TestWithDbContainer() {
 
         // Forsøker å lagre noe med versjon 1, skal feile
         assertThatThrownBy { utkastRepository.save(fetchedUtkast) }.isInstanceOf(ObjectOptimisticLockingFailureException::class.java)
+    }
+
+    // Kan ikke gjøre equals-sjekk på set av ids fordi tidligere tester lagrer også ned Utkast som blir plukket opp i denne testen.
+    // Altså ikke atomiske tester.
+    @Test
+    fun findAllUtkastByStatus() {
+        val utkast = UtkastBuilder.builder("Utkast 1").withStatus(UtkastStatus.OPPRETTET).build()
+        val utkast2 = UtkastBuilder.builder("Utkast 2").withStatus(UtkastStatus.OPPRETTET).build()
+        val utkast3 = UtkastBuilder.builder("Utkast 3").withStatus(UtkastStatus.FORKASTET).build()
+        utkastRepository.saveAll(listOf(utkast, utkast2, utkast3))
+
+        val matchingUtkastIdsForStatusOpprettet = utkastRepository.findAllByStatus(UtkastStatus.OPPRETTET).map { it.id }.toSet()
+        assertThat(matchingUtkastIdsForStatusOpprettet).contains(utkast.id, utkast2.id)
+        assertThat(matchingUtkastIdsForStatusOpprettet).doesNotContain(utkast3.id)
+
     }
 
     private fun kommuneRequests(): Map<String, KommuneRequest> {

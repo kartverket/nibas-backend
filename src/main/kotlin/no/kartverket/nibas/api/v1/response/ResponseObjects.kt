@@ -97,6 +97,16 @@ data class RevisjonRef(
     val href: String
 )
 
+@Schema(description = "En referanse til et utkast")
+data class UtkastRef(
+    @Schema(description = "ID-en til utkastet")
+    val id: String,
+    @Schema(description = "Navnet på utkastet")
+    val navn: String,
+    @Schema(description = "URL til full representasjon av utkastet.")
+    val href: String
+)
+
 @Schema(description = "Representasjon av en nasjon")
 data class NasjonResponse(
     @Schema(description = "ID-en til nasjonen")

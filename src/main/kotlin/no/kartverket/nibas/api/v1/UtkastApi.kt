@@ -13,6 +13,7 @@ import no.kartverket.nibas.api.v1.request.OpprettUtkastRequest
 import no.kartverket.nibas.api.v1.response.ApiErrorResponse
 import no.kartverket.nibas.api.v1.response.ConflictResponse
 import no.kartverket.nibas.api.v1.response.UtkastOpprettetResponse
+import no.kartverket.nibas.api.v1.response.UtkastRef
 import no.kartverket.nibas.api.v1.response.UtkastResponse
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -121,4 +122,18 @@ interface UtkastApi {
     )
     @PostMapping("/{id}/publiser", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun publiserUtkast(@Parameter(description = "ID-en til utkastet man vil publisere") @PathVariable id: String)
+
+    @Operation(summary = "Henter alle utkast i status Opprettet sortert på navn.", description = "Henter alle utkast i status Opprettet sortert på navn.")
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            description = "Successful operation",
+            content = [Content(
+                mediaType = "application/json",
+                array = ArraySchema(schema = Schema(implementation = UtkastRef::class))
+            )]
+        )
+    )
+    @GetMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun hentUtkastIStatusOpprettet(): List<UtkastRef>
 }

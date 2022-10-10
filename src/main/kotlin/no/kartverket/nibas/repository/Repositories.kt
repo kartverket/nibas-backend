@@ -20,6 +20,7 @@ import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.Terrengdetaljkode
 import no.kartverket.nibas.domain.Typeendring
 import no.kartverket.nibas.domain.utkast.Utkast
+import no.kartverket.nibas.domain.utkast.UtkastStatus
 import no.kartverket.nibas.sporing.Laasbar
 import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.NoRepositoryBean
@@ -59,10 +60,12 @@ interface StemmekretsRepository : CrudRepositoryWithLokalIdFinder<Stemmekrets, S
 
 interface GrenseRepository : CrudRepositoryWithLokalIdFinder<Grense, String>
 
-interface UtkastRepository : CrudRepository<Utkast, String>
+interface UtkastRepository : CrudRepository<Utkast, String> {
+    fun findAllByStatus(status: UtkastStatus): List<Utkast>
+}
 
 fun verifiserOptimistiskLaas(nyVersion: Int, eksisterende: Laasbar): KonfliktVersjon? =
-    if(nyVersion == eksisterende.version) null else KonfliktVersjon(nyVersion, eksisterende)
+    if (nyVersion == eksisterende.version) null else KonfliktVersjon(nyVersion, eksisterende)
 
 data class KonfliktVersjon(val nyVersjon: Int, val eksisterende: Laasbar) {
     fun getMessage(): String =

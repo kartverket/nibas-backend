@@ -8,6 +8,7 @@ import no.kartverket.nibas.api.v1.response.ApiErrorResponse
 import no.kartverket.nibas.api.v1.response.AuditInfoResponse
 import no.kartverket.nibas.api.v1.response.ConflictResponse
 import no.kartverket.nibas.api.v1.response.UtkastOpprettetResponse
+import no.kartverket.nibas.api.v1.response.UtkastRef
 import no.kartverket.nibas.api.v1.response.UtkastResponse
 import no.kartverket.nibas.builders.FylkeBuilder
 import no.kartverket.nibas.builders.KommuneRequestBuilder
@@ -44,6 +45,9 @@ internal class UtkastControllerTest : NibasMvcTest() {
 
     @MockBean
     private lateinit var utkastServiceMock: UtkastService
+
+    @MockBean
+    private lateinit var hrefProviderMock: HrefProvider
 
     @Test
     fun opprettUtkastGir201Created() {
@@ -272,6 +276,44 @@ internal class UtkastControllerTest : NibasMvcTest() {
                     feilLokasjonMatcherCoordinatesX, feilLokasjonMatcherCoordinatesY)))
 
         verify(utkastServiceMock).publiserUtkast(anyString())
+    }
+
+    @Test
+    fun hentAktiveUtkastGir200OK() {
+        val kommuneRequests = mapOf("UUID-1" to KommuneRequestBuilder.DEFAULT_REQUEST)
+        val navn2 = "Utkast 2"
+        val utkast2 = UtkastBuilder.builder(navn2)
+            .withStatus(UtkastStatus.OPPRETTET)
+            .withKommuneRequests(kommuneRequests)
+            .build()
+        val navn = "Utkast 1"
+        val utkast = UtkastBuilder.builder(navn)
+            .withStatus(UtkastStatus.OPPRETTET)
+            .withKommuneRequests(kommuneRequests)
+            .build()
+        whenever(utkastServiceMock.hentUtkastIStatusOpprettet()).thenReturn(listOf(utkast2, utkast))
+        val href = "http://localhost:8080/v1/utkast/UUID-TIL_UTKAST"
+        whenever(hrefProviderMock.getHref(anyString())).thenReturn(href)
+
+        val utkastRefs = listOf(
+            UtkastRef(
+                id = utkast.id,
+                navn = navn,
+                href = href
+            ),
+            UtkastRef(
+                id = utkast2.id,
+                navn = navn2,
+                href = href
+            )
+        )
+        get(
+            url = "/v1/utkast",
+            responseAsserts = MockResponseAsserts(
+                expectedResponseObject = utkastRefs,
+                resultMatchers = listOf(status().isOk)
+            )
+        )
     }
 
 }
