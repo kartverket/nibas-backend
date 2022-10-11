@@ -1,8 +1,8 @@
 package no.kartverket.nibas.builders
 
-import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
+import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.sporing.Gyldighet
 import org.locationtech.jts.geom.Coordinate
@@ -12,7 +12,7 @@ import java.time.LocalDate
 class StemmekretsBuilder(private val id: String = "1") {
 
     private var grenser: MutableSet<Grense> = mutableSetOf()
-    private var kommunenummer: String = "UUID-1"
+    private var kommune: Kommune = KommuneBuilder.DEFAULT_KOMMUNE
     private var lokalId: String = LOKALID
     private var versjonId: String = VERSJON_33
     private var navnerom: String = NAVNEROM
@@ -20,7 +20,6 @@ class StemmekretsBuilder(private val id: String = "1") {
     private var stemmekretsnummer = "9"
     private var tellekretsnavn = "Nordre Follo Tellekrets"
     private var tellekretsnummer = "98"
-
 
     private var oppdateringsdato: LocalDate = LocalDate.now()
     private var datafangstdato: LocalDate = LocalDate.now()
@@ -47,8 +46,9 @@ class StemmekretsBuilder(private val id: String = "1") {
         stemmekrets.tellekretsnavn = tellekretsnavn
         stemmekrets.tellekretsnummer = tellekretsnummer
 
-        stemmekrets.kommunenummer = kommunenummer
         stemmekrets.auditInfo.oppdateringsdato = oppdateringsdato
+
+        stemmekrets.kommune = kommune
 
         stemmekrets.auditInfo.oppdateringsdato = oppdateringsdato
         stemmekrets.gyldighet = Gyldighet(gyldigFra, gyldigTil)
@@ -74,11 +74,6 @@ class StemmekretsBuilder(private val id: String = "1") {
         return this
     }
 
-    fun withOppdateringsdato(dateTime: LocalDate): StemmekretsBuilder {
-        this.oppdateringsdato = dateTime
-        return this
-    }
-
     fun withDatafangstdato(dateTime: LocalDate): StemmekretsBuilder {
         this.datafangstdato = dateTime
         return this
@@ -89,25 +84,8 @@ class StemmekretsBuilder(private val id: String = "1") {
         return this
     }
 
-    fun withGyldigTil(dateTime: LocalDate): StemmekretsBuilder {
-        this.gyldigTil = dateTime
-        return this
-    }
-
     fun withGrenser(vararg grenser: Grense): StemmekretsBuilder {
         this.grenser = grenser.toMutableSet()
         return this
     }
-
-    fun withRandomGrenser(vararg grensePairs: Pair<Grensetype, Int>): StemmekretsBuilder {
-        val grenser = mutableListOf<Grense>()
-        grensePairs.forEach { pair ->
-            repeat(pair.second) {
-                grenser.add(Grense(pair.first))
-            }
-        }
-        this.grenser = grenser.toMutableSet()
-        return this
-    }
-
 }

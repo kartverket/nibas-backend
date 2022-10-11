@@ -53,7 +53,6 @@ class GrunnkretsImporter @Autowired constructor(
         } else {
             val grunnkrets = Grunnkrets()
             val kommunenummerId = kodelisteService.getKommunenummerIdByCodeValue(flate.getKommunenummer())
-            grunnkrets.kommunenummer = kommunenummerId
             grunnkrets.kommune = kommuneRepository.findByKommunenummer(kommunenummerId)!!
 
             // Hent grensene til kommunen som grunnkretsen er en del av (for å kun gjøre oppslaget èn gang)

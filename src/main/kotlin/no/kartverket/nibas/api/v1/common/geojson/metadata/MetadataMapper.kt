@@ -12,8 +12,8 @@ import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.FoelgerGrunnkretsgrenseIdentifikasjon
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.MaritimGrense
-import no.kartverket.nibas.inndelinger.createKommunenummerFromUUID
 import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.kodelister.createKommunenummerFromUUID
 import no.kartverket.nibas.sporing.toSporingsinformasjon
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 
@@ -73,7 +73,7 @@ class MetadataMapper(private val kodelisteService: KodelisteService,
         )
         val kommunenummerId = grense.kommunenummerId
         if (kommunenummerId != null) {
-            grunnlinjeMetadata.kommunenummer = createKommunenummerFromUUID(kommunenummerId, kodelisteService)
+            grunnlinjeMetadata.kommunenummer = kodelisteService.createKommunenummerFromUUID(kommunenummerId)
         }
         return grunnlinjeMetadata
     }

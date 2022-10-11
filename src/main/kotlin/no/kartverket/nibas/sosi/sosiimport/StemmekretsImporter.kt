@@ -57,7 +57,6 @@ class StemmekretsImporter @Autowired constructor(private val kommunalKretsImport
 
             // Setter kommunenummerId fra GeoNorge samt kobling til kommune
             val kommunenummerId = kodelisteService.getKommunenummerIdByCodeValue(forsteFlate.getKommunenummer())
-            stemmekrets.kommunenummer = kommunenummerId
             stemmekrets.kommune = kommuneRepository.findByKommunenummer(kommunenummerId)!!
 
             stemmekrets.informasjon = forsteFlate.getInformasjon()

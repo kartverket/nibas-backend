@@ -4,6 +4,7 @@ import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.Grunnkrets
+import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.sporing.Gyldighet
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
@@ -12,7 +13,7 @@ import java.time.LocalDate
 class GrunnkretsBuilder(private val id: String = "1") {
 
     private var grenser: MutableSet<Grense> = mutableSetOf()
-    private var kommunenummer: String = "UUID-1"
+    private var kommune: Kommune = KommuneBuilder.DEFAULT_KOMMUNE
     private var lokalId: String = LOKALID
     private var versjonId: String = VERSJON_33
     private var navnerom: String = NAVNEROM
@@ -40,8 +41,8 @@ class GrunnkretsBuilder(private val id: String = "1") {
         grunnkrets.navnerom = navnerom
         grunnkrets.grunnkretsnavn = grunnkretsnavn
         grunnkrets.grunnkretsnummer = grunnkretsnummer
-        grunnkrets.kommunenummer = kommunenummer
         grunnkrets.auditInfo.oppdateringsdato = oppdateringsdato
+        grunnkrets.kommune = kommune
 
         grunnkrets.auditInfo.oppdateringsdato = oppdateringsdato
         grunnkrets.gyldighet = Gyldighet(gyldigFra, gyldigTil)

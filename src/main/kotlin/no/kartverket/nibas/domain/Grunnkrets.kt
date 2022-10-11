@@ -32,9 +32,6 @@ class Grunnkrets(override val id: String = UUID.randomUUID().toString()) : Stati
     @Column(name = "grunnkretsnavn")
     var grunnkretsnavn: String? = null
 
-    @Column(name = "kommunenummer", nullable = false)
-    var kommunenummer: String? = null
-
     @ManyToOne
     @JoinColumn(name = "delomraadeinndeling_fk")
     var delomraadeinndelingFk: Delomraade? = null
@@ -88,7 +85,7 @@ class Grunnkrets(override val id: String = UUID.randomUUID().toString()) : Stati
 
 
     override fun toString(): String {
-        return "Grunnkrets(id='$id', grunnkretsnummer=$grunnkretsnummer, grunnkretsnavn=$grunnkretsnavn, kommunenummer=$kommunenummer)"
+        return "Grunnkrets(id='$id', grunnkretsnummer=$grunnkretsnummer, grunnkretsnavn=$grunnkretsnavn)"
     }
 
     private fun tillatteGrensetyper(): Set<Grensetype> = setOf(

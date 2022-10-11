@@ -204,7 +204,7 @@ data class GrunnkretsResponse(
     val identifikasjon: Identifikasjon,
 
     @Schema(description = "Kommunenummeret til grunnkretsen")
-    val kommunenummer: String,
+    val kommunenummer: Kommunenummer,
 
     @Schema(description = "Geometrien til grunnkretsen, dvs representasjonspunkt og flaten")
     val features: FeatureCollection,
@@ -228,7 +228,7 @@ data class StemmekretsResponse(
     val identifikasjon: Identifikasjon,
 
     @Schema(description = "Kommunenummeret til stemmekretsen")
-    val kommunenummer: String,
+    val kommunenummer: Kommunenummer,
 
     @Schema(description = "Tellekretsnummer til stemmekretsen")
     var tellekretsnummer: String? = null,
@@ -253,7 +253,7 @@ data class Kommunenummer(
     val id: String,
 
     @Schema(description = "Det faktiske kommunenummeret")
-    val kodeverdi: Int?
+    val kodeverdi: String
 )
 
 @Schema(description = "Respons-type for geometrifeil")
@@ -331,6 +331,13 @@ data class ConflictResponse(
     val melding: String?
 )
 
+data class MissingKodelisteItemResponse(
+    @Schema(description = "HttpStatus for responsen")
+    val httpStatus: HttpStatus = HttpStatus.INTERNAL_SERVER_ERROR,
+
+    @Schema(description = "Hva gikk galt")
+    val message: String
+)
 data class ApiErrorResponse(
     @Schema(description = "HttpStatus for responsen.")
     val httpStatus: HttpStatus,

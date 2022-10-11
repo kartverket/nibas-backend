@@ -7,7 +7,6 @@ import no.kartverket.nibas.api.v1.request.KommuneRequest
 import no.kartverket.nibas.api.v1.response.GrunnkretsRef
 import no.kartverket.nibas.api.v1.response.KommuneRef
 import no.kartverket.nibas.api.v1.response.KommuneResponse
-import no.kartverket.nibas.api.v1.response.Kommunenummer
 import no.kartverket.nibas.api.v1.response.RevisjonRef
 import no.kartverket.nibas.api.v1.response.StemmekretsRef
 import no.kartverket.nibas.domain.GrenseKobling
@@ -15,6 +14,7 @@ import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.kodelister.createKommunenummerFromUUID
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.FylkeRepository
 import no.kartverket.nibas.repository.KommuneRepository
@@ -134,14 +134,9 @@ fun Kommune.toKommuneResponse(kodelisteService: KodelisteService): KommuneRespon
     administrativenhetnavn = this.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version) },
     lokalid = this.lokalid,
     navnerom = this.navnerom,
-    kommunenummer = createKommunenummerFromUUID(this.kommunenummer, kodelisteService),
+    kommunenummer = kodelisteService.createKommunenummerFromUUID(this.kommunenummer),
     samiskforvaltningsomraade = this.samiskforvaltningsomraade!!,
     oppdateringsdato = this.auditInfo.oppdateringsdato,
     features = FeatureCollection(features = listOf(posisjonToFeature(this.posisjon, this.version), flateToFeature(this, kodelisteService, this.version))),
     version = this.version
-)
-
-fun createKommunenummerFromUUID(kommunenrUUID: String, kodelisteService: KodelisteService) = Kommunenummer(
-    id = kommunenrUUID,
-    kodeverdi = kodelisteService.getCodeValueByKommunenummerId(kommunenrUUID)?.toInt()
 )

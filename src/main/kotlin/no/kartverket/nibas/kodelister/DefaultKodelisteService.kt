@@ -1,6 +1,7 @@
 package no.kartverket.nibas.kodelister
 
 import no.kartverket.nibas.api.v1.common.Grensetype
+import no.kartverket.nibas.api.v1.response.Kommunenummer
 import no.kartverket.nibas.repository.FastsettingstypeRepository
 import no.kartverket.nibas.repository.GrensestatusRepository
 import no.kartverket.nibas.repository.LandKodeRepository
@@ -31,8 +32,10 @@ class DefaultKodelisteService constructor(private val kodelisteFetcher: Kodelist
         kodelisteByTypeMap.clear()
     }
 
-    override fun getCodeValueByKommunenummerId(kommunenummerId: String): String? {
-        return getKommunenummerMap()[kommunenummerId]?.item?.codevalue
+    override fun getCodeValueByKommunenummerId(kommunenummerId: String): String {
+        return getKommunenummerMap().getOrElse(kommunenummerId) {
+            throw MissingKodelisteItemException(KodelisteType.KOMMUNENUMMER, kommunenummerId)
+        }.item.codevalue
     }
 
     override fun getCodeValueByFylkesnummerId(fylkesnummerId: String): String? {
@@ -174,3 +177,11 @@ open class KodelisteFetcher(private val webClient: WebClient) {
             ?: throw RuntimeException("Fetch for $uri failed.")).containeditems
     }
 }
+
+class MissingKodelisteItemException(val kodelisteType: KodelisteType, val id: String)
+    : RuntimeException("Kodeliste-innslag for: $id finnes ikke for Kodeliste: $kodelisteType")
+
+fun KodelisteService.createKommunenummerFromUUID(uuid: String) = Kommunenummer(
+    id = uuid,
+    kodeverdi = this.getCodeValueByKommunenummerId(uuid)
+)

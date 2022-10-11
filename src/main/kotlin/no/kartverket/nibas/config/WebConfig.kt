@@ -2,11 +2,13 @@ package no.kartverket.nibas.config
 
 import no.kartverket.nibas.api.v1.response.ApiErrorResponse
 import no.kartverket.nibas.api.v1.response.ConflictResponse
+import no.kartverket.nibas.api.v1.response.MissingKodelisteItemResponse
 import no.kartverket.nibas.api.v1.response.GeometriErrorResponse
 import no.kartverket.nibas.inndelinger.toDto
 import no.kartverket.nibas.kodelister.DefaultKodelisteService
 import no.kartverket.nibas.kodelister.KodelisteFetcher
 import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.kodelister.MissingKodelisteItemException
 import no.kartverket.nibas.repository.FastsettingstypeRepository
 import no.kartverket.nibas.repository.GrensestatusRepository
 import no.kartverket.nibas.repository.LandKodeRepository
@@ -69,6 +71,12 @@ class WebConfig @Autowired constructor(val configProps: NibasBackendConfigProps)
  */
 @ControllerAdvice
 class CustomRestExceptionHandler : ResponseEntityExceptionHandler() {
+
+    @ExceptionHandler(value = [MissingKodelisteItemException::class])
+    fun handleManglendeKodelisteInnslag(missingKodelisteEx: MissingKodelisteItemException, request: WebRequest): ResponseEntity<Any>{
+        val errorResponse = MissingKodelisteItemResponse(message = "Fant ikke ${missingKodelisteEx.kodelisteType} for ${missingKodelisteEx.id}")
+        return handleExceptionInternal(missingKodelisteEx, errorResponse, HttpHeaders(), errorResponse.httpStatus, request)
+    }
 
     @ExceptionHandler(value = [UgyldigGeometriException::class])
     fun handleUgyldigGeometriException(ugyldigGEx: UgyldigGeometriException, request: WebRequest): ResponseEntity<Any> {

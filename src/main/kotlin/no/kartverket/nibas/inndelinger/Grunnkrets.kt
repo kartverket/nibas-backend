@@ -10,6 +10,7 @@ import no.kartverket.nibas.api.v1.response.RevisjonRef
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.kodelister.createKommunenummerFromUUID
 import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
+import java.util.Collections.emptySet
 
 @RestController
 class GrunnkretsController(
@@ -97,7 +99,7 @@ fun Grunnkrets.toGrunnkretsResponse(kodelisteService: KodelisteService): Grunnkr
     navn = this.grunnkretsnavn!!,
     grunnkretsnummer = this.grunnkretsnummer!!,
     identifikasjon = Identifikasjon(this.lokalid, this.navnerom, this.versjonid),
-    kommunenummer = this.kommunenummer!!,
+    kommunenummer = kodelisteService.createKommunenummerFromUUID(this.kommune.kommunenummer),
     features = FeatureCollection(features = listOf(
         posisjonToFeature(this.posisjon, this.version),
         flateToFeature(this, kodelisteService, this.version))),

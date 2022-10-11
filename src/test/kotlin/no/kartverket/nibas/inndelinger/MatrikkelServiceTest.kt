@@ -41,11 +41,13 @@ internal class MatrikkelServiceTest {
     fun beforeEach() {
         MockitoAnnotations.openMocks(this)
         matrikkelService = MatrikkelService(grunnkretsControllerServiceMock, stemmekretsControllerServiceMock, kodelisteServiceMock, kommuneServiceMock)
+
+        whenever(kodelisteServiceMock.getKommunenummerIdByCodeValue(anyString())).thenReturn("23b34165-bd8b-4eae-9356-4237ca68f287")
+        whenever(kodelisteServiceMock.getCodeValueByKommunenummerId(anyString())).thenReturn("1787")
     }
 
     @Test
     fun hentAlleStemmekretserForKommune() {
-        whenever(kodelisteServiceMock.getKommunenummerIdByCodeValue(anyString())).thenReturn("23b34165-bd8b-4eae-9356-4237ca68f287")
         val stemmekrets1 = StemmekretsBuilder(id = "1")
             .withGyldigFra(LocalDate.of(2023, Month.JANUARY, 1))
             .build()
@@ -69,7 +71,6 @@ internal class MatrikkelServiceTest {
 
     @Test
     fun hentAlleGrunnkretserForKommune() {
-        whenever(kodelisteServiceMock.getKommunenummerIdByCodeValue(anyString())).thenReturn("23b34165-bd8b-4eae-9356-4237ca68f287")
         val gk1 = GrunnkretsBuilder(id = "1")
             .withGyldigFra(LocalDate.of(2023, Month.JANUARY, 1))
             .build()
