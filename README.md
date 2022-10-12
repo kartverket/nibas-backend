@@ -194,6 +194,25 @@ nibas:
 ./gradlew bootRun -PImport --args='--spring.profiles.active=dev,security-off,import'
 ```
 
+# Opprette database i miljø
+For nibas-backend må vi (foreløpig) opprette applikasjonsbruker og database manuelt.
+Root-bruker og connection-detaljer per miljø finnes i Vault under nøkkel `nibas-db-root`
+
+Logg på med root-bruker på gjeldende database og kjør følgende sql-er:
+```sql
+CREATE ROLE nibas WITH LOGIN PASSWORD '<lag et sikkert passord>';
+create database nibas with owner = nibas;
+```
+
+Opprett et innslag i Vault under nøkkel `nibas-db`. Dette skal ha følgende innhold:
+```json
+{
+  "spring.datasource.password": "<passord>",
+  "spring.datasource.url": "jdbc:postgresql://<server>:<port>/nibas",
+  "spring.datasource.username": "nibas"
+}
+```
+
 
 
 

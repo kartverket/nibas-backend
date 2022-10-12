@@ -2,10 +2,7 @@ name: nibas-backend
 on:
   push:
     branches: [ master ]
-
-permissions:
-  id-token: write
-  contents: 'read'
+  workflow_dispatch:
 
 env:
   image_name: nibas-backend
@@ -80,8 +77,12 @@ jobs:
         with:
           sarif_file: 'trivy-results.sarif'
 
-  deploy:
+  deploy-dev:
     needs: build
+    name: Deploy to dev
+    permissions:
+      id-token: write
+      contents: 'read'
     runs-on: ubuntu-latest
     environment: ${{ matrix.environment }}
     strategy:
@@ -139,3 +140,24 @@ jobs:
 
     - name: Terraform apply
       run: terraform apply -input=false -auto-approve          
+
+  deploy-test:
+    needs: build
+    name: Deploy to test
+    permissions:
+      id-token: write
+      pull-requests: write
+      contents: read
+    uses: kartverket/github-workflows/.github/workflows/run-terraform.yml@v2.7.3
+    with:
+      runner: atkv1-test
+      environment: test
+      kubernetes_cluster: atkv1-test
+      terraform_workspace: test
+      terraform_options: -var-file=test.tfvars -var=image=ghcr.io/kartverket/nibas-backend:${{ needs.build.outputs.new_tag }}
+      terraform_backend_config: -backend-config=test.gcs.tfbackend
+      working_directory: terraform
+      workload_identity_provider: projects/935702487708/locations/global/workloadIdentityPools/nibas-deploy-pool/providers/github-provider
+      service_account: nibas-deploy@nibas-test-36cb.iam.gserviceaccount.com
+      project_id: kubernetes-test-94f6
+      #image_url: <registry>/<repository>:<tag> or <registry>/<repository>@<digest> - trenger dette ved attestering av images, som vi må ha i prod

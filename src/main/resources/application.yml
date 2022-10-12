@@ -53,6 +53,12 @@ spring:
   # Vault-konfigurasjon
   cloud:
     vault:
+      uri: https://vault.vault:8200
+      authentication: kubernetes
+      kubernetes:
+        role: nibas # Er en rolle definert hos skip
+        kubernetes-path: ${KUBERNETES_CLUSTER}
+        service-account-token-file: /var/run/secrets/kubernetes.io/serviceaccount/token
       ssl:
         trust-store: classpath:ca.jks
         trust-store-type: jks
@@ -84,6 +90,7 @@ nibas:
       invalidate: 0 0 3 * * *
 ---
 spring:
+  # Kan fjernes etter flytting til skiperator, bruker default oppførsel
   config:
     activate:
       on-profile: dev

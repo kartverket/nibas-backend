@@ -1,0 +1,5 @@
+external_dns_hostname       = "nibas-api.test.skip.statkart.no"
+container_registry          = "ghcr.io"
+container_registry_username = "georg-robot"
+deploy_env                  = "test"
+kubernetes_cluster          = "atkv1-test"
