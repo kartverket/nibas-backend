@@ -33,22 +33,22 @@ resource "kubernetes_deployment" "nibas-backend-deployment" {
     template {
       metadata {
         annotations = {
-          "prometheus.io/scrape" = "true"
+          "prometheus.io/scrape"                     = "true"
           "seccomp.security.alpha.kubernetes.io/pod" = "runtime/default"
         }
         labels = {
-          app = "nibas-backend"
+          app                          = "nibas-backend"
           "backstage.io/kubernetes-id" = "nibas"
         }
       }
       spec {
         image_pull_secrets {
           # Midlertidig PAT for Kenneth
-          name="nibas-pull-token-atkv1-kes"
+          name = "nibas-pull-token-atkv1-kes"
         }
         security_context {
           supplemental_groups = [199]
-          fs_group = 199
+          fs_group            = 199
         }
         container {
           image = "ghcr.io/kartverket/nibas-backend:${var.nibas_backend_version}"
@@ -95,7 +95,7 @@ resource "kubernetes_service" "nibas-backend-service" {
       port        = 80
       target_port = 8080
     }
-    type     = "ClusterIP"
+    type = "ClusterIP"
   }
 }
 

@@ -20,7 +20,7 @@ resource "kubernetes_manifest" "nibas_backend_application" {
       # Environment variables that will be set inside the Deployment's pod
       env = [
         {
-          name = "KUBERNETES_CLUSTER"
+          name  = "KUBERNETES_CLUSTER"
           value = var.kubernetes_cluster
         }
       ]
