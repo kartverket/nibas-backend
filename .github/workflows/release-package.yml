@@ -59,7 +59,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ env.registry }}/${{ github.repository }}:${{ steps.tag_version.outputs.new_tag }}
+          tags: ${{ env.registry }}/${{ github.repository }}:${{ steps.tag_version.outputs.new_tag }} , ${{ env.registry }}/${{ github.repository }}:latest
           build-args: |
             project_version_arg=${{ steps.tag_version.outputs.new_tag }}
 
