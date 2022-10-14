@@ -160,4 +160,5 @@ jobs:
       workload_identity_provider: projects/935702487708/locations/global/workloadIdentityPools/nibas-deploy-pool/providers/github-provider
       service_account: nibas-deploy@nibas-test-36cb.iam.gserviceaccount.com
       project_id: kubernetes-test-94f6
+      deploy_on: 'refs/heads/master'
       #image_url: <registry>/<repository>:<tag> or <registry>/<repository>@<digest> - trenger dette ved attestering av images, som vi må ha i prod
