@@ -1,6 +1,7 @@
 package no.kartverket.nibas.inndelinger
 
 import no.kartverket.nibas.api.v1.GrunnkretsApi
+import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
@@ -15,7 +16,6 @@ import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
 import no.kartverket.nibas.unwrap
-import no.kartverket.nibas.utkast.NotFoundException
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -62,7 +62,6 @@ class GrunnkretsControllerService(private val grunnkretsService: GrunnkretsServi
     fun hentEn(id: String): GrunnkretsResponse =
         grunnkretsService.hentGrunnkrets(id)?.toGrunnkretsResponse(kodelisteService)
             ?: throw NotFoundException("Grunnkrets med id '$id' ble ikke funnet.")
-
 }
 
 

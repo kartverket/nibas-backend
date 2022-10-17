@@ -1,5 +1,6 @@
 package no.kartverket.nibas.config
 
+import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.api.v1.response.ApiErrorResponse
 import no.kartverket.nibas.api.v1.response.ConflictResponse
 import no.kartverket.nibas.api.v1.response.MissingKodelisteItemResponse
@@ -18,8 +19,6 @@ import no.kartverket.nibas.repository.TerrengdetaljkodeRepository
 import no.kartverket.nibas.sosi.sosiimport.GeometriFailedToBeCreatedException
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import no.kartverket.nibas.sosi.sosiimport.UgyldigGeometriException
-import no.kartverket.nibas.utkast.BadRequestException
-import no.kartverket.nibas.utkast.NotFoundException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -113,15 +112,12 @@ class CustomRestExceptionHandler : ResponseEntityExceptionHandler() {
         return handleExceptionInternal(ex, errors, HttpHeaders(), HttpStatus.CONFLICT, request)
     }
 
-    @ExceptionHandler(value = [NotFoundException::class])
-    fun handleNotFoundException(ex: NotFoundException, request: WebRequest): ResponseEntity<Any> {
-        val httpStatus = HttpStatus.NOT_FOUND
-        return handleExceptionInternal(ex, ApiErrorResponse(httpStatus, ex.message), HttpHeaders(), httpStatus, request)
-    }
-
-    @ExceptionHandler(value = [BadRequestException::class])
-    fun handleBadRequestException(ex: BadRequestException, request: WebRequest): ResponseEntity<Any> {
-        val httpStatus = HttpStatus.BAD_REQUEST
+    @ExceptionHandler(value = [ResponseException::class])
+    fun handleResponseExceptionException(ex: ResponseException, request: WebRequest): ResponseEntity<Any> {
+        val httpStatus = when(ex) {
+            is ResponseException.NotFoundException -> HttpStatus.NOT_FOUND
+            is ResponseException.BadRequestException -> HttpStatus.BAD_REQUEST
+        }
         return handleExceptionInternal(ex, ApiErrorResponse(httpStatus, ex.message), HttpHeaders(), httpStatus, request)
     }
 

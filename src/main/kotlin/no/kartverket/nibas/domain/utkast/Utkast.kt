@@ -43,7 +43,7 @@ class Utkast(
 
     @Type(type = "jsonb")
     @Column(columnDefinition = "jsonb", name = "utkast")
-    var operasjoner: Operasjoner = Operasjoner()
+    var operasjoner: Operasjoner? = Operasjoner()
 ) : Sporbar, Laasbar {
 
     @Version
@@ -105,13 +105,13 @@ class UtkastBuilder private constructor(val navn: String, private val endringsty
     }
 
     fun withKommuneRequests(kommuneRequests: Map<String, KommuneRequest>): UtkastBuilder {
-        val metadataEndringerCopy = operasjoner.metadataendringer!!.copy(kommuneendringer = kommuneRequests)
+        val metadataEndringerCopy = operasjoner.metadataendringer.copy(kommuneendringer = kommuneRequests)
         operasjoner = operasjoner.copy(metadataendringer = metadataEndringerCopy)
         return this
     }
 
     fun withFylkeRequests(fylkeRequests: Map<String, FylkeRequest>): UtkastBuilder {
-        val metadataEndringerCopy = operasjoner.metadataendringer!!.copy(fylkesendringer = fylkeRequests)
+        val metadataEndringerCopy = operasjoner.metadataendringer.copy(fylkesendringer = fylkeRequests)
         operasjoner = operasjoner.copy(metadataendringer = metadataEndringerCopy)
         return this
     }

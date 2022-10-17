@@ -3,6 +3,7 @@ package no.kartverket.nibas.inndelinger
 import no.kartverket.nibas.api.v1.GrenseApi
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.KontekstEnhetType
+import no.kartverket.nibas.common.ResponseException.BadRequestException
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.FeatureProperties
@@ -37,7 +38,6 @@ import no.kartverket.nibas.repository.TerrengdetaljkodeRepository
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import no.kartverket.nibas.unwrap
-import no.kartverket.nibas.utkast.BadRequestException
 import org.locationtech.jts.geom.Point
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service

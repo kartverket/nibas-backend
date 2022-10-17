@@ -4,6 +4,8 @@ import no.kartverket.nibas.api.v1.UtkastApi
 import no.kartverket.nibas.api.v1.common.Grenseendringer
 import no.kartverket.nibas.api.v1.common.Metadataendringer
 import no.kartverket.nibas.api.v1.common.Operasjoner
+import no.kartverket.nibas.common.ResponseException.BadRequestException
+import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.request.OppdaterUtkastRequest
 import no.kartverket.nibas.api.v1.request.OpprettUtkastRequest
@@ -36,8 +38,6 @@ import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 
-class NotFoundException(msg: String) : RuntimeException(msg)
-class BadRequestException(msg: String) : RuntimeException(msg)
 
 @RestController
 class UtkastController(private val utkastService: UtkastService,
@@ -55,6 +55,10 @@ class UtkastController(private val utkastService: UtkastService,
     override fun oppdaterUtkast(id: String, utkast: OppdaterUtkastRequest): UtkastResponse {
         return utkastService.oppdaterUtkast(id, utkast)?.toUtkastResponse()
             ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
+    }
+
+    override fun forkastUtkast(id: String) {
+        utkastService.forkastUtkast(id) ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
     }
 
     override fun publiserUtkast(id: String) {
@@ -102,51 +106,57 @@ class UtkastService(private val utkastRepository: UtkastRepository,
         }
     }
 
+    fun forkastUtkast(id: String): Utkast? =
+        hentUtkast(id)?.apply {
+            status = UtkastStatus.FORKASTET
+            operasjoner = null
+        }
+
     fun publiserUtkast(id: String) {
         val utkast = hentUtkast(id) ?: throw NotFoundException("Utkast ble ikke funnet for id: $id.")
-        validateUtkastReadyForPubliser(utkast)
+        validateUtkastKlartForPublisering(utkast)
 
         logger.debug(utkast.publiseringsInfo())
 
-        val operasjoner = utkast.operasjoner
-        val metadata: Metadataendringer = operasjoner.metadataendringer
-        val grenseendringer = operasjoner.grenseendringer
+        utkast.operasjoner?.let { operasjoner ->
+            val metadata: Metadataendringer = operasjoner.metadataendringer
+            val grenseendringer = operasjoner.grenseendringer
 
-        metadata.nasjonsendringer.forEach { nasjonService.oppdaterNasjon(it.key, it.value) }
-        metadata.fylkesendringer.forEach { fylkeService.oppdaterFylke(it.key, it.value) }
-        metadata.kommuneendringer.forEach { kommuneService.oppdaterKommune(it.key, it.value) }
-        metadata.grunnkretsendringer.forEach { grunnkretsService.oppdaterGrunnkrets(it.key, it.value) }
-        metadata.stemmekretsendringer.forEach { stemmekretsService.oppdaterStemmekrets(it.key, it.value) }
+            metadata.nasjonsendringer.forEach { nasjonService.oppdaterNasjon(it.key, it.value) }
+            metadata.fylkesendringer.forEach { fylkeService.oppdaterFylke(it.key, it.value) }
+            metadata.kommuneendringer.forEach { kommuneService.oppdaterKommune(it.key, it.value) }
+            metadata.grunnkretsendringer.forEach { grunnkretsService.oppdaterGrunnkrets(it.key, it.value) }
+            metadata.stemmekretsendringer.forEach { stemmekretsService.oppdaterStemmekrets(it.key, it.value) }
 
-        val endredeFeatures = grenseendringer.endredeFeatures
-        if (endredeFeatures.isNotEmpty()) {
-            grenseService.lagreGrenser(FeatureCollection(features = endredeFeatures.map { it.value }))
+            val endredeFeatures = grenseendringer.endredeFeatures
+
+            if (endredeFeatures.isNotEmpty()) {
+                grenseService.lagreGrenser(FeatureCollection(features = endredeFeatures.map { it.value }))
+            }
         }
 
         utkast.status = UtkastStatus.PUBLISERT
     }
 
     // Max 2 throws pr metode tillates av Detekt
-    private fun validateUtkastReadyForPubliser(utkast: Utkast) {
+    private fun validateUtkastKlartForPublisering(utkast: Utkast) {
         if (utkast.status != UtkastStatus.OPPRETTET) {
             throw BadRequestException("Kan ikke publisere et utkast i status ${utkast.status}.")
         }
-        if (!utkast.operasjoner.inValidState()) {
-            throw BadRequestException("Kan ikke publisere et utkast i ugyldig tilstand.")
+
+        val utkastIkkeHarEndringer = utkast.operasjoner?.harIkkeEndringer() ?: true
+        if (utkastIkkeHarEndringer) {
+            throw BadRequestException("Kan ikke publisere et utkast uten endringer.")
         }
     }
-
 }
 
-private fun Utkast.publiseringsInfo(): String {
-    val operasjoner = this.operasjoner
-    val logBuilder = StringBuilder("Publiserer utkast '${this.navn}' (id: ${this.id}): ")
-    return logBuilder
-        .append(operasjoner.metadataendringer.logFriendlyString())
-        .append(operasjoner.grenseendringer.logFriendlyString())
+private fun Utkast.publiseringsInfo(): String =
+    StringBuilder("Publiserer utkast '${this.navn}' (id: ${this.id}): ")
+        .append(this.operasjoner?.metadataendringer?.logFriendlyString() ?: "")
+        .append(this.operasjoner?.grenseendringer?.logFriendlyString() ?: "")
         .append("\n")
         .toString()
-}
 
 private fun Metadataendringer.logFriendlyString(): String {
     val logBuilder = StringBuilder("")
@@ -184,10 +194,7 @@ private fun Grenseendringer.logFriendlyString(): String {
     return logBuilder.toString()
 }
 
-/**
- * Feltene er nullable for klientens skyld, men minst en av typene må ha en verdi.
- */
-private fun Operasjoner.inValidState(): Boolean {
+private fun Operasjoner.harEndringer(): Boolean {
     val metadata = this.metadataendringer
     return metadata.nasjonsendringer.isNotEmpty() ||
         metadata.fylkesendringer.isNotEmpty() ||
@@ -196,6 +203,8 @@ private fun Operasjoner.inValidState(): Boolean {
         metadata.stemmekretsendringer.isNotEmpty() ||
         this.grenseendringer.endredeFeatures.isNotEmpty()
 }
+
+private fun Operasjoner.harIkkeEndringer(): Boolean = !this.harEndringer()
 
 private fun OpprettUtkastRequest.createUtkast(): Utkast =
     UtkastBuilder.builder(this.navn, UtkastEndringstype.fromValue(this.endringstype))
@@ -208,7 +217,7 @@ private fun Utkast.toUtkastResponse(): UtkastResponse = UtkastResponse(
     endringstype = this.endringstype.value,
     status = this.status.value,
     gyldigFra = this.gyldigFra,
-    operasjoner = this.operasjoner,
+    operasjoner = this.operasjoner ?: Operasjoner(),
     opprettetDato = this.opprettetDato,
     auditInfoResponse = this.auditInfo.toAuditInfoResponse(),
     version = this.version

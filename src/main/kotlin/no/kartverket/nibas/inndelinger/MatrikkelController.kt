@@ -1,11 +1,11 @@
 package no.kartverket.nibas.inndelinger
 
 import no.kartverket.nibas.api.v1.MatrikkelApi
+import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.api.v1.response.GrunnkretsResponse
 import no.kartverket.nibas.api.v1.response.StemmekretsResponse
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.kodelister.KodelisteService
-import no.kartverket.nibas.utkast.NotFoundException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service

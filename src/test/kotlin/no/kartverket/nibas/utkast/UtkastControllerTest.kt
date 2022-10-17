@@ -2,6 +2,8 @@ package no.kartverket.nibas.utkast
 
 import no.kartverket.nibas.MockResponseAsserts
 import no.kartverket.nibas.NibasMvcTest
+import no.kartverket.nibas.common.ResponseException.BadRequestException
+import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.api.v1.request.OppdaterUtkastRequest
 import no.kartverket.nibas.api.v1.request.OpprettUtkastRequest
 import no.kartverket.nibas.api.v1.response.ApiErrorResponse
@@ -95,7 +97,7 @@ internal class UtkastControllerTest : NibasMvcTest() {
             ),
             opprettetDato = opprettetTidspunkt,
             gyldigFra = foersteJanuar,
-            operasjoner = operasjoner,
+            operasjoner = operasjoner!!,
             version = 1
         )
         get("/v1/utkast/$utkastId", responseAsserts = MockResponseAsserts(
@@ -133,7 +135,7 @@ internal class UtkastControllerTest : NibasMvcTest() {
             .withNavn(utkastNavn)
             .withEndringstype(UtkastEndringstype.KVALITETSHEVING)
             .withGyldigFra(gyldigFra)
-            .withOperasjoner(operasjoner)
+            .withOperasjoner(operasjoner!!)
             .build()
 
         val expectedUtkastResponse = UtkastResponse(
@@ -316,4 +318,35 @@ internal class UtkastControllerTest : NibasMvcTest() {
         )
     }
 
+    @Test
+    fun forkastEksisterendeUtkastGir200OK() {
+        val kommuneRequests = mapOf("UUID-1" to KommuneRequestBuilder.DEFAULT_REQUEST)
+        val navn = "Utkast 1"
+        val forkastetUtkast = UtkastBuilder.builder(navn)
+            .withStatus(UtkastStatus.FORKASTET)
+            .withKommuneRequests(kommuneRequests)
+            .build()
+        whenever(utkastServiceMock.forkastUtkast(anyString())).thenReturn(forkastetUtkast)
+
+        delete(
+            url = "/v1/utkast/123",
+            responseAsserts = MockResponseAsserts(
+                resultMatchers = listOf(status().is2xxSuccessful)
+            )
+        )
+    }
+
+    @Test
+    fun forkastUtkastSomIkkeFinnesGir404NotFound() {
+        val ikkeGyldigId = "12341515"
+        val href = "http://localhost:8080/v1/utkast/UUID-TIL_UTKAST"
+        whenever(hrefProviderMock.getHref(anyString())).thenReturn(href)
+
+        delete(
+            url = "/v1/utkast/${ikkeGyldigId}",
+            responseAsserts = MockResponseAsserts(
+                resultMatchers = listOf(status().isNotFound)
+            )
+        )
+    }
 }

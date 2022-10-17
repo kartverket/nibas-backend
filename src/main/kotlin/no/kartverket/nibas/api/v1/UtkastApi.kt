@@ -17,6 +17,7 @@ import no.kartverket.nibas.api.v1.response.UtkastRef
 import no.kartverket.nibas.api.v1.response.UtkastResponse
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -93,6 +94,26 @@ interface UtkastApi {
         @Parameter(description = "ID til utkastet man vil oppdatere") @PathVariable id: String,
         @RequestBody utkast: OppdaterUtkastRequest
     ): UtkastResponse
+
+    @Operation(
+        summary = "Forkast angitt utkast.",
+        description = "Forkast angitt utkast."
+    )
+    @ApiResponses(
+        ApiResponse(responseCode = "200", description = "Successful operation"),
+        ApiResponse(responseCode = "404", description = "Not Found",
+            content = [
+                Content(
+                    mediaType = "application/json",
+                    schema = Schema(implementation = ApiErrorResponse::class)
+                )
+            ]
+        )
+    )
+    @DeleteMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun forkastUtkast(
+        @Parameter(description = "ID til utkastet man vil slette") @PathVariable id: String
+    )
 
     @Operation(summary = "Publiserer utkastet med gitt id.", description = "Publiserer utkastet med gitt id.")
     @ApiResponses(

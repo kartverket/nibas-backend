@@ -68,6 +68,10 @@ open class NibasMvcTest {
         testPost(url, null, responseAsserts)
     }
 
+    fun delete(url: String, responseAsserts: MockResponseAsserts) {
+        testDelete(url, responseAsserts)
+    }
+
     fun post(url: String, requestObject: Any, responseAsserts: MockResponseAsserts) {
         testPost(url, requestObject, responseAsserts)
     }
@@ -85,6 +89,17 @@ open class NibasMvcTest {
             action = postRequest,
             matchers = responseAsserts.resultMatchers)
         assertResponseObject(mvcResult, responseAsserts)
+    }
+
+    private fun testDelete(
+        url: String,
+        responseAsserts: MockResponseAsserts
+    ) {
+        val deleteRequest = MockMvcRequestBuilders.delete(url)
+        perform(
+            action = deleteRequest,
+            matchers = responseAsserts.resultMatchers
+        )
     }
 
     private fun perform(action: MockHttpServletRequestBuilder, matcher: ResultMatcher): MvcResult {

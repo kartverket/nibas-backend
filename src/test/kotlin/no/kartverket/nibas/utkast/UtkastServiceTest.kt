@@ -3,6 +3,7 @@ package no.kartverket.nibas.utkast
 import no.kartverket.nibas.api.v1.common.Grenseendringer
 import no.kartverket.nibas.api.v1.common.Metadataendringer
 import no.kartverket.nibas.api.v1.common.Operasjoner
+import no.kartverket.nibas.common.ResponseException.BadRequestException
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.request.FylkeRequest
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
@@ -162,6 +163,31 @@ internal class UtkastServiceTest {
         verify(grunnkretsServiceMock).oppdaterGrunnkrets(anyString(), any(GrunnkretsRequest::class.java))
         verify(stemmekretsServiceMock).oppdaterStemmekrets(anyString(), any(StemmekretsRequest::class.java))
         verify(grenseServiceMock).lagreGrenser(any(FeatureCollection::class.java))
+    }
+
+    @Test
+    fun forkastUtkast() {
+        val utkast = UtkastBuilder.builder("Utkast for forkasting")
+            .withGyldigFra(LocalDate.of(2024, Month.JANUARY, 1))
+            .withOperasjoner(Operasjoner(
+                metadataendringer = Metadataendringer(
+                    nasjonsendringer = mapOf("Nasjon-UUID-1" to NasjonRequestBuilder.DEFAULT_NASJON),
+                    fylkesendringer = mapOf("Fylke-UUID-1" to FylkeRequestBuilder.DEFAULT_REQUEST),
+                    kommuneendringer = mapOf("Kommune-UUID-1" to KommuneRequestBuilder.DEFAULT_REQUEST),
+                    grunnkretsendringer = mapOf("Grunnkrets-UUID-1" to GrunnkretsRequestBuilder.DEFAULT_REQUEST),
+                    stemmekretsendringer = mapOf("Stemmekrets-UUID-1" to StemmekretsRequestBuilder.DEFAULT_REQUEST)
+                ),
+                grenseendringer = Grenseendringer(
+                    endredeFeatures = mapOf("56" to FeatureBuilder("56").build())
+                )
+            ))
+            .build()
+        whenever(utkastRepositoryMock.findById(anyString())).thenReturn(Optional.of(utkast))
+
+        utkastService.forkastUtkast(utkast.id)
+
+        assertThat(utkast.status).isEqualTo(UtkastStatus.FORKASTET)
+        assertThat(utkast.operasjoner).isNull()
     }
 
     private fun <T> any(clazz: Class<T>): T = Mockito.any(clazz)

@@ -1,11 +1,11 @@
 package no.kartverket.nibas.domain
 
 import no.kartverket.nibas.api.v1.common.Grensetype
+import no.kartverket.nibas.common.ResponseException.BadRequestException
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Dokref
 import no.kartverket.nibas.sporing.AuditInfo
 import no.kartverket.nibas.sporing.Gyldighet
 import no.kartverket.nibas.sporing.Laasbar
-import no.kartverket.nibas.utkast.BadRequestException
 import org.hibernate.envers.Audited
 import org.locationtech.jts.geom.LineString
 import java.time.LocalDate
