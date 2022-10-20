@@ -148,7 +148,7 @@ jobs:
       id-token: write
       pull-requests: write
       contents: read
-    uses: kartverket/github-workflows/.github/workflows/run-terraform.yml@v2.7.3
+    uses: kartverket/github-workflows/.github/workflows/run-terraform.yml@v2.7.5
     with:
       runner: atkv1-test
       environment: test
