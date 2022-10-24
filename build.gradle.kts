@@ -1,4 +1,3 @@
-
 import io.gitlab.arturbosch.detekt.Detekt
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.springframework.boot.gradle.tasks.bundling.BootJar
@@ -47,16 +46,20 @@ val intTestImplementation: Configuration by configurations.getting {
 
 configurations["intTestRuntimeOnly"].extendsFrom(configurations.runtimeOnly.get())
 
-object DependencyVersions {
-    const val HIBERNATE_VERSION = "5.6.5.Final"
-    const val SPRINGDOC_OPENAPI_VERSION = "1.6.6"
-    const val JTS_VERSION = "1.18.2"
-    const val TEST_CONTAINER_VERSION = "1.17.3"
-    const val AUT_LIB_VERSION = "0.0.25"
-}
+// Definerer versjoner for avhengigheter som ikke dekkes av BOM
+val hibernateVersion = "5.6.5.Final"
+val springdocOpenapiVersion = "1.6.12"
+val jtsVersion = "1.19.0"
+val testContainerVersion = "1.17.5"
+val autLibVersion = "0.0.25"
+val flywayVersion = "9.5.0"
+val hibernateTypes55Version = "2.20.0"
+val springCloudStarterVaultConfigVersion = "3.1.1"
+val spatial4jVersion = "0.8"
+val kotlinxCoroutinesCoreVersion = "1.6.4"
 
 dependencies {
-    implementation("no.kartverket.aut:aut-lib:${DependencyVersions.AUT_LIB_VERSION}")
+    implementation("no.kartverket.aut:aut-lib:$autLibVersion")
 
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-security") // Web-security
@@ -67,27 +70,28 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-validation")
-    implementation("org.springdoc:springdoc-openapi-webmvc-core:${DependencyVersions.SPRINGDOC_OPENAPI_VERSION}")
-    implementation("org.springdoc:springdoc-openapi-kotlin:${DependencyVersions.SPRINGDOC_OPENAPI_VERSION}")
-    implementation("org.springdoc:springdoc-openapi-ui:${DependencyVersions.SPRINGDOC_OPENAPI_VERSION}")
-    implementation("org.locationtech.jts:jts-core:${DependencyVersions.JTS_VERSION}")
-    implementation("org.locationtech.jts:jts:${DependencyVersions.JTS_VERSION}")
-    implementation("org.locationtech.jts:jts-modules:${DependencyVersions.JTS_VERSION}")
-    implementation("org.locationtech.jts:jts-io:${DependencyVersions.JTS_VERSION}")
-    implementation("org.locationtech.jts.io:jts-io-common:${DependencyVersions.JTS_VERSION}") {
+    implementation("org.springdoc:springdoc-openapi-webmvc-core:$springdocOpenapiVersion")
+    implementation("org.springdoc:springdoc-openapi-kotlin:$springdocOpenapiVersion")
+    implementation("org.springdoc:springdoc-openapi-ui:$springdocOpenapiVersion")
+    implementation("org.locationtech.jts:jts-core:$jtsVersion")
+    implementation("org.locationtech.jts:jts:$jtsVersion")
+    implementation("org.locationtech.jts:jts-modules:$jtsVersion")
+    implementation("org.locationtech.jts:jts-io:$jtsVersion")
+    implementation("org.locationtech.jts.io:jts-io-common:$jtsVersion") {
         exclude(group = "junit", module = "junit")
     }
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
-    implementation("org.locationtech.spatial4j:spatial4j:0.8")
-    implementation("org.hibernate:hibernate-spatial:${DependencyVersions.HIBERNATE_VERSION}")
-    implementation("org.hibernate:hibernate-envers:${DependencyVersions.HIBERNATE_VERSION}")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinxCoroutinesCoreVersion")
+    implementation("org.locationtech.spatial4j:spatial4j:$spatial4jVersion")
+    implementation("org.hibernate:hibernate-spatial:$hibernateVersion")
+    implementation("org.hibernate:hibernate-envers:$hibernateVersion")
     implementation("org.springframework.cloud:spring-cloud-starter")
-    implementation("org.springframework.cloud:spring-cloud-starter-vault-config:3.1.1")
+    implementation("org.springframework.cloud:spring-cloud-starter-vault-config:$springCloudStarterVaultConfigVersion")
     implementation("org.springframework.kafka:spring-kafka")
     // This library provides Hibernate 5.5+ Json column support, which is not natively supported by Hibernate
-    implementation("com.vladmihalcea:hibernate-types-55:2.20.0")
+    // NB! Artifact-id må endres ved overgang til Hibernate 6
+    implementation("com.vladmihalcea:hibernate-types-55:$hibernateTypes55Version")
 
-    runtimeOnly("org.flywaydb:flyway-core:9.5.0")
+    runtimeOnly("org.flywaydb:flyway-core:$flywayVersion")
     runtimeOnly("org.postgresql:postgresql")
 
     testImplementation("org.jetbrains.kotlin:kotlin-test")
@@ -98,8 +102,8 @@ dependencies {
 
     intTestImplementation("org.jetbrains.kotlin:kotlin-test")
     intTestImplementation("org.springframework.boot:spring-boot-starter-test")
-    intTestImplementation("org.testcontainers:postgresql:${DependencyVersions.TEST_CONTAINER_VERSION}")
-    intTestImplementation("org.testcontainers:junit-jupiter:${DependencyVersions.TEST_CONTAINER_VERSION}")
+    intTestImplementation("org.testcontainers:postgresql:$testContainerVersion")
+    intTestImplementation("org.testcontainers:junit-jupiter:$testContainerVersion")
 }
 
 allOpen {
@@ -114,7 +118,7 @@ tasks.named<BootJar>("bootJar") {
 
 tasks.getByName<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
     findProperty("TLSversion")?.let { systemProperty("jdk.tls.client.protocols", it) }
-    when(findProperty("Import")) {
+    when (findProperty("Import")) {
         null -> mainClass.set("no.kartverket.nibas.NibasBackendApplication")
         else -> mainClass.set("no.kartverket.nibas.NibasImportApplication")
     }
