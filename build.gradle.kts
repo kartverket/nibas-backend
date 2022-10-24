@@ -11,7 +11,7 @@ plugins {
     kotlin("plugin.spring") version kotlinPluginVersion
     kotlin("plugin.jpa") version kotlinPluginVersion
     kotlin("plugin.allopen") version kotlinPluginVersion
-    id("org.flywaydb.flyway") version "9.5.0"
+    id("org.flywaydb.flyway") version "9.5.1"
     id("io.gitlab.arturbosch.detekt") version "1.21.0"
 }
 
