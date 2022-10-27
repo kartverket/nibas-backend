@@ -79,6 +79,13 @@ resource "kubernetes_manifest" "nibas_backend_application" {
             },
             {
               application = "nibas-db" # Kun til vi kutter kubernetes-base
+              ports = [
+                {
+                  name     = "dbport",
+                  protocol = "TCP",
+                  port     = 5432
+                }
+              ]
             }
           ]
 
@@ -90,7 +97,7 @@ resource "kubernetes_manifest" "nibas_backend_application" {
                 {
                   name     = "postgisport"
                   protocol = "TCP"
-                  port : 5432
+                  port     = 5432
                 }
               ]
             },
