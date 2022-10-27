@@ -90,20 +90,6 @@ nibas:
       invalidate: 0 0 3 * * *
 ---
 spring:
-  # Kan fjernes etter flytting til skiperator, bruker default oppførsel
-  config:
-    activate:
-      on-profile: dev
-  cloud:
-    vault:
-      uri: https://vault.dev.skip.statkart.no/
-      authentication: kubernetes
-      kubernetes:
-        role: nibas # Er en rolle definert hos skip
-        kubernetes-path: atkv1-dev
-        service-account-token-file: /var/run/secrets/kubernetes.io/serviceaccount/token
----
-spring:
   config:
     activate:
       on-profile: localhost

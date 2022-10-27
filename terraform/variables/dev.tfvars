@@ -1,0 +1,6 @@
+external_dns_hostname       = "nibas-api.dev.skip.statkart.no"
+container_registry          = "ghcr.io"
+container_registry_username = "georg-robot"
+deploy_env                  = "dev"
+kubernetes_cluster          = "atkv1-dev"
+vault_addr                  = "https://vault.vault:8200"

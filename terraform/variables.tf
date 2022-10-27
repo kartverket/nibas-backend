@@ -21,3 +21,7 @@ variable "deploy_env" {
 variable "kubernetes_cluster" {
   type = string
 }
+
+variable "vault_addr" {
+  type = string
+}

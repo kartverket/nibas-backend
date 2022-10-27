@@ -13,7 +13,10 @@ provider "kubernetes" {
   config_path = "~/.kube/config"
 }
 
-provider "vault" {}
+provider "vault" {
+  address         = var.vault_addr
+  skip_tls_verify = true
+}
 
 locals {
   environment = var.deploy_env

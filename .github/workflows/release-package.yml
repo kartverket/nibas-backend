@@ -77,69 +77,29 @@ jobs:
         with:
           sarif_file: 'trivy-results.sarif'
 
+
   deploy-dev:
     needs: build
     name: Deploy to dev
     permissions:
       id-token: write
-      contents: 'read'
-    runs-on: ubuntu-latest
-    environment: ${{ matrix.environment }}
-    strategy:
-      matrix:
-        environment: [ 'atkv1-dev' ]
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-
-    # Fetch environment variables and set for subsequent steps
-    - name: read .env
-      uses: c-py/action-dotenv-to-setenv@v3
-      with: 
-        env-file: .github/workflows/.env.${{matrix.environment}}
-      
-    - name: Set up Cloud SDK
-      uses: google-github-actions/setup-gcloud@v0
-
-    # Authenticate with google cloud serviceaccount to have permissions in cluster.
-    # Variabel project_id må settes til kubernetesprosjektet her.   
-    - id: auth
-      name: Authenticate to GCP
-      uses: google-github-actions/auth@v0
-      with:
-        workload_identity_provider: ${{env.WORKLOAD_IDENTITY_FEDERATION_PROVIDER}}
-        service_account: ${{env.WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT}}
-        project_id: ${{env.TF_VAR_PROJECT_ID}}
-
-    - name: Authenticate with cluster
-      run: gcloud container hub memberships get-credentials ${{ matrix.environment }} --verbosity debug
-    
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v1
-      with:
-        terraform_wrapper: false
-
-    - name: Generate terraform variables
-      run: |
-        cat <<EOF >> terraform.tfvars
-        nibas_backend_version="${{ needs.build.outputs.new_tag }}"
-        EOF
-    
-    - name: Generate terraform backend variables
-      run: |
-        cat <<EOF >> backend.tfbackend
-        bucket="${{ env.BUCKET }}"
-        EOF
-    
-    - name: Terraform init
-      run: terraform init -input=false -backend-config=backend.tfbackend
-
-    - name: Terraform plan
-      run: terraform plan -input=false
-
-    - name: Terraform apply
-      run: terraform apply -input=false -auto-approve          
+      pull-requests: write
+      contents: read
+    uses: kartverket/github-workflows/.github/workflows/run-terraform.yml@v2.7.5
+    with:
+      runner: atkv1-dev
+      environment: dev
+      kubernetes_cluster: atkv1-dev
+      terraform_workspace: dev
+      terraform_options: -var-file=dev.tfvars -var=image=ghcr.io/kartverket/nibas-backend:${{ needs.build.outputs.new_tag }}
+      terraform_backend_config: -backend-config=dev.gcs.tfbackend
+      working_directory: terraform
+      workload_identity_provider: projects/747318126147/locations/global/workloadIdentityPools/nibas-deploy-pool/providers/github-provider
+      service_account: nibas-deploy@nibas-dev-075c.iam.gserviceaccount.com
+      project_id: kubernetes-dev-94b9
+      deploy_on: 'refs/heads/master'
+      vault_role: nibas-backend-write-role
+      #image_url: <registry>/<repository>:<tag> or <registry>/<repository>@<digest> - trenger dette ved attestering av images, som vi må ha i prod
 
   deploy-test:
     needs: build
@@ -161,4 +121,5 @@ jobs:
       service_account: nibas-deploy@nibas-test-36cb.iam.gserviceaccount.com
       project_id: kubernetes-test-94f6
       deploy_on: 'refs/heads/master'
+      vault_role: nibas-backend-write-role
       #image_url: <registry>/<repository>:<tag> or <registry>/<repository>@<digest> - trenger dette ved attestering av images, som vi må ha i prod

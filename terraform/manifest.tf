@@ -1,3 +1,7 @@
+data "vault_generic_secret" "nibas_db_details" {
+  path = "nibas/nibas-db"
+}
+
 resource "kubernetes_manifest" "nibas_backend_application" {
   manifest = {
     apiVersion = "skiperator.kartverket.no/v1alpha1"
@@ -50,7 +54,7 @@ resource "kubernetes_manifest" "nibas_backend_application" {
           memory = "1G"
         }
         requests = {
-          cpu    = "500m"
+          cpu    = "10m"
           memory = "500M"
         }
       }
@@ -61,13 +65,17 @@ resource "kubernetes_manifest" "nibas_backend_application" {
             {
               application = "vault"
               namespace   = "vault"
+            },
+            {
+              application = "aut-idporten"
+              namespace   = "aut"
             }
           ]
 
           external = [
             {
-              host = "rin-db1551.statkart.no"
-              ip   = "159.162.25.184"
+              host = data.vault_generic_secret.nibas_db_details.data["db-host"]
+              ip   = data.vault_generic_secret.nibas_db_details.data["db-ip"]
               ports = [
                 {
                   name     = "postgisport"
@@ -78,6 +86,9 @@ resource "kubernetes_manifest" "nibas_backend_application" {
             },
             {
               host = "register.geonorge.no"
+            },
+            {
+              host = "aut-idporten.dev.skip.statkart.no"
             }
           ]
         }
