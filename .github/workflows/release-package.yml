@@ -91,8 +91,8 @@ jobs:
       environment: dev
       kubernetes_cluster: atkv1-dev
       terraform_workspace: dev
-      terraform_options: -var-file=dev.tfvars -var=image=ghcr.io/kartverket/nibas-backend:${{ needs.build.outputs.new_tag }}
-      terraform_backend_config: -backend-config=dev.gcs.tfbackend
+      terraform_options: -var-file=variables/dev.tfvars -var=image=ghcr.io/kartverket/nibas-backend:${{ needs.build.outputs.new_tag }}
+      terraform_backend_config: -backend-config=backend/dev.gcs.tfbackend
       working_directory: terraform
       workload_identity_provider: projects/747318126147/locations/global/workloadIdentityPools/nibas-deploy-pool/providers/github-provider
       service_account: nibas-deploy@nibas-dev-075c.iam.gserviceaccount.com
@@ -114,8 +114,8 @@ jobs:
       environment: test
       kubernetes_cluster: atkv1-test
       terraform_workspace: test
-      terraform_options: -var-file=test.tfvars -var=image=ghcr.io/kartverket/nibas-backend:${{ needs.build.outputs.new_tag }}
-      terraform_backend_config: -backend-config=test.gcs.tfbackend
+      terraform_options: -var-file=variables/test.tfvars -var=image=ghcr.io/kartverket/nibas-backend:${{ needs.build.outputs.new_tag }}
+      terraform_backend_config: -backend-config=backend/test.gcs.tfbackend
       working_directory: terraform
       workload_identity_provider: projects/935702487708/locations/global/workloadIdentityPools/nibas-deploy-pool/providers/github-provider
       service_account: nibas-deploy@nibas-test-36cb.iam.gserviceaccount.com
