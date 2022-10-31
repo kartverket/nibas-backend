@@ -98,7 +98,7 @@ jobs:
       service_account: nibas-deploy@nibas-dev-075c.iam.gserviceaccount.com
       project_id: kubernetes-dev-94b9
       deploy_on: 'refs/heads/master'
-      vault_role: nibas-backend-write-role
+      vault_role: nibas-backend-read-role
       #image_url: <registry>/<repository>:<tag> or <registry>/<repository>@<digest> - trenger dette ved attestering av images, som vi må ha i prod
 
   deploy-test:
@@ -121,5 +121,5 @@ jobs:
       service_account: nibas-deploy@nibas-test-36cb.iam.gserviceaccount.com
       project_id: kubernetes-test-94f6
       deploy_on: 'refs/heads/master'
-      vault_role: nibas-backend-write-role
+      vault_role: nibas-backend-read-role
       #image_url: <registry>/<repository>:<tag> or <registry>/<repository>@<digest> - trenger dette ved attestering av images, som vi må ha i prod
