@@ -158,6 +158,10 @@ class WebSecurityConfig @Autowired constructor(private val environment: Environm
         }
     }
 
+    override fun getAutModulHostURL(): String {
+        return "http://aut-idporten.aut:8080"
+    }
+
     override fun getDateTimeToUseForTokenVerification(): ZonedDateTime? {
         val jwtTimestampString = environment.getProperty("mock.jwt.timestamp")
         if (!jwtTimestampString.isNullOrEmpty()) {

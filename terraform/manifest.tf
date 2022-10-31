@@ -96,9 +96,6 @@ resource "kubernetes_manifest" "nibas_backend_application" {
             },
             {
               host = "register.geonorge.no"
-            },
-            {
-              host = "aut-idporten.dev.skip.statkart.no"
             }
           ]
         }
