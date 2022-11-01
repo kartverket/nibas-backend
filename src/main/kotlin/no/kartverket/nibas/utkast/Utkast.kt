@@ -138,7 +138,6 @@ class UtkastService(private val utkastRepository: UtkastRepository,
         utkast.status = UtkastStatus.PUBLISERT
     }
 
-    // Max 2 throws pr metode tillates av Detekt
     private fun validateUtkastKlartForPublisering(utkast: Utkast) {
         if (utkast.status != UtkastStatus.OPPRETTET) {
             throw BadRequestException("Kan ikke publisere et utkast i status ${utkast.status}.")

@@ -165,9 +165,7 @@ root.getKurver().forEach { kurve ->
 
 ## Formatering <a name="formatering"></a>
 
-Vi bruker EditorConfig for formatering (som IntelliJ default forstår). I tillegg benyttes Detekt i byggeløypa (anbefalt av SKIP). Dette kan en også sette opp i
-IntelliJ for å få varsler der. Gå til File->Settings->Plugins og installer Detekt-plugin. Etterpå gå til File->Settings->Tools->Detekt. Huk av Enable Detekt,
-Enable rules og Enable formatting. Under Configuration Files, legg til stien til detekt.yml som ligger på rota.
+Vi bruker EditorConfig for formatering (som IntelliJ default forstår).
 
 ## Import <a name="import"></a>
 

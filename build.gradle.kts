@@ -1,4 +1,3 @@
-import io.gitlab.arturbosch.detekt.Detekt
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.springframework.boot.gradle.tasks.bundling.BootJar
 
@@ -12,7 +11,6 @@ plugins {
     kotlin("plugin.jpa") version kotlinPluginVersion
     kotlin("plugin.allopen") version kotlinPluginVersion
     id("org.flywaydb.flyway") version "9.6.0"
-    id("io.gitlab.arturbosch.detekt") version "1.21.0"
 }
 
 group = "no.kartverket.nibas"
@@ -153,14 +151,4 @@ tasks.withType<Test> {
 
 flyway {
     schemas = arrayOf("nibas")
-}
-
-detekt {
-    config = files("detekt.yml")
-}
-
-tasks.withType<Detekt>().configureEach {
-    reports {
-        sarif.required.set(true)
-    }
 }
