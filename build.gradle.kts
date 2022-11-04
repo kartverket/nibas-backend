@@ -10,7 +10,7 @@ plugins {
     kotlin("plugin.spring") version kotlinPluginVersion
     kotlin("plugin.jpa") version kotlinPluginVersion
     kotlin("plugin.allopen") version kotlinPluginVersion
-    id("org.flywaydb.flyway") version "9.6.0"
+    id("org.flywaydb.flyway") version "9.7.0"
 }
 
 group = "no.kartverket.nibas"
