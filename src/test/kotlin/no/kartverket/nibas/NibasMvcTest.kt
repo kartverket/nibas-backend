@@ -68,12 +68,15 @@ open class NibasMvcTest {
         testPost(url, null, responseAsserts)
     }
 
-    fun delete(url: String, responseAsserts: MockResponseAsserts) {
-        testDelete(url, responseAsserts)
-    }
-
     fun post(url: String, requestObject: Any, responseAsserts: MockResponseAsserts) {
         testPost(url, requestObject, responseAsserts)
+    }
+
+    fun post(url: String, requestObject: Any, expected: ResultMatcher) =
+        perform(MockMvcRequestBuilders.post(url).content(asJson(requestObject)), expected)
+
+    fun delete(url: String, responseAsserts: MockResponseAsserts) {
+        testDelete(url, responseAsserts)
     }
 
     private fun testPost(

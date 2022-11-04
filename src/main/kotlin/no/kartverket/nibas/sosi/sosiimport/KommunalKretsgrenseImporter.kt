@@ -2,13 +2,11 @@ package no.kartverket.nibas.sosi.sosiimport
 
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.domain.Grense
-import no.kartverket.nibas.domain.updateSosiIdentifikasjon
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.NoeyaktighetsklassekodeRepository
 import no.kartverket.nibas.repository.TerrengdetaljkodeRepository
 import no.kartverket.nibas.repository.TypeendringRepository
 import no.kartverket.nibas.sosi.common.SosiKoder
-import no.kartverket.nibas.sosi.model.SosiGeometri
 import no.kartverket.nibas.sporing.Gyldighet
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
@@ -24,13 +22,12 @@ class KommunalKretsgrenseImporter @Autowired constructor(
 
     fun importer(skalImporteres: SplitTilImport): Grense {
         val sosiGeometri = skalImporteres.splitRef.basertPaGrense
+
         val grense = when (sosiGeometri.getObjType()) {
-            SosiKoder.STEMMEKRETSGRENSE -> Grense(Grensetype.Stemmekretsgrense)
+            SosiKoder.STEMMEKRETSGRENSE -> createGrense(sosiGeometri.getIdent(), Grensetype.Stemmekretsgrense)
             else -> throw RuntimeException("Ukjent grensetype (${sosiGeometri.getObjType()}) for kommunal kretsgrense")
         }
 
-        grense.updateSosiIdentifikasjon(sosiGeometri.getIdent())
-        grense.lokalid = skalImporteres.lokalId()
         grense.datafangstdato = sosiGeometri.getDatafangstDato()
         grense.datauttaksdato = sosiGeometri.getDataUttaksdato()
         grense.endringsflagg?.tidspunktendring = sosiGeometri.getEndringsflagg()?.getTidspunktEndring()

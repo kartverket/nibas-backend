@@ -4,21 +4,24 @@ import no.kartverket.nibas.api.v1.UtkastApi
 import no.kartverket.nibas.api.v1.common.Grenseendringer
 import no.kartverket.nibas.api.v1.common.Metadataendringer
 import no.kartverket.nibas.api.v1.common.Operasjoner
-import no.kartverket.nibas.common.ResponseException.BadRequestException
-import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
+import no.kartverket.nibas.api.v1.request.ConflictResolved
 import no.kartverket.nibas.api.v1.request.OppdaterUtkastRequest
 import no.kartverket.nibas.api.v1.request.OpprettUtkastRequest
 import no.kartverket.nibas.api.v1.response.AuditInfoResponse
 import no.kartverket.nibas.api.v1.response.UtkastOpprettetResponse
 import no.kartverket.nibas.api.v1.response.UtkastRef
 import no.kartverket.nibas.api.v1.response.UtkastResponse
+import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.common.ResponseException.BadRequestException
+import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.domain.utkast.Utkast
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastEndringstype
 import no.kartverket.nibas.domain.utkast.UtkastStatus
 import no.kartverket.nibas.inndelinger.FylkeService
 import no.kartverket.nibas.inndelinger.GrenseService
+import no.kartverket.nibas.inndelinger.GrunnkretsRequestWrapper
 import no.kartverket.nibas.inndelinger.GrunnkretsService
 import no.kartverket.nibas.inndelinger.KommuneService
 import no.kartverket.nibas.inndelinger.NasjonService
@@ -69,6 +72,10 @@ class UtkastController(private val utkastService: UtkastService,
         return utkastService.hentUtkastIStatusOpprettet().map { it.toUtkastRef(hrefProvider) }.sortedBy { it.navn }
     }
 
+    override fun resolveConflictForFramtidigeVersjoner(id: String, conflictResolved: ConflictResolved) {
+        utkastService.resolveConflictForFramtidigeVersjoner(id, conflictResolved)
+    }
+
 }
 
 @Transactional
@@ -112,8 +119,8 @@ class UtkastService(private val utkastRepository: UtkastRepository,
             operasjoner = null
         }
 
-    fun publiserUtkast(id: String) {
-        val utkast = hentUtkast(id) ?: throw NotFoundException("Utkast ble ikke funnet for id: $id.")
+    fun publiserUtkast(utkastId: String) {
+        val utkast = hentUtkast(utkastId) ?: throw NotFoundException("Utkast ble ikke funnet for id: $utkastId.")
         validateUtkastKlartForPublisering(utkast)
 
         logger.debug(utkast.publiseringsInfo())
@@ -125,7 +132,13 @@ class UtkastService(private val utkastRepository: UtkastRepository,
             metadata.nasjonsendringer.forEach { nasjonService.oppdaterNasjon(it.key, it.value) }
             metadata.fylkesendringer.forEach { fylkeService.oppdaterFylke(it.key, it.value) }
             metadata.kommuneendringer.forEach { kommuneService.oppdaterKommune(it.key, it.value) }
-            metadata.grunnkretsendringer.forEach { grunnkretsService.oppdaterGrunnkrets(it.key, it.value) }
+            metadata.grunnkretsendringer.forEach {
+                grunnkretsService.oppdaterGrunnkrets(Lokalid(it.key),
+                    GrunnkretsRequestWrapper(
+                        grunnkretsRequest = it.value,
+                        gyldigFra = utkast.gyldigFra,
+                        endringstype = utkast.endringstype.name))
+            }
             metadata.stemmekretsendringer.forEach { stemmekretsService.oppdaterStemmekrets(it.key, it.value) }
 
             val endredeFeatures = grenseendringer.endredeFeatures
@@ -135,7 +148,23 @@ class UtkastService(private val utkastRepository: UtkastRepository,
             }
         }
 
-        utkast.status = UtkastStatus.PUBLISERT
+        utkast.settPublisert()
+    }
+
+    /**
+     * Setter utkastet til PUBLISERT hvis utføringen av requestene som er resolved går bra.
+     */
+    fun resolveConflictForFramtidigeVersjoner(utkastId: String, conflictResolved: ConflictResolved) {
+        val utkast = hentUtkast(utkastId) ?: throw NotFoundException("Utkast ble ikke funnet for id: $utkastId.")
+
+        conflictResolved.grunnkretsRequests.forEach {
+            grunnkretsService.oppdaterGrunnkrets(conflictResolved.lokalid, GrunnkretsRequestWrapper(
+                grunnkretsRequest = it.grunnkretsRequest,
+                gyldigFra = it.gyldigFra,
+                endringstype = it.endringstype,
+                resolved = true))
+        }
+        utkast.settPublisert()
     }
 
     private fun validateUtkastKlartForPublisering(utkast: Utkast) {

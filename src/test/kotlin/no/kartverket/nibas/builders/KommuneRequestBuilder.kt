@@ -12,14 +12,12 @@ class KommuneRequestBuilder {
     private var navn = "Oslo"
     private var spraak = "NOR"
     private var lokalId = "123"
-    private var navnerom = "A.B.C"
     private var kommunenummer = "123"
     private var samiskforvaltningsomraade = false
 
     fun build(): KommuneRequest = KommuneRequest(
         administrativenhetnavn = listOf(AdministrativEnhetNavn(navn, spraak, version = 1)),
         lokalid = lokalId,
-        navnerom = navnerom,
         kommunenummerId = kommunenummer,
         samiskforvaltningsomraade = samiskforvaltningsomraade,
         version = 1
@@ -27,11 +25,6 @@ class KommuneRequestBuilder {
 
     fun withNavn(navn: String): KommuneRequestBuilder {
         this.navn = navn
-        return this
-    }
-
-    fun withNavnerom(navnerom: String): KommuneRequestBuilder {
-        this.navnerom = navnerom
         return this
     }
 

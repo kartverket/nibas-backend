@@ -11,7 +11,6 @@ class NasjonBuilder(private val id: String = "1") {
 
     private var navn: String = "Norge"
     private var spraak: String = "nor"
-    private var navnerom: String = "ABC"
     private var lokalId: String = "123"
     private var fylke: Fylke = Fylke()
 
@@ -25,7 +24,7 @@ class NasjonBuilder(private val id: String = "1") {
     }
 
     fun build(): Nasjon {
-        val nasjon = Nasjon(id = this.id)
+        val nasjon = Nasjon(id = this.id, lokalid = lokalId)
         val spraakkode = Spraakkode()
         spraakkode.id = spraak
         spraakkode.description = spraak
@@ -35,8 +34,6 @@ class NasjonBuilder(private val id: String = "1") {
         administrativenhetnavn.spraak = spraakkode
 
         nasjon.administrativenhetnavn = mutableSetOf(administrativenhetnavn)
-        nasjon.lokalid = lokalId
-        nasjon.navnerom = navnerom
         nasjon.posisjon = GeometryFactory().createPoint(Coordinate(1.0, 1.0))
         nasjon.flate = GeometryFactory().createMultiPolygon(arrayOf(GeometryFactory().createPolygon()))
 

@@ -28,6 +28,7 @@ import org.springframework.data.repository.NoRepositoryBean
 @NoRepositoryBean
 interface CrudRepositoryWithLokalIdFinder<T, ID> : CrudRepository<T, ID> {
     fun findByLokalid(lokalid: String): T?
+    fun findAllByLokalid(lokalid: String): List<T>
 }
 
 interface LandKodeRepository : CrudRepository<Landkode, String>
@@ -53,6 +54,9 @@ interface KommuneRepository : CrudRepositoryWithLokalIdFinder<Kommune, String> {
 }
 
 interface GrunnkretsRepository : CrudRepositoryWithLokalIdFinder<Grunnkrets, String>
+
+fun GrunnkretsRepository.findAllByLokalidSortedByGyldigFra(lokalid: String): List<Grunnkrets> =
+    findAllByLokalid(lokalid).sortedBy { it.gyldighet.gyldigFra }
 
 interface StemmekretsRepository : CrudRepositoryWithLokalIdFinder<Stemmekrets, String>
 

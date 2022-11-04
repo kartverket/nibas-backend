@@ -2,12 +2,10 @@ package no.kartverket.nibas.sosi.sosiimport
 
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.domain.Grense
-import no.kartverket.nibas.domain.updateSosiIdentifikasjon
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.FastsettingstypeRepository
 import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.GrensestatusRepository
-import no.kartverket.nibas.sosi.model.SosiGeometri
 import no.kartverket.nibas.sporing.Gyldighet
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
@@ -30,9 +28,7 @@ class RiksgrenseImporter @Autowired constructor(
 
         return when (val existing = grenseRepository.findByLokalid(skalImporteres.lokalId())) {
             null -> {
-                var riksgrense = Grense(Grensetype.Riksgrense)
-                riksgrense.updateSosiIdentifikasjon(sosiRiksgrense.getIdent())
-                riksgrense.lokalid = skalImporteres.lokalId()
+                var riksgrense = createGrense(sosiRiksgrense.getIdent(), Grensetype.Riksgrense)
                 riksgrense.datafangstdato = sosiRiksgrense.getDatafangstDato()
 
                 riksgrense.datauttaksdato = sosiRiksgrense.getDataUttaksdato()
@@ -62,6 +58,7 @@ class RiksgrenseImporter @Autowired constructor(
                 return riksgrense
 
             }
+
             else -> existing
         }
     }

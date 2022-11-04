@@ -8,8 +8,6 @@ import java.util.*
  * Eksempel:
  * ..IDENT
  * ...LOKALID "123-abc"
- * ...NAVNEROM "https://data.geonorge.no/sosi/administrativeenheter"
- * ...VERSJONID "abc"
  *
  * Eksempelet over kan også kompaktifiseres til følgende:
  * ..IDENT 123-abc "https://data.geonorge.no/sosi/administrativeenheter" abc
@@ -20,27 +18,26 @@ class SosiIdent(niva: Int, verdier: MutableList<SosiVerdi>) : SosiObjekt(type = 
         false -> getVerdiMedIndex(0)
     }
 
-    fun getNavnerom(): String? = when (harBarn()) {
-        true -> getVerdiAvBarn(SosiKoder.NAVNEROM)
-        false -> getVerdiMedIndex(1)
+    fun getValidLokalId(): String? {
+        if (lokalIdIsValidUUID()) {
+            return getLokalId()
+        }
+        return null
     }
 
-    fun getVersjonId(): String? = when(harBarn()) {
-        true -> getVerdiAvBarn(SosiKoder.VERSJONID)
-        false -> getVerdiMedIndex(2)
-    }
-}
-
-fun SosiIdent.lokalIdIsValidUUID(): Boolean {
-    val lokalId = getLokalId()
-    return if (lokalId.isNullOrEmpty()) {
-        false
-    } else {
-        try {
-            UUID.fromString(lokalId)
-            true
-        } catch (e: Exception) {
+    fun lokalIdIsValidUUID(): Boolean {
+        val lokalId = getLokalId()
+        return if (lokalId.isNullOrEmpty()) {
             false
+        } else {
+            try {
+                UUID.fromString(lokalId)
+                true
+            } catch (e: Exception) {
+                false
+            }
         }
     }
 }
+
+

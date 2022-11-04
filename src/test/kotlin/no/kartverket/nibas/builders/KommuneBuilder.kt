@@ -9,16 +9,17 @@ import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
 import java.time.LocalDate
 
-class KommuneBuilder(private val id: String = "1") {
-    private var kommunenummer: String = "UUID-1"
-    private var navnerom: String = "ABC"
-    private var lokalId: String = "123"
-    private var navn = "Vestland"
-    private var spraak = "NOR"
-    private var samiskforvaltningsomraade = false
-    private var oppdateringsdato: LocalDate = LocalDate.now()
-    private var grunnkretser: MutableList<Grunnkrets> = mutableListOf()
+class KommuneBuilder(
+    private val id: String = "1",
+    private var kommunenummer: String = "UUID-1",
+    private var lokalId: String = "123",
+    private var navn: String = "Vestland",
+    private var spraak: String = "NOR",
+    private var samiskforvaltningsomraade: Boolean = false,
+    private var oppdateringsdato: LocalDate = LocalDate.now(),
+    private var grunnkretser: MutableList<Grunnkrets> = mutableListOf(),
     private var stemmekretser: MutableList<Stemmekrets> = mutableListOf()
+) {
 
     companion object {
         val DEFAULT_KOMMUNE = KommuneBuilder().build()
@@ -31,7 +32,7 @@ class KommuneBuilder(private val id: String = "1") {
     }
 
     fun build(): Kommune {
-        val kommune = Kommune(id = this.id)
+        val kommune = Kommune(id = this.id, lokalid = lokalId)
         val spraakkode = Spraakkode()
         spraakkode.id = spraak
         spraakkode.description = spraak
@@ -43,8 +44,6 @@ class KommuneBuilder(private val id: String = "1") {
         kommune.administrativenhetnavn = mutableSetOf(administrativenhetnavn)
         administrativenhetnavn.kommuneFk = kommune
 
-        kommune.lokalid = lokalId
-        kommune.navnerom = navnerom
         kommune.kommunenummer = kommunenummer
         kommune.samiskforvaltningsomraade = samiskforvaltningsomraade
         kommune.auditInfo.oppdateringsdato = oppdateringsdato
@@ -59,11 +58,6 @@ class KommuneBuilder(private val id: String = "1") {
 
     fun withLokalId(lokalId: String): KommuneBuilder {
         this.lokalId = lokalId
-        return this
-    }
-
-    fun withNavnerom(navnerom: String): KommuneBuilder {
-        this.navnerom = navnerom
         return this
     }
 

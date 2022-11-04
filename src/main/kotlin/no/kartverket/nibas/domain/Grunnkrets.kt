@@ -24,7 +24,10 @@ import javax.persistence.Table
 @Table(name = "grunnkrets")
 @Audited
 @Entity
-class Grunnkrets(override val id: String = UUID.randomUUID().toString()) : StatistiskEnhet(Flatetype.GRUNNKRETS), KobletTilGrense {
+class Grunnkrets(
+    override val id: String = UUID.randomUUID().toString(),
+    override val lokalid: String = UUID.randomUUID().toString(),
+) : StatistiskEnhet(Flatetype.GRUNNKRETS), KobletTilGrense {
 
     @Column(name = "grunnkretsnummer", nullable = false)
     var grunnkretsnummer: String? = null
@@ -85,7 +88,7 @@ class Grunnkrets(override val id: String = UUID.randomUUID().toString()) : Stati
 
 
     override fun toString(): String {
-        return "Grunnkrets(id='$id', grunnkretsnummer=$grunnkretsnummer, grunnkretsnavn=$grunnkretsnavn)"
+        return "Grunnkrets(id='$id', grunnkretsnummer=$grunnkretsnummer, grunnkretsnavn=$grunnkretsnavn, gyldighet: $gyldighet)"
     }
 
     private fun tillatteGrensetyper(): Set<Grensetype> = setOf(
@@ -105,6 +108,18 @@ class Grunnkrets(override val id: String = UUID.randomUUID().toString()) : Stati
                 grenseKoblingAttributter = grenseKoblingAttributter
             )
         )
+    }
+
+    fun addGrenseKoblingerFrom(grensekoblinger: Set<GrunnkretsGrenseKobling>) {
+        grensekoblinger.forEach {
+            addGrensekobling(it.grense, it.grenseKoblingAttributter)
+        }
+    }
+
+    fun addInformasjonselementerFrom(informasjonselementer: Set<GrunnkretsInformasjon>) {
+        informasjonselementer.forEach { grunnkretsInformasjon ->
+            setInfo(grunnkretsInformasjon.informasjon)
+        }
     }
 
     fun kommunegrenser(): Set<GrenseKobling> = getGrenserAvType(Grensetype.Kommunegrense)

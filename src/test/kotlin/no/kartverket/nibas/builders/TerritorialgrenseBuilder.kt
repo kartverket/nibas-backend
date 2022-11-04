@@ -14,8 +14,6 @@ import java.time.LocalDate
 class TerritorialgrenseBuilder {
 
     private var lokalid: String = LOKALID
-    private var navnerom: String = NAVNEROM
-    private var versjonid: String = VERSJON_33
     private var oppdateringsdato: LocalDate = LocalDate.now()
     private var datafangstdato: LocalDate = LocalDate.now()
     private var gyldigFra: LocalDate = LocalDate.now()
@@ -37,10 +35,7 @@ class TerritorialgrenseBuilder {
     private var beregningsdato: LocalDate = LocalDate.now()
 
     fun build(): Grense {
-        val territorialgrense = Grense(Grensetype.Territorialgrense)
-        territorialgrense.lokalid = lokalid
-        territorialgrense.navnerom = navnerom
-        territorialgrense.versjonid = versjonid
+        val territorialgrense = Grense(lokalid = lokalid, grensetype = Grensetype.Territorialgrense)
         territorialgrense.datafangstdato = datafangstdato
         territorialgrense.gyldighet = Gyldighet(gyldigFra, null)
         territorialgrense.kvalitet = kvalitet

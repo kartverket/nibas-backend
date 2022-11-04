@@ -25,7 +25,7 @@ class GrunnkretsResponseBuilder(private val kodelisteService: KodelisteService) 
             id = grunnkrets.id,
             navn = grunnkrets.grunnkretsnavn!!,
             grunnkretsnummer = grunnkrets.grunnkretsnummer!!,
-            identifikasjon = Identifikasjon(grunnkrets.lokalid, grunnkrets.navnerom, grunnkrets.versjonid),
+            identifikasjon = Identifikasjon(grunnkrets.lokalid),
             kommunenummer = Kommunenummer(grunnkrets.kommune.kommunenummer, kommunenummer),
             features = FeatureCollection(
                 features = listOf(

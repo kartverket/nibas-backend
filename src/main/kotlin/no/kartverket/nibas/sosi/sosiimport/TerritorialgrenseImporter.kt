@@ -2,13 +2,11 @@ package no.kartverket.nibas.sosi.sosiimport
 
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.domain.Grense
-import no.kartverket.nibas.domain.updateSosiIdentifikasjon
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.FastsettingstypeRepository
 import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.GrensestatusRepository
 import no.kartverket.nibas.repository.LandKodeRepository
-import no.kartverket.nibas.sosi.model.SosiGeometri
 import no.kartverket.nibas.sporing.Gyldighet
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
@@ -32,19 +30,13 @@ class TerritorialgrenseImporter @Autowired constructor(
         return when (val existing =
             grenseRepository.findByLokalid(skalImporteres.lokalId())) {
             null -> {
-                var territorialgrense = Grense(Grensetype.Territorialgrense)
-                val sosiIdent = sosiTerritorialgrense.getIdent()
-                territorialgrense.updateSosiIdentifikasjon(sosiIdent)
-                territorialgrense.lokalid = skalImporteres.lokalId()
+                var territorialgrense = createGrense(sosiTerritorialgrense.getIdent(), Grensetype.Territorialgrense)
+
                 territorialgrense.datafangstdato = sosiTerritorialgrense.getDatafangstDato()
-
                 territorialgrense.datauttaksdato = sosiTerritorialgrense.getDataUttaksdato()
-
                 territorialgrense.opphav = sosiTerritorialgrense.getOpphav()
                 territorialgrense.gyldighet = Gyldighet(sosiTerritorialgrense.getGyldigFra(), sosiTerritorialgrense.getGyldigTil())
-
                 territorialgrense.kvalitet = sosiTerritorialgrense.getPosisjonskvalitet(kodelisteService)
-
                 territorialgrense.grensestatus = when (val grenseStatus = sosiTerritorialgrense.getGrensestatus()) {
                     null -> null
                     else -> grensestatusRepository.findByIdOrNull(grenseStatus)

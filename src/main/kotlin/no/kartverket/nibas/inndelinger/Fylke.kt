@@ -73,8 +73,6 @@ class FylkeService(
             verifiserOptimistiskLaas(oppdatertFylke.version, gammel)?.let { throw OptimistiskLaasException(it) }
             gammel.samiskforvaltningsomraade = oppdatertFylke.samiskforvaltningsomraade
             gammel.fylkesnummer = oppdatertFylke.fylkesnummerId
-            gammel.navnerom = oppdatertFylke.navnerom
-            gammel.lokalid = oppdatertFylke.lokalid
 
             // Finner basert på språkkode, og oppdaterer den
             oppdatertFylke.administrativenhetnavn.forEach { navn ->
@@ -99,7 +97,6 @@ fun Fylke.toFylkeResponse(kodelisteService: KodelisteService): FylkeResponse = F
     id = this.id,
     administrativenhetnavn = this.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version) },
     lokalid = this.lokalid,
-    navnerom = this.navnerom,
     fylkesnummer = Fylkesnummer(
         id = this.fylkesnummer,
         kodeverdi = kodelisteService.getCodeValueByFylkesnummerId(this.fylkesnummer)?.toInt()!!

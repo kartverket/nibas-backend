@@ -2,11 +2,9 @@ package no.kartverket.nibas.sosi.sosiimport
 
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.domain.Grense
-import no.kartverket.nibas.domain.updateSosiIdentifikasjon
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.FastsettingstypeRepository
 import no.kartverket.nibas.repository.GrenseRepository
-import no.kartverket.nibas.sosi.model.SosiKurve
 import no.kartverket.nibas.sporing.Gyldighet
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
@@ -28,9 +26,7 @@ class LovVirkeomraadeGrenseImporter @Autowired constructor(
         return when (val existing =
             grenseRepository.findByLokalid(skalImporteres.lokalId())) {
             null -> {
-                var lovvirkeomraadegrense = Grense(Grensetype.Lovvirkeomraadegrense)
-                lovvirkeomraadegrense.updateSosiIdentifikasjon(sosiLovvirkeomraadegrense.getIdent())
-                lovvirkeomraadegrense.lokalid = skalImporteres.lokalId()
+                var lovvirkeomraadegrense = createGrense(sosiLovvirkeomraadegrense.getIdent(), Grensetype.Lovvirkeomraadegrense)
                 lovvirkeomraadegrense.datafangstdato = sosiLovvirkeomraadegrense.getDatafangstDato()
                 lovvirkeomraadegrense.datauttaksdato = sosiLovvirkeomraadegrense.getDataUttaksdato()
                 lovvirkeomraadegrense.kommunenummer = sosiLovvirkeomraadegrense.getKommunenumre().map { sosiKommunenummer ->
@@ -57,6 +53,7 @@ class LovVirkeomraadeGrenseImporter @Autowired constructor(
                 }
                 return lovvirkeomraadegrense
             }
+
             else -> existing
         }
     }

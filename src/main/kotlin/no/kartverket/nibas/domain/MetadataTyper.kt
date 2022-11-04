@@ -61,13 +61,7 @@ data class Registreringsversjon(
 @Embeddable
 data class FoelgerGrunnkretsgrenseIdentifikasjon(
     @Column(name = "foelgergrunnkretsgrense_lokalid")
-    override var lokalid: String = "",
-
-    @Column(name = "foelgergrunnkretsgrense_navnerom")
-    override var navnerom: String = "",
-
-    @Column(name = "foelgergrunnkretsgrense_versjonid")
-    override var versjonid: String? = null
+    override val lokalid: String = ""
 ) : ContainsSosiIdentifikasjon
 
 // Felles egenskaper for grenser, adm_enheter, punkter ++
@@ -100,7 +94,6 @@ interface Info {
     val id: String
     var informasjon: String?
 }
-
 
 
 // Innkommende fra klienten. Id kan være null

@@ -20,7 +20,10 @@ import javax.persistence.Table
 @Table(name = "nasjon")
 @Audited
 @Entity
-class Nasjon(override val id: String = UUID.randomUUID().toString()) : AdministrativEnhet(Flatetype.NASJON) {
+class Nasjon(
+    override val id: String = UUID.randomUUID().toString(),
+    override val lokalid: String = UUID.randomUUID().toString(),
+) : AdministrativEnhet(Flatetype.NASJON) {
 
     @OneToMany(mappedBy = "nasjonFk")
     override var administrativenhetnavn: MutableSet<Administrativenhetnavn> = mutableSetOf()

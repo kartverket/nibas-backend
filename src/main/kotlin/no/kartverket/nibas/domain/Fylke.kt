@@ -20,7 +20,10 @@ import javax.persistence.Table
 @Table(name = "fylke")
 @Audited
 @Entity
-class Fylke(override val id: String = UUID.randomUUID().toString()) : AdministrativEnhet(Flatetype.FYLKE) {
+class Fylke(
+    override val id: String = UUID.randomUUID().toString(),
+    override val lokalid: String = UUID.randomUUID().toString(),
+) : AdministrativEnhet(Flatetype.FYLKE) {
 
     @Column(name = "fylkesnummer", nullable = false)
     var fylkesnummer: String = ""

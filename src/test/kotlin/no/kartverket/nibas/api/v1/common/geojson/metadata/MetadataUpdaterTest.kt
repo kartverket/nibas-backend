@@ -11,7 +11,6 @@ import no.kartverket.nibas.builders.LINK_TEKST_2
 import no.kartverket.nibas.builders.LOKALID
 import no.kartverket.nibas.builders.MYNDIGHET
 import no.kartverket.nibas.builders.MaalemetodeKodeEnum
-import no.kartverket.nibas.builders.NAVNEROM
 import no.kartverket.nibas.builders.NoeyaktighetsklasseEnum
 import no.kartverket.nibas.builders.REF_TEKST_1
 import no.kartverket.nibas.builders.REF_TEKST_2
@@ -19,7 +18,6 @@ import no.kartverket.nibas.builders.RETTSKILDE_ID_1
 import no.kartverket.nibas.builders.TITTEL
 import no.kartverket.nibas.builders.TerrengdetaljEnum
 import no.kartverket.nibas.builders.TerritorialgrenseBuilder
-import no.kartverket.nibas.builders.VERSJON_33
 import no.kartverket.nibas.builders.fastsettingstypeBestemteKoordinater
 import no.kartverket.nibas.builders.grensestatusTraktat
 import no.kartverket.nibas.builders.noeyaktighetsklassekodeLite
@@ -206,7 +204,7 @@ internal class MetadataUpdaterTest {
     }
 
     private fun expectedCommonMetadata() = CommonMetadata(
-        identifikasjon = Identifikasjon(LOKALID, NAVNEROM, VERSJON_33),
+        identifikasjon = Identifikasjon(LOKALID),
         datafangstdato = dataFanget,
         gyldigFra = gyldigFraTidspunkt,
         gyldigTil = null,

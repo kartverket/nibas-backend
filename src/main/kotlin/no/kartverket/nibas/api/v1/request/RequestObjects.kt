@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
+import no.kartverket.nibas.common.Lokalid
 import java.time.LocalDate
 import javax.validation.constraints.NotBlank
 import javax.validation.constraints.NotNull
@@ -15,9 +16,6 @@ data class NasjonRequest(
     @Schema(description = "LokalId for angitt nasjon")
     @NotBlank
     val lokalid: String,
-
-    @Schema(description = "Navnerommet for nasjonen")
-    val navnerom: String,
 
     @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
     @NotNull
@@ -31,9 +29,6 @@ data class FylkeRequest(
     @Schema(description = "LokalId for angitt fylke")
     @NotBlank
     val lokalid: String,
-
-    @Schema(description = "Navnerommet for fylket")
-    val navnerom: String,
 
     @Schema(description = "UUID til fylkesnummeret")
     @NotBlank
@@ -57,10 +52,6 @@ data class KommuneRequest(
     @Schema(description = "LokalId for angitt kommune")
     @NotBlank
     val lokalid: String,
-
-    //TODO: Vurdere å gjøre påkrevet, fordi det er en påkrevet egenskap i sosi-modellen
-    @Schema(description = "Navnerommet for kommunen")
-    val navnerom: String?,
 
     @Schema(description = "UUID til kommunenummeret")
     @NotBlank
@@ -144,4 +135,22 @@ data class OppdaterUtkastRequest(
     @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
     @NotNull
     val version: Int
+)
+
+@Schema(description = "Representasjon for resolved konflikt.")
+data class ConflictResolved(
+    @Schema(description = "Lokalid til objektet som det oppstod konflikt for.")
+    val lokalid: Lokalid,
+    @Schema(description = "Resolvede endringer på grunnkrets.")
+    val grunnkretsRequests: List<GrunnkretsRequestResolved>
+)
+
+@Schema(description = "Representasjon av en resolvet konflikt for en endring på Grunnkrets.")
+data class GrunnkretsRequestResolved(
+    @Schema(description = "Tidspunktet utkastet skal være gyldig fra.")
+    val gyldigFra: LocalDate,
+    @Schema(description = "Typen endring utkastet representerer.")
+    val endringstype: String,
+    @Schema(description = "Endring på en grunnkrets.")
+    val grunnkretsRequest: GrunnkretsRequest
 )

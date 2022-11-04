@@ -70,21 +70,17 @@ class FylkeServiceTest {
 
     @Test
     fun thatOppdaterFylkeSavesAnUpdatedVersion() {
-        val navnerom = "no.kartverket.nibas"
         val lokalId = "1000"
         val navn = "Oslo"
 
         val eksisterende = FylkeBuilder.DEFAULT_FYLKE
-        val oppdatertFylke = FylkeRequestBuilder().withNavnerom(navnerom).withLokalId(lokalId).withNavn(navn).build()
+        val oppdatertFylke = FylkeRequestBuilder().withLokalId(lokalId).withNavn(navn).build()
 
         whenever(fylkeRepository.findById(anyString())).thenReturn(Optional.of(eksisterende))
         fylkeService.oppdaterFylke("1", oppdatertFylke)
 
         val forventetNavnToSave = eksisterende.administrativenhetnavn.first()
         forventetNavnToSave.navn = navn
-
-        eksisterende.navnerom = navnerom
-        eksisterende.lokalid = lokalId
 
         verify(administrativenhetnavnRepository).save(forventetNavnToSave)
         verify(fylkeRepository).save(eksisterende)

@@ -199,7 +199,7 @@ data class KommunalKretsgrenseMetadata(
     var noeyaktighetsklasse: KodelisteEntry = KodelisteEntry(),
     @Schema(description = "Angir om grensen følger grunnkretsgrense og i så fall hvilken grunnkretsgrense")
     var foelgerGrunnkretsgrense: Identifikasjon?
-): Metadata
+) : Metadata
 
 data class CommonMetadata(
     @Schema(description = "Unik identifikasjon av et objekt")
@@ -272,11 +272,7 @@ fun Posisjonskvalitet.toEmbeddable(): PosisjonskvalitetEmbeddable = Posisjonskva
 
 data class Identifikasjon(
     @Schema(description = "Lokal id som identifiserer geometrien. Dette er en globalt unik id.")
-    override var lokalid: String,
-    @Schema(description = "Navnerom som unikt identifiserer datakilden til objektet, starter med to bokstavs kode jfr ISO 3166.")
-    override var navnerom: String,
-    @Schema(description = "Identifikasjon av en spesiell versjon av et geografisk objekt (instans), maksimum lengde på 25 karakterer.")
-    override var versjonid: String? = null
+    override val lokalid: String
 ) : ContainsSosiIdentifikasjon
 
 data class Dokref(

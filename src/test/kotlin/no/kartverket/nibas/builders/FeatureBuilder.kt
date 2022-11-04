@@ -31,7 +31,6 @@ class FeatureBuilder(private val id: String? = "1") {
     private var grenseVersjon = 1
     private var metadata: Metadata? = null
     private var lokalid: String = "123"
-    private var navnerom: String = "ABC"
     private var kontekstId: String = "123"
     private var kontekstType: KontekstEnhetType = KontekstEnhetType.GRUNNKRETS
     private var retningMedKlokka: Boolean = true
@@ -55,7 +54,7 @@ class FeatureBuilder(private val id: String? = "1") {
 
         if (metadata == null) {
             val commonMetadata = CommonMetadata(
-                identifikasjon = Identifikasjon(lokalid, navnerom),
+                identifikasjon = Identifikasjon(lokalid),
                 sporingsinformasjon = Sporingsinformasjon(oppdateringsdato = ZonedDateTime.now().toLocalDate()),
                 gyldigFra = LocalDate.now()
             )

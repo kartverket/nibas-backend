@@ -36,7 +36,6 @@ class FylkeControllerTest : NibasMvcTest() {
             FylkeBuilder()
                 .withNavn("Vestland")
                 .withLokalId("123")
-                .withNavnerom("ABC")
                 .withFylkesnummer("UUID-123")
                 .build()
         )

@@ -1,8 +1,8 @@
 package no.kartverket.nibas.domain
 
 import no.kartverket.nibas.api.v1.common.Grensetype
-import no.kartverket.nibas.common.ResponseException.BadRequestException
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Dokref
+import no.kartverket.nibas.common.ResponseException.BadRequestException
 import no.kartverket.nibas.sporing.AuditInfo
 import no.kartverket.nibas.sporing.Gyldighet
 import no.kartverket.nibas.sporing.Laasbar
@@ -10,7 +10,6 @@ import org.hibernate.envers.Audited
 import org.locationtech.jts.geom.LineString
 import java.time.LocalDate
 import java.util.*
-import java.util.logging.Logger
 import javax.persistence.CascadeType
 import javax.persistence.Column
 import javax.persistence.ElementCollection
@@ -32,15 +31,14 @@ import javax.persistence.Version
 @Audited
 @Entity
 class Grense(
-    // Blir mappet av Converter
-    var grensetype: Grensetype,
-
     @Id
     @Column(name = "objid", nullable = false, updatable = false)
-    override val id: String = UUID.randomUUID().toString()) : CommonMetadataProperties, MaritimGrense, Laasbar {
-
-    @Transient
-    private val logger: Logger = Logger.getLogger(this::class.java.name)
+    override val id: String = UUID.randomUUID().toString(),
+    @Column(name = "lokalid", nullable = false, updatable = false)
+    override val lokalid: String = UUID.randomUUID().toString(),
+    // Blir mappet av Converter
+    var grensetype: Grensetype
+) : CommonMetadataProperties, MaritimGrense, Laasbar {
 
     @Embedded
     override var auditInfo: AuditInfo = AuditInfo()
@@ -68,15 +66,6 @@ class Grense(
     override var version: Int = 1
 
     var objtype: String? = grensetype.value
-
-    @Column(name = "lokalid", nullable = false, updatable = false)
-    override var lokalid: String = UUID.randomUUID().toString()
-
-    @Column(name = "navnerom", nullable = false, updatable = false)
-    override var navnerom: String = DEFAULT_NAVNEROM
-
-    @Column(name = "versjonid")
-    override var versjonid: String? = null
 
     @Column(name = "datafangstdato")
     override var datafangstdato: LocalDate? = null

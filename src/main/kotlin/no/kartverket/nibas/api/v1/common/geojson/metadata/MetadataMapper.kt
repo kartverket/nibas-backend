@@ -100,7 +100,7 @@ class MetadataMapper(private val kodelisteService: KodelisteService,
     )
 
     private fun CommonMetadataProperties.getCommonMetadata(): CommonMetadata = CommonMetadata(
-        identifikasjon = Identifikasjon(this.lokalid, this.navnerom, this.versjonid),
+        identifikasjon = Identifikasjon(this.lokalid),
         datafangstdato = this.datafangstdato,
         gyldigFra = this.gyldighet.gyldigFra,
         gyldigTil = this.gyldighet.gyldigTil,
@@ -121,8 +121,7 @@ class MetadataMapper(private val kodelisteService: KodelisteService,
             href = kodelisteHrefProvider.landkodeHref())
     )
 
-    private fun FoelgerGrunnkretsgrenseIdentifikasjon.toIdentifikasjon(): Identifikasjon =
-        Identifikasjon(this.lokalid, this.navnerom, this.versjonid)
+    private fun FoelgerGrunnkretsgrenseIdentifikasjon.toIdentifikasjon(): Identifikasjon = Identifikasjon(this.lokalid)
 
 }
 

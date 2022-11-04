@@ -3,7 +3,10 @@ package no.kartverket.nibas.domain.utkast
 import com.vladmihalcea.hibernate.type.json.JsonBinaryType
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.request.FylkeRequest
+import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
 import no.kartverket.nibas.api.v1.request.KommuneRequest
+import no.kartverket.nibas.common.ResponseException
+import no.kartverket.nibas.common.inThePast
 import no.kartverket.nibas.sporing.AuditInfo
 import no.kartverket.nibas.sporing.Laasbar
 import no.kartverket.nibas.sporing.Sporbar
@@ -20,8 +23,6 @@ import javax.persistence.Entity
 import javax.persistence.Id
 import javax.persistence.Table
 import javax.persistence.Version
-
-private const val DEFAULT_GYLDIG_FRA_YEARS: Long = 10
 
 /**
  * Navn og endringstype settes i konstruktør da de er påkrevd ved opprettelse av utkastet.
@@ -56,18 +57,28 @@ class Utkast(
     override var auditInfo: AuditInfo = AuditInfo()
 
     @Column(name = "gyldig_fra")
-    var gyldigFra: LocalDate = LocalDate.now().plusYears(DEFAULT_GYLDIG_FRA_YEARS)
+    var gyldigFra: LocalDate = LocalDate.now()
+        set(value) {
+            if (value.inThePast()) {
+                throw ResponseException.BadRequestException("Invalid gyldigFra: $value")
+            }
+            field = value
+        }
 
     // Blir mappet av Converter
     var status: UtkastStatus = UtkastStatus.OPPRETTET
 
+    fun settPublisert() {
+        operasjoner = null
+        status = UtkastStatus.PUBLISERT
+    }
 }
 
 class UtkastBuilder private constructor(val navn: String, private val endringstype: UtkastEndringstype = UtkastEndringstype.KVALITETSHEVING) {
 
     private var status: UtkastStatus = UtkastStatus.OPPRETTET
     private var operasjoner: Operasjoner = Operasjoner()
-    private var gyldigFra: LocalDate = LocalDate.now().plusYears(DEFAULT_GYLDIG_FRA_YEARS)
+    private var gyldigFra: LocalDate = LocalDate.now()
     private var auditInfo: AuditInfo? = null
 
     companion object {
@@ -112,6 +123,12 @@ class UtkastBuilder private constructor(val navn: String, private val endringsty
 
     fun withFylkeRequests(fylkeRequests: Map<String, FylkeRequest>): UtkastBuilder {
         val metadataEndringerCopy = operasjoner.metadataendringer.copy(fylkesendringer = fylkeRequests)
+        operasjoner = operasjoner.copy(metadataendringer = metadataEndringerCopy)
+        return this
+    }
+
+    fun withGrunnkretsRequests(grunnkretsRequests: Map<String, GrunnkretsRequest>): UtkastBuilder {
+        val metadataEndringerCopy = operasjoner.metadataendringer.copy(grunnkretsendringer = grunnkretsRequests)
         operasjoner = operasjoner.copy(metadataendringer = metadataEndringerCopy)
         return this
     }

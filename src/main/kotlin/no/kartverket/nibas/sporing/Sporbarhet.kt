@@ -2,6 +2,7 @@ package no.kartverket.nibas.sporing
 
 import no.kartverket.aut.lib.security.DefaultWebSecurityConfig
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Sporingsinformasjon
+import no.kartverket.nibas.common.ResponseException
 import org.hibernate.event.service.spi.EventListenerRegistry
 import org.hibernate.event.spi.AbstractPreDatabaseOperationEvent
 import org.hibernate.event.spi.EventType
@@ -111,16 +112,64 @@ data class AuditInfo(
 }
 
 interface Gyldig {
+    // Inklusiv gyldigFra, eksklusiv gyldigTil
     var gyldighet: Gyldighet
+    fun gyldigPaaTidspunkt(dato: LocalDate): Boolean {
+        val dagenEtterDato = dato.plusDays(1)
+        val gyldigTil = gyldighet.gyldigTil
+        return gyldighet.gyldigFra.isBefore(dagenEtterDato) && (gyldigTil == null || gyldigTil.isAfter(dato))
+    }
+
+    fun setGyldigTil(gyldigTil: LocalDate) {
+        this.gyldighet = this.gyldighet.setGyldigTil(gyldigTil)
+    }
+
+    fun setGyldigFra(nyGyldigFra: LocalDate) {
+        this.gyldighet = this.gyldighet.setGyldigFra(nyGyldigFra)
+    }
 }
 
 data class Gyldighet(
     @Column(name = "gyldigfra")
-    var gyldigFra: LocalDate = LocalDate.now(),
+    val gyldigFra: LocalDate = LocalDate.now(),
 
     @Column(name = "gyldigtil")
-    var gyldigTil: LocalDate? = null
-)
+    val gyldigTil: LocalDate? = null
+) {
+
+    fun setGyldigFra(nyGyldigFra: LocalDate): Gyldighet {
+        return this.copy(gyldigFra = nyGyldigFra)
+            .apply { validerIntervall() }
+    }
+
+    fun setGyldigTil(gyldigTil: LocalDate): Gyldighet {
+        return this.copy(
+            gyldigTil = gyldigTil
+        ).apply { validerIntervall() }
+    }
+
+    private fun validerIntervall() {
+        if (!this.isValidInterval()) {
+            throw ResponseException.BadRequestException("Gyldighetsintervall blir ugyldig: $this")
+        }
+    }
+
+    /**
+     * Eksempler på gyldige intervall (gyldigFra inklusiv, gyldigTil eksklusiv):
+     * - [1.8.22, 16.10.22)
+     * - [1.8.22, null)
+     * - [1.8.22, 1.8.22) -> Tomt intervall, men vi tillater det. F.o.m. 1.8 - til 1.8.
+     */
+    private fun isValidInterval(): Boolean {
+        val gyldigTil = this.gyldigTil
+        val dagenFoerGyldigFra = this.gyldigFra.minusDays(1)
+        return gyldigTil == null || gyldigTil.isAfter(dagenFoerGyldigFra)
+    }
+
+    override fun toString(): String {
+        return "Gyldighet [gyldigFra=$gyldigFra, gyldigTil=$gyldigTil]"
+    }
+}
 
 fun AuditInfo.toSporingsinformasjon(): Sporingsinformasjon {
     return Sporingsinformasjon(

@@ -54,12 +54,12 @@ class NasjonServiceTest {
                 .withKommune(KommuneBuilder()
                     .withGrunnkrets(GrunnkretsBuilder()
                         .withGrenser(
-                            Grense(Grensetype.Riksgrense),
-                            Grense(Grensetype.Riksgrense),
-                            Grense(Grensetype.Riksgrense),
-                            Grense(Grensetype.Territorialgrense),
-                            Grense(Grensetype.Territorialgrense),
-                            Grense(Grensetype.AvtaltAvgrensningslinje),
+                            Grense(grensetype = Grensetype.Riksgrense),
+                            Grense(grensetype = Grensetype.Riksgrense),
+                            Grense(grensetype = Grensetype.Riksgrense),
+                            Grense(grensetype = Grensetype.Territorialgrense),
+                            Grense(grensetype = Grensetype.Territorialgrense),
+                            Grense(grensetype = Grensetype.AvtaltAvgrensningslinje),
                         )
                         .build())
                     .build())
@@ -86,21 +86,17 @@ class NasjonServiceTest {
 
     @Test
     fun thatOppdaterNasjonSavesAnUpdatedVersion() {
-        val navnerom = "no.kartverket.nibas"
         val lokalId = "1000"
         val navn = "Sverige"
 
         val eksisterende = NasjonBuilder.DEFAULT_NASJON
-        val oppdatertNasjon = NasjonRequestBuilder().withNavnerom(navnerom).withLokalId(lokalId).withNavn(navn).build()
+        val oppdatertNasjon = NasjonRequestBuilder().withLokalId(lokalId).withNavn(navn).build()
 
         whenever(nasjonRepository.findById(anyString())).thenReturn(Optional.of(eksisterende))
         nasjonService.oppdaterNasjon("1", oppdatertNasjon)
 
         val forventetNavnToSave = eksisterende.administrativenhetnavn.first()
         forventetNavnToSave.navn = navn
-
-        eksisterende.navnerom = navnerom
-        eksisterende.lokalid = lokalId
 
         verify(administrativenhetnavnRepository).save(forventetNavnToSave)
         verify(nasjonRepository).save(eksisterende)

@@ -7,6 +7,8 @@ import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.Point
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
+import no.kartverket.nibas.common.Identifikator
+import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.inndelinger.RevisjonStatus
 import org.springframework.http.HttpStatus
 import java.time.LocalDate
@@ -118,9 +120,6 @@ data class NasjonResponse(
     @Schema(description = "LokalID til nasjonen")
     val lokalid: String,
 
-    @Schema(description = "Navnerommet til nasjonen")
-    val navnerom: String,
-
     @Schema(description = "Geometrien til nasjonen. Ikke grenser")
     val features: FeatureCollection,
 
@@ -139,9 +138,6 @@ data class FylkeResponse(
 
     @Schema(description = "LokalIDen til fylket")
     val lokalid: String,
-
-    @Schema(description = "Navnerommet til fylket")
-    val navnerom: String,
 
     @Schema(description = "Fylkesnummeret til fylket")
     val fylkesnummer: Fylkesnummer,
@@ -169,9 +165,6 @@ data class KommuneResponse(
 
     @Schema(description = "LokalIDen til kommunen")
     val lokalid: String,
-
-    @Schema(description = "Navnerommet til kommunen")
-    val navnerom: String,
 
     @Schema(description = "Kommunenummeret til kommunen")
     val kommunenummer: Kommunenummer,
@@ -311,10 +304,23 @@ data class AuditInfoResponse(
     val endretAv: String
 )
 
-data class ConflictResponse(
+/**
+ * Samler
+ * -optimiske låsefeil og
+ * -feil ved forsøk på oppdatering av objekt med et nyere gyldigFra-tidspunkt tilstede i databasen
+ * i samme type for å returnere 409 tilbake. Alternativt kunne en nok ha brukt en Swagger oneOf.
+ */
+data class ConflictResponseWrapper(
     @Schema(description = "HttpStatus for responsen.")
     val httpStatus: HttpStatus = HttpStatus.CONFLICT,
+    @Schema(description = "Feil som har oppstått pga optimistisk lås.")
+    val optimisticLockExceptions: List<ConflictResponse> = emptyList(),
+    @Schema(description = "Feil som har oppstått pga at det fantes rader med nyere gyldighet.")
+    val framtidigVersjonConflict: FramtidigVersjonConflict? = null
+)
 
+data class ConflictResponse(
+    // TODO: Bruke ObjektIdentifikator også her
     @Schema(description = "Identifikatoren til objektet som er utdatert.")
     val id: String,
 
@@ -331,6 +337,21 @@ data class ConflictResponse(
     val melding: String?
 )
 
+data class FramtidigVersjonConflict(
+    @Schema(description = "Identifikatoren til objektet som ble forsøkt oppdatert.")
+    val id: ObjektIdentifikator,
+    @Schema(description = "Typen til objektet som ble forsøkt oppdatert.")
+    val type: String,
+    @Schema(description = "Identifikator til objekt(et/ene) som har en nyere gyldigFra-dato og er i konflikt med endringen.")
+    val affectedIds: List<ObjektIdentifikator> = emptyList(),
+    @Schema(description = "Beskrivelse av hva som har gått galt.")
+    val melding: String?
+)
+
+data class ObjektIdentifikator(val lokalid: Lokalid, val gyldigFra: LocalDate)
+
+fun Identifikator.toObjektIdentifikator(): ObjektIdentifikator = ObjektIdentifikator(this.lokalid, this.gyldigFra)
+
 data class MissingKodelisteItemResponse(
     @Schema(description = "HttpStatus for responsen")
     val httpStatus: HttpStatus = HttpStatus.INTERNAL_SERVER_ERROR,
@@ -338,6 +359,7 @@ data class MissingKodelisteItemResponse(
     @Schema(description = "Hva gikk galt")
     val message: String
 )
+
 data class ApiErrorResponse(
     @Schema(description = "HttpStatus for responsen.")
     val httpStatus: HttpStatus,

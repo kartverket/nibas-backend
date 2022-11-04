@@ -2,13 +2,13 @@ package no.kartverket.nibas.inndelinger
 
 import no.kartverket.nibas.api.v1.StemmekretsApi
 import no.kartverket.nibas.api.v1.common.KontekstEnhetType
-import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.request.StemmekretsRequest
 import no.kartverket.nibas.api.v1.response.RevisjonRef
 import no.kartverket.nibas.api.v1.response.StemmekretsRef
 import no.kartverket.nibas.api.v1.response.StemmekretsResponse
+import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.kodelister.KodelisteService
@@ -99,7 +99,7 @@ fun Stemmekrets.toStemmekretsResponse(kodelisteService: KodelisteService): Stemm
     id = this.id,
     stemmekretsnavn = this.stemmekretsnavn!!,
     stemmekretsnummer = this.stemmekretsnummer!!,
-    identifikasjon = Identifikasjon(this.lokalid, this.navnerom, this.versjonid),
+    identifikasjon = Identifikasjon(this.lokalid),
     kommunenummer = kodelisteService.createKommunenummerFromUUID(this.kommune.kommunenummer),
     valgdistriktsnummer = this.valgdistriktsnummer,
     tellekretsnavn = this.tellekretsnavn,

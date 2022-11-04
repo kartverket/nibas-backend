@@ -11,7 +11,6 @@ import java.time.LocalDate
 class FylkeBuilder(private val id: String = "1") {
     private var objtype: String = "Fylke"
     private var fylkesnummer: String = "UUID-1"
-    private var navnerom: String = "ABC"
     private var lokalId: String = "123"
     private var navn = "Vestland"
     private var spraak = "NOR"
@@ -31,7 +30,7 @@ class FylkeBuilder(private val id: String = "1") {
     }
 
     fun build(): Fylke {
-        val fylke = Fylke(id = this.id)
+        val fylke = Fylke(id = this.id, lokalid = lokalId)
         val spraakkode = Spraakkode()
         spraakkode.id = spraak
         spraakkode.description = spraak
@@ -44,8 +43,6 @@ class FylkeBuilder(private val id: String = "1") {
         administrativenhetnavn.fylkeFk = fylke
 
         fylke.objtype = objtype
-        fylke.lokalid = lokalId
-        fylke.navnerom = navnerom
         fylke.fylkesnummer = fylkesnummer
         fylke.samiskforvaltningsomraade = samiskforvaltningsomraade
         fylke.auditInfo.oppdateringsdato = oppdateringsdato
@@ -60,11 +57,6 @@ class FylkeBuilder(private val id: String = "1") {
 
     fun withLokalId(lokalId: String): FylkeBuilder {
         this.lokalId = lokalId
-        return this
-    }
-
-    fun withNavnerom(navnerom: String): FylkeBuilder {
-        this.navnerom = navnerom
         return this
     }
 

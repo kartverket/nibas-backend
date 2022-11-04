@@ -2,7 +2,6 @@ package no.kartverket.nibas.sosi.sosiimport
 
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.domain.Grense
-import no.kartverket.nibas.domain.updateSosiIdentifikasjon
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.FastsettingstypeRepository
 import no.kartverket.nibas.repository.GrenseRepository
@@ -32,9 +31,7 @@ class AvtaltAvgrensningslinjeImporter @Autowired constructor(
         return when (val existing =
             grenseRepository.findByLokalid(skalImporteres.lokalId())) {
             null -> {
-                var avtaltavgrensningslinje = Grense(Grensetype.AvtaltAvgrensningslinje)
-                avtaltavgrensningslinje.updateSosiIdentifikasjon(sosiAvtaltAvgrensningslinje.getIdent())
-                avtaltavgrensningslinje.lokalid = skalImporteres.lokalId()
+                var avtaltavgrensningslinje = createGrense(sosiAvtaltAvgrensningslinje.getIdent(), Grensetype.AvtaltAvgrensningslinje)
                 avtaltavgrensningslinje.opphav = sosiAvtaltAvgrensningslinje.getOpphav()
                 avtaltavgrensningslinje.datauttaksdato = sosiAvtaltAvgrensningslinje.getDataUttaksdato()
 
@@ -72,6 +69,7 @@ class AvtaltAvgrensningslinjeImporter @Autowired constructor(
 
                 return avtaltavgrensningslinje
             }
+
             else -> existing
         }
     }

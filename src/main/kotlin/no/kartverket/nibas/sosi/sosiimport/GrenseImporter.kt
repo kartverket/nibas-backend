@@ -1,12 +1,13 @@
 package no.kartverket.nibas.sosi.sosiimport
 
+import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.GrenseMedAttributter
-import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.KobletTilGrense
 import no.kartverket.nibas.sosi.common.SosiKoder
 import no.kartverket.nibas.sosi.model.SosiFlate
+import no.kartverket.nibas.sosi.model.SosiIdent
 import no.kartverket.nibas.sosi.model.SosiKurve
 import no.kartverket.nibas.sosi.model.SosiReferanse
 import org.springframework.beans.factory.annotation.Autowired
@@ -95,5 +96,17 @@ class GrenseImporter {
             SosiKoder.DELOMRAADEGRENSE -> delomraadegrenseImporter.importerDelomraadegrense(skalImporteres)
             else -> throw RuntimeException("Found no importer for ${skalImporteres.splitRef.basertPaGrense.getObjType()}")
         }
+    }
+}
+
+/**
+ * Oppretter Grense med lokalid fra eksternt system hvis den er gyldig.
+ */
+fun createGrense(sosiIdent: SosiIdent?, grensetype: Grensetype): Grense {
+    val lokalid: String? = sosiIdent?.getValidLokalId()
+    return if (lokalid != null) {
+        Grense(lokalid = lokalid, grensetype = grensetype)
+    } else {
+        Grense(grensetype = grensetype)
     }
 }

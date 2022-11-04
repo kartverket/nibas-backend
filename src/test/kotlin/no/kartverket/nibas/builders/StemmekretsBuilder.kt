@@ -14,8 +14,6 @@ class StemmekretsBuilder(private val id: String = "1") {
     private var grenser: MutableSet<Grense> = mutableSetOf()
     private var kommune: Kommune = KommuneBuilder.DEFAULT_KOMMUNE
     private var lokalId: String = LOKALID
-    private var versjonId: String = VERSJON_33
-    private var navnerom: String = NAVNEROM
     private var stemmekretsnavn = "Nordre Follo"
     private var stemmekretsnummer = "9"
     private var tellekretsnavn = "Nordre Follo Tellekrets"
@@ -33,13 +31,9 @@ class StemmekretsBuilder(private val id: String = "1") {
     }
 
     fun build(): Stemmekrets {
-        val stemmekrets = Stemmekrets(id = this.id)
+        val stemmekrets = Stemmekrets(id = this.id, lokalid = lokalId)
 
         stemmekrets.datafangstdato = datafangstdato
-
-        stemmekrets.lokalid = lokalId
-        stemmekrets.versjonid = versjonId
-        stemmekrets.navnerom = navnerom
 
         stemmekrets.stemmekretsnavn = stemmekretsnavn
         stemmekrets.stemmekretsnummer = stemmekretsnummer
@@ -66,11 +60,6 @@ class StemmekretsBuilder(private val id: String = "1") {
 
     fun withLokalId(lokalId: String): StemmekretsBuilder {
         this.lokalId = lokalId
-        return this
-    }
-
-    fun withNavnerom(navnerom: String): StemmekretsBuilder {
-        this.navnerom = navnerom
         return this
     }
 

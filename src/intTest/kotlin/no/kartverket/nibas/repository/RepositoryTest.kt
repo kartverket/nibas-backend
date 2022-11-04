@@ -2,6 +2,7 @@ package no.kartverket.nibas.repository
 
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.request.KommuneRequest
+import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Spraakkode
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
@@ -11,7 +12,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.orm.ObjectOptimisticLockingFailureException
 import org.mockito.Mockito.`when` as whenever
@@ -21,12 +21,6 @@ class RepositoryTest : TestWithDbContainer() {
 
     @MockBean
     private lateinit var userFacade: UserFacade
-
-    @Autowired
-    private lateinit var utkastRepository: UtkastRepository
-
-    @Autowired
-    private lateinit var spraakkodeRepository: SpraakkodeRepository
 
     @BeforeEach
     fun beforeEach() {
@@ -75,20 +69,35 @@ class RepositoryTest : TestWithDbContainer() {
         val matchingUtkastIdsForStatusOpprettet = utkastRepository.findAllByStatus(UtkastStatus.OPPRETTET).map { it.id }.toSet()
         assertThat(matchingUtkastIdsForStatusOpprettet).contains(utkast.id, utkast2.id)
         assertThat(matchingUtkastIdsForStatusOpprettet).doesNotContain(utkast3.id)
+    }
 
+    @Test
+    fun findAllGrunnkretserByLokalid() {
+        val grunnkrets1 = createGrunnkrets()
+        val grunnkrets2MedSammeLokalid = createGrunnkrets(lokalid = grunnkrets1.lokalid)
+        grunnkretsRepository.saveAll(listOf(grunnkrets1, grunnkrets2MedSammeLokalid))
+
+        val grunnkretsIdsFunnet = grunnkretsRepository.findAllByLokalid(grunnkrets1.lokalid).map { it.id }.toSet()
+        assertThat(grunnkretsIdsFunnet).isEqualTo(setOf(grunnkrets1.id, grunnkrets2MedSammeLokalid.id))
+    }
+
+    private fun createGrunnkrets(lokalid: String? = null): Grunnkrets {
+        val grunnkrets = if (lokalid != null) Grunnkrets(lokalid = lokalid) else Grunnkrets()
+        return grunnkrets.apply {
+            grunnkretsnummer = "1234"
+            grunnkretsnavn = "Basvatn"
+        }
     }
 
     private fun kommuneRequests(): Map<String, KommuneRequest> {
         val navn = "Oslo"
         val spraak = "NOR"
         val lokalId = "123"
-        val navnerom = "A.B.C"
         val kommunenummer = "123"
         val samiskforvaltningsomraade = false
         return mapOf("UUID-1" to KommuneRequest(
             administrativenhetnavn = listOf(AdministrativEnhetNavn(navn, spraak, version = 1)),
             lokalid = lokalId,
-            navnerom = navnerom,
             kommunenummerId = kommunenummer,
             samiskforvaltningsomraade = samiskforvaltningsomraade,
             version = 1

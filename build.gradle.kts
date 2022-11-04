@@ -35,6 +35,9 @@ sourceSets {
     create("intTest") {
         compileClasspath += sourceSets.main.get().output
         runtimeClasspath += sourceSets.main.get().output
+        // Legger til fra sourceSet test også for å få tilgang på buildere osv.
+        compileClasspath += sourceSets.test.get().output
+        runtimeClasspath += sourceSets.test.get().output
     }
 }
 

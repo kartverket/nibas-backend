@@ -14,14 +14,20 @@ import javax.persistence.Column
 import javax.persistence.Embedded
 import javax.persistence.Id
 import javax.persistence.MappedSuperclass
-import javax.persistence.Version
 
 @MappedSuperclass
 @Audited
-abstract class StatistiskEnhet(@Transient override val type: Flatetype) : Flate, Sporbar, Laasbar {
+abstract class StatistiskEnhet(
+    @Transient
+    override val type: Flatetype
+) : Flate, Sporbar, Laasbar {
+
     @Id
     @Column(name = "objid", nullable = false, updatable = false)
     override val id: String = UUID.randomUUID().toString()
+
+    @Column(name = "lokalid", nullable = false, updatable = false)
+    override val lokalid: String = UUID.randomUUID().toString()
 
     @Embedded
     override var auditInfo: AuditInfo = AuditInfo()
@@ -29,26 +35,10 @@ abstract class StatistiskEnhet(@Transient override val type: Flatetype) : Flate,
     @Embedded
     override var gyldighet: Gyldighet = Gyldighet()
 
-    @Version
     override var version: Int = 1
 
     @Column(name = "objtype")
     var objtype: String? = null
-
-    /**
-     * Må være satt og skal aldri endre seg i objektets levetid. Så burde ideelt vært immutable.
-     */
-    @Column(name = "lokalid", nullable = false, updatable = false)
-    override var lokalid: String = UUID.randomUUID().toString()
-
-    /**
-     * Må være satt ihht standard.
-     */
-    @Column(name = "navnerom", nullable = false, updatable = false)
-    override var navnerom: String = DEFAULT_NAVNEROM
-
-    @Column(name = "versjonid")
-    override var versjonid: String? = null
 
     @Column(name = "datafangstdato")
     override var datafangstdato: LocalDate? = null
@@ -76,6 +66,10 @@ abstract class StatistiskEnhet(@Transient override val type: Flatetype) : Flate,
 
     @Column(name = "flate")
     override var flate: MultiPolygon? = null
+
+    // TODO: typeEndring vil komme inn som del av ny sosi-modell (blir muligens en enum på et interface/embedded type)
+    @Column(name = "type_endring")
+    var typeEndring: String? = null
 
     @Suppress("UNCHECKED_CAST")
     fun <T : GrenseKobling> oppdaterSamling(grense: Grense, attributter: GrenseKoblingAttributter, samling: MutableSet<T>, default: GrenseKobling) {

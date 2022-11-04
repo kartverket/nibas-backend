@@ -9,7 +9,6 @@ import org.locationtech.jts.geom.LineString
 class GrenseBuilder(private val id: String = "1") {
 
     private var lokalId: String = "123"
-    private var navnerom: String = "A.B.C"
     private var grenseGeometri: LineString = GeometryFactory().createLineString()
 
     fun buildFylkesgrense(): Grense {
@@ -17,25 +16,19 @@ class GrenseBuilder(private val id: String = "1") {
     }
 
     fun buildRiksgrense(): Grense {
-        val grense = Grense(Grensetype.Riksgrense, id = this.id)
-        grense.lokalid = lokalId
-        grense.navnerom = navnerom
+        val grense = Grense(id = this.id, lokalid = lokalId, Grensetype.Riksgrense)
         grense.grense = grenseGeometri
         return grense
     }
 
     fun buildKommunegrense(): Grense {
-        val grense = Grense(Grensetype.Kommunegrense, id = this.id)
-        grense.lokalid = lokalId
-        grense.navnerom = navnerom
+        val grense = Grense(id = this.id, lokalid = lokalId, Grensetype.Kommunegrense)
         grense.grense = grenseGeometri
         return grense
     }
 
     fun buildGrunnkretsgrense(): Grense {
-        val grense = Grense(Grensetype.Grunnkretsgrense, id = this.id)
-        grense.lokalid = lokalId
-        grense.navnerom = navnerom
+        val grense = Grense(id = this.id, lokalid = lokalId, Grensetype.Grunnkretsgrense)
         grense.grense = grenseGeometri
         return grense
     }

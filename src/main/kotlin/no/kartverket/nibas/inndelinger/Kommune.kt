@@ -98,8 +98,6 @@ class KommuneService(
 
             gammel.samiskforvaltningsomraade = oppdatertKommune.samiskforvaltningsomraade
             gammel.kommunenummer = oppdatertKommune.kommunenummerId
-            gammel.navnerom = oppdatertKommune.navnerom!!
-            gammel.lokalid = oppdatertKommune.lokalid
 
             // Finner basert på språkkode, og oppdaterer den
             oppdatertKommune.administrativenhetnavn.forEach { navn ->
@@ -133,7 +131,6 @@ fun Kommune.toKommuneResponse(kodelisteService: KodelisteService): KommuneRespon
     id = this.id,
     administrativenhetnavn = this.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version) },
     lokalid = this.lokalid,
-    navnerom = this.navnerom,
     kommunenummer = kodelisteService.createKommunenummerFromUUID(this.kommunenummer),
     samiskforvaltningsomraade = this.samiskforvaltningsomraade!!,
     oppdateringsdato = this.auditInfo.oppdateringsdato,

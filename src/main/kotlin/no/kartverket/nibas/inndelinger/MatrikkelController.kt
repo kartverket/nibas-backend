@@ -1,9 +1,10 @@
 package no.kartverket.nibas.inndelinger
 
 import no.kartverket.nibas.api.v1.MatrikkelApi
-import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.api.v1.response.GrunnkretsResponse
 import no.kartverket.nibas.api.v1.response.StemmekretsResponse
+import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.kodelister.KodelisteService
 import org.slf4j.Logger
@@ -53,8 +54,8 @@ class MatrikkelService(private val grunnkretsControllerService: GrunnkretsContro
             .sortedBy { it.id }
     }
 
-    fun hentGrunnkretserForIds(id: Set<String>): List<GrunnkretsResponse> {
-        return id.map { grunnkretsControllerService.hentEn(it) }.sortedBy { it.id }
+    fun hentGrunnkretserForIds(ids: Set<String>): List<GrunnkretsResponse> {
+        return ids.map { Lokalid(it) }.map { grunnkretsControllerService.hentEn(it) }.sortedBy { it.id }
     }
 
     fun hentAlleGrunnkretserForKommune(kommunenummer: String): List<GrunnkretsResponse> {

@@ -2,19 +2,29 @@ package no.kartverket.nibas.utkast
 
 import no.kartverket.nibas.MockResponseAsserts
 import no.kartverket.nibas.NibasMvcTest
-import no.kartverket.nibas.common.ResponseException.BadRequestException
-import no.kartverket.nibas.common.ResponseException.NotFoundException
+import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
+import no.kartverket.nibas.api.v1.request.ConflictResolved
+import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
+import no.kartverket.nibas.api.v1.request.GrunnkretsRequestResolved
 import no.kartverket.nibas.api.v1.request.OppdaterUtkastRequest
 import no.kartverket.nibas.api.v1.request.OpprettUtkastRequest
 import no.kartverket.nibas.api.v1.response.ApiErrorResponse
 import no.kartverket.nibas.api.v1.response.AuditInfoResponse
 import no.kartverket.nibas.api.v1.response.ConflictResponse
+import no.kartverket.nibas.api.v1.response.ConflictResponseWrapper
+import no.kartverket.nibas.api.v1.response.FramtidigVersjonConflict
+import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.response.UtkastOpprettetResponse
 import no.kartverket.nibas.api.v1.response.UtkastRef
 import no.kartverket.nibas.api.v1.response.UtkastResponse
 import no.kartverket.nibas.builders.FylkeBuilder
 import no.kartverket.nibas.builders.KommuneRequestBuilder
 import no.kartverket.nibas.builders.UtkastRequestBuilder
+import no.kartverket.nibas.common.FeilVedOppdatering
+import no.kartverket.nibas.common.Identifikator
+import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.common.ResponseException.BadRequestException
+import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastEndringstype
 import no.kartverket.nibas.domain.utkast.UtkastStatus
@@ -206,7 +216,7 @@ internal class UtkastControllerTest : NibasMvcTest() {
     }
 
     @Test
-    fun publiserUtkastOppdateringAvFylkeGir409Conflict() {
+    fun publiserUtkastOppdateringAvFylkeGir409Conflict_PgaOptimistiskLaasefeil() {
         val eksisterendeFylke = FylkeBuilder()
             .withVersion(4)
             .build()
@@ -219,15 +229,16 @@ internal class UtkastControllerTest : NibasMvcTest() {
         post(
             url = publiserUrl,
             responseAsserts = MockResponseAsserts(
-                expectedResponseObject = listOf(
-                    ConflictResponse(
-                        id = fylkeId,
-                        type = "Fylke",
-                        gjeldendeVersjon = 4,
-                        versjon = 3,
-                        melding = "Det er ikke samsvar med versjon. Ønsket versjon = 3, eksisterende versjon = 4 for objekt med id = $fylkeId"
-                    )
-                ),
+                expectedResponseObject = ConflictResponseWrapper(
+                    optimisticLockExceptions = listOf(
+                        ConflictResponse(
+                            id = fylkeId,
+                            type = "Fylke",
+                            gjeldendeVersjon = 4,
+                            versjon = 3,
+                            melding = "Det er ikke samsvar med versjon. Ønsket versjon = 3, eksisterende versjon = 4 for objekt med id = $fylkeId"
+                        )
+                    )),
                 resultMatchers = listOf(status().isConflict)
             )
         )
@@ -349,4 +360,87 @@ internal class UtkastControllerTest : NibasMvcTest() {
             )
         )
     }
+
+    @Test
+    fun publiserUtkastOppdateringAvFylkeGir409Conflict_PgaKonfliktMedFramtidigeVersjoner() {
+        // Lokalid+gyldigFra som blir truffet av utkastet
+        val lokalid = Lokalid("abcd-38383")
+        val foersteJanuar2024 = LocalDate.of(2024, Month.JANUARY, 1)
+
+        // Fantes en Grunnkrets fra før med: Gyldig fra 1.1.25
+        val foersteJanuar2025 = LocalDate.of(2025, Month.JANUARY, 1)
+
+        // Fantes en Grunnkrets fra før med: Gyldig fra 1.1.26
+        val foersteJanuar2026 = LocalDate.of(2026, Month.JANUARY, 1)
+
+        whenever(utkastServiceMock.publiserUtkast(anyString())).thenThrow(FeilVedOppdatering.OppdateringException(
+            oppdateringInfo = FeilVedOppdatering.OppdateringInfo(
+                id = Identifikator(lokalid, foersteJanuar2024),
+                type = FeilVedOppdatering.Type.GRUNNKRETS,
+                affectedIds = listOf(
+                    Identifikator(lokalid, foersteJanuar2025),
+                    Identifikator(lokalid, foersteJanuar2026)
+                )
+            )
+        ))
+
+        post(
+            url = publiserUrl,
+            responseAsserts = MockResponseAsserts(
+                expectedResponseObject = ConflictResponseWrapper(
+                    framtidigVersjonConflict = FramtidigVersjonConflict(
+                        id = ObjektIdentifikator(lokalid, foersteJanuar2024),
+                        type = "GRUNNKRETS",
+                        affectedIds = listOf(
+                            ObjektIdentifikator(lokalid, foersteJanuar2025),
+                            ObjektIdentifikator(lokalid, foersteJanuar2026)
+                        ),
+                        melding = "Det er ikke mulig å oppdatere objekt med identifikator " +
+                            "Identifikator(lokalid=Lokalid(value=${lokalid.value}), gyldigFra=2024-01-01) " +
+                            "av type GRUNNKRETS. Dette berører følgende objekter med senere gyldigFra-tidspunkt: " +
+                            "[" +
+                            "Identifikator(lokalid=Lokalid(value=${lokalid.value}), gyldigFra=2025-01-01), " +
+                            "Identifikator(lokalid=Lokalid(value=${lokalid.value}), gyldigFra=2026-01-01)" +
+                            "]."
+                    )),
+                resultMatchers = listOf(status().isConflict)
+            )
+        )
+        verify(utkastServiceMock).publiserUtkast(anyString())
+    }
+
+    @Test
+    fun framtidigeVersjonerKonfliktResolvedGir200OK() {
+        val lokalid = Lokalid("abcd-38383")
+        val july1In2023 = LocalDate.of(2023, Month.JULY, 1)
+        val january1In2024 = LocalDate.of(2024, Month.JANUARY, 1)
+
+        post(
+            url = "/v1/utkast/123/resolved",
+            requestObject = ConflictResolved(
+                lokalid = lokalid,
+                grunnkretsRequests = listOf(
+                    GrunnkretsRequestResolved(
+                        gyldigFra = july1In2023,
+                        endringstype = UtkastEndringstype.KVALITETSHEVING.value,
+                        grunnkretsRequest = createGrunnkretsRequest("Moi", 2)),
+                    GrunnkretsRequestResolved(
+                        gyldigFra = january1In2024,
+                        endringstype = UtkastEndringstype.KVALITETSHEVING.value,
+                        grunnkretsRequest = createGrunnkretsRequest("Voi", 3)
+                    )
+                )
+            ),
+            expected = status().isOk
+        )
+        verify(utkastServiceMock).resolveConflictForFramtidigeVersjoner(anyString(), any(ConflictResolved::class.java))
+    }
+
+    private fun createGrunnkretsRequest(grkrNavn: String, version: Int): GrunnkretsRequest =
+        GrunnkretsRequest(
+            navn = grkrNavn,
+            grunnkretsnummer = "4589",
+            identifikasjon = Identifikasjon(lokalid = "abcd-38383"),
+            version = version,
+        )
 }

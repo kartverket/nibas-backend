@@ -20,7 +20,10 @@ import javax.persistence.Table
 @Table(name = "stemmekrets")
 @Audited
 @Entity
-class Stemmekrets(override val id: String = UUID.randomUUID().toString()) : KommunalKrets(Flatetype.STEMMEKRETS), KobletTilGrense {
+class Stemmekrets(
+    override val id: String = UUID.randomUUID().toString(),
+    override val lokalid: String = UUID.randomUUID().toString(),
+) : KommunalKrets(Flatetype.STEMMEKRETS), KobletTilGrense {
 
     override var objtype: String? = Flatetype.STEMMEKRETS.name
 

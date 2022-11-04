@@ -3,10 +3,8 @@ package no.kartverket.nibas.utkast
 import no.kartverket.nibas.api.v1.common.Grenseendringer
 import no.kartverket.nibas.api.v1.common.Metadataendringer
 import no.kartverket.nibas.api.v1.common.Operasjoner
-import no.kartverket.nibas.common.ResponseException.BadRequestException
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.request.FylkeRequest
-import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
 import no.kartverket.nibas.api.v1.request.KommuneRequest
 import no.kartverket.nibas.api.v1.request.NasjonRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsRequest
@@ -18,11 +16,14 @@ import no.kartverket.nibas.builders.NasjonRequestBuilder
 import no.kartverket.nibas.builders.OpprettUtkastRequestBuilder
 import no.kartverket.nibas.builders.StemmekretsRequestBuilder
 import no.kartverket.nibas.builders.UtkastRequestBuilder
+import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.common.ResponseException.BadRequestException
 import no.kartverket.nibas.domain.utkast.Utkast
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
 import no.kartverket.nibas.inndelinger.FylkeService
 import no.kartverket.nibas.inndelinger.GrenseService
+import no.kartverket.nibas.inndelinger.GrunnkretsRequestWrapper
 import no.kartverket.nibas.inndelinger.GrunnkretsService
 import no.kartverket.nibas.inndelinger.KommuneService
 import no.kartverket.nibas.inndelinger.NasjonService
@@ -156,11 +157,12 @@ internal class UtkastServiceTest {
         utkastService.publiserUtkast(utkast.id)
 
         assertThat(utkast.status).isEqualTo(UtkastStatus.PUBLISERT)
+        assertThat(utkast.operasjoner).isNull()
 
         verify(nasjonServiceMock).oppdaterNasjon(anyString(), any(NasjonRequest::class.java))
         verify(fylkeServiceMock).oppdaterFylke(anyString(), any(FylkeRequest::class.java))
         verify(kommuneServiceMock).oppdaterKommune(anyString(), any(KommuneRequest::class.java))
-        verify(grunnkretsServiceMock).oppdaterGrunnkrets(anyString(), any(GrunnkretsRequest::class.java))
+        verify(grunnkretsServiceMock).oppdaterGrunnkrets(any(Lokalid::class.java), any(GrunnkretsRequestWrapper::class.java))
         verify(stemmekretsServiceMock).oppdaterStemmekrets(anyString(), any(StemmekretsRequest::class.java))
         verify(grenseServiceMock).lagreGrenser(any(FeatureCollection::class.java))
     }

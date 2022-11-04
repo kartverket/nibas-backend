@@ -18,11 +18,16 @@ import javax.persistence.Version
 
 @MappedSuperclass
 @Audited
-abstract class KommunalKrets(@Transient override val type: Flatetype) : Flate, Sporbar, Laasbar {
+abstract class KommunalKrets(
+    @Transient override val type: Flatetype
+) : Flate, Sporbar, Laasbar {
 
     @Id
     @Column(name = "objid", nullable = false, updatable = false)
     override val id: String = UUID.randomUUID().toString()
+
+    @Column(name = "lokalid", nullable = false, updatable = false)
+    override val lokalid: String = UUID.randomUUID().toString()
 
     @Column(name = "objtype")
     var objtype: String? = type.name
@@ -35,18 +40,6 @@ abstract class KommunalKrets(@Transient override val type: Flatetype) : Flate, S
 
     @Version
     override var version: Int = 1
-
-    /**
-     * Må være satt og skal aldri endre seg i objektets levetid. Så burde ideelt vært immutable.
-     */
-    @Column(name = "lokalid", nullable = false, updatable = false)
-    override var lokalid: String = UUID.randomUUID().toString()
-
-    @Column(name = "navnerom", nullable = false, updatable = false)
-    override var navnerom: String = DEFAULT_NAVNEROM
-
-    @Column(name = "versjonid")
-    override var versjonid: String? = null
 
     @Column(name = "datafangstdato")
     override var datafangstdato: LocalDate? = null

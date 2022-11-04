@@ -24,8 +24,6 @@ object SosiKoder {
     const val REKKEFOLGE = "REKKEFØLGE"
     const val FYLKESNUMMER = "FYLKESNUMMER"
     const val IDENT = "IDENT"
-    const val VERSJONID = "VERSJONID"
-    const val NAVNEROM = "NAVNEROM"
     const val LOKALID = "LOKALID"
     const val OPPHAV = "OPPHAVE"
     const val IKKE_NIVA = Integer.MAX_VALUE

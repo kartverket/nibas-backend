@@ -77,22 +77,18 @@ class KommuneServiceTest {
 
     @Test
     fun thatOppdaterKommuneSavesAnUpdatedVersion() {
-        val navnerom = "no.kartverket.nibas"
         val lokalId = "1000"
         val navn = "Bergen"
 
         val eksisterende = KommuneBuilder.DEFAULT_KOMMUNE
         val oppdatertKommune =
-            KommuneRequestBuilder().withNavnerom(navnerom).withLokalId(lokalId).withNavn(navn).build()
+            KommuneRequestBuilder().withLokalId(lokalId).withNavn(navn).build()
 
         whenever(kommuneRepository.findById(anyString())).thenReturn(Optional.of(eksisterende))
         kommuneService.oppdaterKommune("1", oppdatertKommune)
 
         val forventetNavnToSave = eksisterende.administrativenhetnavn.first()
         forventetNavnToSave.navn = navn
-
-        eksisterende.navnerom = navnerom
-        eksisterende.lokalid = lokalId
 
         verify(administrativenhetnavnRepository).save(forventetNavnToSave)
         verify(kommuneRepository).save(eksisterende)

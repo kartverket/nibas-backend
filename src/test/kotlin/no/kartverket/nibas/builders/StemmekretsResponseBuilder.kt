@@ -25,7 +25,7 @@ class StemmekretsResponseBuilder(private val kodelisteService: KodelisteService)
             id = stemmekrets.id,
             stemmekretsnavn = stemmekrets.stemmekretsnavn!!,
             stemmekretsnummer = stemmekrets.stemmekretsnummer!!,
-            identifikasjon = Identifikasjon(stemmekrets.lokalid, stemmekrets.navnerom, stemmekrets.versjonid),
+            identifikasjon = Identifikasjon(stemmekrets.lokalid),
             kommunenummer = Kommunenummer(stemmekrets.kommune.kommunenummer, kommunenummer),
             tellekretsnummer = stemmekrets.tellekretsnummer,
             tellekretsnavn = stemmekrets.tellekretsnavn,

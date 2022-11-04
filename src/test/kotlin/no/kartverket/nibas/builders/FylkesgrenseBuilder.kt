@@ -14,8 +14,6 @@ import org.locationtech.jts.geom.LineString
 import java.time.LocalDate
 
 const val LOKALID = "lokalId1"
-const val NAVNEROM = "navnerom"
-const val VERSJON_33 = "versjon33"
 const val MYNDIGHET = "myndighet"
 const val HJEMMEL_I_LOVEN = "Hjemmel i loven"
 const val RETTSKILDE_ID_1 = "RettskildeId 1"
@@ -63,8 +61,6 @@ val fastsettingstypeBestemteKoordinater = Fastsettingstype().apply {
 class FylkesgrenseBuilder(private val id: String = "1") {
 
     private var lokalid: String = LOKALID
-    private var navnerom: String = NAVNEROM
-    private var versjonid: String = VERSJON_33
     private var omtvistet: Boolean = true
     private var oppdateringsdato: LocalDate = LocalDate.now()
     private var datafangstdato: LocalDate = LocalDate.now()
@@ -83,10 +79,7 @@ class FylkesgrenseBuilder(private val id: String = "1") {
     private var grenseGeometri: LineString = GeometryFactory().createLineString()
 
     fun build(): Grense {
-        val fylkesgrense = Grense(Grensetype.Fylkesgrense, id = this.id)
-        fylkesgrense.lokalid = lokalid
-        fylkesgrense.navnerom = navnerom
-        fylkesgrense.versjonid = versjonid
+        val fylkesgrense = Grense(id = this.id , lokalid= lokalid, Grensetype.Fylkesgrense)
         fylkesgrense.foelgerterrengdetalj = terrengdetaljkode
         fylkesgrense.noeyaktighetsklasse = noeyaktighetsklassekode
         fylkesgrense.omtvistet = omtvistet

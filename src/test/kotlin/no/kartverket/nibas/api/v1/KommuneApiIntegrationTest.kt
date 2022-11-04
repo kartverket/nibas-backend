@@ -54,7 +54,7 @@ class KommuneApiIntegrationTest {
         // FYI, bryr oss ikke om hvilken type grense det er, skal bare verifisere at polygoner blir laget riktig
         val ke = feature.properties.kontekstEgenskaper!!
 
-        val grunnkretsgrense = Grense(Grensetype.Grunnkretsgrense)
+        val grunnkretsgrense = Grense(grensetype = Grensetype.Grunnkretsgrense)
         grunnkretsgrense.grense = feature.geometry as LineString
 
         return GrunnkretsGrenseKobling(

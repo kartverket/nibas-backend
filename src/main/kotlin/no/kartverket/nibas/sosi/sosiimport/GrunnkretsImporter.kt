@@ -1,36 +1,20 @@
 package no.kartverket.nibas.sosi.sosiimport
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.joinAll
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
-import no.kartverket.nibas.domain.Grense
-import no.kartverket.nibas.domain.GrenseKoblingAttributter
-import no.kartverket.nibas.domain.GrenseMedAttributter
 import no.kartverket.nibas.domain.Grunnkrets
-import no.kartverket.nibas.domain.updateSosiIdentifikasjon
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.TypeendringRepository
 import no.kartverket.nibas.sosi.common.SosiKoder
 import no.kartverket.nibas.sosi.model.SosiFlate
-import no.kartverket.nibas.sosi.model.SosiGeometri
 import no.kartverket.nibas.sosi.model.SosiKurve
 import no.kartverket.nibas.sosi.model.SosiObjekt
-import no.kartverket.nibas.sosi.model.SosiReferanse
 import no.kartverket.nibas.sporing.Gyldighet
-import org.locationtech.jts.geom.LineString
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import java.util.logging.Logger
-import kotlin.math.log
-import kotlin.math.min
-import kotlin.system.measureTimeMillis
 
 @Component
 class GrunnkretsImporter @Autowired constructor(
@@ -51,7 +35,9 @@ class GrunnkretsImporter @Autowired constructor(
         if (grunnkretsRepository.findByLokalid(sosiIdent?.getLokalId()!!) != null) {
             logger.info("Bruker eksisterende flate")
         } else {
-            val grunnkrets = Grunnkrets()
+            val lokalid: String? = sosiIdent.getValidLokalId()
+            val grunnkrets = if (lokalid != null) Grunnkrets(lokalid = lokalid) else Grunnkrets()
+
             val kommunenummerId = kodelisteService.getKommunenummerIdByCodeValue(flate.getKommunenummer())
             grunnkrets.kommune = kommuneRepository.findByKommunenummer(kommunenummerId)!!
 
@@ -59,7 +45,6 @@ class GrunnkretsImporter @Autowired constructor(
             val kommuneFlater = admenhetRoot.getFlater().filter { it.getObjType() == SosiKoder.KOMMUNE && it.getKommunenummer() == flate.getKommunenummer() }
             kommuneFlater.forEach { it.lastReferanser(admenhetRoot) }
 
-            grunnkrets.updateSosiIdentifikasjon(sosiIdent)
             grunnkrets.datafangstdato = flate.getDatafangstDato()
             grunnkrets.endringsflagg?.tidspunktendring = flate.getEndringsflagg()?.getTidspunktEndring()
             grunnkrets.endringsflagg?.typeendring = when (val typeendring = flate.getEndringsflagg()?.getTypeEndring()) {

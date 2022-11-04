@@ -1,10 +1,14 @@
 package no.kartverket.nibas.config
 
-import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.api.v1.response.ApiErrorResponse
 import no.kartverket.nibas.api.v1.response.ConflictResponse
-import no.kartverket.nibas.api.v1.response.MissingKodelisteItemResponse
+import no.kartverket.nibas.api.v1.response.ConflictResponseWrapper
+import no.kartverket.nibas.api.v1.response.FramtidigVersjonConflict
 import no.kartverket.nibas.api.v1.response.GeometriErrorResponse
+import no.kartverket.nibas.api.v1.response.MissingKodelisteItemResponse
+import no.kartverket.nibas.api.v1.response.toObjektIdentifikator
+import no.kartverket.nibas.common.FeilVedOppdatering
+import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.inndelinger.toDto
 import no.kartverket.nibas.kodelister.DefaultKodelisteService
 import no.kartverket.nibas.kodelister.KodelisteFetcher
@@ -72,7 +76,7 @@ class WebConfig @Autowired constructor(val configProps: NibasBackendConfigProps)
 class CustomRestExceptionHandler : ResponseEntityExceptionHandler() {
 
     @ExceptionHandler(value = [MissingKodelisteItemException::class])
-    fun handleManglendeKodelisteInnslag(missingKodelisteEx: MissingKodelisteItemException, request: WebRequest): ResponseEntity<Any>{
+    fun handleManglendeKodelisteInnslag(missingKodelisteEx: MissingKodelisteItemException, request: WebRequest): ResponseEntity<Any> {
         val errorResponse = MissingKodelisteItemResponse(message = "Fant ikke ${missingKodelisteEx.kodelisteType} for ${missingKodelisteEx.id}")
         return handleExceptionInternal(missingKodelisteEx, errorResponse, HttpHeaders(), errorResponse.httpStatus, request)
     }
@@ -100,21 +104,35 @@ class CustomRestExceptionHandler : ResponseEntityExceptionHandler() {
 
     @ExceptionHandler(value = [OptimistiskLaasException::class])
     fun handleOptimisticLockException(ex: OptimistiskLaasException, request: WebRequest): ResponseEntity<Any> {
-        val errors: List<ConflictResponse> = ex.konflikter.map { conflict ->
-            ConflictResponse(
-                id = conflict.eksisterende.id,
-                type = conflict.eksisterende::class.java.simpleName,
-                gjeldendeVersjon = conflict.eksisterende.version,
-                versjon = conflict.nyVersjon,
-                melding = conflict.getMessage()
+        // For grenser kan det være flere optimistiske låsekonflikter
+        return handleExceptionInternal(ex, ConflictResponseWrapper(
+            optimisticLockExceptions = ex.konflikter.map { conflict ->
+                ConflictResponse(
+                    id = conflict.eksisterende.id,
+                    type = conflict.eksisterende::class.java.simpleName,
+                    gjeldendeVersjon = conflict.eksisterende.version,
+                    versjon = conflict.nyVersjon,
+                    melding = conflict.getMessage()
+                )
+            }), HttpHeaders(), HttpStatus.CONFLICT, request)
+    }
+
+    @ExceptionHandler(value = [FeilVedOppdatering.OppdateringException::class])
+    fun handleOppdateringException(ex: FeilVedOppdatering.OppdateringException, request: WebRequest): ResponseEntity<Any> {
+        val oppdateringInfo = ex.oppdateringInfo
+        return handleExceptionInternal(ex, ConflictResponseWrapper(
+            framtidigVersjonConflict = FramtidigVersjonConflict(
+                id = oppdateringInfo.id.toObjektIdentifikator(),
+                type = oppdateringInfo.type.name,
+                affectedIds = oppdateringInfo.affectedIds.map { it.toObjektIdentifikator() },
+                melding = oppdateringInfo.getMessage()
             )
-        }
-        return handleExceptionInternal(ex, errors, HttpHeaders(), HttpStatus.CONFLICT, request)
+        ), HttpHeaders(), HttpStatus.CONFLICT, request)
     }
 
     @ExceptionHandler(value = [ResponseException::class])
     fun handleResponseExceptionException(ex: ResponseException, request: WebRequest): ResponseEntity<Any> {
-        val httpStatus = when(ex) {
+        val httpStatus = when (ex) {
             is ResponseException.NotFoundException -> HttpStatus.NOT_FOUND
             is ResponseException.BadRequestException -> HttpStatus.BAD_REQUEST
         }

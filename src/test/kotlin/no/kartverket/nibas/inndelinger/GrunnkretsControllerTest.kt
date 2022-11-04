@@ -2,10 +2,10 @@ package no.kartverket.nibas.inndelinger
 
 import no.kartverket.nibas.NibasMvcTest
 import no.kartverket.nibas.builders.GrunnkretsBuilder
+import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.kodelister.KodelisteType
 import no.kartverket.nibas.kodelister.MissingKodelisteItemException
 import org.junit.jupiter.api.Test
-import org.mockito.ArgumentMatchers.anyString
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -23,14 +23,14 @@ internal class GrunnkretsControllerTest : NibasMvcTest() {
 
     @Test
     fun hentGrunnkretsReturns200_OK() {
-        whenever(grunnkretsService.hentGrunnkrets(anyString())).thenReturn(GrunnkretsBuilder.DEFAULT_GRUNNKRETS)
+        whenever(grunnkretsService.hentGrunnkrets(any(Lokalid::class.java))).thenReturn(GrunnkretsBuilder.DEFAULT_GRUNNKRETS)
         get("/v1/grunnkretser/1", status().isOk)
     }
 
     @Test
     fun manglendeItemForKodelisteReturns500_InternalServerError() {
         val id: String = UUID.randomUUID().toString();
-        whenever(grunnkretsControllerService.hentEn(anyString())).thenThrow(MissingKodelisteItemException(KodelisteType.KOMMUNENUMMER, id))
+        whenever(grunnkretsControllerService.hentEn(any(Lokalid::class.java))).thenThrow(MissingKodelisteItemException(KodelisteType.KOMMUNENUMMER, id))
         get("/v1/grunnkretser/$id", status().isInternalServerError)
     }
 }

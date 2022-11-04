@@ -70,8 +70,6 @@ class NasjonService(
     fun oppdaterNasjon(id: String, oppdatertNasjon: NasjonRequest): Nasjon? {
         return hentNasjon(id)?.let { gammel ->
             verifiserOptimistiskLaas(oppdatertNasjon.version, gammel)?.let { throw OptimistiskLaasException(it) }
-            gammel.navnerom = oppdatertNasjon.navnerom
-            gammel.lokalid = oppdatertNasjon.lokalid
 
             // Finner basert på språkkode, og oppdaterer den
             oppdatertNasjon.administrativenhetnavn.forEach { navn ->
@@ -96,7 +94,6 @@ fun Nasjon.toNasjonResponse(kodelisteService: KodelisteService): NasjonResponse 
     id = this.id,
     administrativenhetnavn = this.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version) },
     lokalid = this.lokalid,
-    navnerom = this.navnerom,
     features = FeatureCollection(features = listOf(posisjonToFeature(this.posisjon, this.version), flateToFeature(this, kodelisteService, this.version))),
     version = this.version
 )

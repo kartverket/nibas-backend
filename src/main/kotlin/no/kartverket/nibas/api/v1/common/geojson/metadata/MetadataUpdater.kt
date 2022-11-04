@@ -69,11 +69,7 @@ class MetadataUpdater(private val landKodeRepository: LandKodeRepository,
         grense.foelgerterrengdetalj = hentTerrengDetaljKode(metadata.foelgerTerrengdetalj.id)
         grense.noeyaktighetsklasse = hentNoeyaktighetsKlasse(metadata.noeyaktighetsklasse.id)
         metadata.foelgerGrunnkretsgrense?.let {
-            grense.foelgerGrunnkretsgrenseIdentifikasjon = FoelgerGrunnkretsgrenseIdentifikasjon(
-                it.lokalid,
-                it.navnerom,
-                it.versjonid
-            )
+            grense.foelgerGrunnkretsgrenseIdentifikasjon = FoelgerGrunnkretsgrenseIdentifikasjon(it.lokalid)
         }
 
         return grense

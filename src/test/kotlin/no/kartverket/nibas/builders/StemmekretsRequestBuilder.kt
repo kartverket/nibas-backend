@@ -7,7 +7,6 @@ import no.kartverket.nibas.api.v1.request.StemmekretsRequest
 class StemmekretsRequestBuilder(
     private var stemmekretsnavn: String = "Mosekollen øst 2",
     private var lokalId: String = "00c5ecde-145c-4757-8bea-6290f0b513db",
-    private var navnerom: String = "A.B.C",
     private var stemmekretsnummer: String = "138",
     private var tellekretsnummer: String = "13",
     private var tellekretsnavn: String = "Mosekollen minikrets 3",
@@ -23,7 +22,6 @@ class StemmekretsRequestBuilder(
         stemmekretsnummer = stemmekretsnummer,
         identifikasjon = Identifikasjon(
             lokalid = lokalId,
-            navnerom = navnerom,
         ),
         stemmekretsnavn = stemmekretsnavn,
         tellekretsnummer = tellekretsnummer,

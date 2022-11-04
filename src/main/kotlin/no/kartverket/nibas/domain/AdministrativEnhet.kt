@@ -28,6 +28,9 @@ abstract class AdministrativEnhet(
     @Column(name = "objid", nullable = false, updatable = false)
     override val id: String = UUID.randomUUID().toString()
 
+    @Column(name = "lokalid", nullable = false, updatable = false)
+    override val lokalid: String = UUID.randomUUID().toString()
+
     @Embedded
     override var auditInfo: AuditInfo = AuditInfo()
 
@@ -39,21 +42,6 @@ abstract class AdministrativEnhet(
 
     @Column(name = "objtype")
     var objtype: String? = null
-
-    /**
-     * Må være satt og skal aldri endre seg i objektets levetid. Så burde ideelt vært immutable.
-     */
-    @Column(name = "lokalid", nullable = false, updatable = false)
-    override var lokalid: String = UUID.randomUUID().toString()
-
-    /**
-     * Må være satt ihht standard.
-     */
-    @Column(name = "navnerom", nullable = false, updatable = false)
-    override var navnerom: String = DEFAULT_NAVNEROM
-
-    @Column(name = "versjonid")
-    override var versjonid: String? = null
 
     @Column(name = "opphav")
     override var opphav: String? = null

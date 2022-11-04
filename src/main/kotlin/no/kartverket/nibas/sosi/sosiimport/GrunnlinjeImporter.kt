@@ -2,12 +2,10 @@ package no.kartverket.nibas.sosi.sosiimport
 
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.domain.Grense
-import no.kartverket.nibas.domain.updateSosiIdentifikasjon
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.FastsettingstypeRepository
 import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.GrensestatusRepository
-import no.kartverket.nibas.sosi.model.SosiGeometri
 import no.kartverket.nibas.sporing.Gyldighet
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
@@ -29,9 +27,7 @@ class GrunnlinjeImporter @Autowired constructor(
         val sosiGrunnlinje = skalImporteres.splitRef.basertPaGrense
         return when (val existing = grenseRepository.findByLokalid(skalImporteres.lokalId())) {
             null -> {
-                var grunnlinje = Grense(Grensetype.Grunnlinje)
-                grunnlinje.updateSosiIdentifikasjon(sosiGrunnlinje.getIdent())
-                grunnlinje.lokalid = skalImporteres.lokalId()
+                var grunnlinje = createGrense(sosiGrunnlinje.getIdent(), Grensetype.Grunnlinje)
                 grunnlinje.datafangstdato = sosiGrunnlinje.getDatafangstDato()
                 grunnlinje.datauttaksdato = sosiGrunnlinje.getDataUttaksdato()
 
@@ -62,6 +58,7 @@ class GrunnlinjeImporter @Autowired constructor(
                 grunnlinje.informasjonstekst = sosiGrunnlinje.getInformasjon()
                 return grunnlinje
             }
+
             else -> existing
         }
     }
