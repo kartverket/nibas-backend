@@ -182,14 +182,18 @@ Eksempel på import mot dev-miljø for både stemmekretser og grunnkretser i fyl
 
 application-import.yml:
 ```application-import.yml
+# Her vil en kun importere grunnkretser og stemmekretser i fylkene Agder + Rogaland (se enum Fylkesnummer):
 nibas:
   import:
     fylkesnumre: 42,11
     targets: grunnkrets,stemmekrets
+```
+```
+# Ved behov for å tømme databasen først:
+$ ./gradlew -Dflyway.user=nibas -Dflyway.password=<se passord i vault> -Dflyway.url=jdbc:postgresql://rin-db1412:5432/nibas -Dflyway.cleanDisabled="false" flywayClean
 
-```
-```
-./gradlew bootRun -PImport --args='--spring.profiles.active=dev,security-off,import'
+# Kjøre selve importjobben
+$ ./gradlew bootRun -PImport --args='--spring.profiles.active=dev,security-off,import'
 ```
 
 # Opprette database i miljø
