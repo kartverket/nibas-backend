@@ -25,6 +25,11 @@ spring:
   profiles:
     active: prod
 
+  autoconfigure:
+    exclude:
+      # Disables the default in-memory-user-authentication. Se Jira: https://kartverket.atlassian.net/browse/TS-535
+      - org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+
   application:
     name: nibas-backend
 

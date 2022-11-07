@@ -17,7 +17,6 @@ spring:
   # Må også inn i test-konfigen ellers feiler GrenseControllerTest.
   jackson:
     time-zone: "Europe/Oslo"
-
 # Hver dag kl 03
 nibas:
   cron:
