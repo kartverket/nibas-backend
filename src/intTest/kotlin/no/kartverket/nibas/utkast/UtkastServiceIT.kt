@@ -32,7 +32,7 @@ import org.mockito.Mockito.`when` as whenever
  * OBS: Hvis fila slutter på IntegrationTest blir den ignorert.
  */
 @Transactional
-class UtkastServiceTest : TestWithDbContainer() {
+class UtkastServiceIT : TestWithDbContainer() {
 
     @MockBean
     private lateinit var userFacade: UserFacade
@@ -209,7 +209,7 @@ class UtkastServiceTest : TestWithDbContainer() {
         assertThat(grunnkretsList.size).isEqualTo(5)
         assertGrunnkrets(grunnkretsList[0], opprinneligGrunnkretsnr, moi, Gyldighet(gyldigFra = october21In2022, gyldigTil = january1In2023), 1)
         assertGrunnkrets(grunnkretsList[1], grunnkretsnr1234, moi, Gyldighet(gyldigFra = january1In2023, gyldigTil = july1In2023), 2)
-        assertGrunnkrets(grunnkretsList[2], grunnkretsnr1234, voi, Gyldighet(gyldigFra = january1In2024, gyldigTil = january1In2024), 3)
+        assertGrunnkrets(grunnkretsList[2], grunnkretsnr1234, voi, Gyldighet(gyldigFra = january1In2024, gyldigTil = null, erGyldig = false), 3)
         assertGrunnkrets(grunnkretsList[3], grunnkretsnr4589, moi, Gyldighet(gyldigFra = july1In2023, gyldigTil = january1In2024), 4)
         assertGrunnkrets(grunnkretsList[4], grunnkretsnr4589, voi, Gyldighet(gyldigFra = january1In2024), 5)
     }

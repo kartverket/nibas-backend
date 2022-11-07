@@ -113,8 +113,7 @@ class GrunnkretsService(private val grunnkretsRepository: GrunnkretsRepository) 
                 // Må oppdatere forrige rad på tidslinja
                 relevantGrunnkrets.setGyldigTil(gyldigFra)
 
-                // Uansett om gyldigFra er identisk med grunnkretsens gyldigFra eller fram i tid: Lage ny rad (ny uuid, samme lokalid). Hvis identisk dato så vil eksisterende rad
-                // settes til gyldig i intervallet [gyldigFra, gyldigFra>, dvs i praksis aldri gyldig.
+                // Uansett om gyldigFra er identisk med grunnkretsens gyldigFra eller fram i tid: Lage ny rad (ny uuid, samme lokalid).
                 val nyGrunnkrets = grunnkretsRepository.save(Grunnkrets(lokalid = relevantGrunnkrets.lokalid)
                     // Mappe alle øvrige felter fra eksisterende grunnkrets
                     .applyMappingFromExistingGrunnkrets(relevantGrunnkrets)

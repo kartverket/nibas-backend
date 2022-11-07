@@ -22,7 +22,7 @@ class StemmekretsBuilder(private val id: String = "1") {
     private var oppdateringsdato: LocalDate = LocalDate.now()
     private var datafangstdato: LocalDate = LocalDate.now()
     private var gyldigFra: LocalDate = LocalDate.now()
-    private var gyldigTil: LocalDate = LocalDate.now()
+    private var gyldigTil: LocalDate? = null
     private var informasjonstekst = INFORMASJONTEKST
     private var opphav = OPPHAV
 

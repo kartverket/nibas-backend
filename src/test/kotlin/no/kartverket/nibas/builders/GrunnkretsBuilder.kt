@@ -22,6 +22,7 @@ class GrunnkretsBuilder(
     private var datafangstdato: LocalDate = LocalDate.now(),
     private var gyldigFra: LocalDate = LocalDate.now(),
     private var gyldigTil: LocalDate? = null,
+    private var gyldig: Boolean = true,
     private var informasjonstekst: String = INFORMASJONTEKST,
     private var opphav: String = OPPHAV
 ) {
@@ -41,7 +42,7 @@ class GrunnkretsBuilder(
         grunnkrets.kommune = kommune
 
         grunnkrets.auditInfo.oppdateringsdato = oppdateringsdato
-        grunnkrets.gyldighet = Gyldighet(gyldigFra, gyldigTil)
+        grunnkrets.gyldighet = Gyldighet(gyldigFra, gyldigTil, gyldig)
         grunnkrets.setInfo(informasjonstekst)
         grunnkrets.opphav = opphav
 

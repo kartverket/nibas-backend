@@ -19,16 +19,32 @@ internal class SporbarhetKtTest {
     private val grunnkretsMedLukketIntervall = grunnkrets(august1, october17)
 
     @Test
+    fun oppretteGyldighetMedIntervall0DagerGirFeil() {
+        assertThatThrownBy { grunnkrets(august1, august1) }
+            .isInstanceOf(ResponseException.BadRequestException::class.java)
+    }
+
+    @Test
     fun setGyldigTilTidligereEnnGyldigFra() {
         val grunnkrets = grunnkrets(august1, october17)
         assertThatThrownBy { grunnkrets.setGyldigTil(juli31) }.isInstanceOf(ResponseException.BadRequestException::class.java)
     }
 
+    // Tillater å sette gyldig til lik gyldig fra, tilstanden blir da: erGyldig = false
     @Test
-    fun setGyldigTilLikGyldigFra() {
+    fun setGyldigTilLikGyldigFraGirFeil() {
         val grunnkrets = grunnkrets(august1, october17)
         grunnkrets.setGyldigTil(august1)
-        assertThat(grunnkrets.gyldighet.gyldigTil).isEqualTo(august1)
+        assertThat(grunnkrets.gyldighet.erGyldig).isFalse
+    }
+
+    // Tillater ikke å sette gyldigFra lik gyldigTil.
+    @Test
+    fun setGyldigFraLikGyldigTilGirFeil() {
+        val grunnkrets = grunnkrets(august1, october17)
+        assertThatThrownBy {
+            grunnkrets.setGyldigFra(october17)
+        }.isInstanceOf(ResponseException.BadRequestException::class.java)
     }
 
     @Test
@@ -42,13 +58,6 @@ internal class SporbarhetKtTest {
     fun setGyldigFraSenereEnnGyldigTil() {
         val grunnkrets = grunnkrets(august1, october17)
         assertThatThrownBy { grunnkrets.setGyldigFra(october18) }.isInstanceOf(ResponseException.BadRequestException::class.java)
-    }
-
-    @Test
-    fun setGyldigFraLikGyldigTil() {
-        val grunnkrets = grunnkrets(august1, october17)
-        grunnkrets.setGyldigFra(october17)
-        assertThat(grunnkrets.gyldighet.gyldigFra).isEqualTo(october17)
     }
 
     @Test
@@ -87,12 +96,21 @@ internal class SporbarhetKtTest {
     }
 
     @Test
-    fun intervallFor1DagGirIkkeGyldigPaaTidspunkt() {
-        val grunnkretsMedIdentiskFraOgTilDato = grunnkrets(august1, august1)
-        assertThat(grunnkretsMedIdentiskFraOgTilDato.gyldigPaaTidspunkt(august1)).isFalse
+    fun ugyldigIntervallGirIkkeGyldigPaaTidspunkt() {
+        assertThat(grunnkrets(august1, october17, gyldig = false).gyldigPaaTidspunkt(august1)).isFalse
     }
 
-    private fun grunnkrets(gyldigFra: LocalDate, gyldigTil: LocalDate?) = GrunnkretsBuilder()
+    @Test
+    fun setUgyldig() {
+        val grunnkrets = grunnkrets(august1, october17)
+        assertThat(grunnkrets.gyldighet.erGyldig).isTrue
+
+        grunnkrets.setUgyldig()
+        assertThat(grunnkrets.gyldighet.erGyldig).isFalse
+        assertThat(grunnkrets.gyldigPaaTidspunkt(august1)).isFalse
+    }
+
+    private fun grunnkrets(gyldigFra: LocalDate, gyldigTil: LocalDate?, gyldig: Boolean = true) = GrunnkretsBuilder(gyldig = gyldig)
         .withGyldighetsIntervall(Pair(gyldigFra, gyldigTil))
         .build()
 }

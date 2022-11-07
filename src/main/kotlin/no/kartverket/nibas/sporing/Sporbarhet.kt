@@ -115,9 +115,13 @@ interface Gyldig {
     // Inklusiv gyldigFra, eksklusiv gyldigTil
     var gyldighet: Gyldighet
     fun gyldigPaaTidspunkt(dato: LocalDate): Boolean {
-        val dagenEtterDato = dato.plusDays(1)
-        val gyldigTil = gyldighet.gyldigTil
-        return gyldighet.gyldigFra.isBefore(dagenEtterDato) && (gyldigTil == null || gyldigTil.isAfter(dato))
+        return if (gyldighet.erGyldig) {
+            val dagenEtterDato = dato.plusDays(1)
+            val gyldigTil = gyldighet.gyldigTil
+            gyldighet.gyldigFra.isBefore(dagenEtterDato) && (gyldigTil == null || gyldigTil.isAfter(dato))
+        } else {
+            false
+        }
     }
 
     fun setGyldigTil(gyldigTil: LocalDate) {
@@ -127,15 +131,36 @@ interface Gyldig {
     fun setGyldigFra(nyGyldigFra: LocalDate) {
         this.gyldighet = this.gyldighet.setGyldigFra(nyGyldigFra)
     }
+
+    fun setUgyldig() {
+        this.gyldighet = this.gyldighet.setUgyldig()
+    }
 }
 
+/**
+ * Grunnen til å ha både gyldigFra og gyldigTil er at det kan være kjekt å kunne evaluere om en rad er
+ * Gyldig.gyldigPaaTidspunkt uten å måtte evaluere flere rader.
+ */
+@Embeddable
 data class Gyldighet(
-    @Column(name = "gyldigfra")
+    @Column(name = "gyldigfra", nullable = false)
     val gyldigFra: LocalDate = LocalDate.now(),
 
     @Column(name = "gyldigtil")
-    val gyldigTil: LocalDate? = null
+    val gyldigTil: LocalDate? = null,
+
+    @Column(name = "gyldig", nullable = false)
+    val erGyldig: Boolean = true
 ) {
+
+    // Kjører alltid en validering etter at objektets konstruktør er kalt
+    init {
+        validerIntervall()
+    }
+
+    fun setUgyldig(): Gyldighet {
+        return this.copy(erGyldig = false)
+    }
 
     fun setGyldigFra(nyGyldigFra: LocalDate): Gyldighet {
         return this.copy(gyldigFra = nyGyldigFra)
@@ -143,6 +168,10 @@ data class Gyldighet(
     }
 
     fun setGyldigTil(gyldigTil: LocalDate): Gyldighet {
+        // Forhindrer bruker i å sette en ugyldig til-dato som skaper et ugyldig intervall
+        if (gyldigFra.isEqual(gyldigTil)) {
+            return setUgyldig()
+        }
         return this.copy(
             gyldigTil = gyldigTil
         ).apply { validerIntervall() }
@@ -150,7 +179,7 @@ data class Gyldighet(
 
     private fun validerIntervall() {
         if (!this.isValidInterval()) {
-            throw ResponseException.BadRequestException("Gyldighetsintervall blir ugyldig: $this")
+            throw ResponseException.BadRequestException("Gyldighetsintervall er ugyldig: $this")
         }
     }
 
@@ -158,16 +187,17 @@ data class Gyldighet(
      * Eksempler på gyldige intervall (gyldigFra inklusiv, gyldigTil eksklusiv):
      * - [1.8.22, 16.10.22)
      * - [1.8.22, null)
-     * - [1.8.22, 1.8.22) -> Tomt intervall, men vi tillater det. F.o.m. 1.8 - til 1.8.
+     *
+     * Ugyldig:
+     * - [1.8.22, 1.8.22) -> Tomt intervall, må være minst 1 dag
      */
     private fun isValidInterval(): Boolean {
         val gyldigTil = this.gyldigTil
-        val dagenFoerGyldigFra = this.gyldigFra.minusDays(1)
-        return gyldigTil == null || gyldigTil.isAfter(dagenFoerGyldigFra)
+        return gyldigTil == null || gyldigTil.isAfter(this.gyldigFra)
     }
 
     override fun toString(): String {
-        return "Gyldighet [gyldigFra=$gyldigFra, gyldigTil=$gyldigTil]"
+        return "Gyldighet [gyldigFra=$gyldigFra, gyldigTil=$gyldigTil, erGyldig=$erGyldig]"
     }
 }
 
