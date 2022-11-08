@@ -54,7 +54,7 @@ spring:
 
   flyway:
     schemas: nibas
-
+    validateMigrationNaming: true
 
   # Vault-konfigurasjon
   cloud:
