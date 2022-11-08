@@ -25,6 +25,9 @@ spring:
   profiles:
     active: prod
 
+  main:
+    banner-mode: "OFF"
+
   autoconfigure:
     exclude:
       # Disables the default in-memory-user-authentication. Se Jira: https://kartverket.atlassian.net/browse/TS-535
@@ -99,6 +102,8 @@ spring:
     activate:
       on-profile: localhost
     import: vault://nibas/nibas-backend-local, vault://nibas/nibas-db-local
+  main:
+    banner-mode: "CONSOLE"
   cloud:
     vault:
       uri: ${VAULT_ADDR:https://vault.dev.skip.statkart.no/}

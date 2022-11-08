@@ -58,6 +58,7 @@ val hibernateTypes55Version = "2.20.0"
 val springCloudStarterVaultConfigVersion = "3.1.1"
 val spatial4jVersion = "0.8"
 val kotlinxCoroutinesCoreVersion = "1.6.4"
+val logstashVersion = "7.2"
 
 dependencies {
     implementation("no.kartverket.aut:aut-lib:$autLibVersion")
@@ -85,6 +86,7 @@ dependencies {
     implementation("org.locationtech.spatial4j:spatial4j:$spatial4jVersion")
     implementation("org.hibernate:hibernate-spatial:$hibernateVersion")
     implementation("org.hibernate:hibernate-envers:$hibernateVersion")
+    implementation("net.logstash.logback:logstash-logback-encoder:$logstashVersion")
     implementation("org.springframework.cloud:spring-cloud-starter")
     implementation("org.springframework.cloud:spring-cloud-starter-vault-config:$springCloudStarterVaultConfigVersion")
     implementation("org.springframework.kafka:spring-kafka")
