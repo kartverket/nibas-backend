@@ -2,6 +2,7 @@ package no.kartverket.nibas.repository
 
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.request.KommuneRequest
+import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Spraakkode
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.orm.ObjectOptimisticLockingFailureException
+import org.springframework.transaction.annotation.Transactional
 import org.mockito.Mockito.`when` as whenever
 
 
@@ -79,6 +81,13 @@ class RepositoryTest : TestWithDbContainer() {
 
         val grunnkretsIdsFunnet = grunnkretsRepository.findAllByLokalid(grunnkrets1.lokalid).map { it.id }.toSet()
         assertThat(grunnkretsIdsFunnet).isEqualTo(setOf(grunnkrets1.id, grunnkrets2MedSammeLokalid.id))
+    }
+
+    @Transactional
+    @Test
+    fun findGrense() {
+        grenseRepository.save(GrenseBuilder(id = "300").buildGrunnkretsgrense())
+        assertThat(grenseRepository.findById("300")).isNotNull
     }
 
     private fun createGrunnkrets(lokalid: String? = null): Grunnkrets {

@@ -1,5 +1,6 @@
 package no.kartverket.nibas.testcontainer
 
+import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.SpraakkodeRepository
 import no.kartverket.nibas.repository.UtkastRepository
@@ -21,6 +22,8 @@ class TestWithDbContainer {
     lateinit var utkastRepository: UtkastRepository
     @Autowired
     lateinit var spraakkodeRepository: SpraakkodeRepository
+    @Autowired
+    lateinit var grenseRepository: GrenseRepository
     @Autowired
     lateinit var dataSource: DataSource
 
