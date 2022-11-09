@@ -169,31 +169,39 @@ Vi bruker EditorConfig for formatering (som IntelliJ default forstår).
 
 ## Import <a name="import"></a>
 
-Sosi-import kan kjøres på lokal maskin mot gitt miljø med følgende kommando:
-```
-./gradlew bootRun -PImport --args='--spring.profiles.active=<miljø>,security-off,import'
-```
+Sosi-import skal kjøres på lokal maskin mot gitte miljøer med kommandoer vist i eksempler under. Default kjøres import for alle fylker med import av:
+adm.enheter, grunnkretser og stemmekretser. En kan overstyre hvilke filer som skal brukes med konfig-properties. I tillegg kan en overstyre med:
 
-* Filen `application-import.yml` spesifiserer detaljer for importen. 
-* Feltet `fylkesnumre` spesifiserer en kommaseparert liste. Kun stemmekretser og grunnkretser i angitte fylker vil da importeres.
-* Feltet `targets` spesifiserer en kommaseparert liste for å angi om kun grunnkretser, stemmekretser eller begge skal importeres.
+* Property `nibas.import.fylkesnumre`: Spesifiserer en kommaseparert liste. Kun stemmekretser og grunnkretser i angitte fylker vil da importeres. Se
+  Fylkesnummer-enum.
+* Property `nibas.import.targets`: Spesifiserer en kommaseparert liste for å angi om kun grunnkretser, stemmekretser eller begge skal importeres.
 
-Eksempel på import mot dev-miljø for både stemmekretser og grunnkretser i fylkene Agder og Rogaland:
-
-application-import.yml:
-```application-import.yml
-# Her vil en kun importere grunnkretser og stemmekretser i fylkene Agder + Rogaland (se enum Fylkesnummer):
-nibas:
-  import:
-    fylkesnumre: 42,11
-    targets: grunnkrets,stemmekrets
 ```
-```
-# Ved behov for å tømme databasen først:
-$ ./gradlew -Dflyway.user=nibas -Dflyway.password=<se passord i vault> -Dflyway.url=jdbc:postgresql://rin-db1412:5432/nibas -Dflyway.cleanDisabled="false" flywayClean
+Eksempel på import mot enten lokal database, dev, test eller prod :
+$ ./gradlew bootRun --args=' \
+    --spring.profiles.active=import,security-off \
+    --spring.datasource.url=URL_HER \
+    --spring.datasource.username=USER_HER \ 
+    --spring.datasource.password=PASSWORD_HER \
+    '
 
-# Kjøre selve importjobben
-$ ./gradlew bootRun -PImport --args='--spring.profiles.active=dev,security-off,import'
+Eksempel på import for bare 2 fylker (Agder + Rogaland):
+$ ./gradlew bootRun --args=' \
+    --spring.profiles.active=import,security-off \
+    --spring.datasource.url=URL_HER \
+    --spring.datasource.username=USER_HER \ 
+    --spring.datasource.password=PASSWORD_HER \
+    --nibas.import.fylkesnumre=11,42 \
+    '
+    
+Eksempel på import med bare stemmekretser:
+$ ./gradlew bootRun --args=' \
+    --spring.profiles.active=import,security-off \
+    --spring.datasource.url=URL_HER \
+    --spring.datasource.username=USER_HER \ 
+    --spring.datasource.password=PASSWORD_HER \
+    --nibas.import.targets=stemmekrets \
+    '
 ```
 
 Om du vil kjøre import og publisere events mot pubsub må følgende også gjøres i application-import.yml:
@@ -207,16 +215,19 @@ Sett miljøvariabelen `GOOGLE_CLOUD_PROJECT` til korrekt nibas gcp project id. (
 Autentiser deg mot GCP med kommandoen `gcloud auth login`
 
 # Opprette database i miljø
+
 For nibas-backend må vi (foreløpig) opprette applikasjonsbruker og database manuelt.
 Root-bruker og connection-detaljer per miljø finnes i Vault under nøkkel `nibas-db-root`
 
 Logg på med root-bruker på gjeldende database og kjør følgende sql-er:
+
 ```sql
 CREATE ROLE nibas WITH LOGIN PASSWORD '<lag et sikkert passord>';
 create database nibas with owner = nibas;
 ```
 
 Opprett et innslag i Vault under nøkkel `nibas-db`. Dette skal ha følgende innhold:
+
 ```json
 {
   "spring.datasource.password": "<passord>",

@@ -13,65 +13,68 @@ import no.kartverket.nibas.sosi.sosiimport.KommuneImporter
 import no.kartverket.nibas.sosi.sosiimport.NasjonImporter
 import no.kartverket.nibas.sosi.sosiimport.StemmekretsImporter
 import org.locationtech.jts.geom.Geometry
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Profile
+import org.springframework.core.env.Environment
+import org.springframework.core.io.DefaultResourceLoader
 import org.springframework.stereotype.Service
-import java.io.File
+import java.io.InputStream
 import java.util.logging.Logger
 import kotlin.system.measureTimeMillis
 
 
 @Service
 @Profile("import")
-class SosiImportService {
+class SosiImportService(
+    private val kommuneImporter: KommuneImporter,
+    private val fylkeImporter: FylkeImporter,
+    private val nasjonImporter: NasjonImporter,
+    private val grunnkretsImporter: GrunnkretsImporter,
+    private val stemmekretsImporter: StemmekretsImporter,
+    private val environment: Environment
+) {
+    private val logger: Logger = Logger.getLogger(this::class.java.name)
+    private final val targetGrunnkrets = "grunnkrets"
+    private final val targetStemmekrets = "stemmekrets"
 
-    private final val TARGET_GRUNNKRETS = "grunnkrets"
-    private final val TARGET_STEMMEKRETS = "stemmekrets"
-
-    @Value("\${nibas.import.grunnkretsfil}")
+    @Value("\${nibas.import.grunnkretsfil:sosifiler/STAT_enheter_grunnkretser.sos}")
     lateinit var grunnkretsfil: String
 
-    @Value("\${nibas.import.admenhetfil}")
+    @Value("\${nibas.import.admenhetfil:sosifiler/ADM_Enheter_Norge_ny_inkl_nasjon.sos}")
     lateinit var admenhetfil: String
 
-    @Value("\${nibas.import.stemmekretsfil}")
+    @Value("\${nibas.import.stemmekretsfil:sosifiler/Stemmekretser_Norge.sos}")
     lateinit var stemmekretsfil: String
 
-    @Value("#{'\${nibas.import.fylkesnumre}'.split(',')}")
-    lateinit var fylkesnumre: List<String>
+    private val importTargets: List<String> =
+        environment.getProperty("nibas.import.targets")?.split(",")
+            ?: listOf(targetGrunnkrets, targetStemmekrets)
 
-    @Value("#{'\${nibas.import.targets}'.split(',')}")
-    lateinit var importTargets: List<String>
-
-    val logger = Logger.getLogger(this::class.java.name)
-
-    @Autowired
-    lateinit var kommuneImporter: KommuneImporter
-
-    @Autowired
-    lateinit var fylkeImporter: FylkeImporter
-
-    @Autowired
-    lateinit var nasjonImporter: NasjonImporter
-
-    @Autowired
-    lateinit var grunnkretsImporter: GrunnkretsImporter
-
-    @Autowired
-    lateinit var stemmekretsImporter: StemmekretsImporter
+    private val fylkesnumre: List<String> =
+        environment.getProperty("nibas.import.fylkesnumre")?.split(",")
+            ?: Fylkesnummer.values().map { it.fylkesnummer }.sorted()
 
     fun importNibas() {
-        val (admEnhetRoot, grunnkretsRoot, stemmekretsRoot) = runBlocking {
-            val admEnhetDeferred = async { NibasSosiDeserializer().deserialize(File(admenhetfil).inputStream()) }
+        logger.info("\nKonfigurasjon for sosi-import: \n\n"
+            + "Profiler: ${environment.activeProfiles.joinToString(",")} \n"
+            + "Datasource url: ${environment.getProperty("spring.datasource.url")?.trim()} \n"
+            + "Adm.enhet-fil: $admenhetfil \n"
+            + "Grunnkretsfil: $grunnkretsfil \n"
+            + "Stemmekretsfil: $stemmekretsfil \n"
+            + "Fylkesnumre: ${fylkesnumre.joinToString(",")} \n"
+            + "Import targets: ${importTargets.joinToString(",")} \n"
+        )
 
-            val grunnkretsDeferred = when(importTargets.contains(TARGET_GRUNNKRETS)) {
-                true -> async { NibasSosiDeserializer().deserialize(File(grunnkretsfil).inputStream()) }
+        val (admEnhetRoot, grunnkretsRoot, stemmekretsRoot) = runBlocking {
+            val admEnhetDeferred = async { NibasSosiDeserializer().deserialize(fileAsInputStream(admenhetfil)) }
+
+            val grunnkretsDeferred = when (importTargets.contains(targetGrunnkrets)) {
+                true -> async { NibasSosiDeserializer().deserialize(fileAsInputStream(grunnkretsfil)) }
                 false -> async { null }
             }
 
-            val stemmekretsDeferred = when(importTargets.contains(TARGET_STEMMEKRETS)) {
-                true -> async { NibasSosiDeserializer().deserialize(File(stemmekretsfil).inputStream()) }
+            val stemmekretsDeferred = when (importTargets.contains(targetStemmekrets)) {
+                true -> async { NibasSosiDeserializer().deserialize(fileAsInputStream(stemmekretsfil)) }
                 false -> async { null }
             }
 
@@ -79,9 +82,11 @@ class SosiImportService {
         }
 
         admEnhetRoot?.let { importerAdministrativeEnheter(admEnhetRoot) }
-        grunnkretsRoot?.let { importerGrunnkretser(grunnkretsRoot, admEnhetRoot!!, fylkesnumre) }
+        grunnkretsRoot?.let { importerGrunnkretser(grunnkretsRoot, admEnhetRoot!!) }
         stemmekretsRoot?.let { importerStemmekretser(stemmekretsRoot, admEnhetRoot!!) }
     }
+
+    private fun fileAsInputStream(filepath: String): InputStream = DefaultResourceLoader().getResource(filepath).file.inputStream()
 
     fun importerAdministrativeEnheter(root: SosiObjekt) {
         logger.info("Importing administrative enheter")
@@ -110,7 +115,7 @@ class SosiImportService {
         logger.info("Took $millis ms to import")
     }
 
-    fun importerGrunnkretser(grunnkretsRoot: SosiObjekt, admenhetRoot: SosiObjekt, fylkesnumre: List<String>) {
+    fun importerGrunnkretser(grunnkretsRoot: SosiObjekt, admenhetRoot: SosiObjekt) {
         logger.info("Importing grunnkretser")
         val fylker = fylkesnumre.map { Fylkesnummer.fromValue(it) }
         val grunnkretser = filtrerKretser(grunnkretsRoot.getFlater(), fylker, SosiKoder.GRUNNKRETS)
@@ -121,7 +126,7 @@ class SosiImportService {
             try {
                 logger.info("Importing grunnkrets ${index + 1} of ${grupperteGrunnkretser.size} - LokalId = ${entry.value.first().getIdent()?.getLokalId()}")
                 grunnkretsImporter.importerSosiGrunnkrets(entry.value, kurver, admenhetRoot)
-            } catch(ex: Exception) {
+            } catch (ex: Exception) {
                 logger.warning("Klarte ikke å importere grunnkrets med lokalId ${entry.value.first().getIdent()?.getLokalId()}")
                 ex.printStackTrace()
             }
@@ -133,16 +138,16 @@ class SosiImportService {
         data class KommunalKretsKey(val kommunenummer: String, val stemmekretsnummer: String)
 
         fun SosiFlate.toKommunalKretsKey() = KommunalKretsKey(getKommunenummer(), getStemmekretsId()!!.getStemmekretsnummer()!!)
-        val fylker = fylkesnumre.map{Fylkesnummer.fromValue(it)}
+        val fylker = fylkesnumre.map { Fylkesnummer.fromValue(it) }
         val stemmekretser = filtrerKretser(stemmekretsRoot.getFlater(), fylker, SosiKoder.STEMMEKRETS)
         val grupperteStemmekretser = stemmekretser.groupBy { it.toKommunalKretsKey() }
 
         val kurver = stemmekretsRoot.getKurver()
         grupperteStemmekretser.entries.forEachIndexed { index, entry ->
-            try{
+            try {
                 logger.info("Importing stemmekrets ${index + 1} of ${grupperteStemmekretser.size} - LokalId = ${entry.value.first().getIdent()?.getLokalId()}")
                 stemmekretsImporter.importerSosiStemmekrets(entry.value, kurver, admenhetRoot)
-            } catch(ex: Exception) {
+            } catch (ex: Exception) {
                 logger.warning("Klarte ikke å importere stemmekrets med lokalId ${entry.value.first().getIdent()?.getLokalId()}")
                 ex.printStackTrace()
             }
