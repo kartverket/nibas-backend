@@ -196,6 +196,16 @@ $ ./gradlew -Dflyway.user=nibas -Dflyway.password=<se passord i vault> -Dflyway.
 $ ./gradlew bootRun -PImport --args='--spring.profiles.active=dev,security-off,import'
 ```
 
+Om du vil kjøre import og publisere events mot pubsub må følgende også gjøres i application-import.yml:
+```application-import.yml
+nibas:
+  pubsub:
+    enabled: true
+```
+
+Sett miljøvariabelen `GOOGLE_CLOUD_PROJECT` til korrekt nibas gcp project id. (Mot det miljø du vil importere til)
+Autentiser deg mot GCP med kommandoen `gcloud auth login`
+
 # Opprette database i miljø
 For nibas-backend må vi (foreløpig) opprette applikasjonsbruker og database manuelt.
 Root-bruker og connection-detaljer per miljø finnes i Vault under nøkkel `nibas-db-root`

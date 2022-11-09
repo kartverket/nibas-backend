@@ -71,29 +71,21 @@ spring:
         trust-store-password: changeit
       connection-timeout: 5000
       read-timeout: 15000
+    gcp:
+      project-id: ${GOOGLE_CLOUD_PROJECT}
   config:
     import: vault://nibas/nibas-backend, vault://nibas/nibas-db
 
   jmx:
     enabled: true
 
-  kafka:
-    bootstrap-servers: nibas-kafka:9092
-    producer:
-      properties:
-        spring:
-          json:
-            add:
-              type:
-                headers: false
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-
 # Hver dag kl 03
 nibas:
   cron:
     kodeliste:
       invalidate: 0 0 3 * * *
+  pubsub:
+    topic: nibas-events
 ---
 spring:
   config:
@@ -108,14 +100,12 @@ spring:
       authentication: token
       token: ${VAULT_TOKEN:myroot}
       enabled: true
-  kafka:
-    bootstrap-servers: localhost:29092
   datasource:
     url: ${DB_CONNECTION_STRING:jdbc:postgresql://localhost:5432/nibas}
     username: ${DB_USER:nibas}
     password: ${DB_PASSWORD:nibas}
 
 nibas:
-  kafka:
+  pubsub:
     enabled: false
 

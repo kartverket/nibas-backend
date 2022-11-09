@@ -1,5 +1,6 @@
 package no.kartverket.nibas.inndelinger
 
+import no.kartverket.nibas.TestConfiguration
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.common.ResponseException.BadRequestException
@@ -25,10 +26,12 @@ import org.mockito.Mockito.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.mock.mockito.MockBean
+import org.springframework.context.annotation.Import
 import java.util.*
 import org.mockito.Mockito.`when` as whenever
 
 @SpringBootTest
+@Import(TestConfiguration::class)
 class GrenseServiceTest {
 
     @Autowired

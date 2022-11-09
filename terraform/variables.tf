@@ -25,3 +25,11 @@ variable "kubernetes_cluster" {
 variable "vault_addr" {
   type = string
 }
+
+variable "nibas_project_id" {
+  type = string
+}
+
+variable "sa_pub_sub_publisher" {
+  type = string
+}

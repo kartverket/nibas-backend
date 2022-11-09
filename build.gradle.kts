@@ -59,6 +59,7 @@ val springCloudStarterVaultConfigVersion = "3.1.1"
 val spatial4jVersion = "0.8"
 val kotlinxCoroutinesCoreVersion = "1.6.4"
 val logstashVersion = "7.2"
+val springCloudGcpStarter = "3.4.0"
 
 dependencies {
     implementation("no.kartverket.aut:aut-lib:$autLibVersion")
@@ -89,7 +90,11 @@ dependencies {
     implementation("net.logstash.logback:logstash-logback-encoder:$logstashVersion")
     implementation("org.springframework.cloud:spring-cloud-starter")
     implementation("org.springframework.cloud:spring-cloud-starter-vault-config:$springCloudStarterVaultConfigVersion")
-    implementation("org.springframework.kafka:spring-kafka")
+
+    implementation("com.google.cloud:spring-cloud-gcp-starter:$springCloudGcpStarter")
+    implementation("com.google.cloud:spring-cloud-gcp-pubsub:$springCloudGcpStarter")
+    implementation("org.springframework.integration:spring-integration-core")
+
     // This library provides Hibernate 5.5+ Json column support, which is not natively supported by Hibernate
     // NB! Artifact-id må endres ved overgang til Hibernate 6
     implementation("com.vladmihalcea:hibernate-types-55:$hibernateTypes55Version")

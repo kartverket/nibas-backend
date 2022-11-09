@@ -12,3 +12,5 @@ nibas:
     fylkesnumre: 42
     targets: grunnkrets,stemmekrets
 
+  pubsub:
+    enabled: false

@@ -10,7 +10,10 @@ spring:
   cloud:
     vault:
       enabled: false
-#   Må også inn i test-konfigen ellers feiler GrenseControllerTest.
+    gcp:
+      pubsub:
+        enabled: false
+  #   Må også inn i test-konfigen ellers feiler GrenseControllerTest.
   jackson:
     time-zone: "Europe/Oslo"
 

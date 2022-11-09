@@ -15,6 +15,11 @@ resource "kubernetes_manifest" "nibas_backend_application" {
       port  = 8080
       # Any external hostnames that route to this application
       ingresses = [var.external_dns_hostname]
+      gcp = {
+        auth = {
+          serviceAccount = var.sa_pub_sub_publisher
+        }
+      }
       replicas = {
         min                  = 2
         max                  = 2
@@ -26,6 +31,10 @@ resource "kubernetes_manifest" "nibas_backend_application" {
         {
           name  = "KUBERNETES_CLUSTER"
           value = var.kubernetes_cluster
+        },
+        {
+          name  = "GOOGLE_CLOUD_PROJECT"
+          value = var.nibas_project_id
         }
       ]
       strategy = {

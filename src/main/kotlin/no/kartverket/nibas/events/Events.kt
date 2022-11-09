@@ -1,5 +1,8 @@
 package no.kartverket.nibas.events
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.KotlinModule
+import no.kartverket.nibas.config.AsynchronousSpringEventsConfig
 import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.inndelinger.HistorikkService
 import org.hibernate.event.service.spi.EventListenerRegistry
@@ -14,7 +17,6 @@ import org.hibernate.persister.entity.EntityPersister
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.context.event.EventListener
-import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Component
 import java.util.logging.Logger
 import javax.annotation.PostConstruct
@@ -22,19 +24,21 @@ import javax.persistence.EntityManagerFactory
 
 
 @Component
-class NibasEventListener constructor(private val kafkaTemplate: KafkaTemplate<String, NibasEvent>) {
+class NibasEventListener constructor(private val messagingGateway: AsynchronousSpringEventsConfig.PubsubOutboundGateway) {
 
-    @Value("\${nibas.kafka.enabled:true}")
-    val kafkaEnabled: Boolean = true
+    @Value("\${nibas.pubsub.enabled:true}")
+    val pubSubEnabled: Boolean = true
 
     val log = Logger.getLogger(this::class.java.name)
 
+    val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
+
     @EventListener(value = [NibasEvent::class])
     fun onApplicationEvent(event: NibasEvent) {
-        if(kafkaEnabled) {
-            kafkaTemplate.send("nibas-events", "key-${System.currentTimeMillis()}", event)
+        if(pubSubEnabled) {
+            messagingGateway.sendToPubsub(mapper.writeValueAsString(event))
         } else {
-            log.fine("Kafka disabled - not sending event for ${event.id} - ${event.type} - ${event.target}")
+            log.fine("PubSub disabled - not sending event for ${event.id} - ${event.type} - ${event.target}")
         }
     }
 }
