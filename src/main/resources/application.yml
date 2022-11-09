@@ -77,9 +77,9 @@ spring:
     gcp:
       project-id: ${GOOGLE_CLOUD_PROJECT}
       pubsub:
-        enabled: true
+        enabled: false
       core:
-        enabled: true
+        enabled: false
   config:
     # Optionally connect to Config Server (Vault). Gjør at vault-pathene ikke evalueres for import.
     import: optional:vault://nibas/nibas-backend, optional:vault://nibas/nibas-db
