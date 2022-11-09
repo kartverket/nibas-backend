@@ -15,6 +15,7 @@ import org.hibernate.event.spi.PostUpdateEvent
 import org.hibernate.internal.SessionFactoryImpl
 import org.hibernate.persister.entity.EntityPersister
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
@@ -24,9 +25,10 @@ import javax.persistence.EntityManagerFactory
 
 
 @Component
+@ConditionalOnProperty(value = ["spring.cloud.gcp.pubsub.enabled"], havingValue = "true")
 class NibasEventListener constructor(private val messagingGateway: AsynchronousSpringEventsConfig.PubsubOutboundGateway) {
 
-    @Value("\${nibas.pubsub.enabled:true}")
+    @Value("\${spring.cloud.gcp.pubsub.enabled:true}")
     val pubSubEnabled: Boolean = true
 
     val log = Logger.getLogger(this::class.java.name)

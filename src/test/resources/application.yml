@@ -17,6 +17,8 @@ spring:
     gcp:
       pubsub:
         enabled: false
+      core:
+        enabled: false
   # Må også inn i test-konfigen ellers feiler GrenseControllerTest.
   jackson:
     time-zone: "Europe/Oslo"

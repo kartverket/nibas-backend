@@ -73,6 +73,10 @@ spring:
       read-timeout: 15000
     gcp:
       project-id: ${GOOGLE_CLOUD_PROJECT}
+      pubsub:
+        enabled: false
+      core:
+        enabled: false
   config:
     import: vault://nibas/nibas-backend, vault://nibas/nibas-db
 
@@ -100,12 +104,14 @@ spring:
       authentication: token
       token: ${VAULT_TOKEN:myroot}
       enabled: true
+    gcp:
+      pubsub:
+        enabled: false
+      core:
+        enabled: false
+
   datasource:
     url: ${DB_CONNECTION_STRING:jdbc:postgresql://localhost:5432/nibas}
     username: ${DB_USER:nibas}
     password: ${DB_PASSWORD:nibas}
-
-nibas:
-  pubsub:
-    enabled: false
 

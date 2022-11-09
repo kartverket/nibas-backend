@@ -3,6 +3,12 @@ spring:
     web-application-type: none
   jpa:
     open-in-view: false
+  cloud:
+    gcp:
+      pubsub:
+        enabled: false
+      core:
+        enabled: false
 
 nibas:
   import:
@@ -11,6 +17,3 @@ nibas:
     admenhetfil: /Users/kes/sandboxes/nibas/datasett/admenheter/ADM_Enheter_Norge.sos
     fylkesnumre: 42
     targets: grunnkrets,stemmekrets
-
-  pubsub:
-    enabled: false
