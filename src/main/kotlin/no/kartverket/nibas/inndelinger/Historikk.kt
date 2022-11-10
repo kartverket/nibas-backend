@@ -6,8 +6,10 @@ import org.hibernate.envers.DefaultRevisionEntity
 import org.hibernate.envers.RevisionType
 import org.hibernate.envers.query.AuditEntity
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 
+@Transactional(readOnly = true)
 @Service
 class HistorikkService(val auditReader: AuditReader) {
 

@@ -3,7 +3,6 @@ package no.kartverket.nibas.inndelinger
 import no.kartverket.nibas.api.v1.GrenseApi
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.KontekstEnhetType
-import no.kartverket.nibas.common.ResponseException.BadRequestException
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.FeatureProperties
@@ -18,6 +17,7 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.RiksgrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.StatistiskgrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.TerritorialgrenseMetadata
 import no.kartverket.nibas.api.v1.response.RevisjonRef
+import no.kartverket.nibas.common.ResponseException.BadRequestException
 import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseKobling
@@ -79,6 +79,7 @@ class GrenseService(
 ) {
     private val logger: Logger = Logger.getLogger(this::class.java.name)
 
+    @Transactional(readOnly = true)
     fun hentGrense(id: String): Grense? {
         return grenseRepository.findById(id).unwrap()
     }

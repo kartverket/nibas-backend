@@ -56,6 +56,7 @@ class StemmekretsController(
 
 }
 
+@Transactional(readOnly = true)
 @Service
 class StemmekretsControllerService(private val stemmekretsService: StemmekretsService,
                                    private val kodelisteService: KodelisteService) {
@@ -65,16 +66,17 @@ class StemmekretsControllerService(private val stemmekretsService: StemmekretsSe
 
 }
 
+@Transactional(readOnly = true)
 @Service
 class StemmekretsService(private val stemmekretsRepository: StemmekretsRepository) {
 
     fun hentStemmekrets(id: String) = stemmekretsRepository.findById(id).unwrap()
 
-    @Transactional
     fun hentGrenserForStemmekrets(id: String): Set<GrenseKobling> {
         return hentStemmekrets(id)?.grenser ?: emptySet()
     }
 
+    @Transactional(readOnly = false)
     fun oppdaterStemmekrets(id: String, oppdatertStemmekrets: StemmekretsRequest): Stemmekrets? {
         return hentStemmekrets(id)?.let { gammel: Stemmekrets ->
             verifiserOptimistiskLaas(oppdatertStemmekrets.version, gammel)?.let { throw OptimistiskLaasException(it) }

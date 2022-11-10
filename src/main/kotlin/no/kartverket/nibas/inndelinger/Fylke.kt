@@ -18,6 +18,7 @@ import no.kartverket.nibas.repository.verifiserOptimistiskLaas
 import no.kartverket.nibas.unwrap
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
@@ -55,6 +56,7 @@ class FylkeController(
 
 }
 
+@Transactional(readOnly = true)
 @Service
 class FylkeService(
     private val fylkeRepository: FylkeRepository,
@@ -68,6 +70,7 @@ class FylkeService(
         return fylkeRepository.findById(id).unwrap()?.getGrenser() ?: emptySet()
     }
 
+    @Transactional(readOnly = false)
     fun oppdaterFylke(id: String, oppdatertFylke: FylkeRequest): Fylke? {
         return hentFylke(id)?.let { gammel ->
             verifiserOptimistiskLaas(oppdatertFylke.version, gammel)?.let { throw OptimistiskLaasException(it) }

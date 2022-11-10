@@ -63,6 +63,7 @@ class GrunnkretsController(
 
 }
 
+@Transactional(readOnly = true)
 @Service
 class GrunnkretsControllerService(private val grunnkretsService: GrunnkretsService,
                                   private val kodelisteService: KodelisteService) {

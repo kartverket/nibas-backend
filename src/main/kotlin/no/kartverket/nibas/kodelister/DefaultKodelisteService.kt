@@ -8,10 +8,12 @@ import no.kartverket.nibas.repository.LandKodeRepository
 import no.kartverket.nibas.repository.NoeyaktighetsklassekodeRepository
 import no.kartverket.nibas.repository.TerrengdetaljkodeRepository
 import org.springframework.scheduling.annotation.Scheduled
+import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.client.WebClient
 import java.time.Duration
 import java.util.logging.Logger
 
+@Transactional(readOnly = true)
 class DefaultKodelisteService constructor(private val kodelisteFetcher: KodelisteFetcher,
                                           private val landKodeRepository: LandKodeRepository,
                                           private val terrengdetaljkodeRepository: TerrengdetaljkodeRepository,
@@ -24,6 +26,7 @@ class DefaultKodelisteService constructor(private val kodelisteFetcher: Kodelist
     private val fylkesnummerUri = "fylkesnummer.json?"
     private val kodelisteByTypeMap: MutableMap<KodelisteType, Map<String, CachetKodelisteItem>> = mutableMapOf()
 
+    @Transactional(readOnly = false)
     @Scheduled(
         cron = "\${nibas.cron.kodeliste.invalidate}"
     )

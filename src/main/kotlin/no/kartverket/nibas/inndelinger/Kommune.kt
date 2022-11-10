@@ -23,6 +23,7 @@ import no.kartverket.nibas.repository.verifiserOptimistiskLaas
 import no.kartverket.nibas.unwrap
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
@@ -74,6 +75,7 @@ class KommuneController(
     }
 }
 
+@Transactional(readOnly = true)
 @Service
 class KommuneService(
     private val kommuneRepository: KommuneRepository,
@@ -92,6 +94,7 @@ class KommuneService(
         return kommuneRepository.findById(id).unwrap()?.getGrenser() ?: emptySet()
     }
 
+    @Transactional(readOnly = false)
     fun oppdaterKommune(id: String, oppdatertKommune: KommuneRequest): Kommune? {
         return hentKommune(id)?.let { gammel ->
             verifiserOptimistiskLaas(oppdatertKommune.version, gammel)?.let { throw OptimistiskLaasException(it) }
