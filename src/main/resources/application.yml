@@ -24,7 +24,14 @@ springdoc:
 spring:
   profiles:
     active: prod
-
+    group:
+      import:
+        - "humanReadableLog"
+        - "pubSubDisabled"
+        - "security-off"
+      localhost:
+        - "humanReadableLog"
+        - "pubSubDisabled"
   main:
     banner-mode: "OFF"
 
@@ -98,27 +105,28 @@ nibas:
 spring:
   config:
     activate:
+      on-profile: pubSubDisabled
+  cloud:
+    gcp:
+      pubsub:
+        enabled: false
+      core:
+        enabled: false
+---
+spring:
+  config:
+    activate:
       on-profile: localhost
-    import: vault://nibas/nibas-backend-local, vault://nibas/nibas-db-local
-  main:
-    banner-mode: "CONSOLE"
+  datasource:
+    url: ${DB_CONNECTION_STRING:jdbc:postgresql://localhost:5432/nibas}
+    username: ${DB_USER:nibas}
+    password: ${DB_PASSWORD:nibas}
   cloud:
     vault:
       uri: ${VAULT_ADDR:https://vault.dev.skip.statkart.no/}
       authentication: token
       token: ${VAULT_TOKEN:myroot}
       enabled: true
-    gcp:
-      pubsub:
-        enabled: false
-      core:
-        enabled: false
-
-  datasource:
-    url: ${DB_CONNECTION_STRING:jdbc:postgresql://localhost:5432/nibas}
-    username: ${DB_USER:nibas}
-    password: ${DB_PASSWORD:nibas}
-
 ---
 spring:
   config:
@@ -131,11 +139,6 @@ spring:
   cloud:
     vault:
       enabled: false
-    gcp:
-      pubsub:
-        enabled: false
-      core:
-        enabled: false
   jmx:
     enabled: false
 

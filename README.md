@@ -44,12 +44,6 @@ aktiv spring-profil til `localhost`. Dette gjøres under "Run/Debug Configuratio
 
 Alternativt kan man også starte applikasjonen via terminalen:
 
-* Definer følgende miljøvariable:
-    * VAULT_TOKEN (Logg inn på Vault, og velg "Copy Token" øverst til høyre under profil-menyen)
-    * VAULT_ADDR https://vault.dev.skip.statkart.no
-__
-* Start nibas-backend:
-
 ```
 ./gradlew bootRun --args='--spring.profiles.active=localhost'
 ``` 
@@ -60,7 +54,10 @@ __
 
 ```
 ./gradlew bootRun -PTLSversion=TLSv1.2 --args='--spring.profiles.active=localhost'
-``` 
+```
+
+Default så vil applikasjonen forsøke å bruke vault fra dev-miljøet. Men om du ønsker å bruke lokalt vault (kjørt opp med docker-compose) kan du overstyre dette med 
+å sette miljøvariabelen `VAULT_ADDR=http://localhost:8200`.
 
 ## Autentisering <a name="autentisering"></a>
 
@@ -70,7 +67,7 @@ Applikasjonen starter default med autentisering påskrudd. Dette betyr at alle A
 
 Man kan disable sikkerhet ved lokal kjøring ved å bruke spring-profilen security-off. Man kan kjøre med flere profiler samtidig, så det er bare å legge den
 til (komma-separert) til der du vanligvis spesifiserer spring-profilen (om det er på kommandolinja eller i intellij run config). Alle kall uten denne headeren
-resulterer i en 401 Unauthorized
+resulterer i en 401 Unauthorized. Om man kjører med profilen `import` er denne profilen lagt til i tillegg automatisk.
 
 ### Test av API utenfor klienten
 

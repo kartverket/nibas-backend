@@ -14,10 +14,10 @@
     </appender>
 
     <root level="INFO">
-        <springProfile name="!dev">
+        <springProfile name="!humanReadableLog">
             <appender-ref ref="stdout_json"/>
         </springProfile>
-        <springProfile name="dev">
+        <springProfile name="humanReadableLog">
             <appender-ref ref="stdout_humanreadable"/>
         </springProfile>
     </root>
