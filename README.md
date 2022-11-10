@@ -56,8 +56,8 @@ Alternativt kan man også starte applikasjonen via terminalen:
 ./gradlew bootRun -PTLSversion=TLSv1.2 --args='--spring.profiles.active=localhost'
 ```
 
-Default så vil applikasjonen forsøke å bruke vault fra dev-miljøet. Men om du ønsker å bruke lokalt vault (kjørt opp med docker-compose) kan du overstyre dette med 
-å sette miljøvariabelen `VAULT_ADDR=http://localhost:8200`.
+Default så vil applikasjonen forsøke å bruke vault fra dev-miljøet. Men om du ønsker å bruke lokalt vault (kjørt opp med docker-compose) kan du overstyre dette
+med å sette miljøvariabelen `VAULT_ADDR=http://localhost:8200`.
 
 ## Autentisering <a name="autentisering"></a>
 
@@ -166,15 +166,17 @@ Vi bruker EditorConfig for formatering (som IntelliJ default forstår).
 
 ## Import <a name="import"></a>
 
-Sosi-import skal kjøres på lokal maskin mot gitte miljøer med kommandoer vist i eksempler under. Default kjøres import for alle fylker med import av:
+Sosi-import skal kjøres på lokal maskin mot gitte miljøer med kommandoer vist i eksempler under. Default kjøres import for alle fylker med import av
 adm.enheter, grunnkretser og stemmekretser. En kan overstyre hvilke filer som skal brukes med konfig-properties. I tillegg kan en overstyre med:
 
 * Property `nibas.import.fylkesnumre`: Spesifiserer en kommaseparert liste. Kun stemmekretser og grunnkretser i angitte fylker vil da importeres. Se
-  Fylkesnummer-enum.
+  [Fylkesnummer](src/main/kotlin/no/kartverket/nibas/sosi/sosiimport/Fylkesnummer.kt) for mulige verdier.
 * Property `nibas.import.targets`: Spesifiserer en kommaseparert liste for å angi om kun grunnkretser, stemmekretser eller begge skal importeres.
 
+Verdiene for url, username og password må hentes ut fra Vault for aktuelt miljø og sendes inn som Spring-properties slik som vist under. Url er på formatet
+`jdbc:postgresql://localhost:5432/nibas`.
 ```
-Eksempel på import mot enten lokal database, dev, test eller prod :
+Eksempel på import mot enten lokal database, dev, test eller prod:
 $ ./gradlew bootRun --args=' \
     --spring.profiles.active=import \
     --spring.datasource.url=URL_HER \
@@ -202,6 +204,7 @@ $ ./gradlew bootRun --args=' \
 ```
 
 Om du vil kjøre import og publisere events mot pubsub må følgende også gjøres i application-import.yml:
+
 ```application-import.yml
 nibas:
   pubsub:
