@@ -47,7 +47,7 @@ Alternativt kan man også starte applikasjonen via terminalen:
 * Definer følgende miljøvariable:
     * VAULT_TOKEN (Logg inn på Vault, og velg "Copy Token" øverst til høyre under profil-menyen)
     * VAULT_ADDR https://vault.dev.skip.statkart.no
-
+__
 * Start nibas-backend:
 
 ```
@@ -179,7 +179,7 @@ adm.enheter, grunnkretser og stemmekretser. En kan overstyre hvilke filer som sk
 ```
 Eksempel på import mot enten lokal database, dev, test eller prod :
 $ ./gradlew bootRun --args=' \
-    --spring.profiles.active=import,security-off \
+    --spring.profiles.active=import \
     --spring.datasource.url=URL_HER \
     --spring.datasource.username=USER_HER \ 
     --spring.datasource.password=PASSWORD_HER \
@@ -187,7 +187,7 @@ $ ./gradlew bootRun --args=' \
 
 Eksempel på import for bare 2 fylker (Agder + Rogaland):
 $ ./gradlew bootRun --args=' \
-    --spring.profiles.active=import,security-off \
+    --spring.profiles.active=import \
     --spring.datasource.url=URL_HER \
     --spring.datasource.username=USER_HER \ 
     --spring.datasource.password=PASSWORD_HER \
@@ -196,7 +196,7 @@ $ ./gradlew bootRun --args=' \
     
 Eksempel på import med bare stemmekretser:
 $ ./gradlew bootRun --args=' \
-    --spring.profiles.active=import,security-off \
+    --spring.profiles.active=import \
     --spring.datasource.url=URL_HER \
     --spring.datasource.username=USER_HER \ 
     --spring.datasource.password=PASSWORD_HER \
