@@ -85,16 +85,17 @@ jobs:
       id-token: write
       pull-requests: write
       contents: read
-    uses: kartverket/github-workflows/.github/workflows/run-terraform.yml@v2.7.5
+    uses: kartverket/github-workflows/.github/workflows/run-terraform.yml@v3.0.2
     with:
       runner: atkv1-dev
       environment: dev
       kubernetes_cluster: atkv1-dev
       terraform_workspace: dev
-      terraform_options: -var-file=variables/dev.tfvars -var=image=ghcr.io/kartverket/nibas-backend:${{ needs.build.outputs.new_tag }}
-      terraform_backend_config: -backend-config=backend/dev.gcs.tfbackend
+      terraform_option_1: -var-file=variables/dev.tfvars
+      terraform_option_2: -var=image=ghcr.io/kartverket/nibas-backend:${{ needs.build.outputs.new_tag }}
+      terraform_init_option_1: -backend-config=backend/dev.gcs.tfbackend
       working_directory: terraform
-      workload_identity_provider: projects/747318126147/locations/global/workloadIdentityPools/nibas-deploy-pool/providers/github-provider
+      auth_project_number: 747318126147
       service_account: nibas-deploy@nibas-dev-075c.iam.gserviceaccount.com
       project_id: kubernetes-dev-94b9
       deploy_on: 'refs/heads/master'
@@ -108,16 +109,17 @@ jobs:
       id-token: write
       pull-requests: write
       contents: read
-    uses: kartverket/github-workflows/.github/workflows/run-terraform.yml@v2.7.5
+    uses: kartverket/github-workflows/.github/workflows/run-terraform.yml@v3.0.2
     with:
       runner: atkv1-test
       environment: test
       kubernetes_cluster: atkv1-test
       terraform_workspace: test
-      terraform_options: -var-file=variables/test.tfvars -var=image=ghcr.io/kartverket/nibas-backend:${{ needs.build.outputs.new_tag }}
-      terraform_backend_config: -backend-config=backend/test.gcs.tfbackend
+      terraform_option_1: -var-file=variables/test.tfvars
+      terraform_option_2: -var=image=ghcr.io/kartverket/nibas-backend:${{ needs.build.outputs.new_tag }}
+      terraform_init_option_1: -backend-config=backend/test.gcs.tfbackend
       working_directory: terraform
-      workload_identity_provider: projects/935702487708/locations/global/workloadIdentityPools/nibas-deploy-pool/providers/github-provider
+      auth_project_number: 935702487708
       service_account: nibas-deploy@nibas-test-36cb.iam.gserviceaccount.com
       project_id: kubernetes-test-94f6
       deploy_on: 'refs/heads/master'
