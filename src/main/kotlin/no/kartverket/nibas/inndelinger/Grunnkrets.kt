@@ -55,11 +55,10 @@ class GrunnkretsController(
     }
 
     override fun hentGrunnkretsRevisjoner(id: String): List<RevisjonRef> =
-        historikkService.hentRevisjoner(id, Grunnkrets::class.java).map { toRevisjonRef(it) }
-
+        historikkService.hentRevisjonerForLokalid(Lokalid(id), Grunnkrets::class.java).map { toRevisjonRef(it) }
 
     override fun hentGrunnkretsRevisjon(id: String, revisjon: Int): GrunnkretsResponse =
-        historikkService.hentRevisjon(id, revisjon, Grunnkrets::class.java).toGrunnkretsResponse(kodelisteService)
+        historikkService.hentRevisjonForLokalId(Lokalid(id), revisjon, Grunnkrets::class.java).toGrunnkretsResponse(kodelisteService)
 
 }
 
@@ -224,24 +223,30 @@ private fun Grunnkrets.applyChangesFromRequest(request: GrunnkretsRequest): Grun
     }
 }
 
-fun toGrunnkretsRef(grunnkrets: Grunnkrets): GrunnkretsRef = GrunnkretsRef(
-    id = grunnkrets.id,
-    navn = grunnkrets.grunnkretsnavn!!,
-    grunnkretsnummer = grunnkrets.grunnkretsnummer!!,
-    href = ServletUriComponentsBuilder.fromCurrentRequestUri().pathSegment(grunnkrets.id).build().toUriString()
-)
+fun toGrunnkretsRef(grunnkrets: Grunnkrets): GrunnkretsRef {
+    val lokalid = grunnkrets.lokalid
+    return GrunnkretsRef(
+        id = lokalid,
+        navn = grunnkrets.grunnkretsnavn!!,
+        grunnkretsnummer = grunnkrets.grunnkretsnummer!!,
+        href = ServletUriComponentsBuilder.fromCurrentRequestUri().pathSegment(lokalid).build().toUriString()
+    )
+}
 
-fun Grunnkrets.toGrunnkretsResponse(kodelisteService: KodelisteService): GrunnkretsResponse = GrunnkretsResponse(
-    id = this.id,
-    navn = this.grunnkretsnavn!!,
-    grunnkretsnummer = this.grunnkretsnummer!!,
-    identifikasjon = Identifikasjon(this.lokalid),
-    kommunenummer = kodelisteService.createKommunenummerFromUUID(this.kommune.kommunenummer),
-    features = FeatureCollection(features = listOf(
-        posisjonToFeature(this.posisjon, this.version),
-        flateToFeature(this, kodelisteService, this.version))),
-    version = this.version
-)
+fun Grunnkrets.toGrunnkretsResponse(kodelisteService: KodelisteService): GrunnkretsResponse {
+    val lokalid = this.lokalid
+    return GrunnkretsResponse(
+        id = lokalid,
+        navn = this.grunnkretsnavn!!,
+        grunnkretsnummer = this.grunnkretsnummer!!,
+        identifikasjon = Identifikasjon(lokalid),
+        kommunenummer = kodelisteService.createKommunenummerFromUUID(this.kommune.kommunenummer),
+        features = FeatureCollection(features = listOf(
+            posisjonToFeature(this.posisjon, this.version),
+            flateToFeature(this, kodelisteService, this.version))),
+        version = this.version
+    )
+}
 
 data class GrunnkretsRequestWrapper(
     val grunnkretsRequest: GrunnkretsRequest,

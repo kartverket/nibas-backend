@@ -7,6 +7,7 @@ import no.kartverket.nibas.builders.GrunnkretsResponseBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.builders.StemmekretsBuilder
 import no.kartverket.nibas.builders.StemmekretsResponseBuilder
+import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.kodelister.KodelisteService
@@ -71,10 +72,16 @@ internal class MatrikkelServiceTest {
 
     @Test
     fun hentAlleGrunnkretserForKommune() {
-        val gk1 = GrunnkretsBuilder(id = "1")
+        val gk1 = GrunnkretsBuilder(
+            id = "1",
+            lokalId = Lokalid("87")
+        )
             .withGyldigFra(LocalDate.of(2023, Month.JANUARY, 1))
             .build()
-        val gk2 = GrunnkretsBuilder(id = "2")
+        val gk2 = GrunnkretsBuilder(
+            id = "2",
+            lokalId = Lokalid("88")
+        )
             .withGyldigFra(LocalDate.of(2024, Month.JANUARY, 1))
             .build()
         whenever(kommuneServiceMock.hentKommuneByKommunenummer(anyString())).thenReturn(

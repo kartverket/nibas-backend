@@ -22,7 +22,7 @@ class GrunnkretsResponseBuilder(private val kodelisteService: KodelisteService) 
 
     fun build(): GrunnkretsResponse {
         return GrunnkretsResponse(
-            id = grunnkrets.id,
+            id = grunnkrets.lokalid,
             navn = grunnkrets.grunnkretsnavn!!,
             grunnkretsnummer = grunnkrets.grunnkretsnummer!!,
             identifikasjon = Identifikasjon(grunnkrets.lokalid),
