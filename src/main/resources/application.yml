@@ -12,6 +12,9 @@ management:
   info:
     env:
       enabled: true
+  health:
+    pubsub:
+      enabled: false
 
 info:
   application:

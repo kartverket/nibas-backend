@@ -44,13 +44,13 @@ resource "kubernetes_manifest" "nibas_backend_application" {
       # Liveness probes define a resource that returns 200 OK when the app is running
       # as intended. Returning a non-200 code will make kubernetes restart the app.
       # Liveness is optional, but when provided path and port is required
-      #      liveness = {
-      #        path             = "/actuator/health"
-      #        port             = 8080
-      #        failureThreshold = 3
-      #        timeout          = 1
-      #        initialDelay     = 60
-      #      }
+      liveness = {
+        path             = "/actuator/health"
+        port             = 8080
+        failureThreshold = 3
+        timeout          = 1
+        initialDelay     = 60
+      }
 
       readiness = {
         path = "/actuator/health"
