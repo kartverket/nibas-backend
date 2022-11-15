@@ -49,7 +49,7 @@ resource "kubernetes_manifest" "nibas_backend_application" {
         port             = 8080
         failureThreshold = 3
         timeout          = 1
-        initialDelay     = 60
+        initialDelay     = 75
       }
 
       readiness = {
