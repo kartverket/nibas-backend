@@ -1,6 +1,26 @@
 version: 2
+registries:
+  maven-github:
+    type: maven-repository
+    # Kanskje denne kan peke til den generelle kartverket-pathen, men det er aut-lib vi vil lese nå
+    url: https://maven.pkg.github.com/kartverket/aut-lib
+    username: ${{ secrets.PAT_USERNAME }}
+    password: ${{ secrets.PAT_SCOPE_READ_PACKAGE }}
 updates:
   - package-ecosystem: "gradle"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: daily
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: daily
+
+  # Sjekker oppdateringer på GitHub Package aut-lib
+  - package-ecosystem: "gitsubmodule"
+    directory: "/"
+    registries:
+      - maven-github
+    schedule:
+      interval: daily
