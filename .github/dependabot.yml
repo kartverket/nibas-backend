@@ -6,20 +6,15 @@ registries:
     username: ${{ secrets.PAT_USERNAME }}
     password: ${{ secrets.PAT_SCOPE_READ_PACKAGE }}
 updates:
+  # Sjekker også oppdateringer på GitHub Maven Package aut-lib
   - package-ecosystem: "gradle"
     directory: "/"
+    registries:
+      - maven-github
     schedule:
       interval: daily
 
   - package-ecosystem: "github-actions"
     directory: "/"
-    schedule:
-      interval: daily
-
-  # Sjekker oppdateringer på GitHub Maven Package aut-lib
-  - package-ecosystem: "maven"
-    directory: "/"
-    registries:
-      - maven-github
     schedule:
       interval: daily
