@@ -16,8 +16,8 @@ updates:
     schedule:
       interval: daily
 
-  # Sjekker oppdateringer på GitHub Package aut-lib
-  - package-ecosystem: "gradle"
+  # Sjekker oppdateringer på GitHub Maven Package aut-lib
+  - package-ecosystem: "maven"
     directory: "/"
     registries:
       - maven-github
