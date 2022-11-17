@@ -51,7 +51,7 @@ configurations["intTestRuntimeOnly"].extendsFrom(configurations.runtimeOnly.get(
 val hibernateVersion = "5.6.5.Final"
 val springdocOpenapiVersion = "1.6.12"
 val jtsVersion = "1.19.0"
-val testContainerVersion = "1.17.5"
+val testContainerVersion = "1.17.6"
 val autLibVersion = "0.0.25"
 val flywayVersion = "9.8.1"
 val hibernateTypes55Version = "2.20.0"
