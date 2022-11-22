@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.RestController
+import java.time.LocalDate
 
 @RestController
 class MatrikkelController(private val matrikkelService: MatrikkelService)
@@ -55,7 +56,7 @@ class MatrikkelService(private val grunnkretsControllerService: GrunnkretsContro
     }
 
     fun hentGrunnkretserForIds(ids: Set<String>): List<GrunnkretsResponse> {
-        return ids.map { Lokalid(it) }.map { grunnkretsControllerService.hentEn(it) }.sortedBy { it.id }
+        return ids.map { Lokalid(it) }.map { grunnkretsControllerService.hentEn(it, LocalDate.now()) }.sortedBy { it.id }
     }
 
     fun hentAlleGrunnkretserForKommune(kommunenummer: String): List<GrunnkretsResponse> {

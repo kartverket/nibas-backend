@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import java.time.LocalDate
 import java.util.*
 import org.mockito.Mockito.`when` as whenever
 
@@ -23,14 +24,20 @@ internal class GrunnkretsControllerTest : NibasMvcTest() {
 
     @Test
     fun hentGrunnkretsReturns200_OK() {
-        whenever(grunnkretsService.hentGrunnkrets(any(Lokalid::class.java))).thenReturn(GrunnkretsBuilder.DEFAULT_GRUNNKRETS)
+        whenever(grunnkretsService.hentGrunnkrets(any(Lokalid::class.java), any(LocalDate::class.java))).thenReturn(GrunnkretsBuilder.DEFAULT_GRUNNKRETS)
         get("/v1/grunnkretser/1", status().isOk)
     }
 
     @Test
     fun manglendeItemForKodelisteReturns500_InternalServerError() {
-        val id: String = UUID.randomUUID().toString();
-        whenever(grunnkretsControllerService.hentEn(any(Lokalid::class.java))).thenThrow(MissingKodelisteItemException(KodelisteType.KOMMUNENUMMER, id))
+        val id: String = UUID.randomUUID().toString()
+        whenever(grunnkretsControllerService.hentEn(any(Lokalid::class.java), any(LocalDate::class.java))).thenThrow(MissingKodelisteItemException(KodelisteType.KOMMUNENUMMER, id))
         get("/v1/grunnkretser/$id", status().isInternalServerError)
+    }
+
+    @Test
+    fun hentGrunnkretsMedGyldighetDatoGir200_OK() {
+        whenever(grunnkretsService.hentGrunnkrets(any(Lokalid::class.java), any(LocalDate::class.java))).thenReturn(GrunnkretsBuilder.DEFAULT_GRUNNKRETS)
+        get("/v1/grunnkretser/1?gyldigDato=2022-01-01", status().isOk)
     }
 }
