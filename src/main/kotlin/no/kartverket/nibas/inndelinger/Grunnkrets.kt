@@ -22,13 +22,12 @@ import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.repository.findAllByLokalidSortedByGyldigFra
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
 import no.kartverket.nibas.sporing.Gyldig
-import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import java.time.LocalDate
+import java.util.Optional
 import java.util.Collections.emptySet
 
 @RestController
@@ -39,14 +38,15 @@ class GrunnkretsController(
     private val grunnkretsControllerService: GrunnkretsControllerService
 ) : GrunnkretsApi {
 
-    override fun hentGrunnkrets(id: String): GrunnkretsResponse {
-        return grunnkretsControllerService.hentEn(Lokalid(id))
+    override fun hentGrunnkrets(id: String, gyldigDato: Optional<LocalDate>): GrunnkretsResponse {
+        return grunnkretsControllerService.hentEn(Lokalid(id), gyldigDato.orElse(LocalDate.now()))
     }
 
-    override fun hentGrenserForGrunnkrets(id: String): FeatureCollection {
-        val grenser = grunnkretsService.hentGrenserForGrunnkrets(Lokalid(id))
+    override fun hentGrenserForGrunnkrets(id: String, gyldigDato: Optional<LocalDate>): FeatureCollection {
+        val dato = gyldigDato.orElse(LocalDate.now())
+        val grenser = grunnkretsService.hentGrenserForGrunnkrets(Lokalid(id), dato)
         if (grenser.isEmpty()) {
-            throw ResponseStatusException(HttpStatus.NOT_FOUND)
+            throw NotFoundException("Fant ingen grenser for id '$id' med gyldig dato '$dato'")
         }
         return FeatureCollection(
             features = grenser.sortedBy { it.grenseKoblingAttributter.rekkefoelge }
@@ -66,9 +66,9 @@ class GrunnkretsController(
 @Service
 class GrunnkretsControllerService(private val grunnkretsService: GrunnkretsService,
                                   private val kodelisteService: KodelisteService) {
-    fun hentEn(id: Lokalid): GrunnkretsResponse =
-        grunnkretsService.hentGrunnkrets(id)?.toGrunnkretsResponse(kodelisteService)
-            ?: throw NotFoundException("Grunnkrets med id '$id' ble ikke funnet.")
+    fun hentEn(id: Lokalid, gyldigDato: LocalDate): GrunnkretsResponse =
+        grunnkretsService.hentGrunnkrets(id, gyldigDato)?.toGrunnkretsResponse(kodelisteService)
+            ?: throw NotFoundException("Grunnkrets med id '$id' og gyldigDato '$gyldigDato' ble ikke funnet.")
 }
 
 
@@ -76,14 +76,20 @@ class GrunnkretsControllerService(private val grunnkretsService: GrunnkretsServi
 @Service
 class GrunnkretsService(private val grunnkretsRepository: GrunnkretsRepository) {
 
-    // TODO TS-4: Må inn med tidspunkt her på egen oppgave
     @Transactional(readOnly = true)
-    fun hentGrunnkrets(id: Lokalid): Grunnkrets? = grunnkretsRepository.findByLokalid(id.value)
+    fun hentGrunnkrets(id: Lokalid, gyldigDato: LocalDate): Grunnkrets? {
+        val grunnkretser: List<Grunnkrets> = grunnkretsRepository.findAllByLokalid(id.value)
+            .filter { it.gyldigPaaTidspunkt(gyldigDato) }
 
-    // TODO TS-4: Må inn med tidspunkt her på egen oppgave
+        if (grunnkretser.isEmpty()) return null
+        if (grunnkretser.size > 1) throw RuntimeException("Flere gyldige grunnkretser på gitt tidspunkt.")
+
+        return grunnkretser[0]
+    }
+
     @Transactional(readOnly = true)
-    fun hentGrenserForGrunnkrets(id: Lokalid): Set<GrenseKobling> {
-        return hentGrunnkrets(id)?.grenser ?: emptySet()
+    fun hentGrenserForGrunnkrets(id: Lokalid, gyldigDato: LocalDate): Set<GrenseKobling> {
+        return hentGrunnkrets(id, gyldigDato)?.grenser ?: emptySet()
     }
 
     /**

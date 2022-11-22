@@ -10,10 +10,14 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.response.GrunnkretsResponse
 import no.kartverket.nibas.api.v1.response.RevisjonRef
+import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
+import java.time.LocalDate
+import java.util.*
 
 @RequestMapping("/v1/grunnkretser")
 @Tag(
@@ -37,7 +41,11 @@ interface GrunnkretsApi {
         ApiResponse(responseCode = "404", description = "Not Found")
     )
     @GetMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentGrunnkrets(@Parameter(description = "ID-en til grunnkretsen man vil hente") @PathVariable id: String): GrunnkretsResponse
+    fun hentGrunnkrets(
+        @Parameter(description = "ID-en til grunnkretsen man vil hente") @PathVariable id: String,
+        @Parameter(description = "Eventuell Gyldig Dato for grunnkrets (default = datens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        @RequestParam(required = false, name = "gyldigDato") gyldigDato: Optional<LocalDate>
+    ): GrunnkretsResponse
 
     @Operation(
         summary = "Hent grensene til en gitt grunnkrets",
@@ -45,7 +53,11 @@ interface GrunnkretsApi {
     )
     @DefaultFeatureCollectionApiResponses
     @GetMapping("/{id}/grenser", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentGrenserForGrunnkrets(@Parameter(description = "ID-en til grunnkretsen man vil hente") @PathVariable id: String): FeatureCollection
+    fun hentGrenserForGrunnkrets(
+        @Parameter(description = "ID-en til grunnkretsen man vil hente") @PathVariable id: String,
+        @Parameter(description = "Eventuell Gyldig Dato for grunnkrets (default = datens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        @RequestParam(required = false) gyldigDato: Optional<LocalDate>
+    ): FeatureCollection
 
     @Operation(
         summary = "Hent historiske revisjoner for en gitt grunnkrets",
