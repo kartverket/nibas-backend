@@ -1,0 +1,8 @@
+external_dns_hostname       = "nibas-api.prod.skip.statkart.no"
+container_registry          = "ghcr.io"
+container_registry_username = "georg-robot"
+deploy_env                  = "prod"
+kubernetes_cluster          = "atkv1-prod"
+vault_addr                  = "https://vault.vault:8200"
+nibas_project_id            = "nibas-prod-732a"
+sa_pub_sub_publisher        = "nibas-deploy@nibas-prod-732a.iam.gserviceaccount.com"
