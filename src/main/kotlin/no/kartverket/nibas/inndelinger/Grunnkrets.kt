@@ -39,9 +39,9 @@ class GrunnkretsController(
     private val kodelisteService: KodelisteService,
 ) : GrunnkretsApi {
 
-    override fun hentGrunnkrets(id: String, gyldigDato: Optional<LocalDate>): GrunnkretsResponse {
-        return grunnkretsService.hentGrunnkrets(Lokalid(id), gyldigDato.orElse(LocalDate.now()))?.toGrunnkretsResponse(kodelisteService)
-            ?: throw NotFoundException("Grunnkrets med id '$id' og gyldigDato '$gyldigDato' ble ikke funnet.")
+    override fun hentGrunnkrets(id: String, gyldighetsdato: Optional<LocalDate>): GrunnkretsResponse {
+        return grunnkretsService.hentGrunnkrets(Lokalid(id), gyldighetsdato.orElse(LocalDate.now()))?.toGrunnkretsResponse(kodelisteService)
+            ?: throw NotFoundException("Grunnkrets med id '$id' og gyldighetsdato '$gyldighetsdato' ble ikke funnet.")
     }
 
     override fun hentGrenserForGrunnkrets(id: String, gyldigDato: Optional<LocalDate>): FeatureCollection {
@@ -67,9 +67,9 @@ class GrunnkretsController(
 class GrunnkretsService(private val grunnkretsRepository: GrunnkretsRepository) {
 
     @Transactional(readOnly = true)
-    fun hentGrunnkrets(id: Lokalid, gyldigDato: LocalDate): Grunnkrets? {
+    fun hentGrunnkrets(id: Lokalid, gyldighetsdato: LocalDate): Grunnkrets? {
         val grunnkretser: List<Grunnkrets> = grunnkretsRepository.findAllByLokalid(id.value)
-            .filter { it.gyldigPaaTidspunkt(gyldigDato) }
+            .filter { it.gyldigPaaTidspunkt(gyldighetsdato) }
 
         if (grunnkretser.isEmpty()) return null
         if (grunnkretser.size > 1) throw RuntimeException("Flere gyldige grunnkretser på gitt tidspunkt.")

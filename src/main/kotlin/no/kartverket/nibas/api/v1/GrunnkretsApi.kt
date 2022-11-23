@@ -44,7 +44,7 @@ interface GrunnkretsApi {
     fun hentGrunnkrets(
         @Parameter(description = "ID-en til grunnkretsen man vil hente") @PathVariable id: String,
         @Parameter(description = "Eventuell Gyldig Dato for grunnkrets (default = datens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-        @RequestParam(required = false, name = "gyldigDato") gyldigDato: Optional<LocalDate>
+        @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: Optional<LocalDate>
     ): GrunnkretsResponse
 
     @Operation(

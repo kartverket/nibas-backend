@@ -50,7 +50,6 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         assertThat(grenserForGrunnkrets).isEmpty()
     }
 
-
     private fun lagGrenserForGrunnkrets(grunnkrets: Grunnkrets) {
 
         val x1 = 23857.0
