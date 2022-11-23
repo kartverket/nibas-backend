@@ -207,7 +207,7 @@ data class GrunnkretsResponse(
     val oppdateringsdato: LocalDate,
 
     @Schema(description = "Typen endring som ble gjort på objektet")
-    val endringstype: String,
+    val endringstype: String?,
 
     @Schema(description = "Geometrien til grunnkretsen, dvs representasjonspunkt og flaten")
     val features: FeatureCollection,

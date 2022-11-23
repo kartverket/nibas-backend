@@ -252,7 +252,7 @@ fun Grunnkrets.toGrunnkretsResponse(kodelisteService: KodelisteService): Grunnkr
         grunnkretsnummer = this.grunnkretsnummer!!,
         gyldighet = this.gyldighet.toGyldighetResponse(),
         oppdateringsdato = this.auditInfo.oppdateringsdato,
-        endringstype = this.typeEndring!!,
+        endringstype = this.typeEndring,
         features = FeatureCollection(features = listOf(
             posisjonToFeature(this.posisjon, this.version),
             flateToFeature(this, kodelisteService, this.version))),
