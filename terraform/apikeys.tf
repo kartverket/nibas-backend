@@ -11,7 +11,7 @@ resource "vault_generic_secret" "matrikkel_api_key_vault" {
 
   data_json = <<EOT
 {
-  "api.key.matrikkel":   "${random_password.matrikkel_api_key}"
+  "api.key.matrikkel":   "${random_password.matrikkel_api_key.result}"
 }
 EOT
 }
