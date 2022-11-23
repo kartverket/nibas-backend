@@ -8,7 +8,7 @@ import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.REPOSITORY_EXTENSIONS_FILEPATH
 import no.kartverket.nibas.repository.findAllByLokalidFramITid
-import no.kartverket.nibas.repository.findGyldigGrunnkretsForTidspunkt
+import no.kartverket.nibas.repository.findGyldigGrunnkretsForDato
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -45,7 +45,7 @@ class GrunnkretsServiceTest {
         val grunnkrets2 = GrunnkretsBuilder(lokalId = lokalId, gyldigFra = january1In2023, gyldigTil = january1In2024).build()
         val grunnkrets3 = GrunnkretsBuilder(lokalId = lokalId, gyldigFra = january1In2024).build()
 
-        every { grunnkretsRepositoryMock.findGyldigGrunnkretsForTidspunkt(lokalId, october1In2022) } returns grunnkrets
+        every { grunnkretsRepositoryMock.findGyldigGrunnkretsForDato(lokalId, october1In2022) } returns grunnkrets
         every { grunnkretsRepositoryMock.findAllByLokalidFramITid(lokalId, october1In2022) } returns listOf(grunnkrets2, grunnkrets3)
 
         val naavarendeOgFramtidigeVersjoner = grunnkretsService.hentFramtidigeVersjonerForGrunnkrets(lokalId, october1In2022)

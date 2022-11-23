@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
+import java.time.LocalDate
 
 @RestController
 class KommuneController(
@@ -119,8 +120,8 @@ class KommuneService(
         }
     }
 
-    fun hentKommunesGrunnkretser(id: String): List<Grunnkrets> {
-        return hentKommune(id)?.grunnkretser?.toList() ?: emptyList()
+    fun hentKommunesGrunnkretser(kommuneId: String, gyldighetsdato: LocalDate = LocalDate.now()): List<Grunnkrets> {
+        return hentKommune(kommuneId)?.grunnkretser?.filter { it.gyldigPaaTidspunkt(gyldighetsdato) } ?: emptyList()
     }
 
     fun hentKommunesStemmekretser(id: String): List<Stemmekrets> {

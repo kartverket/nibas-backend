@@ -13,8 +13,8 @@ fun GrunnkretsRepository.findAllByLokalidSortedByGyldigFra(lokalid: Lokalid): Li
         .filter { !it.gyldighet.slettet }
         .sortedBy { it.gyldighet.gyldigFra }
 
-fun GrunnkretsRepository.findGyldigGrunnkretsForTidspunkt(lokalid: Lokalid, gyldigTidspunkt: LocalDate = LocalDate.now()): Grunnkrets =
-    findGrunnkretsGyldigPaaDato(findAllByLokalidSortedByGyldigFra(lokalid), gyldigTidspunkt)
+fun GrunnkretsRepository.findGyldigGrunnkretsForDato(lokalid: Lokalid, gyldighetsdato: LocalDate = LocalDate.now()): Grunnkrets =
+    findGrunnkretsGyldigPaaDato(findAllByLokalidSortedByGyldigFra(lokalid), gyldighetsdato)
 
 /**
  * Finne alle rader som matcher:
@@ -22,9 +22,9 @@ fun GrunnkretsRepository.findGyldigGrunnkretsForTidspunkt(lokalid: Lokalid, gyld
  * -har et gyldighetsintervall som er gyldig på framover i tid (inkluderer ikke nåværende gyldig rad)
  * Sorteres på gyldigFra-dato
  */
-fun GrunnkretsRepository.findAllByLokalidFramITid(lokalid: Lokalid, gyldigTidspunkt: LocalDate = LocalDate.now()): List<Grunnkrets> {
+fun GrunnkretsRepository.findAllByLokalidFramITid(lokalid: Lokalid, gyldighetsdato: LocalDate = LocalDate.now()): List<Grunnkrets> {
     val grunnkretser = findAllByLokalidSortedByGyldigFra(lokalid)
-    val grunnkretsGyldigPaaTidspunkt = findGrunnkretsGyldigPaaDato(grunnkretser, gyldigTidspunkt)
+    val grunnkretsGyldigPaaTidspunkt = findGrunnkretsGyldigPaaDato(grunnkretser, gyldighetsdato)
     val indexOfCurrentRad = grunnkretser.indexOf(grunnkretsGyldigPaaTidspunkt)
     return if (indexOfCurrentRad == grunnkretser.lastIndex) {
         emptyList()
@@ -33,12 +33,12 @@ fun GrunnkretsRepository.findAllByLokalidFramITid(lokalid: Lokalid, gyldigTidspu
     }
 }
 
-private fun findGrunnkretsGyldigPaaDato(grunnkretser: List<Grunnkrets>, gyldigTidspunkt: LocalDate = LocalDate.now()): Grunnkrets {
-    val matchingGrunnkretser = grunnkretser.filter { it.gyldigPaaTidspunkt(gyldigTidspunkt) }
+private fun findGrunnkretsGyldigPaaDato(grunnkretser: List<Grunnkrets>, gyldighetsdato: LocalDate = LocalDate.now()): Grunnkrets {
+    val matchingGrunnkretser = grunnkretser.filter { it.gyldigPaaTidspunkt(gyldighetsdato) }
     if (matchingGrunnkretser.isEmpty()) {
-        throw ResponseException.NotFoundException("Fant ingen grunnkrets gyldig på tidspunkt $gyldigTidspunkt")
+        throw ResponseException.NotFoundException("Fant ingen grunnkrets gyldig på dato $gyldighetsdato")
     } else if (matchingGrunnkretser.size > 1) { // Bør ikke kunne skje, da er det programmeringsfeil
-        throw UgyldigTilstandException("Fant ${matchingGrunnkretser.size} grunnkretser gyldig på tidspunkt $gyldigTidspunkt")
+        throw UgyldigTilstandException("Fant ${matchingGrunnkretser.size} grunnkretser gyldig på dato $gyldighetsdato")
     }
     return matchingGrunnkretser.first()
 }

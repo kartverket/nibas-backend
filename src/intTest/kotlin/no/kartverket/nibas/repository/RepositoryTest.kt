@@ -90,9 +90,9 @@ class RepositoryTest : TestWithDbContainer() {
     fun findGyldigGrunnkretsForTidspunkt() {
         val lokalid = Lokalid("1001")
         val grunnkretsIds = saveGrunnkretser(lokalid)
-        assertThat(grunnkretsRepository.findGyldigGrunnkretsForTidspunkt(lokalid, currentDate).id).isEqualTo(grunnkretsIds[0])
-        assertThat(grunnkretsRepository.findGyldigGrunnkretsForTidspunkt(lokalid, january1In2023).id).isEqualTo(grunnkretsIds[1])
-        assertThat(grunnkretsRepository.findGyldigGrunnkretsForTidspunkt(lokalid, january1In2024).id).isEqualTo(grunnkretsIds[2])
+        assertThat(grunnkretsRepository.findGyldigGrunnkretsForDato(lokalid, currentDate).id).isEqualTo(grunnkretsIds[0])
+        assertThat(grunnkretsRepository.findGyldigGrunnkretsForDato(lokalid, january1In2023).id).isEqualTo(grunnkretsIds[1])
+        assertThat(grunnkretsRepository.findGyldigGrunnkretsForDato(lokalid, january1In2024).id).isEqualTo(grunnkretsIds[2])
     }
 
     @Test

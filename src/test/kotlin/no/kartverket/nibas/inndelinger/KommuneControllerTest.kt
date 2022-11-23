@@ -82,7 +82,7 @@ class KommuneControllerTest : NibasMvcTest() {
             grunnkretsnummer = "8989")
             .build()
         val href = "http://finPathTilGrunnkretsHer"
-        whenever(kommuneService.hentKommunesGrunnkretser(anyString())).thenReturn(listOf(grunnkrets))
+        whenever(kommuneService.hentKommunesGrunnkretser(anyString(), any(LocalDate::class.java))).thenReturn(listOf(grunnkrets))
         whenever(grunnkretsService.hentAntallGyldigeVersjonerFramITidForLokalid(any(Lokalid::class.java), any(LocalDate::class.java))).thenReturn(1)
         whenever(hrefProviderMock.getHref(anyString())).thenReturn(href)
 

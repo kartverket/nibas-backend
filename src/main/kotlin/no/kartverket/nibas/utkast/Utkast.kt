@@ -136,7 +136,8 @@ class UtkastService(private val utkastRepository: UtkastRepository,
                     GrunnkretsRequestWrapper(
                         grunnkretsRequest = it.value,
                         gyldigFra = utkast.gyldigFra,
-                        endringstype = utkast.endringstype.name))
+                        // TODO: Må sees på etter ny sosi-modell. Skal det ligge i egen tabell, eller være enum.
+                        endringstype = utkast.endringstype.value))
             }
             metadata.stemmekretsendringer.forEach { stemmekretsService.oppdaterStemmekrets(it.key, it.value) }
 

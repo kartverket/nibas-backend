@@ -23,7 +23,7 @@ import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.repository.findAllByLokalidFramITid
 import no.kartverket.nibas.repository.findAllByLokalidSortedByGyldigFra
-import no.kartverket.nibas.repository.findGyldigGrunnkretsForTidspunkt
+import no.kartverket.nibas.repository.findGyldigGrunnkretsForDato
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
 import no.kartverket.nibas.sporing.Gyldig
 import org.springframework.stereotype.Service
@@ -129,17 +129,17 @@ class GrunnkretsService(private val grunnkretsRepository: GrunnkretsRepository) 
     }
 
     /**
-     * Returnerer liste med grunnkretser som matcher lokalid og gyldigtidspunkt.
-     * -Første innslag er raden som er gyldig på gyldigTidspunkt, default dagens dato.
+     * Returnerer liste med grunnkretser som matcher lokalid og gyldighetsdato.
+     * -Første innslag er raden som er gyldig på gyldighetsdato, default dagens dato.
      * -Så følger de framtidige gyldige publiserte versjonene sortert på gyldigFra.
      */
-    fun hentFramtidigeVersjonerForGrunnkrets(lokalid: Lokalid, gyldigTidspunkt: LocalDate = LocalDate.now()): List<Grunnkrets> {
-        return listOf(grunnkretsRepository.findGyldigGrunnkretsForTidspunkt(lokalid, gyldigTidspunkt))
-            .plus(grunnkretsRepository.findAllByLokalidFramITid(lokalid, gyldigTidspunkt))
+    fun hentFramtidigeVersjonerForGrunnkrets(lokalid: Lokalid, gyldighetsdato: LocalDate = LocalDate.now()): List<Grunnkrets> {
+        return listOf(grunnkretsRepository.findGyldigGrunnkretsForDato(lokalid, gyldighetsdato))
+            .plus(grunnkretsRepository.findAllByLokalidFramITid(lokalid, gyldighetsdato))
     }
 
-    fun hentAntallGyldigeVersjonerFramITidForLokalid(lokalid: Lokalid, gyldigTidspunkt: LocalDate = LocalDate.now()): Int =
-        grunnkretsRepository.findAllByLokalidFramITid(lokalid, gyldigTidspunkt).size
+    fun hentAntallGyldigeVersjonerFramITidForLokalid(lokalid: Lokalid, gyldighetsdato: LocalDate = LocalDate.now()): Int =
+        grunnkretsRepository.findAllByLokalidFramITid(lokalid, gyldighetsdato).size
 
 }
 
@@ -252,6 +252,7 @@ fun Grunnkrets.toGrunnkretsResponse(kodelisteService: KodelisteService): Grunnkr
         grunnkretsnummer = this.grunnkretsnummer!!,
         gyldighet = this.gyldighet.toGyldighetResponse(),
         oppdateringsdato = this.auditInfo.oppdateringsdato,
+        endringstype = this.typeEndring!!,
         features = FeatureCollection(features = listOf(
             posisjonToFeature(this.posisjon, this.version),
             flateToFeature(this, kodelisteService, this.version))),

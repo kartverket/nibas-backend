@@ -17,7 +17,8 @@ class GrunnkretsResponseBuilder(
     private var kommunenummer: String = "1787",
     private var version: Int = 1,
     private var gyldighetResponse: GyldighetResponse = GyldighetResponse(LocalDate.of(2022, Month.JANUARY, 1), null),
-    private var oppdateringsdato: LocalDate = LocalDate.of(2022, Month.AUGUST, 1)
+    private var oppdateringsdato: LocalDate = LocalDate.of(2022, Month.AUGUST, 1),
+    private var endringstype: String = "Kvalitetsheving"
 ) {
 
     fun build(): GrunnkretsResponse {
@@ -29,6 +30,7 @@ class GrunnkretsResponseBuilder(
             grunnkretsnummer = grunnkrets.grunnkretsnummer!!,
             gyldighet = gyldighetResponse,
             oppdateringsdato = oppdateringsdato,
+            endringstype =  endringstype,
             features = FeatureCollection(
                 features = listOf(
                     posisjonToFeature(grunnkrets.posisjon, grunnkrets.version),

@@ -24,7 +24,8 @@ class GrunnkretsBuilder(
     private var gyldigTil: LocalDate? = null,
     private var slettet: Boolean = false,
     private var informasjonstekst: String = INFORMASJONTEKST,
-    private var opphav: String = OPPHAV
+    private var opphav: String = OPPHAV,
+    private var typeEndring: String = "Kvalitetsheving"
 ) {
 
     companion object {
@@ -45,6 +46,7 @@ class GrunnkretsBuilder(
         grunnkrets.gyldighet = Gyldighet(gyldigFra, gyldigTil, slettet)
         grunnkrets.setInfo(informasjonstekst)
         grunnkrets.opphav = opphav
+        grunnkrets.typeEndring = typeEndring
 
         grunnkrets.posisjon = GeometryFactory().createPoint(Coordinate(1.0, 1.0))
         grunnkrets.flate = GeometryFactory().createMultiPolygon(arrayOf(GeometryFactory().createPolygon()))

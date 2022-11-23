@@ -4,6 +4,7 @@ import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.builders.KommuneRequestBuilder
+import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.FylkeRepository
 import no.kartverket.nibas.repository.KommuneRepository
@@ -14,6 +15,8 @@ import org.mockito.Mockito.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.mock.mockito.MockBean
+import java.time.LocalDate
+import java.time.Month
 import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -93,5 +96,54 @@ class KommuneServiceTest {
         verify(administrativenhetnavnRepository).save(forventetNavnToSave)
         verify(kommuneRepository).save(eksisterende)
 
+    }
+
+    /**
+     * Kommune med 3 grunnkretser.
+     * 1 Storvatn
+     * 1 nåværende og 1 framtidig versjon av Moi.
+     *
+     * Later som dagens dato er 23.11.22 og da skal kommunes grunnkretser kun returnere
+     * Storvatn og nåværende Moi.
+     */
+    @Test
+    fun hentKommunesGrunnkretserReturnererBareGyldigeNaavaerendeVersjoner() {
+        val august1 = LocalDate.of(2022, Month.AUGUST, 1)
+        val jan1In2024 = LocalDate.of(2024, Month.JANUARY, 1)
+        val todayIsNovember22In2022 = LocalDate.of(2022, Month.NOVEMBER, 22)
+
+        val kommuneId = "12"
+        val lokalIdGrunnkretsStorvatn = Lokalid("98")
+        val lokalIdGrunnkretsMoi = Lokalid("99")
+
+        val grunnkretsStorvatn = GrunnkretsBuilder(
+            id = "1",
+            lokalId = lokalIdGrunnkretsStorvatn,
+            gyldigFra = august1
+        ).build()
+        val grunnkretsMoi = GrunnkretsBuilder(
+            id = "2",
+            lokalId = lokalIdGrunnkretsMoi,
+            gyldigFra = august1,
+            gyldigTil = jan1In2024
+        ).build()
+        val grunnkretsMoiFremtidigVersjon = GrunnkretsBuilder(
+            id = "3",
+            lokalId = lokalIdGrunnkretsMoi,
+            gyldigFra = jan1In2024
+        ).build()
+
+        val kommune = KommuneBuilder(
+            id = kommuneId,
+            lokalId = "1000",
+            navn = "Bergen",
+            grunnkretser = mutableListOf(grunnkretsStorvatn, grunnkretsMoi, grunnkretsMoiFremtidigVersjon)
+        ).build()
+        whenever(kommuneRepository.findById(anyString())).thenReturn(Optional.of(kommune))
+
+        val kommunesGrunnkretser = kommuneService.hentKommunesGrunnkretser(kommuneId, gyldighetsdato = todayIsNovember22In2022)
+
+        val expectedListOfGrunnkretsIds = listOf("1", "2")
+        assertThat(kommunesGrunnkretser.map { it.id }).isEqualTo(expectedListOfGrunnkretsIds)
     }
 }
