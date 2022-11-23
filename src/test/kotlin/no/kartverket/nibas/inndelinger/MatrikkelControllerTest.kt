@@ -2,14 +2,15 @@ package no.kartverket.nibas.inndelinger
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import no.kartverket.nibas.NibasMvcTest
-import no.kartverket.nibas.api.v1.response.GrunnkretsResponse
-import no.kartverket.nibas.api.v1.response.StemmekretsResponse
+import no.kartverket.nibas.api.v1.response.KretsResponse
 import no.kartverket.nibas.builders.GrunnkretsBuilder
-import no.kartverket.nibas.builders.GrunnkretsResponseBuilder
+import no.kartverket.nibas.builders.KretsResponseBuilder
 import no.kartverket.nibas.builders.StemmekretsBuilder
-import no.kartverket.nibas.builders.StemmekretsResponseBuilder
 import no.kartverket.nibas.config.WebSecurityConfig
+import no.kartverket.nibas.domain.Grunnkrets
+import no.kartverket.nibas.domain.Stemmekrets
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.anySet
 import org.mockito.Mockito.anyString
@@ -37,21 +38,22 @@ internal class MatrikkelControllerTest : NibasMvcTest() {
     @MockBean
     private lateinit var matrikkelService: MatrikkelService
 
-    @MockBean
-    private lateinit var grunnkretsControllerServiceMock: GrunnkretsControllerService
-
-    @MockBean
-    private lateinit var stemmekretsControllerServiceMock: StemmekretsControllerService
-
     @Autowired
     private lateinit var objectMapper: ObjectMapper
 
+    @BeforeEach
+    fun beforeEach() {
+        whenever(kodelisteServiceMock.getCodeValueByKommunenummerId(anyString())).thenReturn("1787")
+    }
+
     @Test
     fun hentStemmekretserForEnIdGir200_OK() {
-        val stemmekretsResponse = stemmekretsResponse("1")
+        val stemmekrets = stemmekrets("1")
+        val stemmekretsResponse = stemmekretsKretsResponse(stemmekrets)
         val stemmekretsResponseList = listOf(stemmekretsResponse)
-        whenever(matrikkelService.hentStemmekretserForIds(anySet())).thenReturn(stemmekretsResponseList)
         val expectedResponseAsJson = asJson(stemmekretsResponseList)
+
+        whenever(matrikkelService.hentStemmekretserForIds(anySet())).thenReturn(listOf(stemmekrets))
 
         val responseAsString = invokeAndExpectStatusOK("$STEMMEKRETSER_ENDPOINT?id=1")
         assertThat(responseAsString).isEqualTo(expectedResponseAsJson)
@@ -62,11 +64,14 @@ internal class MatrikkelControllerTest : NibasMvcTest() {
      */
     @Test
     fun hentStemmekretserForToIdsGir200_OK() {
-        val stemmekretsResponse1 = stemmekretsResponse("1")
-        val stemmekretsResponse2 = stemmekretsResponse("2")
+        val stemmekrets1 = stemmekrets("1")
+        val stemmekrets2 = stemmekrets("2")
+        val stemmekretsResponse1 = stemmekretsKretsResponse(stemmekrets1)
+        val stemmekretsResponse2 = stemmekretsKretsResponse(stemmekrets2)
         val stemmekretsResponseList = listOf(stemmekretsResponse1, stemmekretsResponse2)
-        whenever(matrikkelService.hentStemmekretserForIds(anySet())).thenReturn(stemmekretsResponseList)
         val expectedResponseAsJson = asJson(stemmekretsResponseList)
+
+        whenever(matrikkelService.hentStemmekretserForIds(anySet())).thenReturn(listOf(stemmekrets1, stemmekrets2))
 
         val responseAsString = invokeAndExpectStatusOK("$STEMMEKRETSER_ENDPOINT?id=2,1")
         assertThat(responseAsString).isEqualTo(expectedResponseAsJson)
@@ -74,10 +79,12 @@ internal class MatrikkelControllerTest : NibasMvcTest() {
 
     @Test
     fun hentGrunnkretserForEnIdGir200_OK() {
-        val grunnkretsResponse = grunnkretsResponse("1")
+        val grunnkrets = grunnkrets("1")
+        val grunnkretsResponse = grunnkretsKretsResponse(grunnkrets)
         val grunnkretsResponseList = listOf(grunnkretsResponse)
-        whenever(matrikkelService.hentGrunnkretserForIds(anySet())).thenReturn(grunnkretsResponseList)
         val expectedResponseAsJson = asJson(grunnkretsResponseList)
+
+        whenever(matrikkelService.hentGrunnkretserForIds(anySet())).thenReturn(listOf(grunnkrets))
 
         val responseAsString = invokeAndExpectStatusOK("$GRUNNKRETSER_ENDPOINT?id=1")
         assertThat(responseAsString).isEqualTo(expectedResponseAsJson)
@@ -88,11 +95,14 @@ internal class MatrikkelControllerTest : NibasMvcTest() {
      */
     @Test
     fun hentGrunnkretserForToIdsGir200_OK() {
-        val grunnkretsResponse1 = grunnkretsResponse("a5")
-        val grunnkretsResponse2 = grunnkretsResponse("b7")
+        val grunnkrets1 = grunnkrets("a5")
+        val grunnkrets2 = grunnkrets("b7")
+        val grunnkretsResponse1 = grunnkretsKretsResponse(grunnkrets1)
+        val grunnkretsResponse2 = grunnkretsKretsResponse(grunnkrets2)
         val grunnkretsResponseList = listOf(grunnkretsResponse1, grunnkretsResponse2)
-        whenever(matrikkelService.hentGrunnkretserForIds(anySet())).thenReturn(grunnkretsResponseList)
         val expectedResponseAsJson = asJson(grunnkretsResponseList)
+
+        whenever(matrikkelService.hentGrunnkretserForIds(anySet())).thenReturn(listOf(grunnkrets1, grunnkrets2))
 
         val responseAsString = invokeAndExpectStatusOK("$GRUNNKRETSER_ENDPOINT?id=b7,a5")
         assertThat(responseAsString).isEqualTo(expectedResponseAsJson)
@@ -100,9 +110,12 @@ internal class MatrikkelControllerTest : NibasMvcTest() {
 
     @Test
     fun hentAlleStemmekretserForKommuneGir200_OK() {
-        val stemmekretsResponseList = listOf(stemmekretsResponse("1"), stemmekretsResponse("2"))
-        whenever(matrikkelService.hentAlleStemmekretserForKommune(anyString())).thenReturn(stemmekretsResponseList)
+        val stemmekrets1 = stemmekrets("1")
+        val stemmekrets2 = stemmekrets("2")
+        val stemmekretsResponseList = listOf(stemmekretsKretsResponse(stemmekrets1), stemmekretsKretsResponse(stemmekrets2))
         val expectedResponseAsJson = asJson(stemmekretsResponseList)
+
+        whenever(matrikkelService.hentAlleStemmekretserForKommune(anyString())).thenReturn(listOf(stemmekrets1, stemmekrets2))
 
         val responseAsString = invokeAndExpectStatusOK("/v1/ekstern/matrikkel/kommuner/0301/stemmekretser")
         assertThat(responseAsString).isEqualTo(expectedResponseAsJson)
@@ -110,9 +123,12 @@ internal class MatrikkelControllerTest : NibasMvcTest() {
 
     @Test
     fun hentAlleGrunnkretserForKommuneGir200_OK() {
-        val grunnkretsResponseList = listOf(grunnkretsResponse("a5"), grunnkretsResponse("b7"))
-        whenever(matrikkelService.hentAlleGrunnkretserForKommune(anyString())).thenReturn(grunnkretsResponseList)
+        val grunnkrets1 = grunnkrets("a5")
+        val grunnkrets2 = grunnkrets("b7")
+        val grunnkretsResponseList = listOf(grunnkretsKretsResponse(grunnkrets1), grunnkretsKretsResponse(grunnkrets2))
         val expectedResponseAsJson = asJson(grunnkretsResponseList)
+
+        whenever(matrikkelService.hentAlleGrunnkretserForKommune(anyString())).thenReturn(listOf(grunnkrets1, grunnkrets2))
 
         val responseAsString = invokeAndExpectStatusOK("/v1/ekstern/matrikkel/kommuner/0301/grunnkretser")
         assertThat(responseAsString).isEqualTo(expectedResponseAsJson)
@@ -129,17 +145,27 @@ internal class MatrikkelControllerTest : NibasMvcTest() {
             .getContentAsString(Charsets.UTF_8)
     }
 
-    private fun stemmekretsResponse(id: String): StemmekretsResponse {
-        return StemmekretsResponseBuilder(kodelisteServiceMock)
-            .forStemmekrets(StemmekretsBuilder(id)
-                .build())
+    private fun stemmekretsKretsResponse(stemmekrets: Stemmekrets): KretsResponse {
+        return KretsResponseBuilder(
+            kodelisteService = kodelisteServiceMock,
+            stemmekrets = stemmekrets)
+            .buildForStemmekrets()
+    }
+
+    private fun grunnkretsKretsResponse(grunnkrets: Grunnkrets): KretsResponse {
+        return KretsResponseBuilder(
+            kodelisteService = kodelisteServiceMock,
+            grunnkrets = grunnkrets)
+            .buildForGrunnkrets()
+    }
+
+    private fun grunnkrets(id: String): Grunnkrets {
+        return GrunnkretsBuilder(id)
             .build()
     }
 
-    private fun grunnkretsResponse(id: String): GrunnkretsResponse {
-        return GrunnkretsResponseBuilder(kodelisteServiceMock)
-            .forGrunnkrets(GrunnkretsBuilder(id)
-                .build())
+    private fun stemmekrets(id: String): Stemmekrets {
+        return StemmekretsBuilder(id)
             .build()
     }
 

@@ -2,6 +2,7 @@ package no.kartverket.nibas.api.v1
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -9,7 +10,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.response.GrunnkretsResponse
-import no.kartverket.nibas.api.v1.response.RevisjonRef
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
@@ -60,37 +60,20 @@ interface GrunnkretsApi {
     ): FeatureCollection
 
     @Operation(
-        summary = "Hent historiske revisjoner for en gitt grunnkrets",
-        description = "Henter historiske revisjoner til en grunnkrets med gitt id"
-    )
-    @DefaultRevisjonRefListApiResponses
-    @GetMapping("/{id}/revisjoner", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentGrunnkretsRevisjoner(@Parameter(description = "ID-en til grunnkretsen man vil hente") @PathVariable id: String): List<RevisjonRef>
-
-    @Operation(
-        summary = "Hent en historisk revisjon av en grunnkrets",
-        description = "Henter en gitt historisk revisjon av en grunnkrets"
+        summary = "Hent framtidige versjoner for en grunnkrets.",
+        description = "Returnerer en liste av nåværende Grunnkrets og eventuelt publiserte framtidige versjoner som matcher lokalid."
     )
     @ApiResponses(
         ApiResponse(
             responseCode = "200",
             description = "Successful operation",
-            content = [
-                Content(
-                    mediaType = "application/json",
-                    schema = Schema(implementation = GrunnkretsResponse::class)
-                )
-            ]
-        ),
-        ApiResponse(
-            responseCode = "404",
-            description = "Not Found"
+            content = [Content(
+                mediaType = "application/json",
+                array = ArraySchema(schema = Schema(implementation = GrunnkretsResponse::class))
+            )]
         )
     )
-    @GetMapping("/{id}/revisjoner/{revisjon}", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentGrunnkretsRevisjon(
-        @Parameter(description = "ID-en til grunnkretsen man vil hente") @PathVariable id: String,
-        @Parameter(description = "ID til revisjonen man vil hente") @PathVariable revisjon: Int
-    ): GrunnkretsResponse
+    @GetMapping("/{lokalid}/framtidigeversjoner", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun hentFramtidigeVersjonerForGrunnkrets(@Parameter(description = "LokalID-en til grunnkretsen man vil hente versjoner for") @PathVariable lokalid: String): List<GrunnkretsResponse>
 
 }

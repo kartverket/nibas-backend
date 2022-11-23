@@ -3,23 +3,32 @@ package no.kartverket.nibas.repository
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.request.KommuneRequest
 import no.kartverket.nibas.builders.GrenseBuilder
+import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Spraakkode
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
+import no.kartverket.nibas.sporing.Gyldighet
 import no.kartverket.nibas.sporing.UserFacade
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.mock.mockito.MockBean
-import org.springframework.orm.ObjectOptimisticLockingFailureException
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDate
+import java.time.Month
 import org.mockito.Mockito.`when` as whenever
 
 
+@Transactional
 class RepositoryTest : TestWithDbContainer() {
+
+    // Later som nåværende dato er 8.10.2022
+    private val currentDate = LocalDate.of(2022, Month.OCTOBER, 8)
+    private val october1In2022 = LocalDate.of(2022, Month.OCTOBER, 1)
+    private val january1In2023 = LocalDate.of(2023, Month.JANUARY, 1)
+    private val january1In2024 = LocalDate.of(2024, Month.JANUARY, 1)
 
     @MockBean
     private lateinit var userFacade: UserFacade
@@ -38,27 +47,6 @@ class RepositoryTest : TestWithDbContainer() {
         assertThat(utkastRepository.findById(utkast.id).isPresent).isTrue
     }
 
-    @Test
-    fun saveUtkastWithOldVersionTriggersOptimisticLockException() {
-        val utkast = UtkastBuilder.builder("Et foreløpig utkast")
-            .withKommuneRequests(kommuneRequests())
-            .build()
-
-        val savedUtkast = utkastRepository.save(utkast)
-        assertThat(savedUtkast.version).isEqualTo(2)
-        savedUtkast.navn = "Navn 1"
-
-        val fetchedUtkast = utkastRepository.findById(utkast.id).get()
-        fetchedUtkast.navn = "Navn 2"
-
-        //Versjon skal øke til 3
-        val resavedUtkast = utkastRepository.save(savedUtkast)
-        assertThat(resavedUtkast.version).isEqualTo(3)
-
-        // Forsøker å lagre noe med versjon 1, skal feile
-        assertThatThrownBy { utkastRepository.save(fetchedUtkast) }.isInstanceOf(ObjectOptimisticLockingFailureException::class.java)
-    }
-
     // Kan ikke gjøre equals-sjekk på set av ids fordi tidligere tester lagrer også ned Utkast som blir plukket opp i denne testen.
     // Altså ikke atomiske tester.
     @Test
@@ -75,27 +63,74 @@ class RepositoryTest : TestWithDbContainer() {
 
     @Test
     fun findAllGrunnkretserByLokalid() {
-        val grunnkrets1 = createGrunnkrets()
-        val grunnkrets2MedSammeLokalid = createGrunnkrets(lokalid = grunnkrets1.lokalid)
+        val lokalid = Lokalid("123")
+        val grunnkrets1 = createGrunnkrets(lokalid)
+        val grunnkrets2MedSammeLokalid = createGrunnkrets(lokalid)
         grunnkretsRepository.saveAll(listOf(grunnkrets1, grunnkrets2MedSammeLokalid))
 
         val grunnkretsIdsFunnet = grunnkretsRepository.findAllByLokalid(grunnkrets1.lokalid).map { it.id }.toSet()
-        assertThat(grunnkretsIdsFunnet).isEqualTo(setOf(grunnkrets1.id, grunnkrets2MedSammeLokalid.id))
+        val expectedGrunnkretsIds = setOf(grunnkrets1.id, grunnkrets2MedSammeLokalid.id)
+        assertThat(grunnkretsIdsFunnet).isEqualTo(expectedGrunnkretsIds)
     }
 
-    @Transactional
+    @Test
+    fun findAllGrunnkretserByLokalidFramITid() {
+        val lokalid = Lokalid("1001")
+        val grunnkretsIds = saveGrunnkretser(lokalid)
+
+        val idsOfActualGrunnkretserFunnet = grunnkretsRepository
+            .findAllByLokalidFramITid(lokalid, currentDate)
+            .map { it.id }
+
+        val expectedResultIds = listOf(grunnkretsIds[1], grunnkretsIds[2])
+        assertThat(idsOfActualGrunnkretserFunnet).isEqualTo(expectedResultIds)
+    }
+
+    @Test
+    fun findGyldigGrunnkretsForTidspunkt() {
+        val lokalid = Lokalid("1001")
+        val grunnkretsIds = saveGrunnkretser(lokalid)
+        assertThat(grunnkretsRepository.findGyldigGrunnkretsForTidspunkt(lokalid, currentDate).id).isEqualTo(grunnkretsIds[0])
+        assertThat(grunnkretsRepository.findGyldigGrunnkretsForTidspunkt(lokalid, january1In2023).id).isEqualTo(grunnkretsIds[1])
+        assertThat(grunnkretsRepository.findGyldigGrunnkretsForTidspunkt(lokalid, january1In2024).id).isEqualTo(grunnkretsIds[2])
+    }
+
     @Test
     fun findGrense() {
         grenseRepository.save(GrenseBuilder(id = "300").buildGrunnkretsgrense())
         assertThat(grenseRepository.findById("300")).isNotNull
     }
 
-    private fun createGrunnkrets(lokalid: String? = null): Grunnkrets {
-        val grunnkrets = if (lokalid != null) Grunnkrets(lokalid = lokalid) else Grunnkrets()
-        return grunnkrets.apply {
-            grunnkretsnummer = "1234"
-            grunnkretsnavn = "Basvatn"
-        }
+    @Test
+    fun saveSpraakkode() {
+        val spraakkode = Spraakkode()
+        spraakkode.id = "17"
+        spraakkode.description = "norsk"
+        spraakkodeRepository.save(spraakkode)
+        assertThat(spraakkodeRepository.findById("17").isPresent).isTrue
+    }
+
+    private fun createGrunnkrets(lokalid: Lokalid,
+                                 gyldigFra: LocalDate = LocalDate.of(2023, Month.JANUARY, 1),
+                                 gyldigTil: LocalDate? = null): Grunnkrets {
+        return Grunnkrets(lokalid = lokalid.value)
+            .apply {
+                grunnkretsnummer = "1234"
+                grunnkretsnavn = "Basvatn"
+                gyldighet = Gyldighet(gyldigFra = gyldigFra, gyldigTil = gyldigTil)
+            }
+    }
+
+    private fun saveGrunnkretser(lokalid: Lokalid): List<String> {
+        // Nåværende gyldig rad
+        val grunnkrets1 = createGrunnkrets(lokalid, gyldigFra = october1In2022, gyldigTil = january1In2023)
+        // Framtidig rad 1
+        val grunnkrets2 = createGrunnkrets(lokalid, gyldigFra = january1In2023, gyldigTil = january1In2024)
+        // Framtidig rad 2
+        val grunnkrets3 = createGrunnkrets(lokalid, gyldigFra = january1In2024)
+        val grunnkretsList = listOf(grunnkrets1, grunnkrets2, grunnkrets3)
+        grunnkretsRepository.saveAll(grunnkretsList)
+        return grunnkretsList.map { it.id }
     }
 
     private fun kommuneRequests(): Map<String, KommuneRequest> {
@@ -111,15 +146,6 @@ class RepositoryTest : TestWithDbContainer() {
             samiskforvaltningsomraade = samiskforvaltningsomraade,
             version = 1
         ))
-    }
-
-    @Test
-    fun saveSpraakkode() {
-        val spraakkode = Spraakkode()
-        spraakkode.id = "17"
-        spraakkode.description = "norsk"
-        spraakkodeRepository.save(spraakkode)
-        assertThat(spraakkodeRepository.findById("17").isPresent).isTrue
     }
 }
 

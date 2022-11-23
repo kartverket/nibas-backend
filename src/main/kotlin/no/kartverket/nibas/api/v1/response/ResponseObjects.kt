@@ -10,6 +10,7 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.inndelinger.RevisjonStatus
+import no.kartverket.nibas.sporing.Gyldighet
 import org.springframework.http.HttpStatus
 import java.time.LocalDate
 import java.time.ZonedDateTime
@@ -68,6 +69,9 @@ data class GrunnkretsRef(
 
     @Schema(description = "Nummeret til grunnkretsen")
     val grunnkretsnummer: String,
+
+    @Schema(description = "Antall publiserte framtidige gyldige versjoner.")
+    val antallFramtidigeVersjoner: Int = 0
 )
 
 @Schema(description = "En referanse til en stemmekrets")
@@ -187,17 +191,20 @@ data class GrunnkretsResponse(
     @Schema(description = "ID-en til grunnkretsen")
     val id: String,
 
+    @Schema(description = "Identifikasjon av grunnkretsen")
+    val identifikasjon: Identifikasjon,
+
     @Schema(description = "Navnet på grunnkretsen")
     val navn: String,
 
     @Schema(description = "Grunnkretsnummeret til grunnkretsen")
     val grunnkretsnummer: String,
 
-    @Schema(description = "Identifikasjon av grunnkretsen")
-    val identifikasjon: Identifikasjon,
+    @Schema(description = "Gyldighetsintervall for objektet")
+    val gyldighet: GyldighetResponse,
 
-    @Schema(description = "Kommunenummeret til grunnkretsen")
-    val kommunenummer: Kommunenummer,
+    @Schema(description = "Siste oppdateringstidspunkt for objektet")
+    val oppdateringsdato: LocalDate,
 
     @Schema(description = "Geometrien til grunnkretsen, dvs representasjonspunkt og flaten")
     val features: FeatureCollection,
@@ -237,6 +244,24 @@ data class StemmekretsResponse(
 
     @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
     val version: Int
+)
+
+@Schema(description = "Representasjon av en krets. Response-type kun for Matrikkelen. Kan være grunnkrets, stemmekrets etc.")
+data class KretsResponse(
+    @Schema(description = "Lokalid-en til kretsen.")
+    val id: String,
+
+    @Schema(description = "Navnet på kretsen.")
+    val navn: String,
+
+    @Schema(description = "Nummeret til kretsen.")
+    val nummer: String,
+
+    @Schema(description = "Kommunenummeret til kretsen.")
+    val kommunenummer: Kommunenummer,
+
+    @Schema(description = "Geometrien til kretsen, dvs representasjonspunkt og flaten")
+    val features: FeatureCollection
 )
 
 @Schema(description = "Representasjon av et kommunenummer")
@@ -367,3 +392,12 @@ data class ApiErrorResponse(
     @Schema(description = "Beskrivelse av hva som har gått galt.")
     val melding: String?
 )
+
+data class GyldighetResponse(
+    @Schema(description = "Tidspunktet objektet er gyldig fra")
+    val gyldigFra: LocalDate,
+    @Schema(description = "Tidspunktet objektet er gyldig til. Kan være tomt/løpende.")
+    val gyldigTil: LocalDate?,
+)
+
+fun Gyldighet.toGyldighetResponse(): GyldighetResponse = GyldighetResponse(this.gyldigFra, this.gyldigTil)

@@ -19,9 +19,6 @@ internal class GrunnkretsControllerTest : NibasMvcTest() {
     @MockBean
     private lateinit var grunnkretsService: GrunnkretsService
 
-    @MockBean
-    private lateinit var grunnkretsControllerService: GrunnkretsControllerService
-
     @Test
     fun hentGrunnkretsReturns200_OK() {
         whenever(grunnkretsService.hentGrunnkrets(any(Lokalid::class.java), any(LocalDate::class.java))).thenReturn(GrunnkretsBuilder.DEFAULT_GRUNNKRETS)
@@ -30,8 +27,8 @@ internal class GrunnkretsControllerTest : NibasMvcTest() {
 
     @Test
     fun manglendeItemForKodelisteReturns500_InternalServerError() {
-        val id: String = UUID.randomUUID().toString()
-        whenever(grunnkretsControllerService.hentEn(any(Lokalid::class.java), any(LocalDate::class.java))).thenThrow(MissingKodelisteItemException(KodelisteType.KOMMUNENUMMER, id))
+        val id: String = UUID.randomUUID().toString();
+        whenever(grunnkretsService.hentGrunnkrets(any(Lokalid::class.java), any(LocalDate::class.java))).thenThrow(MissingKodelisteItemException(KodelisteType.KOMMUNENUMMER, id))
         get("/v1/grunnkretser/$id", status().isInternalServerError)
     }
 
@@ -40,4 +37,13 @@ internal class GrunnkretsControllerTest : NibasMvcTest() {
         whenever(grunnkretsService.hentGrunnkrets(any(Lokalid::class.java), any(LocalDate::class.java))).thenReturn(GrunnkretsBuilder.DEFAULT_GRUNNKRETS)
         get("/v1/grunnkretser/1?gyldigDato=2022-01-01", status().isOk)
     }
+
+    @Test
+    fun hentFramtidigeVersjonerReturns200_OK() {
+        whenever(grunnkretsService.hentFramtidigeVersjonerForGrunnkrets(any(Lokalid::class.java), any(LocalDate::class.java)))
+            .thenReturn(listOf(GrunnkretsBuilder(lokalId = Lokalid("123")).build()))
+        get("/v1/grunnkretser/123/framtidigeversjoner", status().isOk)
+    }
+
+
 }

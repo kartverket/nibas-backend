@@ -115,7 +115,7 @@ interface Gyldig {
     // Inklusiv gyldigFra, eksklusiv gyldigTil
     var gyldighet: Gyldighet
     fun gyldigPaaTidspunkt(dato: LocalDate): Boolean {
-        return if (gyldighet.erGyldig) {
+        return if (!gyldighet.slettet) {
             val dagenEtterDato = dato.plusDays(1)
             val gyldigTil = gyldighet.gyldigTil
             gyldighet.gyldigFra.isBefore(dagenEtterDato) && (gyldigTil == null || gyldigTil.isAfter(dato))
@@ -132,8 +132,8 @@ interface Gyldig {
         this.gyldighet = this.gyldighet.setGyldigFra(nyGyldigFra)
     }
 
-    fun setUgyldig() {
-        this.gyldighet = this.gyldighet.setUgyldig()
+    fun setSlettet() {
+        this.gyldighet = this.gyldighet.setSlettet()
     }
 }
 
@@ -149,8 +149,11 @@ data class Gyldighet(
     @Column(name = "gyldigtil")
     val gyldigTil: LocalDate? = null,
 
-    @Column(name = "gyldig", nullable = false)
-    val erGyldig: Boolean = true
+    /**
+     * Representerer "logisk slettet".
+     */
+    @Column(name = "slettet", nullable = false)
+    val slettet: Boolean = false
 ) {
 
     // Kjører alltid en validering etter at objektets konstruktør er kalt
@@ -158,8 +161,8 @@ data class Gyldighet(
         validerIntervall()
     }
 
-    fun setUgyldig(): Gyldighet {
-        return this.copy(erGyldig = false)
+    fun setSlettet(): Gyldighet {
+        return this.copy(slettet = true)
     }
 
     fun setGyldigFra(nyGyldigFra: LocalDate): Gyldighet {
@@ -170,7 +173,7 @@ data class Gyldighet(
     fun setGyldigTil(gyldigTil: LocalDate): Gyldighet {
         // Forhindrer bruker i å sette en ugyldig til-dato som skaper et ugyldig intervall
         if (gyldigFra.isEqual(gyldigTil)) {
-            return setUgyldig()
+            return setSlettet()
         }
         return this.copy(
             gyldigTil = gyldigTil
@@ -197,7 +200,7 @@ data class Gyldighet(
     }
 
     override fun toString(): String {
-        return "Gyldighet [gyldigFra=$gyldigFra, gyldigTil=$gyldigTil, erGyldig=$erGyldig]"
+        return "Gyldighet [gyldigFra=$gyldigFra, gyldigTil=$gyldigTil, slettet=$slettet]"
     }
 }
 

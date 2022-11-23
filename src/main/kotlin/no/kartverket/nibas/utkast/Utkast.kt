@@ -12,6 +12,7 @@ import no.kartverket.nibas.api.v1.response.AuditInfoResponse
 import no.kartverket.nibas.api.v1.response.UtkastOpprettetResponse
 import no.kartverket.nibas.api.v1.response.UtkastRef
 import no.kartverket.nibas.api.v1.response.UtkastResponse
+import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.BadRequestException
 import no.kartverket.nibas.common.ResponseException.NotFoundException
@@ -34,12 +35,10 @@ import no.kartverket.nibas.unwrap
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
-import org.springframework.stereotype.Component
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 
 
 @RestController
@@ -256,14 +255,6 @@ private fun Utkast.toUtkastRef(hrefProvider: HrefProvider): UtkastRef = UtkastRe
     navn = navn,
     href = hrefProvider.getHref(id)
 )
-
-/**
- * Gir mulighet til å overstyre statisk spring-web metode. Tryggere for test.
- */
-@Component
-class HrefProvider {
-    fun getHref(id: String): String = ServletUriComponentsBuilder.fromCurrentRequestUri().pathSegment(id).build().toUriString()
-}
 
 fun AuditInfo.toAuditInfoResponse(): AuditInfoResponse = AuditInfoResponse(this.oppdateringsdato, this.endretAv!!)
 

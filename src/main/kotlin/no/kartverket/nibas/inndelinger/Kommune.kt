@@ -9,6 +9,8 @@ import no.kartverket.nibas.api.v1.response.KommuneRef
 import no.kartverket.nibas.api.v1.response.KommuneResponse
 import no.kartverket.nibas.api.v1.response.RevisjonRef
 import no.kartverket.nibas.api.v1.response.StemmekretsRef
+import no.kartverket.nibas.common.HrefProvider
+import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
@@ -32,7 +34,9 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 class KommuneController(
     private val kommuneService: KommuneService,
     private val kodelisteService: KodelisteService,
-    private val historikkService: HistorikkService
+    private val historikkService: HistorikkService,
+    private val grunnkretsService: GrunnkretsService,
+    private val hrefProvider: HrefProvider
 ) : KommuneApi {
 
     override fun hentKommuner(fylkeId: String?): List<KommuneRef> {
@@ -65,10 +69,10 @@ class KommuneController(
     override fun hentKommuneRevisjon(id: String, revisjon: Int): KommuneResponse =
         historikkService.hentRevisjon(id, revisjon, Kommune::class.java).toKommuneResponse(kodelisteService)
 
-
-    override fun hentKommunesGrunnkretser(id: String): List<GrunnkretsRef> {
-        return kommuneService.hentKommunesGrunnkretser(id).map { toGrunnkretsRef(it) }
-    }
+    override fun hentKommunesGrunnkretser(id: String): List<GrunnkretsRef> =
+        kommuneService.hentKommunesGrunnkretser(id).map {
+            it.toGrunnkretsRef(grunnkretsService.hentAntallGyldigeVersjonerFramITidForLokalid(Lokalid(it.lokalid)), hrefProvider)
+        }
 
     override fun hentKommunesStemmekretser(id: String): List<StemmekretsRef> {
         return kommuneService.hentKommunesStemmekretser(id).map { toStemmekretsRef(it) }

@@ -5,6 +5,7 @@ import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Spraakkode
 import no.kartverket.nibas.domain.Stemmekrets
+import no.kartverket.nibas.sporing.Gyldighet
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
 import java.time.LocalDate
@@ -18,7 +19,10 @@ class KommuneBuilder(
     private var samiskforvaltningsomraade: Boolean = false,
     private var oppdateringsdato: LocalDate = LocalDate.now(),
     private var grunnkretser: MutableList<Grunnkrets> = mutableListOf(),
-    private var stemmekretser: MutableList<Stemmekrets> = mutableListOf()
+    private var stemmekretser: MutableList<Stemmekrets> = mutableListOf(),
+    private var gyldigFra: LocalDate = LocalDate.now(),
+    private var gyldigTil: LocalDate? = null,
+    private var utledetFra: Kommune? = null
 ) {
 
     companion object {
@@ -52,6 +56,9 @@ class KommuneBuilder(
 
         grunnkretser.forEach { kommune.addGrunnkrets(it) }
         stemmekretser.forEach { kommune.addStemmekrets(it) }
+
+        kommune.gyldighet = Gyldighet(gyldigFra, gyldigTil)
+        kommune.utledetFra = utledetFra
 
         return kommune
     }

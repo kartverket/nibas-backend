@@ -5,6 +5,7 @@ import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.request.StemmekretsRequest
+import no.kartverket.nibas.api.v1.response.KretsResponse
 import no.kartverket.nibas.api.v1.response.RevisjonRef
 import no.kartverket.nibas.api.v1.response.StemmekretsRef
 import no.kartverket.nibas.api.v1.response.StemmekretsResponse
@@ -29,11 +30,11 @@ class StemmekretsController(
     private val stemmekretsService: StemmekretsService,
     private val kodelisteService: KodelisteService,
     private val historikkService: HistorikkService,
-    private val stemmekretsControllerService: StemmekretsControllerService
 ) : StemmekretsApi {
 
     override fun hentStemmekrets(id: String): StemmekretsResponse {
-        return stemmekretsControllerService.hentEn(id)
+        return stemmekretsService.hentStemmekrets(id)?.toStemmekretsResponse(kodelisteService)
+            ?: throw NotFoundException("Stemmekrets med id '$id' ble ikke funnet.")
     }
 
     override fun hentGrenserForStemmekrets(id: String): FeatureCollection {
@@ -58,19 +59,9 @@ class StemmekretsController(
 
 @Transactional(readOnly = true)
 @Service
-class StemmekretsControllerService(private val stemmekretsService: StemmekretsService,
-                                   private val kodelisteService: KodelisteService) {
-    fun hentEn(id: String): StemmekretsResponse =
-        stemmekretsService.hentStemmekrets(id)?.toStemmekretsResponse(kodelisteService)
-            ?: throw NotFoundException("Stemmekrets med id '$id' ble ikke funnet.")
-
-}
-
-@Transactional(readOnly = true)
-@Service
 class StemmekretsService(private val stemmekretsRepository: StemmekretsRepository) {
 
-    fun hentStemmekrets(id: String) = stemmekretsRepository.findById(id).unwrap()
+    fun hentStemmekrets(id: String): Stemmekrets? = stemmekretsRepository.findById(id).unwrap()
 
     fun hentGrenserForStemmekrets(id: String): Set<GrenseKobling> {
         return hentStemmekrets(id)?.grenser ?: emptySet()
@@ -110,5 +101,16 @@ fun Stemmekrets.toStemmekretsResponse(kodelisteService: KodelisteService): Stemm
         posisjonToFeature(this.posisjon, this.version),
         flateToFeature(this, kodelisteService, this.version))),
     version = this.version
+)
+
+fun Stemmekrets.toKretsResponse(kodelisteService: KodelisteService): KretsResponse = KretsResponse(
+    // TODO: Her må returneres lokalid så fort vi får endret API-et for Stemmekrets
+    id = this.id,
+    navn = this.stemmekretsnavn!!,
+    nummer = this.stemmekretsnummer!!,
+    kommunenummer = kodelisteService.createKommunenummerFromUUID(this.kommune.kommunenummer),
+    features = FeatureCollection(features = listOf(
+        posisjonToFeature(this.posisjon, this.version),
+        flateToFeature(this, kodelisteService, this.version))),
 )
 

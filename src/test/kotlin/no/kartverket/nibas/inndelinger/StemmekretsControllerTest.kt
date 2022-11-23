@@ -15,11 +15,9 @@ internal class StemmekretsControllerTest : NibasMvcTest() {
     @MockBean
     private lateinit var stemmekretsService: StemmekretsService
 
-    @MockBean
-    private lateinit var stemmekretsControllerService: StemmekretsControllerService
-
     @Test
     fun hentStemmekretsReturns200_OK() {
+        whenever(kodelisteServiceMock.getCodeValueByKommunenummerId(anyString())).thenReturn("0301")
         whenever(stemmekretsService.hentStemmekrets(anyString())).thenReturn(StemmekretsBuilder.DEFAULT_STEMMEKRETS)
         get("/v1/stemmekretser/1", status().isOk)
     }

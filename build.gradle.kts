@@ -60,6 +60,7 @@ val spatial4jVersion = "0.8"
 val kotlinxCoroutinesCoreVersion = "1.6.4"
 val logstashVersion = "7.2"
 val springCloudGcpStarter = "3.4.0"
+val springmockkVersion = "3.1.1"
 
 dependencies {
     implementation("no.kartverket.aut:aut-lib:$autLibVersion")
@@ -105,6 +106,7 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.batch:spring-batch-test")
+    testImplementation("com.ninja-squad:springmockk:$springmockkVersion")
 
     testRuntimeOnly("com.h2database:h2")
 

@@ -55,9 +55,6 @@ interface KommuneRepository : CrudRepositoryWithLokalIdFinder<Kommune, String> {
 
 interface GrunnkretsRepository : CrudRepositoryWithLokalIdFinder<Grunnkrets, String>
 
-fun GrunnkretsRepository.findAllByLokalidSortedByGyldigFra(lokalid: String): List<Grunnkrets> =
-    findAllByLokalid(lokalid).sortedBy { it.gyldighet.gyldigFra }
-
 interface StemmekretsRepository : CrudRepositoryWithLokalIdFinder<Stemmekrets, String>
 
 interface GrenseRepository : CrudRepositoryWithLokalIdFinder<Grense, String>

@@ -21,6 +21,7 @@ import no.kartverket.nibas.builders.FylkeBuilder
 import no.kartverket.nibas.builders.KommuneRequestBuilder
 import no.kartverket.nibas.builders.UtkastRequestBuilder
 import no.kartverket.nibas.common.FeilVedOppdatering
+import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.BadRequestException
