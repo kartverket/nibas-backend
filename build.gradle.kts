@@ -61,6 +61,8 @@ val kotlinxCoroutinesCoreVersion = "1.6.4"
 val logstashVersion = "7.2"
 val springCloudGcpStarter = "3.4.0"
 val springmockkVersion = "3.1.1"
+val springSecurityCoreVersion = "5.7.5"
+
 
 dependencies {
     implementation("no.kartverket.aut:aut-lib:$autLibVersion")
@@ -72,6 +74,7 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    implementation("org.springframework.security:spring-security-core:$springSecurityCoreVersion")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springdoc:springdoc-openapi-webmvc-core:$springdocOpenapiVersion")
