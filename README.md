@@ -94,6 +94,10 @@ eksempel [WebSecurityConfigTest](src/test/kotlin/no/kartverket/nibas/config/WebS
 @ActiveProfiles("dev", inheritProfiles = false)
 ```
 
+### Testbrukere i lokal Vault
+Dersom du ønsker å teste med påskrudd sikkerhet lokalt, må det legges inn testbrukere i lokal vault.
+Dette gjøres ved å legge inn følgende på sti `nibas/nibas-backend/nibas.authorized.users`: `21079408678,21079408597,21079408406,21079408325,21079408244`
+
 ## Hente docker image fra ghcr.io
 
 `docker pull ghcr.io/kartverket/nibas-backend:<versjonsnummer>`

@@ -146,7 +146,10 @@ class WebSecurityConfig @Autowired constructor(private val environment: Environm
         return NibasJwtAuthenticationRequestFilter(jwtValidator(), getAuthorizerPlugin())
     }
 
-    override fun getAuthorizerPlugin(): AuthorizerPlugin = DummyNibasAuthorizerPlugin()
+    override fun getAuthorizerPlugin(): AuthorizerPlugin {
+        val authorizedUsers = environment.getProperty("nibas.authorized.users") ?: ""
+        return NibasAuthorizerPlugin(authorizedUsers.split(",").map { it.trim() })
+    }
 
     override fun jwksRetriever(): JwksRetriever {
         val mockJwkRetrieval: Boolean? = environment.getProperty("mock.jwk.retrieval", Boolean::class.java)
@@ -177,25 +180,16 @@ class WebSecurityConfig @Autowired constructor(private val environment: Environm
 }
 
 /**
- * En midlertidig AuthorizerPlugin-implementasjon som hardkoder bruker-rolle-tilknytninger.
+ * En midlertidig AuthorizerPlugin-implementasjon som gir alle autoriserte brukere NIBAS-rollen.
  */
-class DummyNibasAuthorizerPlugin : AuthorizerPlugin {
-    private val nibasSingletonList = listOf("NIBAS")
-    private val authoritiesByPidMap = mapOf(
-        "21079408678" to nibasSingletonList,
-        "21079408597" to nibasSingletonList,
-        "21079408406" to nibasSingletonList,
-        "21079408325" to nibasSingletonList,
-        "21079408244" to nibasSingletonList,
-    )
+class NibasAuthorizerPlugin constructor(private val users: List<String>) : AuthorizerPlugin {
 
     override fun getAuthoritiesForPid(pid: String): Collection<GrantedAuthority> {
-        if (authoritiesByPidMap.containsKey(pid)) {
-            return authoritiesByPidMap[pid]!!.map { role -> SimpleGrantedAuthority("ROLE_$role") }
+        if (users.contains(pid)) {
+            return listOf(SimpleGrantedAuthority("ROLE_NIBAS"))
         }
         return emptyList()
     }
-
 }
 
 /**
