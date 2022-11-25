@@ -4,7 +4,7 @@ import org.springframework.boot.gradle.tasks.bundling.BootJar
 plugins {
     val kotlinPluginVersion = "1.7.21"
 
-    id("org.springframework.boot") version "2.7.5"
+    id("org.springframework.boot") version "2.7.6"
     id("io.spring.dependency-management") version "1.1.0"
     kotlin("jvm") version kotlinPluginVersion
     kotlin("plugin.spring") version kotlinPluginVersion
@@ -61,8 +61,8 @@ val kotlinxCoroutinesCoreVersion = "1.6.4"
 val logstashVersion = "7.2"
 val springCloudGcpStarter = "3.4.0"
 val springmockkVersion = "3.1.1"
-val springSecurityCoreVersion = "5.7.5"
 
+ext["snakeyaml.version"] = "1.31"
 
 dependencies {
     implementation("no.kartverket.aut:aut-lib:$autLibVersion")
@@ -74,7 +74,6 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-    implementation("org.springframework.security:spring-security-core:$springSecurityCoreVersion")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springdoc:springdoc-openapi-webmvc-core:$springdocOpenapiVersion")
