@@ -161,3 +161,30 @@ jobs:
             deploy_on: "refs/heads/master"
             vault_role: nibas-backend-write-role
             image_url: ${{ needs.build.outputs.image_url}}
+
+    deploy-prod:
+        needs: [build, post-build-attest, security-scans, deploy-test]
+        name: Deploy to prod
+        permissions:
+            id-token: write
+            pull-requests: write
+            contents: read
+            packages: write
+        uses: kartverket/github-workflows/.github/workflows/run-terraform.yml@v3.0.3
+        with:
+            runner: atkv1-prod
+            environment: prod
+            kubernetes_cluster: atkv1-prod
+            terraform_option_1: -var-file=variables/prod.tfvars
+            terraform_option_2: -var=image=ghcr.io/kartverket/nibas-backend:${{ needs.build.outputs.new_tag }}
+            terraform_init_option_1: -backend-config=backend/prod.gcs.tfbackend
+            working_directory: terraform
+            auth_project_number: 468770754406
+            service_account: nibas-deploy@nibas-prod-732a.iam.gserviceaccount.com
+            project_id: kubernetes-prod-e4a2
+            deploy_on: "refs/heads/master"
+            vault_role: nibas-backend-write-role
+            image_url: ${{ needs.build.outputs.image_url }}
+
+
+
