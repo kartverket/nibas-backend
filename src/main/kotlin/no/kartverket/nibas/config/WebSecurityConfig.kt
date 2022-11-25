@@ -101,12 +101,12 @@ class WebSecurityConfig @Autowired constructor(private val environment: Environm
             return httpSecurity.antMatcher("/**")
                 // Skal tillate stiene under (anbefalt måte fra Spring Security 5.7 for å ignore)
                 .authorizeHttpRequests {
-                    it.antMatchers(
-                        "/actuator/health",
-                        "/actuator/info",
-                        "/api-docs/**",
-                        "/swagger-ui/**")
-                        .permitAll()
+
+                    // Er åpne for alle
+                    it.antMatchers("/actuator/health", "/actuator/info", "/api-docs/**", "/swagger-ui/**").permitAll()
+
+                    // Krever administrator-rolle ROLE_NIBAS_ADMIN
+                    it.antMatchers("/v1/admin/**").hasRole("NIBAS_ADMIN")
 
                     // Alle øvrige requests må ha rolle ROLE_NIBAS
                     it.anyRequest().hasRole("NIBAS")
@@ -147,8 +147,13 @@ class WebSecurityConfig @Autowired constructor(private val environment: Environm
     }
 
     override fun getAuthorizerPlugin(): AuthorizerPlugin {
-        val authorizedUsers = environment.getProperty("nibas.authorized.users") ?: ""
-        return NibasAuthorizerPlugin(authorizedUsers.split(",").map { it.trim() })
+        fun envPropertyAsList(propName: String) =
+            (environment.getProperty(propName) ?: "").split(",").map { it.trim() }
+
+        val authorizedUsers = envPropertyAsList("nibas.authorized.users")
+        val authorizedAdminUsers = envPropertyAsList("nibas.authorized.administrators")
+
+        return NibasAuthorizerPlugin(authorizedUsers, authorizedAdminUsers)
     }
 
     override fun jwksRetriever(): JwksRetriever {
@@ -182,13 +187,18 @@ class WebSecurityConfig @Autowired constructor(private val environment: Environm
 /**
  * En midlertidig AuthorizerPlugin-implementasjon som gir alle autoriserte brukere NIBAS-rollen.
  */
-class NibasAuthorizerPlugin constructor(private val users: List<String>) : AuthorizerPlugin {
+class NibasAuthorizerPlugin constructor(private val users: List<String>, private val adminUsers: List<String>) : AuthorizerPlugin {
 
     override fun getAuthoritiesForPid(pid: String): Collection<GrantedAuthority> {
+        val grantedRoles = mutableListOf<GrantedAuthority>()
         if (users.contains(pid)) {
-            return listOf(SimpleGrantedAuthority("ROLE_NIBAS"))
+            grantedRoles.add(SimpleGrantedAuthority("ROLE_NIBAS"))
         }
-        return emptyList()
+        if(adminUsers.contains(pid)){
+            grantedRoles.add(SimpleGrantedAuthority("ROLE_NIBAS_ADMIN"))
+        }
+
+        return grantedRoles
     }
 }
 
