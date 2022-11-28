@@ -84,9 +84,6 @@ resource "kubernetes_manifest" "nibas_backend_application" {
             {
               application = "aut-idporten"
               namespace   = "aut"
-            },
-            {
-              application = "nibas-db" # Kun til vi kutter kubernetes-base
             }
           ]
 
