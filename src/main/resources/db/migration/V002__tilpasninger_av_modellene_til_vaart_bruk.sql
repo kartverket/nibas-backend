@@ -155,6 +155,11 @@ alter table grense
     add column info text;
 
 -- Slettet-kolonne --
+ALTER TABLE administrativenhet add column slettet boolean NOT NULL DEFAULT 'FALSE';
+ALTER TABLE administrativenhetnavn add column slettet boolean NOT NULL DEFAULT 'FALSE';
+ALTER TABLE dokumentasjonsreferanse add column slettet boolean NOT NULL DEFAULT 'FALSE';
+ALTER TABLE dokumentasjonsreferanse_dokumentlink add column slettet boolean NOT NULL DEFAULT 'FALSE';
+ALTER TABLE dokumentasjonsreferanse_internreferansekartverket add column slettet boolean NOT NULL DEFAULT 'FALSE';
 ALTER TABLE grense add column slettet boolean NOT NULL DEFAULT 'FALSE';
 ALTER TABLE fylke add column slettet boolean NOT NULL DEFAULT 'FALSE';
 ALTER TABLE kommune add column slettet boolean NOT NULL DEFAULT 'FALSE';

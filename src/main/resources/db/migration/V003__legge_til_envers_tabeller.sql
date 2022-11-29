@@ -1,3 +1,5 @@
+create sequence hibernate_sequence;
+
 create table revinfo
 (
     rev      integer not null,
@@ -15,6 +17,8 @@ create table administrativenhetnavn_aud
     typeendring                   varchar(255),
     foerstedigitaliseringsdato    date,
     gyldigfra                     date,
+    gyldigtil                     date,
+    slettet                       boolean,
     lokalid                       varchar(255),
     navn                          varchar(255),
     objtype                       varchar(255),
@@ -50,6 +54,8 @@ create table dokumentasjonsreferanse_aud
     fastsettingsmyndighet      varchar(255),
     foerstedigitaliseringsdato date,
     gyldigfra                  date,
+    gyldigtil                  date,
+    slettet                    boolean,
     hjemmel                    varchar(255),
     lokalid                    varchar(255),
     objtype                    varchar(255),
