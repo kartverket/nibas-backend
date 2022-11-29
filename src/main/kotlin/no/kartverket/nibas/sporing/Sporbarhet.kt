@@ -3,6 +3,7 @@ package no.kartverket.nibas.sporing
 import no.kartverket.aut.lib.security.DefaultWebSecurityConfig
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Sporingsinformasjon
 import no.kartverket.nibas.common.ResponseException
+import no.kartverket.nibas.domain.Endringstype
 import org.hibernate.event.service.spi.EventListenerRegistry
 import org.hibernate.event.spi.AbstractPreDatabaseOperationEvent
 import org.hibernate.event.spi.EventType
@@ -102,12 +103,13 @@ interface Laasbar {
 
 @Embeddable
 data class AuditInfo(
-    @Column(name = "oppdateringsdato", nullable = false) var oppdateringsdato: LocalDate = LocalDate.now(),
-    @Column(name = "endret_av", nullable = true) var endretAv: String? = null,
+    @Column(name = "endretdato", nullable = false) var endretdato: LocalDate = LocalDate.now(),
+    @Column(name = "endretav", nullable = false) var endretAv: String = "import",
+    @Column(name = "typeendring", nullable = false) var typeEndring: Endringstype = Endringstype.IMPORT
 ) {
     fun onUpdate(user: String) {
         endretAv = user
-        oppdateringsdato = LocalDate.now()
+        endretdato = LocalDate.now()
     }
 }
 
@@ -206,6 +208,6 @@ data class Gyldighet(
 
 fun AuditInfo.toSporingsinformasjon(): Sporingsinformasjon {
     return Sporingsinformasjon(
-        oppdateringsdato = this.oppdateringsdato,
+        oppdateringsdato = this.endretdato,
         endretAv = this.endretAv)
 }

@@ -23,7 +23,6 @@ open class SosiGeometri(type: String, niva: Int, verdier: MutableList<SosiVerdi>
     }
 
     fun getOpphav(): String? = getVerdiAvBarn(SosiKoder.OPPHAV)
-    fun getDataUttaksdato(): LocalDate? = stringAsDate(getVerdiAvBarn(SosiKoder.DATAUTTAKSDATO))
     fun getOppdateringsdato(): LocalDate? = stringAsDate(getVerdiAvBarn(SosiKoder.OPPDATERINGSDATO))
     fun getAlleSosiNordOest(): List<SosiNordOest> = barn.filter { it is SosiNordOest }.map { it as SosiNordOest }
     fun getReferanser(): List<SosiReferanse> = barn.filter { it is SosiReferanse }.map { it as SosiReferanse }
@@ -41,13 +40,10 @@ open class SosiGeometri(type: String, niva: Int, verdier: MutableList<SosiVerdi>
     fun getFastsettingstype(): String? = getVerdiAvBarn(SosiKoder.FASTSETTINGSTYPE)
     fun getGyldigFra(): LocalDate = stringAsDate(getVerdiAvBarn(SosiKoder.GYLDIGFRA)) ?: LocalDate.now()
     fun getGyldigTil(): LocalDate? = stringAsDate(getVerdiAvBarn(SosiKoder.GYLDIGTIL))
-    fun getSluttdato(): LocalDate? = stringAsDate(getVerdiAvBarn(SosiKoder.SLUTTDATO))
     fun getDatafangstDato(): LocalDate? = stringAsDate(getVerdiAvBarn(SosiKoder.DATAFANGSTDATO))
     fun getGrensestatus(): String? = getVerdiAvBarn(SosiKoder.GRENSESTATUS)
     fun getFolgerTerrengdetalj(): String? = getVerdiAvBarn(SosiKoder.FOLGERTERRENGDETALJ)
     fun getKvalitet(): SosiKvalitet? = barn.find { it is SosiKvalitet } as? SosiKvalitet
-    fun getEndringsflagg(): SosiEndringsflagg? = barn.find {it is SosiEndringsflagg} as? SosiEndringsflagg
-    fun getKopidata(): SosiKopidata? = barn.find {it is SosiKopidata} as? SosiKopidata
     fun getGrunnkretsId(): SosiGrunnkretsId? = barn.find {it is SosiGrunnkretsId} as? SosiGrunnkretsId
 
     fun getRegistreringsversjon(): SosiRegistreringsversjon? = barn.find {it is SosiRegistreringsversjon} as? SosiRegistreringsversjon

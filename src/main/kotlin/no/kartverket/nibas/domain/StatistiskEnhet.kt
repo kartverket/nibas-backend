@@ -8,6 +8,7 @@ import no.kartverket.nibas.sporing.Sporbar
 import org.hibernate.envers.Audited
 import org.locationtech.jts.geom.MultiPolygon
 import org.locationtech.jts.geom.Point
+import org.locationtech.jts.geom.Polygon
 import java.time.LocalDate
 import java.util.*
 import javax.persistence.Column
@@ -19,7 +20,7 @@ import javax.persistence.MappedSuperclass
 @Audited
 abstract class StatistiskEnhet(
     @Transient
-    override val type: Flatetype
+    override val type: Flatetype,
 ) : Flate, Sporbar, Laasbar {
 
     @Id
@@ -43,33 +44,17 @@ abstract class StatistiskEnhet(
     @Column(name = "datafangstdato")
     override var datafangstdato: LocalDate? = null
 
-    @Column(name = "sluttdato")
-    var sluttdato: LocalDate? = null
-
-    @Column(name = "informasjon")
-    var informasjon: String? = null
-
-    @Embedded
-    var endringsflagg: Endringsflagg? = Endringsflagg()
+    @Column(name = "foerstedigitaliseringsdato")
+    override var foerstedigitaliseringsdato: LocalDate = LocalDate.now()
 
     @Column(name = "opphav")
     override var opphav: String? = null
 
-    @Embedded
-    override var registreringsversjon: Registreringsversjon? = Registreringsversjon()
-
-    @Embedded
-    override var kopidata: Kopidata? = Kopidata()
-
     @Column(name = "posisjon")
     var posisjon: Point? = null
 
-    @Column(name = "flate")
-    override var flate: MultiPolygon? = null
-
-    // TODO: typeEndring vil komme inn som del av ny sosi-modell (blir muligens en enum på et interface/embedded type)
-    @Column(name = "type_endring")
-    var typeEndring: String? = null
+    @Column(name = "omraade")
+    override var omraade: MultiPolygon? = null
 
     @Suppress("UNCHECKED_CAST")
     fun <T : GrenseKobling> oppdaterSamling(grense: Grense, attributter: GrenseKoblingAttributter, samling: MutableSet<T>, default: GrenseKobling) {

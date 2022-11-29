@@ -20,7 +20,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
     @Autowired
     private lateinit var grunnkretsService: GrunnkretsService
 
-    private val lokalidOfGrunnkrets = Lokalid("f5ada1ad-f1d3-4cd3-b04f-1b29aa97aa5a")
+    private val lokalidOfGrunnkrets = Lokalid("c54fb55e-15d0-4528-8b88-f58d6c74bd87")
     private val earlyDate = LocalDate.of(2000, 1, 1)
 
     @Test

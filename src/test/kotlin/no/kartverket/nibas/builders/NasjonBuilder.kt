@@ -35,7 +35,7 @@ class NasjonBuilder(private val id: String = "1") {
 
         nasjon.administrativenhetnavn = mutableSetOf(administrativenhetnavn)
         nasjon.posisjon = GeometryFactory().createPoint(Coordinate(1.0, 1.0))
-        nasjon.flate = GeometryFactory().createMultiPolygon(arrayOf(GeometryFactory().createPolygon()))
+        nasjon.omraade = GeometryFactory().createMultiPolygon(arrayOf(GeometryFactory().createPolygon()))
 
         nasjon.addFylke(fylke)
 

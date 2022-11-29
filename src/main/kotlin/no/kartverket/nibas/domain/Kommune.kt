@@ -22,7 +22,7 @@ import javax.persistence.Table
 @Entity
 class Kommune(
     override val id: String = UUID.randomUUID().toString(),
-    override val lokalid: String = UUID.randomUUID().toString(),
+    override val lokalid: String = UUID.randomUUID().toString()
 ) : AdministrativEnhet(Flatetype.KOMMUNE) {
 
     @Column(name = "kommunenummer", nullable = false)
@@ -35,7 +35,7 @@ class Kommune(
     @JoinColumn(name = "fylke_fk")
     lateinit var fylke: Fylke
 
-    @OneToMany(mappedBy = "kommuneFk")
+    @OneToMany(mappedBy = "kommuneFk", cascade = [CascadeType.ALL])
     var informasjonselementer: MutableSet<KommuneInformasjon> = mutableSetOf()
 
     @OneToMany(mappedBy = "kommuneFk")
@@ -57,8 +57,8 @@ class Kommune(
         doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { KommuneInformasjon(this) }
     }
 
-    override fun oppdaterFlate() {
-        flate = SosiGeometryFunctions.beregnFlate(getGrenser())
+    override fun oppdaterOmraade() {
+        omraade = SosiGeometryFunctions.beregnFlate(getGrenser())
     }
 
     fun getGrenser(): Set<GrenseKobling> {

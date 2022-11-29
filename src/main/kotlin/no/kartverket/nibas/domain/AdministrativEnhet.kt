@@ -13,8 +13,6 @@ import java.util.*
 import javax.persistence.Column
 import javax.persistence.Embedded
 import javax.persistence.Id
-import javax.persistence.JoinColumn
-import javax.persistence.ManyToOne
 import javax.persistence.MappedSuperclass
 import javax.persistence.Version
 
@@ -46,27 +44,17 @@ abstract class AdministrativEnhet(
     @Column(name = "opphav")
     override var opphav: String? = null
 
-    @Embedded
-    override var registreringsversjon: Registreringsversjon? = Registreringsversjon()
-
-    @Embedded
-    override var kopidata: Kopidata? = Kopidata()
-
     @Column(name = "datafangstdato")
     override var datafangstdato: LocalDate? = null
-
-    @ManyToOne
-    @JoinColumn(name = "spraak")
-    var spraak: Spraakkode? = null
-
-    @Column(name = "rekkefoelge")
-    var rekkefoelge: Int? = null
 
     @Column(name = "posisjon")
     var posisjon: Point? = null
 
-    @Column(name = "flate")
-    override var flate: MultiPolygon? = null
+    @Column(name = "omraade")
+    override var omraade: MultiPolygon? = null
+
+    @Column(name = "foerstedigitaliseringsdato")
+    override var foerstedigitaliseringsdato: LocalDate = LocalDate.now()
 
     @javax.persistence.Transient
     var administrativenhetnavn: MutableSet<Administrativenhetnavn> = mutableSetOf()

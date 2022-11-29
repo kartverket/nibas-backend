@@ -15,6 +15,7 @@ import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.domain.ContainsSosiIdentifikasjon
+import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.kodelister.KodelisteService
@@ -122,7 +123,7 @@ class GrunnkretsService(private val grunnkretsRepository: GrunnkretsRepository) 
                             // Setter gyldigTil lik gyldigFra for neste rad
                             setGyldigTil(grunnkretsHelper.getNesteGyldigFraDato(relevantGrunnkrets))
                         }
-                        this.typeEndring = grunnkretsRequestWrapper.endringstype
+                        this.auditInfo.typeEndring = grunnkretsRequestWrapper.endringstype
                         this.version = grunnkretsHelper.getNextVersion()
                     }
             }
@@ -214,12 +215,7 @@ private fun Grunnkrets.applyCascadingOperationsBasedOnExistingGrunnkrets(relevan
 private fun Grunnkrets.applyMappingFromExistingGrunnkrets(relevantGrunnkrets: Grunnkrets): Grunnkrets {
     return this.apply {
         datafangstdato = relevantGrunnkrets.datafangstdato
-        endringsflagg = relevantGrunnkrets.endringsflagg
-        informasjon = relevantGrunnkrets.informasjon
-        kopidata = relevantGrunnkrets.kopidata
         opphav = relevantGrunnkrets.opphav
-        registreringsversjon = relevantGrunnkrets.registreringsversjon
-        sluttdato = relevantGrunnkrets.sluttdato
         posisjon = relevantGrunnkrets.posisjon
     }
 }
@@ -251,8 +247,8 @@ fun Grunnkrets.toGrunnkretsResponse(kodelisteService: KodelisteService): Grunnkr
         navn = this.grunnkretsnavn!!,
         grunnkretsnummer = this.grunnkretsnummer!!,
         gyldighet = this.gyldighet.toGyldighetResponse(),
-        oppdateringsdato = this.auditInfo.oppdateringsdato,
-        endringstype = this.typeEndring,
+        oppdateringsdato = this.auditInfo.endretdato,
+        endringstype = this.auditInfo.typeEndring.value,
         features = FeatureCollection(features = listOf(
             posisjonToFeature(this.posisjon, this.version),
             flateToFeature(this, kodelisteService, this.version))),
@@ -273,7 +269,6 @@ fun Grunnkrets.toKretsResponse(kodelisteService: KodelisteService): KretsRespons
 data class GrunnkretsRequestWrapper(
     val grunnkretsRequest: GrunnkretsRequest,
     val gyldigFra: LocalDate,
-    // TODO: Bør være en enumerert type når vi får oppdatert sosimodell inn i vår domenemodell
-    val endringstype: String,
+    val endringstype: Endringstype,
     val resolved: Boolean = false
 )

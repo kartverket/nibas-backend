@@ -3,21 +3,16 @@ package no.kartverket.nibas.repository
 import no.kartverket.nibas.domain.Administrativenhetnavn
 import no.kartverket.nibas.domain.Dokumentasjonsreferanse
 import no.kartverket.nibas.domain.DokumentasjonsreferanseDokumentlink
-import no.kartverket.nibas.domain.Fastsettingstype
 import no.kartverket.nibas.domain.Fylke
 import no.kartverket.nibas.domain.FylkeInformasjon
 import no.kartverket.nibas.domain.Grense
-import no.kartverket.nibas.domain.Grensestatus
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.KommuneInformasjon
 import no.kartverket.nibas.domain.Landkode
 import no.kartverket.nibas.domain.Nasjon
-import no.kartverket.nibas.domain.NasjonInformasjon
-import no.kartverket.nibas.domain.Noeyaktighetsklassekode
 import no.kartverket.nibas.domain.Spraakkode
 import no.kartverket.nibas.domain.Stemmekrets
-import no.kartverket.nibas.domain.Terrengdetaljkode
 import no.kartverket.nibas.domain.Typeendring
 import no.kartverket.nibas.domain.utkast.Utkast
 import no.kartverket.nibas.domain.utkast.UtkastStatus
@@ -32,16 +27,11 @@ interface CrudRepositoryWithLokalIdFinder<T, ID> : CrudRepository<T, ID> {
 }
 
 interface LandKodeRepository : CrudRepository<Landkode, String>
-interface GrensestatusRepository : CrudRepository<Grensestatus, String>
-interface FastsettingstypeRepository : CrudRepository<Fastsettingstype, String>
-interface TerrengdetaljkodeRepository : CrudRepository<Terrengdetaljkode, String>
-interface NoeyaktighetsklassekodeRepository : CrudRepository<Noeyaktighetsklassekode, String>
 interface TypeendringRepository : CrudRepository<Typeendring, String>
 interface DokumentasjonsreferanseRepository : CrudRepository<Dokumentasjonsreferanse, String>
 interface DokumentasjonsreferanseDokumentlinkRepository : CrudRepository<DokumentasjonsreferanseDokumentlink, String>
 interface SpraakkodeRepository : CrudRepository<Spraakkode, String>
 interface AdministrativenhetnavnRepository : CrudRepository<Administrativenhetnavn, String>
-interface NasjonInformasjonRepository : CrudRepository<NasjonInformasjon, String>
 interface NasjonRepository : CrudRepositoryWithLokalIdFinder<Nasjon, String>
 interface FylkeInformasjonRepository : CrudRepository<FylkeInformasjon, String>
 interface FylkeRepository : CrudRepositoryWithLokalIdFinder<Fylke, String> {

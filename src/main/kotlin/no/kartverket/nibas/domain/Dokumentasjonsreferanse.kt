@@ -2,12 +2,15 @@ package no.kartverket.nibas.domain
 
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Dokref
 import no.kartverket.nibas.api.v1.common.geojson.metadata.TekstHolder
+import no.kartverket.nibas.sporing.AuditInfo
+import no.kartverket.nibas.sporing.Gyldighet
 import no.kartverket.nibas.sporing.Laasbar
 import org.hibernate.envers.Audited
 import java.time.LocalDate
 import java.util.*
 import javax.persistence.CascadeType
 import javax.persistence.Column
+import javax.persistence.Embedded
 import javax.persistence.Entity
 import javax.persistence.FetchType
 import javax.persistence.Id
@@ -24,6 +27,18 @@ class Dokumentasjonsreferanse : Laasbar {
     @Id
     @Column(name = "objid", nullable = false, updatable = false)
     override val id: String = UUID.randomUUID().toString()
+
+    @Column(name = "lokalid", nullable = false, updatable = false)
+    val lokalid: String = UUID.randomUUID().toString()
+
+    @Column(name = "foerstedigitaliseringsdato", nullable = false, updatable = false)
+    var foerstedigitaliseringsdato: LocalDate = LocalDate.now()
+
+    @Embedded
+    var auditInfo: AuditInfo = AuditInfo()
+
+    @Embedded
+    var gyldighet: Gyldighet = Gyldighet()
 
     @Column(name = "objtype")
     var objtype: String? = null
@@ -45,54 +60,6 @@ class Dokumentasjonsreferanse : Laasbar {
 
     @Column(name = "fastsettingsdato", nullable = false)
     var fastsettingsdato: LocalDate? = null
-
-    @ManyToOne
-    @JoinColumn(name = "grense_fk")
-    var grenseFk: Grense? = null
-
-    @ManyToOne
-    @JoinColumn(name = "lovvirkeomraade_fk")
-    var lovvirkeomraadeFk: Lovvirkeomraade? = null
-
-    @ManyToOne
-    @JoinColumn(name = "detsaerskilteomraadet_fk")
-    var detsaerskilteomraadetFk: Detsaerskilteomraadet? = null
-
-    @ManyToOne
-    @JoinColumn(name = "fiskerisone_fk")
-    var fiskerisoneFk: Fiskerisone? = null
-
-    @ManyToOne
-    @JoinColumn(name = "fiskevernsone_fk")
-    var fiskevernsoneFk: Fiskevernsone? = null
-
-    @ManyToOne
-    @JoinColumn(name = "graasonen_fk")
-    var graasonenFk: Graasonen? = null
-
-    @ManyToOne
-    @JoinColumn(name = "indrefarvann_fk")
-    var indrefarvannFk: Indrefarvann? = null
-
-    @ManyToOne
-    @JoinColumn(name = "kontinentalsokkel_fk")
-    var kontinentalsokkelFk: Kontinentalsokkel? = null
-
-    @ManyToOne
-    @JoinColumn(name = "norgesoekonomiskesone_fk")
-    var norgesoekonomiskesoneFk: Norgesoekonomiskesone? = null
-
-    @ManyToOne
-    @JoinColumn(name = "sjoeterritorium_fk")
-    var sjoeterritoriumFk: Sjoeterritorium? = null
-
-    @ManyToOne
-    @JoinColumn(name = "territorialfarvann_fk")
-    var territorialfarvannFk: Territorialfarvann? = null
-
-    @ManyToOne
-    @JoinColumn(name = "tilstoetendesone_fk")
-    var tilstoetendesoneFk: Tilstoetendesone? = null
 
     @OneToMany(mappedBy = "dokumentasjonsreferanseFk", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     var dokumentlenker: MutableSet<DokumentasjonsreferanseDokumentlink> = mutableSetOf()

@@ -14,12 +14,8 @@ import no.kartverket.nibas.kodelister.DefaultKodelisteService
 import no.kartverket.nibas.kodelister.KodelisteFetcher
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.kodelister.MissingKodelisteItemException
-import no.kartverket.nibas.repository.FastsettingstypeRepository
-import no.kartverket.nibas.repository.GrensestatusRepository
 import no.kartverket.nibas.repository.LandKodeRepository
-import no.kartverket.nibas.repository.NoeyaktighetsklassekodeRepository
 import no.kartverket.nibas.repository.OptimistiskLaasException
-import no.kartverket.nibas.repository.TerrengdetaljkodeRepository
 import no.kartverket.nibas.sosi.sosiimport.GeometriFailedToBeCreatedException
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import no.kartverket.nibas.sosi.sosiimport.UgyldigGeometriException
@@ -42,18 +38,10 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 class WebConfig @Autowired constructor(val configProps: NibasBackendConfigProps) : WebMvcConfigurer {
 
     @Bean
-    fun kodelisteService(landKodeRepository: LandKodeRepository,
-                         terrengdetaljkodeRepository: TerrengdetaljkodeRepository,
-                         noeyaktighetsklassekodeRepository: NoeyaktighetsklassekodeRepository,
-                         fastsettingstypeRepository: FastsettingstypeRepository,
-                         grensestatusRepository: GrensestatusRepository): KodelisteService {
+    fun kodelisteService(landKodeRepository: LandKodeRepository): KodelisteService {
         return DefaultKodelisteService(
             KodelisteFetcher(geoNorgeWebClient()),
-            landKodeRepository,
-            terrengdetaljkodeRepository,
-            noeyaktighetsklassekodeRepository,
-            fastsettingstypeRepository,
-            grensestatusRepository)
+            landKodeRepository)
     }
 
     /**

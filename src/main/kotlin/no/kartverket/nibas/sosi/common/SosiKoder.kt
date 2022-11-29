@@ -17,7 +17,6 @@ object SosiKoder {
     const val RETTSKILDEID = "RETTSKILDEID"
     const val GYLDIGFRA = "GYLDIGFRA"
     const val GYLDIGTIL = "GYLDIGTIL"
-    const val SLUTTDATO = "SLUTTDATO"
     const val SAMISKFORVALTNINGSOMRADE = "SAMISKFORVALTNINGSOMRÅDE"
     const val SPRAK = "SPRÅK"
     const val NAVN = "NAVN"
@@ -33,7 +32,6 @@ object SosiKoder {
     const val FLATE = "FLATE"
     const val OBJTYPE = "OBJTYPE" //For Sosiversjon >= 4.0
     const val DATAFANGSTDATO = "DATAFANGSTDATO"
-    const val DATAUTTAKSDATO = "DATAUTTAKSDATO"
     const val OPPDATERINGSDATO = "OPPDATERINGSDATO"
     const val INFORMASJON = "INFORMASJON"
     const val KVALITET = "KVALITET"

@@ -17,7 +17,7 @@ class KommuneBuilder(
     private var navn: String = "Vestland",
     private var spraak: String = "NOR",
     private var samiskforvaltningsomraade: Boolean = false,
-    private var oppdateringsdato: LocalDate = LocalDate.now(),
+    private var endretdato: LocalDate = LocalDate.now(),
     private var grunnkretser: MutableList<Grunnkrets> = mutableListOf(),
     private var stemmekretser: MutableList<Stemmekrets> = mutableListOf(),
     private var gyldigFra: LocalDate = LocalDate.now(),
@@ -50,9 +50,9 @@ class KommuneBuilder(
 
         kommune.kommunenummer = kommunenummer
         kommune.samiskforvaltningsomraade = samiskforvaltningsomraade
-        kommune.auditInfo.oppdateringsdato = oppdateringsdato
+        kommune.auditInfo.endretdato = endretdato
         kommune.posisjon = GeometryFactory().createPoint(Coordinate(1.0, 1.0))
-        kommune.flate = GeometryFactory().createMultiPolygon(arrayOf(GeometryFactory().createPolygon()))
+        kommune.omraade = GeometryFactory().createMultiPolygon(arrayOf(GeometryFactory().createPolygon()))
 
         grunnkretser.forEach { kommune.addGrunnkrets(it) }
         stemmekretser.forEach { kommune.addStemmekrets(it) }

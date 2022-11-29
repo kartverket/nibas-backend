@@ -25,16 +25,12 @@ import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.GrenseMedAttributter
 import no.kartverket.nibas.domain.GrenseMedRetningOgKontekst
 import no.kartverket.nibas.kodelister.KodelisteService
-import no.kartverket.nibas.repository.FastsettingstypeRepository
 import no.kartverket.nibas.repository.GrenseRepository
-import no.kartverket.nibas.repository.GrensestatusRepository
 import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.KonfliktVersjon
 import no.kartverket.nibas.repository.LandKodeRepository
-import no.kartverket.nibas.repository.NoeyaktighetsklassekodeRepository
 import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.repository.StemmekretsRepository
-import no.kartverket.nibas.repository.TerrengdetaljkodeRepository
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import no.kartverket.nibas.unwrap
@@ -63,7 +59,6 @@ class GrenseController(
 
     override fun hentGrenseRevisjoner(id: String): List<RevisjonRef> =
         historikkService.hentRevisjoner(id, Grense::class.java).map { toRevisjonRef(it) }
-
 }
 
 @Service
@@ -72,10 +67,6 @@ class GrenseService(
     private val landKodeRepository: LandKodeRepository,
     private val grunnkretsRepository: GrunnkretsRepository,
     private val stemmekretsRepository: StemmekretsRepository,
-    private val fastsettingstypeRepository: FastsettingstypeRepository,
-    private val terrengdetaljkodeRepository: TerrengdetaljkodeRepository,
-    private val noeyaktighetsklassekodeRepository: NoeyaktighetsklassekodeRepository,
-    private val grensestatusRepository: GrensestatusRepository
 ) {
     private val logger: Logger = Logger.getLogger(this::class.java.name)
 
@@ -169,12 +160,7 @@ class GrenseService(
     ): Grense {
         val featureMetadata = feature.properties.metadata
         if (featureMetadata != null) {
-            val metadataUpdater = MetadataUpdater(landKodeRepository,
-                fastsettingstypeRepository,
-                terrengdetaljkodeRepository,
-                noeyaktighetsklassekodeRepository,
-                grensestatusRepository
-            )
+            val metadataUpdater = MetadataUpdater()
             when (grense.grensetype) {
                 Grensetype.Kommunegrense -> metadataUpdater.updateAdministrativGrense(grense, (featureMetadata as AdministrativGrenseMetadata))
                 Grensetype.Fylkesgrense -> metadataUpdater.updateAdministrativGrense(grense, (featureMetadata as AdministrativGrenseMetadata))
@@ -252,7 +238,7 @@ fun posisjonToFeature(posisjon: Point?, version: Int): Feature =
 fun flateToFeature(flate: Flate, kodelisteService: KodelisteService, version: Int): Feature {
     var featureProperties = FeatureProperties(
         type = flate.type.name,
-        srid = flate.flate?.srid ?: SosiGeometryFunctions.defaultSrid,
+        srid = flate.omraade?.srid ?: SosiGeometryFunctions.defaultSrid,
         version = version
     )
     val metadataMapper = MetadataMapper(kodelisteService)

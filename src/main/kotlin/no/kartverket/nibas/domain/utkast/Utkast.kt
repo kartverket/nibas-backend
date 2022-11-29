@@ -7,6 +7,7 @@ import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
 import no.kartverket.nibas.api.v1.request.KommuneRequest
 import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.common.inThePast
+import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.sporing.AuditInfo
 import no.kartverket.nibas.sporing.Laasbar
 import no.kartverket.nibas.sporing.Sporbar
@@ -38,9 +39,6 @@ class Utkast(
 
     @Column(name = "navn")
     var navn: String,
-
-    // Blir mappet av Converter
-    var endringstype: UtkastEndringstype,
 
     @Type(type = "jsonb")
     @Column(columnDefinition = "jsonb", name = "utkast")
@@ -74,7 +72,7 @@ class Utkast(
     }
 }
 
-class UtkastBuilder private constructor(val navn: String, private val endringstype: UtkastEndringstype = UtkastEndringstype.KVALITETSHEVING) {
+class UtkastBuilder private constructor(val navn: String, private val endringstype: Endringstype = Endringstype.KVALITETSHEVING) {
 
     private var status: UtkastStatus = UtkastStatus.OPPRETTET
     private var operasjoner: Operasjoner = Operasjoner()
@@ -82,7 +80,7 @@ class UtkastBuilder private constructor(val navn: String, private val endringsty
     private var auditInfo: AuditInfo? = null
 
     companion object {
-        fun builder(navn: String, endringstype: UtkastEndringstype = UtkastEndringstype.KVALITETSHEVING): UtkastBuilder {
+        fun builder(navn: String, endringstype: Endringstype = Endringstype.KVALITETSHEVING): UtkastBuilder {
             return UtkastBuilder(navn, endringstype)
         }
     }
@@ -90,9 +88,9 @@ class UtkastBuilder private constructor(val navn: String, private val endringsty
     fun build(): Utkast {
         val utkast = Utkast(
             navn = navn,
-            endringstype = this.endringstype,
             operasjoner = this.operasjoner
         )
+        utkast.auditInfo.typeEndring = this.endringstype
         utkast.gyldigFra = this.gyldigFra
         auditInfo?.let { utkast.auditInfo = it }
         utkast.status = status

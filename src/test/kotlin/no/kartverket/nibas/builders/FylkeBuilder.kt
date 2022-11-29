@@ -15,7 +15,7 @@ class FylkeBuilder(private val id: String = "1") {
     private var navn = "Vestland"
     private var spraak = "NOR"
     private var samiskforvaltningsomraade = false
-    private var oppdateringsdato: LocalDate = LocalDate.now()
+    private var endretdato: LocalDate = LocalDate.now()
     private var kommune: Kommune = Kommune()
     private var version: Int = 1
 
@@ -45,9 +45,9 @@ class FylkeBuilder(private val id: String = "1") {
         fylke.objtype = objtype
         fylke.fylkesnummer = fylkesnummer
         fylke.samiskforvaltningsomraade = samiskforvaltningsomraade
-        fylke.auditInfo.oppdateringsdato = oppdateringsdato
+        fylke.auditInfo.endretdato = endretdato
         fylke.posisjon = GeometryFactory().createPoint(Coordinate(1.0, 1.0))
-        fylke.flate = GeometryFactory().createMultiPolygon(arrayOf(GeometryFactory().createPolygon()))
+        fylke.omraade = GeometryFactory().createMultiPolygon(arrayOf(GeometryFactory().createPolygon()))
         fylke.version = version
 
         fylke.addKommune(kommune)

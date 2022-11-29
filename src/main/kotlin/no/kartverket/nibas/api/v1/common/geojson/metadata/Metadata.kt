@@ -91,12 +91,6 @@ data class AdministrativGrenseMetadata(
     val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
     @Schema(description = "Henviser til fastsettings- eller lovinformasjon.")
     var dokumentasjonsreferanser: List<Dokref> = emptyList(),
-    @Schema(description = "Opplysning om at grense følger naturlige skillelinjer i terrenget.")
-    var foelgerTerrengdetalj: KodelisteEntry = KodelisteEntry(),
-    @Schema(description = "Klassifikasjon av stedfestingsnøyaktighet på grenser, og er basert på dårligste nøyaktighet til grensepunktene til grensen.")
-    var noeyaktighetsklasse: KodelisteEntry = KodelisteEntry(),
-    @Schema(description = "Angir om grensen er omtvistet, eller det er tvil om forløpet.")
-    var omtvistet: Boolean? = null,
 ) : Metadata
 
 @Schema(
@@ -110,14 +104,6 @@ data class RiksgrenseMetadata(
     val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
     @Schema(description = "Henviser til fastsettings- eller lovinformasjon.")
     var dokumentasjonsreferanser: List<Dokref> = emptyList(),
-    @Schema(description = "Opplysning om at grense følger naturlige skillelinjer i terrenget.")
-    var foelgerTerrengdetalj: KodelisteEntry = KodelisteEntry(),
-    @Schema(description = "Angivelse om stedfestingen (koordinatene) er kontrollert og funnet i orden (verifisert).")
-    var stedfestingVerifisert: Boolean? = null,
-    @Schema(description = "Organisasjon(er) som er ansvarlig for opprettholdelse av grensa.")
-    var ansvarligeMyndigheter: List<TekstHolder> = emptyList(),
-    @Schema(description = "Bredde av området på begge sider av riksgrensen som er ryddet for vegetasjon høyere enn 0,5 m.")
-    var grensegateBredde: Double? = null,
 ) : Metadata
 
 @Schema(
@@ -131,10 +117,6 @@ data class TerritorialgrenseMetadata(
     val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
     @Schema(description = "Henviser til fastsettings- eller lovinformasjon.")
     var dokumentasjonsreferanser: List<Dokref> = emptyList(),
-    @Schema(description = "Metadata-egenskaper for maritim grense.")
-    var maritimeGrenser: MaritimeGrenserMetadata = MaritimeGrenserMetadata(),
-    @Schema(description = "Tidspunktet for når koordinatene er utregnet.")
-    var beregningsdato: LocalDate? = null
 ) : Metadata
 
 @Schema(
@@ -148,8 +130,6 @@ data class AvtaltAvgrensningslinjeMetadata(
     val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
     @Schema(description = "Henviser til fastsettings- eller lovinformasjon.")
     var dokumentasjonsreferanser: List<Dokref> = emptyList(),
-    @Schema(description = "Metadata-egenskaper for maritim grense.")
-    var maritimeGrenser: MaritimeGrenserMetadata = MaritimeGrenserMetadata(),
 ) : Metadata
 
 @Schema(
@@ -163,10 +143,6 @@ data class GrunnlinjeMetadata(
     val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
     @Schema(description = "Henviser til fastsettings- eller lovinformasjon.")
     var dokumentasjonsreferanser: List<Dokref> = emptyList(),
-    @Schema(description = "Metadata-egenskaper for maritim grense.")
-    var maritimeGrenser: MaritimeGrenserMetadata = MaritimeGrenserMetadata(),
-    @Schema(description = "Nummerering av kommunen i henhold til Statistisk sentralbyrå sin offisielle liste.")
-    var kommunenummer: Kommunenummer? = null
 ) : Metadata
 
 @Schema(
@@ -178,10 +154,6 @@ data class StatistiskgrenseMetadata(
     val common: CommonMetadata,
     @Schema(description = "Felles metadata-egenskaper for grenser.")
     val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
-    @Schema(description = "Opplysning om at grense følger naturlige skillelinjer i terrenget.")
-    var foelgerTerrengdetalj: KodelisteEntry = KodelisteEntry(),
-    @Schema(description = "Klassifikasjon av stedfestingsnøyaktighet på grenser, og er basert på dårligste nøyaktighet til grensepunktene til grensen.")
-    var noeyaktighetsklasse: KodelisteEntry = KodelisteEntry(),
 ) : Metadata
 
 @Schema(
@@ -193,12 +165,6 @@ data class KommunalKretsgrenseMetadata(
     val common: CommonMetadata,
     @Schema(description = "Felles metadata-egenskaper for grenser.")
     val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
-    @Schema(description = "Opplysning om at grense følger naturlige skillelinjer i terrenget.")
-    var foelgerTerrengdetalj: KodelisteEntry = KodelisteEntry(),
-    @Schema(description = "Klassifikasjon av stedfestingsnøyaktighet på grenser, og er basert på dårligste nøyaktighet til grensepunktene til grensen.")
-    var noeyaktighetsklasse: KodelisteEntry = KodelisteEntry(),
-    @Schema(description = "Angir om grensen følger grunnkretsgrense og i så fall hvilken grunnkretsgrense")
-    var foelgerGrunnkretsgrense: Identifikasjon?
 ) : Metadata
 
 data class CommonMetadata(
@@ -221,10 +187,6 @@ data class CommonMetadata(
 data class CommonGrenseMetadata(
     @Schema(description = "Beskrivelse av kvaliteten på stedfestingen")
     var posisjonskvalitet: Posisjonskvalitet? = null,
-    @Schema(description = "Juridisk status på grensa.")
-    var grensestatus: KodelisteEntry = KodelisteEntry(),
-    @Schema(description = "Måte en grense er fastsatt på.")
-    var fastsettingstype: KodelisteEntry = KodelisteEntry()
 )
 
 data class KodelisteEntry(
@@ -238,19 +200,6 @@ data class TekstHolder(
     val id: String? = null,
     @Schema(description = "Tekstfelt.")
     val beskrivelse: String
-)
-
-data class MaritimeGrenserMetadata(
-    @Schema(description = "Organisasjon som er ansvarlig for opprettholdelse av grensa.")
-    var ansvarligeMyndigheter: List<TekstHolder> = emptyList(),
-    @Schema(description = "Navn på område som loven gjelder for, eller område som grensa er beregnet fra.")
-    var gjelderOmraade: String? = null,
-    @Schema(description = "Tidspunktet for når koordinatene er transformert fra originalt koordinatsystem.")
-    var transformasjonsdato: LocalDate? = null,
-    @Schema(description = "Begrep knyttet til yttergrensa for virkeområdet, som oftest angitt i lov eller forskrift.")
-    var virkeomraadenavn: String? = null,
-    @Schema(description = "Angivelse av hvilke land grensa er knyttet til Merknad: Alfanumerisk kode (ISO 3166-1 alpha-2) for land som definert i ISO 3166.")
-    var land: Landkoder = Landkoder(),
 )
 
 data class Landkoder(
@@ -298,5 +247,5 @@ data class Sporingsinformasjon(
     @Schema(description = "Dato for siste endring på objektdataene")
     var oppdateringsdato: LocalDate = LocalDate.now(),
     @Schema(description = "Angir hvem som endret data på objektet sist.")
-    var endretAv: String? = null
+    var endretAv: String = "import"
 )

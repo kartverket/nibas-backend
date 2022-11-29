@@ -4,14 +4,12 @@ import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.KommuneRepository
-import no.kartverket.nibas.repository.TypeendringRepository
 import no.kartverket.nibas.sosi.common.SosiKoder
 import no.kartverket.nibas.sosi.model.SosiFlate
 import no.kartverket.nibas.sosi.model.SosiKurve
 import no.kartverket.nibas.sosi.model.SosiObjekt
 import no.kartverket.nibas.sporing.Gyldighet
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import java.util.logging.Logger
@@ -20,7 +18,6 @@ import java.util.logging.Logger
 class GrunnkretsImporter @Autowired constructor(
     private val grenseImporter: GrenseImporter,
     private val grunnkretsRepository: GrunnkretsRepository,
-    private val typeendringRepository: TypeendringRepository,
     private val kodelisteService: KodelisteService,
     private val kommuneRepository: KommuneRepository
 ) {
@@ -46,29 +43,16 @@ class GrunnkretsImporter @Autowired constructor(
             kommuneFlater.forEach { it.lastReferanser(admenhetRoot) }
 
             grunnkrets.datafangstdato = flate.getDatafangstDato()
-            grunnkrets.endringsflagg?.tidspunktendring = flate.getEndringsflagg()?.getTidspunktEndring()
-            grunnkrets.endringsflagg?.typeendring = when (val typeendring = flate.getEndringsflagg()?.getTypeEndring()) {
-                null -> null
-                else -> typeendringRepository.findByIdOrNull(typeendring)
-            }
             grunnkrets.gyldighet = Gyldighet(flate.getGyldigFra(), flate.getGyldigTil())
-            grunnkrets.informasjon = flate.getInformasjon()
-            grunnkrets.kopidata?.kopidato = flate.getKopidata()?.getKopidato()
-            grunnkrets.kopidata?.omraadeid = flate.getKopidata()?.getOmraadeId()
-            grunnkrets.kopidata?.originaldatavert = flate.getKopidata()?.getOriginalDatavert()
+            grunnkrets.setInfo(flate.getInformasjon())
             grunnkrets.opphav = flate.getOpphav()
-
-            grunnkrets.registreringsversjon?.produkt = flate.getRegistreringsversjon()?.getProdukt()
-            grunnkrets.registreringsversjon?.versjon = flate.getRegistreringsversjon()?.getVersjon()
-
-            grunnkrets.sluttdato = flate.getSluttdato()
 
             grunnkrets.grunnkretsnummer = flate.getGrunnkretsId()?.getGrunnkretsnummer()
             grunnkrets.grunnkretsnavn = flate.getGrunnkretsId()?.getGrunnkretsnavn()
 
             grunnkrets.posisjon = SosiGeometryFunctions.sosiKoordinatToPoint(flate.getAlleSosiNordOest(), flate.koordsys)
 
-            grunnkrets.informasjon = flate.getInformasjon()
+            grunnkrets.setInfo(flate.getInformasjon())
 
             flater.forEachIndexed { skall_index, gkFlate ->
                 gkFlate.getSkallReferanser().forEachIndexed { _, ref ->
@@ -83,7 +67,7 @@ class GrunnkretsImporter @Autowired constructor(
                 }
             }
 
-            grunnkrets.oppdaterFlate()
+            grunnkrets.oppdaterOmraade()
             grunnkretsRepository.save(grunnkrets)
         }
     }

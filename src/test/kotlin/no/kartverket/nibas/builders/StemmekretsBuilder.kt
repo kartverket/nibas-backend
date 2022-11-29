@@ -19,7 +19,7 @@ class StemmekretsBuilder(private val id: String = "1") {
     private var tellekretsnavn = "Nordre Follo Tellekrets"
     private var tellekretsnummer = "98"
 
-    private var oppdateringsdato: LocalDate = LocalDate.now()
+    private var endretdato: LocalDate = LocalDate.now()
     private var datafangstdato: LocalDate = LocalDate.now()
     private var gyldigFra: LocalDate = LocalDate.now()
     private var gyldigTil: LocalDate? = null
@@ -40,17 +40,17 @@ class StemmekretsBuilder(private val id: String = "1") {
         stemmekrets.tellekretsnavn = tellekretsnavn
         stemmekrets.tellekretsnummer = tellekretsnummer
 
-        stemmekrets.auditInfo.oppdateringsdato = oppdateringsdato
+        stemmekrets.auditInfo.endretdato = endretdato
 
         stemmekrets.kommune = kommune
 
-        stemmekrets.auditInfo.oppdateringsdato = oppdateringsdato
+        stemmekrets.auditInfo.endretdato = endretdato
         stemmekrets.gyldighet = Gyldighet(gyldigFra, gyldigTil)
         stemmekrets.setInfo(informasjonstekst)
         stemmekrets.opphav = opphav
 
         stemmekrets.posisjon = GeometryFactory().createPoint(Coordinate(1.0, 1.0))
-        stemmekrets.flate = GeometryFactory().createMultiPolygon(arrayOf(GeometryFactory().createPolygon()))
+        stemmekrets.omraade = GeometryFactory().createMultiPolygon(arrayOf(GeometryFactory().createPolygon()))
         grenser.forEach {
             stemmekrets.addGrensekobling(it, GrenseKoblingAttributter())
         }

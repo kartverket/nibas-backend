@@ -45,32 +45,8 @@ interface KodelisteApi {
     fun fetchLandkoder(): KodelisteRespons
 
     /**
-     * Slår opp internt forvaltet terrengdetaljkoder.
-     */
-    @GetMapping(TERRENGDETALJKODE_PATH, produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun fetchTerrengdetaljkoder(): KodelisteRespons
-
-    /**
-     * Slår opp internt forvaltet nøyaktighetsklasser.
-     */
-    @GetMapping(NOEYAKTIGHETSKLASSEKODE_PATH, produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun fetchNoeyaktighetsklasser(): KodelisteRespons
-
-    /**
      * Slår opp internt forvaltet grensetyper.
      */
     @GetMapping(GRENSETYPE_PATH, produces = [MediaType.APPLICATION_JSON_VALUE])
     fun fetchGrensetyper(): KodelisteRespons
-
-    /**
-     * Slår opp internt forvaltet fastsettingstyper.
-     */
-    @GetMapping(FASTSETTINGSTYPE_PATH, produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun fetchFastsettingstyper(): KodelisteRespons
-
-    /**
-     * Slår opp internt forvaltet grensestatuskoder.
-     */
-    @GetMapping(GRENSESTATUSKODE_PATH, produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun fetchGrensestatuskoder(): KodelisteRespons
 }

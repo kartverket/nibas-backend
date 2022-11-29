@@ -141,7 +141,7 @@ fun Kommune.toKommuneResponse(kodelisteService: KodelisteService): KommuneRespon
     lokalid = this.lokalid,
     kommunenummer = kodelisteService.createKommunenummerFromUUID(this.kommunenummer),
     samiskforvaltningsomraade = this.samiskforvaltningsomraade!!,
-    oppdateringsdato = this.auditInfo.oppdateringsdato,
+    oppdateringsdato = this.auditInfo.endretdato,
     features = FeatureCollection(features = listOf(posisjonToFeature(this.posisjon, this.version), flateToFeature(this, kodelisteService, this.version))),
     version = this.version
 )

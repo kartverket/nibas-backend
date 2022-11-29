@@ -23,24 +23,8 @@ class KodelisteController @Autowired constructor(private val kodelisteService: K
         return kodelisteService.getLandkoder()
     }
 
-    override fun fetchTerrengdetaljkoder(): KodelisteRespons {
-        return kodelisteService.getTerrengdetaljkoder()
-    }
-
-    override fun fetchNoeyaktighetsklasser(): KodelisteRespons {
-        return kodelisteService.getNoeyaktighetsklasser()
-    }
-
     override fun fetchGrensetyper(): KodelisteRespons {
         return kodelisteService.getGrensetyper()
-    }
-
-    override fun fetchFastsettingstyper(): KodelisteRespons {
-        return kodelisteService.getFastsettingstyper()
-    }
-
-    override fun fetchGrensestatuskoder(): KodelisteRespons {
-        return kodelisteService.getGrensestatuskoder()
     }
 }
 

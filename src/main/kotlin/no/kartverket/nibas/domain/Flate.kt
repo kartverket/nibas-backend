@@ -5,13 +5,10 @@ import org.locationtech.jts.geom.MultiPolygon
 
 interface Flate : CommonMetadataProperties {
     val id: String
-    var flate: MultiPolygon?
+    var omraade: MultiPolygon?
     val type: Flatetype
 
-    var registreringsversjon: Registreringsversjon?
-    var kopidata: Kopidata?
-
-    fun oppdaterFlate()
+    fun oppdaterOmraade()
 }
 
 interface KobletTilGrense {

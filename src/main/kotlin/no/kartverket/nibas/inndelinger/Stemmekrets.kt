@@ -54,7 +54,6 @@ class StemmekretsController(
 
     override fun hentStemmekretsRevisjon(id: String, revisjon: Int): StemmekretsResponse =
         historikkService.hentRevisjon(id, revisjon, Stemmekrets::class.java).toStemmekretsResponse(kodelisteService)
-
 }
 
 @Transactional(readOnly = true)

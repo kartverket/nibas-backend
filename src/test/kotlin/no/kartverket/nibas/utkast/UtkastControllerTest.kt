@@ -26,8 +26,8 @@ import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.BadRequestException
 import no.kartverket.nibas.common.ResponseException.NotFoundException
+import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
-import no.kartverket.nibas.domain.utkast.UtkastEndringstype
 import no.kartverket.nibas.domain.utkast.UtkastStatus
 import no.kartverket.nibas.repository.KonfliktVersjon
 import no.kartverket.nibas.repository.OptimistiskLaasException
@@ -68,7 +68,7 @@ internal class UtkastControllerTest : NibasMvcTest() {
         whenever(utkastServiceMock.opprettUtkast(any(OpprettUtkastRequest::class.java))).thenReturn(id)
         val opprettUtkastRequest = OpprettUtkastRequest(
             navn = "Mitt utkast",
-            endringstype = UtkastEndringstype.KVALITETSHEVING.value
+            endringstype = Endringstype.KVALITETSHEVING.value
         )
         post(
             url = "/v1/utkast",
@@ -89,7 +89,7 @@ internal class UtkastControllerTest : NibasMvcTest() {
         val kommuneRequests = mapOf("UUID-1" to KommuneRequestBuilder.DEFAULT_REQUEST)
         val utkast = UtkastBuilder.builder(navn)
             .withKommuneRequests(kommuneRequests)
-            .withAuditInfo(AuditInfo(syvendeJuli, dummy))
+            .withAuditInfo(AuditInfo(syvendeJuli, dummy, Endringstype.KVALITETSHEVING))
             .withGyldigFra(foersteJanuar)
             .build()
         val operasjoner = utkast.operasjoner
@@ -100,7 +100,7 @@ internal class UtkastControllerTest : NibasMvcTest() {
         val expectedUtkastResponse = UtkastResponse(
             id = utkastId,
             navn = navn,
-            endringstype = UtkastEndringstype.KVALITETSHEVING.value,
+            endringstype = Endringstype.KVALITETSHEVING.value,
             status = UtkastStatus.OPPRETTET.value,
             auditInfoResponse = AuditInfoResponse(
                 oppdateringsdato = syvendeJuli,
@@ -134,7 +134,7 @@ internal class UtkastControllerTest : NibasMvcTest() {
         val oppdateringsdato = LocalDate.of(2022, Month.SEPTEMBER, 26)
         val utkastEtterOppdatering = UtkastBuilder.builder(utkastNavn)
             .withKommuneRequests(mapOf("1234" to KommuneRequestBuilder.DEFAULT_REQUEST))
-            .withAuditInfo(AuditInfo(oppdateringsdato, endretAv))
+            .withAuditInfo(AuditInfo(oppdateringsdato, endretAv, Endringstype.KVALITETSHEVING))
             .withGyldigFra(gyldigFra)
             .build()
         val operasjoner = utkastEtterOppdatering.operasjoner
@@ -144,7 +144,7 @@ internal class UtkastControllerTest : NibasMvcTest() {
 
         val requestBody = UtkastRequestBuilder()
             .withNavn(utkastNavn)
-            .withEndringstype(UtkastEndringstype.KVALITETSHEVING)
+            .withEndringstype(Endringstype.KVALITETSHEVING)
             .withGyldigFra(gyldigFra)
             .withOperasjoner(operasjoner!!)
             .build()
@@ -152,7 +152,7 @@ internal class UtkastControllerTest : NibasMvcTest() {
         val expectedUtkastResponse = UtkastResponse(
             id = utkastId,
             navn = utkastNavn,
-            endringstype = UtkastEndringstype.KVALITETSHEVING.value,
+            endringstype = Endringstype.KVALITETSHEVING.value,
             status = UtkastStatus.OPPRETTET.value,
             auditInfoResponse = AuditInfoResponse(
                 oppdateringsdato = oppdateringsdato,
@@ -423,11 +423,11 @@ internal class UtkastControllerTest : NibasMvcTest() {
                 grunnkretsRequests = listOf(
                     GrunnkretsRequestResolved(
                         gyldigFra = july1In2023,
-                        endringstype = UtkastEndringstype.KVALITETSHEVING.value,
+                        endringstype = Endringstype.KVALITETSHEVING.value,
                         grunnkretsRequest = createGrunnkretsRequest("Moi", 2)),
                     GrunnkretsRequestResolved(
                         gyldigFra = january1In2024,
-                        endringstype = UtkastEndringstype.KVALITETSHEVING.value,
+                        endringstype = Endringstype.KVALITETSHEVING.value,
                         grunnkretsRequest = createGrunnkretsRequest("Voi", 3)
                     )
                 )

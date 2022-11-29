@@ -42,6 +42,9 @@ class Stemmekrets(
     @Column(name = "valgdistriktsnummer")
     var valgdistriktsnummer: String? = null
 
+    @OneToMany(mappedBy = "stemmekretsFk", cascade = [CascadeType.ALL])
+    var informasjonselementer: MutableSet<StemmekretsInformasjon> = mutableSetOf()
+
     @OneToMany(mappedBy = "stemmekrets", cascade = [CascadeType.ALL])
     var grenser: MutableSet<StemmekretsGrenseKobling> = Collections.synchronizedSet(mutableSetOf())
 
@@ -62,8 +65,8 @@ class Stemmekrets(
     fun getGrenserAvType(grensetype: Grensetype): Set<GrenseKobling> = getGrenserAvTyper(setOf(grensetype))
 
 
-    override fun oppdaterFlate() {
-        flate = SosiGeometryFunctions.beregnFlate(alleGrenser())
+    override fun oppdaterOmraade() {
+        omraade = SosiGeometryFunctions.beregnFlate(alleGrenser())
     }
 
     override fun oppdaterEllerLeggTilGrenseKobling(grenseMedAttributter: GrenseMedAttributter) {
@@ -87,9 +90,9 @@ class Stemmekrets(
 
     override fun antallGrenser(): Int = grenser.size
 
-    override fun getInfo(): String? = informasjon
+    override fun getInfo(): String? = doGetInfoFromSingletonCollection(informasjonselementer)
     override fun setInfo(updatedInfo: String?) {
-        informasjon = updatedInfo
+        doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { StemmekretsInformasjon(this) }
     }
 
     fun addGrensekobling(grense: Grense, grenseKoblingAttributter: GrenseKoblingAttributter) {
@@ -148,6 +151,22 @@ class StemmekretsGrenseKobling(
     override fun getEnhetKobletTilGrense(): KobletTilGrense {
         return stemmekrets
     }
+}
+
+@Table(name = "stemmekrets_informasjon")
+@Audited
+@Entity
+class StemmekretsInformasjon(stemmekrets: Stemmekrets) : Info {
+    @Id
+    @Column(name = "objid", nullable = false, updatable = false)
+    override val id: String = UUID.randomUUID().toString()
+
+    @ManyToOne
+    @JoinColumn(name = "stemmekrets_fk")
+    var stemmekretsFk: Stemmekrets? = stemmekrets
+
+    @Column(name = "informasjon")
+    override var informasjon: String? = null
 }
 
 data class StemmekretsGrenseId(val stemmekrets: String = "", val grense: String = "") : Serializable

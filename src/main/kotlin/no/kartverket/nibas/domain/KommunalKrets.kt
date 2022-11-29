@@ -44,29 +44,17 @@ abstract class KommunalKrets(
     @Column(name = "datafangstdato")
     override var datafangstdato: LocalDate? = null
 
-    @Embedded
-    var endringsflagg: Endringsflagg? = Endringsflagg()
-
-    @Column(name = "informasjon")
-    var informasjon: String? = null
-
-    @Embedded
-    override var kopidata: Kopidata? = Kopidata()
-
     @Column(name = "opphav")
     override var opphav: String? = null
-
-    @Embedded
-    override var registreringsversjon: Registreringsversjon? = Registreringsversjon()
-
-    @Column(name = "sluttdato")
-    var sluttdato: LocalDate? = null
 
     @Column(name = "posisjon")
     var posisjon: Point? = null
 
-    @Column(name = "flate")
-    override var flate: MultiPolygon? = null
+    @Column(name = "omraade")
+    override var omraade: MultiPolygon? = null
+
+    @Column(name = "foerstedigitaliseringsdato")
+    override var foerstedigitaliseringsdato: LocalDate = LocalDate.now()
 
     @Suppress("UNCHECKED_CAST")
     fun <T : GrenseKobling> oppdaterSamling(grense: Grense, attributter: GrenseKoblingAttributter, samling: MutableSet<T>, default: GrenseKobling) {

@@ -26,7 +26,7 @@ import javax.persistence.Table
 @Entity
 class Grunnkrets(
     override val id: String = UUID.randomUUID().toString(),
-    override val lokalid: String = UUID.randomUUID().toString(),
+    override val lokalid: String = UUID.randomUUID().toString()
 ) : StatistiskEnhet(Flatetype.GRUNNKRETS), KobletTilGrense {
 
     @Column(name = "grunnkretsnummer", nullable = false)
@@ -59,8 +59,8 @@ class Grunnkrets(
         doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { GrunnkretsInformasjon(this) }
     }
 
-    override fun oppdaterFlate() {
-        flate = SosiGeometryFunctions.beregnFlate(getGrenserAvTyper(tillatteGrensetyper()))
+    override fun oppdaterOmraade() {
+        omraade = SosiGeometryFunctions.beregnFlate(getGrenserAvTyper(tillatteGrensetyper()))
     }
 
     override fun oppdaterEllerLeggTilGrenseKobling(grenseMedAttributter: GrenseMedAttributter) {

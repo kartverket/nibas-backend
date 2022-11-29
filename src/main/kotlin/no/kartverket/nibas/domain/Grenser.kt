@@ -19,7 +19,6 @@ import javax.persistence.Id
 import javax.persistence.JoinColumn
 import javax.persistence.JoinTable
 import javax.persistence.ManyToMany
-import javax.persistence.ManyToOne
 import javax.persistence.OneToMany
 import javax.persistence.Table
 import javax.persistence.Version
@@ -37,8 +36,9 @@ class Grense(
     @Column(name = "lokalid", nullable = false, updatable = false)
     override val lokalid: String = UUID.randomUUID().toString(),
     // Blir mappet av Converter
-    var grensetype: Grensetype
-) : CommonMetadataProperties, MaritimGrense, Laasbar {
+    @Column(name = "avgrensningstype")
+    var grensetype: Grensetype,
+) : CommonMetadataProperties, Laasbar {
 
     @Embedded
     override var auditInfo: AuditInfo = AuditInfo()
@@ -47,20 +47,7 @@ class Grense(
     override var gyldighet: Gyldighet = Gyldighet()
 
     @Embedded
-    var endringsflagg: Endringsflagg? = Endringsflagg()
-
-    @Embedded
-    var registreringsversjon: Registreringsversjon? = Registreringsversjon()
-
-    @Embedded
-    var kopidata: Kopidata? = Kopidata()
-
-    @Embedded
     var kvalitet: PosisjonskvalitetEmbeddable? = PosisjonskvalitetEmbeddable()
-
-    // For KommunalKretsgrense
-    @Embedded
-    var foelgerGrunnkretsgrenseIdentifikasjon: FoelgerGrunnkretsgrenseIdentifikasjon? = FoelgerGrunnkretsgrenseIdentifikasjon()
 
     @Version
     override var version: Int = 1
@@ -69,6 +56,9 @@ class Grense(
 
     @Column(name = "datafangstdato")
     override var datafangstdato: LocalDate? = null
+
+    @Column(name = "foerstedigitaliseringsdato", nullable = false, updatable = false)
+    override val foerstedigitaliseringsdato: LocalDate = LocalDate.now()
 
     @Column(name = "opphav")
     override var opphav: String? = null
@@ -79,68 +69,19 @@ class Grense(
     @Column(name = "info")
     var informasjonstekst: String? = null
 
-    @Column(name = "sluttdato")
-    var sluttdato: LocalDate? = null
-
-    @Column(name = "datauttaksdato")
-    var datauttaksdato: LocalDate? = null
-
-    @Column(name = "omtvistet")
-    var omtvistet: Boolean? = null
-
-    @Column(name = "gjelderomraade")
-    override var gjelderomraade: String? = null
-
-    @Column(name = "virkeomraadenavn")
-    override var virkeomraadenavn: String? = null
-
-    @Column(name = "transformasjonsdato")
-    override var transformasjonsdato: LocalDate? = null
-
-    @Column(name = "beregningsdato")
-    var beregningsdato: LocalDate? = null
-
-    @Column(name = "stedfestingverifisert")
-    var stedfestingverifisert: Boolean? = null
-
-    @Column(name = "grensegatebredde")
-    var grensegatebredde: Double? = null
-
-    // UUID
-    @Column(name = "kommunenummer")
-    var kommunenummerId: String? = null
-
     // Holder på liste av kommunenummer-UUIDs grensen er tilknyttet
     // Uten at vi behøver definere egen entity for dette.
     // Brukes av grenser av type Lovvirkeomraadegrense
     @ElementCollection
     var kommunenummer: MutableSet<String> = mutableSetOf()
 
-    // For statistiske grenser
-    @Column(name = "foelgerteiggrense")
-    var foelgerteiggrense: Boolean? = null
-
-    @ManyToOne
-    @JoinColumn(name = "foelgerterrengdetalj")
-    var foelgerterrengdetalj: Terrengdetaljkode? = null
-
-    @ManyToOne
-    @JoinColumn(name = "noeyaktighetsklasse")
-    var noeyaktighetsklasse: Noeyaktighetsklassekode? = null
-
-    @ManyToOne
-    @JoinColumn(name = "grensestatus")
-    var grensestatus: Grensestatus? = null
-
-    @ManyToOne
-    @JoinColumn(name = "fastsettingstype")
-    var fastsettingstype: Fastsettingstype? = null
-
-    @OneToMany(mappedBy = "grenseFk", cascade = [CascadeType.ALL])
+    @ManyToMany(cascade = [CascadeType.ALL])
+    @JoinTable(
+        name = "grense_dokumentasjonsreferanse",
+        joinColumns = [JoinColumn(name = "grense_fk")],
+        inverseJoinColumns = [JoinColumn(name = "dokumentasjonsreferanse_fk")]
+    )
     var dokumentasjonsreferanser: MutableSet<Dokumentasjonsreferanse> = mutableSetOf()
-
-    @OneToMany(mappedBy = "grenseFk", cascade = [CascadeType.ALL])
-    var ansvarligeMyndigheter: MutableSet<GrenseAnsvarligMyndighet> = mutableSetOf()
 
     // Relasjon oppover i treet til Grunnkrets
     @OneToMany(mappedBy = "grense")
@@ -149,15 +90,6 @@ class Grense(
     // Relasjon oppover i treet til Stemmekrets
     @OneToMany(mappedBy = "grense")
     var stemmekretser: MutableSet<StemmekretsGrenseKobling> = mutableSetOf()
-
-    @ManyToMany(cascade = [CascadeType.ALL])
-    @JoinTable(
-        schema = "nibas",
-        name = "grense_land",
-        joinColumns = [JoinColumn(name = "grense_fk")],
-        inverseJoinColumns = [JoinColumn(name = "landkode_fk")]
-    )
-    var landkoder: MutableSet<Landkode> = mutableSetOf()
 
     fun grunnkretser(): Set<Grunnkrets> = grunnkretser.map { it.grunnkrets }.toSet()
     fun stemmekretser(): Set<Stemmekrets> = stemmekretser.map { it.stemmekrets }.toSet()
@@ -185,27 +117,9 @@ class Grense(
         this.informasjonstekst = updatedInfo
     }
 
-    override fun getAnsvarligeMyndigheter(): Collection<AnsvarligMyndighet> {
-        return this.ansvarligeMyndigheter
-    }
-
-    override fun setAnsvarligeMyndigheter(ansvarligeMyndigheter: List<AnsvarligMyndighetHolder>) {
-        doSetAnsvarligeMyndigheter(ansvarligeMyndigheter, this.ansvarligeMyndigheter) { GrenseAnsvarligMyndighet() }
-    }
-
-    override fun getLandIds(): List<String> {
-        return this.landkoder.map { it.id }
-    }
-
-    override fun setLand(landkoder: List<Landkode>) {
-        this.landkoder.clear()
-        this.landkoder.addAll(landkoder)
-    }
-
     fun addDokumentasjonsreferanse(): Dokumentasjonsreferanse {
         val dokumentasjonsreferanse = Dokumentasjonsreferanse()
         this.dokumentasjonsreferanser.add(dokumentasjonsreferanse)
-        dokumentasjonsreferanse.grenseFk = this
         return dokumentasjonsreferanse
     }
 
@@ -253,20 +167,4 @@ class Grense(
             }
         }
     }
-}
-
-@Table(name = "grense_ansvarligmyndighet")
-@Audited
-@Entity
-class GrenseAnsvarligMyndighet : AnsvarligMyndighet {
-    @Id
-    @Column(name = "objid", nullable = false, updatable = false)
-    override val id: String = UUID.randomUUID().toString()
-
-    @ManyToOne
-    @JoinColumn(name = "grense_fk")
-    var grenseFk: Grense? = null
-
-    @Column(name = "ansvarligmyndighet")
-    override var ansvarligmyndighet: String? = null
 }

@@ -51,7 +51,7 @@ class FlateService @Autowired constructor(
 
         enheterSomSkalFlatedannes.forEach { enhet ->
             logger.fine(finnNavn(enhet))
-            enhet.oppdaterFlate()
+            enhet.oppdaterOmraade()
             when (enhet) {
                 is Kommune -> kommuneRepository.save(enhet)
                 is Fylke -> fylkeRepository.save(enhet)

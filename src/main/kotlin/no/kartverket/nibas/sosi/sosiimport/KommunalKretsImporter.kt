@@ -11,10 +11,7 @@ import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component
 
 @Component
-class KommunalKretsImporter @Autowired constructor(
-    private val typeendringRepository: TypeendringRepository
-) {
-
+class KommunalKretsImporter {
     fun importer(flate: SosiFlate): KommunalKrets {
         val lokalid: String? = flate.getIdent()?.getValidLokalId()
         val krets = when (Flatetype.valueOf(flate.getObjType()?.uppercase()!!)) {
@@ -23,22 +20,9 @@ class KommunalKretsImporter @Autowired constructor(
         }
 
         krets.datafangstdato = flate.getDatafangstDato()
-        krets.endringsflagg?.tidspunktendring = flate.getEndringsflagg()?.getTidspunktEndring()
-        krets.endringsflagg?.typeendring = when (val typeendring = flate.getEndringsflagg()?.getTypeEndring()) {
-            null -> null
-            else -> typeendringRepository.findByIdOrNull(typeendring)
-        }
-
         krets.gyldighet = Gyldighet(flate.getGyldigFra(), flate.getGyldigTil())
-        krets.informasjon = flate.getInformasjon()
-        krets.kopidata?.kopidato = flate.getKopidata()?.getKopidato()
-        krets.kopidata?.omraadeid = flate.getKopidata()?.getOmraadeId()
-        krets.kopidata?.originaldatavert = flate.getKopidata()?.getOriginalDatavert()
+        krets.setInfo(flate.getInformasjon())
         krets.opphav = flate.getOpphav()
-        krets.registreringsversjon?.produkt = flate.getRegistreringsversjon()?.getProdukt()
-        krets.registreringsversjon?.versjon = flate.getRegistreringsversjon()?.getVersjon()
-        krets.sluttdato = flate.getSluttdato()
-        krets.informasjon = flate.getInformasjon()
 
         return krets
     }

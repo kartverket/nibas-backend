@@ -22,13 +22,13 @@ import javax.persistence.Table
 @Entity
 class Nasjon(
     override val id: String = UUID.randomUUID().toString(),
-    override val lokalid: String = UUID.randomUUID().toString(),
+    override val lokalid: String = UUID.randomUUID().toString()
 ) : AdministrativEnhet(Flatetype.NASJON) {
 
     @OneToMany(mappedBy = "nasjonFk")
     override var administrativenhetnavn: MutableSet<Administrativenhetnavn> = mutableSetOf()
 
-    @OneToMany(mappedBy = "nasjon")
+    @OneToMany(mappedBy = "nasjon", cascade = [CascadeType.ALL])
     var informasjonselementer: MutableSet<NasjonInformasjon> = mutableSetOf()
 
     @OneToMany(mappedBy = "nasjon", cascade = [CascadeType.ALL])
@@ -40,8 +40,8 @@ class Nasjon(
         doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { NasjonInformasjon(this) }
     }
 
-    override fun oppdaterFlate() {
-        flate = SosiGeometryFunctions.beregnFlate(getGrenser())
+    override fun oppdaterOmraade() {
+        omraade = SosiGeometryFunctions.beregnFlate(getGrenser())
     }
 
     fun getGrenser(): Set<GrenseKobling> {

@@ -31,9 +31,5 @@ interface KodelisteService {
     fun getFylkesnumre(): KodelisteRespons
     fun getMaalemetodeKoder(): KodelisteRespons
     fun getLandkoder(): KodelisteRespons
-    fun getTerrengdetaljkoder(): KodelisteRespons
-    fun getNoeyaktighetsklasser(): KodelisteRespons
     fun getGrensetyper(): KodelisteRespons
-    fun getFastsettingstyper(): KodelisteRespons
-    fun getGrensestatuskoder(): KodelisteRespons
 }

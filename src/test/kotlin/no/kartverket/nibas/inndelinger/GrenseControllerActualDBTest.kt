@@ -70,7 +70,6 @@ class GrenseControllerActualDBTest {
         val rettskildeTittel = "Min fine rettskilde!"
         val beskrivelse = "Min informasjonstekst"
         val updatedMetadata = metadata.copy(
-            omtvistet = true,
             common = metadata.common.copy(
                 gyldigFra = gyldigFra,
                 informasjon = beskrivelse
@@ -106,7 +105,6 @@ class GrenseControllerActualDBTest {
 
         // Henter kommunegrense på nytt og asserter
         kommunegrense = fetchKommunegrense()
-        assertThat(kommunegrense.omtvistet).isTrue
         assertThat(kommunegrense.gyldighet.gyldigFra).isEqualTo(gyldigFra)
         assertThat(kommunegrense.informasjonstekst).isEqualTo(beskrivelse)
 

@@ -52,7 +52,6 @@ class NasjonController(
 
     override fun hentNasjonRevisjon(id: String, revisjon: Int): NasjonResponse =
         historikkService.hentRevisjon(id, revisjon, Nasjon::class.java).toNasjonResponse(kodelisteService)
-
 }
 
 @Transactional(readOnly = true)

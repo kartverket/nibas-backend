@@ -4,7 +4,7 @@ import no.kartverket.nibas.api.v1.common.Metadataendringer
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.request.OppdaterUtkastRequest
 import no.kartverket.nibas.api.v1.request.OpprettUtkastRequest
-import no.kartverket.nibas.domain.utkast.UtkastEndringstype
+import no.kartverket.nibas.domain.Endringstype
 import java.time.LocalDate
 import java.time.Month
 
@@ -12,7 +12,7 @@ class UtkastRequestBuilder {
 
     private var gyldigFra: LocalDate = LocalDate.of(2023, Month.JANUARY, 1)
     private var navn = "Utkastet mitt"
-    private var endringstype = UtkastEndringstype.VEDTATT_GRENSEJUSTERING
+    private var endringstype = Endringstype.VEDTATT_GRENSEJUSTERING
     private var operasjoner = Operasjoner(
         metadataendringer = Metadataendringer(
             kommuneendringer = mapOf("6n49a68e-bb52-49f4-b668-48cabb0b8585" to KommuneRequestBuilder.DEFAULT_REQUEST)
@@ -44,7 +44,7 @@ class UtkastRequestBuilder {
         return this
     }
 
-    fun withEndringstype(endringstype: UtkastEndringstype): UtkastRequestBuilder {
+    fun withEndringstype(endringstype: Endringstype): UtkastRequestBuilder {
         this.endringstype = endringstype
         return this
     }
@@ -59,7 +59,7 @@ class UtkastRequestBuilder {
 class OpprettUtkastRequestBuilder {
 
     private var navn = "Mitt nye utkast"
-    private var endringstype = UtkastEndringstype.VEDTATT_GRENSEJUSTERING
+    private var endringstype = Endringstype.VEDTATT_GRENSEJUSTERING
     private var operasjoner = Operasjoner(
         metadataendringer = Metadataendringer(
             kommuneendringer = mapOf("6n49a68e-bb52-49f4-b668-48cabb0b8585" to KommuneRequestBuilder.DEFAULT_REQUEST)

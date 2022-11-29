@@ -9,6 +9,7 @@ import javax.persistence.Table
 /**
  * Her brukes ikke UUID fordi id-en er en del av datasettet, kolonne i tabellen.
  */
+
 @Table(name = "landkode")
 @Audited
 @Entity

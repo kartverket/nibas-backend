@@ -3,9 +3,7 @@ package no.kartverket.nibas.builders
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.domain.AnsvarligMyndighetHolder
 import no.kartverket.nibas.domain.Dokumentasjonsreferanse
-import no.kartverket.nibas.domain.Fastsettingstype
 import no.kartverket.nibas.domain.Grense
-import no.kartverket.nibas.domain.Grensestatus
 import no.kartverket.nibas.domain.Landkode
 import no.kartverket.nibas.domain.PosisjonskvalitetEmbeddable
 import no.kartverket.nibas.sporing.Gyldighet
@@ -14,7 +12,7 @@ import java.time.LocalDate
 class TerritorialgrenseBuilder {
 
     private var lokalid: String = LOKALID
-    private var oppdateringsdato: LocalDate = LocalDate.now()
+    private var endretdato: LocalDate = LocalDate.now()
     private var datafangstdato: LocalDate = LocalDate.now()
     private var gyldigFra: LocalDate = LocalDate.now()
     private var dokumentasjonsreferanser: MutableList<Dokumentasjonsreferanse> = mutableListOf()
@@ -39,23 +37,15 @@ class TerritorialgrenseBuilder {
         territorialgrense.datafangstdato = datafangstdato
         territorialgrense.gyldighet = Gyldighet(gyldigFra, null)
         territorialgrense.kvalitet = kvalitet
-        territorialgrense.auditInfo.oppdateringsdato = oppdateringsdato
+        territorialgrense.auditInfo.endretdato = endretdato
         territorialgrense.opphav = opphav
-        territorialgrense.fastsettingstype = Fastsettingstype().apply { id = fastsettingstypeEnum.name }
-        territorialgrense.grensestatus = Grensestatus().apply { id = grensestatusEnum.name }
         territorialgrense.setInfo(informasjonstekst)
         territorialgrense.dokumentasjonsreferanser.addAll(dokumentasjonsreferanser)
-        territorialgrense.transformasjonsdato = transformasjonsdato
-        territorialgrense.gjelderomraade = gjelderOmraade
-        territorialgrense.setAnsvarligeMyndigheter(ansvarligeMyndigheter)
-        territorialgrense.virkeomraadenavn = virkeomraade
-        territorialgrense.setLand(landkoder)
-        territorialgrense.beregningsdato = beregningsdato
         return territorialgrense
     }
 
-    fun withOppdateringsdato(dateTime: LocalDate): TerritorialgrenseBuilder {
-        this.oppdateringsdato = dateTime
+    fun withEndretDato(dateTime: LocalDate): TerritorialgrenseBuilder {
+        this.endretdato = dateTime
         return this
     }
 

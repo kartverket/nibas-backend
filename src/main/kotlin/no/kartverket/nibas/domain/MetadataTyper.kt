@@ -10,30 +10,6 @@ import java.time.LocalDate
 import java.util.function.Supplier
 import javax.persistence.Column
 import javax.persistence.Embeddable
-import javax.persistence.JoinColumn
-import javax.persistence.ManyToOne
-
-@Embeddable
-data class Endringsflagg(
-    @ManyToOne
-    @JoinColumn(name = "typeendring")
-    var typeendring: Typeendring? = null,
-
-    @Column(name = "tidspunktendring")
-    var tidspunktendring: LocalDate? = null
-)
-
-@Embeddable
-data class Kopidata(
-    @Column(name = "omraadeid")
-    var omraadeid: Int? = null,
-
-    @Column(name = "originaldatavert")
-    var originaldatavert: String? = null,
-
-    @Column(name = "kopidato")
-    var kopidato: LocalDate? = null
-)
 
 @Embeddable
 data class PosisjonskvalitetEmbeddable(
@@ -49,38 +25,13 @@ data class PosisjonskvalitetEmbeddable(
         noeyaktighet)
 }
 
-@Embeddable
-data class Registreringsversjon(
-    @Column(name = "produkt")
-    var produkt: String? = null,
-
-    @Column(name = "versjon")
-    var versjon: String? = null
-)
-
-@Embeddable
-data class FoelgerGrunnkretsgrenseIdentifikasjon(
-    @Column(name = "foelgergrunnkretsgrense_lokalid")
-    override val lokalid: String = ""
-) : ContainsSosiIdentifikasjon
-
 // Felles egenskaper for grenser, adm_enheter, punkter ++
 interface CommonMetadataProperties : ContainsSosiIdentifikasjon, Sporbar, Gyldig {
     var datafangstdato: LocalDate?
+    val foerstedigitaliseringsdato: LocalDate
     var opphav: String?
     fun getInfo(): String?
     fun setInfo(updatedInfo: String?)
-}
-
-// Felles egenskaper for maritime grenser
-interface MaritimGrense {
-    var gjelderomraade: String?
-    var transformasjonsdato: LocalDate?
-    var virkeomraadenavn: String?
-    fun getAnsvarligeMyndigheter(): Collection<AnsvarligMyndighet>
-    fun setAnsvarligeMyndigheter(ansvarligeMyndigheter: List<AnsvarligMyndighetHolder>)
-    fun getLandIds(): List<String>
-    fun setLand(landkoder: List<Landkode>)
 }
 
 // Representerer domenemodellen, slipper ut av backend.

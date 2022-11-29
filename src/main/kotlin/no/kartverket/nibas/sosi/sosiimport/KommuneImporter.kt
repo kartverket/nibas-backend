@@ -10,7 +10,6 @@ import no.kartverket.nibas.repository.KommuneInformasjonRepository
 import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.SpraakkodeRepository
 import no.kartverket.nibas.sosi.model.SosiFlate
-import no.kartverket.nibas.sosi.model.SosiObjekt
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component

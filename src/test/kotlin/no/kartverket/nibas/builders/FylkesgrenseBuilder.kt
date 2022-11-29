@@ -2,12 +2,8 @@ package no.kartverket.nibas.builders
 
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.domain.Dokumentasjonsreferanse
-import no.kartverket.nibas.domain.Fastsettingstype
 import no.kartverket.nibas.domain.Grense
-import no.kartverket.nibas.domain.Grensestatus
-import no.kartverket.nibas.domain.Noeyaktighetsklassekode
 import no.kartverket.nibas.domain.PosisjonskvalitetEmbeddable
-import no.kartverket.nibas.domain.Terrengdetaljkode
 import no.kartverket.nibas.sporing.Gyldighet
 import org.locationtech.jts.geom.GeometryFactory
 import org.locationtech.jts.geom.LineString
@@ -40,29 +36,12 @@ enum class TerrengdetaljEnum(val code: String) {
 enum class FastsettingstypeEnum { BestemteKoordinater }
 enum class GrensestatusEnum { Traktat }
 
-val terrengdetaljkodeAnnetGjerde = Terrengdetaljkode().apply {
-    id = TerrengdetaljEnum.AnnetGjerde.code
-    description = "Annet gjerde"
-}
-val noeyaktighetsklassekodeLite = Noeyaktighetsklassekode().apply {
-    id = NoeyaktighetsklasseEnum.NK1.code
-    description = "Lite nøyaktige"
-}
-val grensestatusTraktat = Grensestatus().apply {
-    id = GrensestatusEnum.Traktat.name
-    description = "Traktat"
-}
-val fastsettingstypeBestemteKoordinater = Fastsettingstype().apply {
-    id = FastsettingstypeEnum.BestemteKoordinater.name
-    description = "Mine bestemte koordinater"
-}
-
 
 class FylkesgrenseBuilder(private val id: String = "1") {
 
     private var lokalid: String = LOKALID
     private var omtvistet: Boolean = true
-    private var oppdateringsdato: LocalDate = LocalDate.now()
+    private var endretdato: LocalDate = LocalDate.now()
     private var datafangstdato: LocalDate = LocalDate.now()
     private var gyldigFra: LocalDate = LocalDate.now()
     private var dokumentasjonsreferanser: MutableList<Dokumentasjonsreferanse> = mutableListOf()
@@ -72,24 +51,15 @@ class FylkesgrenseBuilder(private val id: String = "1") {
     )
     private var opphav = OPPHAV
     private var informasjonstekst = INFORMASJONTEKST
-    private var terrengdetaljkode: Terrengdetaljkode? = terrengdetaljkodeAnnetGjerde
-    private var noeyaktighetsklassekode: Noeyaktighetsklassekode? = noeyaktighetsklassekodeLite
-    private var grensestatus: Grensestatus? = grensestatusTraktat
-    private var fastsettingstype: Fastsettingstype = fastsettingstypeBestemteKoordinater
     private var grenseGeometri: LineString = GeometryFactory().createLineString()
 
     fun build(): Grense {
         val fylkesgrense = Grense(id = this.id , lokalid= lokalid, Grensetype.Fylkesgrense)
-        fylkesgrense.foelgerterrengdetalj = terrengdetaljkode
-        fylkesgrense.noeyaktighetsklasse = noeyaktighetsklassekode
-        fylkesgrense.omtvistet = omtvistet
         fylkesgrense.datafangstdato = datafangstdato
         fylkesgrense.gyldighet = Gyldighet(gyldigFra, null)
         fylkesgrense.kvalitet = kvalitet
-        fylkesgrense.auditInfo.oppdateringsdato = oppdateringsdato
+        fylkesgrense.auditInfo.endretdato = endretdato
         fylkesgrense.opphav = opphav
-        fylkesgrense.fastsettingstype = fastsettingstype
-        fylkesgrense.grensestatus = grensestatus
         fylkesgrense.setInfo(informasjonstekst)
         fylkesgrense.grense = grenseGeometri
 
@@ -97,23 +67,8 @@ class FylkesgrenseBuilder(private val id: String = "1") {
         return fylkesgrense
     }
 
-    fun withFastsettingstype(fastsettingstype: Fastsettingstype): FylkesgrenseBuilder {
-        this.fastsettingstype = fastsettingstype
-        return this
-    }
-
-    fun withFoelgerTerrengdetalj(terrengdetaljkode: Terrengdetaljkode?): FylkesgrenseBuilder {
-        this.terrengdetaljkode = terrengdetaljkode
-        return this
-    }
-
-    fun withNoeyaktighetsklassekode(noeyaktighetsklassekode: Noeyaktighetsklassekode?): FylkesgrenseBuilder {
-        this.noeyaktighetsklassekode = noeyaktighetsklassekode
-        return this
-    }
-
-    fun withOppdateringsdato(dateTime: LocalDate): FylkesgrenseBuilder {
-        this.oppdateringsdato = dateTime
+    fun withEndretDato(dateTime: LocalDate): FylkesgrenseBuilder {
+        this.endretdato = dateTime
         return this
     }
 

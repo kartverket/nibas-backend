@@ -1,24 +1,17 @@
 package no.kartverket.nibas.api.v1.common.geojson.metadata
 
 import no.kartverket.nibas.builders.DokumentasjonsreferanseBuilder
-import no.kartverket.nibas.builders.FastsettingstypeEnum
 import no.kartverket.nibas.builders.FylkesgrenseBuilder
-import no.kartverket.nibas.builders.GrensestatusEnum
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.INFORMASJONTEKST
 import no.kartverket.nibas.builders.LINK_TEKST_1
 import no.kartverket.nibas.builders.LINK_TEKST_2
 import no.kartverket.nibas.builders.LOKALID
 import no.kartverket.nibas.builders.MaalemetodeKodeEnum
-import no.kartverket.nibas.builders.NoeyaktighetsklasseEnum
 import no.kartverket.nibas.builders.OPPHAV
 import no.kartverket.nibas.builders.REF_TEKST_1
 import no.kartverket.nibas.builders.REF_TEKST_2
-import no.kartverket.nibas.builders.TerrengdetaljEnum
 import no.kartverket.nibas.builders.TerritorialgrenseBuilder
-import no.kartverket.nibas.builders.fastsettingstypeBestemteKoordinater
-import no.kartverket.nibas.builders.noeyaktighetsklassekodeLite
-import no.kartverket.nibas.builders.terrengdetaljkodeAnnetGjerde
 import no.kartverket.nibas.domain.AnsvarligMyndighetHolder
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.LandKodeRepository
@@ -93,22 +86,16 @@ internal class MetadataMapperTest {
     @Test
     fun toAdministrativGrenseMetadata() {
         val fylkesgrense = FylkesgrenseBuilder()
-            .withOppdateringsdato(oppdateringsdato)
+            .withEndretDato(oppdateringsdato)
             .datafangstdato(dataFanget)
             .gyldigFra(gyldigFraTidspunkt)
             .dokRef(dokumentasjonsreferanse)
-            .withFastsettingstype(fastsettingstypeBestemteKoordinater)
-            .withFoelgerTerrengdetalj(terrengdetaljkodeAnnetGjerde)
-            .withNoeyaktighetsklassekode(noeyaktighetsklassekodeLite)
             .build()
 
         val administrativGrenseMetadata = AdministrativGrenseMetadata(
             common = expectedCommonMetadata(),
             commonGrense = expectedCommonGrensedata(),
-            dokumentasjonsreferanser = listOf(dokumentasjonsreferanse).map { it.toDokRef() },
-            foelgerTerrengdetalj = KodelisteEntry(id = TerrengdetaljEnum.AnnetGjerde.code, href = terrengDetaljHref),
-            noeyaktighetsklasse = KodelisteEntry(id = NoeyaktighetsklasseEnum.NK1.code, href = noeyaktighetHref),
-            omtvistet = true
+            dokumentasjonsreferanser = listOf(dokumentasjonsreferanse).map { it.toDokRef() }
         )
 
         val metadata: AdministrativGrenseMetadata = metadataMapper.toMetadataForAdministrativGrense(fylkesgrense)
@@ -122,7 +109,7 @@ internal class MetadataMapperTest {
         mockRussland(landKodeRepositoryMock)
 
         val territorialgrense = TerritorialgrenseBuilder()
-            .withOppdateringsdato(oppdateringsdato)
+            .withEndretDato(oppdateringsdato)
             .datafangstdato(dataFanget)
             .gyldigFra(gyldigFraTidspunkt)
             .dokRef(dokumentasjonsreferanse)
@@ -134,21 +121,7 @@ internal class MetadataMapperTest {
         val territorialgrenseMetadata = TerritorialgrenseMetadata(
             common = expectedCommonMetadata(),
             commonGrense = expectedCommonGrensedata(),
-            maritimeGrenser = MaritimeGrenserMetadata(
-                ansvarligeMyndigheter = listOf(
-                    TekstHolder(territorialgrense.findIdForAnsvarligMyndighet(kv), kv),
-                    TekstHolder(territorialgrense.findIdForAnsvarligMyndighet(hav), hav)
-                ),
-                gjelderOmraade = "Område over elva",
-                transformasjonsdato = transformasjonsdato,
-                virkeomraadenavn = "Virkeområde 33",
-                land = Landkoder(
-                    ids = listOf("ru"),
-                    href = landkodeHref
-                ),
-            ),
             dokumentasjonsreferanser = listOf(dokumentasjonsreferanse).map { it.toDokRef() },
-            beregningsdato = beregningsdato
         )
 
         val metadata: TerritorialgrenseMetadata = metadataMapper.toMetadataForTerritorialgrense(territorialgrense)
@@ -161,7 +134,7 @@ internal class MetadataMapperTest {
             .withDatafangstdato(dataFanget)
             .withGyldigFra(gyldigFraTidspunkt)
             .withGyldigTil(gyldigTilTidspunkt)
-            .withOppdateringsdato(oppdateringsdato)
+            .withEndretDato(oppdateringsdato)
             .build()
 
         val expectedFlateMetadata = FlateMetadata(common = expectedCommonMetadata().copy(gyldigTil = gyldigTilTidspunkt))
@@ -185,8 +158,6 @@ internal class MetadataMapperTest {
             maalemetode = KodelisteEntry(id = MaalemetodeKodeEnum.TERRENGMAALT.uuid, href = maalemetodeHref),
             noeyaktighet = 200
         ),
-        fastsettingstype = KodelisteEntry(id = FastsettingstypeEnum.BestemteKoordinater.name, href = fastsettingstypeHref),
-        grensestatus = KodelisteEntry(id = GrensestatusEnum.Traktat.name, href = grensestatusHref),
     )
 
 }

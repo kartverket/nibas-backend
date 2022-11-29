@@ -24,7 +24,6 @@ class DokumentasjonsreferanseImporter {
         dokRef.rettskildetittel = sosiDokRef.getRettskildeTittel()
 
         dokRef.fastsettingsdato = sosiDokRef.getFastsettingsdato()
-        dokRef.grenseFk = grense
 
         dokRef = dokumentasjonsreferanseRepository.save(dokRef)
 

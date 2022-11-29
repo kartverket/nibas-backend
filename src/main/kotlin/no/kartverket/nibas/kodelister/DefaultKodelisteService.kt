@@ -2,11 +2,7 @@ package no.kartverket.nibas.kodelister
 
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.response.Kommunenummer
-import no.kartverket.nibas.repository.FastsettingstypeRepository
-import no.kartverket.nibas.repository.GrensestatusRepository
 import no.kartverket.nibas.repository.LandKodeRepository
-import no.kartverket.nibas.repository.NoeyaktighetsklassekodeRepository
-import no.kartverket.nibas.repository.TerrengdetaljkodeRepository
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.client.WebClient
@@ -15,11 +11,7 @@ import java.util.logging.Logger
 
 @Transactional(readOnly = true)
 class DefaultKodelisteService constructor(private val kodelisteFetcher: KodelisteFetcher,
-                                          private val landKodeRepository: LandKodeRepository,
-                                          private val terrengdetaljkodeRepository: TerrengdetaljkodeRepository,
-                                          private val noeyaktighetsklassekodeRepository: NoeyaktighetsklassekodeRepository,
-                                          private val fastsettingstypeRepository: FastsettingstypeRepository,
-                                          private val grensestatusRepository: GrensestatusRepository) : KodelisteService {
+                                          private val landKodeRepository: LandKodeRepository) : KodelisteService {
     private val logger: Logger = Logger.getLogger(this::class.java.name)
     private val malemetodeKodeUri = "malemetode-kode.json?"
     private val kommunenummerUri = "kommunenummer.json?"
@@ -86,43 +78,11 @@ class DefaultKodelisteService constructor(private val kodelisteFetcher: Kodelist
                 .sortedBy { it.id })
     }
 
-    override fun getTerrengdetaljkoder(): KodelisteRespons {
-        return KodelisteRespons(
-            type = KodelisteType.TERRENGDETALJ,
-            items = terrengdetaljkodeRepository.findAll()
-                .map { KodelisteItem(id = it.id, label = it.description!!) }
-                .sortedBy { it.id })
-    }
-
-    override fun getNoeyaktighetsklasser(): KodelisteRespons {
-        return KodelisteRespons(
-            type = KodelisteType.NOEYAKTIGHETSKLASSE,
-            items = noeyaktighetsklassekodeRepository.findAll()
-                .map { KodelisteItem(id = it.id, label = it.description!!) }
-                .sortedBy { it.id })
-    }
-
     override fun getGrensetyper(): KodelisteRespons {
         return KodelisteRespons(
             type = KodelisteType.GRENSETYPE,
             items = Grensetype.values()
                 .map { KodelisteItem(id = it.value, label = it.name) }
-                .sortedBy { it.id })
-    }
-
-    override fun getFastsettingstyper(): KodelisteRespons {
-        return KodelisteRespons(
-            type = KodelisteType.FASTSETTINGSTYPE,
-            items = fastsettingstypeRepository.findAll()
-                .map { KodelisteItem(id = it.id, label = it.description!!) }
-                .sortedBy { it.id })
-    }
-
-    override fun getGrensestatuskoder(): KodelisteRespons {
-        return KodelisteRespons(
-            type = KodelisteType.GRENSESTATUS,
-            items = grensestatusRepository.findAll()
-                .map { KodelisteItem(id = it.id, label = it.description!!) }
                 .sortedBy { it.id })
     }
 

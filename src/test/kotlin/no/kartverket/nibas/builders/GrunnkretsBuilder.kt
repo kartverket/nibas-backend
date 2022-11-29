@@ -2,6 +2,7 @@ package no.kartverket.nibas.builders
 
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.Grunnkrets
@@ -18,14 +19,14 @@ class GrunnkretsBuilder(
     private var grunnkretsnavn: String = "Dåsvatn",
     private var grenser: MutableSet<Grense> = mutableSetOf(),
     private var kommune: Kommune = KommuneBuilder.DEFAULT_KOMMUNE,
-    private var oppdateringsdato: LocalDate = LocalDate.now(),
+    private var endretdato: LocalDate = LocalDate.now(),
     private var datafangstdato: LocalDate = LocalDate.now(),
     private var gyldigFra: LocalDate = LocalDate.now(),
     private var gyldigTil: LocalDate? = null,
     private var slettet: Boolean = false,
     private var informasjonstekst: String = INFORMASJONTEKST,
     private var opphav: String = OPPHAV,
-    private var typeEndring: String = "Kvalitetsheving"
+    private var typeEndring: Endringstype = Endringstype.KVALITETSHEVING
 ) {
 
     companion object {
@@ -39,17 +40,17 @@ class GrunnkretsBuilder(
 
         grunnkrets.grunnkretsnavn = grunnkretsnavn
         grunnkrets.grunnkretsnummer = grunnkretsnummer
-        grunnkrets.auditInfo.oppdateringsdato = oppdateringsdato
+        grunnkrets.auditInfo.endretdato = endretdato
         grunnkrets.kommune = kommune
 
-        grunnkrets.auditInfo.oppdateringsdato = oppdateringsdato
+        grunnkrets.auditInfo.endretdato = endretdato
         grunnkrets.gyldighet = Gyldighet(gyldigFra, gyldigTil, slettet)
         grunnkrets.setInfo(informasjonstekst)
         grunnkrets.opphav = opphav
-        grunnkrets.typeEndring = typeEndring
+        grunnkrets.auditInfo.typeEndring = typeEndring
 
         grunnkrets.posisjon = GeometryFactory().createPoint(Coordinate(1.0, 1.0))
-        grunnkrets.flate = GeometryFactory().createMultiPolygon(arrayOf(GeometryFactory().createPolygon()))
+        grunnkrets.omraade = GeometryFactory().createMultiPolygon(arrayOf(GeometryFactory().createPolygon()))
         grenser.forEach {
             grunnkrets.addGrensekobling(it, GrenseKoblingAttributter())
         }
@@ -67,8 +68,8 @@ class GrunnkretsBuilder(
         return this
     }
 
-    fun withOppdateringsdato(dateTime: LocalDate): GrunnkretsBuilder {
-        this.oppdateringsdato = dateTime
+    fun withEndretDato(dateTime: LocalDate): GrunnkretsBuilder {
+        this.endretdato = dateTime
         return this
     }
 

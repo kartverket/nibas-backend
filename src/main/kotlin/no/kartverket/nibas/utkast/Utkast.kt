@@ -16,9 +16,9 @@ import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.BadRequestException
 import no.kartverket.nibas.common.ResponseException.NotFoundException
+import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.utkast.Utkast
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
-import no.kartverket.nibas.domain.utkast.UtkastEndringstype
 import no.kartverket.nibas.domain.utkast.UtkastStatus
 import no.kartverket.nibas.inndelinger.FylkeService
 import no.kartverket.nibas.inndelinger.GrenseService
@@ -105,7 +105,7 @@ class UtkastService(private val utkastRepository: UtkastRepository,
             verifiserOptimistiskLaas(request.version, eksisterendeUtkast)?.let { throw OptimistiskLaasException(it) }
 
             eksisterendeUtkast.navn = request.navn
-            eksisterendeUtkast.endringstype = UtkastEndringstype.fromValue(request.endringstype)
+            eksisterendeUtkast.auditInfo.typeEndring = Endringstype.fromValue(request.endringstype)
             eksisterendeUtkast.gyldigFra = request.gyldigFra!!
             eksisterendeUtkast.operasjoner = request.operasjoner
             utkastRepository.save(eksisterendeUtkast)
@@ -136,8 +136,8 @@ class UtkastService(private val utkastRepository: UtkastRepository,
                     GrunnkretsRequestWrapper(
                         grunnkretsRequest = it.value,
                         gyldigFra = utkast.gyldigFra,
-                        // TODO: Må sees på etter ny sosi-modell. Skal det ligge i egen tabell, eller være enum.
-                        endringstype = utkast.endringstype.value))
+                        endringstype = utkast.auditInfo.typeEndring)
+                )
             }
             metadata.stemmekretsendringer.forEach { stemmekretsService.oppdaterStemmekrets(it.key, it.value) }
 
@@ -161,7 +161,7 @@ class UtkastService(private val utkastRepository: UtkastRepository,
             grunnkretsService.oppdaterGrunnkrets(conflictResolved.lokalid, GrunnkretsRequestWrapper(
                 grunnkretsRequest = it.grunnkretsRequest,
                 gyldigFra = it.gyldigFra,
-                endringstype = it.endringstype,
+                endringstype = Endringstype.fromValue(it.endringstype),
                 resolved = true))
         }
         utkast.settPublisert()
@@ -235,14 +235,14 @@ private fun Operasjoner.harEndringer(): Boolean {
 private fun Operasjoner.harIkkeEndringer(): Boolean = !this.harEndringer()
 
 private fun OpprettUtkastRequest.createUtkast(): Utkast =
-    UtkastBuilder.builder(this.navn, UtkastEndringstype.fromValue(this.endringstype))
+    UtkastBuilder.builder(this.navn, Endringstype.fromValue(this.endringstype))
         .withOperasjoner(this.operasjoner)
         .build()
 
 private fun Utkast.toUtkastResponse(): UtkastResponse = UtkastResponse(
     id = this.id,
     navn = this.navn,
-    endringstype = this.endringstype.value,
+    endringstype = this.auditInfo.typeEndring.value,
     status = this.status.value,
     gyldigFra = this.gyldigFra,
     operasjoner = this.operasjoner ?: Operasjoner(),
@@ -257,5 +257,5 @@ private fun Utkast.toUtkastRef(hrefProvider: HrefProvider): UtkastRef = UtkastRe
     href = hrefProvider.getHref(id)
 )
 
-fun AuditInfo.toAuditInfoResponse(): AuditInfoResponse = AuditInfoResponse(this.oppdateringsdato, this.endretAv!!)
+fun AuditInfo.toAuditInfoResponse(): AuditInfoResponse = AuditInfoResponse(this.endretdato, this.endretAv)
 

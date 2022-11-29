@@ -53,7 +53,6 @@ class FylkeController(
 
     override fun hentFylkesRevisjon(id: String, revisjon: Int): FylkeResponse =
         historikkService.hentRevisjon(id, revisjon, Fylke::class.java).toFylkeResponse(kodelisteService)
-
 }
 
 @Transactional(readOnly = true)
@@ -105,7 +104,7 @@ fun Fylke.toFylkeResponse(kodelisteService: KodelisteService): FylkeResponse = F
         kodeverdi = kodelisteService.getCodeValueByFylkesnummerId(this.fylkesnummer)?.toInt()!!
     ),
     samiskforvaltningsomraade = this.samiskforvaltningsomraade!!,
-    oppdateringsdato = this.auditInfo.oppdateringsdato,
+    oppdateringsdato = this.auditInfo.endretdato,
     features = FeatureCollection(features = listOf(posisjonToFeature(this.posisjon, this.version), flateToFeature(this, kodelisteService, this.version))),
     version = this.version
 )

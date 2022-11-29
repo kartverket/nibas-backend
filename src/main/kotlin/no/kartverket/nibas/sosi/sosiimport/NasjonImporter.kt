@@ -6,7 +6,6 @@ import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.NasjonRepository
 import no.kartverket.nibas.repository.SpraakkodeRepository
 import no.kartverket.nibas.sosi.model.SosiFlate
-import no.kartverket.nibas.sosi.model.SosiObjekt
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component
@@ -35,9 +34,7 @@ class NasjonImporter {
         when (nasjonRepository.findByLokalid(flate.getIdent()?.getLokalId()!!)) {
             null -> {
                 var nasjon = administrativEnhetImporter.importer(flate) as Nasjon
-
-
-                nasjon = nasjonRepository.save(nasjon)
+                nasjonRepository.save(nasjon)
 
                 flate.getNasjonnavn().forEach { sosiNasjonnavn ->
                     val nasjonnavn = Administrativenhetnavn()

@@ -1,10 +1,6 @@
 package no.kartverket.nibas.kodelister
 
-import no.kartverket.nibas.repository.FastsettingstypeRepository
-import no.kartverket.nibas.repository.GrensestatusRepository
 import no.kartverket.nibas.repository.LandKodeRepository
-import no.kartverket.nibas.repository.NoeyaktighetsklassekodeRepository
-import no.kartverket.nibas.repository.TerrengdetaljkodeRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
@@ -23,18 +19,6 @@ internal class DefaultKodelisteServiceTest {
     @Mock
     private lateinit var landKodeRepositoryMock: LandKodeRepository
 
-    @Mock
-    private lateinit var terrengdetaljkodeRepositoryMock: TerrengdetaljkodeRepository
-
-    @Mock
-    private lateinit var noeyaktighetsklassekodeRepositoryMock: NoeyaktighetsklassekodeRepository
-
-    @Mock
-    private lateinit var fastsettingstypeRepositoryMock: FastsettingstypeRepository
-
-    @Mock
-    private lateinit var grensestatusRepositoryMock: GrensestatusRepository
-
     private lateinit var kodelisteService: KodelisteService
 
     private val codeValueForTysnes = "4616"
@@ -47,8 +31,7 @@ internal class DefaultKodelisteServiceTest {
     @BeforeEach
     fun beforeEach() {
         MockitoAnnotations.openMocks(this)
-        kodelisteService = DefaultKodelisteService(kodelisteFetcherMock, landKodeRepositoryMock, terrengdetaljkodeRepositoryMock,
-            noeyaktighetsklassekodeRepositoryMock, fastsettingstypeRepositoryMock, grensestatusRepositoryMock)
+        kodelisteService = DefaultKodelisteService(kodelisteFetcherMock, landKodeRepositoryMock)
     }
 
     @Test
