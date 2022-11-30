@@ -245,7 +245,5 @@ data class Dokref(
 
 data class Sporingsinformasjon(
     @Schema(description = "Dato for siste endring på objektdataene")
-    var oppdateringsdato: LocalDate = LocalDate.now(),
-    @Schema(description = "Angir hvem som endret data på objektet sist.")
-    var endretAv: String = "import"
+    var oppdateringsdato: LocalDate = LocalDate.now()
 )

@@ -257,5 +257,5 @@ private fun Utkast.toUtkastRef(hrefProvider: HrefProvider): UtkastRef = UtkastRe
     href = hrefProvider.getHref(id)
 )
 
-fun AuditInfo.toAuditInfoResponse(): AuditInfoResponse = AuditInfoResponse(this.endretdato, this.endretAv)
+fun AuditInfo.toAuditInfoResponse(): AuditInfoResponse = AuditInfoResponse(this.endretdato)
 

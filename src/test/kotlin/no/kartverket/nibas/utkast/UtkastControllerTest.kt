@@ -102,10 +102,7 @@ internal class UtkastControllerTest : NibasMvcTest() {
             navn = navn,
             endringstype = Endringstype.KVALITETSHEVING.value,
             status = UtkastStatus.OPPRETTET.value,
-            auditInfoResponse = AuditInfoResponse(
-                oppdateringsdato = syvendeJuli,
-                endretAv = dummy
-            ),
+            auditInfoResponse = AuditInfoResponse(oppdateringsdato = syvendeJuli),
             opprettetDato = opprettetTidspunkt,
             gyldigFra = foersteJanuar,
             operasjoner = operasjoner!!,
@@ -154,10 +151,7 @@ internal class UtkastControllerTest : NibasMvcTest() {
             navn = utkastNavn,
             endringstype = Endringstype.KVALITETSHEVING.value,
             status = UtkastStatus.OPPRETTET.value,
-            auditInfoResponse = AuditInfoResponse(
-                oppdateringsdato = oppdateringsdato,
-                endretAv = endretAv
-            ),
+            auditInfoResponse = AuditInfoResponse(oppdateringsdato = oppdateringsdato),
             opprettetDato = opprettetDato,
             gyldigFra = gyldigFra,
             operasjoner = operasjoner,

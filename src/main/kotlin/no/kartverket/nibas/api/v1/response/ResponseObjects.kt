@@ -327,9 +327,7 @@ data class UtkastResponse(
 @Schema(description = "Representasjon av audit info for et objekt.")
 data class AuditInfoResponse(
     @Schema(description = "Da objektet sist ble oppdatert.")
-    val oppdateringsdato: LocalDate,
-    @Schema(description = "Den som sist endret objektet.")
-    val endretAv: String
+    val oppdateringsdato: LocalDate
 )
 
 /**

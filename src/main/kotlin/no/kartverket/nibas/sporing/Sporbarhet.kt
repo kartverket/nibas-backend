@@ -207,7 +207,5 @@ data class Gyldighet(
 }
 
 fun AuditInfo.toSporingsinformasjon(): Sporingsinformasjon {
-    return Sporingsinformasjon(
-        oppdateringsdato = this.endretdato,
-        endretAv = this.endretAv)
+    return Sporingsinformasjon(oppdateringsdato = this.endretdato)
 }
