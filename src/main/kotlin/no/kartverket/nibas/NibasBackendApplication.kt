@@ -3,9 +3,11 @@ package no.kartverket.nibas
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.info.Info
 import no.kartverket.nibas.config.NibasBackendConfigProps
+import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
+import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.context.annotation.Bean
 import org.springframework.scheduling.annotation.EnableScheduling
 import java.util.*
@@ -14,6 +16,7 @@ import java.util.*
 @EnableConfigurationProperties(NibasBackendConfigProps::class)
 @SpringBootApplication
 class NibasBackendApplication {
+
     @Bean
     fun openApiDef(): OpenAPI =
         OpenAPI().info(
@@ -23,13 +26,52 @@ class NibasBackendApplication {
                 version = "1.0.0"
             }
         )
+
     companion object {
         @JvmStatic
         fun main(args: Array<String>) {
             @Suppress("SpreadOperator")
-            runApplication<NibasBackendApplication>(*args)
+            val configurableAppCtx = runApplication<NibasBackendApplication>(*args)
+            asciiArt(configurableAppCtx)
         }
     }
+}
+
+/**
+ * Kalles fra statisk kontekst. Logger noen relevante konfigurasjonsparametre.
+ */
+fun asciiArt(appCtx: ConfigurableApplicationContext) {
+    val logger = LoggerFactory.getLogger(NibasBackendApplication::class.java)
+    val env = appCtx.environment
+    val datasourceUrlProp = "spring.datasource.url"
+    val pubsubEnabledProp = "spring.cloud.gcp.pubsub.enabled"
+    val gcpCoreEnabledProp = "spring.cloud.gcp.core.enabled"
+    val cloudVaultEnabledProp = "spring.cloud.vault.enabled"
+
+    val asciiArtTemplate = """
+----------------------------------------------------------
+	
+    Application '{}' is running!
+	Profiles: 	{}
+	TLS-version:   {}
+	Configuration: {}
+    Datasource url: {}
+    ${pubsubEnabledProp}: {} 
+    ${gcpCoreEnabledProp}: {} 
+    ${cloudVaultEnabledProp}: {} 
+    
+----------------------------------------------------------"""
+
+    logger.info(asciiArtTemplate, *listOf(
+        env.getProperty("spring.application.name"),
+        env.activeProfiles,
+        env.getProperty("jdk.tls.client.protocols", ""),
+        appCtx.getBean(NibasBackendConfigProps::class.java).toString(),
+        env.getProperty(datasourceUrlProp),
+        env.getProperty(pubsubEnabledProp),
+        env.getProperty(gcpCoreEnabledProp),
+        env.getProperty(cloudVaultEnabledProp),
+    ).toTypedArray())
 }
 
 fun <T> Optional<T>.unwrap(): T? = orElse(null)
