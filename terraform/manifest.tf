@@ -35,6 +35,10 @@ resource "kubernetes_manifest" "nibas_backend_application" {
         {
           name  = "GOOGLE_CLOUD_PROJECT"
           value = var.nibas_project_id
+        },
+        {
+          name  = "SPRING_PROFILES_ACTIVE"
+          value = var.active_profiles
         }
       ]
       strategy = {

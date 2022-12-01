@@ -33,3 +33,7 @@ variable "nibas_project_id" {
 variable "sa_pub_sub_publisher" {
   type = string
 }
+
+variable "active_profiles" {
+  type = string
+}
