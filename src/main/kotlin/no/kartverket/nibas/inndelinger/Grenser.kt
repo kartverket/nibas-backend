@@ -245,9 +245,11 @@ fun flateToFeature(flate: Flate, kodelisteService: KodelisteService, version: In
 
     featureProperties = featureProperties.copy(metadata = metadataMapper.toMetadata(flate))
 
+
+
     return Feature(
         id = flate.id,
         properties = featureProperties,
-        geometry = MultiPolygon(coordinates = emptyList()),
+        geometry = flate.omraade?.toDto() ?: MultiPolygon(coordinates = emptyList()),
     )
 }
