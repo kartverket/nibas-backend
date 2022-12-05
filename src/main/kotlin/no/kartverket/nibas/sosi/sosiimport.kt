@@ -2,6 +2,9 @@ package no.kartverket.nibas.sosi
 
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.withIndex
 import kotlinx.coroutines.runBlocking
 import no.kartverket.nibas.sosi.common.SosiKoder
 import no.kartverket.nibas.sosi.deserializer.NibasSosiDeserializer
@@ -14,13 +17,13 @@ import no.kartverket.nibas.sosi.sosiimport.KommuneImporter
 import no.kartverket.nibas.sosi.sosiimport.NasjonImporter
 import no.kartverket.nibas.sosi.sosiimport.StemmekretsImporter
 import org.locationtech.jts.geom.Geometry
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Profile
 import org.springframework.core.env.Environment
 import org.springframework.core.io.DefaultResourceLoader
 import org.springframework.stereotype.Service
 import java.io.InputStream
-import java.util.logging.Logger
 import kotlin.system.measureTimeMillis
 
 
@@ -34,7 +37,7 @@ class SosiImportService(
     private val stemmekretsImporter: StemmekretsImporter,
     private val environment: Environment
 ) {
-    private val logger: Logger = Logger.getLogger(this::class.java.name)
+    private val logger = LoggerFactory.getLogger(this.javaClass.name)
     private final val targetGrunnkrets = "grunnkrets"
     private final val targetStemmekrets = "stemmekrets"
 
@@ -83,8 +86,10 @@ class SosiImportService(
         }
 
         admEnhetRoot?.let { importerAdministrativeEnheter(admEnhetRoot) }
-        grunnkretsRoot?.let { importerGrunnkretser(grunnkretsRoot, admEnhetRoot!!) }
-        stemmekretsRoot?.let { importerStemmekretser(stemmekretsRoot, admEnhetRoot!!) }
+        val resultsGrunnkrets = grunnkretsRoot?.let { importerGrunnkretser(grunnkretsRoot, admEnhetRoot!!) }
+        val resultsStemmekrets = stemmekretsRoot?.let { importerStemmekretser(stemmekretsRoot, admEnhetRoot!!) }
+        logResults("Grunnkrets import", resultsGrunnkrets)
+        logResults("Stemmekrets import", resultsStemmekrets)
     }
 
     private fun fileAsInputStream(filepath: String): InputStream = DefaultResourceLoader().getResource(filepath).file.inputStream()
@@ -113,28 +118,29 @@ class SosiImportService(
                 kommuneImporter.importerSosiKommune(entry.value)
             }
         }
-        logger.info("Took $millis ms to import")
+        logger.info("Took $millis ms to import Administrative enheter")
     }
 
-    fun importerGrunnkretser(grunnkretsRoot: SosiObjekt, admenhetRoot: SosiObjekt) {
+    fun importerGrunnkretser(grunnkretsRoot: SosiObjekt, admenhetRoot: SosiObjekt): List<Result<Unit>> {
         logger.info("Importing grunnkretser")
         val fylker = fylkesnumre.map { Fylkesnummer.fromValue(it) }
         val grunnkretser = filtrerKretser(grunnkretsRoot.getFlater(), fylker, SosiKoder.GRUNNKRETS)
 
         val kurver = grunnkretsRoot.getKurver()
         val grupperteGrunnkretser: Map<String?, List<SosiFlate>> = grunnkretser.groupBy { it.getGrunnkretsId()?.getGrunnkretsnummer() }
-        grupperteGrunnkretser.entries.forEachIndexed { index, entry ->
+        return grupperteGrunnkretser.entries.mapIndexed { index, entry ->
             try {
                 logger.info("Importing grunnkrets ${index + 1} of ${grupperteGrunnkretser.size} - LokalId = ${entry.value.first().getIdent()?.getLokalId()}")
                 grunnkretsImporter.importerSosiGrunnkrets(entry.value, kurver, admenhetRoot)
+                Result.success(Unit)
             } catch (ex: Exception) {
-                logger.warning("Klarte ikke å importere grunnkrets med lokalId ${entry.value.first().getIdent()?.getLokalId()}")
-                ex.printStackTrace()
+                logger.warn("Klarte ikke å importere grunnkrets med lokalId ${entry.value.first().getIdent()?.getLokalId()}")
+                Result.failure(ex)
             }
         }
     }
 
-    fun importerStemmekretser(stemmekretsRoot: SosiObjekt, admenhetRoot: SosiObjekt) {
+    fun importerStemmekretser(stemmekretsRoot: SosiObjekt, admenhetRoot: SosiObjekt): List<Result<Unit>> {
         logger.info("Importing stemmekretser")
         data class KommunalKretsKey(val kommunenummer: String, val stemmekretsnummer: String)
 
@@ -144,13 +150,14 @@ class SosiImportService(
         val grupperteStemmekretser = stemmekretser.groupBy { it.toKommunalKretsKey() }
 
         val kurver = stemmekretsRoot.getKurver()
-        grupperteStemmekretser.entries.forEachIndexed { index, entry ->
+        return grupperteStemmekretser.entries.mapIndexed { index, entry ->
             try {
                 logger.info("Importing stemmekrets ${index + 1} of ${grupperteStemmekretser.size} - LokalId = ${entry.value.first().getIdent()?.getLokalId()}")
                 stemmekretsImporter.importerSosiStemmekrets(entry.value, kurver, admenhetRoot)
+                Result.success(Unit)
             } catch (ex: Exception) {
-                logger.warning("Klarte ikke å importere stemmekrets med lokalId ${entry.value.first().getIdent()?.getLokalId()}")
-                ex.printStackTrace()
+                logger.warn("Klarte ikke å importere stemmekrets med lokalId ${entry.value.first().getIdent()?.getLokalId()}", ex)
+                Result.failure(ex)
             }
         }
     }
@@ -182,6 +189,22 @@ class SosiImportService(
             SosiKoder.GRUNNKRETS -> flate.getGrunnkretsId()?.getGrunnkretsnummer()
             else -> flate.getKommunenummer()
         }
+    }
+
+    private fun logResults(jobName: String, results: List<Result<Unit>>?) {
+        if (results.isNullOrEmpty()) {
+            logger.info("$jobName has no recorded results")
+            return
+        }
+        val groupedResults = results.groupingBy {
+            it.fold(
+                onSuccess = { "Success" },
+                onFailure = { ex -> ex.javaClass.name }
+            )
+        }.eachCount()
+        logger.info("Results for $jobName:")
+        logger.info("    Total: ${results.size}")
+        groupedResults.entries.forEach { (key, count) -> logger.info("    $key: $count") }
     }
 }
 

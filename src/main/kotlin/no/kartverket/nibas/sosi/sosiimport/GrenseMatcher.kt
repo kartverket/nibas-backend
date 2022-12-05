@@ -7,6 +7,7 @@ import no.kartverket.nibas.sosi.model.SosiFlate
 import no.kartverket.nibas.sosi.model.SosiGeometri
 import no.kartverket.nibas.sosi.model.SosiReferanse
 import org.locationtech.jts.geom.Coordinate
+import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.LineString
 import org.locationtech.jts.linearref.LengthIndexedLine
 import org.locationtech.jts.linearref.LengthLocationMap
@@ -107,7 +108,7 @@ object GrenseMatcher {
             start != null && slutt != null -> koordinater.first().equals2D(start) && koordinater.last().equals2D(slutt)
             start != null -> koordinater.first().equals2D(start)
             slutt != null -> koordinater.last().equals2D(slutt)
-            else -> throw RuntimeException("Trenger minimum ett koordinat for å kunne splitte grenser")
+            else -> throw GrenseMatchingException(grense.asLineString(), "Trenger minimum ett koordinat for å kunne splitte grenser")
         }
 
         return !koordinaterMatcher
@@ -144,7 +145,7 @@ object GrenseMatcher {
         }
 
         if (grenserSomDekker.isEmpty()) {
-            throw SosiImportException(grense.asLineString(), "Klarte ikke å matche grense.")
+            throw GrenseMatchingException(grense.asLineString(), "Klarte ikke å matche grense.")
         }
 
         return splittGrenser(ref, grense, grenserSomDekker)
@@ -162,3 +163,5 @@ data class SplitTilImport(val splitRef: SplitRef, val originalRef: SosiReferanse
         }
     }
 }
+
+data class GrenseMatchingException(val geometri: Geometry, override val message: String, override val cause: Throwable? = null): RuntimeException(message, cause)

@@ -14,11 +14,12 @@ class NibasImportApplication(val sosiImportService: SosiImportService) : Command
 
     override fun run(vararg args: String?) {
         sosiImportService.importNibas()
+        exitProcess(0)
     }
 
     companion object {
         @JvmStatic fun main(args: Array<String>) {
-            exitProcess(exit(SpringApplication.run(NibasImportApplication::class.java, *args)))
+            SpringApplication.run(NibasImportApplication::class.java, *args)
         }
     }
 }
