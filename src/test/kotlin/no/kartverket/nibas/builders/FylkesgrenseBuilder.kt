@@ -8,6 +8,7 @@ import no.kartverket.nibas.sporing.Gyldighet
 import org.locationtech.jts.geom.GeometryFactory
 import org.locationtech.jts.geom.LineString
 import java.time.LocalDate
+import java.time.ZonedDateTime
 
 const val LOKALID = "lokalId1"
 const val MYNDIGHET = "myndighet"
@@ -41,8 +42,8 @@ class FylkesgrenseBuilder(private val id: String = "1") {
 
     private var lokalid: String = LOKALID
     private var omtvistet: Boolean = true
-    private var endretdato: LocalDate = LocalDate.now()
-    private var datafangstdato: LocalDate = LocalDate.now()
+    private var endretdato: ZonedDateTime = ZonedDateTime.now()
+    private var datafangstdato: ZonedDateTime = ZonedDateTime.now()
     private var gyldigFra: LocalDate = LocalDate.now()
     private var dokumentasjonsreferanser: MutableList<Dokumentasjonsreferanse> = mutableListOf()
     private var kvalitet: PosisjonskvalitetEmbeddable = PosisjonskvalitetEmbeddable(
@@ -67,13 +68,13 @@ class FylkesgrenseBuilder(private val id: String = "1") {
         return fylkesgrense
     }
 
-    fun withEndretDato(dateTime: LocalDate): FylkesgrenseBuilder {
-        this.endretdato = dateTime
+    fun withEndretDato(zonedDateTime: ZonedDateTime): FylkesgrenseBuilder {
+        this.endretdato = zonedDateTime
         return this
     }
 
-    fun datafangstdato(dateTime: LocalDate): FylkesgrenseBuilder {
-        this.datafangstdato = dateTime
+    fun datafangstdato(zonedDateTime: ZonedDateTime): FylkesgrenseBuilder {
+        this.datafangstdato = zonedDateTime
         return this
     }
 

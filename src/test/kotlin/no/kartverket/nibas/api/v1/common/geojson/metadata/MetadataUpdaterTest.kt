@@ -22,6 +22,7 @@ import org.mockito.Mockito.anyString
 import org.mockito.Mockito.`when`
 import org.mockito.MockitoAnnotations
 import java.time.LocalDate
+import java.time.ZonedDateTime
 import java.util.*
 
 
@@ -36,10 +37,10 @@ internal class MetadataUpdaterTest {
 
     private lateinit var metadataUpdater: MetadataUpdater
 
-    private val oppdDato: LocalDate = LocalDate.now()
+    private val oppdDato: ZonedDateTime = ZonedDateTime.now()
     private val dataFanget = oppdDato.minusYears(1)
-    private val gyldigFraTidspunkt = oppdDato.minusMonths(6)
-    private val fastsettingsdato: LocalDate = oppdDato.minusMonths(5)
+    private val gyldigFraTidspunkt = oppdDato.minusMonths(6).toLocalDate()
+    private val fastsettingsdato = oppdDato.minusMonths(5).toLocalDate()
 
     private val link1 = dokLink(LINK_TEKST_1)
     private val link2 = dokLink(LINK_TEKST_2)

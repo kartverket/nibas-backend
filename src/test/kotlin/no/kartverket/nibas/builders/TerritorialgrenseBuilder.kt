@@ -8,12 +8,13 @@ import no.kartverket.nibas.domain.Landkode
 import no.kartverket.nibas.domain.PosisjonskvalitetEmbeddable
 import no.kartverket.nibas.sporing.Gyldighet
 import java.time.LocalDate
+import java.time.ZonedDateTime
 
 class TerritorialgrenseBuilder {
 
     private var lokalid: String = LOKALID
-    private var endretdato: LocalDate = LocalDate.now()
-    private var datafangstdato: LocalDate = LocalDate.now()
+    private var endretdato: ZonedDateTime = ZonedDateTime.now()
+    private var datafangstdato: ZonedDateTime = ZonedDateTime.now()
     private var gyldigFra: LocalDate = LocalDate.now()
     private var dokumentasjonsreferanser: MutableList<Dokumentasjonsreferanse> = mutableListOf()
     private var kvalitet: PosisjonskvalitetEmbeddable = PosisjonskvalitetEmbeddable(
@@ -44,13 +45,13 @@ class TerritorialgrenseBuilder {
         return territorialgrense
     }
 
-    fun withEndretDato(dateTime: LocalDate): TerritorialgrenseBuilder {
-        this.endretdato = dateTime
+    fun withEndretDato(zonedDateTime: ZonedDateTime): TerritorialgrenseBuilder {
+        this.endretdato = zonedDateTime
         return this
     }
 
-    fun datafangstdato(dateTime: LocalDate): TerritorialgrenseBuilder {
-        this.datafangstdato = dateTime
+    fun datafangstdato(zonedDateTime: ZonedDateTime): TerritorialgrenseBuilder {
+        this.datafangstdato = zonedDateTime
         return this
     }
 

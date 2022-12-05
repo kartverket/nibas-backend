@@ -10,13 +10,14 @@ services:
     volumes:
       - db_volume:/var/lib/postgresql
   database:
-    image: ghcr.io/kartverket/nibas-db:v0.0.1
+    image: postgis/postgis
     ports:
       - "5432:5432"
     environment:
-      - NIBAS_USER_PW=nibas
+      - POSTGRES_USER=nibas
       - POSTGRES_PASSWORD=nibas
-      - POSTGRES_DB=nibas
+      - TZ=Europe/Oslo
+      - PGTZ=Europe/Oslo
 volumes:
   db_volume: {}
 

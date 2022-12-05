@@ -150,7 +150,7 @@ data class FylkeResponse(
     val samiskforvaltningsomraade: Boolean,
 
     @Schema(description = "Angir når dette fylket ble sist oppdatert")
-    val oppdateringsdato: LocalDate,
+    val oppdateringsdato: ZonedDateTime,
 
     @Schema(description = "Geometrien til fylket. Ikke grenser")
     val features: FeatureCollection,
@@ -177,7 +177,7 @@ data class KommuneResponse(
     val samiskforvaltningsomraade: Boolean,
 
     @Schema(description = "Angir når denne kommunen ble sist oppdatert")
-    val oppdateringsdato: LocalDate,
+    val oppdateringsdato: ZonedDateTime,
 
     @Schema(description = "Geometrien til kommunen. Ikke grenser")
     val features: FeatureCollection,
@@ -204,7 +204,7 @@ data class GrunnkretsResponse(
     val gyldighet: GyldighetResponse,
 
     @Schema(description = "Siste oppdateringstidspunkt for objektet")
-    val oppdateringsdato: LocalDate,
+    val oppdateringsdato: ZonedDateTime,
 
     @Schema(description = "Typen endring som ble gjort på objektet")
     val endringstype: String?,
@@ -327,7 +327,7 @@ data class UtkastResponse(
 @Schema(description = "Representasjon av audit info for et objekt.")
 data class AuditInfoResponse(
     @Schema(description = "Da objektet sist ble oppdatert.")
-    val oppdateringsdato: LocalDate
+    val oppdateringsdato: ZonedDateTime
 )
 
 /**

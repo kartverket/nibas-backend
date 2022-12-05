@@ -10,6 +10,7 @@ import org.locationtech.jts.geom.MultiPolygon
 import org.locationtech.jts.geom.Point
 import org.locationtech.jts.geom.Polygon
 import java.time.LocalDate
+import java.time.ZonedDateTime
 import java.util.*
 import javax.persistence.Column
 import javax.persistence.Embedded
@@ -42,10 +43,10 @@ abstract class StatistiskEnhet(
     var objtype: String? = null
 
     @Column(name = "datafangstdato")
-    override var datafangstdato: LocalDate? = null
+    override var datafangstdato: ZonedDateTime? = null
 
     @Column(name = "foerstedigitaliseringsdato")
-    override var foerstedigitaliseringsdato: LocalDate = LocalDate.now()
+    override var foerstedigitaliseringsdato: ZonedDateTime = ZonedDateTime.now()
 
     @Column(name = "opphav")
     override var opphav: String? = null

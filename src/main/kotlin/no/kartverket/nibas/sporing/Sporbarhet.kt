@@ -16,6 +16,7 @@ import org.springframework.core.env.Environment
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Component
 import java.time.LocalDate
+import java.time.ZonedDateTime
 import javax.annotation.PostConstruct
 import javax.persistence.Column
 import javax.persistence.Embeddable
@@ -103,13 +104,13 @@ interface Laasbar {
 
 @Embeddable
 data class AuditInfo(
-    @Column(name = "endretdato", nullable = false) var endretdato: LocalDate = LocalDate.now(),
+    @Column(name = "endretdato", nullable = false) var endretdato: ZonedDateTime = ZonedDateTime.now(),
     @Column(name = "endretav", nullable = false) var endretAv: String = "import",
     @Column(name = "typeendring", nullable = false) var typeEndring: Endringstype = Endringstype.IMPORT
 ) {
     fun onUpdate(user: String) {
         endretAv = user
-        endretdato = LocalDate.now()
+        endretdato = ZonedDateTime.now()
     }
 }
 

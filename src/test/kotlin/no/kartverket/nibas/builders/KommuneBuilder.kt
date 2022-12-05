@@ -9,6 +9,7 @@ import no.kartverket.nibas.sporing.Gyldighet
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
 import java.time.LocalDate
+import java.time.ZonedDateTime
 
 class KommuneBuilder(
     private val id: String = "1",
@@ -17,7 +18,7 @@ class KommuneBuilder(
     private var navn: String = "Vestland",
     private var spraak: String = "NOR",
     private var samiskforvaltningsomraade: Boolean = false,
-    private var endretdato: LocalDate = LocalDate.now(),
+    private var endretdato: ZonedDateTime = ZonedDateTime.now(),
     private var grunnkretser: MutableList<Grunnkrets> = mutableListOf(),
     private var stemmekretser: MutableList<Stemmekrets> = mutableListOf(),
     private var gyldigFra: LocalDate = LocalDate.now(),

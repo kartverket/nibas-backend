@@ -8,6 +8,7 @@ import no.kartverket.nibas.api.v1.response.Kommunenummer
 import no.kartverket.nibas.domain.ContainsSosiIdentifikasjon
 import no.kartverket.nibas.domain.PosisjonskvalitetEmbeddable
 import java.time.LocalDate
+import java.time.ZonedDateTime
 
 const val FLATE_METADATA_SCHEMA: String = "FlateMetadata"
 const val ADMINISTRATIV_GRENSE_METADATA_SCHEMA: String = "AdministrativGrenseMetadata"
@@ -171,7 +172,7 @@ data class CommonMetadata(
     @Schema(description = "Unik identifikasjon av et objekt")
     var identifikasjon: Identifikasjon,
     @Schema(description = "Dato når objektet siste gang ble registrert/observert/målt i terrenget")
-    var datafangstdato: LocalDate? = null,
+    var datafangstdato: ZonedDateTime? = null,
     @Schema(description = "Tidspunktet når objektet oppstod i den virkelige verden")
     var gyldigFra: LocalDate,
     @Schema(description = "Tidspunktet når objektet opphørte å eksistere i den virkelige verden")
@@ -245,5 +246,5 @@ data class Dokref(
 
 data class Sporingsinformasjon(
     @Schema(description = "Dato for siste endring på objektdataene")
-    var oppdateringsdato: LocalDate = LocalDate.now()
+    var oppdateringsdato: ZonedDateTime = ZonedDateTime.now()
 )

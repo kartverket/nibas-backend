@@ -23,7 +23,10 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.Month
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import org.mockito.Mockito.`when` as whenever
 
 /**
@@ -51,8 +54,8 @@ class UtkastServiceIT : TestWithDbContainer() {
     private val grunnkretsnr1234 = "1234"
     private val grunnkretsnr4589 = "4589"
 
-    private val october23In2022 = LocalDate.of(2022, Month.OCTOBER, 23)
-    private val october24In2022 = LocalDate.of(2022, Month.OCTOBER, 24)
+    private val october23In2022 = ZonedDateTime.of(LocalDateTime.of(2022, Month.OCTOBER, 23, 12, 0), ZoneId.systemDefault())
+    private val october24In2022 = ZonedDateTime.of(LocalDateTime.of(2022, Month.OCTOBER, 24, 12, 0), ZoneId.systemDefault())
     private val november25In2022 = LocalDate.of(2022, Month.NOVEMBER, 25)
     private val january1In2023 = LocalDate.of(2023, Month.JANUARY, 1)
     private val july1In2023 = LocalDate.of(2023, Month.JULY, 1)
@@ -349,7 +352,7 @@ class UtkastServiceIT : TestWithDbContainer() {
     }
 
     private fun saveAndPubliserUtkast(navn: String, grkrNr: String, grkrNavn: String,
-                                      oppdateringsdato: LocalDate, gyldigFra: LocalDate, version: Int) {
+                                      oppdateringsdato: ZonedDateTime, gyldigFra: LocalDate, version: Int) {
         val utkastId = saveutkast(navn, grkrNavn, grkrNr, version, oppdateringsdato, gyldigFra)
         publiser(utkastId)
     }
@@ -361,7 +364,7 @@ class UtkastServiceIT : TestWithDbContainer() {
 
     private fun saveutkast(
         navn: String,
-        oppdateringsdato: LocalDate,
+        oppdateringsdato: ZonedDateTime,
         gyldigFra: LocalDate,
         grunnkretsRequest: GrunnkretsRequest
     ): String {
@@ -380,7 +383,7 @@ class UtkastServiceIT : TestWithDbContainer() {
         grkrNavn: String,
         grkrNr: String,
         version: Int,
-        oppdateringsdato: LocalDate,
+        oppdateringsdato: ZonedDateTime,
         gyldigFra: LocalDate
     ): String = saveutkast(navn, oppdateringsdato, gyldigFra, createGrunnkretsRequest(grkrNavn, grkrNr, version))
 

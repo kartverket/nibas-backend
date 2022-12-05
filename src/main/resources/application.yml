@@ -60,6 +60,10 @@ spring:
       # properties:
       # hibernate:
     # format_sql: true
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: "Europe/Oslo"
 
   jackson:
     time-zone: "Europe/Oslo"

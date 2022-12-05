@@ -55,7 +55,7 @@ class FeatureBuilder(private val id: String? = "1") {
         if (metadata == null) {
             val commonMetadata = CommonMetadata(
                 identifikasjon = Identifikasjon(lokalid),
-                sporingsinformasjon = Sporingsinformasjon(oppdateringsdato = ZonedDateTime.now().toLocalDate()),
+                sporingsinformasjon = Sporingsinformasjon(oppdateringsdato = ZonedDateTime.now()),
                 gyldigFra = LocalDate.now()
             )
             metadata = when (grenseType) {

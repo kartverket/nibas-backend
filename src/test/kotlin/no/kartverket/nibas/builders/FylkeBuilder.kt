@@ -7,6 +7,7 @@ import no.kartverket.nibas.domain.Spraakkode
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
 import java.time.LocalDate
+import java.time.ZonedDateTime
 
 class FylkeBuilder(private val id: String = "1") {
     private var objtype: String = "Fylke"
@@ -15,7 +16,7 @@ class FylkeBuilder(private val id: String = "1") {
     private var navn = "Vestland"
     private var spraak = "NOR"
     private var samiskforvaltningsomraade = false
-    private var endretdato: LocalDate = LocalDate.now()
+    private var endretdato: ZonedDateTime = ZonedDateTime.now()
     private var kommune: Kommune = Kommune()
     private var version: Int = 1
 

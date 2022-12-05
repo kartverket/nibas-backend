@@ -9,7 +9,10 @@ import no.kartverket.nibas.inndelinger.flateToFeature
 import no.kartverket.nibas.inndelinger.posisjonToFeature
 import no.kartverket.nibas.kodelister.KodelisteService
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.Month
+import java.time.ZoneId
+import java.time.ZonedDateTime
 
 class GrunnkretsResponseBuilder(
     private val kodelisteService: KodelisteService,
@@ -17,7 +20,7 @@ class GrunnkretsResponseBuilder(
     private var kommunenummer: String = "1787",
     private var version: Int = 1,
     private var gyldighetResponse: GyldighetResponse = GyldighetResponse(LocalDate.of(2022, Month.JANUARY, 1), null),
-    private var oppdateringsdato: LocalDate = LocalDate.of(2022, Month.AUGUST, 1),
+    private var oppdateringsdato: ZonedDateTime = ZonedDateTime.of(LocalDateTime.of(2022, Month.AUGUST, 1, 12, 0), ZoneId.systemDefault()),
     private var endringstype: String = "Kvalitetsheving"
 ) {
 

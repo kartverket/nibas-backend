@@ -11,6 +11,7 @@ import no.kartverket.nibas.sporing.Gyldighet
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
 import java.time.LocalDate
+import java.time.ZonedDateTime
 
 class GrunnkretsBuilder(
     private val id: String = "1",
@@ -19,8 +20,8 @@ class GrunnkretsBuilder(
     private var grunnkretsnavn: String = "Dåsvatn",
     private var grenser: MutableSet<Grense> = mutableSetOf(),
     private var kommune: Kommune = KommuneBuilder.DEFAULT_KOMMUNE,
-    private var endretdato: LocalDate = LocalDate.now(),
-    private var datafangstdato: LocalDate = LocalDate.now(),
+    private var endretdato: ZonedDateTime = ZonedDateTime.now(),
+    private var datafangstdato: ZonedDateTime = ZonedDateTime.now(),
     private var gyldigFra: LocalDate = LocalDate.now(),
     private var gyldigTil: LocalDate? = null,
     private var slettet: Boolean = false,
@@ -68,13 +69,13 @@ class GrunnkretsBuilder(
         return this
     }
 
-    fun withEndretDato(dateTime: LocalDate): GrunnkretsBuilder {
-        this.endretdato = dateTime
+    fun withEndretDato(zonedDateTime: ZonedDateTime): GrunnkretsBuilder {
+        this.endretdato = zonedDateTime
         return this
     }
 
-    fun withDatafangstdato(dateTime: LocalDate): GrunnkretsBuilder {
-        this.datafangstdato = dateTime
+    fun withDatafangstdato(zonedDateTime: ZonedDateTime): GrunnkretsBuilder {
+        this.datafangstdato = zonedDateTime
         return this
     }
 

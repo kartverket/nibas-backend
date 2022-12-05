@@ -7,6 +7,7 @@ import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.LineString
 import java.time.LocalDate
+import java.time.ZonedDateTime
 
 open class SosiGeometri(type: String, niva: Int, verdier: MutableList<SosiVerdi>) :
     SosiObjekt(type = type, niva, verdier = verdier) {
@@ -40,7 +41,7 @@ open class SosiGeometri(type: String, niva: Int, verdier: MutableList<SosiVerdi>
     fun getFastsettingstype(): String? = getVerdiAvBarn(SosiKoder.FASTSETTINGSTYPE)
     fun getGyldigFra(): LocalDate = stringAsDate(getVerdiAvBarn(SosiKoder.GYLDIGFRA)) ?: LocalDate.now()
     fun getGyldigTil(): LocalDate? = stringAsDate(getVerdiAvBarn(SosiKoder.GYLDIGTIL))
-    fun getDatafangstDato(): LocalDate? = stringAsDate(getVerdiAvBarn(SosiKoder.DATAFANGSTDATO))
+    fun getDatafangstDato(): ZonedDateTime? = stringAsZonedDateTime(getVerdiAvBarn(SosiKoder.DATAFANGSTDATO))
     fun getGrensestatus(): String? = getVerdiAvBarn(SosiKoder.GRENSESTATUS)
     fun getFolgerTerrengdetalj(): String? = getVerdiAvBarn(SosiKoder.FOLGERTERRENGDETALJ)
     fun getKvalitet(): SosiKvalitet? = barn.find { it is SosiKvalitet } as? SosiKvalitet

@@ -22,6 +22,7 @@ import org.mockito.Mock
 import org.mockito.Mockito.`when`
 import org.mockito.MockitoAnnotations
 import java.time.LocalDate
+import java.time.ZonedDateTime
 
 /**
  * Enhetstest av MetadataMapper.
@@ -39,13 +40,13 @@ internal class MetadataMapperTest {
 
     private lateinit var metadataMapper: MetadataMapper
 
-    private val oppdateringsdato: LocalDate = LocalDate.now()
+    private val oppdateringsdato: ZonedDateTime = ZonedDateTime.now()
     private val dataFanget = oppdateringsdato.minusYears(1)
-    private val gyldigFraTidspunkt = oppdateringsdato.minusMonths(6)
-    private val gyldigTilTidspunkt = oppdateringsdato.plusMonths(12)
-    private val fastsettingsdato: LocalDate = oppdateringsdato.minusMonths(5)
-    private val beregningsdato: LocalDate = oppdateringsdato.minusWeeks(17)
-    private val transformasjonsdato: LocalDate = oppdateringsdato.minusDays(19)
+    private val gyldigFraTidspunkt = oppdateringsdato.minusMonths(6).toLocalDate()
+    private val gyldigTilTidspunkt = oppdateringsdato.plusMonths(12).toLocalDate()
+    private val fastsettingsdato: LocalDate = oppdateringsdato.minusMonths(5).toLocalDate()
+    private val beregningsdato: LocalDate = oppdateringsdato.minusWeeks(17).toLocalDate()
+    private val transformasjonsdato: LocalDate = oppdateringsdato.minusDays(19).toLocalDate()
 
     private val link1 = dokLink(LINK_TEKST_1)
     private val link2 = dokLink(LINK_TEKST_2)

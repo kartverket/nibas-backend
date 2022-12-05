@@ -7,6 +7,7 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.Posisjonskvalitet
 import no.kartverket.nibas.sporing.Gyldig
 import no.kartverket.nibas.sporing.Sporbar
 import java.time.LocalDate
+import java.time.ZonedDateTime
 import java.util.function.Supplier
 import javax.persistence.Column
 import javax.persistence.Embeddable
@@ -27,8 +28,8 @@ data class PosisjonskvalitetEmbeddable(
 
 // Felles egenskaper for grenser, adm_enheter, punkter ++
 interface CommonMetadataProperties : ContainsSosiIdentifikasjon, Sporbar, Gyldig {
-    var datafangstdato: LocalDate?
-    val foerstedigitaliseringsdato: LocalDate
+    var datafangstdato: ZonedDateTime?
+    val foerstedigitaliseringsdato: ZonedDateTime
     var opphav: String?
     fun getInfo(): String?
     fun setInfo(updatedInfo: String?)

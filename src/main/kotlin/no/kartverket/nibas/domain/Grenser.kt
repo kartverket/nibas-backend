@@ -9,6 +9,7 @@ import no.kartverket.nibas.sporing.Laasbar
 import org.hibernate.envers.Audited
 import org.locationtech.jts.geom.LineString
 import java.time.LocalDate
+import java.time.ZonedDateTime
 import java.util.*
 import javax.persistence.CascadeType
 import javax.persistence.Column
@@ -55,10 +56,10 @@ class Grense(
     var objtype: String? = grensetype.value
 
     @Column(name = "datafangstdato")
-    override var datafangstdato: LocalDate? = null
+    override var datafangstdato: ZonedDateTime? = null
 
     @Column(name = "foerstedigitaliseringsdato", nullable = false, updatable = false)
-    override val foerstedigitaliseringsdato: LocalDate = LocalDate.now()
+    override val foerstedigitaliseringsdato: ZonedDateTime = ZonedDateTime.now()
 
     @Column(name = "opphav")
     override var opphav: String? = null

@@ -9,6 +9,7 @@ import org.hibernate.envers.Audited
 import org.locationtech.jts.geom.MultiPolygon
 import org.locationtech.jts.geom.Point
 import java.time.LocalDate
+import java.time.ZonedDateTime
 import java.util.*
 import javax.persistence.Column
 import javax.persistence.Embedded
@@ -42,7 +43,7 @@ abstract class KommunalKrets(
     override var version: Int = 1
 
     @Column(name = "datafangstdato")
-    override var datafangstdato: LocalDate? = null
+    override var datafangstdato: ZonedDateTime? = null
 
     @Column(name = "opphav")
     override var opphav: String? = null
@@ -54,7 +55,7 @@ abstract class KommunalKrets(
     override var omraade: MultiPolygon? = null
 
     @Column(name = "foerstedigitaliseringsdato")
-    override var foerstedigitaliseringsdato: LocalDate = LocalDate.now()
+    override var foerstedigitaliseringsdato: ZonedDateTime = ZonedDateTime.now()
 
     @Suppress("UNCHECKED_CAST")
     fun <T : GrenseKobling> oppdaterSamling(grense: Grense, attributter: GrenseKoblingAttributter, samling: MutableSet<T>, default: GrenseKobling) {

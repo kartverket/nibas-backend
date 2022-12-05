@@ -8,6 +8,7 @@ import no.kartverket.nibas.sporing.Gyldighet
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
 import java.time.LocalDate
+import java.time.ZonedDateTime
 
 class StemmekretsBuilder(private val id: String = "1") {
 
@@ -19,8 +20,8 @@ class StemmekretsBuilder(private val id: String = "1") {
     private var tellekretsnavn = "Nordre Follo Tellekrets"
     private var tellekretsnummer = "98"
 
-    private var endretdato: LocalDate = LocalDate.now()
-    private var datafangstdato: LocalDate = LocalDate.now()
+    private var endretdato: ZonedDateTime = ZonedDateTime.now()
+    private var datafangstdato: ZonedDateTime = ZonedDateTime.now()
     private var gyldigFra: LocalDate = LocalDate.now()
     private var gyldigTil: LocalDate? = null
     private var informasjonstekst = INFORMASJONTEKST
@@ -63,8 +64,8 @@ class StemmekretsBuilder(private val id: String = "1") {
         return this
     }
 
-    fun withDatafangstdato(dateTime: LocalDate): StemmekretsBuilder {
-        this.datafangstdato = dateTime
+    fun withDatafangstdato(zonedDateTime: ZonedDateTime): StemmekretsBuilder {
+        this.datafangstdato = zonedDateTime
         return this
     }
 

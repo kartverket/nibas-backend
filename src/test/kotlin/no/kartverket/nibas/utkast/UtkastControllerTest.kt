@@ -47,7 +47,10 @@ import org.springframework.http.HttpStatus
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.Month
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import org.mockito.Mockito.`when` as whenever
 
 
@@ -83,7 +86,9 @@ internal class UtkastControllerTest : NibasMvcTest() {
     @Test
     fun hentUtkastGir200OK() {
         val navn = "Utkastet mitt"
-        val syvendeJuli = LocalDate.of(2022, Month.JULY, 7)
+
+
+        val syvendeJuli = ZonedDateTime.of(LocalDateTime.of(2022, Month.JULY, 7, 12, 0), ZoneId.systemDefault())
         val dummy = "DUMMY"
         val foersteJanuar = LocalDate.of(2024, Month.JANUARY, 1)
         val kommuneRequests = mapOf("UUID-1" to KommuneRequestBuilder.DEFAULT_REQUEST)
@@ -128,7 +133,7 @@ internal class UtkastControllerTest : NibasMvcTest() {
         val gyldigFra = LocalDate.of(2024, Month.JANUARY, 1)
         val utkastNavn = "Navn 345"
         val endretAv = "DUMMY"
-        val oppdateringsdato = LocalDate.of(2022, Month.SEPTEMBER, 26)
+        val oppdateringsdato = ZonedDateTime.of(LocalDateTime.of(2022, Month.SEPTEMBER, 26, 12, 0), ZoneId.systemDefault())
         val utkastEtterOppdatering = UtkastBuilder.builder(utkastNavn)
             .withKommuneRequests(mapOf("1234" to KommuneRequestBuilder.DEFAULT_REQUEST))
             .withAuditInfo(AuditInfo(oppdateringsdato, endretAv, Endringstype.KVALITETSHEVING))

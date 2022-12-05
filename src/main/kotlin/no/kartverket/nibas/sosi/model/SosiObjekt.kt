@@ -1,8 +1,11 @@
 package no.kartverket.nibas.sosi.model
 
 import java.io.PrintStream
+import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 open class SosiObjekt(
@@ -18,16 +21,17 @@ open class SosiObjekt(
     companion object {
         val SOSI_DATOFORMAT = DateTimeFormatter.ofPattern("yyyyMMdd")
     }
+
     fun harBarn(): Boolean = barn.size > 0
     fun getVerdierAvBarn(type: String): List<String> = barn.filter { it.type == type }.flatMap { it.verdier }.map { it.verdi }
-    fun getVerdiAvBarn(type: String): String? = barn.find{ it.type == type}?.verdier?.getOrNull(0)?.verdi
+    fun getVerdiAvBarn(type: String): String? = barn.find { it.type == type }?.verdier?.getOrNull(0)?.verdi
     fun getKurver(): List<SosiKurve> = barn.filter { it is SosiKurve }.map { it as SosiKurve }
     fun getFlater(): List<SosiFlate> = barn.filter { it is SosiFlate }.map { it as SosiFlate }
     fun getBuep(): List<SosiBuep> = barn.filter { it is SosiBuep }.map { it as SosiBuep }
     fun getHode(): SosiHode? = barn.find { it is SosiHode } as? SosiHode
 
     fun getVerdiMedIndex(index: Int): String? {
-        return when(verdier.size > index) {
+        return when (verdier.size > index) {
             true -> verdier[index].verdi
             false -> null
         }
@@ -39,8 +43,8 @@ open class SosiObjekt(
     }
 
     fun fjernBarnUtenVerdierEllerBarn(): SosiObjekt {
-        barn.forEach  { it.fjernBarnUtenVerdierEllerBarn() }
-        barn.removeIf { it.barn.isEmpty() && it.verdier.isEmpty()}
+        barn.forEach { it.fjernBarnUtenVerdierEllerBarn() }
+        barn.removeIf { it.barn.isEmpty() && it.verdier.isEmpty() }
         return this
     }
 
@@ -81,6 +85,11 @@ open class SosiObjekt(
 
     protected fun stringAsDate(verdi: String?): LocalDate? = when (verdi) {
         null -> null
-        else -> LocalDate.parse(verdi.substring(0,8), SOSI_DATOFORMAT)
+        else -> stringAsZonedDateTime(verdi)?.toLocalDate()
+    }
+
+    protected fun stringAsZonedDateTime(verdi: String?): ZonedDateTime? = when (verdi) {
+        null -> null
+        else -> ZonedDateTime.of(LocalDate.parse(verdi.substring(0, 8), SOSI_DATOFORMAT).atStartOfDay(), ZoneId.systemDefault())
     }
 }

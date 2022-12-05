@@ -9,6 +9,7 @@ import org.hibernate.envers.Audited
 import org.locationtech.jts.geom.MultiPolygon
 import org.locationtech.jts.geom.Point
 import java.time.LocalDate
+import java.time.ZonedDateTime
 import java.util.*
 import javax.persistence.Column
 import javax.persistence.Embedded
@@ -45,7 +46,7 @@ abstract class AdministrativEnhet(
     override var opphav: String? = null
 
     @Column(name = "datafangstdato")
-    override var datafangstdato: LocalDate? = null
+    override var datafangstdato: ZonedDateTime? = null
 
     @Column(name = "posisjon")
     var posisjon: Point? = null
@@ -54,7 +55,7 @@ abstract class AdministrativEnhet(
     override var omraade: MultiPolygon? = null
 
     @Column(name = "foerstedigitaliseringsdato")
-    override var foerstedigitaliseringsdato: LocalDate = LocalDate.now()
+    override var foerstedigitaliseringsdato: ZonedDateTime = ZonedDateTime.now()
 
     @javax.persistence.Transient
     var administrativenhetnavn: MutableSet<Administrativenhetnavn> = mutableSetOf()
