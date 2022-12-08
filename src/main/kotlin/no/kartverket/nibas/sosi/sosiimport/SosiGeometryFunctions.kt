@@ -5,6 +5,7 @@ import no.kartverket.nibas.domain.getGrenseJustertForRetning
 import no.kartverket.nibas.sosi.model.SosiKoordinat
 import no.kartverket.nibas.sosi.model.SosiNordOest
 import org.locationtech.jts.geom.Coordinate
+import org.locationtech.jts.geom.CoordinateList
 import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.GeometryFactory
 import org.locationtech.jts.geom.LineString
@@ -148,12 +149,14 @@ object SosiGeometryFunctions {
      */
     private fun GeometryFactory.createLinearRingFromLineStrings(lineStrings: List<LineString>): LinearRing {
         val coordinates: Array<Coordinate> = createMultiLineString(lineStrings.toTypedArray()).coordinates
+        val coordinateList = CoordinateList(coordinates, false)
         try {
-            return createLinearRing(coordinates)
+            return createLinearRing(coordinateList.toCoordinateArray())
         } catch (exception: Exception) {
             throw GeometriFailedToBeCreatedException(coordinateToPoint(coordinates[0]), exception)
         }
     }
+
 }
 
 class GeometriFailedToBeCreatedException(val point: Point, rootEx: Exception? = null)

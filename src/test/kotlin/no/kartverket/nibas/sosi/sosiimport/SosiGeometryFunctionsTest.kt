@@ -54,6 +54,24 @@ internal class SosiGeometryFunctionsTest {
     }
 
     @Test
+    fun repeterendePunkterFjernesIFlate() {
+        val a = Coordinate(0.0, 0.0)
+        val b = Coordinate(100.0, 0.0)
+        val c = Coordinate(100.0, 100.0)
+        val d = Coordinate(0.0, 100.0)
+
+        val grenseAB = grunnkretsGrenseKobling(listOf(a, b), 1)
+        val grenseBC = grunnkretsGrenseKobling(listOf(b, c), 2)
+        val grenseCD = grunnkretsGrenseKobling(listOf(c, d), 3)
+        val grenseDA = grunnkretsGrenseKobling(listOf(d, a), 4)
+
+        val grenseKoblinger = setOf(grenseAB, grenseBC, grenseCD, grenseDA)
+        val flate = SosiGeometryFunctions.beregnFlate(grenseKoblinger)
+        assertThat(flate.numPoints).isEqualTo(5) // De 4 koordinatene, samt at flaten lukkes og får med start-koordinatet helt til slutt
+    }
+
+
+    @Test
     fun thatDekkerReturnsTrueWhenCoverdByBothInBufferAndOnGeometry() {
         val skalDekke = SosiGeometryFunctions.getGeometryFactory().createLineString(arrayOf(Coordinate(0.0,0.0), Coordinate(0.0, 1.0), Coordinate(0.0, 2.0), Coordinate(0.0, 3.0)))
         val paaLinjen = SosiGeometryFunctions.getGeometryFactory().createPoint(Coordinate(0.0, 1.0))
