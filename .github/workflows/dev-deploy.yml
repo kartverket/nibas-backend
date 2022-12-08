@@ -82,7 +82,7 @@ jobs:
       pull-requests: write
       contents: read
       packages: write
-    uses: kartverket/github-workflows/.github/workflows/run-terraform.yml@v3.0.3
+    uses: kartverket/github-workflows/.github/workflows/run-terraform.yml@v3.1.0
     with:
       runner: atkv1-dev
       environment: dev
