@@ -3,6 +3,9 @@ management:
     enabled-by-default: false
     web:
       exposure:
+        include: 'info, health'
+    jmx:
+      exposure:
         include: '*'
   endpoint:
     info:
@@ -10,6 +13,8 @@ management:
     health:
       enabled: true
     metrics:
+      enabled: true
+    env:
       enabled: true
   info:
     env:
