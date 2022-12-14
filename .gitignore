@@ -38,3 +38,5 @@ out/
 .vscode/
 
 .jpb/
+.DS_Store
+.fleet/

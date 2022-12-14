@@ -401,4 +401,9 @@ data class GyldighetResponse(
     val gyldigTil: LocalDate?,
 )
 
+data class AuthZStatusResponse(
+    @Schema(description = "Status for autorisering")
+    val authorized: Boolean = true
+)
+
 fun Gyldighet.toGyldighetResponse(): GyldighetResponse = GyldighetResponse(this.gyldigFra, this.gyldigTil)
