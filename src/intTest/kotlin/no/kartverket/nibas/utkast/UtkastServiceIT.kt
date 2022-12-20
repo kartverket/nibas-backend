@@ -12,6 +12,8 @@ import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
+import no.kartverket.nibas.repository.GrunnkretsRepository
+import no.kartverket.nibas.repository.UtkastRepository
 import no.kartverket.nibas.sporing.AuditInfo
 import no.kartverket.nibas.sporing.Gyldighet
 import no.kartverket.nibas.sporing.UserFacade
@@ -42,6 +44,10 @@ class UtkastServiceIT : TestWithDbContainer() {
 
     @Autowired
     private lateinit var utkastService: UtkastService
+    @Autowired
+    private lateinit var utkastRepository: UtkastRepository
+    @Autowired
+    private lateinit var grunnkretsRepository: GrunnkretsRepository
 
     private val lokalidOfGrunnkrets = "c54fb55e-15d0-4528-8b88-f58d6c74bd87"
 

@@ -1,26 +1,31 @@
 package no.kartverket.nibas.inndelinger
 
+import com.ninjasquad.springmockk.MockkBean
+import io.mockk.every
+import io.mockk.mockkStatic
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.builders.FylkeBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.builders.NasjonBuilder
 import no.kartverket.nibas.builders.NasjonRequestBuilder
+import no.kartverket.nibas.common.Identifikator
+import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.NasjonRepository
+import no.kartverket.nibas.repository.REPOSITORY_EXTENSIONS_FILEPATH
+import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.anyString
 import org.mockito.Mockito.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.mock.mockito.MockBean
-import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
-import org.mockito.Mockito.`when` as whenever
 
 fun assertGrensekoblinger(grenseKoblinger: Set<GrenseKobling>, grensetype: Grensetype, size: Int, msg: String) {
     assertThat(grenseKoblinger.map { it.grense }
@@ -41,14 +46,25 @@ class NasjonServiceTest {
     @MockBean
     private lateinit var administrativenhetnavnRepository: AdministrativenhetnavnRepository
 
+    @MockkBean
+    private lateinit var nasjonRepositoryKotlinMock: NasjonRepository
+
+    @BeforeEach
+    fun beforeEach() {
+        // Bruker her SpringMockK for å kunne mocke ut kall til extension functions
+        mockkStatic(REPOSITORY_EXTENSIONS_FILEPATH)
+    }
+
     @Test
     fun hentGrenserForNasjonReturnsNullWhenNasjonNotFound() {
-        whenever(nasjonRepository.findById(anyString())).thenReturn(Optional.empty())
-        assertThat(nasjonService.hentGrenserForNasjon("1")).isEmpty()
+        val nasjonIdentifikator = returnNullForLokalid1()
+        assertThat(nasjonService.hentGrenserForNasjon(nasjonIdentifikator)).isEmpty()
     }
 
     @Test
     fun hentGrenserForNasjonReturnsTheCorrectBorders() {
+        val nasjonIdentifikator = Identifikator(lokalid = Lokalid("1"))
+
         val nasjon = NasjonBuilder()
             .withFylke(FylkeBuilder()
                 .withKommune(KommuneBuilder()
@@ -65,10 +81,9 @@ class NasjonServiceTest {
                     .build())
                 .build())
             .build()
+        every { nasjonRepositoryKotlinMock.findGyldigObjektForIdentifikator(nasjonIdentifikator) } returns nasjon
 
-        whenever(nasjonRepository.findById(anyString())).thenReturn(Optional.of(nasjon))
-
-        val grenserForNasjon = nasjonService.hentGrenserForNasjon("1")
+        val grenserForNasjon = nasjonService.hentGrenserForNasjon(nasjonIdentifikator)
         assertEquals(6, grenserForNasjon.size, "Expected six borders")
         assertGrensekoblinger(grenserForNasjon, Grensetype.AvtaltAvgrensningslinje, 1, "Expected 1 AvtaltAvgrensningslinje")
         assertGrensekoblinger(grenserForNasjon, Grensetype.Territorialgrense, 2, "Expected 2 Territorialgrense")
@@ -77,23 +92,26 @@ class NasjonServiceTest {
 
     @Test
     fun thatOppdaterFylkeReturnsNullWhenFylkeNotFound() {
-        whenever(nasjonRepository.findById(anyString())).thenReturn(Optional.empty())
+        returnNullForLokalid1()
         assertNull(
-            nasjonService.oppdaterNasjon("1", NasjonRequestBuilder.DEFAULT_NASJON),
+            nasjonService.oppdaterNasjon(Lokalid("1"), NasjonRequestBuilder.DEFAULT_NASJON),
             "Expected to not find the nasjon"
         )
     }
 
     @Test
     fun thatOppdaterNasjonSavesAnUpdatedVersion() {
-        val lokalId = "1000"
+        val lokalIdValue = "1000"
         val navn = "Sverige"
 
         val eksisterende = NasjonBuilder.DEFAULT_NASJON
-        val oppdatertNasjon = NasjonRequestBuilder().withLokalId(lokalId).withNavn(navn).build()
+        val oppdatertNasjon = NasjonRequestBuilder().withLokalId(lokalIdValue).withNavn(navn).build()
 
-        whenever(nasjonRepository.findById(anyString())).thenReturn(Optional.of(eksisterende))
-        nasjonService.oppdaterNasjon("1", oppdatertNasjon)
+        val lokalid = Lokalid(lokalIdValue)
+        val nasjonIdentifikator = Identifikator(lokalid = lokalid)
+        every { nasjonRepositoryKotlinMock.findGyldigObjektForIdentifikator(nasjonIdentifikator) } returns eksisterende
+
+        nasjonService.oppdaterNasjon(lokalid, oppdatertNasjon)
 
         val forventetNavnToSave = eksisterende.administrativenhetnavn.first()
         forventetNavnToSave.navn = navn
@@ -101,5 +119,11 @@ class NasjonServiceTest {
         verify(administrativenhetnavnRepository).save(forventetNavnToSave)
         verify(nasjonRepository).save(eksisterende)
 
+    }
+
+    private fun returnNullForLokalid1(): Identifikator {
+        val nasjonIdentifikator = Identifikator(lokalid = Lokalid("1"))
+        every { nasjonRepositoryKotlinMock.findGyldigObjektForIdentifikator(nasjonIdentifikator) } returns null
+        return nasjonIdentifikator
     }
 }

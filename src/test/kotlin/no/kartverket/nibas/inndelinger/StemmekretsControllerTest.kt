@@ -2,6 +2,7 @@ package no.kartverket.nibas.inndelinger
 
 import no.kartverket.nibas.NibasMvcTest
 import no.kartverket.nibas.builders.StemmekretsBuilder
+import no.kartverket.nibas.common.Identifikator
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyString
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
@@ -18,7 +19,7 @@ internal class StemmekretsControllerTest : NibasMvcTest() {
     @Test
     fun hentStemmekretsReturns200_OK() {
         whenever(kodelisteServiceMock.getCodeValueByKommunenummerId(anyString())).thenReturn("0301")
-        whenever(stemmekretsService.hentStemmekrets(anyString())).thenReturn(StemmekretsBuilder.DEFAULT_STEMMEKRETS)
+        whenever(stemmekretsService.hentStemmekrets(any(Identifikator::class.java))).thenReturn(StemmekretsBuilder.DEFAULT_STEMMEKRETS)
         get("/v1/stemmekretser/1", status().isOk)
     }
 }

@@ -21,6 +21,7 @@ import javax.persistence.JoinColumn
 import javax.persistence.JoinTable
 import javax.persistence.ManyToMany
 import javax.persistence.OneToMany
+import javax.persistence.OneToOne
 import javax.persistence.Table
 import javax.persistence.Version
 
@@ -91,6 +92,10 @@ class Grense(
     // Relasjon oppover i treet til Stemmekrets
     @OneToMany(mappedBy = "grense")
     var stemmekretser: MutableSet<StemmekretsGrenseKobling> = mutableSetOf()
+
+    @OneToOne
+    @JoinColumn(name = "neste_versjon")
+    var nesteVersjon: Grense? = null
 
     fun grunnkretser(): Set<Grunnkrets> = grunnkretser.map { it.grunnkrets }.toSet()
     fun stemmekretser(): Set<Stemmekrets> = stemmekretser.map { it.stemmekrets }.toSet()
@@ -168,4 +173,34 @@ class Grense(
             }
         }
     }
+
+    /**
+     * Sjekker om enten seg selv eller en av Grensene som den peker til er gyldig på dato og matcher grensetyper.
+     */
+    fun finnRelevantGrenseForTyperOgDato(grensetyper: Set<Grensetype>, gyldighetsdato: LocalDate = LocalDate.now()): Grense? {
+        var grenseInstansToCheck: Grense? = this
+        var result: Grense? = null
+        while (result == null && grenseInstansToCheck != null) {
+            if (grenseInstansToCheck.gyldigPaaDato(gyldighetsdato)) {
+                if (grensetyper.isNotEmpty()) { // Hvis grensetyper er angitt må også sjekke for match på det
+                    if (grenseInstansToCheck.harGrenseTypeContainedInSet(grensetyper)) {
+                        result = grenseInstansToCheck
+                    }
+                } else {
+                    result = grenseInstansToCheck
+                }
+            }
+            grenseInstansToCheck = grenseInstansToCheck.nesteVersjon
+        }
+        return result
+    }
+
+    fun finnRelevantGrenseForDato(gyldighetsdato: LocalDate = LocalDate.now()): Grense? {
+        return finnRelevantGrenseForTyperOgDato(emptySet(), gyldighetsdato)
+    }
+
+    fun erRelevantGrenseForTyperOgDato(grensetyper: Set<Grensetype>, gyldighetsdato: LocalDate = LocalDate.now()): Boolean =
+        finnRelevantGrenseForTyperOgDato(grensetyper, gyldighetsdato) != null
+
+    fun harGrenseTypeContainedInSet(grensetyper: Set<Grensetype>): Boolean = grensetyper.contains(this.grensetype)
 }

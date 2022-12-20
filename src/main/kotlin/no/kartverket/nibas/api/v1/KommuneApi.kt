@@ -12,13 +12,15 @@ import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.response.GrunnkretsRef
 import no.kartverket.nibas.api.v1.response.KommuneRef
 import no.kartverket.nibas.api.v1.response.KommuneResponse
-import no.kartverket.nibas.api.v1.response.RevisjonRef
 import no.kartverket.nibas.api.v1.response.StemmekretsRef
+import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
+import java.time.LocalDate
+import java.util.*
 
 @RequestMapping("/v1/kommuner")
 @Tag(
@@ -27,7 +29,6 @@ import org.springframework.web.bind.annotation.RequestParam
 )
 interface KommuneApi {
 
-    //TODO: Skulle vi heller vurdert å ha 2 tjenester her, en for hentAlle og en for hentAlleForFylke hvor fylkeId er påkrevet?
     @Operation(summary = "Hent alle kommuner", description = "Henter alle kommuner i Nasjonal inndelingsbase.")
     @ApiResponses(
         ApiResponse(
@@ -41,10 +42,10 @@ interface KommuneApi {
     )
     @GetMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
     fun hentKommuner(
-        @Parameter(description = "Valgfri id til et fylke for å filtrere kommuner innenfor et fylke") @RequestParam(
-            name = "fylkeid",
-            required = false
-        ) fylkeId: String?
+        @Parameter(description = "Valgfri id til et fylke for å filtrere kommuner innenfor et fylke")
+        @RequestParam(name = "fylkeid", required = false) fylkeId: String?,
+        @Parameter(description = "Eventuell gyldighetsdato for kommune (default = dagens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?
     ): List<KommuneRef>
 
     @Operation(summary = "Hent en kommune med gitt id", description = "Henter kommune med gitt id")
@@ -60,7 +61,10 @@ interface KommuneApi {
         ApiResponse(responseCode = "404", description = "Not Found")
     )
     @GetMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentKommune(@Parameter(description = "ID-en til kommunen man vil hente") @PathVariable id: String): KommuneResponse
+    fun hentKommune(@Parameter(description = "ID-en til kommunen man vil hente") @PathVariable(name = "id") lokalid: String,
+                    @Parameter(description = "Eventuell gyldighetsdato for kommune (default = dagens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+                    @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?
+    ): KommuneResponse
 
     @Operation(
         summary = "Hent grensene til en gitt kommune",
@@ -68,39 +72,10 @@ interface KommuneApi {
     )
     @DefaultFeatureCollectionApiResponses
     @GetMapping("/{id}/grenser", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentGrenserForKommune(@Parameter(description = "ID-en til kommunen man vil hente") @PathVariable id: String): FeatureCollection
-
-    @Operation(
-        summary = "Hent historiske revisjoner for en gitt kommune",
-        description = "Henter historiske revisjoner til en kommune med gitt id"
-    )
-    @DefaultRevisjonRefListApiResponses
-    @GetMapping("/{id}/revisjoner", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentKommuneRevisjoner(@Parameter(description = "ID-en til kommunen man vil hente historiske revisjoner for") @PathVariable id: String): List<RevisjonRef>
-
-    @Operation(
-        summary = "Hent en historisk revisjon av en kommune",
-        description = "Henter en gitt historisk revisjon av en kommune"
-    )
-    @ApiResponses(
-        ApiResponse(
-            responseCode = "200",
-            description = "Successful operation",
-            content = [Content(
-                mediaType = "application/json",
-                schema = Schema(implementation = KommuneResponse::class)
-            )]
-        ),
-        ApiResponse(
-            responseCode = "404",
-            description = "Not Found"
-        )
-    )
-    @GetMapping("/{id}/revisjoner/{revisjon}", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentKommuneRevisjon(
-        @Parameter(description = "ID-en til kommunen man vil hente") @PathVariable id: String,
-        @Parameter(description = "ID til revisjonen man vil hente") @PathVariable revisjon: Int
-    ): KommuneResponse
+    fun hentGrenserForKommune(@Parameter(description = "ID-en til kommunen man vil hente") @PathVariable(name = "id") lokalid: String,
+                              @Parameter(description = "Eventuell gyldighetsdato for kommune (default = dagens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+                              @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?
+    ): FeatureCollection
 
     @Operation(summary = "Hent kommunes grunnkretser", description = "Henter alle grunnkretser som tilhører en kommune.")
     @ApiResponses(
@@ -115,11 +90,15 @@ interface KommuneApi {
     )
     @GetMapping("/{id}/grunnkretser", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun hentKommunesGrunnkretser(
-        @Parameter(description = "ID til kommunen man vil hente grunnkretsene til") @PathVariable id: String
+        @Parameter(description = "ID til kommunen man vil hente grunnkretsene til") @PathVariable(name = "id") lokalid: String,
+        @Parameter(description = "Eventuell gyldighetsdato for kommune (default = dagens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?
     ): List<GrunnkretsRef>
 
     @GetMapping("/{id}/stemmekretser", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun hentKommunesStemmekretser(
-        @Parameter(description = "ID til kommunen man vil hente stemmekretsene til") @PathVariable id: String
+        @Parameter(description = "ID til kommunen man vil hente stemmekretsene til") @PathVariable(name = "id") lokalid: String,
+        @Parameter(description = "Eventuell gyldighetsdato for kommune (default = dagens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?
     ): List<StemmekretsRef>
 }

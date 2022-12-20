@@ -10,7 +10,6 @@ import no.kartverket.nibas.api.v1.TERRENGDETALJKODE_PATH
 import no.kartverket.nibas.domain.CommonMetadataProperties
 import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.Grense
-import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.sporing.toSporingsinformasjon
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 
@@ -18,8 +17,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder
  * Hjelpeklasse/mappinglogikk grense/flate -> metadata.
  * Skilte ut egen klasse da extension-funksjonene ble avhengig av injectede avhengigheter.
  */
-class MetadataMapper(private val kodelisteService: KodelisteService,
-                     private val kodelisteHrefProvider: KodelisteHrefProviderI = KodelisteHrefProvider()) {
+class MetadataMapper(private val kodelisteHrefProvider: KodelisteHrefProviderI = KodelisteHrefProvider()) {
 
     fun toMetadata(flate: Flate): FlateMetadata = FlateMetadata(
         common = flate.getCommonMetadata()

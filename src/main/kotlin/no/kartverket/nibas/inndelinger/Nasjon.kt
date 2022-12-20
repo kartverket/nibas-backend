@@ -5,53 +5,61 @@ import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.request.NasjonRequest
 import no.kartverket.nibas.api.v1.response.NasjonResponse
-import no.kartverket.nibas.api.v1.response.RevisjonRef
+import no.kartverket.nibas.api.v1.response.toObjektIdentifikator
+import no.kartverket.nibas.common.HrefProvider
+import no.kartverket.nibas.common.Identifikator
+import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.common.ResponseException.NotFoundException
+import no.kartverket.nibas.common.createIdentifikator
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Nasjon
-import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.NasjonRepository
 import no.kartverket.nibas.repository.OptimistiskLaasException
+import no.kartverket.nibas.repository.findAllGyldigPaaDato
+import no.kartverket.nibas.repository.findAntallFramtidigeVersjonerForIdentifikator
+import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
-import no.kartverket.nibas.unwrap
-import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder
+import java.time.LocalDate
 import no.kartverket.nibas.api.v1.response.NasjonRef as NasjonRefResponse
 
 @RestController
 class NasjonController(
     private val nasjonService: NasjonService,
-    private val historikkService: HistorikkService,
-    private val kodelisteService: KodelisteService,
+    private val hrefProvider: HrefProvider
 ) : NasjonApi {
 
-    override fun hentNasjoner(): List<NasjonRefResponse> = nasjonService.hentAlleNasjoner().map { toNasjonRef(it) }
-
-    override fun hentNasjon(id: String): NasjonResponse =
-        nasjonService.hentNasjon(id)?.toNasjonResponse(kodelisteService) ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
-
-    override fun hentGrenserForNasjon(id: String): FeatureCollection {
-        val grenser = nasjonService.hentGrenserForNasjon(id)
-        if (grenser.isEmpty()) {
-            throw ResponseStatusException(HttpStatus.NOT_FOUND)
+    override fun hentNasjoner(gyldighetsdato: LocalDate?): List<NasjonRefResponse> {
+        val datoToUse: LocalDate = gyldighetsdato?: LocalDate.now()
+        return nasjonService.hentAlleNasjoner(datoToUse).map {
+            val identifikatorForNasjon = Identifikator(Lokalid(it.lokalid), datoToUse)
+            it.toNasjonRef(identifikatorForNasjon, nasjonService.hentAntallGyldigeVersjonerFramITidFor(identifikatorForNasjon), hrefProvider)
         }
-        return FeatureCollection(
-            features = grenser
-                // TODO: NIBAS-473 Hvordan sortere grensene nå?
-//                .sortedBy { it.grenseKoblingAttributter.rekkefoelge }
-                .map { grenseKoblingToFeature(it, kodelisteService) }
-        )
     }
 
-    override fun hentNasjonRevisjoner(id: String): List<RevisjonRef> =
-        historikkService.hentRevisjoner(id, Nasjon::class.java).map { toRevisjonRef(it) }
+    override fun hentNasjon(lokalid: String, gyldighetsdato: LocalDate?): NasjonResponse {
+        val identifikatorForNasjon = createIdentifikator(lokalid, gyldighetsdato)
+        return nasjonService.hentNasjon(identifikatorForNasjon)?.toNasjonResponse(identifikatorForNasjon)
+            ?: throw NotFoundException("Nasjon $identifikatorForNasjon ble ikke funnet.")
+    }
 
-    override fun hentNasjonRevisjon(id: String, revisjon: Int): NasjonResponse =
-        historikkService.hentRevisjon(id, revisjon, Nasjon::class.java).toNasjonResponse(kodelisteService)
+    override fun hentGrenserForNasjon(lokalid: String, gyldighetsdato: LocalDate?): FeatureCollection {
+        val identifikator = createIdentifikator(lokalid, gyldighetsdato)
+        val grensekoblinger = nasjonService.hentGrenserForNasjon(identifikator)
+        if (grensekoblinger.isEmpty()) {
+            throw NotFoundException("Fant ingen grenser for $identifikator")
+        }
+        return FeatureCollection(
+            features = grensekoblinger.map {
+                grenseKoblingToFeature(
+                    grenseKobling = it,
+                    gyldighetsdato = identifikator.gyldighetsdato)
+            }
+        )
+    }
 }
 
 @Transactional(readOnly = true)
@@ -61,16 +69,15 @@ class NasjonService(
     private val administrativenhetnavnRepository: AdministrativenhetnavnRepository
 ) {
 
-    fun hentAlleNasjoner() = nasjonRepository.findAll().toList()
-    fun hentNasjon(id: String) = nasjonRepository.findById(id).unwrap()
+    fun hentAlleNasjoner(gyldighetsdato: LocalDate = LocalDate.now()): List<Nasjon> = nasjonRepository.findAllGyldigPaaDato(gyldighetsdato)
+    fun hentNasjon(identifikator: Identifikator): Nasjon? = nasjonRepository.findGyldigObjektForIdentifikator(identifikator)
 
-    fun hentGrenserForNasjon(id: String): Set<GrenseKobling> {
-        return nasjonRepository.findById(id).unwrap()?.getGrenser() ?: emptySet()
-    }
+    fun hentGrenserForNasjon(identifikator: Identifikator): Set<GrenseKobling> =
+        hentNasjon(identifikator)?.getGrenser(identifikator.gyldighetsdato) ?: emptySet()
 
     @Transactional(readOnly = false)
-    fun oppdaterNasjon(id: String, oppdatertNasjon: NasjonRequest): Nasjon? {
-        return hentNasjon(id)?.let { gammel ->
+    fun oppdaterNasjon(lokalid: Lokalid, oppdatertNasjon: NasjonRequest): Nasjon? {
+        return hentNasjon(Identifikator(lokalid))?.let { gammel ->
             verifiserOptimistiskLaas(oppdatertNasjon.version, gammel)?.let { throw OptimistiskLaasException(it) }
 
             // Finner basert på språkkode, og oppdaterer den
@@ -84,18 +91,23 @@ class NasjonService(
             nasjonRepository.save(gammel)
         }
     }
+
+    fun hentAntallGyldigeVersjonerFramITidFor(identifikator: Identifikator): Int = nasjonRepository.findAntallFramtidigeVersjonerForIdentifikator(identifikator)
 }
 
-fun toNasjonRef(nasjon: Nasjon): NasjonRefResponse = NasjonRefResponse(
-    id = nasjon.id,
-    navn = nasjon.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version) },
-    href = ServletUriComponentsBuilder.fromCurrentRequestUri().pathSegment(nasjon.id).build().toUriString()
-)
+fun Nasjon.toNasjonRef(identifikator: Identifikator, antallFramtidigeVersjoner: Int = 0, hrefProvider: HrefProvider): NasjonRefResponse =
+    NasjonRefResponse(
+        id = identifikator.toObjektIdentifikator(),
+        navn = this.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version) },
+        href = hrefProvider.getHref(identifikator),
+        antallFramtidigeVersjoner = antallFramtidigeVersjoner
+    )
 
-fun Nasjon.toNasjonResponse(kodelisteService: KodelisteService): NasjonResponse = NasjonResponse(
-    id = this.id,
-    administrativenhetnavn = this.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version) },
-    lokalid = this.lokalid,
-    features = FeatureCollection(features = listOf(posisjonToFeature(this.posisjon, this.version), flateToFeature(this, kodelisteService, this.version))),
-    version = this.version
-)
+
+fun Nasjon.toNasjonResponse(identifikator: Identifikator): NasjonResponse =
+    NasjonResponse(
+        id = identifikator.toObjektIdentifikator(),
+        administrativenhetnavn = this.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version) },
+        features = FeatureCollection(features = listOf(posisjonToFeature(this.posisjon, this.version), flateToFeature(this, this.version))),
+        version = this.version
+    )

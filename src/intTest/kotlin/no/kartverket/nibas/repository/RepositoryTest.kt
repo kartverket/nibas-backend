@@ -3,6 +3,7 @@ package no.kartverket.nibas.repository
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.request.KommuneRequest
 import no.kartverket.nibas.builders.GrenseBuilder
+import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Spraakkode
@@ -14,6 +15,7 @@ import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -23,6 +25,18 @@ import org.mockito.Mockito.`when` as whenever
 
 @Transactional
 class RepositoryTest : TestWithDbContainer() {
+
+    @Autowired
+    private lateinit var grunnkretsRepository: GrunnkretsRepository
+
+    @Autowired
+    private lateinit var utkastRepository: UtkastRepository
+
+    @Autowired
+    private lateinit var spraakkodeRepository: SpraakkodeRepository
+
+    @Autowired
+    private lateinit var grenseRepository: GrenseRepository
 
     // Later som nåværende dato er 8.10.2022
     private val currentDate = LocalDate.of(2022, Month.OCTOBER, 8)
@@ -77,9 +91,10 @@ class RepositoryTest : TestWithDbContainer() {
     fun findAllGrunnkretserByLokalidFramITid() {
         val lokalid = Lokalid("1001")
         val grunnkretsIds = saveGrunnkretser(lokalid)
+        val identifikator = Identifikator(lokalid, currentDate)
 
         val idsOfActualGrunnkretserFunnet = grunnkretsRepository
-            .findAllByLokalidFramITid(lokalid, currentDate)
+            .findAllFramtidigeVersjonerByIdentifikator(identifikator)
             .map { it.id }
 
         val expectedResultIds = listOf(grunnkretsIds[1], grunnkretsIds[2])
@@ -90,9 +105,9 @@ class RepositoryTest : TestWithDbContainer() {
     fun findGyldigGrunnkretsForTidspunkt() {
         val lokalid = Lokalid("1001")
         val grunnkretsIds = saveGrunnkretser(lokalid)
-        assertThat(grunnkretsRepository.findGyldigGrunnkretsForDato(lokalid, currentDate).id).isEqualTo(grunnkretsIds[0])
-        assertThat(grunnkretsRepository.findGyldigGrunnkretsForDato(lokalid, january1In2023).id).isEqualTo(grunnkretsIds[1])
-        assertThat(grunnkretsRepository.findGyldigGrunnkretsForDato(lokalid, january1In2024).id).isEqualTo(grunnkretsIds[2])
+        assertThat(grunnkretsRepository.findGyldigObjektForIdentifikator(Identifikator(lokalid, currentDate))!!.id).isEqualTo(grunnkretsIds[0])
+        assertThat(grunnkretsRepository.findGyldigObjektForIdentifikator(Identifikator(lokalid, january1In2023))!!.id).isEqualTo(grunnkretsIds[1])
+        assertThat(grunnkretsRepository.findGyldigObjektForIdentifikator(Identifikator(lokalid, january1In2024))!!.id).isEqualTo(grunnkretsIds[2])
     }
 
     @Test

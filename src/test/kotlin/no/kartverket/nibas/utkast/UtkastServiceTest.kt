@@ -16,6 +16,7 @@ import no.kartverket.nibas.builders.NasjonRequestBuilder
 import no.kartverket.nibas.builders.OpprettUtkastRequestBuilder
 import no.kartverket.nibas.builders.StemmekretsRequestBuilder
 import no.kartverket.nibas.builders.UtkastRequestBuilder
+import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.BadRequestException
 import no.kartverket.nibas.domain.utkast.Utkast
@@ -159,12 +160,12 @@ internal class UtkastServiceTest {
         assertThat(utkast.status).isEqualTo(UtkastStatus.PUBLISERT)
         assertThat(utkast.operasjoner).isNull()
 
-        verify(nasjonServiceMock).oppdaterNasjon(anyString(), any(NasjonRequest::class.java))
-        verify(fylkeServiceMock).oppdaterFylke(anyString(), any(FylkeRequest::class.java))
-        verify(kommuneServiceMock).oppdaterKommune(anyString(), any(KommuneRequest::class.java))
+        verify(nasjonServiceMock).oppdaterNasjon(any(Lokalid::class.java), any(NasjonRequest::class.java))
+        verify(fylkeServiceMock).oppdaterFylke(any(Lokalid::class.java), any(FylkeRequest::class.java))
+        verify(kommuneServiceMock).oppdaterKommune(any(Lokalid::class.java), any(KommuneRequest::class.java))
         verify(grunnkretsServiceMock).oppdaterGrunnkrets(any(Lokalid::class.java), any(GrunnkretsRequestWrapper::class.java))
-        verify(stemmekretsServiceMock).oppdaterStemmekrets(anyString(), any(StemmekretsRequest::class.java))
-        verify(grenseServiceMock).lagreGrenser(any(FeatureCollection::class.java))
+        verify(stemmekretsServiceMock).oppdaterStemmekrets(any(Identifikator::class.java), any(StemmekretsRequest::class.java))
+        verify(grenseServiceMock).lagreGrenser(any(FeatureCollection::class.java), any(LocalDate::class.java))
     }
 
     @Test

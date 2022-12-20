@@ -117,7 +117,7 @@ data class AuditInfo(
 interface Gyldig {
     // Inklusiv gyldigFra, eksklusiv gyldigTil
     var gyldighet: Gyldighet
-    fun gyldigPaaTidspunkt(dato: LocalDate): Boolean {
+    fun gyldigPaaDato(dato: LocalDate): Boolean {
         return if (!gyldighet.slettet) {
             val dagenEtterDato = dato.plusDays(1)
             val gyldigTil = gyldighet.gyldigTil

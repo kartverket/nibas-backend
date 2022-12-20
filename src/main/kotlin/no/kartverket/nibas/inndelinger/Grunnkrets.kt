@@ -1,19 +1,22 @@
 package no.kartverket.nibas.inndelinger
 
 import no.kartverket.nibas.api.v1.GrunnkretsApi
+import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
-import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
 import no.kartverket.nibas.api.v1.response.GrunnkretsRef
 import no.kartverket.nibas.api.v1.response.GrunnkretsResponse
 import no.kartverket.nibas.api.v1.response.KretsResponse
 import no.kartverket.nibas.api.v1.response.toGyldighetResponse
+import no.kartverket.nibas.api.v1.response.toObjektIdentifikator
 import no.kartverket.nibas.common.FeilVedOppdatering
 import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.common.ResponseException.NotFoundException
+import no.kartverket.nibas.common.UgyldigTilstandException
+import no.kartverket.nibas.common.createIdentifikator
 import no.kartverket.nibas.domain.ContainsSosiIdentifikasjon
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.GrenseKobling
@@ -22,43 +25,51 @@ import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.kodelister.createKommunenummerFromUUID
 import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.OptimistiskLaasException
-import no.kartverket.nibas.repository.findAllByLokalidFramITid
 import no.kartverket.nibas.repository.findAllByLokalidSortedByGyldigFra
-import no.kartverket.nibas.repository.findGyldigGrunnkretsForDato
+import no.kartverket.nibas.repository.findAllFramtidigeVersjonerByIdentifikator
+import no.kartverket.nibas.repository.findAntallFramtidigeVersjonerForIdentifikator
+import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
 import no.kartverket.nibas.sporing.Gyldig
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDate
-import java.util.*
-import java.util.Collections.emptySet
 
 @RestController
 class GrunnkretsController(
     private val grunnkretsService: GrunnkretsService,
-    private val kodelisteService: KodelisteService,
 ) : GrunnkretsApi {
 
-    override fun hentGrunnkrets(id: String, gyldighetsdato: Optional<LocalDate>): GrunnkretsResponse {
-        return grunnkretsService.hentGrunnkrets(Lokalid(id), gyldighetsdato.orElse(LocalDate.now()))?.toGrunnkretsResponse(kodelisteService)
-            ?: throw NotFoundException("Grunnkrets med id '$id' og gyldighetsdato '$gyldighetsdato' ble ikke funnet.")
+    override fun hentGrunnkrets(lokalid: String, gyldighetsdato: LocalDate?): GrunnkretsResponse {
+        val identifikator = createIdentifikator(lokalid, gyldighetsdato)
+        return grunnkretsService.hentGrunnkrets(identifikator)?.toGrunnkretsResponse(identifikator)
+            ?: throw NotFoundException("Grunnkrets $identifikator ble ikke funnet.")
     }
 
-    override fun hentGrenserForGrunnkrets(id: String, gyldigDato: Optional<LocalDate>): FeatureCollection {
-        val dato = gyldigDato.orElse(LocalDate.now())
-        val grenser = grunnkretsService.hentGrenserForGrunnkrets(Lokalid(id), dato)
-        if (grenser.isEmpty()) {
-            throw NotFoundException("Fant ingen grenser for id '$id' med gyldig dato '$dato'")
+    override fun hentGrenserForGrunnkrets(lokalid: String, gyldighetsdato: LocalDate?): FeatureCollection {
+        val identifikator = createIdentifikator(lokalid, gyldighetsdato)
+        val grensekoblinger = grunnkretsService.hentGrenserForGrunnkrets(identifikator)
+        if (grensekoblinger.isEmpty()) {
+            throw NotFoundException("Fant ingen grenser for $identifikator")
         }
         return FeatureCollection(
-            features = grenser.sortedBy { it.grenseKoblingAttributter.rekkefoelge }
-                .map { grenseKoblingToFeature(it, kodelisteService) }
+            features = grensekoblinger
+                .sortedBy { it.grenseKoblingAttributter.rekkefoelge }
+                .map { grenseKoblingToFeature(it, KontekstEnhetType.GRUNNKRETS, identifikator.gyldighetsdato) }
         )
     }
 
-    override fun hentFramtidigeVersjonerForGrunnkrets(lokalid: String): List<GrunnkretsResponse> {
-        return grunnkretsService.hentFramtidigeVersjonerForGrunnkrets(Lokalid(lokalid)).map { it.toGrunnkretsResponse(kodelisteService) }
+    override fun hentFramtidigeVersjonerForGrunnkrets(lokalid: String, gyldighetsdato: LocalDate?): List<GrunnkretsResponse> {
+        val identifikatorForGrunnkrets = createIdentifikator(lokalid, gyldighetsdato)
+        return grunnkretsService.hentFramtidigeVersjonerForGrunnkrets(identifikatorForGrunnkrets)
+            .map {
+                it.toGrunnkretsResponse(
+                    Identifikator(
+                        lokalid = Lokalid(it.lokalid),
+                        gyldighetsdato = it.gyldighet.gyldigFra)
+                )
+            }
     }
 
 }
@@ -68,19 +79,11 @@ class GrunnkretsController(
 class GrunnkretsService(private val grunnkretsRepository: GrunnkretsRepository) {
 
     @Transactional(readOnly = true)
-    fun hentGrunnkrets(id: Lokalid, gyldighetsdato: LocalDate): Grunnkrets? {
-        val grunnkretser: List<Grunnkrets> = grunnkretsRepository.findAllByLokalid(id.value)
-            .filter { it.gyldigPaaTidspunkt(gyldighetsdato) }
-
-        if (grunnkretser.isEmpty()) return null
-        if (grunnkretser.size > 1) throw RuntimeException("Flere gyldige grunnkretser på gitt tidspunkt.")
-
-        return grunnkretser[0]
-    }
+    fun hentGrunnkrets(identifikator: Identifikator): Grunnkrets? = grunnkretsRepository.findGyldigObjektForIdentifikator(identifikator)
 
     @Transactional(readOnly = true)
-    fun hentGrenserForGrunnkrets(id: Lokalid, gyldigDato: LocalDate): Set<GrenseKobling> {
-        return hentGrunnkrets(id, gyldigDato)?.grenser ?: emptySet()
+    fun hentGrenserForGrunnkrets(identifikator: Identifikator): List<GrenseKobling> {
+        return hentGrunnkrets(identifikator)?.getGrenser(identifikator.gyldighetsdato) ?: emptyList()
     }
 
     /**
@@ -131,23 +134,26 @@ class GrunnkretsService(private val grunnkretsRepository: GrunnkretsRepository) 
 
     /**
      * Returnerer liste med grunnkretser som matcher lokalid og gyldighetsdato.
+     * Nåværende gyldig rad og fremtidig publiserte gyldige rader.
+     *
      * -Første innslag er raden som er gyldig på gyldighetsdato, default dagens dato.
      * -Så følger de framtidige gyldige publiserte versjonene sortert på gyldigFra.
      */
-    fun hentFramtidigeVersjonerForGrunnkrets(lokalid: Lokalid, gyldighetsdato: LocalDate = LocalDate.now()): List<Grunnkrets> {
-        return listOf(grunnkretsRepository.findGyldigGrunnkretsForDato(lokalid, gyldighetsdato))
-            .plus(grunnkretsRepository.findAllByLokalidFramITid(lokalid, gyldighetsdato))
+    fun hentFramtidigeVersjonerForGrunnkrets(identifikator: Identifikator): List<Grunnkrets> {
+        val gyldigGrunnkretsForDagensDato = grunnkretsRepository.findGyldigObjektForIdentifikator(identifikator)
+            ?: throw UgyldigTilstandException("Det finnes ingen gyldig grunnkrets for identifikator $identifikator")
+        return listOf(gyldigGrunnkretsForDagensDato)
+            .plus(grunnkretsRepository.findAllFramtidigeVersjonerByIdentifikator(identifikator))
     }
 
-    fun hentAntallGyldigeVersjonerFramITidForLokalid(lokalid: Lokalid, gyldighetsdato: LocalDate = LocalDate.now()): Int =
-        grunnkretsRepository.findAllByLokalidFramITid(lokalid, gyldighetsdato).size
+    fun hentAntallGyldigeVersjonerFramITidFor(identifikator: Identifikator): Int = grunnkretsRepository.findAntallFramtidigeVersjonerForIdentifikator(identifikator)
 
 }
 
 private class GrunnkretsHelper(private val grunnkretserSortedByGyldigFra: List<Grunnkrets>) {
 
     fun findRelevantGrunnkretsForGyldigFra(utkastetsGyldigFra: LocalDate, id: Lokalid): Grunnkrets =
-        grunnkretserSortedByGyldigFra.find { grunnkrets -> grunnkrets.gyldigPaaTidspunkt(utkastetsGyldigFra) }
+        grunnkretserSortedByGyldigFra.find { grunnkrets -> grunnkrets.gyldigPaaDato(utkastetsGyldigFra) }
             ?: throw NotFoundException("Fant ikke eksisterende grunnkrets for lokalid $id og gyldigFra $utkastetsGyldigFra.")
 
     fun existsRowsWithLaterGyldigFraDato(grunnkrets: Grunnkrets): Boolean {
@@ -228,22 +234,19 @@ private fun Grunnkrets.applyChangesFromRequest(request: GrunnkretsRequest): Grun
     }
 }
 
-fun Grunnkrets.toGrunnkretsRef(antallFramtidigeVersjoner: Int = 0, hrefProvider: HrefProvider): GrunnkretsRef {
-    val lokalid = this.lokalid
-    return GrunnkretsRef(
-        id = lokalid,
+fun Grunnkrets.toGrunnkretsRef(identifikator: Identifikator, antallFramtidigeVersjoner: Int = 0, hrefProvider: HrefProvider): GrunnkretsRef =
+    GrunnkretsRef(
+        id = identifikator.toObjektIdentifikator(),
         navn = this.grunnkretsnavn!!,
         grunnkretsnummer = this.grunnkretsnummer!!,
-        href = hrefProvider.getHref(lokalid),
+        href = hrefProvider.getHref(identifikator),
         antallFramtidigeVersjoner = antallFramtidigeVersjoner
     )
-}
 
-fun Grunnkrets.toGrunnkretsResponse(kodelisteService: KodelisteService): GrunnkretsResponse {
-    val lokalid = this.lokalid
-    return GrunnkretsResponse(
-        id = lokalid,
-        identifikasjon = Identifikasjon(lokalid),
+
+fun Grunnkrets.toGrunnkretsResponse(identifikator: Identifikator): GrunnkretsResponse =
+    GrunnkretsResponse(
+        id = identifikator.toObjektIdentifikator(),
         navn = this.grunnkretsnavn!!,
         grunnkretsnummer = this.grunnkretsnummer!!,
         gyldighet = this.gyldighet.toGyldighetResponse(),
@@ -251,19 +254,22 @@ fun Grunnkrets.toGrunnkretsResponse(kodelisteService: KodelisteService): Grunnkr
         endringstype = this.auditInfo.typeEndring.value,
         features = FeatureCollection(features = listOf(
             posisjonToFeature(this.posisjon, this.version),
-            flateToFeature(this, kodelisteService, this.version))),
+            flateToFeature(this, this.version))),
         version = this.version
     )
-}
+
 
 fun Grunnkrets.toKretsResponse(kodelisteService: KodelisteService): KretsResponse = KretsResponse(
     id = this.lokalid,
     navn = this.grunnkretsnavn!!,
     nummer = this.grunnkretsnummer!!,
     kommunenummer = kodelisteService.createKommunenummerFromUUID(this.kommune.kommunenummer),
-    features = FeatureCollection(features = listOf(
-        posisjonToFeature(this.posisjon, this.version),
-        flateToFeature(this, kodelisteService, this.version))),
+    features = FeatureCollection(
+        features = listOf(
+            posisjonToFeature(this.posisjon, this.version),
+            flateToFeature(this, this.version)
+        )
+    )
 )
 
 data class GrunnkretsRequestWrapper(

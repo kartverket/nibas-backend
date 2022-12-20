@@ -1,13 +1,21 @@
 package no.kartverket.nibas.inndelinger
 
+import com.ninjasquad.springmockk.MockkBean
+import io.mockk.every
+import io.mockk.mockkStatic
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.builders.FylkeBuilder
 import no.kartverket.nibas.builders.FylkeRequestBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
+import no.kartverket.nibas.common.Identifikator
+import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.FylkeRepository
+import no.kartverket.nibas.repository.REPOSITORY_EXTENSIONS_FILEPATH
+import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito.verify
@@ -28,17 +36,29 @@ class FylkeServiceTest {
     @MockBean
     private lateinit var fylkeRepository: FylkeRepository
 
+    @MockkBean
+    private lateinit var fylkeRepositoryKotlinMock: FylkeRepository
+
     @MockBean
     private lateinit var administrativenhetnavnRepository: AdministrativenhetnavnRepository
 
+    @BeforeEach
+    fun beforeEach() {
+        // Bruker her SpringMockK for å kunne mocke ut kall til extension functions
+        mockkStatic(REPOSITORY_EXTENSIONS_FILEPATH)
+    }
+
     @Test
     fun hentGrenserForFylkeReturnsEmptyCollectionWhenFylkeNotFound() {
-        whenever(fylkeRepository.findById(anyString())).thenReturn(Optional.empty())
-        assertThat(fylkeService.hentGrenserForFylke("1")).isEmpty()
+        val fylkeIdentifikator = Identifikator(lokalid = Lokalid("1"))
+        every { fylkeRepositoryKotlinMock.findGyldigObjektForIdentifikator(fylkeIdentifikator) } returns null
+
+        assertThat(fylkeService.hentGrenserForFylke(fylkeIdentifikator)).isEmpty()
     }
 
     @Test
     fun hentGrenserForFylkeReturnsTheCorrectBorders() {
+        val fylkeIdentifikator = Identifikator(lokalid = Lokalid("1"))
         val fylke = FylkeBuilder()
             .withKommune(KommuneBuilder()
                 .withGrunnkrets(GrunnkretsBuilder()
@@ -50,10 +70,9 @@ class FylkeServiceTest {
                     .build())
                 .build())
             .build()
+        every { fylkeRepositoryKotlinMock.findGyldigObjektForIdentifikator(fylkeIdentifikator) } returns fylke
 
-        whenever(fylkeRepository.findById(anyString())).thenReturn(Optional.of(fylke))
-
-        val grenserForFylke = fylkeService.hentGrenserForFylke("1")
+        val grenserForFylke = fylkeService.hentGrenserForFylke(fylkeIdentifikator)
         assertEquals(10, grenserForFylke.size, "Expected ten borders")
 
         assertGrensekoblinger(grenserForFylke, Grensetype.AvtaltAvgrensningslinje, 1, "Expected 1 AvtaltAvgrensningslinje")
@@ -65,25 +84,27 @@ class FylkeServiceTest {
     @Test
     fun thatOppdaterFylkeReturnsNullWhenFylkeNotFound() {
         whenever(fylkeRepository.findById(anyString())).thenReturn(Optional.empty())
-        assertNull(fylkeService.oppdaterFylke("1", FylkeRequestBuilder.DEFAULT_REQUEST), "Expected to not find the fylke")
+        assertNull(fylkeService.oppdaterFylke(Lokalid("1"), FylkeRequestBuilder.DEFAULT_REQUEST), "Expected to not find the fylke")
     }
 
     @Test
     fun thatOppdaterFylkeSavesAnUpdatedVersion() {
-        val lokalId = "1000"
+        val lokalIdValue = "1000"
         val navn = "Oslo"
 
         val eksisterende = FylkeBuilder.DEFAULT_FYLKE
-        val oppdatertFylke = FylkeRequestBuilder().withLokalId(lokalId).withNavn(navn).build()
+        val oppdatertFylke = FylkeRequestBuilder().withLokalId(lokalIdValue).withNavn(navn).build()
 
-        whenever(fylkeRepository.findById(anyString())).thenReturn(Optional.of(eksisterende))
-        fylkeService.oppdaterFylke("1", oppdatertFylke)
+        val lokalid = Lokalid(lokalIdValue)
+        val fylkeIdentifikator = Identifikator(lokalid = lokalid)
+        every { fylkeRepositoryKotlinMock.findGyldigObjektForIdentifikator(fylkeIdentifikator) } returns eksisterende
+
+        fylkeService.oppdaterFylke(lokalid, oppdatertFylke)
 
         val forventetNavnToSave = eksisterende.administrativenhetnavn.first()
         forventetNavnToSave.navn = navn
 
         verify(administrativenhetnavnRepository).save(forventetNavnToSave)
         verify(fylkeRepository).save(eksisterende)
-
     }
 }

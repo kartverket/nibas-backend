@@ -2,6 +2,7 @@ package no.kartverket.nibas.inndelinger
 
 import no.kartverket.nibas.api.v1.MatrikkelApi
 import no.kartverket.nibas.api.v1.response.KretsResponse
+import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.domain.Grunnkrets
@@ -11,7 +12,6 @@ import no.kartverket.nibas.kodelister.KodelisteService
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.RestController
-import java.time.LocalDate
 
 @RestController
 class MatrikkelController(private val matrikkelService: MatrikkelService,
@@ -45,7 +45,7 @@ class MatrikkelService(private val grunnkretsService: GrunnkretsService,
                        private val kommuneService: KommuneService) {
 
     fun hentStemmekretserForIds(ids: Set<String>): List<Stemmekrets> {
-        return ids.map { fetchStemmekrets(it) }.sortedBy { it.id }
+        return ids.map { fetchStemmekrets(Lokalid(it)) }.sortedBy { it.id }
     }
 
     fun hentAlleStemmekretserForKommune(numeriskKommunenummer: String): List<Stemmekrets> {
@@ -54,7 +54,7 @@ class MatrikkelService(private val grunnkretsService: GrunnkretsService,
     }
 
     fun hentGrunnkretserForIds(ids: Set<String>): List<Grunnkrets> {
-        return ids.map { Lokalid(it) }.map { fetchGrunnkrets(it) }.sortedBy { it.id }
+        return ids.map { fetchGrunnkrets(Lokalid(it)) }.sortedBy { it.id }
     }
 
     fun hentAlleGrunnkretserForKommune(kommunenummer: String): List<Grunnkrets> {
@@ -62,11 +62,17 @@ class MatrikkelService(private val grunnkretsService: GrunnkretsService,
             .sortedBy { it.id }
     }
 
-    private fun fetchStemmekrets(id: String): Stemmekrets = stemmekretsService.hentStemmekrets(id)
-        ?: throw NotFoundException("Stemmekrets med id '$id' ble ikke funnet.")
+    private fun fetchStemmekrets(lokalid: Lokalid): Stemmekrets {
+        val identifikator = Identifikator(lokalid)
+        return stemmekretsService.hentStemmekrets(identifikator)
+            ?: throw NotFoundException("Stemmekrets med $identifikator ble ikke funnet.")
+    }
 
-    private fun fetchGrunnkrets(id: Lokalid): Grunnkrets = grunnkretsService.hentGrunnkrets(id, LocalDate.now())
-        ?: throw NotFoundException("Grunnkrets med id '$id' ble ikke funnet.")
+    private fun fetchGrunnkrets(lokalid: Lokalid): Grunnkrets {
+        val identifikator = Identifikator(lokalid)
+        return grunnkretsService.hentGrunnkrets(identifikator)
+            ?: throw NotFoundException("Grunnkrets med $identifikator ble ikke funnet.")
+    }
 
     private fun hentKommuneFraNumeriskNummer(numeriskKommunenummer: String): Kommune {
         try {

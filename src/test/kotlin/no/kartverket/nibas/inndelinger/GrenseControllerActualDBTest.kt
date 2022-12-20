@@ -9,8 +9,9 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.Dokref
 import no.kartverket.nibas.api.v1.common.geojson.metadata.MetadataMapper
 import no.kartverket.nibas.api.v1.common.geojson.metadata.TekstHolder
 import no.kartverket.nibas.builders.FeatureBuilder
+import no.kartverket.nibas.common.Identifikator
+import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.Grense
-import no.kartverket.nibas.kodelister.KodelisteService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -46,11 +47,9 @@ class GrenseControllerActualDBTest {
     @Autowired
     lateinit var grenseService: GrenseService
 
-    @Autowired
-    lateinit var kodelisteService: KodelisteService
+    val kommunegrenseIdentifikator = Identifikator(Lokalid("3e50135f-db16-426e-961e-6a0f9d464db7"))
 
-    val kommunegrenseId = "3e50135f-db16-426e-961e-6a0f9d464db7"
-
+    //TODO TS-696: Gjøre test til IT-test i int-pakke
     @Ignore
     @Transactional
     @Test
@@ -61,7 +60,7 @@ class GrenseControllerActualDBTest {
         assertThat(kommunegrense.dokumentasjonsreferanser).isEmpty()
 
         // Konverterer til metadataObjekt og endrer noen egenskaper
-        val metadataMapper = MetadataMapper(kodelisteService)
+        val metadataMapper = MetadataMapper()
         val metadata: AdministrativGrenseMetadata = metadataMapper.toMetadataForAdministrativGrense(kommunegrense)
         val gyldigFra = LocalDate.now().plusDays(1)
         val dokumentLink = "LinkTilMittDokument"
@@ -87,7 +86,7 @@ class GrenseControllerActualDBTest {
         // POST mot /grenser
         val featureCollection = FeatureCollection(
             features = listOf(
-                FeatureBuilder(id = kommunegrenseId)
+                FeatureBuilder(id = kommunegrenseIdentifikator.lokalid.value)
                     .withGrensetype(Grensetype.Kommunegrense)
                     .withMetadata(updatedMetadata)
                     .build()
@@ -118,7 +117,7 @@ class GrenseControllerActualDBTest {
     }
 
     private fun fetchKommunegrense(): Grense {
-        val kommunegrense = grenseService.hentGrense(kommunegrenseId)
+        val kommunegrense = grenseService.hentGrense(kommunegrenseIdentifikator)
         assertThat(kommunegrense).isNotNull
         return kommunegrense!!
     }

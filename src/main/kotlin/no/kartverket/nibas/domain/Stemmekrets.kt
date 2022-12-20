@@ -5,17 +5,9 @@ import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import org.hibernate.envers.Audited
 import java.io.Serializable
+import java.time.LocalDate
 import java.util.*
-import javax.persistence.CascadeType
-import javax.persistence.Column
-import javax.persistence.Embedded
-import javax.persistence.Entity
-import javax.persistence.Id
-import javax.persistence.IdClass
-import javax.persistence.JoinColumn
-import javax.persistence.ManyToOne
-import javax.persistence.OneToMany
-import javax.persistence.Table
+import javax.persistence.*
 
 @Table(name = "stemmekrets")
 @Audited
@@ -56,17 +48,15 @@ class Stemmekrets(
     @JoinColumn(name = "utledetfra")
     var utledetFra: Stemmekrets? = null
 
-    fun getGrenserAvTyper(grensetyper: Set<Grensetype>): Set<GrenseKobling> {
+    fun getGrenserAvTyper(grensetyper: Set<Grensetype>, gyldighetsdato: LocalDate = LocalDate.now()): List<GrenseKobling> {
         return grenser
-            .filter { grensetyper.contains(it.grense.grensetype) }
-            .toSet()
+            .filter { it.grense.erRelevantGrenseForTyperOgDato(grensetyper, gyldighetsdato) }
     }
 
-    fun getGrenserAvType(grensetype: Grensetype): Set<GrenseKobling> = getGrenserAvTyper(setOf(grensetype))
-
+    fun getGrenser(gyldighetsdato: LocalDate = LocalDate.now()): List<GrenseKobling> = getGrenserAvTyper(tillatteGrensetyper(), gyldighetsdato)
 
     override fun oppdaterOmraade() {
-        omraade = SosiGeometryFunctions.beregnFlate(alleGrenser())
+        omraade = SosiGeometryFunctions.beregnFlate(getGrenser().toSet())
     }
 
     override fun oppdaterEllerLeggTilGrenseKobling(grenseMedAttributter: GrenseMedAttributter) {
@@ -109,8 +99,6 @@ class Stemmekrets(
         return "Stemmekrets(id='$id', stemmekretsnummer=$stemmekretsnummer, stemmekretsnavn=$stemmekretsnavn, tellekretsnummer=$tellekretsnummer, " +
             "tellekretsnavn=$tellekretsnavn, valgdistriktsnummer=$valgdistriktsnummer)"
     }
-
-    fun alleGrenser() = getGrenserAvTyper(tillatteGrensetyper())
 
     private fun tillatteGrensetyper(): Set<Grensetype> = setOf(
         Grensetype.Stemmekretsgrense,

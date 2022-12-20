@@ -4,6 +4,7 @@ import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import org.hibernate.envers.Audited
+import java.time.LocalDate
 import java.util.*
 import javax.persistence.CascadeType
 import javax.persistence.Column
@@ -61,14 +62,10 @@ class Kommune(
         omraade = SosiGeometryFunctions.beregnFlate(getGrenser())
     }
 
-    fun getGrenser(): Set<GrenseKobling> {
-        return grunnkretser
-            .flatMap { it.getGrenserAvTyper(tillatteGrensetyper()) }
+    fun getGrenser(gyldighetsdato: LocalDate = LocalDate.now()): Set<GrenseKobling> {
+        return getGrunnkretser(gyldighetsdato)
+            .flatMap { it.getGrenserAvTyper(tillatteGrensetyper(), gyldighetsdato) }
             .toSet()
-    }
-
-    fun kommunegrenser(): Set<GrenseKobling> {
-        return getGrenser().filter { it.grense.grensetype == Grensetype.Kommunegrense }.toSet()
     }
 
     fun addGrunnkrets(grunnkrets: Grunnkrets) {
@@ -79,6 +76,14 @@ class Kommune(
     fun addStemmekrets(stemmekrets: Stemmekrets) {
         stemmekrets.kommune = this
         stemmekretser.add(stemmekrets)
+    }
+
+    fun getGrunnkretser(gyldighetsdato: LocalDate = LocalDate.now()): List<Grunnkrets> {
+        return grunnkretser.filter { it.gyldigPaaDato(gyldighetsdato) }
+    }
+
+    fun getStemmekretser(gyldighetsdato: LocalDate = LocalDate.now()): List<Stemmekrets> {
+        return stemmekretser.filter { it.gyldigPaaDato(gyldighetsdato) }
     }
 
     private fun tillatteGrensetyper(): Set<Grensetype> = setOf(

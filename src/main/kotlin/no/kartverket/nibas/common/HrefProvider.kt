@@ -9,4 +9,11 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 @Component
 class HrefProvider {
     fun getHref(id: String): String = ServletUriComponentsBuilder.fromCurrentRequestUri().pathSegment(id).build().toUriString()
+
+    fun getHref(identifikator: Identifikator): String = ServletUriComponentsBuilder.fromCurrentRequestUri()
+        .pathSegment(identifikator.lokalid.value)
+        .queryParam("gyldighetsdato", identifikator.gyldighetsdato)
+        .build()
+        .toUriString()
+
 }

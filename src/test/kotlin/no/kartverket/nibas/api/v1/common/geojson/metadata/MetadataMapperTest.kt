@@ -13,7 +13,6 @@ import no.kartverket.nibas.builders.REF_TEKST_1
 import no.kartverket.nibas.builders.REF_TEKST_2
 import no.kartverket.nibas.builders.TerritorialgrenseBuilder
 import no.kartverket.nibas.domain.AnsvarligMyndighetHolder
-import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.LandKodeRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -29,8 +28,6 @@ import java.time.ZonedDateTime
  */
 internal class MetadataMapperTest {
 
-    @Mock
-    private lateinit var kodelisteServiceMock: KodelisteService
 
     @Mock
     private lateinit var landKodeRepositoryMock: LandKodeRepository
@@ -73,7 +70,7 @@ internal class MetadataMapperTest {
     @BeforeEach
     fun beforeEach() {
         MockitoAnnotations.openMocks(this)
-        metadataMapper = MetadataMapper(kodelisteServiceMock, kodelisteHrefProviderMock)
+        metadataMapper = MetadataMapper(kodelisteHrefProviderMock)
 
         `when`(kodelisteHrefProviderMock.terrengDetaljHref()).thenReturn(terrengDetaljHref)
         `when`(kodelisteHrefProviderMock.noeyaktighetsklasseHref()).thenReturn(noeyaktighetHref)

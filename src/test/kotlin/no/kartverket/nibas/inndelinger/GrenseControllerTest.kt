@@ -2,6 +2,7 @@ package no.kartverket.nibas.inndelinger
 
 import no.kartverket.nibas.NibasMvcTest
 import no.kartverket.nibas.builders.GrenseBuilder
+import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.repository.GrenseRepository
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
@@ -24,7 +25,7 @@ class GrenseControllerTest : NibasMvcTest() {
 
     @Test
     fun thatHentGrenseReturns200_OK() {
-        whenever(grenseServiceMock.hentGrense("1"))
+        whenever(grenseServiceMock.hentGrense(any(Identifikator::class.java)))
             .thenReturn(GrenseBuilder().buildKommunegrense())
 
         get("/v1/grenser/1", status().isOk)
@@ -32,7 +33,7 @@ class GrenseControllerTest : NibasMvcTest() {
 
     @Test
     fun thatHentGrenseReturns404_NotFound() {
-        whenever(grenseServiceMock.hentGrense("1"))
+        whenever(grenseServiceMock.hentGrense(any(Identifikator::class.java)))
             .thenReturn(null)
 
         get("/v1/grenser/1", status().isNotFound)

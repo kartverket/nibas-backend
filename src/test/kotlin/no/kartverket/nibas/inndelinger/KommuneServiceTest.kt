@@ -1,14 +1,21 @@
 package no.kartverket.nibas.inndelinger
 
+import com.ninjasquad.springmockk.MockkBean
+import io.mockk.every
+import io.mockk.mockkStatic
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.builders.KommuneRequestBuilder
+import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.FylkeRepository
 import no.kartverket.nibas.repository.KommuneRepository
+import no.kartverket.nibas.repository.REPOSITORY_EXTENSIONS_FILEPATH
+import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito.verify
@@ -28,8 +35,11 @@ class KommuneServiceTest {
     @Autowired
     lateinit var kommuneService: KommuneService
 
+    @MockkBean
+    private lateinit var kommuneRepositoryKotlinMock: KommuneRepository
+
     @MockBean
-    private lateinit var kommuneRepository: KommuneRepository
+    private lateinit var kommuneRepositoryMock: KommuneRepository
 
     @MockBean
     private lateinit var fylkeRepository: FylkeRepository
@@ -37,14 +47,22 @@ class KommuneServiceTest {
     @MockBean
     private lateinit var administrativenhetnavnRepository: AdministrativenhetnavnRepository
 
+    @BeforeEach
+    fun beforeEach() {
+        // Bruker her SpringMockK for å kunne mocke ut kall til extension functions
+        mockkStatic(REPOSITORY_EXTENSIONS_FILEPATH)
+    }
+
     @Test
     fun hentGrenserForKommuneReturnsNullWhenKommuneNotFound() {
-        whenever(kommuneRepository.findById(anyString())).thenReturn(Optional.empty())
-        assertThat(kommuneService.hentGrenserForKommune("1")).isEmpty()
+        whenever(kommuneRepositoryMock.findById(anyString())).thenReturn(Optional.empty())
+        assertThat(kommuneService.hentGrenserForKommune(Identifikator(Lokalid("1")))).isEmpty()
     }
 
     @Test
     fun hentGrenserForKommuneReturnsTheCorrectBorders() {
+        val kommuneIdentifikator = Identifikator(lokalid = Lokalid("1"))
+
         val kommune = KommuneBuilder()
             .withGrunnkrets(GrunnkretsBuilder()
                 .withRandomGrenser(
@@ -56,10 +74,9 @@ class KommuneServiceTest {
                 )
                 .build())
             .build()
+        every { kommuneRepositoryKotlinMock.findGyldigObjektForIdentifikator(kommuneIdentifikator) } returns kommune
 
-        whenever(kommuneRepository.findById(anyString())).thenReturn(Optional.of(kommune))
-
-        val grenserForKommune = kommuneService.hentGrenserForKommune("1")
+        val grenserForKommune = kommuneService.hentGrenserForKommune(kommuneIdentifikator)
         assertEquals(15, grenserForKommune.size, "Expected 15 borders")
 
         assertGrensekoblinger(grenserForKommune, Grensetype.AvtaltAvgrensningslinje, 1, "Expected 1 AvtaltAvgrensningslinje")
@@ -71,31 +88,32 @@ class KommuneServiceTest {
 
     @Test
     fun thatOppdaterKommuneReturnsNullWhenKommuneNotFound() {
-        whenever(kommuneRepository.findById(anyString())).thenReturn(Optional.empty())
+        whenever(kommuneRepositoryMock.findById(anyString())).thenReturn(Optional.empty())
         assertNull(
-            kommuneService.oppdaterKommune("1", KommuneRequestBuilder.DEFAULT_REQUEST),
+            kommuneService.oppdaterKommune(Lokalid("1"), KommuneRequestBuilder.DEFAULT_REQUEST),
             "Expected to not find the kommune"
         )
     }
 
     @Test
     fun thatOppdaterKommuneSavesAnUpdatedVersion() {
-        val lokalId = "1000"
+        val lokalIdValue = "1000"
         val navn = "Bergen"
 
         val eksisterende = KommuneBuilder.DEFAULT_KOMMUNE
         val oppdatertKommune =
-            KommuneRequestBuilder().withLokalId(lokalId).withNavn(navn).build()
+            KommuneRequestBuilder().withLokalId(lokalIdValue).withNavn(navn).build()
 
-        whenever(kommuneRepository.findById(anyString())).thenReturn(Optional.of(eksisterende))
-        kommuneService.oppdaterKommune("1", oppdatertKommune)
+        val lokalid = Lokalid(lokalIdValue)
+        val kommuneIdentifikator = Identifikator(lokalid = lokalid)
+        every { kommuneRepositoryKotlinMock.findGyldigObjektForIdentifikator(kommuneIdentifikator) } returns eksisterende
+
+        kommuneService.oppdaterKommune(lokalid, oppdatertKommune)
 
         val forventetNavnToSave = eksisterende.administrativenhetnavn.first()
         forventetNavnToSave.navn = navn
 
         verify(administrativenhetnavnRepository).save(forventetNavnToSave)
-        verify(kommuneRepository).save(eksisterende)
-
     }
 
     /**
@@ -135,13 +153,17 @@ class KommuneServiceTest {
 
         val kommune = KommuneBuilder(
             id = kommuneId,
-            lokalId = "1000",
+            lokalId = Lokalid("1000"),
             navn = "Bergen",
             grunnkretser = mutableListOf(grunnkretsStorvatn, grunnkretsMoi, grunnkretsMoiFremtidigVersjon)
         ).build()
-        whenever(kommuneRepository.findById(anyString())).thenReturn(Optional.of(kommune))
 
-        val kommunesGrunnkretser = kommuneService.hentKommunesGrunnkretser(kommuneId, gyldighetsdato = todayIsNovember22In2022)
+        val kommuneIdentifikator = Identifikator(
+            lokalid = Lokalid(kommuneId),
+            gyldighetsdato = todayIsNovember22In2022)
+        every { kommuneRepositoryKotlinMock.findGyldigObjektForIdentifikator(kommuneIdentifikator) } returns kommune
+
+        val kommunesGrunnkretser = kommuneService.hentKommunesGrunnkretser(kommuneIdentifikator)
 
         val expectedListOfGrunnkretsIds = listOf("1", "2")
         assertThat(kommunesGrunnkretser.map { it.id }).isEqualTo(expectedListOfGrunnkretsIds)

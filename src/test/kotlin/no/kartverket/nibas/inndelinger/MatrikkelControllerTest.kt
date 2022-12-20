@@ -147,14 +147,12 @@ internal class MatrikkelControllerTest : NibasMvcTest() {
 
     private fun stemmekretsKretsResponse(stemmekrets: Stemmekrets): KretsResponse {
         return KretsResponseBuilder(
-            kodelisteService = kodelisteServiceMock,
             stemmekrets = stemmekrets)
             .buildForStemmekrets()
     }
 
     private fun grunnkretsKretsResponse(grunnkrets: Grunnkrets): KretsResponse {
         return KretsResponseBuilder(
-            kodelisteService = kodelisteServiceMock,
             grunnkrets = grunnkrets)
             .buildForGrunnkrets()
     }

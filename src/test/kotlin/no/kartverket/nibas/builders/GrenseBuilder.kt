@@ -1,40 +1,75 @@
 package no.kartverket.nibas.builders
 
 import no.kartverket.nibas.api.v1.common.Grensetype
+import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.domain.Dokumentasjonsreferanse
 import no.kartverket.nibas.domain.Grense
+import no.kartverket.nibas.domain.PosisjonskvalitetEmbeddable
+import no.kartverket.nibas.sporing.Gyldighet
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
 import org.locationtech.jts.geom.LineString
+import java.time.LocalDate
+import java.time.ZonedDateTime
 
-class GrenseBuilder(private val id: String = "1") {
+enum class MaalemetodeKodeEnum(val uuid: String) {
+    TERRENGMAALT("7f48625b-e46f-413e-ae4d-0381ac64264b")
+}
 
-    private var lokalId: String = "123"
-    private var grenseGeometri: LineString = GeometryFactory().createLineString()
+enum class NoeyaktighetsklasseEnum(val code: String) {
+    NK1("LiteNøyaktigeGrenserOgGrenserFraN50")
+}
+
+enum class TerrengdetaljEnum(val code: String) {
+    AnnetGjerde("AGJ")
+}
+
+enum class FastsettingstypeEnum { BestemteKoordinater }
+enum class GrensestatusEnum { Traktat }
+
+class GrenseBuilder(private val id: String = "1",
+                    private var lokalId: Lokalid = Lokalid("123"),
+                    private var grenseGeometri: LineString = GeometryFactory().createLineString(),
+                    private var gyldigFra: LocalDate = LocalDate.now(),
+                    private var gyldigTil: LocalDate? = null,
+                    private var opphav: String = "Eidsvoll",
+                    private var nesteVersjon: Grense? = null) {
 
     fun buildFylkesgrense(): Grense {
-        return FylkesgrenseBuilder(id).build()
+        return FylkesgrenseBuilder(
+            id = id,
+            lokalid = lokalId,
+            gyldigFra = gyldigFra,
+            gyldigTil = gyldigTil,
+            opphav = opphav,
+            grenseGeometri = grenseGeometri,
+            nesteVersjon = nesteVersjon
+        ).build()
     }
 
     fun buildRiksgrense(): Grense {
-        val grense = Grense(id = this.id, lokalid = lokalId, Grensetype.Riksgrense)
-        grense.grense = grenseGeometri
-        return grense
+        return Grense(id = id, lokalid = lokalId.value, Grensetype.Riksgrense).apply { setFelter(this) }
     }
 
     fun buildKommunegrense(): Grense {
-        val grense = Grense(id = this.id, lokalid = lokalId, Grensetype.Kommunegrense)
-        grense.grense = grenseGeometri
-        return grense
+        return Grense(id = id, lokalid = lokalId.value, Grensetype.Kommunegrense).apply { setFelter(this) }
     }
 
     fun buildGrunnkretsgrense(): Grense {
-        val grense = Grense(id = this.id, lokalid = lokalId, Grensetype.Grunnkretsgrense)
+        return Grense(id = id, lokalid = lokalId.value, Grensetype.Grunnkretsgrense).apply { setFelter(this) }
+    }
+
+    private fun setFelter(grense: Grense) {
         grense.grense = grenseGeometri
-        return grense
+        grense.gyldighet = Gyldighet(gyldigFra, gyldigTil)
+        grense.opphav = opphav
+        if (nesteVersjon != null) {
+            grense.nesteVersjon = nesteVersjon
+        }
     }
 
     fun withLokalId(lokalId: String): GrenseBuilder {
-        this.lokalId = lokalId
+        this.lokalId = Lokalid(lokalId)
         return this
     }
 
@@ -43,4 +78,74 @@ class GrenseBuilder(private val id: String = "1") {
         return this
     }
 
+}
+
+const val LOKALID = "lokalId1"
+const val MYNDIGHET = "myndighet"
+const val HJEMMEL_I_LOVEN = "Hjemmel i loven"
+const val RETTSKILDE_ID_1 = "RettskildeId 1"
+const val TITTEL = "Kilden til alt bra"
+const val INFORMASJONTEKST = "Informasjon om det ene og andre."
+const val LINK_TEKST_1 = "C. Link1"
+const val LINK_TEKST_2 = "D. Link2"
+const val REF_TEKST_1 = "B. Intern 1"
+const val REF_TEKST_2 = "A. Intern 2"
+const val OPPHAV = "Opphav må til"
+
+class FylkesgrenseBuilder(private val id: String = "1",
+                          private var lokalid: Lokalid = Lokalid(LOKALID),
+                          private var omtvistet: Boolean = true,
+                          private var endretdato: ZonedDateTime = ZonedDateTime.now(),
+                          private var datafangstdato: ZonedDateTime = ZonedDateTime.now(),
+                          private var gyldigFra: LocalDate = LocalDate.now(),
+                          private var gyldigTil: LocalDate? = null,
+                          private var dokumentasjonsreferanser: MutableList<Dokumentasjonsreferanse> = mutableListOf(),
+                          private var kvalitet: PosisjonskvalitetEmbeddable = PosisjonskvalitetEmbeddable(
+                              maalemetode = MaalemetodeKodeEnum.TERRENGMAALT.uuid,
+                              noeyaktighet = 200,
+                          ),
+                          private var opphav: String = OPPHAV,
+                          private var informasjonstekst: String = INFORMASJONTEKST,
+                          private var grenseGeometri: LineString = GeometryFactory().createLineString(),
+                          private var nesteVersjon: Grense? = null) {
+
+    fun build(): Grense {
+        val fylkesgrense = Grense(id = this.id, lokalid = lokalid.value, Grensetype.Fylkesgrense)
+        fylkesgrense.datafangstdato = datafangstdato
+        fylkesgrense.gyldighet = Gyldighet(gyldigFra, gyldigTil)
+        fylkesgrense.kvalitet = kvalitet
+        fylkesgrense.auditInfo.endretdato = endretdato
+        fylkesgrense.opphav = opphav
+        fylkesgrense.setInfo(informasjonstekst)
+        fylkesgrense.grense = grenseGeometri
+
+        fylkesgrense.dokumentasjonsreferanser.addAll(dokumentasjonsreferanser)
+        fylkesgrense.nesteVersjon = nesteVersjon
+        return fylkesgrense
+    }
+
+    fun withEndretDato(zonedDateTime: ZonedDateTime): FylkesgrenseBuilder {
+        this.endretdato = zonedDateTime
+        return this
+    }
+
+    fun datafangstdato(zonedDateTime: ZonedDateTime): FylkesgrenseBuilder {
+        this.datafangstdato = zonedDateTime
+        return this
+    }
+
+    fun gyldigFra(dateTime: LocalDate): FylkesgrenseBuilder {
+        this.gyldigFra = dateTime
+        return this
+    }
+
+    fun dokRef(dokRef: Dokumentasjonsreferanse): FylkesgrenseBuilder {
+        this.dokumentasjonsreferanser.add(dokRef)
+        return this
+    }
+
+    fun informasjon(tekst: String): FylkesgrenseBuilder {
+        this.informasjonstekst = tekst
+        return this;
+    }
 }

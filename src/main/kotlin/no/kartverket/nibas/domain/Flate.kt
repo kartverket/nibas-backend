@@ -12,7 +12,7 @@ interface Flate : CommonMetadataProperties {
 }
 
 interface KobletTilGrense {
-    val id: String
+    val lokalid: String
 
     fun oppdaterEllerLeggTilGrenseKobling(grenseMedAttributter: GrenseMedAttributter)
     fun antallGrenser(): Int

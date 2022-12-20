@@ -6,7 +6,6 @@ import no.kartverket.nibas.api.v1.common.Fylkesnummer
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.Point
-import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.inndelinger.RevisjonStatus
@@ -20,46 +19,55 @@ import java.util.*
 data class NasjonRef(
 
     @Schema(description = "ID-en til nasjonen")
-    val id: String,
+    val id: ObjektIdentifikator,
 
     @Schema(description = "Liste over navn til nasjonen")
     val navn: List<AdministrativEnhetNavn>,
 
     @Schema(description = "URL til full representasjon av nasjonen")
-    val href: String
+    val href: String,
+
+    @Schema(description = "Antall publiserte framtidige gyldige versjoner.")
+    val antallFramtidigeVersjoner: Int = 0
 )
 
 @Schema(description = "En referanse til et fylke")
 data class FylkeRef(
 
     @Schema(description = "ID-en til fylket")
-    val id: String,
+    val id: ObjektIdentifikator,
 
     @Schema(description = "Liste over navn til fylket")
     val navn: List<AdministrativEnhetNavn>,
 
     @Schema(description = "URL til full representasjon av fylket")
-    val href: String
+    val href: String,
+
+    @Schema(description = "Antall publiserte framtidige gyldige versjoner.")
+    val antallFramtidigeVersjoner: Int = 0
 )
 
 @Schema(description = "En referanse til en kommune")
 data class KommuneRef(
 
     @Schema(description = "ID-en til kommunen")
-    val id: String,
+    val id: ObjektIdentifikator,
 
     @Schema(description = "Liste over navn til kommunen")
     val navn: List<AdministrativEnhetNavn>,
 
     @Schema(description = "URL til full representasjon av kommunen")
-    val href: String
+    val href: String,
+
+    @Schema(description = "Antall publiserte framtidige gyldige versjoner.")
+    val antallFramtidigeVersjoner: Int = 0
 )
 
 @Schema(description = "En referanse til en grunnkrets")
 data class GrunnkretsRef(
 
-    @Schema(description = "ID-en til grunnkretser")
-    val id: String,
+    @Schema(description = "ID-en til grunnkretsen")
+    val id: ObjektIdentifikator,
 
     @Schema(description = "Navnet på grunnkretser")
     val navn: String,
@@ -78,13 +86,16 @@ data class GrunnkretsRef(
 data class StemmekretsRef(
 
     @Schema(description = "ID-en til stemmekretsen")
-    val id: String,
+    val id: ObjektIdentifikator,
 
     @Schema(description = "Navnet på stemmekretsen")
     val navn: String,
 
     @Schema(description = "URL til full representasjon av stemmekrets")
-    val href: String
+    val href: String,
+
+    @Schema(description = "Antall publiserte framtidige gyldige versjoner.")
+    val antallFramtidigeVersjoner: Int = 0
 )
 
 @Schema(description = "En referanse til en historisk revisjon av en administrativ enhet")
@@ -116,13 +127,10 @@ data class UtkastRef(
 @Schema(description = "Representasjon av en nasjon")
 data class NasjonResponse(
     @Schema(description = "ID-en til nasjonen")
-    val id: String,
+    val id: ObjektIdentifikator,
 
     @Schema(description = "Liste over navn til nasjonen")
     val administrativenhetnavn: List<AdministrativEnhetNavn>,
-
-    @Schema(description = "LokalID til nasjonen")
-    val lokalid: String,
 
     @Schema(description = "Geometrien til nasjonen. Ikke grenser")
     val features: FeatureCollection,
@@ -135,13 +143,10 @@ data class NasjonResponse(
 data class FylkeResponse(
 
     @Schema(description = "ID-en til fylket")
-    val id: String,
+    val id: ObjektIdentifikator,
 
     @Schema(description = "Liste over navn til fylket")
     val administrativenhetnavn: List<AdministrativEnhetNavn>,
-
-    @Schema(description = "LokalIDen til fylket")
-    val lokalid: String,
 
     @Schema(description = "Fylkesnummeret til fylket")
     val fylkesnummer: Fylkesnummer,
@@ -159,16 +164,13 @@ data class FylkeResponse(
     val version: Int
 )
 
-@Schema(description = "")
+@Schema(description = "Representasjon av en kommune")
 data class KommuneResponse(
     @Schema(description = "ID-en til kommunen")
-    val id: String,
+    val id: ObjektIdentifikator,
 
     @Schema(description = "Liste over navn til kommunen")
     val administrativenhetnavn: List<AdministrativEnhetNavn>,
-
-    @Schema(description = "LokalIDen til kommunen")
-    val lokalid: String,
 
     @Schema(description = "Kommunenummeret til kommunen")
     val kommunenummer: Kommunenummer,
@@ -189,10 +191,7 @@ data class KommuneResponse(
 @Schema(description = "Representasjon av en grunnkrets")
 data class GrunnkretsResponse(
     @Schema(description = "ID-en til grunnkretsen")
-    val id: String,
-
-    @Schema(description = "Identifikasjon av grunnkretsen")
-    val identifikasjon: Identifikasjon,
+    val id: ObjektIdentifikator,
 
     @Schema(description = "Navnet på grunnkretsen")
     val navn: String,
@@ -219,16 +218,13 @@ data class GrunnkretsResponse(
 @Schema(description = "Representasjon av en stemmekrets")
 data class StemmekretsResponse(
     @Schema(description = "ID-en til stemmekretsen")
-    val id: String,
+    val id: ObjektIdentifikator,
 
     @Schema(description = "Navnet på stemmekretsen")
     val stemmekretsnavn: String,
 
     @Schema(description = "Stemmekretsnummeret til stemmekretsen")
     val stemmekretsnummer: String,
-
-    @Schema(description = "Identifikasjon av stemmekretsen")
-    val identifikasjon: Identifikasjon,
 
     @Schema(description = "Kommunenummeret til stemmekretsen")
     val kommunenummer: Kommunenummer,
@@ -374,9 +370,10 @@ data class FramtidigVersjonConflict(
     val melding: String?
 )
 
-data class ObjektIdentifikator(val lokalid: Lokalid, val gyldigFra: LocalDate)
+data class ObjektIdentifikator(val lokalid: Lokalid, val gyldighetsdato: LocalDate)
 
-fun Identifikator.toObjektIdentifikator(): ObjektIdentifikator = ObjektIdentifikator(this.lokalid, this.gyldigFra)
+fun Identifikator.toObjektIdentifikator(): ObjektIdentifikator = ObjektIdentifikator(this.lokalid, this.gyldighetsdato)
+fun ObjektIdentifikator.toIdentifikator(): Identifikator = Identifikator(this.lokalid, this.gyldighetsdato)
 
 data class MissingKodelisteItemResponse(
     @Schema(description = "HttpStatus for responsen")

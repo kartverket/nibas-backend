@@ -42,9 +42,9 @@ interface GrunnkretsApi {
     )
     @GetMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun hentGrunnkrets(
-        @Parameter(description = "ID-en til grunnkretsen man vil hente") @PathVariable id: String,
-        @Parameter(description = "Eventuell Gyldig Dato for grunnkrets (default = datens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-        @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: Optional<LocalDate>
+        @Parameter(description = "ID-en til grunnkretsen man vil hente") @PathVariable(name = "id") lokalid: String,
+        @Parameter(description = "Eventuell gyldighetsdato for grunnkrets (default = dagens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?
     ): GrunnkretsResponse
 
     @Operation(
@@ -54,9 +54,9 @@ interface GrunnkretsApi {
     @DefaultFeatureCollectionApiResponses
     @GetMapping("/{id}/grenser", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun hentGrenserForGrunnkrets(
-        @Parameter(description = "ID-en til grunnkretsen man vil hente") @PathVariable id: String,
-        @Parameter(description = "Eventuell Gyldig Dato for grunnkrets (default = datens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-        @RequestParam(required = false) gyldigDato: Optional<LocalDate>
+        @Parameter(description = "ID-en til grunnkretsen man vil hente") @PathVariable(name = "id") lokalid: String,
+        @Parameter(description = "Eventuell gyldighetsdato for grunnkrets (default = dagens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?
     ): FeatureCollection
 
     @Operation(
@@ -74,6 +74,9 @@ interface GrunnkretsApi {
         )
     )
     @GetMapping("/{lokalid}/framtidigeversjoner", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentFramtidigeVersjonerForGrunnkrets(@Parameter(description = "LokalID-en til grunnkretsen man vil hente versjoner for") @PathVariable lokalid: String): List<GrunnkretsResponse>
+    fun hentFramtidigeVersjonerForGrunnkrets(@Parameter(description = "LokalID-en til grunnkretsen man vil hente versjoner for") @PathVariable lokalid: String,
+                                             @Parameter(description = "Eventuell gyldighetsdato for grunnkrets (default = dagens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+                                             @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?
+    ): List<GrunnkretsResponse>
 
 }

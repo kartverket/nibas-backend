@@ -13,6 +13,7 @@ import no.kartverket.nibas.api.v1.response.UtkastOpprettetResponse
 import no.kartverket.nibas.api.v1.response.UtkastRef
 import no.kartverket.nibas.api.v1.response.UtkastResponse
 import no.kartverket.nibas.common.HrefProvider
+import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.BadRequestException
 import no.kartverket.nibas.common.ResponseException.NotFoundException
@@ -128,9 +129,9 @@ class UtkastService(private val utkastRepository: UtkastRepository,
             val metadata: Metadataendringer = operasjoner.metadataendringer
             val grenseendringer = operasjoner.grenseendringer
 
-            metadata.nasjonsendringer.forEach { nasjonService.oppdaterNasjon(it.key, it.value) }
-            metadata.fylkesendringer.forEach { fylkeService.oppdaterFylke(it.key, it.value) }
-            metadata.kommuneendringer.forEach { kommuneService.oppdaterKommune(it.key, it.value) }
+            metadata.nasjonsendringer.forEach { nasjonService.oppdaterNasjon(Lokalid(it.key), it.value) }
+            metadata.fylkesendringer.forEach { fylkeService.oppdaterFylke(Lokalid(it.key), it.value) }
+            metadata.kommuneendringer.forEach { kommuneService.oppdaterKommune(Lokalid(it.key), it.value) }
             metadata.grunnkretsendringer.forEach {
                 grunnkretsService.oppdaterGrunnkrets(Lokalid(it.key),
                     GrunnkretsRequestWrapper(
@@ -139,7 +140,7 @@ class UtkastService(private val utkastRepository: UtkastRepository,
                         endringstype = utkast.auditInfo.typeEndring)
                 )
             }
-            metadata.stemmekretsendringer.forEach { stemmekretsService.oppdaterStemmekrets(it.key, it.value) }
+            metadata.stemmekretsendringer.forEach { stemmekretsService.oppdaterStemmekrets(Identifikator(Lokalid(it.key)), it.value) }
 
             val endredeFeatures = grenseendringer.endredeFeatures
 

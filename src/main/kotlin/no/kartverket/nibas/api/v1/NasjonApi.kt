@@ -11,11 +11,14 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.response.NasjonRef
 import no.kartverket.nibas.api.v1.response.NasjonResponse
-import no.kartverket.nibas.api.v1.response.RevisjonRef
+import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
+import java.time.LocalDate
+import java.util.*
 
 @RequestMapping("/v1/nasjoner")
 @Tag(
@@ -36,7 +39,9 @@ interface NasjonApi {
         )
     )
     @GetMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentNasjoner(): List<NasjonRef>
+    fun hentNasjoner(@Parameter(description = "Eventuell gyldighetsdato for nasjonene (default = dagens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+                     @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?
+    ): List<NasjonRef>
 
     @Operation(summary = "Hent en nasjon med gitt id", description = "Henter nasjon med gitt id")
     @ApiResponses(
@@ -51,7 +56,10 @@ interface NasjonApi {
         )
     )
     @GetMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentNasjon(@Parameter(description = "ID-en til nasjonen man vil hente") @PathVariable id: String): NasjonResponse
+    fun hentNasjon(@Parameter(description = "ID-en til nasjonen man vil hente") @PathVariable(name = "id") lokalid: String,
+                   @Parameter(description = "Eventuell gyldighetsdato for nasjon (default = dagens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+                   @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?
+    ): NasjonResponse
 
     @Operation(
         summary = "Hent grensene til en gitt nasjon",
@@ -59,37 +67,9 @@ interface NasjonApi {
     )
     @DefaultFeatureCollectionApiResponses
     @GetMapping("/{id}/grenser", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentGrenserForNasjon(@Parameter(description = "ID-en til nasjonen man vil hente") @PathVariable id: String): FeatureCollection
+    fun hentGrenserForNasjon(@Parameter(description = "ID-en til nasjonen man vil hente") @PathVariable(name = "id") lokalid: String,
+                             @Parameter(description = "Eventuell gyldighetsdato for nasjon (default = dagens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+                             @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?
+    ): FeatureCollection
 
-    @Operation(
-        summary = "Hent historiske revisjoner for en gitt nasjon",
-        description = "Henter historiske revisjoner til en nasjon med gitt id"
-    )
-    @DefaultRevisjonRefListApiResponses
-    @GetMapping("/{id}/revisjoner", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentNasjonRevisjoner(@Parameter(description = "ID-en til nasjonen man vil hente historiske revisjoner for") @PathVariable id: String): List<RevisjonRef>
-
-    @Operation(
-        summary = "Hent en historisk versjon av en nasjon",
-        description = "Henter en gitt historisk revisjon av en nasjon"
-    )
-    @ApiResponses(
-        ApiResponse(
-            responseCode = "200",
-            description = "Successful operation",
-            content = [Content(
-                mediaType = "application/json",
-                schema = Schema(implementation = NasjonResponse::class)
-            )]
-        ),
-        ApiResponse(
-            responseCode = "404",
-            description = "Not Found"
-        )
-    )
-    @GetMapping("/{id}/revisjoner/{revisjon}", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentNasjonRevisjon(
-        @Parameter(description = "Id til nasjonen man vil hente") @PathVariable id: String,
-        @Parameter(description = "Id til revisjonen man vil hente") @PathVariable revisjon: Int
-    ): NasjonResponse
 }

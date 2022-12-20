@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.media.DiscriminatorMapping
 import io.swagger.v3.oas.annotations.media.Schema
 import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Metadata
+import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import javax.validation.constraints.NotNull
 
@@ -118,7 +119,7 @@ data class FeatureProperties(
 @Schema(description = "Egenskaper som beskriver konteksten som grensen sees i.")
 data class KontekstEgenskaper(
     @Schema(description = "Id til objekt som det vises til i kontekst")
-    val id: String? = null,
+    val id: ObjektIdentifikator? = null,
 
     @Schema(description = "Hvilken kontekst geometrien skal sees i")
     val type: KontekstEnhetType? = null,

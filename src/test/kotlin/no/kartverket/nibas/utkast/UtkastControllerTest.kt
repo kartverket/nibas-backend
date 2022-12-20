@@ -396,11 +396,11 @@ internal class UtkastControllerTest : NibasMvcTest() {
                             ObjektIdentifikator(lokalid, foersteJanuar2026)
                         ),
                         melding = "Det er ikke mulig å oppdatere objekt med identifikator " +
-                            "Identifikator(lokalid=Lokalid(value=${lokalid.value}), gyldigFra=2024-01-01) " +
+                            "Identifikator(lokalid=Lokalid(value=${lokalid.value}), gyldighetsdato=2024-01-01) " +
                             "av type GRUNNKRETS. Dette berører følgende objekter med senere gyldigFra-tidspunkt: " +
                             "[" +
-                            "Identifikator(lokalid=Lokalid(value=${lokalid.value}), gyldigFra=2025-01-01), " +
-                            "Identifikator(lokalid=Lokalid(value=${lokalid.value}), gyldigFra=2026-01-01)" +
+                            "Identifikator(lokalid=Lokalid(value=${lokalid.value}), gyldighetsdato=2025-01-01), " +
+                            "Identifikator(lokalid=Lokalid(value=${lokalid.value}), gyldighetsdato=2026-01-01)" +
                             "]."
                     )),
                 resultMatchers = listOf(status().isConflict)

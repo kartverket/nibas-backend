@@ -1,5 +1,6 @@
 package no.kartverket.nibas.builders
 
+import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.Administrativenhetnavn
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
@@ -14,13 +15,13 @@ import java.time.ZonedDateTime
 class KommuneBuilder(
     private val id: String = "1",
     private var kommunenummer: String = "UUID-1",
-    private var lokalId: String = "123",
+    private var lokalId: Lokalid = Lokalid("123"),
     private var navn: String = "Vestland",
     private var spraak: String = "NOR",
     private var samiskforvaltningsomraade: Boolean = false,
     private var endretdato: ZonedDateTime = ZonedDateTime.now(),
-    private var grunnkretser: MutableList<Grunnkrets> = mutableListOf(),
-    private var stemmekretser: MutableList<Stemmekrets> = mutableListOf(),
+    private var grunnkretser: List<Grunnkrets> = listOf(),
+    private var stemmekretser: List<Stemmekrets> = listOf(),
     private var gyldigFra: LocalDate = LocalDate.now(),
     private var gyldigTil: LocalDate? = null,
     private var utledetFra: Kommune? = null
@@ -37,7 +38,7 @@ class KommuneBuilder(
     }
 
     fun build(): Kommune {
-        val kommune = Kommune(id = this.id, lokalid = lokalId)
+        val kommune = Kommune(id = this.id, lokalid = lokalId.value)
         val spraakkode = Spraakkode()
         spraakkode.id = spraak
         spraakkode.description = spraak
@@ -64,18 +65,22 @@ class KommuneBuilder(
         return kommune
     }
 
+    fun buildWithoutAdministrativenhetnavn(): Kommune {
+        return build().apply { this.administrativenhetnavn.clear() }
+    }
+
     fun withLokalId(lokalId: String): KommuneBuilder {
-        this.lokalId = lokalId
+        this.lokalId = Lokalid(lokalId)
         return this
     }
 
     fun withGrunnkrets(grunnkrets: Grunnkrets): KommuneBuilder {
-        this.grunnkretser.add(grunnkrets)
+        this.grunnkretser = this.grunnkretser.plus(grunnkrets)
         return this
     }
 
     fun withStemmekrets(stemmekrets: Stemmekrets): KommuneBuilder {
-        this.stemmekretser.add(stemmekrets)
+        this.stemmekretser = this.stemmekretser.plus(stemmekrets)
         return this
     }
 

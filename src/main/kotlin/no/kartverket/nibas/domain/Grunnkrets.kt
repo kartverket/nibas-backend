@@ -5,17 +5,9 @@ import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import org.hibernate.envers.Audited
 import java.io.Serializable
+import java.time.LocalDate
 import java.util.*
-import javax.persistence.CascadeType
-import javax.persistence.Column
-import javax.persistence.Embedded
-import javax.persistence.Entity
-import javax.persistence.Id
-import javax.persistence.IdClass
-import javax.persistence.JoinColumn
-import javax.persistence.ManyToOne
-import javax.persistence.OneToMany
-import javax.persistence.Table
+import javax.persistence.*
 
 /**
  * id overrides i konstruktør for å kunne overstyre verdi for test.
@@ -60,7 +52,7 @@ class Grunnkrets(
     }
 
     override fun oppdaterOmraade() {
-        omraade = SosiGeometryFunctions.beregnFlate(getGrenserAvTyper(tillatteGrensetyper()))
+        omraade = SosiGeometryFunctions.beregnFlate(getGrenser().toSet())
     }
 
     override fun oppdaterEllerLeggTilGrenseKobling(grenseMedAttributter: GrenseMedAttributter) {
@@ -78,14 +70,12 @@ class Grunnkrets(
 
     override fun antallGrenser(): Int = grenser.size
 
-    fun getGrenserAvTyper(grensetyper: Set<Grensetype>): Set<GrenseKobling> {
+    fun getGrenserAvTyper(grensetyper: Set<Grensetype>, gyldighetsdato: LocalDate = LocalDate.now()): List<GrenseKobling> {
         return grenser
-            .filter { grensetyper.contains(it.grense.grensetype) }
-            .toSet()
+            .filter { it.grense.erRelevantGrenseForTyperOgDato(grensetyper, gyldighetsdato) }
     }
 
-    fun getGrenserAvType(grensetype: Grensetype): Set<GrenseKobling> = getGrenserAvTyper(setOf(grensetype))
-
+    fun getGrenser(gyldighetsdato: LocalDate = LocalDate.now()): List<GrenseKobling> = getGrenserAvTyper(tillatteGrensetyper(), gyldighetsdato)
 
     override fun toString(): String {
         return "Grunnkrets(id='$id', grunnkretsnummer=$grunnkretsnummer, grunnkretsnavn=$grunnkretsnavn, gyldighet: $gyldighet)"
@@ -121,20 +111,6 @@ class Grunnkrets(
             setInfo(grunnkretsInformasjon.informasjon)
         }
     }
-
-    fun kommunegrenser(): Set<GrenseKobling> = getGrenserAvType(Grensetype.Kommunegrense)
-
-    fun fylkesgrenser(): Set<GrenseKobling> = getGrenserAvType(Grensetype.Fylkesgrense)
-
-    fun riksgrenser(): Set<GrenseKobling> = getGrenserAvType(Grensetype.Riksgrense)
-
-    fun grunnkretsgrenser(): Set<GrenseKobling> = getGrenserAvType(Grensetype.Grunnkretsgrense)
-
-    fun delomraadegrenser(): Set<GrenseKobling> = getGrenserAvType(Grensetype.Delomraadegrense)
-
-    fun territorialgrenser(): Set<GrenseKobling> = getGrenserAvType(Grensetype.Territorialgrense)
-
-    fun avtaltavgrensningslinjer(): Set<GrenseKobling> = getGrenserAvType(Grensetype.AvtaltAvgrensningslinje)
 
 }
 

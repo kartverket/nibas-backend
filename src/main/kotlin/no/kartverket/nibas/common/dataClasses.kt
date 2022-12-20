@@ -3,4 +3,16 @@ package no.kartverket.nibas.common
 import java.time.LocalDate
 
 data class Lokalid(val value: String)
-data class Identifikator(val lokalid: Lokalid, val gyldigFra: LocalDate)
+
+/**
+ * Forretningsnøkkel.
+ * Kombinasjonen av lokalid (uuid) + gyldighetsdato skal alltid bare returnere en rad.
+ */
+data class Identifikator(val lokalid: Lokalid, val gyldighetsdato: LocalDate = LocalDate.now())
+
+fun createIdentifikator(lokalid: String, gyldighetsdato: LocalDate?): Identifikator =
+    Identifikator(
+        lokalid = Lokalid(lokalid),
+        gyldighetsdato = gyldighetsdato ?: LocalDate.now()
+    )
+

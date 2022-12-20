@@ -16,98 +16,98 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.MetadataUpdater
 import no.kartverket.nibas.api.v1.common.geojson.metadata.RiksgrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.StatistiskgrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.TerritorialgrenseMetadata
-import no.kartverket.nibas.api.v1.response.RevisjonRef
+import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
+import no.kartverket.nibas.api.v1.response.toIdentifikator
+import no.kartverket.nibas.common.Identifikator
+import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.BadRequestException
+import no.kartverket.nibas.common.ResponseException.NotFoundException
+import no.kartverket.nibas.common.createIdentifikator
 import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.GrenseMedAttributter
 import no.kartverket.nibas.domain.GrenseMedRetningOgKontekst
-import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.KonfliktVersjon
-import no.kartverket.nibas.repository.LandKodeRepository
 import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.repository.StemmekretsRepository
+import no.kartverket.nibas.repository.findAllGyldigeObjekterForIdentifikatorer
+import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
-import no.kartverket.nibas.unwrap
 import org.locationtech.jts.geom.Point
-import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
+import java.time.LocalDate
 import java.util.logging.Logger
 
 @RestController
 class GrenseController(
     private val grenseService: GrenseService,
-    private val historikkService: HistorikkService,
-    private val kodelisteService: KodelisteService
 ) : GrenseApi {
 
-    override fun hentGrense(id: String): Feature =
-        grenseService.hentGrense(id)
-            ?.let { grenseToFeature(grense = it, kodelisteService) }
-            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
+    override fun hentGrense(lokalid: String, gyldighetsdato: LocalDate?): Feature {
+        val identifikatorForGrense = createIdentifikator(lokalid, gyldighetsdato)
+        return grenseService.hentGrense(identifikatorForGrense)?.toFeature()
+            ?: throw NotFoundException("Grense $identifikatorForGrense ble ikke funnet.")
+    }
 
-    override fun hentGrenseRevisjon(id: String, revisjon: Int): Feature =
-        grenseToFeature(grense = historikkService.hentRevisjon(id, revisjon, Grense::class.java), kodelisteService)
-
-    override fun hentGrenseRevisjoner(id: String): List<RevisjonRef> =
-        historikkService.hentRevisjoner(id, Grense::class.java).map { toRevisjonRef(it) }
 }
 
+@Transactional(readOnly = true)
 @Service
 class GrenseService(
     private val grenseRepository: GrenseRepository,
-    private val landKodeRepository: LandKodeRepository,
     private val grunnkretsRepository: GrunnkretsRepository,
     private val stemmekretsRepository: StemmekretsRepository,
 ) {
     private val logger: Logger = Logger.getLogger(this::class.java.name)
 
-    @Transactional(readOnly = true)
-    fun hentGrense(id: String): Grense? {
-        return grenseRepository.findById(id).unwrap()
-    }
+    fun hentGrense(identifikator: Identifikator): Grense? = grenseRepository.findGyldigObjektForIdentifikator(identifikator)
 
-    @Transactional
-    fun lagreGrenser(grenser: FeatureCollection) {
+    // TODO: Dato må sendes inn her på utkast. Men de fleste grenseendringer er kvalitetshevinger som skal skje umiddelbart, så dagens dato duger en stund.
+    @Transactional(readOnly = false)
+    fun lagreGrenser(grenser: FeatureCollection, gyldighetsdato: LocalDate = LocalDate.now()) {
         val features = grenser.features
         features
             .groupBy { it.properties.type }
             .forEach { mapEntry ->
-                doLagreGrenser(mapEntry.value)
+                doLagreGrenser(mapEntry.value, gyldighetsdato)
             }
 //        flateService.beregnFlaterFor(features)
     }
 
-    private fun doLagreGrenser(features: List<Feature>) {
+    // Feature.id vil være lokalid
+    private fun doLagreGrenser(features: List<Feature>, gyldighetsdato: LocalDate = LocalDate.now()) {
         // Hvis det er innkommende features med id ikke satt kastes HTTP 400
         if (features.any { feature -> feature.id == null }) {
             throw BadRequestException("Missing feature id.")
         }
-        val eksisterendeGrenser: Iterable<Grense> = grenseRepository.findAllById(features.map { it.id })
+        // Henter eksisterende grenser på identifikator. Sorterer på lokalid for testens skyld.
+        val grenseIdentifikatorer = features.map { featureIdToIdentifikator(it.id, gyldighetsdato) }.sortedBy { it.lokalid.value }
+        val identifikatorToGrenseMap = grenseRepository.findAllGyldigeObjekterForIdentifikatorer(grenseIdentifikatorer)
+        val eksisterendeGrenser: List<Grense> = identifikatorToGrenseMap.values.toList()
 
         // Hvis det er innkommende features med id som ikke ligger i databasen kastes HTTP 400
-        val grenseIdDiffs: List<String> = features.map { it.id!! } - eksisterendeGrenser.map { it.id }.toSet()
-        if (grenseIdDiffs.isNotEmpty()) {
-            throw BadRequestException("Non-existing grenseIds: [${grenseIdDiffs.joinToString(",")}]")
+        val identifikatorDiffs: List<Identifikator> = grenseIdentifikatorer - identifikatorToGrenseMap.keys
+        if (identifikatorDiffs.isNotEmpty()) {
+            throw BadRequestException("Non-existing grenseidentifikatorer: [${identifikatorDiffs.joinToString(",")}])")
         }
 
         val konflikterIGrenser: List<KonfliktVersjon> = features.mapNotNull { feature ->
-            verifiserOptimistiskLaas(feature.properties.version, eksisterendeGrenser.find { it.id == feature.id }!!)
+            val featureIdentifikator = featureIdToIdentifikator(feature.id, gyldighetsdato)
+            verifiserOptimistiskLaas(feature.properties.version, findGrenseForIdentifikator(eksisterendeGrenser, featureIdentifikator))
         }
         if (konflikterIGrenser.isNotEmpty()) {
             throw OptimistiskLaasException(*konflikterIGrenser.toTypedArray())
         }
 
         val grenserMedRetningOgKontekst = features.map { feature ->
-            var grense: Grense = eksisterendeGrenser.find { it.id == feature.id }!!
+            var grense: Grense = findGrenseForIdentifikator(eksisterendeGrenser, featureIdToIdentifikator(feature.id, gyldighetsdato))
 
             grense.grense = feature.geometry.toLineString(feature.properties.srid)
             grense = updateMetadataOnGrense(feature, grense)
@@ -124,7 +124,7 @@ class GrenseService(
                     )
                 ),
                 kontekstEgenskaper.type!!,
-                kontekstEgenskaper.id!!
+                kontekstEgenskaper.id!!.toIdentifikator()
             )
         }
 
@@ -139,19 +139,30 @@ class GrenseService(
             }
     }
 
+    private fun featureIdToIdentifikator(lokalid: String?, gyldighetsdato: LocalDate): Identifikator = Identifikator(Lokalid(lokalid!!), gyldighetsdato)
+    private fun findGrenseForIdentifikator(grenser: List<Grense>, identifikator: Identifikator): Grense {
+        return grenser.find { it.lokalid == identifikator.lokalid.value && it.gyldigPaaDato(identifikator.gyldighetsdato) }!!
+    }
+
     private fun oppdaterGrensekoblinger(kontekstType: KontekstEnhetType, grenserMedRetningOgKontekst: List<GrenseMedRetningOgKontekst>) {
         val enhetKobletTilGrenseRepository = when (kontekstType) {
             KontekstEnhetType.GRUNNKRETS -> grunnkretsRepository
             KontekstEnhetType.STEMMEKRETS -> stemmekretsRepository
         }
-        enhetKobletTilGrenseRepository.findAllById(grenserMedRetningOgKontekst.map { it.kontekstId })
-            .forEach { enhetKobletTilGrense ->
-                grenserMedRetningOgKontekst
-                    .filter { grenseMedRetningOgKontekst -> grenseMedRetningOgKontekst.kontekstId == enhetKobletTilGrense.id }
-                    .map { it.grenseMedAttributter }
-                    .forEach { grenseMedAttributter -> enhetKobletTilGrense.oppdaterEllerLeggTilGrenseKobling(grenseMedAttributter) }
-                logger.info("Oppdaterer enhet: [${enhetKobletTilGrense::class.java.name} - id ${enhetKobletTilGrense.id}]")
-            }
+        val kretsIdentifikators = grenserMedRetningOgKontekst.map { it.kontekstId }
+        kretsIdentifikators.forEach { kretsIdentifikator ->
+            val enhetKobletTilGrense = enhetKobletTilGrenseRepository.findGyldigObjektForIdentifikator(kretsIdentifikator)
+                ?: throw RuntimeException("Fant ikke enhet for identifikator $kretsIdentifikator")
+            grenserMedRetningOgKontekst
+                .filter { grenseMedRetningOgKontekst ->
+                    val kontekstIdentifikator = grenseMedRetningOgKontekst.kontekstId
+                    // Må matche på Kretsens lokalid og være gyldig på identifikatorens gyldighetsdato
+                    kontekstIdentifikator.lokalid.value == enhetKobletTilGrense.lokalid && enhetKobletTilGrense.gyldigPaaDato(kontekstIdentifikator.gyldighetsdato)
+                }
+                .map { it.grenseMedAttributter }
+                .forEach { grenseMedAttributter -> enhetKobletTilGrense.oppdaterEllerLeggTilGrenseKobling(grenseMedAttributter) }
+            logger.info("Oppdaterer enhet: [${enhetKobletTilGrense::class.java.name} - id ${enhetKobletTilGrense.id}]")
+        }
     }
 
     private fun updateMetadataOnGrense(
@@ -169,6 +180,7 @@ class GrenseService(
                     grense = grense,
                     metadata = (featureMetadata as AvtaltAvgrensningslinjeMetadata)
                 )
+
                 Grensetype.Territorialgrense -> metadataUpdater.updateTerritoritalgrense(grense, (featureMetadata as TerritorialgrenseMetadata))
                 Grensetype.Delomraadegrense -> metadataUpdater.updateStatistiskGrense(grense, (featureMetadata as StatistiskgrenseMetadata))
                 Grensetype.Grunnkretsgrense -> metadataUpdater.updateStatistiskGrense(grense, (featureMetadata as StatistiskgrenseMetadata))
@@ -185,47 +197,54 @@ class GrenseService(
  * Default angitt kontekst er Grunnkrets.
  * Kontekstegenskapene retning, rekkefoelge, flateIndeks, hullIndeks gir nå kun mening for
  * Grunnkrets/Stemmekrets.
+ * Metoden tar inn gyldighetsdato, defaulter til dagens dato. Dette for å kunne velge rett versjon av Grense-objektet dersom det finnes framtidige versjoner.
  */
 fun grenseKoblingToFeature(
     grenseKobling: GrenseKobling,
-    kodelisteService: KodelisteService,
-    kontekstType: KontekstEnhetType = KontekstEnhetType.GRUNNKRETS
+    kontekstType: KontekstEnhetType = KontekstEnhetType.GRUNNKRETS,
+    gyldighetsdato: LocalDate = LocalDate.now()
 ): Feature {
-    val feature = grenseToFeature(grenseKobling.grense, kodelisteService)
+    val feature = grenseKobling.getRelevantGrense(gyldighetsdato).toFeature()
+    val koblingAttributter = grenseKobling.grenseKoblingAttributter
     return feature.copy(
         properties = feature.properties.copy(
             kontekstEgenskaper = KontekstEgenskaper(
-                id = grenseKobling.getEnhetKobletTilGrense().id,
+                id = ObjektIdentifikator(
+                    lokalid = Lokalid(grenseKobling.getEnhetKobletTilGrense().lokalid),
+                    gyldighetsdato = gyldighetsdato
+                ),
                 type = kontekstType,
-                retningMedKlokken = grenseKobling.grenseKoblingAttributter.retningMedKlokken,
-                rekkefoelge = grenseKobling.grenseKoblingAttributter.rekkefoelge,
-                flateIndeks = grenseKobling.grenseKoblingAttributter.flateIndeks,
-                hullIndeks = grenseKobling.grenseKoblingAttributter.hullIndeks
+                retningMedKlokken = koblingAttributter.retningMedKlokken,
+                rekkefoelge = koblingAttributter.rekkefoelge,
+                flateIndeks = koblingAttributter.flateIndeks,
+                hullIndeks = koblingAttributter.hullIndeks
             )
         )
     )
 }
 
-fun grenseToFeature(grense: Grense, kodelisteService: KodelisteService): Feature {
-    var featureProperties = FeatureProperties(type = grense.grensetype.value, srid = grense.grense.srid, version = grense.version)
-    val metadataMapper = MetadataMapper(kodelisteService)
-    featureProperties = when (grense.grensetype) {
-        Grensetype.Fylkesgrense -> featureProperties.copy(metadata = metadataMapper.toMetadataForAdministrativGrense(grense))
-        Grensetype.Kommunegrense -> featureProperties.copy(metadata = metadataMapper.toMetadataForAdministrativGrense(grense))
-        Grensetype.Riksgrense -> featureProperties.copy(metadata = metadataMapper.toMetadataForRiksgrense(grense))
-        Grensetype.AvtaltAvgrensningslinje -> featureProperties.copy(metadata = metadataMapper.toMetadataForAvtaltAvgrensningslinje(grense))
-        Grensetype.Territorialgrense -> featureProperties.copy(metadata = metadataMapper.toMetadataForTerritorialgrense(grense))
-        Grensetype.Grunnlinje -> featureProperties.copy(metadata = metadataMapper.toMetadataForGrunnlinje(grense))
-        Grensetype.Delomraadegrense -> featureProperties.copy(metadata = metadataMapper.toMetadataForStatistiskGrense(grense))
-        Grensetype.Grunnkretsgrense -> featureProperties.copy(metadata = metadataMapper.toMetadataForStatistiskGrense(grense))
-        Grensetype.Stemmekretsgrense -> featureProperties.copy(metadata = metadataMapper.toMetadataForKommunalKretsgrense(grense))
-        else -> throw RuntimeException("Ikke støttet å mappe til metadata for grensetype: " + grense.grensetype.name)
+fun Grense.toFeature(): Feature {
+    val grensetype = this.grensetype
+    var featureProperties = FeatureProperties(type = grensetype.value, srid = this.grense.srid, version = this.version)
+    val metadataMapper = MetadataMapper()
+    featureProperties = when (grensetype) {
+        Grensetype.Fylkesgrense -> featureProperties.copy(metadata = metadataMapper.toMetadataForAdministrativGrense(this))
+        Grensetype.Kommunegrense -> featureProperties.copy(metadata = metadataMapper.toMetadataForAdministrativGrense(this))
+        Grensetype.Riksgrense -> featureProperties.copy(metadata = metadataMapper.toMetadataForRiksgrense(this))
+        Grensetype.AvtaltAvgrensningslinje -> featureProperties.copy(metadata = metadataMapper.toMetadataForAvtaltAvgrensningslinje(this))
+        Grensetype.Territorialgrense -> featureProperties.copy(metadata = metadataMapper.toMetadataForTerritorialgrense(this))
+        Grensetype.Grunnlinje -> featureProperties.copy(metadata = metadataMapper.toMetadataForGrunnlinje(this))
+        Grensetype.Delomraadegrense -> featureProperties.copy(metadata = metadataMapper.toMetadataForStatistiskGrense(this))
+        Grensetype.Grunnkretsgrense -> featureProperties.copy(metadata = metadataMapper.toMetadataForStatistiskGrense(this))
+        Grensetype.Stemmekretsgrense -> featureProperties.copy(metadata = metadataMapper.toMetadataForKommunalKretsgrense(this))
+        else -> throw RuntimeException("Ikke støttet å mappe til metadata for grensetype: " + grensetype.name)
     }
 
     return Feature(
-        id = grense.id,
+        // Feature må ha en id, men denne må være objektets lokalid
+        id = this.lokalid,
         properties = featureProperties,
-        geometry = grense.grense.toDto()
+        geometry = this.grense.toDto()
     )
 }
 
@@ -235,20 +254,19 @@ fun posisjonToFeature(posisjon: Point?, version: Int): Feature =
         geometry = posisjon.toDto()
     )
 
-fun flateToFeature(flate: Flate, kodelisteService: KodelisteService, version: Int): Feature {
+fun flateToFeature(flate: Flate, version: Int): Feature {
     var featureProperties = FeatureProperties(
         type = flate.type.name,
         srid = flate.omraade?.srid ?: SosiGeometryFunctions.defaultSrid,
         version = version
     )
-    val metadataMapper = MetadataMapper(kodelisteService)
+    val metadataMapper = MetadataMapper()
 
     featureProperties = featureProperties.copy(metadata = metadataMapper.toMetadata(flate))
 
-
-
     return Feature(
-        id = flate.id,
+        // Feature må ha en id, men denne må være objektets lokalid
+        id = flate.lokalid,
         properties = featureProperties,
         geometry = flate.omraade?.toDto() ?: MultiPolygon(coordinates = emptyList()),
     )

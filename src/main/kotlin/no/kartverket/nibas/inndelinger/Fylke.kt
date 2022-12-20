@@ -7,52 +7,63 @@ import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.request.FylkeRequest
 import no.kartverket.nibas.api.v1.response.FylkeRef
 import no.kartverket.nibas.api.v1.response.FylkeResponse
-import no.kartverket.nibas.api.v1.response.RevisjonRef
+import no.kartverket.nibas.api.v1.response.toObjektIdentifikator
+import no.kartverket.nibas.common.HrefProvider
+import no.kartverket.nibas.common.Identifikator
+import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.common.ResponseException.NotFoundException
+import no.kartverket.nibas.common.createIdentifikator
 import no.kartverket.nibas.domain.Fylke
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.FylkeRepository
 import no.kartverket.nibas.repository.OptimistiskLaasException
+import no.kartverket.nibas.repository.findAllGyldigPaaDato
+import no.kartverket.nibas.repository.findAntallFramtidigeVersjonerForIdentifikator
+import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
-import no.kartverket.nibas.unwrap
-import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder
+import java.time.LocalDate
 
 @RestController
 class FylkeController(
     private val fylkeService: FylkeService,
     private val kodelisteService: KodelisteService,
-    private val historikkService: HistorikkService,
+    private val hrefProvider: HrefProvider
 ) : FylkeApi {
 
-    override fun hentFylker(): List<FylkeRef> = fylkeService.hentAlleFylker().map { toFylkeRef(it) }
+    override fun hentFylker(gyldighetsdato: LocalDate?): List<FylkeRef> {
+        val datoToUse: LocalDate = gyldighetsdato ?: LocalDate.now()
+        return fylkeService.hentAlleFylker(datoToUse).map {
+            val identifikatorForFylke = Identifikator(Lokalid(it.lokalid), datoToUse)
+            it.toFylkeRef(identifikatorForFylke, fylkeService.hentAntallGyldigeVersjonerFramITidFor(identifikatorForFylke), hrefProvider)
+        }
+    }
 
-    override fun hentFylke(id: String): FylkeResponse =
-        fylkeService.hentFylke(id)?.toFylkeResponse(kodelisteService) ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
+    override fun hentFylke(lokalid: String, gyldighetsdato: LocalDate?): FylkeResponse {
+        val identifikator = createIdentifikator(lokalid, gyldighetsdato)
+        return fylkeService.hentFylke(identifikator)?.toFylkeResponse(identifikator, kodelisteService)
+            ?: throw NotFoundException("Fylke $identifikator ble ikke funnet.")
+    }
 
-    override fun hentGrenserForFylke(id: String): FeatureCollection {
-        val grenser = fylkeService.hentGrenserForFylke(id)
-        if (grenser.isEmpty()) {
-            throw ResponseStatusException(HttpStatus.NOT_FOUND)
+    override fun hentGrenserForFylke(lokalid: String, gyldighetsdato: LocalDate?): FeatureCollection {
+        val identifikator = createIdentifikator(lokalid, gyldighetsdato)
+        val grenseKoblinger = fylkeService.hentGrenserForFylke(identifikator)
+        if (grenseKoblinger.isEmpty()) {
+            throw NotFoundException("Fant ingen grenser for $identifikator")
         }
         return FeatureCollection(
-            features = grenser
-                // TODO: NIBAS-473 Hvordan sortere grensene nå?
-//                .sortedBy { it.grenseKoblingAttributter.rekkefoelge }
-                .map { grenseKoblingToFeature(it, kodelisteService) }
+            features = grenseKoblinger.map {
+                grenseKoblingToFeature(
+                    grenseKobling = it,
+                    gyldighetsdato = identifikator.gyldighetsdato)
+            }
         )
     }
 
-    override fun hentFylkesRevisjoner(id: String): List<RevisjonRef> =
-        historikkService.hentRevisjoner(id, Fylke::class.java).map { toRevisjonRef(it) }
-
-    override fun hentFylkesRevisjon(id: String, revisjon: Int): FylkeResponse =
-        historikkService.hentRevisjon(id, revisjon, Fylke::class.java).toFylkeResponse(kodelisteService)
 }
 
 @Transactional(readOnly = true)
@@ -62,16 +73,16 @@ class FylkeService(
     private val administrativenhetnavnRepository: AdministrativenhetnavnRepository
 ) {
 
-    fun hentAlleFylker() = fylkeRepository.findAll().toList()
-    fun hentFylke(id: String) = fylkeRepository.findById(id).unwrap()
+    fun hentAlleFylker(gyldighetsdato: LocalDate = LocalDate.now()): List<Fylke> = fylkeRepository.findAllGyldigPaaDato(gyldighetsdato)
 
-    fun hentGrenserForFylke(id: String): Set<GrenseKobling> {
-        return fylkeRepository.findById(id).unwrap()?.getGrenser() ?: emptySet()
-    }
+    fun hentFylke(identifikator: Identifikator): Fylke? = fylkeRepository.findGyldigObjektForIdentifikator(identifikator)
+
+    fun hentGrenserForFylke(identifikator: Identifikator): Set<GrenseKobling> =
+        hentFylke(identifikator)?.getGrenser(identifikator.gyldighetsdato) ?: emptySet()
 
     @Transactional(readOnly = false)
-    fun oppdaterFylke(id: String, oppdatertFylke: FylkeRequest): Fylke? {
-        return hentFylke(id)?.let { gammel ->
+    fun oppdaterFylke(lokalid: Lokalid, oppdatertFylke: FylkeRequest): Fylke? {
+        return hentFylke(Identifikator(lokalid))?.let { gammel ->
             verifiserOptimistiskLaas(oppdatertFylke.version, gammel)?.let { throw OptimistiskLaasException(it) }
             gammel.samiskforvaltningsomraade = oppdatertFylke.samiskforvaltningsomraade
             gammel.fylkesnummer = oppdatertFylke.fylkesnummerId
@@ -87,24 +98,28 @@ class FylkeService(
             fylkeRepository.save(gammel)
         }
     }
+
+    fun hentAntallGyldigeVersjonerFramITidFor(identifikator: Identifikator): Int = fylkeRepository.findAntallFramtidigeVersjonerForIdentifikator(identifikator)
 }
 
-fun toFylkeRef(fylke: Fylke): FylkeRef = FylkeRef(
-    id = fylke.id,
-    navn = fylke.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version) },
-    href = ServletUriComponentsBuilder.fromCurrentRequestUri().pathSegment(fylke.id).build().toUriString()
-)
+fun Fylke.toFylkeRef(identifikator: Identifikator, antallFramtidigeVersjoner: Int = 0, hrefProvider: HrefProvider): FylkeRef {
+    return FylkeRef(
+        id = identifikator.toObjektIdentifikator(),
+        navn = this.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version) },
+        href = hrefProvider.getHref(identifikator),
+        antallFramtidigeVersjoner = antallFramtidigeVersjoner
+    )
+}
 
-fun Fylke.toFylkeResponse(kodelisteService: KodelisteService): FylkeResponse = FylkeResponse(
-    id = this.id,
+fun Fylke.toFylkeResponse(identifikator: Identifikator, kodelisteService: KodelisteService): FylkeResponse = FylkeResponse(
+    id = identifikator.toObjektIdentifikator(),
     administrativenhetnavn = this.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version) },
-    lokalid = this.lokalid,
     fylkesnummer = Fylkesnummer(
         id = this.fylkesnummer,
         kodeverdi = kodelisteService.getCodeValueByFylkesnummerId(this.fylkesnummer)?.toInt()!!
     ),
     samiskforvaltningsomraade = this.samiskforvaltningsomraade!!,
     oppdateringsdato = this.auditInfo.endretdato,
-    features = FeatureCollection(features = listOf(posisjonToFeature(this.posisjon, this.version), flateToFeature(this, kodelisteService, this.version))),
+    features = FeatureCollection(features = listOf(posisjonToFeature(this.posisjon, this.version), flateToFeature(this, this.version))),
     version = this.version
 )

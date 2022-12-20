@@ -18,8 +18,8 @@ class GrunnkretsBuilder(
     private var lokalId: Lokalid = Lokalid(LOKALID),
     private var grunnkretsnummer: String = "12",
     private var grunnkretsnavn: String = "Dåsvatn",
-    private var grenser: MutableSet<Grense> = mutableSetOf(),
-    private var kommune: Kommune = KommuneBuilder.DEFAULT_KOMMUNE,
+    private var grenser: List<Grense> = emptyList(),
+    private var kommune: Kommune? = KommuneBuilder.DEFAULT_KOMMUNE,
     private var endretdato: ZonedDateTime = ZonedDateTime.now(),
     private var datafangstdato: ZonedDateTime = ZonedDateTime.now(),
     private var gyldigFra: LocalDate = LocalDate.now(),
@@ -42,8 +42,9 @@ class GrunnkretsBuilder(
         grunnkrets.grunnkretsnavn = grunnkretsnavn
         grunnkrets.grunnkretsnummer = grunnkretsnummer
         grunnkrets.auditInfo.endretdato = endretdato
-        grunnkrets.kommune = kommune
-
+        if (kommune != null) {
+            grunnkrets.kommune = kommune!!
+        }
         grunnkrets.auditInfo.endretdato = endretdato
         grunnkrets.gyldighet = Gyldighet(gyldigFra, gyldigTil, slettet)
         grunnkrets.setInfo(informasjonstekst)
@@ -90,7 +91,7 @@ class GrunnkretsBuilder(
     }
 
     fun withGrenser(vararg grenser: Grense): GrunnkretsBuilder {
-        this.grenser = grenser.toMutableSet()
+        this.grenser = this.grenser.plus(grenser.toList())
         return this
     }
 
@@ -101,7 +102,7 @@ class GrunnkretsBuilder(
                 grenser.add(Grense(grensetype = pair.first))
             }
         }
-        this.grenser = grenser.toMutableSet()
+        this.grenser = this.grenser.plus(grenser.toList())
         return this
     }
 

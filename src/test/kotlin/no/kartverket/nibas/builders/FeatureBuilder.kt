@@ -14,6 +14,8 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.RiksgrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Sporingsinformasjon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.StatistiskgrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.TerritorialgrenseMetadata
+import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
+import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.inndelinger.toDto
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import org.locationtech.jts.geom.Coordinate
@@ -31,7 +33,7 @@ class FeatureBuilder(private val id: String? = "1") {
     private var grenseVersjon = 1
     private var metadata: Metadata? = null
     private var lokalid: String = "123"
-    private var kontekstId: String = "123"
+    private var kontekstId: ObjektIdentifikator = ObjektIdentifikator(Lokalid("123"), gyldighetsdato = LocalDate.now())
     private var kontekstType: KontekstEnhetType = KontekstEnhetType.GRUNNKRETS
     private var retningMedKlokka: Boolean = true
     private var rekkefoelge: Int = 0
@@ -43,7 +45,7 @@ class FeatureBuilder(private val id: String? = "1") {
         var properties = FeatureProperties(
             type = grenseType.toString(),
             srid = this.srid,
-	    version = grenseVersjon,
+            version = grenseVersjon,
             kontekstEgenskaper = KontekstEgenskaper(
                 id = kontekstId,
                 type = kontekstType,
@@ -84,8 +86,8 @@ class FeatureBuilder(private val id: String? = "1") {
         return this
     }
 
-    fun withKontekstId(kontekstId: String): FeatureBuilder {
-        this.kontekstId = kontekstId
+    fun withKontekstId(kontekstId: String, gyldighetsdato: LocalDate = LocalDate.now()): FeatureBuilder {
+        this.kontekstId = ObjektIdentifikator(Lokalid(kontekstId), gyldighetsdato)
         return this
     }
 

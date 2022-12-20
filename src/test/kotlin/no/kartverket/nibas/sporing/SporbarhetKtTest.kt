@@ -62,42 +62,42 @@ internal class SporbarhetKtTest {
 
     @Test
     fun tidspunktEtterGyldigFraMedAapentIntervall() {
-        assertThat(grunnkretsMedAapentIntervall.gyldigPaaTidspunkt(october17)).isTrue
+        assertThat(grunnkretsMedAapentIntervall.gyldigPaaDato(october17)).isTrue
     }
 
     @Test
     fun tidspunktIdentiskMedGyldigFraMedAapentIntervall() {
-        assertThat(grunnkretsMedAapentIntervall.gyldigPaaTidspunkt(august1)).isTrue
+        assertThat(grunnkretsMedAapentIntervall.gyldigPaaDato(august1)).isTrue
     }
 
     @Test
     fun tidspunktTidligereEnnGyldigFraMedAapentIntervall() {
-        assertThat(grunnkretsMedAapentIntervall.gyldigPaaTidspunkt(juli31)).isFalse
+        assertThat(grunnkretsMedAapentIntervall.gyldigPaaDato(juli31)).isFalse
     }
 
     @Test
     fun tidspunktDagenFoerGyldigTilMedLukketIntervall() {
-        assertThat(grunnkretsMedLukketIntervall.gyldigPaaTidspunkt(october16)).isTrue
+        assertThat(grunnkretsMedLukketIntervall.gyldigPaaDato(october16)).isTrue
     }
 
     @Test
     fun tidspunktIdentiskMedGyldigTilMedLukketIntervall() {
-        assertThat(grunnkretsMedLukketIntervall.gyldigPaaTidspunkt(october17)).isFalse
+        assertThat(grunnkretsMedLukketIntervall.gyldigPaaDato(october17)).isFalse
     }
 
     @Test
     fun tidspunktDagenEtterGyldigTilMedLukketIntervall() {
-        assertThat(grunnkretsMedLukketIntervall.gyldigPaaTidspunkt(october18)).isFalse
+        assertThat(grunnkretsMedLukketIntervall.gyldigPaaDato(october18)).isFalse
     }
 
     @Test
     fun tidspunktTidligereEnnGyldigFraMedLukketIntervall() {
-        assertThat(grunnkretsMedLukketIntervall.gyldigPaaTidspunkt(juli31)).isFalse
+        assertThat(grunnkretsMedLukketIntervall.gyldigPaaDato(juli31)).isFalse
     }
 
     @Test
     fun ugyldigIntervallGirIkkeGyldigPaaTidspunkt() {
-        assertThat(grunnkrets(august1, october17, slettet = true).gyldigPaaTidspunkt(august1)).isFalse
+        assertThat(grunnkrets(august1, october17, slettet = true).gyldigPaaDato(august1)).isFalse
     }
 
     @Test
@@ -107,7 +107,7 @@ internal class SporbarhetKtTest {
 
         grunnkrets.setSlettet()
         assertThat(grunnkrets.gyldighet.slettet).isTrue
-        assertThat(grunnkrets.gyldigPaaTidspunkt(august1)).isFalse
+        assertThat(grunnkrets.gyldigPaaDato(august1)).isFalse
     }
 
     private fun grunnkrets(gyldigFra: LocalDate, gyldigTil: LocalDate?, slettet: Boolean = false) = GrunnkretsBuilder(slettet = slettet)

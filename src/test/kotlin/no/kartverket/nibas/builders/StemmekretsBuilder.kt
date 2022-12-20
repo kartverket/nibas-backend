@@ -1,5 +1,6 @@
 package no.kartverket.nibas.builders
 
+import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.Kommune
@@ -10,29 +11,27 @@ import org.locationtech.jts.geom.GeometryFactory
 import java.time.LocalDate
 import java.time.ZonedDateTime
 
-class StemmekretsBuilder(private val id: String = "1") {
-
-    private var grenser: MutableSet<Grense> = mutableSetOf()
-    private var kommune: Kommune = KommuneBuilder.DEFAULT_KOMMUNE
-    private var lokalId: String = LOKALID
-    private var stemmekretsnavn = "Nordre Follo"
-    private var stemmekretsnummer = "9"
-    private var tellekretsnavn = "Nordre Follo Tellekrets"
-    private var tellekretsnummer = "98"
-
-    private var endretdato: ZonedDateTime = ZonedDateTime.now()
-    private var datafangstdato: ZonedDateTime = ZonedDateTime.now()
-    private var gyldigFra: LocalDate = LocalDate.now()
-    private var gyldigTil: LocalDate? = null
-    private var informasjonstekst = INFORMASJONTEKST
-    private var opphav = OPPHAV
+class StemmekretsBuilder(private val id: String = "1",
+                         private var grenser: List<Grense> = emptyList(),
+                         private var kommune: Kommune? = KommuneBuilder.DEFAULT_KOMMUNE,
+                         private var lokalId: Lokalid = Lokalid(LOKALID),
+                         private var stemmekretsnavn: String = "Nordre Follo",
+                         private var stemmekretsnummer: String = "9",
+                         private var tellekretsnavn: String = "Nordre Follo Tellekrets",
+                         private var tellekretsnummer: String = "98",
+                         private var endretdato: ZonedDateTime = ZonedDateTime.now(),
+                         private var datafangstdato: ZonedDateTime = ZonedDateTime.now(),
+                         private var gyldigFra: LocalDate = LocalDate.now(),
+                         private var gyldigTil: LocalDate? = null,
+                         private var informasjonstekst: String = INFORMASJONTEKST,
+                         private var opphav: String = OPPHAV) {
 
     companion object {
         val DEFAULT_STEMMEKRETS: Stemmekrets = StemmekretsBuilder().build()
     }
 
     fun build(): Stemmekrets {
-        val stemmekrets = Stemmekrets(id = this.id, lokalid = lokalId)
+        val stemmekrets = Stemmekrets(id = this.id, lokalid = lokalId.value)
 
         stemmekrets.datafangstdato = datafangstdato
 
@@ -43,7 +42,9 @@ class StemmekretsBuilder(private val id: String = "1") {
 
         stemmekrets.auditInfo.endretdato = endretdato
 
-        stemmekrets.kommune = kommune
+        if (kommune != null) {
+            stemmekrets.kommune = kommune!!
+        }
 
         stemmekrets.auditInfo.endretdato = endretdato
         stemmekrets.gyldighet = Gyldighet(gyldigFra, gyldigTil)
@@ -60,7 +61,7 @@ class StemmekretsBuilder(private val id: String = "1") {
     }
 
     fun withLokalId(lokalId: String): StemmekretsBuilder {
-        this.lokalId = lokalId
+        this.lokalId = Lokalid(lokalId)
         return this
     }
 
@@ -75,7 +76,7 @@ class StemmekretsBuilder(private val id: String = "1") {
     }
 
     fun withGrenser(vararg grenser: Grense): StemmekretsBuilder {
-        this.grenser = grenser.toMutableSet()
+        this.grenser = this.grenser.plus(grenser.toList())
         return this
     }
 }

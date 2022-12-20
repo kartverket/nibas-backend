@@ -4,6 +4,7 @@ import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import org.hibernate.envers.Audited
+import java.time.LocalDate
 import java.util.*
 import javax.persistence.CascadeType
 import javax.persistence.Column
@@ -44,12 +45,16 @@ class Nasjon(
         omraade = SosiGeometryFunctions.beregnFlate(getGrenser())
     }
 
-    fun getGrenser(): Set<GrenseKobling> {
-        return fylker
-            .flatMap { it.kommuner }
-            .flatMap { it.grunnkretser }
-            .flatMap { it.getGrenserAvTyper(tillatteGrensetyper()) }
+    fun getGrenser(gyldighetsdato: LocalDate = LocalDate.now()): Set<GrenseKobling> {
+        return getFylker(gyldighetsdato)
+            .flatMap { it.getKommuner(gyldighetsdato) }
+            .flatMap { it.getGrunnkretser(gyldighetsdato) }
+            .flatMap { it.getGrenserAvTyper(tillatteGrensetyper(), gyldighetsdato) }
             .toSet()
+    }
+
+    fun getFylker(gyldighetsdato: LocalDate = LocalDate.now()): List<Fylke> {
+        return fylker.filter { it.gyldigPaaDato(gyldighetsdato) }
     }
 
     fun addFylke(fylke: Fylke) {
