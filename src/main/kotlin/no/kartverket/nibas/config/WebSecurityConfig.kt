@@ -7,6 +7,7 @@ import no.kartverket.aut.lib.jwt.impl.DefaultSecurityContextUpdater
 import no.kartverket.aut.lib.jwt.impl.JwtAuthenticationRequestFilter
 import no.kartverket.aut.lib.jwt.impl.SecurityContextUpdater
 import no.kartverket.aut.lib.security.DefaultWebSecurityConfig
+import no.kartverket.nibas.common.md5
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -190,11 +191,12 @@ class WebSecurityConfig @Autowired constructor(private val environment: Environm
 class NibasAuthorizerPlugin constructor(private val users: List<String>, private val adminUsers: List<String>) : AuthorizerPlugin {
 
     override fun getAuthoritiesForPid(pid: String): Collection<GrantedAuthority> {
+        val hashedPid = pid.md5()
         val grantedRoles = mutableListOf<GrantedAuthority>()
-        if (users.contains(pid)) {
+        if (users.contains(hashedPid)) {
             grantedRoles.add(SimpleGrantedAuthority("ROLE_NIBAS"))
         }
-        if(adminUsers.contains(pid)){
+        if(adminUsers.contains(hashedPid)){
             grantedRoles.add(SimpleGrantedAuthority("ROLE_NIBAS_ADMIN"))
         }
 

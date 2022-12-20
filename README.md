@@ -96,7 +96,9 @@ eksempel [WebSecurityConfigTest](src/test/kotlin/no/kartverket/nibas/config/WebS
 
 ### Testbrukere i lokal Vault
 Dersom du ønsker å teste med påskrudd sikkerhet lokalt, må det legges inn testbrukere i lokal vault.
-Dette gjøres ved å legge inn følgende på sti `nibas/nibas-backend/nibas.authorized.users`: `21079408678,21079408597,21079408406,21079408325,21079408244`
+Dette gjøres ved å legge inn følgende på sti `nibas/nibas-backend/nibas.authorized.users`: `b7f27cc2c77bceef60c7f7fdbbf6f3f9,c9bb6f93d076772dcaa47bf99bd4a4bc,0a5a25c693355ecb9119f7a5dfc31dfd,da7503ebff0141c38adb2656d730c472,c7c794d9483f5d807e996ff478d76db3`
+Dette tilsvarer fødselsnummer for følgende testbrukere:
+21079408678,21079408597,21079408406,21079408325,21079408244
 
 ## Hente docker image fra ghcr.io
 
