@@ -223,6 +223,7 @@ private fun Grunnkrets.applyMappingFromExistingGrunnkrets(relevantGrunnkrets: Gr
         datafangstdato = relevantGrunnkrets.datafangstdato
         opphav = relevantGrunnkrets.opphav
         posisjon = relevantGrunnkrets.posisjon
+        omraade = relevantGrunnkrets.omraade
     }
 }
 
