@@ -4,6 +4,7 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.request.ConflictResolved
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequestResolved
+import no.kartverket.nibas.common.CurrentTime
 import no.kartverket.nibas.common.FeilVedOppdatering
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
@@ -42,6 +43,9 @@ class UtkastServiceIT : TestWithDbContainer() {
     @MockBean
     private lateinit var userFacade: UserFacade
 
+    @MockBean
+    private lateinit var currentTime: CurrentTime
+
     @Autowired
     private lateinit var utkastService: UtkastService
     @Autowired
@@ -70,6 +74,7 @@ class UtkastServiceIT : TestWithDbContainer() {
 
     @BeforeEach
     fun beforeEach() {
+        whenever(currentTime.asLocalDate()).thenReturn(LocalDate.of(2022, 6, 1))
         whenever(userFacade.getAuthenticatedUser()).thenReturn("Testbruker 123")
     }
 

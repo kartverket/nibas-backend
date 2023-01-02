@@ -56,12 +56,6 @@ class Utkast(
 
     @Column(name = "gyldig_fra")
     var gyldigFra: LocalDate = LocalDate.now()
-        set(value) {
-            if (value.inThePast()) {
-                throw ResponseException.BadRequestException("Invalid gyldigFra: $value")
-            }
-            field = value
-        }
 
     // Blir mappet av Converter
     var status: UtkastStatus = UtkastStatus.OPPRETTET

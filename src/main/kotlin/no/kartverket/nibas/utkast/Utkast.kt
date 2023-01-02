@@ -12,6 +12,7 @@ import no.kartverket.nibas.api.v1.response.AuditInfoResponse
 import no.kartverket.nibas.api.v1.response.UtkastOpprettetResponse
 import no.kartverket.nibas.api.v1.response.UtkastRef
 import no.kartverket.nibas.api.v1.response.UtkastResponse
+import no.kartverket.nibas.common.CurrentTime
 import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
@@ -86,7 +87,9 @@ class UtkastService(private val utkastRepository: UtkastRepository,
                     private val kommuneService: KommuneService,
                     private val grunnkretsService: GrunnkretsService,
                     private val stemmekretsService: StemmekretsService,
-                    private val grenseService: GrenseService) {
+                    private val grenseService: GrenseService,
+                    private val currentTime: CurrentTime
+) {
 
     private val logger: Logger = LoggerFactory.getLogger(UtkastService::class.java)
 
@@ -171,6 +174,10 @@ class UtkastService(private val utkastRepository: UtkastRepository,
     private fun validateUtkastKlartForPublisering(utkast: Utkast) {
         if (utkast.status != UtkastStatus.OPPRETTET) {
             throw BadRequestException("Kan ikke publisere et utkast i status ${utkast.status}.")
+        }
+
+        if (utkast.gyldigFra.isBefore(currentTime.asLocalDate())) {
+            throw BadRequestException("Kan ikke publisere et utkast som har gyldigFra-dato i fortiden. GyldigFra er satt til: ${utkast.gyldigFra}")
         }
 
         val utkastIkkeHarEndringer = utkast.operasjoner?.harIkkeEndringer() ?: true

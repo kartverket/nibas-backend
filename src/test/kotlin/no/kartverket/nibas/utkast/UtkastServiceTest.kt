@@ -16,6 +16,7 @@ import no.kartverket.nibas.builders.NasjonRequestBuilder
 import no.kartverket.nibas.builders.OpprettUtkastRequestBuilder
 import no.kartverket.nibas.builders.StemmekretsRequestBuilder
 import no.kartverket.nibas.builders.UtkastRequestBuilder
+import no.kartverket.nibas.common.CurrentTime
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.BadRequestException
@@ -65,14 +66,18 @@ internal class UtkastServiceTest {
     private lateinit var stemmekretsServiceMock: StemmekretsService
 
     @Mock
+    private lateinit var currentTime: CurrentTime
+
+    @Mock
     private lateinit var grenseServiceMock: GrenseService
     private lateinit var utkastService: UtkastService
 
     @BeforeEach
     fun beforeEach() {
         MockitoAnnotations.openMocks(this)
+        whenever(currentTime.asLocalDate()).thenReturn(LocalDate.of(2022, 6, 1))
         utkastService = UtkastService(utkastRepositoryMock, nasjonServiceMock, fylkeServiceMock, kommuneServiceMock, grunnkretsServiceMock,
-            stemmekretsServiceMock, grenseServiceMock)
+            stemmekretsServiceMock, grenseServiceMock, currentTime)
     }
 
     @Test
@@ -128,6 +133,18 @@ internal class UtkastServiceTest {
     @Test
     fun publiserUtkastUtenOperasjonerGirBadRequestEx() {
         val utkastUtenOperasjoner = UtkastBuilder.builder("Utkast for publisering")
+            .build()
+        whenever(utkastRepositoryMock.findById(anyString())).thenReturn(Optional.of(utkastUtenOperasjoner))
+
+        assertThatThrownBy {
+            utkastService.publiserUtkast(utkastUtenOperasjoner.id)
+        }.isInstanceOf(BadRequestException::class.java)
+    }
+
+    @Test
+    fun publiserUtkastMedDatoIFortidenGirBadRequestEx() {
+        val utkastUtenOperasjoner = UtkastBuilder.builder("Utkast for publisering")
+            .withGyldigFra(LocalDate.of(2021, 1, 1))
             .build()
         whenever(utkastRepositoryMock.findById(anyString())).thenReturn(Optional.of(utkastUtenOperasjoner))
 
