@@ -24,7 +24,7 @@ class RiksgrenseImporter @Autowired constructor(
 
         return when (val existing = grenseRepository.findByLokalid(skalImporteres.lokalId())) {
             null -> {
-                var riksgrense = createGrense(sosiRiksgrense.getIdent(), Grensetype.Riksgrense)
+                var riksgrense = createGrense(skalImporteres.lokalId(), Grensetype.Riksgrense)
                 riksgrense.datafangstdato = sosiRiksgrense.getDatafangstDato()
                 riksgrense.opphav = sosiRiksgrense.getOpphav()
                 riksgrense.gyldighet = Gyldighet(sosiRiksgrense.getGyldigFra(), sosiRiksgrense.getGyldigTil())

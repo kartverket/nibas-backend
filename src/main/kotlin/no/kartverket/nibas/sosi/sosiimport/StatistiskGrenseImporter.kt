@@ -17,8 +17,8 @@ class StatistiskGrenseImporter @Autowired constructor(
         val sosiGeometri = skalImporteres.splitRef.basertPaGrense
 
         val grense = when (sosiGeometri.getObjType()) {
-            SosiKoder.GRUNNKRETSGRENSE -> createGrense(sosiGeometri.getIdent(), Grensetype.Grunnkretsgrense)
-            SosiKoder.DELOMRAADEGRENSE -> createGrense(sosiGeometri.getIdent(), Grensetype.Delomraadegrense)
+            SosiKoder.GRUNNKRETSGRENSE -> createGrense(skalImporteres.lokalId(), Grensetype.Grunnkretsgrense)
+            SosiKoder.DELOMRAADEGRENSE -> createGrense(skalImporteres.lokalId(), Grensetype.Delomraadegrense)
             else -> throw RuntimeException("Ukjent grensetype (${sosiGeometri.getObjType()}) for statistisk grense")
         }
 

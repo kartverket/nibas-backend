@@ -1,7 +1,6 @@
 package no.kartverket.nibas.sosi.sosiimport
 
 import no.kartverket.nibas.config.overlappedWindow
-import no.kartverket.nibas.sosi.SosiImportException
 import no.kartverket.nibas.sosi.common.SosiKoder
 import no.kartverket.nibas.sosi.model.SosiFlate
 import no.kartverket.nibas.sosi.model.SosiGeometri
@@ -13,6 +12,7 @@ import org.locationtech.jts.linearref.LengthIndexedLine
 import org.locationtech.jts.linearref.LengthLocationMap
 import org.locationtech.jts.operation.distance.DistanceOp
 import java.lang.Integer.min
+import java.util.*
 
 object GrenseMatcher {
     fun grenserSomDekkerNyGrense(skalSjekkesMot: List<SosiGeometri>, grense: SosiGeometri): List<SosiGeometri> {
@@ -159,9 +159,12 @@ data class SplitTilImport(val splitRef: SplitRef, val originalRef: SosiReferanse
         val lokalIdOrigGrense = originalGrense.getIdent()?.getLokalId()!!
         return when (lokalIdSplitTarget == lokalIdOrigGrense) {
             true -> lokalIdSplitTarget
-            false -> "${lokalIdSplitTarget}-${lokalIdOrigGrense}"
+            false -> generateDeterministicUUIDFromSeed("${lokalIdSplitTarget}-${lokalIdOrigGrense}")
         }
     }
+
+    private fun generateDeterministicUUIDFromSeed(seed: String): String =
+        UUID.nameUUIDFromBytes(seed.toByteArray()).toString()
 }
 
 data class GrenseMatchingException(val geometri: Geometry, override val message: String, override val cause: Throwable? = null): RuntimeException(message, cause)

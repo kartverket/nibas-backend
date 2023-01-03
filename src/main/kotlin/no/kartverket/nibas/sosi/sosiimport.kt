@@ -134,7 +134,7 @@ class SosiImportService(
                 grunnkretsImporter.importerSosiGrunnkrets(entry.value, kurver, admenhetRoot)
                 Result.success(Unit)
             } catch (ex: Exception) {
-                logger.warn("Klarte ikke å importere grunnkrets med lokalId ${entry.value.first().getIdent()?.getLokalId()}")
+                logger.warn("Klarte ikke å importere grunnkrets med lokalId ${entry.value.first().getIdent()?.getLokalId()}", ex)
                 Result.failure(ex)
             }
         }

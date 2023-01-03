@@ -1,6 +1,7 @@
 package no.kartverket.nibas.sosi.sosiimport
 
 import no.kartverket.nibas.sosi.model.SosiGeometri
+import no.kartverket.nibas.sosi.model.SosiIdent
 import no.kartverket.nibas.sosi.model.SosiKoordinat
 import no.kartverket.nibas.sosi.model.SosiNordOest
 import no.kartverket.nibas.sosi.model.SosiReferanse
@@ -12,7 +13,6 @@ import org.locationtech.jts.geom.Coordinate
 import kotlin.test.assertNull
 
 internal class GrenseMatcherTest {
-
     @Test
     fun thatFinnGrensesegmentMedKoordinatReturnererKorrektSegment() {
         val seg1 = lagSosiGeometri(Coordinate(0.0, 0.0), Coordinate(20.0, 0.0))
@@ -207,6 +207,37 @@ internal class GrenseMatcherTest {
         assertThat(splitTilImport[3].splitRef.splittetGrense.endPoint.x).isEqualTo(grense.asLineString().endPoint.x)
     }
 
+    @Test
+    fun splitTilImportLokalId_generertLokalIdSkalVeareDeterministisk() {
+        val sosiRef = SosiReferanse(1, mutableListOf())
+        val grense1 = lagSosiGeometriMedUUID("grense", Coordinate(20.0, 0.0), Coordinate(100.0, 0.0))
+        val seg1 = lagSosiGeometriMedUUID("seg", Coordinate(0.0, 0.0), Coordinate(35.0, 0.0))
+        val grense2 = lagSosiGeometriMedUUID("grense", Coordinate(20.0, 0.0), Coordinate(100.0, 0.0))
+        val seg2 = lagSosiGeometriMedUUID("seg", Coordinate(0.0, 0.0), Coordinate(35.0, 0.0))
+
+        val splitTilImport1 = GrenseMatcher.splittGrenser(sosiRef, grense1, grenserSomDekker = listOf(seg1))
+        val splitTilImport2 = GrenseMatcher.splittGrenser(sosiRef, grense2, grenserSomDekker = listOf(seg2))
+        val lokalId1 = splitTilImport1.map { it.lokalId() }.first()
+        val lokalId2 = splitTilImport2.map { it.lokalId() }.first()
+
+        assertThat(lokalId1).isEqualTo(lokalId2)
+    }
+
+    @Test
+    fun splitTilImportLokalId_alleSplittedeGrenserSkalHaUnikLokalId() {
+        val sosiRef = SosiReferanse(1, mutableListOf())
+        val grense = lagSosiGeometriMedUUID("grense", Coordinate(20.0, 0.0), Coordinate(100.0, 0.0))
+
+        val seg1 = lagSosiGeometriMedUUID("seg1", Coordinate(0.0, 0.0), Coordinate(35.0, 0.0))
+        val seg2 = lagSosiGeometriMedUUID("seg2", Coordinate(35.0, 0.0), Coordinate(50.0, 0.0))
+        val seg3 = lagSosiGeometriMedUUID("seg3", Coordinate(50.0, 0.0), Coordinate(75.0, 0.0))
+        val seg4 = lagSosiGeometriMedUUID("seg4", Coordinate(75.0, 0.0), Coordinate(125.0, 0.0))
+
+        val splitTilImport = GrenseMatcher.splittGrenser(sosiRef, grense, grenserSomDekker = listOf(seg1, seg2, seg3, seg4))
+        val lokalIder = splitTilImport.map { it.lokalId() }
+        assertThat(lokalIder).doesNotHaveDuplicates()
+    }
+
     private fun lagSosiGeometri(vararg koordinater: Coordinate): SosiGeometri {
         val sosiKoordinater = koordinater.map { koordinat ->
             SosiKoordinat(koordinat.y.toString(), koordinat.x.toString()) as SosiVerdi
@@ -215,6 +246,12 @@ internal class GrenseMatcherTest {
         val nordOest = SosiNordOest(niva = 1, verdier = sosiKoordinater)
         val geometri = SosiGeometri(type = "KURVE", 1, mutableListOf())
         geometri.addBarn(nordOest)
+        return geometri
+    }
+
+    private fun lagSosiGeometriMedUUID(uuid: String, vararg koordinater: Coordinate): SosiGeometri {
+        val geometri = lagSosiGeometri(*koordinater)
+        geometri.addBarn(SosiIdent(niva = 1, verdier = mutableListOf(SosiVerdi(uuid))))
         return geometri
     }
 }

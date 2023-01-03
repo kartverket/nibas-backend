@@ -23,7 +23,7 @@ class GrunnlinjeImporter @Autowired constructor(
         val sosiGrunnlinje = skalImporteres.splitRef.basertPaGrense
         return when (val existing = grenseRepository.findByLokalid(skalImporteres.lokalId())) {
             null -> {
-                var grunnlinje = createGrense(sosiGrunnlinje.getIdent(), Grensetype.Grunnlinje)
+                var grunnlinje = createGrense(skalImporteres.lokalId(), Grensetype.Grunnlinje)
                 grunnlinje.datafangstdato = sosiGrunnlinje.getDatafangstDato()
 
                 grunnlinje.opphav = sosiGrunnlinje.getOpphav()

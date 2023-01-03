@@ -18,8 +18,8 @@ class AdministrativGrenseImporter @Autowired constructor(
         val sosiGeometri = skalImporteres.splitRef.basertPaGrense
 
         val grense = when (sosiGeometri.getObjType()) {
-            FYLKESGRENSE -> createGrense(sosiGeometri.getIdent(), Grensetype.Fylkesgrense)
-            KOMMUNEGRENSE -> createGrense(sosiGeometri.getIdent(), Grensetype.Kommunegrense)
+            FYLKESGRENSE -> createGrense(skalImporteres.lokalId(), Grensetype.Fylkesgrense)
+            KOMMUNEGRENSE -> createGrense(skalImporteres.lokalId(), Grensetype.Kommunegrense)
             else -> throw RuntimeException("Ukjent grensetype for import av administrativ grense")
         }
 

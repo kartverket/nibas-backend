@@ -17,7 +17,7 @@ class KommunalKretsgrenseImporter @Autowired constructor(
         val sosiGeometri = skalImporteres.splitRef.basertPaGrense
 
         val grense = when (sosiGeometri.getObjType()) {
-            SosiKoder.STEMMEKRETSGRENSE -> createGrense(sosiGeometri.getIdent(), Grensetype.Stemmekretsgrense)
+            SosiKoder.STEMMEKRETSGRENSE -> createGrense(skalImporteres.lokalId(), Grensetype.Stemmekretsgrense)
             else -> throw RuntimeException("Ukjent grensetype (${sosiGeometri.getObjType()}) for kommunal kretsgrense")
         }
 

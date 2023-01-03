@@ -23,7 +23,7 @@ class LovVirkeomraadeGrenseImporter @Autowired constructor(
         return when (val existing =
             grenseRepository.findByLokalid(skalImporteres.lokalId())) {
             null -> {
-                var lovvirkeomraadegrense = createGrense(sosiLovvirkeomraadegrense.getIdent(), Grensetype.Lovvirkeomraadegrense)
+                var lovvirkeomraadegrense = createGrense(skalImporteres.lokalId(), Grensetype.Lovvirkeomraadegrense)
                 lovvirkeomraadegrense.datafangstdato = sosiLovvirkeomraadegrense.getDatafangstDato()
                 lovvirkeomraadegrense.kommunenummer = sosiLovvirkeomraadegrense.getKommunenumre().map { sosiKommunenummer ->
                     kodelisteService.getKommunenummerIdByCodeValue(sosiKommunenummer)

@@ -23,7 +23,7 @@ class TerritorialgrenseImporter @Autowired constructor(
         return when (val existing =
             grenseRepository.findByLokalid(skalImporteres.lokalId())) {
             null -> {
-                var territorialgrense = createGrense(sosiTerritorialgrense.getIdent(), Grensetype.Territorialgrense)
+                var territorialgrense = createGrense(skalImporteres.lokalId(), Grensetype.Territorialgrense)
 
                 territorialgrense.datafangstdato = sosiTerritorialgrense.getDatafangstDato()
                 territorialgrense.opphav = sosiTerritorialgrense.getOpphav()

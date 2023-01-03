@@ -23,7 +23,7 @@ class AvtaltAvgrensningslinjeImporter @Autowired constructor(
         return when (val existing =
             grenseRepository.findByLokalid(skalImporteres.lokalId())) {
             null -> {
-                var avtaltavgrensningslinje = createGrense(sosiAvtaltAvgrensningslinje.getIdent(), Grensetype.AvtaltAvgrensningslinje)
+                var avtaltavgrensningslinje = createGrense(skalImporteres.lokalId(), Grensetype.AvtaltAvgrensningslinje)
                 avtaltavgrensningslinje.opphav = sosiAvtaltAvgrensningslinje.getOpphav()
 
                 avtaltavgrensningslinje.gyldighet = Gyldighet(sosiAvtaltAvgrensningslinje.getGyldigFra(), sosiAvtaltAvgrensningslinje.getGyldigTil())

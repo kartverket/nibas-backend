@@ -102,8 +102,7 @@ class GrenseImporter {
 /**
  * Oppretter Grense med lokalid fra eksternt system hvis den er gyldig.
  */
-fun createGrense(sosiIdent: SosiIdent?, grensetype: Grensetype): Grense {
-    val lokalid: String? = sosiIdent?.getValidLokalId()
+fun createGrense(lokalid: String?, grensetype: Grensetype): Grense {
     return if (lokalid != null) {
         Grense(lokalid = lokalid, grensetype = grensetype)
     } else {
