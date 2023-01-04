@@ -91,6 +91,9 @@ data class StemmekretsRef(
     @Schema(description = "Navnet på stemmekretsen")
     val navn: String,
 
+    @Schema(description = "Nummeret til stemmekretsen")
+    val nummer: String,
+
     @Schema(description = "URL til full representasjon av stemmekrets")
     val href: String,
 

@@ -85,6 +85,7 @@ fun Stemmekrets.toStemmekretsRef(identifikator: Identifikator, antallFramtidigeV
     return StemmekretsRef(
         id = identifikator.toObjektIdentifikator(),
         navn = this.stemmekretsnavn!!,
+        nummer = this.stemmekretsnummer!!,
         href = hrefProvider.getHref(identifikator),
         antallFramtidigeVersjoner = antallFramtidigeVersjoner
     )
