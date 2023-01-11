@@ -28,24 +28,16 @@ import javax.persistence.EntityManagerFactory
 @ConditionalOnProperty(value = ["spring.cloud.gcp.pubsub.enabled"], havingValue = "true")
 class NibasEventListener constructor(private val messagingGateway: AsynchronousSpringEventsConfig.PubsubOutboundGateway) {
 
-    @Value("\${spring.cloud.gcp.pubsub.enabled:true}")
-    val pubSubEnabled: Boolean = true
-
-    val log = Logger.getLogger(this::class.java.name)
-
     val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
 
     @EventListener(value = [NibasEvent::class])
     fun onApplicationEvent(event: NibasEvent) {
-        if(pubSubEnabled) {
-            messagingGateway.sendToPubsub(mapper.writeValueAsString(event))
-        } else {
-            log.fine("PubSub disabled - not sending event for ${event.id} - ${event.type} - ${event.target}")
-        }
+        messagingGateway.sendToPubsub(mapper.writeValueAsString(event))
     }
 }
 
 @Component
+@ConditionalOnProperty(value = ["spring.cloud.gcp.pubsub.enabled"], havingValue = "true")
 class NibasEventPublisher constructor(
     val aep: ApplicationEventPublisher,
     val historikkService: HistorikkService
@@ -64,6 +56,7 @@ class NibasEventPublisher constructor(
 }
 
 @Component
+@ConditionalOnProperty(value = ["spring.cloud.gcp.pubsub.enabled"], havingValue = "true")
 class HibernateEntitySavesListener constructor(
     private val nibasEventPublisher: NibasEventPublisher,
     private val jpaEntityManagerFactory: EntityManagerFactory

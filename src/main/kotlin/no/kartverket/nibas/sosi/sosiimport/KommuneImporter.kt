@@ -39,8 +39,6 @@ class KommuneImporter @Autowired constructor(
         kommune.kommunenummer = kodelisteService.getKommunenummerIdByCodeValue(forsteFlate.getKommunenummer())
         kommune.samiskforvaltningsomraade = forsteFlate.isSamiskForvaltningsomrade()
 
-
-
         // Fylkesnummer er de to første sifferne i kommunenummeret
         kommune.fylke = fylkeRepository.findByFylkesnummer(
             kodelisteService.getFylkesnummerIdByCodeValue(

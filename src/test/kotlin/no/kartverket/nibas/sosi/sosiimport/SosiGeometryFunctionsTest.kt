@@ -39,7 +39,7 @@ internal class SosiGeometryFunctionsTest {
     fun ikkeLukketRingFailsCreationOfGeometry() {
         val a = Coordinate(167_390.0, 6_524_000.0)
         val b = Coordinate(167_370.0, 6_524_100.0)
-        val c = Coordinate(167_370.0, 6_524_000.0)
+        val c = Coordinate(167_370.0, 6_524_100.0)
         val d = Coordinate(167_385.0, 6_524_000.0)
 
         val grenseAB = grunnkretsGrenseKobling(listOf(a, b), 1)
@@ -49,8 +49,28 @@ internal class SosiGeometryFunctionsTest {
         val grenseKoblinger = setOf(grenseAB, grenseBC, grenseCD)
 
         assertThatThrownBy { SosiGeometryFunctions.beregnFlate(grenseKoblinger) }
-            .isInstanceOf(GeometriFailedToBeCreatedException::class.java)
-            .hasMessageContaining("Geometri-objekt kunne ikke opprettes. Feil-lokasjon: (167390.0, 6524000.0, NaN)")
+            .isInstanceOf(IkkeSammenhengendePolygonException::class.java)
+            .hasMessageContaining("Polygon som skal dannes har ikke-sammenhengende punkter, sluttpunkt: (167385.0, 6524000.0, NaN), startPunkt: (167390.0, 6524000.0, NaN). Validation-feil: Interior is disconnected.")
+    }
+    /**
+     * Ringen har grenser som ikke henger sammen i et knutepunkt, ringen regnes da ikke som lukket
+     */
+    @Test
+    fun manglendeKnutepunkterFailsCreationOfGeometry() {
+        val a = Coordinate(167_390.0, 6_524_000.0)
+        val b = Coordinate(167_370.0, 6_524_100.0)
+        val c = Coordinate(167_370.0, 6_524_000.0)
+        val d = Coordinate(167_385.0, 6_524_000.0)
+
+        val grenseAB = grunnkretsGrenseKobling(listOf(a, b), 1)
+        val grenseBC = grunnkretsGrenseKobling(listOf(b, c), 2)
+        val grenseDA = grunnkretsGrenseKobling(listOf(d, a), 4)
+
+        val grenseKoblinger = setOf(grenseAB, grenseBC, grenseDA)
+
+        assertThatThrownBy { SosiGeometryFunctions.beregnFlate(grenseKoblinger) }
+            .isInstanceOf(IkkeSammenhengendePolygonException::class.java)
+            .hasMessageContaining("Polygon som skal dannes har ikke-sammenhengende punkter, sluttpunkt: (167370.0, 6524000.0, NaN), startPunkt: (167385.0, 6524000.0, NaN). Validation-feil: Interior is disconnected.")
     }
 
     @Test
@@ -75,12 +95,12 @@ internal class SosiGeometryFunctionsTest {
     fun thatDekkerReturnsTrueWhenCoverdByBothInBufferAndOnGeometry() {
         val skalDekke = SosiGeometryFunctions.getGeometryFactory().createLineString(arrayOf(Coordinate(0.0,0.0), Coordinate(0.0, 1.0), Coordinate(0.0, 2.0), Coordinate(0.0, 3.0)))
         val paaLinjen = SosiGeometryFunctions.getGeometryFactory().createPoint(Coordinate(0.0, 1.0))
-        val innenforBuffer = SosiGeometryFunctions.getGeometryFactory().createPoint(Coordinate(0.0, 8.0))
-        val utenforBuffer = SosiGeometryFunctions.getGeometryFactory().createPoint(Coordinate(0.0, 8.5))
+        val innenforBuffer = SosiGeometryFunctions.getGeometryFactory().createPoint(Coordinate(5.0, 2.0))
+        val utenforBuffer = SosiGeometryFunctions.getGeometryFactory().createPoint(Coordinate(5.5, 2.0))
 
-        assertThat(SosiGeometryFunctions.dekker(skalDekke, paaLinjen)).isTrue
-        assertThat(SosiGeometryFunctions.dekker(skalDekke, innenforBuffer)).isTrue
-        assertThat(SosiGeometryFunctions.dekker(skalDekke, utenforBuffer)).isFalse
+        assertThat(SosiGeometryFunctions.dekker(skalDekke, paaLinjen, 5.0)).isTrue
+        assertThat(SosiGeometryFunctions.dekker(skalDekke, innenforBuffer, 5.0)).isTrue
+        assertThat(SosiGeometryFunctions.dekker(skalDekke, utenforBuffer, 5.0)).isFalse
     }
 
     private fun grunnkretsGrenseKobling(coordinates: List<Coordinate>, rekkefoelge: Int) =
@@ -89,4 +109,5 @@ internal class SosiGeometryFunctionsTest {
             .buildGrunnkretsgrense(),
             GrenseKoblingAttributter(rekkefoelge = rekkefoelge))
 }
+
 

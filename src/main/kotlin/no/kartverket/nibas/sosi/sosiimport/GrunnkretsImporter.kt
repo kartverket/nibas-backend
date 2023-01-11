@@ -5,10 +5,13 @@ import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.sosi.common.SosiKoder
+import no.kartverket.nibas.sosi.model.SosiBuep
 import no.kartverket.nibas.sosi.model.SosiFlate
+import no.kartverket.nibas.sosi.model.SosiGeometri
 import no.kartverket.nibas.sosi.model.SosiKurve
 import no.kartverket.nibas.sosi.model.SosiObjekt
 import no.kartverket.nibas.sporing.Gyldighet
+import org.locationtech.jts.geom.Coordinate
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
@@ -25,7 +28,7 @@ class GrunnkretsImporter @Autowired constructor(
     val logger: Logger = Logger.getLogger(this::class.java.name)
 
     @Transactional
-    fun importerSosiGrunnkrets(flater: List<SosiFlate>, kurver: List<SosiKurve>, admenhetRoot: SosiObjekt) {
+    fun importerSosiGrunnkrets(flater: List<SosiFlate>, grunnkretsgrenser: List<SosiGeometri>, erstatningskoordinater: MutableMap<Coordinate, Erstatningskoordinat>, matchedeGrenser: MutableMap<String, List<SplitTilImport>>) {
         // Henter egenskapene bare fra første flate. Egenskapene er/skal være like på tvers av flatene.
         val flate = flater.first()
         val sosiIdent = flate.getIdent()
@@ -37,10 +40,6 @@ class GrunnkretsImporter @Autowired constructor(
 
             val kommunenummerId = kodelisteService.getKommunenummerIdByCodeValue(flate.getKommunenummer())
             grunnkrets.kommune = kommuneRepository.findByKommunenummer(kommunenummerId)!!
-
-            // Hent grensene til kommunen som grunnkretsen er en del av (for å kun gjøre oppslaget èn gang)
-            val kommuneFlater = admenhetRoot.getFlater().filter { it.getObjType() == SosiKoder.KOMMUNE && it.getKommunenummer() == flate.getKommunenummer() }
-            kommuneFlater.forEach { it.lastReferanser(admenhetRoot) }
 
             grunnkrets.datafangstdato = flate.getDatafangstDato()
             grunnkrets.gyldighet = Gyldighet(flate.getGyldigFra(), flate.getGyldigTil())
@@ -55,13 +54,13 @@ class GrunnkretsImporter @Autowired constructor(
             grunnkrets.setInfo(flate.getInformasjon())
 
             flater.forEachIndexed { skall_index, gkFlate ->
-                gkFlate.getSkallReferanser().forEachIndexed { _, ref ->
-                    grenseImporter.importerGrenseRef(grunnkrets, ref, kurver, kommuneFlater, skall_index)
+                gkFlate.getSkallReferanser().forEachIndexed { rekkefoelge, ref ->
+                    grenseImporter.importerGrenseRef(grunnkrets, ref, grunnkretsgrenser, skall_index, rekkefoelge, erstatningskoordinater = erstatningskoordinater, matchedeGrenser = matchedeGrenser)
                 }
 
                 gkFlate.getHullReferanser().forEachIndexed { hullIndex, liste ->
-                    liste.forEachIndexed { _, ref ->
-                        grenseImporter.importerGrenseRef(grunnkrets, ref, kurver, kommuneFlater, skall_index, hullIndex)
+                    liste.forEachIndexed { rekkefoelge, ref ->
+                        grenseImporter.importerGrenseRef(grunnkrets, ref, grunnkretsgrenser, skall_index, rekkefoelge, hullIndex, erstatningskoordinater, matchedeGrenser)
 
                     }
                 }

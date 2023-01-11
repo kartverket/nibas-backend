@@ -14,7 +14,7 @@ class NibasSosiDeserializerTest {
         when (val stream = this.javaClass.getResourceAsStream("/sosi-testfil.sos")) {
             null -> fail("Could not read file from resource")
             else -> {
-                val root = NibasSosiDeserializer().deserialize(stream)
+                val root = NibasSosiDeserializer().deserialize(stream, "/sosi-testfil.sos")
                 root.debug(System.out)
                 assertNotNull(root.getHode(), "Forventer et hode")
                 assertTrue(root.getKurver().isNotEmpty(), "Forventer kurver")
@@ -32,7 +32,7 @@ class NibasSosiDeserializerTest {
         when (val stream = this.javaClass.getResourceAsStream("/sosi-testfil-one-line.sos")) {
             null -> fail("Could not read file from resource")
             else -> {
-                val root = NibasSosiDeserializer().deserialize(stream)
+                val root = NibasSosiDeserializer().deserialize(stream, "/sosi-testfil-one-line.sos")
                 assertNotNull(root.getHode(), "Forventer et hode")
                 assertTrue(root.getKurver().isNotEmpty(), "Forventer kurver")
                 assertTrue(root.getFlater().isNotEmpty(), "Forventer flater")

@@ -17,6 +17,7 @@ import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.NasjonRepository
 import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.unwrap
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.util.logging.Logger
@@ -31,7 +32,7 @@ class FlateService @Autowired constructor(
     private val grenseRepository: GrenseRepository
 ) {
 
-    val logger: Logger = Logger.getLogger(this::class.qualifiedName)
+    private val logger = LoggerFactory.getLogger(this.javaClass.name)
 
     fun beregnFlaterFor(features: List<Feature>) {
         val enheterSomSkalFlatedannes: Set<Flate> = features.flatMap {
@@ -50,7 +51,7 @@ class FlateService @Autowired constructor(
         }.toSet()
 
         enheterSomSkalFlatedannes.forEach { enhet ->
-            logger.fine(finnNavn(enhet))
+            logger.debug(finnNavn(enhet))
             enhet.oppdaterOmraade()
             when (enhet) {
                 is Kommune -> kommuneRepository.save(enhet)

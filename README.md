@@ -208,6 +208,10 @@ $ ./gradlew bootRun --args=' \
     --nibas.import.targets=stemmekrets \
     '
 ```
+Dersom man heller vil kjøre det som en Spring boot-prosess, kan man spesifisere de samme propertiene som VM options:
+```
+-Dspring.datasource.url=URL_HER -Dspring.datasource.username=USER_HER -Dspring.datasource.password=PASSWORD_HER
+```
 
 Om du vil kjøre import og publisere events mot pubsub må følgende også gjøres i application-import.yml:
 

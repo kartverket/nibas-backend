@@ -2,16 +2,16 @@ package no.kartverket.nibas.sosi
 
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.withIndex
 import kotlinx.coroutines.runBlocking
+import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.sosi.common.SosiKoder
 import no.kartverket.nibas.sosi.deserializer.NibasSosiDeserializer
 import no.kartverket.nibas.sosi.model.SosiFlate
+import no.kartverket.nibas.sosi.model.SosiGeometri
 import no.kartverket.nibas.sosi.model.SosiObjekt
 import no.kartverket.nibas.sosi.sosiimport.FylkeImporter
 import no.kartverket.nibas.sosi.sosiimport.Fylkesnummer
+import no.kartverket.nibas.sosi.sosiimport.GrenseMatcher
 import no.kartverket.nibas.sosi.sosiimport.GrunnkretsImporter
 import no.kartverket.nibas.sosi.sosiimport.KommuneImporter
 import no.kartverket.nibas.sosi.sosiimport.NasjonImporter
@@ -37,17 +37,22 @@ class SosiImportService(
     private val stemmekretsImporter: StemmekretsImporter,
     private val environment: Environment
 ) {
+
+    companion object {
+        var importType: Flatetype? = null
+    }
+
     private val logger = LoggerFactory.getLogger(this.javaClass.name)
     private final val targetGrunnkrets = "grunnkrets"
     private final val targetStemmekrets = "stemmekrets"
 
-    @Value("\${nibas.import.grunnkretsfil:sosifiler/STAT_enheter_grunnkretser.sos}")
+    @Value("\${nibas.import.grunnkretsfil:sosifiler/STAT_enheter_grunnkretser_20221129.sos}")
     lateinit var grunnkretsfil: String
 
-    @Value("\${nibas.import.admenhetfil:sosifiler/ADM_Enheter_Norge_ny_inkl_nasjon.sos}")
+    @Value("\${nibas.import.admenhetfil:sosifiler/ADM_Enheter_Norge_v_20221219.sos}")
     lateinit var admenhetfil: String
 
-    @Value("\${nibas.import.stemmekretsfil:sosifiler/Stemmekretser_Norge.sos}")
+    @Value("\${nibas.import.stemmekretsfil:sosifiler/Stemmekretser_Norge_rettekopi_20230105.sos}")
     lateinit var stemmekretsfil: String
 
     private val importTargets: List<String> =
@@ -58,6 +63,8 @@ class SosiImportService(
         environment.getProperty("nibas.import.fylkesnumre")?.split(",")
             ?: Fylkesnummer.values().map { it.fylkesnummer }.sorted()
 
+    private val importerAdministrativeEnheter: Boolean = environment.getProperty("nibas.import.importerAdministrativeEnheter")?.toBoolean() ?: true
+
     fun importNibas() {
         logger.info("\nKonfigurasjon for sosi-import: \n\n"
             + "Profiler: ${environment.activeProfiles.joinToString(",")} \n"
@@ -66,26 +73,30 @@ class SosiImportService(
             + "Grunnkretsfil: $grunnkretsfil \n"
             + "Stemmekretsfil: $stemmekretsfil \n"
             + "Fylkesnumre: ${fylkesnumre.joinToString(",")} \n"
+            + "Importer administrative enheter: $importerAdministrativeEnheter \n"
             + "Import targets: ${importTargets.joinToString(",")} \n"
         )
 
         val (admEnhetRoot, grunnkretsRoot, stemmekretsRoot) = runBlocking {
-            val admEnhetDeferred = async { NibasSosiDeserializer().deserialize(fileAsInputStream(admenhetfil)) }
+            val admEnhetDeferredGrunnkrets = async { NibasSosiDeserializer().deserialize(fileAsInputStream(admenhetfil), admenhetfil) }
 
             val grunnkretsDeferred = when (importTargets.contains(targetGrunnkrets)) {
-                true -> async { NibasSosiDeserializer().deserialize(fileAsInputStream(grunnkretsfil)) }
+                true -> async { NibasSosiDeserializer().deserialize(fileAsInputStream(grunnkretsfil), grunnkretsfil) }
                 false -> async { null }
             }
 
             val stemmekretsDeferred = when (importTargets.contains(targetStemmekrets)) {
-                true -> async { NibasSosiDeserializer().deserialize(fileAsInputStream(stemmekretsfil)) }
+                true -> async { NibasSosiDeserializer().deserialize(fileAsInputStream(stemmekretsfil), stemmekretsfil) }
                 false -> async { null }
             }
 
-            awaitAll(admEnhetDeferred, grunnkretsDeferred, stemmekretsDeferred)
+            awaitAll(admEnhetDeferredGrunnkrets, grunnkretsDeferred, stemmekretsDeferred)
         }
 
-        admEnhetRoot?.let { importerAdministrativeEnheter(admEnhetRoot) }
+        if (importerAdministrativeEnheter) {
+            admEnhetRoot?.let { importerAdministrativeEnheter(admEnhetRoot)}
+        }
+
         val resultsGrunnkrets = grunnkretsRoot?.let { importerGrunnkretser(grunnkretsRoot, admEnhetRoot!!) }
         val resultsStemmekrets = stemmekretsRoot?.let { importerStemmekretser(stemmekretsRoot, admEnhetRoot!!) }
         logResults("Grunnkrets import", resultsGrunnkrets)
@@ -122,16 +133,40 @@ class SosiImportService(
     }
 
     fun importerGrunnkretser(grunnkretsRoot: SosiObjekt, admenhetRoot: SosiObjekt): List<Result<Unit>> {
+        importType = Flatetype.GRUNNKRETS
         logger.info("Importing grunnkretser")
         val fylker = fylkesnumre.map { Fylkesnummer.fromValue(it) }
         val grunnkretser = filtrerKretser(grunnkretsRoot.getFlater(), fylker, SosiKoder.GRUNNKRETS)
 
-        val kurver = grunnkretsRoot.getKurver()
+        val grunnkretsgrenser: List<SosiGeometri> = grunnkretsRoot.getKurver().plus(grunnkretsRoot.getBuep())
+
         val grupperteGrunnkretser: Map<String?, List<SosiFlate>> = grunnkretser.groupBy { it.getGrunnkretsId()?.getGrunnkretsnummer() }
+
+        val grenseMatcher = GrenseMatcher()
+
+        //Kjører først gjennom samtlige kretser for å matche opp grenser. Dette gjøres for å kunne beregne nye knutepunkter
+        grupperteGrunnkretser.entries.forEachIndexed { index, entry ->
+            val flater = entry.value
+            try {
+                logger.info("Matcher grenser for grunnkrets ${index + 1} of ${grupperteGrunnkretser.size} - Navn: ${flater.first().getGrunnkretsId()?.getGrunnkretsnavn()}, lokalId = ${flater.first().getIdent()?.getLokalId()}")
+
+                // Hent grensene til kommunen som kretsen er en del av (for å kun gjøre oppslaget èn gang)
+                val kommuneFlater = hentKommuneFlaterMedReferanser(admenhetRoot, flater.first().getKommunenummer())
+
+                grenseMatcher.matchGrenser(flater, grunnkretsgrenser, kommuneFlater)
+            } catch (ex: Exception) {
+                logger.warn("Klarte ikke å matche grenser for grunnkrets med lokalId ${flater.first().getIdent()?.getLokalId()}")
+                ex.printStackTrace()
+            }
+        }
+
+        val erstatningskoordinater = grenseMatcher.finnErstatningskoordinater()
+
+        //Etter at nye knutepunkter har blitt beregnet kan vi kjøre en faktisk import der man bruker de nye knutepunktene og persisterer til databasen
         return grupperteGrunnkretser.entries.mapIndexed { index, entry ->
             try {
                 logger.info("Importing grunnkrets ${index + 1} of ${grupperteGrunnkretser.size} - LokalId = ${entry.value.first().getIdent()?.getLokalId()}")
-                grunnkretsImporter.importerSosiGrunnkrets(entry.value, kurver, admenhetRoot)
+                grunnkretsImporter.importerSosiGrunnkrets(entry.value, grunnkretsgrenser, erstatningskoordinater, grenseMatcher.matchedeGrenser)
                 Result.success(Unit)
             } catch (ex: Exception) {
                 logger.warn("Klarte ikke å importere grunnkrets med lokalId ${entry.value.first().getIdent()?.getLokalId()}", ex)
@@ -141,6 +176,7 @@ class SosiImportService(
     }
 
     fun importerStemmekretser(stemmekretsRoot: SosiObjekt, admenhetRoot: SosiObjekt): List<Result<Unit>> {
+        importType = Flatetype.STEMMEKRETS
         logger.info("Importing stemmekretser")
         data class KommunalKretsKey(val kommunenummer: String, val stemmekretsnummer: String)
 
@@ -149,17 +185,52 @@ class SosiImportService(
         val stemmekretser = filtrerKretser(stemmekretsRoot.getFlater(), fylker, SosiKoder.STEMMEKRETS)
         val grupperteStemmekretser = stemmekretser.groupBy { it.toKommunalKretsKey() }
 
-        val kurver = stemmekretsRoot.getKurver()
+        val stemmekretsgrenser: List<SosiGeometri> = stemmekretsRoot.getKurver().plus(stemmekretsRoot.getBuep())
+        val grenseMatcher = GrenseMatcher()
+
+        //Kjører først gjennom samtlige kretser for å matche opp grenser. Dette gjøres for å kunne beregne nye knutepunkter
+        grupperteStemmekretser.entries.forEachIndexed { index, entry ->
+            val flater = entry.value
+            try {
+                logger.info("Matcher grenser for stemmekrets ${index + 1} of ${grupperteStemmekretser.size} - Navn: ${flater.first().getStemmekretsId()?.getStemmekretsnavn()}, lokalId = ${flater.first().getIdent()?.getLokalId()}")
+
+                // Hent grensene til kommunen som kretsen er en del av (for å kun gjøre oppslaget èn gang)
+                val kommuneFlater = hentKommuneFlaterMedReferanser(admenhetRoot, flater.first().getKommunenummer())
+
+                grenseMatcher.matchGrenser(flater, stemmekretsgrenser, kommuneFlater)
+            } catch (ex: Exception) {
+                logger.warn("Klarte ikke å matche grenser for stemmekrets med lokalId ${flater.first().getIdent()?.getLokalId()}")
+                ex.printStackTrace()
+            }
+        }
+
+        val erstatningskoordinater = grenseMatcher.finnErstatningskoordinater()
+
+        //Etter at nye knutepunkter har blitt beregnet kan vi kjøre en faktisk import der man bruker de nye knutepunktene og persisterer til databasen
         return grupperteStemmekretser.entries.mapIndexed { index, entry ->
             try {
                 logger.info("Importing stemmekrets ${index + 1} of ${grupperteStemmekretser.size} - LokalId = ${entry.value.first().getIdent()?.getLokalId()}")
-                stemmekretsImporter.importerSosiStemmekrets(entry.value, kurver, admenhetRoot)
+                stemmekretsImporter.importerSosiStemmekrets(entry.value, stemmekretsgrenser, erstatningskoordinater, grenseMatcher.matchedeGrenser)
                 Result.success(Unit)
             } catch (ex: Exception) {
                 logger.warn("Klarte ikke å importere stemmekrets med lokalId ${entry.value.first().getIdent()?.getLokalId()}", ex)
+                ex.printStackTrace()
                 Result.failure(ex)
             }
         }
+    }
+
+    private fun hentKommuneFlaterMedReferanser(
+        admenhetRoot: SosiObjekt,
+        kommunenummer: String
+    ): List<SosiFlate> {
+        val kommuneFlater = admenhetRoot.getFlater().filter { it.getObjType() == SosiKoder.KOMMUNE && it.getKommunenummer() == kommunenummer }
+
+        // OBS! Ved lasting av referanser settes retningMedKlokken til retningen grensen har for denne kommunen.
+        // Siden vi nå må matche grensereferansene for alle kommuner ville dette påvirket retningen for den enkelte grense.
+        // Dette er løst ved å innføre opprinneligRetningMedKlokken i SplitRef
+        kommuneFlater.forEach { it.lastReferanser(admenhetRoot) }
+        return kommuneFlater
     }
 
     private fun filtrerKretser(

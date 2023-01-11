@@ -5,17 +5,22 @@ import no.kartverket.nibas.sosi.model.SosiObjekt
 import no.kartverket.nibas.sosi.model.SosiObjektFactory
 import java.io.*
 import java.nio.charset.Charset
+import java.util.logging.Logger
 import java.util.regex.Pattern
 import kotlin.collections.ArrayList
 
 class NibasSosiDeserializer {
-    fun deserialize(stream: InputStream): SosiObjekt {
+
+    val logger = Logger.getLogger(this::class.java.name)
+    fun deserialize(stream: InputStream, filnavn: String): SosiObjekt {
         skipUTF8BOM(stream)
         val contentAsBytes = stream.readAllBytes()
         val encoding = finnEncoding(contentAsBytes)
         val reformatted = reformat(contentAsBytes, encoding)
 
-        return parseLinjer(reformatted)
+        val parseLinjer = parseLinjer(reformatted)
+        logger.info("Ferdig deserialisert $filnavn")
+        return parseLinjer
     }
 
     fun parseLinjer(linjer: List<SosiLinje>): SosiObjekt {
