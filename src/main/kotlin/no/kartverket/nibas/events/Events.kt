@@ -1,6 +1,7 @@
 package no.kartverket.nibas.events
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import no.kartverket.nibas.config.AsynchronousSpringEventsConfig
 import no.kartverket.nibas.domain.Flate
@@ -14,12 +15,10 @@ import org.hibernate.event.spi.PostInsertEvent
 import org.hibernate.event.spi.PostUpdateEvent
 import org.hibernate.internal.SessionFactoryImpl
 import org.hibernate.persister.entity.EntityPersister
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
-import java.util.logging.Logger
 import javax.annotation.PostConstruct
 import javax.persistence.EntityManagerFactory
 
@@ -28,7 +27,7 @@ import javax.persistence.EntityManagerFactory
 @ConditionalOnProperty(value = ["spring.cloud.gcp.pubsub.enabled"], havingValue = "true")
 class NibasEventListener constructor(private val messagingGateway: AsynchronousSpringEventsConfig.PubsubOutboundGateway) {
 
-    val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
+    val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build()).registerModule(JavaTimeModule())
 
     @EventListener(value = [NibasEvent::class])
     fun onApplicationEvent(event: NibasEvent) {
