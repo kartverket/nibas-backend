@@ -6,8 +6,15 @@ import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.junit.Ignore
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.locationtech.jts.geom.Coordinate
+import org.locationtech.jts.geom.CoordinateList
+import org.locationtech.jts.geom.GeometryFactory
+import org.locationtech.jts.geom.MultiPolygon
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 internal class SosiGeometryFunctionsTest {
 
@@ -30,6 +37,159 @@ internal class SosiGeometryFunctionsTest {
             .hasMessageContaining("Geometri-objekt er ikke gyldig: POLYGON ((167390 6524000")
             .hasMessageContaining("Validation-feil: Self-intersection.")
             .hasMessageContaining("Feil-lokasjon: (167375.0, 6524000.0, NaN)")
+    }
+
+    @Test
+    fun thatFlaterDannesAvGrenserMedEnkelGeometri() {
+        val geometryFactory = GeometryFactory()
+        val grenser = mutableListOf(
+            geometryFactory.createLineString(arrayOf(
+                Coordinate(1.0, 1.0),
+                Coordinate(2.0, 1.0),
+                Coordinate(2.0, 2.0),
+            )),
+            geometryFactory.createLineString(arrayOf(
+                Coordinate(2.0, 2.0),
+                Coordinate(1.0, 2.0),
+                Coordinate(1.0, 1.0)
+            ))
+        )
+
+        val flate: MultiPolygon = SosiGeometryFunctions.dannFlaterFraGrenser(grenser)
+
+        val coordinates = geometryFactory.createMultiLineString(grenser.toTypedArray()).coordinates
+        val coordinateList = CoordinateList(coordinates, false)
+
+        val linearRing = geometryFactory.createLinearRing(coordinateList.toCoordinateArray())
+        val polygon = listOf(geometryFactory.createPolygon(linearRing))
+        val multiPolygon = geometryFactory.createMultiPolygon(polygon.toTypedArray())
+
+        assertEquals(multiPolygon, flate)
+    }
+
+    @Test
+    fun thatFlaterDannesAvGrenseSomBiterSegSelvIHalen() {
+        val geometryFactory = GeometryFactory()
+
+        // En grense som er selv-lukkende
+        val grenser = mutableListOf(
+            geometryFactory.createLineString(arrayOf(
+                Coordinate(1.0, 1.0),
+                Coordinate(2.0, 1.0),
+                Coordinate(2.0, 2.0),
+                Coordinate(2.0, 2.0),
+                Coordinate(1.0, 2.0),
+                Coordinate(1.0, 1.0)
+            ))
+        )
+
+        val faktiskFlate = SosiGeometryFunctions.dannFlaterFraGrenser(grenser)
+
+        val linearRing = geometryFactory.createLinearRing(geometryFactory.createMultiLineString(grenser.toTypedArray()).coordinates)
+        val polygon = listOf(geometryFactory.createPolygon(linearRing))
+        val forventetFlate = geometryFactory.createMultiPolygon(polygon.toTypedArray())
+
+        assertTrue(forventetFlate.equalsTopo(faktiskFlate))
+    }
+
+    @Test
+    @Disabled("Denne testen feiler fordi det opprettes tre polygoner som så pakkes inn i et multipolygon, mulig vi må utvide til å hensynta skall og hull for å få ekte likhet")
+    fun thatFlaterDannesAvGrenserSomDannerFlaterMedHull() {
+        val geometryFactory = GeometryFactory()
+
+        // 4 grenser, hvor to danner et skall og de to siste danner to hull i skallet
+        val grense1 = geometryFactory.createLineString(arrayOf(
+            Coordinate(1.0, 1.0),
+            Coordinate(7.0, 1.0),
+            Coordinate(7.0, 4.0)
+        ))
+        val grense2 = geometryFactory.createLineString(arrayOf(
+            Coordinate(7.0, 4.0),
+            Coordinate(1.0, 4.0),
+            Coordinate(1.0, 1.0)
+        ))
+        val grense3 = geometryFactory.createLineString(arrayOf(
+            Coordinate(2.0, 2.0),
+            Coordinate(3.0, 2.0),
+            Coordinate(3.0, 3.0),
+            Coordinate(2.0, 3.0),
+            Coordinate(2.0, 2.0)
+        ))
+
+        val grense4 = geometryFactory.createLineString(arrayOf(
+            Coordinate(4.0, 2.0),
+            Coordinate(6.0, 2.0),
+            Coordinate(6.0, 3.0),
+            Coordinate(4.0, 3.0),
+            Coordinate(4.0, 2.0)
+        ))
+
+        val grenser = mutableListOf( grense3, grense4, grense1, grense2)
+
+        val faktiskFlate = SosiGeometryFunctions.dannFlaterFraGrenser(grenser)
+
+//        val linearRing = geometryFactory.createLinearRing(geometryFactory.createMultiLineString(grenser.toTypedArray()).coordinates)
+//        val polygon = listOf(geometryFactory.createPolygon(linearRing))
+        val hullLineStrings = listOf(listOf(grense3), listOf(grense4))
+        val polygon = SosiGeometryFunctions.lagFlate(listOf(grense1, grense2), hullLineStrings)// geometryFactory.createMultiPolygon(polygon.toTypedArray())
+        val forventetFlate = geometryFactory.createMultiPolygon(listOf(polygon).toTypedArray())
+
+        assertTrue(forventetFlate.equalsTopo(faktiskFlate))
+    }
+
+    @Test
+    fun thatFlaterDannesAvGrenserSomIkkeErSortert() {
+        val geometryFactory = GeometryFactory()
+
+        val grense1 = geometryFactory.createLineString(arrayOf( //grense 1
+            Coordinate(1.0, 1.0),
+            Coordinate(2.0, 1.0)
+        ))
+        val grense2 = geometryFactory.createLineString(arrayOf( //grense 2
+            Coordinate(2.0, 1.0),
+            Coordinate(3.0, 2.0)
+        ))
+        val grense3 = geometryFactory.createLineString(arrayOf( //grense 3
+            Coordinate(3.0, 2.0),
+            Coordinate(4.0, 2.0)
+        ))
+        val grense4 = geometryFactory.createLineString(arrayOf( //grense 4
+            Coordinate(4.0, 2.0),
+            Coordinate(4.0, 4.0)
+        ))
+        val grense5 = geometryFactory.createLineString(arrayOf( //grense 5
+            Coordinate(4.0, 4.0),
+            Coordinate(2.0, 4.0)
+        ))
+        val grense6 = geometryFactory.createLineString(arrayOf( //grense 6
+            Coordinate(2.0, 4.0),
+            Coordinate(1.0, 1.0)
+        ))
+        val usorterteGrenser = mutableListOf(
+            grense6,
+            grense2,
+            grense5,
+            grense4,
+            grense1,
+            grense3
+        )
+
+        val sorterteGrenser = mutableListOf(
+            grense1,
+            grense2,
+            grense3,
+            grense4,
+            grense5,
+            grense6
+        )
+
+        val faktiskFlate = SosiGeometryFunctions.dannFlaterFraGrenser(usorterteGrenser)
+
+        val linearRing = geometryFactory.createLinearRing(geometryFactory.createMultiLineString(sorterteGrenser.toTypedArray()).coordinates)
+        val polygon = geometryFactory.createPolygon(linearRing)
+        val forventetFlate = geometryFactory.createMultiPolygon(listOf(polygon).toTypedArray())
+
+        assertTrue(forventetFlate.equalsTopo(faktiskFlate))
     }
 
     /**

@@ -83,6 +83,52 @@ object SosiGeometryFunctions {
         return geometryAsLineString.buffer(bufferStorrelse, 8, BufferParameters.CAP_FLAT).buffer(0.2).covers(geometriSomSkalDekkes)
     }
 
+    /**
+     * Sorterer innkommende grenser fra potensielt flere flater, danner flater og pakker den/dem inn i et multipolygon som returneres
+     */
+    fun dannFlaterFraGrenser(grenserMedKorrektRetning: List<LineString>): MultiPolygon {
+        var gjenstaaendeGrenser = grenserMedKorrektRetning
+        val flater = mutableListOf<Polygon>()
+
+        while (gjenstaaendeGrenser.isNotEmpty()) {
+            when (val result = finnGrenserSomDannerEnFlate(gjenstaaendeGrenser)) {
+                is FlatedanningResult.KomplettFlate -> {
+                    flater.add(lagFlate(result.sorterteGrenser, emptyList()))
+                    gjenstaaendeGrenser = gjenstaaendeGrenser - result.sorterteGrenser
+                }
+                is FlatedanningResult.UkomplettFlate -> {
+                    gjenstaaendeGrenser = gjenstaaendeGrenser - result.forsoekteGrenser
+                }
+            }
+        }
+
+        return getGeometryFactory().createMultiPolygon(flater.toTypedArray())
+    }
+
+    private fun finnGrenserSomDannerEnFlate(grenser: List<LineString>): FlatedanningResult {
+        val forsteGrense = grenser.first()
+        var gjeldendeGrense = forsteGrense
+
+        val sorterteGrenserForFlate = mutableListOf<LineString>()
+        sorterteGrenserForFlate.add(gjeldendeGrense)
+
+        do {
+            val nesteGrense: LineString = finnNesteGrense(gjeldendeGrense.endPoint, grenser)
+                ?: return FlatedanningResult.UkomplettFlate(sorterteGrenserForFlate)
+
+            if (nesteGrense != forsteGrense) {
+                sorterteGrenserForFlate.add(nesteGrense)
+                gjeldendeGrense = nesteGrense
+            }
+
+        } while (!nesteGrense.equals(forsteGrense))
+        return FlatedanningResult.KomplettFlate(sorterteGrenserForFlate)
+    }
+
+    private fun finnNesteGrense(sluttpunkt: Point?, grenserMedKorrektRetning: List<LineString>): LineString? {
+        return grenserMedKorrektRetning.find {it.startPoint.equals(sluttpunkt)}
+    }
+
     fun beregnFlate(grenseKoblinger: Set<GrenseKobling>): MultiPolygon {
         val flater: List<Polygon> = grenseKoblinger
             .groupBy { it.grenseKoblingAttributter.flateIndeks }
@@ -130,7 +176,7 @@ object SosiGeometryFunctions {
      * @param skallLineStrings Linjene som utgjør ytre del av et polygon. Disse linjene må forme et lukket Polygon
      * @param hullLineStrings Dobbel liste som inneholder alle hull i et polygon. Hver av listene inneholde linjer som utgjør et lukket polygon.
      */
-    private fun lagFlate(skallLineStrings: List<LineString>, hullLineStrings: List<List<LineString>>, koordsys: String? = null): Polygon {
+    fun lagFlate(skallLineStrings: List<LineString>, hullLineStrings: List<List<LineString>>, koordsys: String? = null): Polygon {
         val geometryFactory = getGeometryFactory(koordsys)
         validerSammenhengendeGrenser(skallLineStrings)
         val skall: LinearRing = geometryFactory.createLinearRingFromLineStrings(skallLineStrings)
@@ -199,7 +245,12 @@ class UgyldigGeometriException(val geometry: Geometry,
                                val topologyValidationError: TopologyValidationError)
     : RuntimeException("Geometri-objekt er ikke gyldig: $geometry. Validation-feil: ${topologyValidationError.message}. Feil-lokasjon: ${topologyValidationError.coordinate}")
 
-class IkkeSammenhengendePolygonException(val sluttPunkt: Geometry,
-                                         val startPunkt: Geometry,
-                                         val topologyValidationError: TopologyValidationError)
+class IkkeSammenhengendePolygonException(sluttPunkt: Geometry,
+                                         startPunkt: Geometry,
+                                         topologyValidationError: TopologyValidationError)
     : RuntimeException("Polygon som skal dannes har ikke-sammenhengende punkter, sluttpunkt: ${sluttPunkt.coordinate}, startPunkt: ${startPunkt.coordinate}. Validation-feil: ${topologyValidationError.message}.")
+
+sealed class FlatedanningResult {
+    class KomplettFlate(val sorterteGrenser: List<LineString>): FlatedanningResult()
+    class UkomplettFlate(val forsoekteGrenser: List<LineString>): FlatedanningResult()
+}
