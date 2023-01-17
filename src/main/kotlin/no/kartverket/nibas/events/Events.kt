@@ -5,7 +5,6 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import no.kartverket.nibas.config.AsynchronousSpringEventsConfig
 import no.kartverket.nibas.domain.Flate
-import no.kartverket.nibas.inndelinger.HistorikkService
 import org.hibernate.event.service.spi.EventListenerRegistry
 import org.hibernate.event.spi.PostCommitDeleteEventListener
 import org.hibernate.event.spi.PostCommitInsertEventListener
@@ -38,8 +37,7 @@ class NibasEventListener constructor(private val messagingGateway: AsynchronousS
 @Component
 @ConditionalOnProperty(value = ["spring.cloud.gcp.pubsub.enabled"], havingValue = "true")
 class NibasEventPublisher constructor(
-    val aep: ApplicationEventPublisher,
-    val historikkService: HistorikkService
+    val aep: ApplicationEventPublisher
 ) {
 
     fun publishNibasEvent(enhet: Flate, eventType: EventType = EventType.MODIFIED) {
@@ -47,8 +45,9 @@ class NibasEventPublisher constructor(
             NibasEvent(
                 type = eventType,
                 target = EventTarget.fromFlatetype(enhet.type),
-                id = enhet.id,
-                revision = historikkService.hentGjeldendeRevisjonsId(enhet.id, enhet::class.java)
+                lokalid = enhet.lokalid,
+                gyldigfra = enhet.gyldighet.gyldigFra,
+                gyldigtil = enhet.gyldighet.gyldigTil
             )
         )
     }
@@ -63,7 +62,7 @@ class HibernateEntitySavesListener constructor(
     override fun requiresPostCommitHanding(persister: EntityPersister?): Boolean = true
     override fun requiresPostCommitHandling(persister: EntityPersister?): Boolean = true
 
-    override fun onPostDelete(event: PostDeleteEvent) = publish(event.entity, EventType.DELETED)
+    override fun onPostDelete(event: PostDeleteEvent) = publish(event.entity, EventType.EXPIRED)
     @Suppress("EmptyFunctionBlock")
     override fun onPostDeleteCommitFailed(event: PostDeleteEvent) {}
 
