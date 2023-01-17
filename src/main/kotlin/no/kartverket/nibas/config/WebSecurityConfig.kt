@@ -168,7 +168,7 @@ class WebSecurityConfig @Autowired constructor(private val environment: Environm
     }
 
     override fun getAutModulHostURL(): String {
-        return "http://aut-idporten.aut:8080"
+        return "https://aut-idporten.aut:8080"
     }
 
     override fun getDateTimeToUseForTokenVerification(): ZonedDateTime? {
