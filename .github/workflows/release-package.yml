@@ -136,6 +136,7 @@ jobs:
             auth_project_number: ${{ needs.set-variables.outputs.dev_auth_project_number}}
             service_account: ${{ needs.set-variables.outputs.dev_service_account}}
             image_url: ${{ needs.build.outputs.image_url}}
+            trivy: false # until trivy has fixed issue https://github.com/aquasecurity/trivy/issues/3421
 
     deploy-test:
         needs: [build, security-scans]
