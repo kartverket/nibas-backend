@@ -46,8 +46,8 @@ class NibasEventPublisher constructor(
                 type = eventType,
                 target = EventTarget.fromFlatetype(enhet.type),
                 lokalid = enhet.lokalid,
-                gyldigfra = enhet.gyldighet.gyldigFra,
-                gyldigtil = enhet.gyldighet.gyldigTil
+                gyldigFra = enhet.gyldighet.gyldigFra,
+                gyldigTil = enhet.gyldighet.gyldigTil
             )
         )
     }

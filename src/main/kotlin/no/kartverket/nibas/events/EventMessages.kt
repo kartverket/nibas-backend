@@ -9,8 +9,8 @@ data class NibasEvent(
     val type: EventType,
     val target: EventTarget,
     val lokalid: String,
-    val gyldigfra: LocalDate,
-    val gyldigtil: LocalDate?
+    val gyldigFra: LocalDate,
+    val gyldigTil: LocalDate?
 )
 
 enum class EventType {
