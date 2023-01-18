@@ -12,6 +12,7 @@ import no.kartverket.nibas.kodelister.KodelisteService
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.RestController
+import java.time.LocalDate
 
 @RestController
 class MatrikkelController(private val matrikkelService: MatrikkelService,
@@ -50,6 +51,7 @@ class MatrikkelService(private val grunnkretsService: GrunnkretsService,
 
     fun hentAlleStemmekretserForKommune(numeriskKommunenummer: String): List<Stemmekrets> {
         return hentKommuneFraNumeriskNummer(numeriskKommunenummer).stemmekretser
+            .filter { it.gyldigPaaDato(LocalDate.now()) }
             .sortedBy { it.id }
     }
 
@@ -59,6 +61,7 @@ class MatrikkelService(private val grunnkretsService: GrunnkretsService,
 
     fun hentAlleGrunnkretserForKommune(kommunenummer: String): List<Grunnkrets> {
         return hentKommuneFraNumeriskNummer(kommunenummer).grunnkretser
+            .filter { it.gyldigPaaDato(LocalDate.now()) }
             .sortedBy { it.id }
     }
 

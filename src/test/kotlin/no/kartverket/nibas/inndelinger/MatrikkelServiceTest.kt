@@ -44,10 +44,10 @@ internal class MatrikkelServiceTest {
     @Test
     fun hentAlleStemmekretserForKommune() {
         val stemmekrets1 = StemmekretsBuilder(id = "1")
-            .withGyldigFra(LocalDate.of(2023, Month.JANUARY, 1))
+            .withGyldigFra(LocalDate.of(2020, Month.JANUARY, 1))
             .build()
         val stemmekrets2 = StemmekretsBuilder(id = "2")
-            .withGyldigFra(LocalDate.of(2024, Month.JANUARY, 1))
+            .withGyldigFra(LocalDate.of(2019, Month.JANUARY, 1))
             .build()
         whenever(kommuneServiceMock.hentKommuneByKommunenummer(anyString())).thenReturn(
             KommuneBuilder()
@@ -66,13 +66,13 @@ internal class MatrikkelServiceTest {
             id = "1",
             lokalId = Lokalid("87")
         )
-            .withGyldigFra(LocalDate.of(2023, Month.JANUARY, 1))
+            .withGyldigFra(LocalDate.of(2020, Month.JANUARY, 1))
             .build()
         val gk2 = GrunnkretsBuilder(
             id = "2",
             lokalId = Lokalid("88")
         )
-            .withGyldigFra(LocalDate.of(2024, Month.JANUARY, 1))
+            .withGyldigFra(LocalDate.of(2020, Month.JANUARY, 1))
             .build()
         whenever(kommuneServiceMock.hentKommuneByKommunenummer(anyString())).thenReturn(
             KommuneBuilder()
