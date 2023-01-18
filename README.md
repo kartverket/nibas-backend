@@ -39,6 +39,10 @@ Den letteste måten å kjøre det opp lokalt på egen maskin er ved å starte op
 via docker-compose. Om man kjører docker-compose med filen `docker-compose-local.yml` vil starte
 vault og database i egne containere.
 
+```html
+docker compose --file docker-compose-local.yml up
+```
+
 Om man bruker intelliJ kan man da starte main-metoden i `NibasBackendApplication.kt`. Husk å sette
 aktiv spring-profil til `localhost`. Dette gjøres under "Run/Debug Configurations".
 
@@ -74,7 +78,7 @@ resulterer i en 401 Unauthorized. Om man kjører med profilen `import` er denne 
 For å teste et endepunkt (med autentisering påskrudd) uten å kalle det via nibas-frontend trenger man å legge på en Authorization-header på kallet. Man henter
 dette enklest ved å gjøre følgende:
 
-* gå til test (http://nibas.test.skip.statkart.no/)
+* gå til test (https://nibas.test.skip.statkart.no/) (bruk vpn eller vdi)
 * logg inn med en av følgende brukere (brukernavn og passord finnes her https://docs.digdir.no/idporten_testbrukere.html)
     * 21079408678, 21079408597, 21079408406, 21079408325, 21079408244
 * inspiser det initielle kallet for å hente fylker (chrome dev tools eller lignende) og finn Authorization-headeren.
