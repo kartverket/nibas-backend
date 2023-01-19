@@ -10,7 +10,7 @@ plugins {
     kotlin("plugin.spring") version kotlinPluginVersion
     kotlin("plugin.jpa") version kotlinPluginVersion
     kotlin("plugin.allopen") version kotlinPluginVersion
-    id("org.flywaydb.flyway") version "9.8.3"
+    id("org.flywaydb.flyway") version "9.11.0"
 }
 
 group = "no.kartverket.nibas"
@@ -53,7 +53,7 @@ val springdocOpenapiVersion = "1.6.13"
 val jtsVersion = "1.19.0"
 val testContainerVersion = "1.17.6"
 val autLibVersion = "0.0.33"
-val flywayVersion = "9.8.3"
+val flywayVersion = "9.11.0"
 val hibernateTypes55Version = "2.20.0"
 val springCloudStarterVaultConfigVersion = "3.1.1"
 val spatial4jVersion = "0.8"
