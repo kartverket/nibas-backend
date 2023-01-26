@@ -6,6 +6,11 @@ terraform {
       source  = "hashicorp/kubernetes"
       version = "~> 2.6"
     }
+
+    google = {
+      source  = "hashicorp/google"
+      version = "4.47.0"
+    }
   }
 }
 
@@ -17,6 +22,8 @@ provider "vault" {
   address         = var.vault_addr
   skip_tls_verify = true
 }
+
+provider "google" {}
 
 locals {
   environment = var.deploy_env
