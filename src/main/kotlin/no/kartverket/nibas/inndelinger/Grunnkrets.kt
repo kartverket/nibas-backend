@@ -21,6 +21,8 @@ import no.kartverket.nibas.domain.ContainsSosiIdentifikasjon
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Grunnkrets
+import no.kartverket.nibas.events.EventType
+import no.kartverket.nibas.events.NibasEventPublisher
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.kodelister.createKommunenummerFromUUID
 import no.kartverket.nibas.repository.GrunnkretsRepository
@@ -76,7 +78,7 @@ class GrunnkretsController(
 
 @Transactional
 @Service
-class GrunnkretsService(private val grunnkretsRepository: GrunnkretsRepository) {
+class GrunnkretsService(private val grunnkretsRepository: GrunnkretsRepository, private val nibasEventPublisher: NibasEventPublisher) {
 
     @Transactional(readOnly = true)
     fun hentGrunnkrets(identifikator: Identifikator): Grunnkrets? = grunnkretsRepository.findGyldigObjektForIdentifikator(identifikator)
@@ -118,6 +120,7 @@ class GrunnkretsService(private val grunnkretsRepository: GrunnkretsRepository) 
                     // Mappe alle øvrige felter fra eksisterende grunnkrets
                     .applyMappingFromExistingGrunnkrets(relevantGrunnkrets)
                     .applyChangesFromRequest(request))
+
                 nyGrunnkrets
                     .applyCascadingOperationsBasedOnExistingGrunnkrets(relevantGrunnkrets)
                     .apply {
@@ -129,6 +132,8 @@ class GrunnkretsService(private val grunnkretsRepository: GrunnkretsRepository) 
                         this.auditInfo.typeEndring = grunnkretsRequestWrapper.endringstype
                         this.version = grunnkretsHelper.getNextVersion()
                     }
+
+                nibasEventPublisher.publishNibasEvent(nyGrunnkrets, EventType.MODIFIED)
             }
     }
 

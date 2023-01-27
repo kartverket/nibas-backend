@@ -6,6 +6,7 @@ import io.mockk.mockkStatic
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.events.NibasEventPublisher
 import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.REPOSITORY_EXTENSIONS_FILEPATH
 import no.kartverket.nibas.repository.findAllFramtidigeVersjonerByIdentifikator
@@ -29,6 +30,9 @@ class GrunnkretsServiceTest {
     // Bruker her SpringMockK for å kunne mocke ut kall til extension functions
     @MockkBean
     private lateinit var grunnkretsRepositoryMock: GrunnkretsRepository
+
+    @MockkBean
+    private lateinit var nibasEventPublisher: NibasEventPublisher
 
     @Autowired
     private lateinit var grunnkretsService: GrunnkretsService

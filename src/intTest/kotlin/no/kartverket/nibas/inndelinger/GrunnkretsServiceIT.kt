@@ -2,9 +2,11 @@ package no.kartverket.nibas.inndelinger
 
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
+import no.kartverket.nibas.builders.GrunnkretsRequestBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
@@ -118,7 +120,31 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         assertThat(grunnkretsService.hentAntallGyldigeVersjonerFramITidFor(Identifikator(grunnkretsLokalid, november28In2022))).isEqualTo(1)
     }
 
-    private fun lagGrenserForGrunnkrets(grunnkretsLokalid: Lokalid) {
+    @Test
+    fun oppdaterGrunnkretsMedDagensDato() {
+        val grunnkretsRequest = GrunnkretsRequestBuilder.DEFAULT_REQUEST
+        val kommune = saveKommune(kommunenummer = "4227")
+
+        val identifikator = Identifikator(Lokalid(grunnkretsRequest.identifikasjon.lokalid), november28In2022)
+        val grunnkrets = lagGrenserForGrunnkrets(identifikator.lokalid, kommune)
+        kommune.grunnkretser.add(grunnkrets)
+
+        val now = LocalDate.now()
+        val grunnkretsRequestWrapper = GrunnkretsRequestWrapper(
+            grunnkretsRequest = grunnkretsRequest,
+            gyldigFra = now,
+            endringstype = Endringstype.RETTING)
+
+        grunnkretsService.oppdaterGrunnkrets(identifikator.lokalid, grunnkretsRequestWrapper)
+        val grunnkretsEtter = grunnkretsService.hentGrunnkrets(Identifikator(identifikator.lokalid))
+
+        assertThat(grunnkretsEtter!!.grunnkretsnummer).isNotEqualTo(grunnkrets.grunnkretsnummer).isEqualTo(grunnkretsRequest.grunnkretsnummer)
+        assertThat(grunnkretsEtter.grunnkretsnavn).isNotEqualTo(grunnkrets.grunnkretsnavn).isEqualTo(grunnkretsRequest.navn)
+        assertThat(grunnkretsEtter.omraade).isEqualTo(grunnkrets.omraade)
+        assertThat(grunnkretsEtter.gyldighet.gyldigFra).isEqualTo(now)
+    }
+
+    private fun lagGrenserForGrunnkrets(grunnkretsLokalid: Lokalid, kommune: Kommune? = null): Grunnkrets {
         val x1 = 23857.0
         val y1 = 675635.0
 
@@ -144,7 +170,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         grenseRepository.save(grense2)
         grenseRepository.save(grense3)
 
-        saveGrunnkrets(lokalid = grunnkretsLokalid, grenser = listOf(grense1, grense2, grense3))
+        return saveGrunnkrets(lokalid = grunnkretsLokalid, kommune = kommune, grenser = listOf(grense1, grense2, grense3))
     }
 
     fun saveGrenseAvTypeKommunegrense(id: String = "12000",
@@ -168,6 +194,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
                                gyldigFra: LocalDate = october1In2022,
                                gyldigTil: LocalDate? = null,
                                grunnkrnr: String = "42270304",
+                               kommune: Kommune? = null,
                                grenser: List<Grense> = emptyList()): Grunnkrets {
         return grunnkretsRepository.save(GrunnkretsBuilder(
             id = id,
@@ -175,7 +202,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
             gyldigFra = gyldigFra,
             gyldigTil = gyldigTil,
             grunnkretsnummer = grunnkrnr,
-            kommune = null,
+            kommune = kommune,
             grenser = grenser
         ).build())
     }
@@ -197,12 +224,12 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         saveKommune(grunnkretser = listOf(grunnkrets, grunnkretsFramtidigVersjon))
     }
 
-    private fun saveKommune(grunnkretser: List<Grunnkrets> = emptyList()): Kommune {
+    private fun saveKommune(grunnkretser: List<Grunnkrets> = emptyList(), kommunenummer: String = "0301"): Kommune {
         return kommuneRepository.save(KommuneBuilder(
             id = "9000",
             lokalId = Lokalid("abc-123"),
             gyldigFra = october1In2022,
-            kommunenummer = "0301",
+            kommunenummer = kommunenummer,
             grunnkretser = grunnkretser
         ).buildWithoutAdministrativenhetnavn())
     }
