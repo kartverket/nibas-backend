@@ -8,7 +8,7 @@ resource "google_monitoring_alert_policy" "nibas_backend_alert_policy" {
 
     }
   }
-  #notification_channels = [data.google_monitoring_notification_channel.slack_smia_alerts.name]
+  notification_channels = var.deploy_env == "prod" ? [data.google_monitoring_notification_channel.slack_smia_alerts.name] : []
 
   alert_strategy {
     notification_rate_limit {
@@ -33,8 +33,8 @@ data "google_secret_manager_secret_version" "slack_token" {
   project = var.nibas_project_id
 }
 
-#data "google_monitoring_notification_channel" "slack_smia_alerts" {
-#  display_name = "Smia slack alerts"
-#}
+data "google_monitoring_notification_channel" "slack_smia_alerts" {
+  display_name = "Smia slack alerts"
+}
 
 
