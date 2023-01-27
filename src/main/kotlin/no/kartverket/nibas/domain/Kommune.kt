@@ -2,7 +2,6 @@ package no.kartverket.nibas.domain
 
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grensetype
-import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import org.hibernate.envers.Audited
 import java.time.LocalDate
 import java.util.*
@@ -58,10 +57,6 @@ class Kommune(
         doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { KommuneInformasjon(this) }
     }
 
-    override fun oppdaterOmraade() {
-        omraade = SosiGeometryFunctions.beregnFlate(getGrenser())
-    }
-
     fun getGrenser(gyldighetsdato: LocalDate = LocalDate.now()): Set<GrenseKobling> {
         return getGrunnkretser(gyldighetsdato)
             .flatMap { it.getGrenserAvTyper(tillatteGrensetyper(), gyldighetsdato) }
@@ -86,7 +81,7 @@ class Kommune(
         return stemmekretser.filter { it.gyldigPaaDato(gyldighetsdato) }
     }
 
-    private fun tillatteGrensetyper(): Set<Grensetype> = setOf(
+    fun tillatteGrensetyper(): Set<Grensetype> = setOf(
         Grensetype.Kommunegrense,
         Grensetype.Fylkesgrense,
         Grensetype.AvtaltAvgrensningslinje,

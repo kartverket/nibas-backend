@@ -14,7 +14,7 @@ import java.time.ZonedDateTime
 class FylkeBuilder(
     private val id: String = "1",
     private var objtype: String = "Fylke",
-    private var fylkesnummer: String = "UUID-1",
+    private var fylkesnummer: String = "UUID-2",
     private var lokalId: Lokalid = Lokalid("123"),
     private var navn: String = "Vestland",
     private var spraak: String = "NOR",

@@ -1,26 +1,24 @@
 package no.kartverket.nibas.inndelinger
 
-import no.kartverket.nibas.api.v1.common.Grensetype
-import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.domain.AdministrativEnhet
 import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.Fylke
-import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.domain.Stemmekrets
+import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.repository.EnhetsGrenseRepository
 import no.kartverket.nibas.repository.FylkeRepository
-import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.NasjonRepository
 import no.kartverket.nibas.repository.StemmekretsRepository
-import no.kartverket.nibas.unwrap
+import no.kartverket.nibas.sosi.sosiimport.GrenseMedLokalid
+import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import java.util.logging.Logger
 
 @Service
 class FlateService @Autowired constructor(
@@ -29,45 +27,80 @@ class FlateService @Autowired constructor(
     private val nasjonRepository: NasjonRepository,
     private val grunnkretsRepository: GrunnkretsRepository,
     private val stemmekretsRepository: StemmekretsRepository,
-    private val grenseRepository: GrenseRepository
+    private val kodelisteService: KodelisteService,
+    private val enhetsGrenseRepository: EnhetsGrenseRepository
 ) {
 
     private val logger = LoggerFactory.getLogger(this.javaClass.name)
 
-    fun beregnFlaterFor(features: List<Feature>) {
-        val enheterSomSkalFlatedannes: Set<Flate> = features.flatMap {
-            val grense = getGrense(it.id!!)
-            when (Grensetype.fromValue(it.properties.type)) {
-                Grensetype.Kommunegrense -> grense.finnFlaterOppTilKommune()
-                Grensetype.Fylkesgrense -> grense.finnFlaterOppTilFylke()
-                Grensetype.Riksgrense -> grense.finnFlaterOppTilNasjon()
-                Grensetype.AvtaltAvgrensningslinje -> grense.finnFlaterOppTilNasjon()
-                Grensetype.Territorialgrense -> grense.finnFlaterOppTilNasjon()
-                Grensetype.Grunnkretsgrense -> grense.finnFlaterOppTilGrunnkrets()
-                Grensetype.Delomraadegrense -> grense.finnFlaterOppTilGrunnkrets()
-                Grensetype.Stemmekretsgrense -> grense.finnFlaterOppTilStemmekrets()
-                else -> throw RuntimeException("Not yet implemented for grensetype: ${it.properties.type}")
-            }
-        }.toSet()
-
+    fun oppdaterFlaterFor(enheterSomSkalFlatedannes: Set<Flate>) {
         enheterSomSkalFlatedannes.forEach { enhet ->
-            logger.debug(finnNavn(enhet))
-            enhet.oppdaterOmraade()
             when (enhet) {
-                is Kommune -> kommuneRepository.save(enhet)
-                is Fylke -> fylkeRepository.save(enhet)
-                is Nasjon -> nasjonRepository.save(enhet)
-                is Grunnkrets -> grunnkretsRepository.save(enhet)
-                is Stemmekrets -> stemmekretsRepository.save(enhet)
+                is Grunnkrets -> oppdaterGrunnkretsflater(listOf(enhet))
+                is Stemmekrets -> oppdaterStemmekretsflater(listOf(enhet))
+                is Kommune -> oppdaterKommuneflater(listOf(enhet))
+                is Fylke -> oppdaterFylkesflater(listOf(enhet))
+                is Nasjon -> oppdaterNasjonsflate(listOf(enhet))
             }
+        }
+    }
+
+    fun settFlaterPaaAlleAdministrativeEnheter() {
+        oppdaterFylkesflater(fylkeRepository.findAll().toList())
+        oppdaterKommuneflater(kommuneRepository.findAll().toList())
+        oppdaterNasjonsflate(nasjonRepository.findAll().toList())
+    }
+
+    private fun oppdaterGrunnkretsflater(grunnkretser: List<Grunnkrets>) {
+        grunnkretser.forEach { grunnkrets ->
+            logger.info("Oppdaterer flate for ${finnNavn(grunnkrets)}")
+            grunnkrets.oppdaterOmraade()
+            grunnkretsRepository.save(grunnkrets)
+        }
+    }
+
+    private fun oppdaterStemmekretsflater(stemmekretser: List<Stemmekrets>) {
+        stemmekretser.forEach { stemmekrets ->
+            logger.info("Oppdaterer flate for ${finnNavn(stemmekrets)}")
+            stemmekrets.oppdaterOmraade()
+            stemmekretsRepository.save(stemmekrets)
+        }
+    }
+
+    private fun oppdaterKommuneflater(kommuner: List<Kommune>) {
+        kommuner.forEach { kommune ->
+            logger.info("Oppdaterer flate for ${finnNavn(kommune)}")
+            val kommunenummerVerdi = kodelisteService.getCodeValueByKommunenummerId(kommune.kommunenummer)
+            var kommunegrenser = enhetsGrenseRepository.hentGrenserMedRiktigRetning(kommunenummerVerdi, kommune.tillatteGrensetyper())
+            kommune.omraade = SosiGeometryFunctions.dannFlaterMedHullBasertPaaGeometri(kommunegrenser.map{ GrenseMedLokalid(it.grense, it.lokalid) }, kommune.lokalid)
+            kommuneRepository.save(kommune)
+        }
+    }
+
+    private fun oppdaterFylkesflater(fylker: List<Fylke>) {
+        fylker.forEach { fylke ->
+            logger.info("Oppdaterer flate for ${finnNavn(fylke)}")
+            val fylkesnummerVerdi = kodelisteService.getCodeValueByFylkesnummerId(fylke.fylkesnummer)
+            var fylkesgrenser = enhetsGrenseRepository.hentGrenserMedRiktigRetning(fylkesnummerVerdi!!, fylke.tillatteGrensetyper())
+            fylke.omraade = SosiGeometryFunctions.dannFlaterMedHullBasertPaaGeometri(fylkesgrenser.map{ GrenseMedLokalid(it.grense, it.lokalid) })
+            fylkeRepository.save(fylke)
+        }
+    }
+
+    private fun oppdaterNasjonsflate(nasjoner: List<Nasjon>) {
+        nasjoner.forEach { nasjon ->
+            logger.info("Oppdaterer flate for ${finnNavn(nasjon)}")
+            var riksgrenser = enhetsGrenseRepository.hentGrenserMedRiktigRetning("", nasjon.tillatteGrensetyper())
+            nasjon.omraade = SosiGeometryFunctions.dannFlaterMedHullBasertPaaGeometri(riksgrenser.map{ GrenseMedLokalid(it.grense, it.lokalid) })
+            nasjonRepository.save(nasjon)
         }
     }
 
     private fun finnNavn(enhet: Flate): String? = when (enhet) {
         is AdministrativEnhet -> enhet.administrativenhetnavn.map { it.navn }.toString()
         is Grunnkrets -> enhet.grunnkretsnavn
+        is Stemmekrets -> enhet.stemmekretsnavn
         else -> "Ukjent enhet"
     }
 
-    private fun getGrense(id: String): Grense = grenseRepository.findById(id).unwrap()!!
 }

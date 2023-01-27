@@ -38,12 +38,14 @@ import no.kartverket.nibas.repository.findAllGyldigeObjekterForIdentifikatorer
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
+import no.kartverket.nibas.unwrap
 import org.locationtech.jts.geom.Point
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDate
-import java.util.logging.Logger
+import kotlin.system.measureTimeMillis
 
 @RestController
 class GrenseController(
@@ -64,21 +66,45 @@ class GrenseService(
     private val grenseRepository: GrenseRepository,
     private val grunnkretsRepository: GrunnkretsRepository,
     private val stemmekretsRepository: StemmekretsRepository,
+    private val flateService: FlateService
 ) {
-    private val logger: Logger = Logger.getLogger(this::class.java.name)
+    private val logger = LoggerFactory.getLogger(this::class.java)
 
     fun hentGrense(identifikator: Identifikator): Grense? = grenseRepository.findGyldigObjektForIdentifikator(identifikator)
 
     // TODO: Dato må sendes inn her på utkast. Men de fleste grenseendringer er kvalitetshevinger som skal skje umiddelbart, så dagens dato duger en stund.
     @Transactional(readOnly = false)
     fun lagreGrenser(grenser: FeatureCollection, gyldighetsdato: LocalDate = LocalDate.now()) {
-        val features = grenser.features
-        features
-            .groupBy { it.properties.type }
-            .forEach { mapEntry ->
-                doLagreGrenser(mapEntry.value, gyldighetsdato)
-            }
-//        flateService.beregnFlaterFor(features)
+        val millis = measureTimeMillis {
+            val features = grenser.features
+            features
+                .groupBy { it.properties.type }
+                .forEach { mapEntry ->
+                    doLagreGrenser(mapEntry.value, gyldighetsdato)
+                }
+
+            var enheterSomSkalFlatedannes: Set<Flate> = features.flatMap {
+                val identifikator = featureIdToIdentifikator(it.id, gyldighetsdato)
+                val grense = hentGrense(identifikator) ?: throw NotFoundException("Grense $identifikator ble ikke funnet.")
+                when (Grensetype.fromValue(it.properties.type)) {
+                    //TODO: Når vi slår sammen administrative grenser for stemme- og grunnkrets må vi huske å oppdatere stemmekretsene også når vi oppdatererer en administrativ grense. Pr nå tas ikke disse flatene med utenfor "stemmekrets-sfæren"
+                    Grensetype.Kommunegrense -> grense.finnFlaterOppTilKommune()
+                    Grensetype.Fylkesgrense -> grense.finnFlaterOppTilFylke()
+                    Grensetype.Riksgrense -> grense.finnFlaterOppTilNasjon()
+                    Grensetype.AvtaltAvgrensningslinje -> grense.finnFlaterOppTilNasjon()
+                    Grensetype.Territorialgrense -> grense.finnFlaterOppTilNasjon()
+                    Grensetype.Grunnkretsgrense -> grense.finnFlaterOppTilGrunnkrets()
+                    Grensetype.Delomraadegrense -> grense.finnFlaterOppTilGrunnkrets()
+                    Grensetype.Stemmekretsgrense -> grense.finnFlaterOppTilStemmekrets()
+                    else -> throw RuntimeException("Not yet implemented for grensetype: ${it.properties.type}")
+                }
+            }.toSet()
+
+
+            flateService.oppdaterFlaterFor(enheterSomSkalFlatedannes)
+        }
+
+        logger.debug("Tid brukt på å lagre grenser og oppdatere flater: $millis")
     }
 
     // Feature.id vil være lokalid
@@ -130,7 +156,7 @@ class GrenseService(
 
         val grenser: List<Grense> = grenserMedRetningOgKontekst.map { it.grenseMedAttributter.grense }
         grenser.forEach { logger.info("Lagrer grense: [${it.grensetype.name} - id ${it.id}]") }
-        grenseRepository.saveAll(grenser)
+        grenseRepository.saveAllAndFlush(grenser)
 
         grenserMedRetningOgKontekst
             .groupBy { it.kontekstType }

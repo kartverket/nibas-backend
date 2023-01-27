@@ -55,10 +55,6 @@ class Fylke(
         doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { FylkeInformasjon(this) }
     }
 
-    override fun oppdaterOmraade() {
-        omraade = SosiGeometryFunctions.beregnFlate(getGrenser())
-    }
-
     fun getGrenser(gyldighetsdato: LocalDate = LocalDate.now()): Set<GrenseKobling> {
         return getKommuner(gyldighetsdato)
             .flatMap { it.getGrunnkretser(gyldighetsdato) }
@@ -75,7 +71,7 @@ class Fylke(
         return kommuner.filter { it.gyldigPaaDato(gyldighetsdato) }
     }
 
-    private fun tillatteGrensetyper(): Set<Grensetype> = setOf(
+    fun tillatteGrensetyper(): Set<Grensetype> = setOf(
         Grensetype.Fylkesgrense,
         Grensetype.AvtaltAvgrensningslinje,
         Grensetype.Territorialgrense,

@@ -4,6 +4,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import no.kartverket.nibas.api.v1.common.Flatetype
+import no.kartverket.nibas.inndelinger.FlateService
 import no.kartverket.nibas.sosi.common.SosiKoder
 import no.kartverket.nibas.sosi.deserializer.NibasSosiDeserializer
 import no.kartverket.nibas.sosi.model.SosiFlate
@@ -35,7 +36,8 @@ class SosiImportService(
     private val nasjonImporter: NasjonImporter,
     private val grunnkretsImporter: GrunnkretsImporter,
     private val stemmekretsImporter: StemmekretsImporter,
-    private val environment: Environment
+    private val environment: Environment,
+    private val flateService: FlateService
 ) {
 
     companion object {
@@ -163,7 +165,7 @@ class SosiImportService(
         val erstatningskoordinater = grenseMatcher.finnErstatningskoordinater()
 
         //Etter at nye knutepunkter har blitt beregnet kan vi kjøre en faktisk import der man bruker de nye knutepunktene og persisterer til databasen
-        return grupperteGrunnkretser.entries.mapIndexed { index, entry ->
+        val results: List<Result<Unit>> = grupperteGrunnkretser.entries.mapIndexed { index, entry ->
             try {
                 logger.info("Importing grunnkrets ${index + 1} of ${grupperteGrunnkretser.size} - LokalId = ${entry.value.first().getIdent()?.getLokalId()}")
                 grunnkretsImporter.importerSosiGrunnkrets(entry.value, grunnkretsgrenser, erstatningskoordinater, grenseMatcher.matchedeGrenser)
@@ -173,6 +175,13 @@ class SosiImportService(
                 Result.failure(ex)
             }
         }
+
+        if (grunnkretser.isNotEmpty()) {
+            logger.info("Import av grunnkretser er fullført, oppdaterer flater nå som grenser er på plass")
+            flateService.settFlaterPaaAlleAdministrativeEnheter()
+        }
+
+        return results
     }
 
     fun importerStemmekretser(stemmekretsRoot: SosiObjekt, admenhetRoot: SosiObjekt): List<Result<Unit>> {

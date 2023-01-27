@@ -23,10 +23,16 @@ fun <T> CrudRepositoryWithLokalIdFinder<T, String>.findAllGyldigPaaDato(gyldighe
  * Hvis flere treff kastes exception (programmeringsfeil).
  */
 fun <T> CrudRepositoryWithLokalIdFinder<T, String>.findGyldigObjektForIdentifikator(identifikator: Identifikator): T?
+    where T : Gyldig, T : ContainsSosiIdentifikasjon {
+        return findGyldigObjektPaaGyldighetsdato(findAllByLokalid(identifikator.lokalid.value), identifikator.gyldighetsdato)
+    }
+
+
+fun <T> JpaRepositoryWithLokalIdFinder<T, String>.findGyldigObjektForIdentifikator(identifikator: Identifikator): T?
     where T : Gyldig, T : ContainsSosiIdentifikasjon =
     findGyldigObjektPaaGyldighetsdato(findAllByLokalid(identifikator.lokalid.value), identifikator.gyldighetsdato)
 
-fun <T> CrudRepositoryWithLokalIdFinder<T, String>.findAllGyldigeObjekterForIdentifikatorer(identifikatorer: List<Identifikator>): Map<Identifikator, T>
+fun <T> JpaRepositoryWithLokalIdFinder<T, String>.findAllGyldigeObjekterForIdentifikatorer(identifikatorer: List<Identifikator>): Map<Identifikator, T>
     where T : Gyldig, T : ContainsSosiIdentifikasjon {
     var map: Map<Identifikator, T> = emptyMap()
     identifikatorer.forEach {

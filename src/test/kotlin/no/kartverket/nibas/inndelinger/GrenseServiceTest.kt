@@ -157,7 +157,11 @@ class GrenseServiceTest {
 
         every { stemmekretsRepositoryKotlinMock.findGyldigObjektForIdentifikator(stemmekretsIdentifikator) } returns stemmekretsSomSkalOppdateres
         every { grunnkretsRepositoryKotlinMock.findGyldigObjektForIdentifikator(grunnkretsIdentifikator) } returns grunnkretsSomSkalOppdateres
-        every { grenseRepositoryKotlinMock.saveAll(allAny<List<Grense>>()) } returns emptyList() // Vi bruker ikke retur fra saveAll i logikken
+        every { grenseRepositoryKotlinMock.findGyldigObjektForIdentifikator(grenseIdentifikator1) } returns eksisterendeGrense
+        every { grenseRepositoryKotlinMock.findGyldigObjektForIdentifikator(grenseIdentifikator2) } returns eksisterendeGrense2
+        every { grenseRepositoryKotlinMock.findGyldigObjektForIdentifikator(grenseIdentifikator3) } returns eksisterendeGrense3
+        every { grenseRepositoryKotlinMock.findGyldigObjektForIdentifikator(grenseIdentifikator4) } returns eksisterendeGrense4
+        every { grenseRepositoryKotlinMock.saveAllAndFlush(allAny<List<Grense>>()) } returns emptyList() // Vi bruker ikke retur fra saveAll i logikken
 
         grenseService.lagreGrenser(
             grenser = FeatureCollection(
@@ -171,7 +175,7 @@ class GrenseServiceTest {
         )
 
         val listOfGrenseSlot = slot<List<Grense>>()
-        verify(exactly = 1) { grenseRepositoryKotlinMock.saveAll(capture(listOfGrenseSlot)) }
+        verify(exactly = 1) { grenseRepositoryKotlinMock.saveAllAndFlush(capture(listOfGrenseSlot)) }
         val lagredeGrenser = listOfGrenseSlot.captured
         assertThat(lagredeGrenser)
             .hasSize(4)

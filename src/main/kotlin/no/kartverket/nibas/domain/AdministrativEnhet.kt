@@ -8,7 +8,6 @@ import no.kartverket.nibas.sporing.Sporbar
 import org.hibernate.envers.Audited
 import org.locationtech.jts.geom.MultiPolygon
 import org.locationtech.jts.geom.Point
-import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.*
 import javax.persistence.Column

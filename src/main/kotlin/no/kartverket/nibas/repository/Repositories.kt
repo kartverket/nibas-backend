@@ -17,12 +17,20 @@ import no.kartverket.nibas.domain.Typeendring
 import no.kartverket.nibas.domain.utkast.Utkast
 import no.kartverket.nibas.domain.utkast.UtkastStatus
 import no.kartverket.nibas.sporing.Laasbar
+import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.NoRepositoryBean
 
 @NoRepositoryBean
 interface CrudRepositoryWithLokalIdFinder<T, ID> : CrudRepository<T, ID> {
     fun findByLokalid(lokalid: String): T?
+    fun findAllByLokalid(lokalid: String): List<T>
+}
+
+@NoRepositoryBean
+interface JpaRepositoryWithLokalIdFinder<T, ID> : JpaRepository<T, ID> {
+    fun findByLokalid(lokalid: String): T?
+
     fun findAllByLokalid(lokalid: String): List<T>
 }
 
@@ -47,7 +55,7 @@ interface GrunnkretsRepository : CrudRepositoryWithLokalIdFinder<Grunnkrets, Str
 
 interface StemmekretsRepository : CrudRepositoryWithLokalIdFinder<Stemmekrets, String>
 
-interface GrenseRepository : CrudRepositoryWithLokalIdFinder<Grense, String>
+interface GrenseRepository : JpaRepositoryWithLokalIdFinder<Grense, String>
 
 interface UtkastRepository : CrudRepository<Utkast, String> {
     fun findAllByStatus(status: UtkastStatus): List<Utkast>

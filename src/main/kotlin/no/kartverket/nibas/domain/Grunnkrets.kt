@@ -51,7 +51,7 @@ class Grunnkrets(
         doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { GrunnkretsInformasjon(this) }
     }
 
-    override fun oppdaterOmraade() {
+    fun oppdaterOmraade() {
         omraade = SosiGeometryFunctions.beregnFlate(getGrenser().toSet())
     }
 

@@ -7,6 +7,7 @@ import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.FylkeInformasjonRepository
 import no.kartverket.nibas.repository.FylkeRepository
+import no.kartverket.nibas.repository.NasjonRepository
 import no.kartverket.nibas.repository.SpraakkodeRepository
 import no.kartverket.nibas.sosi.model.SosiFlate
 import org.springframework.beans.factory.annotation.Autowired
@@ -20,6 +21,7 @@ import java.util.logging.Logger
 class FylkeImporter @Autowired constructor(
     private val kodelisteService: KodelisteService,
     private val fylkeRepository: FylkeRepository,
+    private val nasjonRepository: NasjonRepository,
     private val fylkeInformasjonRepository: FylkeInformasjonRepository,
     private val administrativenhetnavnRepository: AdministrativenhetnavnRepository,
     private val spraakkodeRepository: SpraakkodeRepository,
@@ -42,7 +44,7 @@ class FylkeImporter @Autowired constructor(
                     )
                 fylke.samiskforvaltningsomraade = flate.isSamiskForvaltningsomrade()
 
-                // TODO: Sette kobling til nasjon
+                fylke.nasjon = nasjonRepository.findAll().first()
                 fylke = fylkeRepository.save(fylke)
 
                 if (flate.getInformasjon() != null) {

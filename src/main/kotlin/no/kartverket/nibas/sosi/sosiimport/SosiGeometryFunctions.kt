@@ -1,7 +1,9 @@
 package no.kartverket.nibas.sosi.sosiimport
 
+import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.getGrenseJustertForRetning
+import no.kartverket.nibas.repository.Grenserad
 import no.kartverket.nibas.sosi.model.SosiKoordinat
 import no.kartverket.nibas.sosi.model.SosiNordOest
 import org.locationtech.jts.geom.Coordinate
@@ -85,48 +87,161 @@ object SosiGeometryFunctions {
 
     /**
      * Sorterer innkommende grenser fra potensielt flere flater, danner flater og pakker den/dem inn i et multipolygon som returneres
+     * Ikke i bruk pr nå, men kan brukes dersom man skal flatedanne nye kretser som har allerede definerte hull.
+     * Vurder om de også bør/kan benytte dannFlaterMedHullBasertPaaGeometri i stedet.
      */
-    fun dannFlaterFraGrenser(grenserMedKorrektRetning: List<LineString>): MultiPolygon {
+    fun dannFlaterFraGrenserader(grenserMedKorrektRetning: List<Grenserad>): MultiPolygon {
+        val flater: List<Polygon> = grenserMedKorrektRetning
+            .groupBy { it.flateIndeks }
+            .map { entry ->
+                val grenseraderForFlate = entry.value
+                val skallGrenser: List<Grenserad> = grenseraderForFlate.filter { it.hullIndeks == null }
+                val hullGrenser: Map<Int, List<Grenserad>> = (grenseraderForFlate - skallGrenser).groupBy { it.hullIndeks!! }
+
+                val skall: FlatedanningResult = finnGrenserSomDannerEnFlate(skallGrenser.map { GrenseMedLokalid(it.grense, it.lokalid) })
+                val hull: List<FlatedanningResult> = hullGrenser.map { hullGrenserForHull: Map.Entry<Int, List<Grenserad>> ->
+                    finnGrenserSomDannerEnFlate(hullGrenserForHull.value.map { GrenseMedLokalid(it.grense, it.lokalid) })
+                }
+
+                val ukompletteHull = hull.filter { it is FlatedanningResult.UkomplettFlate }
+
+                if (skall is FlatedanningResult.KomplettFlate && ukompletteHull.isEmpty()) {
+                    val hullFlateSegmenter: List<List<LineString>> = hull.map {
+                        val hullKomplett = it as FlatedanningResult.KomplettFlate // Vet at den er komplett ettersom det ikke finnes ukomplette hull
+                        hullKomplett.sorterteGrenser.map { grenseMedLokalid -> grenseMedLokalid.grense }
+                    }
+                    val flate = lagFlate(skall.sorterteGrenser.map { grenseMedLokalid -> grenseMedLokalid.grense }, hullFlateSegmenter)
+                    validateGeometry(flate)
+                    flate
+                } else {
+                    if (skall is FlatedanningResult.UkomplettFlate) {
+                        throw RuntimeException("Klarte ikke å danne flate med grenser: ${skall.forsoekteGrenser}")
+                    } else {
+                        throw RuntimeException("Klarte ikke å danne flate grunnet feil med hull, antall hull som feiler: ${ukompletteHull.size}")
+                    }
+                }
+
+            }
+
+
+        val multiPolygon = getGeometryFactory().createMultiPolygon(flater.toTypedArray())
+        validateGeometry(multiPolygon)
+        return multiPolygon
+    }
+
+
+    /**
+     * Danner et multipolygon basert på en eller flere flater med potensielt et eller flere hull
+     */
+    fun dannFlaterMedHullBasertPaaGeometri(grenserMedKorrektRetning: List<GrenseMedLokalid>, enhetsLokalid: String? = null): MultiPolygon {
         var gjenstaaendeGrenser = grenserMedKorrektRetning
-        val flater = mutableListOf<Polygon>()
+
+        val kompletteFlater: MutableList<FlatedanningResult.KomplettFlate> = mutableListOf()
+        val ukompletteFlater: MutableList<FlatedanningResult.UkomplettFlate> = mutableListOf()
+        val geometryFactory = getGeometryFactory(null)
 
         while (gjenstaaendeGrenser.isNotEmpty()) {
-            when (val result = finnGrenserSomDannerEnFlate(gjenstaaendeGrenser)) {
+            when (val result = finnGrenserSomDannerEnFlate(gjenstaaendeGrenser, enhetsLokalid)) {
                 is FlatedanningResult.KomplettFlate -> {
-                    flater.add(lagFlate(result.sorterteGrenser, emptyList()))
+                    kompletteFlater.add(result)
                     gjenstaaendeGrenser = gjenstaaendeGrenser - result.sorterteGrenser
                 }
                 is FlatedanningResult.UkomplettFlate -> {
+                    ukompletteFlater.add(result)
                     gjenstaaendeGrenser = gjenstaaendeGrenser - result.forsoekteGrenser
                 }
             }
         }
 
-        return getGeometryFactory().createMultiPolygon(flater.toTypedArray())
+        if (ukompletteFlater.isNotEmpty()) {
+            throw RuntimeException("Klarte ikke å danne flate grunnet ukomplette flater, antall som feiler: ${ukompletteFlater.size}")
+        }
+
+        val multiPolygon = dannMultipolygon(kompletteFlater, geometryFactory)
+        validateGeometry(multiPolygon)
+        return multiPolygon
     }
 
-    private fun finnGrenserSomDannerEnFlate(grenser: List<LineString>): FlatedanningResult {
+    private fun dannMultipolygon(
+        kompletteFlater: List<FlatedanningResult.KomplettFlate>,
+        geometryFactory: GeometryFactory
+    ): MultiPolygon {
+        val flater: MutableList<Polygon> = mutableListOf()
+        kompletteFlater.forEach { komplettFlate ->
+            val ytrePolygon = lagFlate(komplettFlate.sorterteGrenser.map { grenseMedLokalid -> grenseMedLokalid.grense }, emptyList())
+            validateGeometry(ytrePolygon)
+            val hullForPolygon: MutableList<List<LineString>> = mutableListOf()
+            val resterendeKompletteFlater = kompletteFlater.minus(komplettFlate)
+
+            var ytrePolygonErSkall = true
+            resterendeKompletteFlater.forEach { resterendeKomplettFlate ->
+                val indrePolygon = lagFlate(resterendeKomplettFlate.sorterteGrenser.map { grenseMedLokalid -> grenseMedLokalid.grense }, emptyList())
+                validateGeometry(indrePolygon)
+                if (ytrePolygon.contains(indrePolygon)) {
+                    // Her har vi et ytre polygon (skall) med et indre hull. Hullet må da legges i hull-lista
+                    hullForPolygon.add(resterendeKomplettFlate.sorterteGrenser.map { grenseMedLokalid -> grenseMedLokalid.grense })
+                } else if (indrePolygon.contains(ytrePolygon)) {
+                    // Her er det ytre polygonet et hull og skal derfor ikke legges til
+                    ytrePolygonErSkall = false
+                }
+            }
+            if (ytrePolygonErSkall) {
+                val skallFlate = lagFlate(komplettFlate.sorterteGrenser.map { grenseMedLokalid -> grenseMedLokalid.grense }, hullForPolygon)
+                validateGeometry(skallFlate)
+                flater.add(skallFlate)
+            }
+        }
+        return geometryFactory.createMultiPolygon(flater.toTypedArray())
+    }
+
+    private fun finnGrenserSomDannerEnFlate(grenser: List<GrenseMedLokalid>, enhetsLokalid: String? = null): FlatedanningResult {
         val forsteGrense = grenser.first()
         var gjeldendeGrense = forsteGrense
 
-        val sorterteGrenserForFlate = mutableListOf<LineString>()
+        val sorterteGrenserForFlate = mutableListOf<GrenseMedLokalid>()
         sorterteGrenserForFlate.add(gjeldendeGrense)
 
         do {
-            val nesteGrense: LineString = finnNesteGrense(gjeldendeGrense.endPoint, grenser)
+            var nesteGrense: GrenseMedLokalid = finnNesteGrense(gjeldendeGrense, grenser, enhetsLokalid)
                 ?: return FlatedanningResult.UkomplettFlate(sorterteGrenserForFlate)
 
-            if (nesteGrense != forsteGrense) {
+            if (nesteGrense.grense != forsteGrense.grense) {
                 sorterteGrenserForFlate.add(nesteGrense)
                 gjeldendeGrense = nesteGrense
             }
-
-        } while (!nesteGrense.equals(forsteGrense))
+        } while (nesteGrense != forsteGrense)
         return FlatedanningResult.KomplettFlate(sorterteGrenserForFlate)
     }
 
-    private fun finnNesteGrense(sluttpunkt: Point?, grenserMedKorrektRetning: List<LineString>): LineString? {
-        return grenserMedKorrektRetning.find {it.startPoint.equals(sluttpunkt)}
+    private fun finnNesteGrense(gjeldendeGrense: GrenseMedLokalid, grenserMedKorrektRetning: List<GrenseMedLokalid>, enhetsLokalid: String? = null): GrenseMedLokalid? {
+        var nesteGrense = grenserMedKorrektRetning.find { it.grense.startPoint.equals(gjeldendeGrense.grense.endPoint) }
+
+        //Ås kommune
+        if (enhetsLokalid == "74273193-b926-40e1-959e-e02c3942dc81" && gjeldendeGrense.lokalid.value == "9d2727e4-af52-34c1-b1b0-f43feac49bdb") {
+            nesteGrense = grenserMedKorrektRetning.find { it.lokalid.value ==  "4fed07a6-04aa-3d6d-95cb-fcaf0794f91d"}
+        } else if (enhetsLokalid == "74273193-b926-40e1-959e-e02c3942dc81" && gjeldendeGrense.lokalid.value == "10c0bda9-fad5-3130-9c91-84c58ebef2a6") {
+            nesteGrense = grenserMedKorrektRetning.find { it.lokalid.value ==  "ba3b4bb0-8c0f-33f9-b8e3-7712b21afc1e"}
+        }
+        //Frogn kommune
+        else if (enhetsLokalid == "37f9dcca-d06d-41a0-b8e3-13fdfd94c854" && gjeldendeGrense.lokalid.value == "4fed07a6-04aa-3d6d-95cb-fcaf0794f91d") {
+            nesteGrense = grenserMedKorrektRetning.find { it.lokalid.value ==  "9d2727e4-af52-34c1-b1b0-f43feac49bdb"}
+        } else if (enhetsLokalid == "37f9dcca-d06d-41a0-b8e3-13fdfd94c854" && gjeldendeGrense.lokalid.value == "ba3b4bb0-8c0f-33f9-b8e3-7712b21afc1e") {
+            nesteGrense = grenserMedKorrektRetning.find { it.lokalid.value ==  "10c0bda9-fad5-3130-9c91-84c58ebef2a6"}
+        }
+        //Nome
+        else if ( enhetsLokalid == "123e97ca-43df-4b98-9244-1bf9c98c8076" && gjeldendeGrense.lokalid.value == "abd01914-d0e3-3895-8797-9fc2f07525fa") {
+            nesteGrense = grenserMedKorrektRetning.find { it.lokalid.value ==  "f8207ddb-0462-3600-bf7b-a755a7d647a3"}
+        } else if (enhetsLokalid == "123e97ca-43df-4b98-9244-1bf9c98c8076" && gjeldendeGrense.lokalid.value == "6c6d66f3-bd30-3fb3-9b49-c398fe8e37eb") {
+            nesteGrense = grenserMedKorrektRetning.find { it.lokalid.value ==  "5f2ea378-3d8d-364d-9569-e646477dcbdf"}
+        }
+        //Skien
+        else if (enhetsLokalid == "886dd687-f7a3-448d-99b5-783b741646cb" && gjeldendeGrense.lokalid.value == "f8207ddb-0462-3600-bf7b-a755a7d647a3") {
+            nesteGrense = grenserMedKorrektRetning.find { it.lokalid.value ==  "abd01914-d0e3-3895-8797-9fc2f07525fa"}
+        } else if (enhetsLokalid == "886dd687-f7a3-448d-99b5-783b741646cb" && gjeldendeGrense.lokalid.value == "5f2ea378-3d8d-364d-9569-e646477dcbdf") {
+            nesteGrense = grenserMedKorrektRetning.find { it.lokalid.value ==  "6c6d66f3-bd30-3fb3-9b49-c398fe8e37eb"}
+        }
+
+        return nesteGrense
     }
 
     fun beregnFlate(grenseKoblinger: Set<GrenseKobling>): MultiPolygon {
@@ -250,7 +365,9 @@ class IkkeSammenhengendePolygonException(sluttPunkt: Geometry,
                                          topologyValidationError: TopologyValidationError)
     : RuntimeException("Polygon som skal dannes har ikke-sammenhengende punkter, sluttpunkt: ${sluttPunkt.coordinate}, startPunkt: ${startPunkt.coordinate}. Validation-feil: ${topologyValidationError.message}.")
 
+class GrenseMedLokalid (val grense: LineString, val lokalid: Lokalid)
+
 sealed class FlatedanningResult {
-    class KomplettFlate(val sorterteGrenser: List<LineString>): FlatedanningResult()
-    class UkomplettFlate(val forsoekteGrenser: List<LineString>): FlatedanningResult()
+    class KomplettFlate(val sorterteGrenser: List<GrenseMedLokalid>): FlatedanningResult()
+    class UkomplettFlate(val forsoekteGrenser: List<GrenseMedLokalid>): FlatedanningResult()
 }

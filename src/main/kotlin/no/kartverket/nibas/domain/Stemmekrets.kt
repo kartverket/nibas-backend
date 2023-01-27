@@ -55,7 +55,7 @@ class Stemmekrets(
 
     fun getGrenser(gyldighetsdato: LocalDate = LocalDate.now()): List<GrenseKobling> = getGrenserAvTyper(tillatteGrensetyper(), gyldighetsdato)
 
-    override fun oppdaterOmraade() {
+    fun oppdaterOmraade() {
         omraade = SosiGeometryFunctions.beregnFlate(getGrenser().toSet())
     }
 

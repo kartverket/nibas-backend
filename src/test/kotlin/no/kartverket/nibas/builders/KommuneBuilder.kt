@@ -16,7 +16,7 @@ class KommuneBuilder(
     private val id: String = "1",
     private var kommunenummer: String = "UUID-1",
     private var lokalId: Lokalid = Lokalid("123"),
-    private var navn: String = "Vestland",
+    private var navn: String = "Bergen",
     private var spraak: String = "NOR",
     private var samiskforvaltningsomraade: Boolean = false,
     private var endretdato: ZonedDateTime = ZonedDateTime.now(),

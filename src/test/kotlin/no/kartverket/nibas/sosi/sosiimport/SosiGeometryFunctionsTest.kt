@@ -2,17 +2,19 @@ package no.kartverket.nibas.sosi.sosiimport
 
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
+import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
+import no.kartverket.nibas.repository.Grenserad
+import no.kartverket.nibas.sporing.Gyldighet
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
-import org.junit.Ignore
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.CoordinateList
 import org.locationtech.jts.geom.GeometryFactory
 import org.locationtech.jts.geom.MultiPolygon
+import java.time.LocalDate
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -43,23 +45,25 @@ internal class SosiGeometryFunctionsTest {
     fun thatFlaterDannesAvGrenserMedEnkelGeometri() {
         val geometryFactory = GeometryFactory()
         val grenser = mutableListOf(
-            geometryFactory.createLineString(arrayOf(
-                Coordinate(1.0, 1.0),
-                Coordinate(2.0, 1.0),
-                Coordinate(2.0, 2.0),
-            )),
-            geometryFactory.createLineString(arrayOf(
-                Coordinate(2.0, 2.0),
-                Coordinate(1.0, 2.0),
-                Coordinate(1.0, 1.0)
-            ))
+            GrenseMedLokalid(
+                geometryFactory.createLineString(arrayOf(
+                    Coordinate(1.0, 1.0),
+                    Coordinate(2.0, 1.0),
+                    Coordinate(2.0, 2.0)
+                )), Lokalid("123")
+            ),
+            GrenseMedLokalid(
+                geometryFactory.createLineString(arrayOf(
+                    Coordinate(2.0, 2.0),
+                    Coordinate(1.0, 2.0),
+                    Coordinate(1.0, 1.0)
+                )), Lokalid("234")
+            ),
         )
 
-        val flate: MultiPolygon = SosiGeometryFunctions.dannFlaterFraGrenser(grenser)
+        val flate: MultiPolygon = SosiGeometryFunctions.dannFlaterMedHullBasertPaaGeometri(grenser)
 
-        val coordinates = geometryFactory.createMultiLineString(grenser.toTypedArray()).coordinates
-        val coordinateList = CoordinateList(coordinates, false)
-
+        val coordinateList = CoordinateList(geometryFactory.createMultiLineString(grenser.map { it.grense }.toTypedArray()).coordinates, false)
         val linearRing = geometryFactory.createLinearRing(coordinateList.toCoordinateArray())
         val polygon = listOf(geometryFactory.createPolygon(linearRing))
         val multiPolygon = geometryFactory.createMultiPolygon(polygon.toTypedArray())
@@ -73,19 +77,21 @@ internal class SosiGeometryFunctionsTest {
 
         // En grense som er selv-lukkende
         val grenser = mutableListOf(
-            geometryFactory.createLineString(arrayOf(
-                Coordinate(1.0, 1.0),
-                Coordinate(2.0, 1.0),
-                Coordinate(2.0, 2.0),
-                Coordinate(2.0, 2.0),
-                Coordinate(1.0, 2.0),
-                Coordinate(1.0, 1.0)
-            ))
+            GrenseMedLokalid(
+                geometryFactory.createLineString(arrayOf(
+                    Coordinate(1.0, 1.0),
+                    Coordinate(2.0, 1.0),
+                    Coordinate(2.0, 2.0),
+                    Coordinate(2.0, 2.0),
+                    Coordinate(1.0, 2.0),
+                    Coordinate(1.0, 1.0)
+            )), Lokalid("123")
+            )
         )
 
-        val faktiskFlate = SosiGeometryFunctions.dannFlaterFraGrenser(grenser)
+        val faktiskFlate = SosiGeometryFunctions.dannFlaterMedHullBasertPaaGeometri(grenser)
 
-        val linearRing = geometryFactory.createLinearRing(geometryFactory.createMultiLineString(grenser.toTypedArray()).coordinates)
+        val linearRing = geometryFactory.createLinearRing(geometryFactory.createMultiLineString(grenser.map{ it.grense }.toTypedArray()).coordinates)
         val polygon = listOf(geometryFactory.createPolygon(linearRing))
         val forventetFlate = geometryFactory.createMultiPolygon(polygon.toTypedArray())
 
@@ -93,78 +99,165 @@ internal class SosiGeometryFunctionsTest {
     }
 
     @Test
-    @Disabled("Denne testen feiler fordi det opprettes tre polygoner som så pakkes inn i et multipolygon, mulig vi må utvide til å hensynta skall og hull for å få ekte likhet")
     fun thatFlaterDannesAvGrenserSomDannerFlaterMedHull() {
         val geometryFactory = GeometryFactory()
 
         // 4 grenser, hvor to danner et skall og de to siste danner to hull i skallet
         val grense1 = geometryFactory.createLineString(arrayOf(
-            Coordinate(1.0, 1.0),
-            Coordinate(7.0, 1.0),
-            Coordinate(7.0, 4.0)
+            Coordinate(100.0, 100.0),
+            Coordinate(700.0, 100.0),
+            Coordinate(700.0, 400.0)
         ))
         val grense2 = geometryFactory.createLineString(arrayOf(
-            Coordinate(7.0, 4.0),
-            Coordinate(1.0, 4.0),
-            Coordinate(1.0, 1.0)
+            Coordinate(700.0, 400.0),
+            Coordinate(100.0, 400.0),
+            Coordinate(100.0, 100.0)
         ))
         val grense3 = geometryFactory.createLineString(arrayOf(
-            Coordinate(2.0, 2.0),
-            Coordinate(3.0, 2.0),
-            Coordinate(3.0, 3.0),
-            Coordinate(2.0, 3.0),
-            Coordinate(2.0, 2.0)
+            Coordinate(200.0, 200.0),
+            Coordinate(300.0, 200.0),
+            Coordinate(300.0, 300.0),
+            Coordinate(200.0, 300.0),
+            Coordinate(200.0, 200.0)
         ))
 
         val grense4 = geometryFactory.createLineString(arrayOf(
-            Coordinate(4.0, 2.0),
-            Coordinate(6.0, 2.0),
-            Coordinate(6.0, 3.0),
-            Coordinate(4.0, 3.0),
-            Coordinate(4.0, 2.0)
+            Coordinate(400.0, 200.0),
+            Coordinate(600.0, 200.0),
+            Coordinate(600.0, 300.0),
+            Coordinate(400.0, 300.0),
+            Coordinate(400.0, 200.0)
         ))
 
-        val grenser = mutableListOf( grense3, grense4, grense1, grense2)
+        val grenserMedLokalid = mutableListOf(
+            GrenseMedLokalid(grense1, Lokalid("1")),
+            GrenseMedLokalid(grense2, Lokalid("2")),
+            GrenseMedLokalid(grense3, Lokalid("3")),
+            GrenseMedLokalid(grense4, Lokalid("4"))
+        )
 
-        val faktiskFlate = SosiGeometryFunctions.dannFlaterFraGrenser(grenser)
+        val faktiskFlate = SosiGeometryFunctions.dannFlaterMedHullBasertPaaGeometri(grenserMedLokalid)
 
-//        val linearRing = geometryFactory.createLinearRing(geometryFactory.createMultiLineString(grenser.toTypedArray()).coordinates)
-//        val polygon = listOf(geometryFactory.createPolygon(linearRing))
         val hullLineStrings = listOf(listOf(grense3), listOf(grense4))
-        val polygon = SosiGeometryFunctions.lagFlate(listOf(grense1, grense2), hullLineStrings)// geometryFactory.createMultiPolygon(polygon.toTypedArray())
+        val polygon = SosiGeometryFunctions.lagFlate(listOf(grense1, grense2), hullLineStrings)
         val forventetFlate = geometryFactory.createMultiPolygon(listOf(polygon).toTypedArray())
 
         assertTrue(forventetFlate.equalsTopo(faktiskFlate))
     }
 
     @Test
+    fun thatIkkeLukketFlateFeiler() {
+        val geometryFactory = GeometryFactory()
+
+        // 4 grenser, hvor de to første skal danne et skall, men dette skallet er ikke komplett
+        val grense1 = geometryFactory.createLineString(arrayOf(
+            Coordinate(100.0, 100.0),
+            Coordinate(700.0, 100.0),
+            Coordinate(700.0, 400.0)
+        ))
+        val grense2 = geometryFactory.createLineString(arrayOf(
+            Coordinate(700.0, 400.0),
+            Coordinate(100.0, 400.0)
+        ))
+        val grense3 = geometryFactory.createLineString(arrayOf(
+            Coordinate(200.0, 200.0),
+            Coordinate(300.0, 200.0),
+            Coordinate(300.0, 300.0),
+            Coordinate(200.0, 300.0),
+            Coordinate(200.0, 200.0)
+        ))
+
+        val grense4 = geometryFactory.createLineString(arrayOf(
+            Coordinate(400.0, 200.0),
+            Coordinate(600.0, 200.0),
+            Coordinate(600.0, 300.0),
+            Coordinate(400.0, 300.0),
+            Coordinate(400.0, 200.0)
+        ))
+
+        val grenserMedLokalid = mutableListOf(
+            GrenseMedLokalid(grense1, Lokalid("1")),
+            GrenseMedLokalid(grense2, Lokalid("2")),
+            GrenseMedLokalid(grense3, Lokalid("3")),
+            GrenseMedLokalid(grense4, Lokalid("4"))
+        )
+
+        assertThatThrownBy { SosiGeometryFunctions.dannFlaterMedHullBasertPaaGeometri(grenserMedLokalid) }
+            .isInstanceOf(RuntimeException::class.java)
+            .hasMessageContaining("Klarte ikke å danne flate grunnet ukomplette flater, antall som feiler: 1")
+
+    }
+
+    @Test
+    fun thatIkkeLukketHullFeiler() {
+        val geometryFactory = GeometryFactory()
+
+        // 4 grenser, hvor to danner et skall og de to siste danner to hull i skallet, men begge disse har hull
+        val grense1 = geometryFactory.createLineString(arrayOf(
+            Coordinate(100.0, 100.0),
+            Coordinate(700.0, 100.0),
+            Coordinate(700.0, 400.0)
+        ))
+        val grense2 = geometryFactory.createLineString(arrayOf(
+            Coordinate(700.0, 400.0),
+            Coordinate(100.0, 400.0),
+            Coordinate(100.0, 100.0)
+        ))
+        val grense3 = geometryFactory.createLineString(arrayOf(
+            Coordinate(200.0, 200.0),
+            Coordinate(300.0, 200.0),
+            Coordinate(300.0, 300.0),
+            Coordinate(200.0, 300.0)
+        ))
+
+        val grense4 = geometryFactory.createLineString(arrayOf(
+            Coordinate(400.0, 200.0),
+            Coordinate(600.0, 200.0),
+            Coordinate(600.0, 300.0),
+            Coordinate(400.0, 300.0)
+        ))
+
+        val grenserMedLokalid = mutableListOf(
+            GrenseMedLokalid(grense1, Lokalid("1")),
+            GrenseMedLokalid(grense2, Lokalid("2")),
+            GrenseMedLokalid(grense3, Lokalid("3")),
+            GrenseMedLokalid(grense4, Lokalid("4"))
+        )
+
+        assertThatThrownBy { SosiGeometryFunctions.dannFlaterMedHullBasertPaaGeometri(grenserMedLokalid) }
+            .isInstanceOf(RuntimeException::class.java)
+            .hasMessageContaining("Klarte ikke å danne flate grunnet ukomplette flater, antall som feiler: 2")
+
+    }
+
+    @Test
     fun thatFlaterDannesAvGrenserSomIkkeErSortert() {
         val geometryFactory = GeometryFactory()
 
-        val grense1 = geometryFactory.createLineString(arrayOf( //grense 1
+        val grense1 =  GrenseMedLokalid(geometryFactory.createLineString(arrayOf(
             Coordinate(1.0, 1.0),
             Coordinate(2.0, 1.0)
-        ))
-        val grense2 = geometryFactory.createLineString(arrayOf( //grense 2
+        )), Lokalid("1"))
+        val grense2 = GrenseMedLokalid(geometryFactory.createLineString(arrayOf(
             Coordinate(2.0, 1.0),
             Coordinate(3.0, 2.0)
-        ))
-        val grense3 = geometryFactory.createLineString(arrayOf( //grense 3
+        )), Lokalid("2"))
+        val grense3 = GrenseMedLokalid(geometryFactory.createLineString(arrayOf(
             Coordinate(3.0, 2.0),
             Coordinate(4.0, 2.0)
-        ))
-        val grense4 = geometryFactory.createLineString(arrayOf( //grense 4
+        )), Lokalid("3"))
+        val grense4 = GrenseMedLokalid(geometryFactory.createLineString(arrayOf(
             Coordinate(4.0, 2.0),
             Coordinate(4.0, 4.0)
-        ))
-        val grense5 = geometryFactory.createLineString(arrayOf( //grense 5
+        )), Lokalid("4"))
+        val grense5 = GrenseMedLokalid(geometryFactory.createLineString(arrayOf(
             Coordinate(4.0, 4.0),
             Coordinate(2.0, 4.0)
-        ))
-        val grense6 = geometryFactory.createLineString(arrayOf( //grense 6
+        )), Lokalid("5"))
+        val grense6 = GrenseMedLokalid(geometryFactory.createLineString(arrayOf(
             Coordinate(2.0, 4.0),
             Coordinate(1.0, 1.0)
-        ))
+        )), Lokalid("5"))
         val usorterteGrenser = mutableListOf(
             grense6,
             grense2,
@@ -183,14 +276,16 @@ internal class SosiGeometryFunctionsTest {
             grense6
         )
 
-        val faktiskFlate = SosiGeometryFunctions.dannFlaterFraGrenser(usorterteGrenser)
+        val faktiskFlate = SosiGeometryFunctions.dannFlaterMedHullBasertPaaGeometri(usorterteGrenser)
 
-        val linearRing = geometryFactory.createLinearRing(geometryFactory.createMultiLineString(sorterteGrenser.toTypedArray()).coordinates)
+        val linearRing = geometryFactory.createLinearRing(geometryFactory.createMultiLineString(sorterteGrenser.map{ it.grense }.toTypedArray()).coordinates)
         val polygon = geometryFactory.createPolygon(linearRing)
         val forventetFlate = geometryFactory.createMultiPolygon(listOf(polygon).toTypedArray())
 
         assertTrue(forventetFlate.equalsTopo(faktiskFlate))
     }
+
+
 
     /**
      * 4 punkter, 3 kanter. Mangler grensesnutt fra D - A, slik at ringen er ikke lukket.

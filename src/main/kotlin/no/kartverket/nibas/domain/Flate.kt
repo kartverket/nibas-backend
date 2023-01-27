@@ -7,8 +7,6 @@ interface Flate : CommonMetadataProperties {
     val id: String
     var omraade: MultiPolygon?
     val type: Flatetype
-
-    fun oppdaterOmraade()
 }
 
 interface KobletTilGrense {
