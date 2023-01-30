@@ -100,6 +100,42 @@ class Stemmekrets(
             "tellekretsnavn=$tellekretsnavn, valgdistriktsnummer=$valgdistriktsnummer)"
     }
 
+    fun applyMappingFromExistingStemmekrets(gammelStemmekrets: Stemmekrets): Stemmekrets =
+        this.apply {
+            gammelStemmekrets.gyldighet.gyldigTil?.let { setGyldigTil(it) }
+            stemmekretsnummer = gammelStemmekrets.stemmekretsnummer
+            stemmekretsnavn = gammelStemmekrets.stemmekretsnavn
+            tellekretsnummer = gammelStemmekrets.tellekretsnummer
+            tellekretsnavn = gammelStemmekrets.tellekretsnavn
+            valgdistriktsnummer = gammelStemmekrets.valgdistriktsnummer
+            utledetFra = gammelStemmekrets.utledetFra
+            omraade = gammelStemmekrets.omraade
+            datafangstdato = gammelStemmekrets.datafangstdato
+            foerstedigitaliseringsdato = gammelStemmekrets.foerstedigitaliseringsdato
+            posisjon = gammelStemmekrets.posisjon
+            opphav = gammelStemmekrets.opphav
+        }
+
+    fun applyCascadingOperationsBasedOnExistingStemmekrets (gammelStemmekrets: Stemmekrets) : Stemmekrets {
+        gammelStemmekrets.kommune.addStemmekrets(this)
+
+        grenser = gammelStemmekrets.grenser.map { grensekobling ->
+            StemmekretsGrenseKobling(
+                stemmekrets = this,
+                grense = grensekobling.grense,
+                grenseKoblingAttributter = grensekobling.grenseKoblingAttributter
+            )
+        }.toMutableSet()
+
+        oppdaterOmraade()
+
+        informasjonselementer = gammelStemmekrets.informasjonselementer.map { stemmekretsInformasjon ->
+            StemmekretsInformasjon(stemmekrets = this).also { it.informasjon = stemmekretsInformasjon.informasjon }
+        }.toMutableSet()
+
+        return this
+    }
+
     private fun tillatteGrensetyper(): Set<Grensetype> = setOf(
         Grensetype.Stemmekretsgrense,
         Grensetype.Kommunegrense,

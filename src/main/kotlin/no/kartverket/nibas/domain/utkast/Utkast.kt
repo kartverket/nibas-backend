@@ -5,6 +5,7 @@ import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.request.FylkeRequest
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
 import no.kartverket.nibas.api.v1.request.KommuneRequest
+import no.kartverket.nibas.api.v1.request.StemmekretsRequest
 import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.common.inThePast
 import no.kartverket.nibas.domain.Endringstype
@@ -121,6 +122,12 @@ class UtkastBuilder private constructor(val navn: String, private val endringsty
 
     fun withGrunnkretsRequests(grunnkretsRequests: Map<String, GrunnkretsRequest>): UtkastBuilder {
         val metadataEndringerCopy = operasjoner.metadataendringer.copy(grunnkretsendringer = grunnkretsRequests)
+        operasjoner = operasjoner.copy(metadataendringer = metadataEndringerCopy)
+        return this
+    }
+
+    fun withStemmekretsRequests(stemmekretsRequest: Map<String, StemmekretsRequest>): UtkastBuilder {
+        val metadataEndringerCopy = operasjoner.metadataendringer.copy(stemmekretsendringer = stemmekretsRequest)
         operasjoner = operasjoner.copy(metadataendringer = metadataEndringerCopy)
         return this
     }

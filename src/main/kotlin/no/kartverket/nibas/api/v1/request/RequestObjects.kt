@@ -142,7 +142,9 @@ data class ConflictResolved(
     @Schema(description = "Lokalid til objektet som det oppstod konflikt for.")
     val lokalid: Lokalid,
     @Schema(description = "Resolvede endringer på grunnkrets.")
-    val grunnkretsRequests: List<GrunnkretsRequestResolved>
+    val grunnkretsRequests: List<GrunnkretsRequestResolved> = emptyList(),
+    @Schema(description = "Resolvede endringer på stemmekrets.")
+    val stemmekretsRequests: List<StemmekretsRequestResolved> = emptyList()
 )
 
 @Schema(description = "Representasjon av en resolvet konflikt for en endring på Grunnkrets.")
@@ -154,3 +156,14 @@ data class GrunnkretsRequestResolved(
     @Schema(description = "Endring på en grunnkrets.")
     val grunnkretsRequest: GrunnkretsRequest
 )
+
+@Schema(description = "Representasjon av en resolvet konflikt for en endring på Stemmekrets.")
+data class StemmekretsRequestResolved(
+    @Schema(description = "Tidspunktet utkastet skal være gyldig fra.")
+    val gyldigFra: LocalDate,
+    @Schema(description = "Typen endring utkastet representerer.")
+    val endringstype: String,
+    @Schema(description = "Endring på en stemmekrets.")
+    val stemmekretsRequest: StemmekretsRequest
+)
+

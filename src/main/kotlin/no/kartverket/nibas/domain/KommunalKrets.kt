@@ -38,7 +38,6 @@ abstract class KommunalKrets(
     @Embedded
     override var gyldighet: Gyldighet = Gyldighet()
 
-    @Version
     override var version: Int = 1
 
     @Column(name = "datafangstdato")

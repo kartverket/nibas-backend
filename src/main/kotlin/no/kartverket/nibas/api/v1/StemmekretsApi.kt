@@ -2,6 +2,7 @@ package no.kartverket.nibas.api.v1
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -57,5 +58,25 @@ interface StemmekretsApi {
                                   @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
                                   @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?
     ): FeatureCollection
+
+    @Operation(
+        summary = "Hent framtidige versjoner for en stemmekrets.",
+        description = "Returnerer en liste av nåværende Stemmekrets og eventuelt publiserte framtidige versjoner som matcher lokalid."
+    )
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            description = "Successful operation",
+            content = [Content(
+                mediaType = "application/json",
+                array = ArraySchema(schema = Schema(implementation = StemmekretsResponse::class))
+            )]
+        )
+    )
+    @GetMapping("/{lokalid}/framtidigeversjoner", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun hentFramtidigeVersjonerForStemmekrets(@Parameter(description = "LokalID-en til stemmekretsen man vil hente versjoner for") @PathVariable lokalid: String,
+                                             @Parameter(description = "Eventuell gyldighetsdato for stemmekrets (default = dagens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+                                             @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?
+    ): List<StemmekretsResponse>
 
 }

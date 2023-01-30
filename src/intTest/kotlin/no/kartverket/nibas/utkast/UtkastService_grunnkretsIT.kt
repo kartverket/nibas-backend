@@ -14,6 +14,7 @@ import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
 import no.kartverket.nibas.repository.GrunnkretsRepository
+import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.repository.UtkastRepository
 import no.kartverket.nibas.sporing.AuditInfo
 import no.kartverket.nibas.sporing.Gyldighet
@@ -38,7 +39,7 @@ import org.mockito.Mockito.`when` as whenever
  * OBS: Hvis fila slutter på IntegrationTest blir den ignorert.
  */
 @Transactional
-class UtkastServiceIT : TestWithDbContainer() {
+class UtkastService_grunnkretsIT : TestWithDbContainer() {
 
     @MockBean
     private lateinit var userFacade: UserFacade
@@ -52,6 +53,8 @@ class UtkastServiceIT : TestWithDbContainer() {
     private lateinit var utkastRepository: UtkastRepository
     @Autowired
     private lateinit var grunnkretsRepository: GrunnkretsRepository
+    @Autowired
+    private lateinit var stemmekretsRepository: StemmekretsRepository
 
     private val lokalidOfGrunnkrets = "c54fb55e-15d0-4528-8b88-f58d6c74bd87"
 
@@ -60,9 +63,12 @@ class UtkastServiceIT : TestWithDbContainer() {
 
     private val moi = "Moi"
     private val voi = "Voi"
+
     private val opprinneligGrunnkretsnr = "42190204"
     private val grunnkretsnr1234 = "1234"
     private val grunnkretsnr4589 = "4589"
+
+
 
     private val october23In2022 = ZonedDateTime.of(LocalDateTime.of(2022, Month.OCTOBER, 23, 12, 0), ZoneId.systemDefault())
     private val october24In2022 = ZonedDateTime.of(LocalDateTime.of(2022, Month.OCTOBER, 24, 12, 0), ZoneId.systemDefault())
@@ -153,7 +159,7 @@ class UtkastServiceIT : TestWithDbContainer() {
 
         // 3. Forsøker å endre grunnkretsnummer med gyldigFra 1.7.23 (selv om vi allerede har publisert endring som gjelder fra 1.1.24)
         // Bruker her version 2 fordi den skal være basert på tilstanden i databasen 1.7.23
-        nyttNummerFraJuli23SkalGiFeil()
+        nyttGrunnkretsNummerFraJuli23SkalGiFeil()
     }
 
     /**
@@ -189,7 +195,7 @@ class UtkastServiceIT : TestWithDbContainer() {
 
         // 3. Forsøker å endre grunnkretsnummer til 4589 med gyldigFra 1.7.23 (selv om vi allerede har publisert endring som gjelder fra 1.1.24)
         // (Bruker her version 2 fordi den vil være basert på tilstanden i databasen 1.7.23)
-        val resultatFraForsoekPaaPublisering = nyttNummerFraJuli23SkalGiFeil()
+        val resultatFraForsoekPaaPublisering = nyttGrunnkretsNummerFraJuli23SkalGiFeil()
         val utkastId = resultatFraForsoekPaaPublisering.idForUtkastSomBleOpprettet
 
         // Utkastet som feilet publisering står som opprettet
@@ -261,7 +267,7 @@ class UtkastServiceIT : TestWithDbContainer() {
 
         // 3. Forsøker å endre grunnkretsnummer til 4589 med gyldigFra 1.7.23 (selv om vi allerede har publisert endring som gjelder fra 1.1.24)
         // (Bruker her version 2 fordi den vil være basert på tilstanden i databasen 1.7.23)
-        val resultatFraForsoekPaaPublisering = nyttNummerFraJuli23SkalGiFeil()
+        val resultatFraForsoekPaaPublisering = nyttGrunnkretsNummerFraJuli23SkalGiFeil()
         val utkastId = resultatFraForsoekPaaPublisering.idForUtkastSomBleOpprettet
 
         // Utkastet som feilet publisering står som opprettet
@@ -289,8 +295,8 @@ class UtkastServiceIT : TestWithDbContainer() {
                         )
                     )))
         }.isInstanceOf(ResponseException.BadRequestException::class.java)
-            .hasMessageContaining("Ikke lov å modifisere gyldigFra-tidspunkt ved resolving av en framtidig versjon-konflikt. " +
-                "Siste kjente gyldigFra for dette objektet er: 2024-01-01 (2024-02-01).")
+            .hasMessageContaining("Kan ikke publisere utkast med id: $utkastId. " +
+                "GyldigFra-feltet på en av endringene i utkastet er etter siste gyldig fra dato for kretsen.")
     }
 
     private fun assert1GrunnkretsPresent() {
@@ -301,13 +307,13 @@ class UtkastServiceIT : TestWithDbContainer() {
         val idForUtkastSomBleOpprettet: String,
     )
 
-    private fun nyttNummerFraJuli23SkalGiFeil(): ResultatFraForsoekPaaPublisering {
+    private fun nyttGrunnkretsNummerFraJuli23SkalGiFeil(): ResultatFraForsoekPaaPublisering {
         val grunnkretsRequest = createGrunnkretsRequest(
             grkrNavn = moi,
             grkrNr = grunnkretsnr4589,
             version = 2)
 
-        val utkastId = saveutkast(
+        val utkastId = saveGrunnkretsUtkast(
             navn = "Jeg vil endre grunnkretsnr til 4589 fra 1.7.23",
             oppdateringsdato = october24In2022,
             gyldigFra = july1In2023,
@@ -330,7 +336,7 @@ class UtkastServiceIT : TestWithDbContainer() {
     }
 
     private fun nyttGrunnkretsnavnJan24(): List<Grunnkrets> {
-        saveAndPubliserUtkast(
+        saveAndPubliserGrunnkretsUtkast(
             navn = "Jeg vil endre grunnkretsens navn til Voi",
             grkrNr = grunnkretsnr1234,
             grkrNavn = voi,
@@ -347,7 +353,7 @@ class UtkastServiceIT : TestWithDbContainer() {
     }
 
     private fun nyttGrunnkretsnummerJan23() {
-        saveAndPubliserUtkast(
+        saveAndPubliserGrunnkretsUtkast(
             navn = "Jeg vil endre grunnkretsnr til 1234",
             grkrNr = grunnkretsnr1234,
             grkrNavn = moi,
@@ -362,9 +368,9 @@ class UtkastServiceIT : TestWithDbContainer() {
         assertGrunnkrets(grunnkretsList[1], grunnkretsnr1234, moi, Gyldighet(gyldigFra = january1In2023), 2)
     }
 
-    private fun saveAndPubliserUtkast(navn: String, grkrNr: String, grkrNavn: String,
-                                      oppdateringsdato: ZonedDateTime, gyldigFra: LocalDate, version: Int) {
-        val utkastId = saveutkast(navn, grkrNavn, grkrNr, version, oppdateringsdato, gyldigFra)
+    private fun saveAndPubliserGrunnkretsUtkast(navn: String, grkrNr: String, grkrNavn: String,
+                                                oppdateringsdato: ZonedDateTime, gyldigFra: LocalDate, version: Int) {
+        val utkastId = saveGrunnkretsUtkast(navn, grkrNavn, grkrNr, version, oppdateringsdato, gyldigFra)
         publiser(utkastId)
     }
 
@@ -373,7 +379,7 @@ class UtkastServiceIT : TestWithDbContainer() {
         assertUtkastIsPublisert(utkastId)
     }
 
-    private fun saveutkast(
+    private fun saveGrunnkretsUtkast(
         navn: String,
         oppdateringsdato: ZonedDateTime,
         gyldigFra: LocalDate,
@@ -389,14 +395,14 @@ class UtkastServiceIT : TestWithDbContainer() {
         return utkast.id
     }
 
-    private fun saveutkast(
+    private fun saveGrunnkretsUtkast(
         navn: String,
         grkrNavn: String,
         grkrNr: String,
         version: Int,
         oppdateringsdato: ZonedDateTime,
         gyldigFra: LocalDate
-    ): String = saveutkast(navn, oppdateringsdato, gyldigFra, createGrunnkretsRequest(grkrNavn, grkrNr, version))
+    ): String = saveGrunnkretsUtkast(navn, oppdateringsdato, gyldigFra, createGrunnkretsRequest(grkrNavn, grkrNr, version))
 
     private fun createGrunnkretsRequest(
         grkrNavn: String,

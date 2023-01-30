@@ -97,6 +97,24 @@ class StemmekretsServiceIT : TestWithDbContainer() {
             enhetKobletTilGrenseLokalid = stemmekretsLokalid)
     }
 
+    @Test
+    fun `hentFramtidigeVersjonerForStemmekrets skal returnere en liste hvis det finnes nyere versjoner`() {
+        saveStemmekrets(id = "301", lokalid = stemmekretsLokalid, gyldigFra = october1In2022, gyldigTil = december1In2022)
+        saveStemmekrets(id = "302", lokalid = stemmekretsLokalid, gyldigFra = december1In2022, gyldigTil = jan1In2024)
+        saveStemmekrets(id = "303", lokalid = stemmekretsLokalid, gyldigFra = jan1In2024)
+
+        assertThat(stemmekretsService.hentFramtidigeVersjonerForStemmekrets(stemmekretsLokalid, december1In2022)).hasSize(2)
+
+    }
+
+    @Test
+    fun `hentFramtidigeVersjonerForStemmekrets skal returnere en liste med kun deg gyldige elementet om det er ingen framtidige endringer`() {
+        saveStemmekrets(id = "301", lokalid = stemmekretsLokalid, gyldigFra = october1In2022, gyldigTil = december1In2022)
+        saveStemmekrets(id = "302", lokalid = stemmekretsLokalid, gyldigFra = december1In2022, gyldigTil = jan1In2024)
+
+        assertThat(stemmekretsService.hentFramtidigeVersjonerForStemmekrets(stemmekretsLokalid, december1In2022)).hasSize(1)
+    }
+
     fun saveGrenseAvTypeKommunegrense(id: String = "12000",
                                       lokalid: Lokalid = Lokalid("ac7e05cd-fb07-4277-ad95-63c32c1370d0"),
                                       gyldigFra: LocalDate = october1In2022,

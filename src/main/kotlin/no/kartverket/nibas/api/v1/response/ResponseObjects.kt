@@ -223,6 +223,15 @@ data class StemmekretsResponse(
     @Schema(description = "ID-en til stemmekretsen")
     val id: ObjektIdentifikator,
 
+    @Schema(description = "Gyldighetsintervall for objektet")
+    val gyldighet: GyldighetResponse,
+
+    @Schema(description = "Typen endring som ble gjort på objektet")
+    val endringstype: String?,
+
+    @Schema(description = "Siste oppdateringstidspunkt for objektet")
+    val oppdateringsdato: ZonedDateTime,
+
     @Schema(description = "Navnet på stemmekretsen")
     val stemmekretsnavn: String,
 

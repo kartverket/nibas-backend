@@ -112,6 +112,25 @@ class Grunnkrets(
         }
     }
 
+    fun applyCascadingOperationsBasedOnExistingGrunnkrets(relevantGrunnkrets: Grunnkrets): Grunnkrets {
+        return this.apply {
+            // Må legge til denne Grunnkrets på eksisterende Grunnkrets sin kommune
+            relevantGrunnkrets.kommune.addGrunnkrets(this)
+            // For eksisterende Grunnkrets sine informasjonselementer (1 i tallet), lag nye koblinger med denne Grunnkrets
+            addInformasjonselementerFrom(relevantGrunnkrets.informasjonselementer)
+            // For eksisterende Grunnkrets sine grensekoblinger, lag nye koblinger fra grense og grensekoblingAttributter
+            addGrenseKoblingerFrom(relevantGrunnkrets.grenser)
+        }
+    }
+
+    fun applyMappingFromExistingGrunnkrets(relevantGrunnkrets: Grunnkrets): Grunnkrets {
+        return this.apply {
+            datafangstdato = relevantGrunnkrets.datafangstdato
+            opphav = relevantGrunnkrets.opphav
+            posisjon = relevantGrunnkrets.posisjon
+            omraade = relevantGrunnkrets.omraade
+        }
+    }
 }
 
 @Table(name = "grunnkrets_informasjon")
