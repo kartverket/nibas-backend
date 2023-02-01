@@ -217,13 +217,9 @@ Dersom man heller vil kjøre det som en Spring boot-prosess, kan man spesifisere
 -Dspring.datasource.url=URL_HER -Dspring.datasource.username=USER_HER -Dspring.datasource.password=PASSWORD_HER
 ```
 
-Om du vil kjøre import og publisere events mot pubsub må følgende også gjøres i application-import.yml:
-
-```application-import.yml
-nibas:
-  pubsub:
-    enabled: true
-```
+Om integrasjonen mot nibas-events skal fungerer, må du gjøre følgende:
+Miljøvariabel `nibas-events.host` må settes til aktuell nibas-events applikasjon. Denne skal inneholde host:port.
+Kjører nibas-events med security, må det også finnes en miljøvariabel `api.key.publisher`. Den samme som nibas-events autentiserer mot.
 
 Sett miljøvariabelen `GOOGLE_CLOUD_PROJECT` til korrekt nibas gcp project id. (Mot det miljø du vil importere til)
 Autentiser deg mot GCP med kommandoen `gcloud auth login`

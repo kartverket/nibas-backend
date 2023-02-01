@@ -130,7 +130,6 @@ class GrunnkretsService(private val grunnkretsRepository: GrunnkretsRepository, 
                         this.auditInfo.typeEndring = grunnkretsRequestWrapper.endringstype
                         this.version = grunnkretsHelper.getNextVersion()
                     }
-
                 nibasEventPublisher.publishNibasEvent(nyGrunnkrets, EventType.MODIFIED)
             }
     }

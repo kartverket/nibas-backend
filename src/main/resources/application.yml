@@ -100,8 +100,10 @@ spring:
         enabled: true
   config:
     # Optionally connect to Config Server (Vault). Gjør at vault-pathene ikke evalueres for import.
-    import: optional:vault://nibas/nibas-backend, optional:vault://nibas/nibas-db, optional:vault://nibas/nibas-backend-apikeys
-
+    import: optional:vault://nibas/nibas-backend,
+            optional:vault://nibas/nibas-db,
+            optional:vault://nibas/nibas-backend-apikeys,
+            optional:vault://nibas/nibas-events-apikeys,
   jmx:
     enabled: true
 
