@@ -26,6 +26,7 @@ import no.kartverket.nibas.repository.findAllByLokalidSortedByGyldigFra
 import no.kartverket.nibas.repository.findAntallFramtidigeVersjonerForIdentifikator
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
+import org.locationtech.jts.geom.Geometry
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.RestController
@@ -82,17 +83,9 @@ class StemmekretsService(private val stemmekretsRepository: StemmekretsRepositor
         return hentStemmekrets(Identifikator(lokalId, gyldigFra))?.let { gammelStemmekrets ->
             verifiserOptimistiskLaas(oppdatertStemmekrets.version, gammelStemmekrets)?.let { throw OptimistiskLaasException(it) }
 
-            stemmekretsRepository.save(
-                Stemmekrets(lokalid = gammelStemmekrets.lokalid).apply {
-                    applyMappingFromExistingStemmekrets(gammelStemmekrets)
-                    applyMappingFromStemmekretsRequest(oppdatertStemmekrets)
-                    setGyldigFra(gyldigFra)
-                    auditInfo.typeEndring = endringstype
-                    version = nesteVersjonForStemmekrets(lokalId)
-                }
-            )
-                .applyCascadingOperationsBasedOnExistingStemmekrets(gammelStemmekrets)
-                .also {gammelStemmekrets.setGyldigTil(gyldigFra) }
+            createNyVersjonAvStemmekrets(gammelStemmekrets, gyldigFra, endringstype)
+                .applyMappingFromStemmekretsRequest(oppdatertStemmekrets)
+                .also { gammelStemmekrets.setGyldigTil(gyldigFra) }
         }
     }
 
@@ -105,6 +98,32 @@ class StemmekretsService(private val stemmekretsRepository: StemmekretsRepositor
             ?: throw UgyldigTilstandException("Det finnes ingen gyldig stemmekrets for identifikator $identifikator")
         return listOf(gyldigStemmekretsForDagensDato)
             .plus(hentAlleVersjonerMedGyldigFraEtterGittDato(lokalId, identifikator.gyldighetsdato))
+    }
+
+    @Transactional(readOnly = false)
+    fun slaaSammenStemmekretser(
+        viderefortStemmekretsId: Identifikator,
+        stemmekretserTilSammenSlaaing: List<Identifikator>,
+        viderefortNavn: String,
+        viderefortNummer: String,
+        sammenslaaingsDato: LocalDate,
+        endringstype: Endringstype
+    ) {
+        throw NotImplementedError("Forsøkte å gjrøe en sammenslåing av stemmekretser. Men sammenslåing av stemmekretser er ikke ferdig implementert enda")
+    }
+
+    private fun createNyVersjonAvStemmekrets(stemmekrets: Stemmekrets, gyldigFra: LocalDate, endringstype: Endringstype): Stemmekrets {
+        return stemmekretsRepository.save(
+            Stemmekrets(lokalid = stemmekrets.lokalid)
+                .apply {
+                    applyMappingFromExistingStemmekrets(stemmekrets)
+                    setGyldigFra(gyldigFra)
+                    version = nesteVersjonForStemmekrets(Lokalid(stemmekrets.lokalid))
+                    auditInfo.typeEndring = endringstype
+                }
+        )
+            .applyCascadingOperationsBasedOnExistingStemmekrets(stemmekrets)
+            .also { stemmekrets.setGyldigTil(gyldigFra)  }
     }
 
     private fun nesteVersjonForStemmekrets(lokalId: Lokalid): Int =
@@ -168,4 +187,5 @@ fun Stemmekrets.toKretsResponse(kodelisteService: KodelisteService): KretsRespon
         )
     )
 )
+
 

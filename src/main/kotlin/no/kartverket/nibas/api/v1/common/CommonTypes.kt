@@ -104,7 +104,9 @@ data class Operasjoner(
     @Schema(description = "Endringer på metadata.")
     val metadataendringer: Metadataendringer = Metadataendringer(),
     @Schema(description = "Endringer på grenser.")
-    val grenseendringer: Grenseendringer = Grenseendringer()
+    val grenseendringer: Grenseendringer = Grenseendringer(),
+    @Schema(description = "Sammenslåing av stemmekretser i samme kommune.")
+    val stemmekretsSammenslaaingsendring: StemmekretsSammenslaaingsendring? = null,
 ) : Serializable
 
 @Schema(description = "Representasjon av endringer på metadata.")
@@ -126,3 +128,16 @@ data class Grenseendringer(
     @Schema(description = "Endringer på features.")
     val endredeFeatures: Map<String, Feature> = emptyMap()
 ) : Serializable
+
+@Schema(description = "Representasjon av sammenslåing av en stemmekrets med 1 eller flere andre stemmekretser i samme kommune")
+data class StemmekretsSammenslaaingsendring (
+    @Schema (description = "LokalIden til den stemmekretsen som skal videreføres")
+    val viderefoertStemmekrets: String,
+    @Schema(description = "Liste av LokalIder som skal bli del av den videreførte stemmekretsen")
+    val stemmekretserTilSammenslaaing: List<String>,
+    @Schema (description = "Navnet til den sammenslåtte stemmekretsen")
+    val stemmekretsNavn: String,
+    @Schema (description = "Stemmekretsnummeret til den sammenslåtte stemmekretsen")
+    val stemmekretsNummer: String
+): Serializable
+

@@ -13,11 +13,14 @@ import no.kartverket.nibas.api.v1.response.AuditInfoResponse
 import no.kartverket.nibas.api.v1.response.UtkastOpprettetResponse
 import no.kartverket.nibas.api.v1.response.UtkastRef
 import no.kartverket.nibas.api.v1.response.UtkastResponse
+import no.kartverket.nibas.common.FeilVedOppdatering
 import no.kartverket.nibas.common.HrefProvider
+import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.BadRequestException
 import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.domain.Endringstype
+import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.utkast.Utkast
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
@@ -40,6 +43,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
+import java.time.LocalDate
 
 
 @RestController
@@ -148,6 +152,17 @@ class UtkastService(
                     if (endredeFeatures.isNotEmpty()) {
                         grenseService.lagreGrenser(FeatureCollection(features = endredeFeatures.map { it.value }))
                     }
+
+                    operasjoner.stemmekretsSammenslaaingsendring?.let { stemmekretsendring ->
+                        stemmekretsService.slaaSammenStemmekretser(
+                            viderefortStemmekretsId = lagIdentifikator(lokalId = stemmekretsendring.viderefoertStemmekrets, gyldigDato = utkast.gyldigFra),
+                            stemmekretserTilSammenSlaaing = stemmekretsendring.stemmekretserTilSammenslaaing.map { lagIdentifikator(lokalId = it, gyldigDato = utkast.gyldigFra) },
+                            viderefortNavn = stemmekretsendring.stemmekretsNavn,
+                            viderefortNummer = stemmekretsendring.stemmekretsNummer,
+                            sammenslaaingsDato = utkast.gyldigFra,
+                            endringstype = utkast.auditInfo.typeEndring
+                        )
+                    }
                 }
 
                 utkast.settPublisert()
@@ -178,6 +193,8 @@ class UtkastService(
         }
     }
 
+    private fun lagIdentifikator(lokalId: String, gyldigDato: LocalDate): Identifikator =
+        Identifikator(lokalid = Lokalid(lokalId), gyldighetsdato = gyldigDato)
 
     /**
      * Setter utkastet til PUBLISERT hvis utføringen av requestene som er resolved går bra.

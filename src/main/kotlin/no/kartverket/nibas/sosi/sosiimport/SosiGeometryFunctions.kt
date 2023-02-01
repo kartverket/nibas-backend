@@ -120,15 +120,12 @@ object SosiGeometryFunctions {
                         throw RuntimeException("Klarte ikke å danne flate grunnet feil med hull, antall hull som feiler: ${ukompletteHull.size}")
                     }
                 }
-
             }
-
 
         val multiPolygon = getGeometryFactory().createMultiPolygon(flater.toTypedArray())
         validateGeometry(multiPolygon)
         return multiPolygon
     }
-
 
     /**
      * Danner et multipolygon basert på en eller flere flater med potensielt et eller flere hull
