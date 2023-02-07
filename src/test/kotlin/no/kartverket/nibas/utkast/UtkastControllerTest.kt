@@ -87,7 +87,6 @@ internal class UtkastControllerTest : NibasMvcTest() {
     fun hentUtkastGir200OK() {
         val navn = "Utkastet mitt"
 
-
         val syvendeJuli = ZonedDateTime.of(LocalDateTime.of(2022, Month.JULY, 7, 12, 0), ZoneId.systemDefault())
         val dummy = "DUMMY"
         val foersteJanuar = LocalDate.of(2024, Month.JANUARY, 1)
@@ -184,13 +183,13 @@ internal class UtkastControllerTest : NibasMvcTest() {
             url = publiserUrl,
             expected = status().isOk
         )
-        verify(utkastServiceMock).publiserUtkast(anyString())
+        verify(utkastServiceMock).publiserUtkast(anyString(), any(LocalDate::class.java))
     }
 
     @Test
     fun publiserUtkastIkkeFunnetGir404NotFound() {
         val errorMsg = "Utkast ble ikke funnet for id: 123"
-        whenever(utkastServiceMock.publiserUtkast(anyString())).thenThrow(NotFoundException(errorMsg))
+        whenever(utkastServiceMock.publiserUtkast(anyString(), any(LocalDate::class.java))).thenThrow(NotFoundException(errorMsg))
         post(
             url = publiserUrl,
             responseAsserts = MockResponseAsserts(
@@ -198,13 +197,13 @@ internal class UtkastControllerTest : NibasMvcTest() {
                 resultMatchers = listOf(status().isNotFound)
             )
         )
-        verify(utkastServiceMock).publiserUtkast(anyString())
+        verify(utkastServiceMock).publiserUtkast(anyString(), any(LocalDate::class.java))
     }
 
     @Test
     fun publiserUtkastIFeilStatusGir400BadRequest() {
         val msg = "Kan ikke publisere et utkast i status FORKASTET."
-        whenever(utkastServiceMock.publiserUtkast(anyString())).thenThrow(BadRequestException(msg))
+        whenever(utkastServiceMock.publiserUtkast(anyString(), any(LocalDate::class.java))).thenThrow(BadRequestException(msg))
         post(
             url = publiserUrl,
             responseAsserts = MockResponseAsserts(
@@ -212,7 +211,7 @@ internal class UtkastControllerTest : NibasMvcTest() {
                 resultMatchers = listOf(status().isBadRequest)
             )
         )
-        verify(utkastServiceMock).publiserUtkast(anyString())
+        verify(utkastServiceMock).publiserUtkast(anyString(), any(LocalDate::class.java))
     }
 
     @Test
@@ -222,7 +221,7 @@ internal class UtkastControllerTest : NibasMvcTest() {
             .build()
         val fylkeId = eksisterendeFylke.id
 
-        whenever(utkastServiceMock.publiserUtkast(anyString())).thenThrow(OptimistiskLaasException(KonfliktVersjon(
+        whenever(utkastServiceMock.publiserUtkast(anyString(), any(LocalDate::class.java))).thenThrow(OptimistiskLaasException(KonfliktVersjon(
             nyVersjon = 3,
             eksisterende = eksisterendeFylke)))
 
@@ -242,12 +241,12 @@ internal class UtkastControllerTest : NibasMvcTest() {
                 resultMatchers = listOf(status().isConflict)
             )
         )
-        verify(utkastServiceMock).publiserUtkast(anyString())
+        verify(utkastServiceMock).publiserUtkast(anyString(), any(LocalDate::class.java))
     }
 
     @Test
     fun publiserUtkastMedUgyldigGeometriGirHTTP400() {
-        whenever(utkastServiceMock.publiserUtkast(anyString())).thenThrow(
+        whenever(utkastServiceMock.publiserUtkast(anyString(), any(LocalDate::class.java))).thenThrow(
             UgyldigGeometriException(
                 geometry = GeometryFactory().createPolygon(),
                 topologyValidationError = TopologyValidationError(6, Coordinate(0.0, 1.0))))
@@ -267,12 +266,12 @@ internal class UtkastControllerTest : NibasMvcTest() {
                     feilLokasjonMatcherCoordinatesX, feilLokasjonMatcherCoordinatesY))
         )
 
-        verify(utkastServiceMock).publiserUtkast(anyString())
+        verify(utkastServiceMock).publiserUtkast(anyString(), any(LocalDate::class.java))
     }
 
     @Test
     fun publiserUtkastMedIkkeSluttetRingGirHTTP400() {
-        whenever(utkastServiceMock.publiserUtkast(anyString())).thenThrow(
+        whenever(utkastServiceMock.publiserUtkast(anyString(), any(LocalDate::class.java))).thenThrow(
             GeometriFailedToBeCreatedException(point = SosiGeometryFunctions.coordinateToPoint(Coordinate(0.0, 1.0))))
 
         val expectedHttpStatus = status().isBadRequest
@@ -288,7 +287,7 @@ internal class UtkastControllerTest : NibasMvcTest() {
                 resultMatchers = listOf(expectedHttpStatus, geometryTypeMatcher, validationErrorMatcher, feilLokasjonMatcherType,
                     feilLokasjonMatcherCoordinatesX, feilLokasjonMatcherCoordinatesY)))
 
-        verify(utkastServiceMock).publiserUtkast(anyString())
+        verify(utkastServiceMock).publiserUtkast(anyString(), any(LocalDate::class.java))
     }
 
     @Test
@@ -373,7 +372,7 @@ internal class UtkastControllerTest : NibasMvcTest() {
         // Fantes en Grunnkrets fra før med: Gyldig fra 1.1.26
         val foersteJanuar2026 = LocalDate.of(2026, Month.JANUARY, 1)
 
-        whenever(utkastServiceMock.publiserUtkast(anyString())).thenThrow(FeilVedOppdatering.OppdateringException(
+        whenever(utkastServiceMock.publiserUtkast(anyString(), any(LocalDate::class.java))).thenThrow(FeilVedOppdatering.OppdateringException(
             oppdateringInfo = FeilVedOppdatering.OppdateringInfo(
                 id = Identifikator(lokalid, foersteJanuar2024),
                 type = FeilVedOppdatering.Type.GRUNNKRETS,
@@ -406,7 +405,7 @@ internal class UtkastControllerTest : NibasMvcTest() {
                 resultMatchers = listOf(status().isConflict)
             )
         )
-        verify(utkastServiceMock).publiserUtkast(anyString())
+        verify(utkastServiceMock).publiserUtkast(anyString(), any(LocalDate::class.java))
     }
 
     @Test

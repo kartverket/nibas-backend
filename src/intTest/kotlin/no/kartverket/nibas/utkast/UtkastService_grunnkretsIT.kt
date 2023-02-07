@@ -68,8 +68,6 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
     private val grunnkretsnr1234 = "1234"
     private val grunnkretsnr4589 = "4589"
 
-
-
     private val october23In2022 = ZonedDateTime.of(LocalDateTime.of(2022, Month.OCTOBER, 23, 12, 0), ZoneId.systemDefault())
     private val october24In2022 = ZonedDateTime.of(LocalDateTime.of(2022, Month.OCTOBER, 24, 12, 0), ZoneId.systemDefault())
     private val november25In2022 = LocalDate.of(2022, Month.NOVEMBER, 25)
@@ -322,7 +320,7 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
 
         // Kall til publiser skal feile.
         val oppdateringException = catchThrowableOfType({
-            publiser(utkastId)
+            publiser(utkastId, july1In2023)
         }, FeilVedOppdatering.OppdateringException::class.java)
 
         assertThat(oppdateringException).isNotNull
@@ -371,11 +369,11 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
     private fun saveAndPubliserGrunnkretsUtkast(navn: String, grkrNr: String, grkrNavn: String,
                                                 oppdateringsdato: ZonedDateTime, gyldigFra: LocalDate, version: Int) {
         val utkastId = saveGrunnkretsUtkast(navn, grkrNavn, grkrNr, version, oppdateringsdato, gyldigFra)
-        publiser(utkastId)
+        publiser(utkastId, gyldigFra)
     }
 
-    private fun publiser(utkastId: String) {
-        utkastService.publiserUtkast(utkastId)
+    private fun publiser(utkastId: String, gyldigFra: LocalDate) {
+        utkastService.publiserUtkast(utkastId, gyldigFra)
         assertUtkastIsPublisert(utkastId)
     }
 

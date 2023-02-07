@@ -13,14 +13,12 @@ import no.kartverket.nibas.api.v1.response.AuditInfoResponse
 import no.kartverket.nibas.api.v1.response.UtkastOpprettetResponse
 import no.kartverket.nibas.api.v1.response.UtkastRef
 import no.kartverket.nibas.api.v1.response.UtkastResponse
-import no.kartverket.nibas.common.FeilVedOppdatering
 import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.BadRequestException
 import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.domain.Endringstype
-import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.utkast.Utkast
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
@@ -128,8 +126,10 @@ class UtkastService(
             operasjoner = null
         }
 
-    fun publiserUtkast(utkastId: String) {
+    fun publiserUtkast(utkastId: String, nyGyldigFra: LocalDate = LocalDate.now()) {
         val utkast = hentUtkast(utkastId) ?: throw NotFoundException("Utkast ble ikke funnet for id: $utkastId.")
+        //Vi håndterer ikke fremtidige endringer enda, ved kall fra frontend settes publiseringsdato til dagens dato
+        utkast.gyldigFra = nyGyldigFra
 
         when (val utkastValideringResult = utkastValidatorService.validateUtkastKlartForPublisering(utkast)) {
             is UtkastValidering.UgyldigUtkast -> throw utkastValideringResult.feil
