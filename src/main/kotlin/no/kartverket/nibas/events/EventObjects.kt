@@ -11,7 +11,7 @@ data class NibasEvent (
 data class EventRad (
     val uuid: String,
     val eventType: EventType,
-    val objektType: Flatetype,
+    val flateType: Flatetype,
     val lokalid: String,
 )
 

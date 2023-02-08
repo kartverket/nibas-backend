@@ -31,7 +31,7 @@ class NibasEventPublisher (private val nibasEventsService: NibasEventsService) {
                 eventRader = setOf (
                     EventRad(uuid = enhet.id,
                         eventType = eventType,
-                        objektType = enhet.type,
+                        flateType = enhet.type,
                         lokalid = enhet.lokalid),
                 )
             )

@@ -14,7 +14,7 @@ class NibasEventsConfig (
     private val environment: Environment,
 ) {
     companion object NibasEventsDefault {
-        const val DEFAULT_HOST: String = "nibas-events:8080"
+        const val DEFAULT_HOST: String = "http://nibas-events:8080"
         const val URI: String = "/v1/events"
     }
 
