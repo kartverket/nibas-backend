@@ -14,11 +14,14 @@ import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.NasjonRepository
 import no.kartverket.nibas.repository.StemmekretsRepository
+import no.kartverket.nibas.repository.findAllGyldigPaaDato
 import no.kartverket.nibas.sosi.sosiimport.GrenseMedLokalid
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDate
 
 @Service
 class FlateService @Autowired constructor(
@@ -45,10 +48,16 @@ class FlateService @Autowired constructor(
         }
     }
 
-    fun settFlaterPaaAlleAdministrativeEnheter() {
-        oppdaterFylkesflater(fylkeRepository.findAll().toList())
-        oppdaterKommuneflater(kommuneRepository.findAll().toList())
-        oppdaterNasjonsflate(nasjonRepository.findAll().toList())
+    @Transactional
+    fun settFlaterPaaAlleAdministrativeEnheter(gyldighetsdato: LocalDate = LocalDate.now()) {
+        oppdaterFylkesflater(fylkeRepository.findAllGyldigPaaDato(gyldighetsdato).toList())
+        oppdaterKommuneflater(kommuneRepository.findAllGyldigPaaDato(gyldighetsdato).toList())
+
+        try {
+            oppdaterNasjonsflate(nasjonRepository.findAllGyldigPaaDato(gyldighetsdato).toList())
+        } catch (e: Exception) {
+            logger.warn("Flatedanning for nasjon feilet, dette er forventet dersom man ikke importerer alle fylker", e)
+        }
     }
 
     private fun oppdaterGrunnkretsflater(grunnkretser: List<Grunnkrets>) {

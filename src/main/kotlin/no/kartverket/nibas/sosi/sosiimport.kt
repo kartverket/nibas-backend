@@ -5,6 +5,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.inndelinger.FlateService
+import no.kartverket.nibas.repository.FlatedanningCustomSQLRepository
 import no.kartverket.nibas.sosi.common.SosiKoder
 import no.kartverket.nibas.sosi.deserializer.NibasSosiDeserializer
 import no.kartverket.nibas.sosi.model.SosiFlate
@@ -37,7 +38,8 @@ class SosiImportService(
     private val grunnkretsImporter: GrunnkretsImporter,
     private val stemmekretsImporter: StemmekretsImporter,
     private val environment: Environment,
-    private val flateService: FlateService
+    private val flateService: FlateService,
+    private val flatedanningCustomSQLRepository: FlatedanningCustomSQLRepository
 ) {
 
     companion object {
@@ -67,6 +69,8 @@ class SosiImportService(
 
     private val importerAdministrativeEnheter: Boolean = environment.getProperty("nibas.import.importerAdministrativeEnheter")?.toBoolean() ?: true
 
+    private val dannFlaterForAdministrativeEnheter: Boolean = environment.getProperty("nibas.import.dannFlaterForAdministrativeEnheter")?.toBoolean() ?: true
+
     fun importNibas() {
         logger.info("\nKonfigurasjon for sosi-import: \n\n"
             + "Profiler: ${environment.activeProfiles.joinToString(",")} \n"
@@ -76,6 +80,7 @@ class SosiImportService(
             + "Stemmekretsfil: $stemmekretsfil \n"
             + "Fylkesnumre: ${fylkesnumre.joinToString(",")} \n"
             + "Importer administrative enheter: $importerAdministrativeEnheter \n"
+            + "Dann flater for administrative enheter: $dannFlaterForAdministrativeEnheter \n"
             + "Import targets: ${importTargets.joinToString(",")} \n"
         )
 
@@ -101,6 +106,12 @@ class SosiImportService(
 
         val resultsGrunnkrets = grunnkretsRoot?.let { importerGrunnkretser(grunnkretsRoot, admEnhetRoot!!) }
         val resultsStemmekrets = stemmekretsRoot?.let { importerStemmekretser(stemmekretsRoot, admEnhetRoot!!) }
+
+        if (dannFlaterForAdministrativeEnheter) {
+            logger.info("Skal danne flater for administrative enheter")
+            flatedanningCustomSQLRepository.slettGrenserUtenUtstrekning()
+            flateService.settFlaterPaaAlleAdministrativeEnheter()
+        }
         logResults("Grunnkrets import", resultsGrunnkrets)
         logResults("Stemmekrets import", resultsStemmekrets)
     }
@@ -174,11 +185,6 @@ class SosiImportService(
                 logger.warn("Klarte ikke å importere grunnkrets med lokalId ${entry.value.first().getIdent()?.getLokalId()}", ex)
                 Result.failure(ex)
             }
-        }
-
-        if (grunnkretser.isNotEmpty()) {
-            logger.info("Import av grunnkretser er fullført, oppdaterer flater nå som grenser er på plass")
-            flateService.settFlaterPaaAlleAdministrativeEnheter()
         }
 
         return results

@@ -182,6 +182,7 @@ adm.enheter, grunnkretser og stemmekretser. En kan overstyre hvilke filer som sk
 * Property `nibas.import.fylkesnumre`: Spesifiserer en kommaseparert liste. Kun stemmekretser og grunnkretser i angitte fylker vil da importeres. Se
   [Fylkesnummer](src/main/kotlin/no/kartverket/nibas/sosi/sosiimport/Fylkesnummer.kt) for mulige verdier.
 * Property `nibas.import.targets`: Spesifiserer en kommaseparert liste for å angi om kun grunnkretser, stemmekretser eller begge skal importeres.
+* Property `nibas.import.dannFlaterForAdministrativeEnheter`: Spesifiserer hvorvidt man skal flatedanne administrative enheter eller ikke. Dersom man under test/feilsøking filtrerer ut et mindre sett med grenser kan denne settes til false for å unngå feil på flatedanning.
 
 Verdiene for url, username og password må hentes ut fra Vault for aktuelt miljø og sendes inn som Spring-properties slik som vist under. Url er på formatet
 `jdbc:postgresql://localhost:5432/nibas`.
@@ -202,6 +203,16 @@ $ ./gradlew bootRun --args=' \
     --spring.datasource.password=PASSWORD_HER \
     --nibas.import.fylkesnumre=11,42 \
     '
+
+Eksempel på import for bare 2 fylker (Agder + Rogaland) uten flatedanning
+$ ./gradlew bootRun --args=' \
+    --spring.profiles.active=import \
+    --spring.datasource.url=URL_HER \
+    --spring.datasource.username=USER_HER \ 
+    --spring.datasource.password=PASSWORD_HER \
+    --nibas.import.fylkesnumre=11,42 \
+    --nibas.import.dannFlaterForAdministrativeEnheter=false \
+    '
     
 Eksempel på import med bare stemmekretser:
 $ ./gradlew bootRun --args=' \
@@ -217,6 +228,14 @@ Dersom man heller vil kjøre det som en Spring boot-prosess, kan man spesifisere
 -Dspring.datasource.url=URL_HER -Dspring.datasource.username=USER_HER -Dspring.datasource.password=PASSWORD_HER
 ```
 
+### Flatedanning av administrative enheter
+For å kunne flatedanne administrative enheter må evt grenser uten utstrekning slettes (ellers feiler algoritmen for å finne neste grense i flaten).
+Flatedanningen (og da også opprydningen) gjøres som en del av importen med mindre man har eksplisitt satt at man ikke vil danne flater via propertyen nibas.import.dannFlaterForAdministrativeEnheter.
+Det er anbefalt at denne settes til false bare ved feilsøking hvor man filtrerer ut færre kretser. Dersom man importerer hele fylker kan man flatedanne disse. 
+Fylker med tilhørende kommuner som ikke er importert vil få satt et tomt multipolygon som flate. 
+Ettersom noe av nasjonens grenser blir importert dersom man bare importerer et utvalg grenser vil flatedanning for nasjon feil og dette er forventet oppførsel. 
+
+## Integrasjon mot nibas-events 
 Om integrasjonen mot nibas-events skal fungerer, må du gjøre følgende:
 Miljøvariabel `nibas-events.host` må settes til aktuell nibas-events applikasjon. Denne skal inneholde host:port.
 Kjører nibas-events med security, må det også finnes en miljøvariabel `api.key.publisher`. Den samme som nibas-events autentiserer mot.
