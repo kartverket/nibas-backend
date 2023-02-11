@@ -1,0 +1,27 @@
+drop table administrativenhetnavn_aud;
+drop table delomraade_aud;
+drop table dokumentasjonsreferanse_aud;
+drop table dokumentasjonsreferanse_dokumentlink_aud;
+drop table dokumentasjonsreferanse_internreferansekartverket_aud;
+drop table fylke_aud;
+drop table fylke_informasjon_aud;
+drop table grense_aud;
+drop table grense_dokumentasjonsreferanse_aud;
+drop table grense_kommunenummer_aud;
+drop table grunnkrets_aud;
+drop table grunnkrets_grense_aud;
+drop table grunnkrets_informasjon_aud;
+drop table kommune_aud;
+drop table kommune_informasjon_aud;
+drop table landkode_aud;
+drop table nasjon_aud;
+drop table nasjon_informasjon_aud;
+drop table spraakkode_aud;
+drop table stemmekrets_aud;
+drop table stemmekrets_grense_aud;
+drop table stemmekrets_informasjon_aud;
+drop table typeendring_aud;
+drop table utkast_aud;
+
+drop table revinfo;
+drop sequence hibernate_sequence;

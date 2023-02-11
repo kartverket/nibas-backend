@@ -3,7 +3,6 @@ package no.kartverket.nibas.domain
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
-import org.hibernate.envers.Audited
 import java.io.Serializable
 import java.time.LocalDate
 import java.util.*
@@ -14,7 +13,6 @@ import javax.persistence.*
  */
 
 @Table(name = "grunnkrets")
-@Audited
 @Entity
 class Grunnkrets(
     override val id: String = UUID.randomUUID().toString(),
@@ -134,7 +132,6 @@ class Grunnkrets(
 }
 
 @Table(name = "grunnkrets_informasjon")
-@Audited
 @Entity
 class GrunnkretsInformasjon(grunnkrets: Grunnkrets) : Info {
     @Id
@@ -153,7 +150,6 @@ class GrunnkretsInformasjon(grunnkrets: Grunnkrets) : Info {
  * Koblingstabell mellom Grunnkrets - Grense.
  */
 @Table(name = "grunnkrets_grense")
-@Audited
 @Entity
 @IdClass(GrunnkretsGrenseId::class)
 class GrunnkretsGrenseKobling(

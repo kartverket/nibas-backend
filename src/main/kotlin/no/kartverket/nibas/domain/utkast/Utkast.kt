@@ -6,8 +6,6 @@ import no.kartverket.nibas.api.v1.request.FylkeRequest
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
 import no.kartverket.nibas.api.v1.request.KommuneRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsRequest
-import no.kartverket.nibas.common.ResponseException
-import no.kartverket.nibas.common.inThePast
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.sporing.AuditInfo
 import no.kartverket.nibas.sporing.Laasbar
@@ -15,7 +13,6 @@ import no.kartverket.nibas.sporing.Sporbar
 import org.hibernate.annotations.Type
 import org.hibernate.annotations.TypeDef
 import org.hibernate.annotations.TypeDefs
-import org.hibernate.envers.Audited
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.*
@@ -30,7 +27,6 @@ import javax.persistence.Version
  * Navn og endringstype settes i konstruktør da de er påkrevd ved opprettelse av utkastet.
  */
 @Table(name = "utkast")
-@Audited
 @TypeDefs(TypeDef(name = "jsonb", typeClass = JsonBinaryType::class))
 @Entity
 class Utkast(

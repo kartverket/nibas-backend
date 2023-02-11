@@ -3,14 +3,12 @@ package no.kartverket.nibas.domain
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
-import org.hibernate.envers.Audited
 import java.io.Serializable
 import java.time.LocalDate
 import java.util.*
 import javax.persistence.*
 
 @Table(name = "stemmekrets")
-@Audited
 @Entity
 class Stemmekrets(
     override val id: String = UUID.randomUUID().toString(),
@@ -151,7 +149,6 @@ class Stemmekrets(
  * Koblingstabell mellom Stemmekrets - Grense
  */
 @Table(name = "stemmekrets_grense")
-@Audited
 @Entity
 @IdClass(StemmekretsGrenseId::class)
 class StemmekretsGrenseKobling(
@@ -178,7 +175,6 @@ class StemmekretsGrenseKobling(
 }
 
 @Table(name = "stemmekrets_informasjon")
-@Audited
 @Entity
 class StemmekretsInformasjon(stemmekrets: Stemmekrets) : Info {
     @Id

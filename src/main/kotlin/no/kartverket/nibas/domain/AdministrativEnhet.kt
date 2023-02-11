@@ -5,7 +5,6 @@ import no.kartverket.nibas.sporing.AuditInfo
 import no.kartverket.nibas.sporing.Gyldighet
 import no.kartverket.nibas.sporing.Laasbar
 import no.kartverket.nibas.sporing.Sporbar
-import org.hibernate.envers.Audited
 import org.locationtech.jts.geom.MultiPolygon
 import org.locationtech.jts.geom.Point
 import java.time.ZonedDateTime
@@ -17,7 +16,6 @@ import javax.persistence.MappedSuperclass
 import javax.persistence.Version
 
 @MappedSuperclass
-@Audited
 abstract class AdministrativEnhet(
     @Transient override val type: Flatetype,
 ) : Flate, Sporbar, Laasbar {

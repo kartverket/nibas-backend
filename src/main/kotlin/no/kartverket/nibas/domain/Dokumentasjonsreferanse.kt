@@ -5,7 +5,6 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.TekstHolder
 import no.kartverket.nibas.sporing.AuditInfo
 import no.kartverket.nibas.sporing.Gyldighet
 import no.kartverket.nibas.sporing.Laasbar
-import org.hibernate.envers.Audited
 import java.time.LocalDate
 import java.util.*
 import javax.persistence.CascadeType
@@ -21,7 +20,6 @@ import javax.persistence.Table
 import javax.persistence.Version
 
 @Table(name = "dokumentasjonsreferanse")
-@Audited
 @Entity
 class Dokumentasjonsreferanse : Laasbar {
     @Id
@@ -100,7 +98,6 @@ class Dokumentasjonsreferanse : Laasbar {
 }
 
 @Table(name = "dokumentasjonsreferanse_dokumentlink")
-@Audited
 @Entity
 class DokumentasjonsreferanseDokumentlink {
     @Id
@@ -116,7 +113,6 @@ class DokumentasjonsreferanseDokumentlink {
 }
 
 @Table(name = "dokumentasjonsreferanse_internreferansekartverket")
-@Audited
 @Entity
 class DokumentasjonsreferanseInternReferanseKartverket {
     @Id

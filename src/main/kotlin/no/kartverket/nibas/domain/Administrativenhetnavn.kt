@@ -3,7 +3,6 @@ package no.kartverket.nibas.domain
 import no.kartverket.nibas.sporing.AuditInfo
 import no.kartverket.nibas.sporing.Gyldighet
 import no.kartverket.nibas.sporing.Laasbar
-import org.hibernate.envers.Audited
 import java.time.LocalDate
 import java.util.*
 import javax.persistence.Column
@@ -16,7 +15,6 @@ import javax.persistence.Table
 import javax.persistence.Version
 
 @Table(name = "administrativenhetnavn")
-@Audited
 @Entity
 class Administrativenhetnavn: Laasbar {
 

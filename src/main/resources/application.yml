@@ -67,6 +67,9 @@ spring:
     # format_sql: true
     properties:
       hibernate:
+        integration:
+          envers:
+            enabled: false
         jdbc:
           time_zone: "Europe/Oslo"
 

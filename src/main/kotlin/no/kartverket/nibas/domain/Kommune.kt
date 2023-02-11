@@ -2,7 +2,6 @@ package no.kartverket.nibas.domain
 
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grensetype
-import org.hibernate.envers.Audited
 import java.time.LocalDate
 import java.util.*
 import javax.persistence.CascadeType
@@ -18,7 +17,6 @@ import javax.persistence.Table
  * id overrides i konstruktør for å kunne overstyre verdi for test.
  */
 @Table(name = "kommune")
-@Audited
 @Entity
 class Kommune(
     override val id: String = UUID.randomUUID().toString(),
@@ -90,7 +88,6 @@ class Kommune(
 }
 
 @Table(name = "kommune_informasjon")
-@Audited
 @Entity
 class KommuneInformasjon(kommune: Kommune) : Info {
     @Id

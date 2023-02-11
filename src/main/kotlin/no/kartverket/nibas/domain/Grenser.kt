@@ -6,7 +6,6 @@ import no.kartverket.nibas.common.ResponseException.BadRequestException
 import no.kartverket.nibas.sporing.AuditInfo
 import no.kartverket.nibas.sporing.Gyldighet
 import no.kartverket.nibas.sporing.Laasbar
-import org.hibernate.envers.Audited
 import org.locationtech.jts.geom.LineString
 import java.time.LocalDate
 import java.time.ZonedDateTime
@@ -29,7 +28,6 @@ import javax.persistence.Version
  * Felles Grense-tabell som holder på samtlige typer av grenser skilt på Grensetype.
  */
 @Table(name = "grense")
-@Audited
 @Entity
 class Grense(
     @Id

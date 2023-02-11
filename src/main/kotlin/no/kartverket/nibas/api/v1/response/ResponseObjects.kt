@@ -8,12 +8,10 @@ import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.Point
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
-import no.kartverket.nibas.inndelinger.RevisjonStatus
 import no.kartverket.nibas.sporing.Gyldighet
 import org.springframework.http.HttpStatus
 import java.time.LocalDate
 import java.time.ZonedDateTime
-import java.util.*
 
 @Schema(description = "En referanse til en nasjon")
 data class NasjonRef(
@@ -99,22 +97,6 @@ data class StemmekretsRef(
 
     @Schema(description = "Antall publiserte framtidige gyldige versjoner.")
     val antallFramtidigeVersjoner: Int = 0
-)
-
-@Schema(description = "En referanse til en historisk revisjon av en administrativ enhet")
-data class RevisjonRef(
-
-    @Schema(description = "IDen til den historiske revisjonen")
-    val revisjonId: Int,
-
-    @Schema(description = "Når revisjonen ble opprettet")
-    val revisjonDato: Date,
-
-    @Schema(description = "Angir status for hva som medførte en ny revisjon")
-    val revisjonStatus: RevisjonStatus,
-
-    @Schema(description = "Referanse til hvor den historiske revisjonen kan finnes")
-    val href: String
 )
 
 @Schema(description = "En referanse til et utkast")

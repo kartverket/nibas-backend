@@ -1,11 +1,9 @@
 package no.kartverket.nibas.domain
 
-import org.hibernate.envers.Audited
 import java.util.*
 import javax.persistence.*
 
 @Table(name = "delomraade")
-@Audited
 @Entity
 class Delomraade {
 
