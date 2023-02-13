@@ -9,7 +9,7 @@ import no.kartverket.nibas.api.v1.response.MissingKodelisteItemResponse
 import no.kartverket.nibas.api.v1.response.toObjektIdentifikator
 import no.kartverket.nibas.common.FeilVedOppdatering
 import no.kartverket.nibas.common.ResponseException
-import no.kartverket.nibas.inndelinger.toDto
+import no.kartverket.nibas.service.toDto
 import no.kartverket.nibas.kodelister.DefaultKodelisteService
 import no.kartverket.nibas.kodelister.KodelisteFetcher
 import no.kartverket.nibas.kodelister.KodelisteService

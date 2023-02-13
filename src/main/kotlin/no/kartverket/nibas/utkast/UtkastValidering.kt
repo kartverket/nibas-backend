@@ -8,8 +8,8 @@ import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.domain.utkast.Utkast
 import no.kartverket.nibas.domain.utkast.UtkastStatus
-import no.kartverket.nibas.inndelinger.GrunnkretsService
-import no.kartverket.nibas.inndelinger.StemmekretsService
+import no.kartverket.nibas.service.GrunnkretsService
+import no.kartverket.nibas.service.StemmekretsService
 import org.springframework.stereotype.Service
 import java.time.LocalDate
 

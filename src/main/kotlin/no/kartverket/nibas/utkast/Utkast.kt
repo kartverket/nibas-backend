@@ -1,5 +1,6 @@
 package no.kartverket.nibas.utkast
-import no.kartverket.nibas.api.v1.UtkastApi
+
+import no.kartverket.nibas.api.v1.klient.UtkastApi
 import no.kartverket.nibas.api.v1.common.Grenseendringer
 import no.kartverket.nibas.api.v1.common.Metadataendringer
 import no.kartverket.nibas.api.v1.common.Operasjoner
@@ -22,13 +23,13 @@ import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.utkast.Utkast
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
-import no.kartverket.nibas.inndelinger.FylkeService
-import no.kartverket.nibas.inndelinger.GrenseService
-import no.kartverket.nibas.inndelinger.GrunnkretsRequestWrapper
-import no.kartverket.nibas.inndelinger.GrunnkretsService
-import no.kartverket.nibas.inndelinger.KommuneService
-import no.kartverket.nibas.inndelinger.NasjonService
-import no.kartverket.nibas.inndelinger.StemmekretsService
+import no.kartverket.nibas.service.FylkeService
+import no.kartverket.nibas.service.GrenseService
+import no.kartverket.nibas.service.GrunnkretsService
+import no.kartverket.nibas.service.KommuneService
+import no.kartverket.nibas.service.NasjonService
+import no.kartverket.nibas.service.StemmekretsService
+import no.kartverket.nibas.service.GrunnkretsRequestWrapper
 import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.repository.UtkastRepository
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas

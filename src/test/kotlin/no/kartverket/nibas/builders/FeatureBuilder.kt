@@ -16,7 +16,7 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.StatistiskgrenseMetada
 import no.kartverket.nibas.api.v1.common.geojson.metadata.TerritorialgrenseMetadata
 import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
 import no.kartverket.nibas.common.Lokalid
-import no.kartverket.nibas.inndelinger.toDto
+import no.kartverket.nibas.service.toDto
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.Geometry

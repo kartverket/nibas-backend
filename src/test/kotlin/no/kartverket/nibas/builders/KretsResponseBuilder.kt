@@ -5,8 +5,8 @@ import no.kartverket.nibas.api.v1.response.Kommunenummer
 import no.kartverket.nibas.api.v1.response.KretsResponse
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Stemmekrets
-import no.kartverket.nibas.inndelinger.flateToFeature
-import no.kartverket.nibas.inndelinger.posisjonToFeature
+import no.kartverket.nibas.service.flateToFeature
+import no.kartverket.nibas.service.posisjonToFeature
 
 class KretsResponseBuilder(
     private var grunnkrets: Grunnkrets = GrunnkretsBuilder().build(),

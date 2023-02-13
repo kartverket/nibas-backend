@@ -1,0 +1,53 @@
+package no.kartverket.nibas.controller.klient
+
+import no.kartverket.nibas.api.v1.klient.GrunnkretsApi
+import no.kartverket.nibas.api.v1.common.KontekstEnhetType
+import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
+import no.kartverket.nibas.api.v1.response.GrunnkretsResponse
+import no.kartverket.nibas.common.Identifikator
+import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.common.ResponseException.NotFoundException
+import no.kartverket.nibas.common.createIdentifikator
+import no.kartverket.nibas.service.GrunnkretsService
+import no.kartverket.nibas.service.grenseKoblingToFeature
+import no.kartverket.nibas.service.toGrunnkretsResponse
+import org.springframework.web.bind.annotation.RestController
+import java.time.LocalDate
+
+@RestController
+class GrunnkretsController(
+    private val grunnkretsService: GrunnkretsService,
+) : GrunnkretsApi {
+
+    override fun hentGrunnkrets(lokalid: String, gyldighetsdato: LocalDate?): GrunnkretsResponse {
+        val identifikator = createIdentifikator(lokalid, gyldighetsdato)
+        return grunnkretsService.hentGrunnkrets(identifikator)?.toGrunnkretsResponse(identifikator)
+            ?: throw NotFoundException("Grunnkrets $identifikator ble ikke funnet.")
+    }
+
+    override fun hentGrenserForGrunnkrets(lokalid: String, gyldighetsdato: LocalDate?): FeatureCollection {
+        val identifikator = createIdentifikator(lokalid, gyldighetsdato)
+        val grensekoblinger = grunnkretsService.hentGrenserForGrunnkrets(identifikator)
+        if (grensekoblinger.isEmpty()) {
+            throw NotFoundException("Fant ingen grenser for $identifikator")
+        }
+        return FeatureCollection(
+            features = grensekoblinger
+                .sortedBy { it.grenseKoblingAttributter.rekkefoelge }
+                .map { grenseKoblingToFeature(it, KontekstEnhetType.GRUNNKRETS, identifikator.gyldighetsdato) }
+        )
+    }
+
+    override fun hentFramtidigeVersjonerForGrunnkrets(lokalid: String, gyldighetsdato: LocalDate?): List<GrunnkretsResponse> {
+        val identifikatorForGrunnkrets = createIdentifikator(lokalid, gyldighetsdato)
+        return grunnkretsService.hentFramtidigeVersjonerForGrunnkrets(identifikatorForGrunnkrets)
+            .map {
+                it.toGrunnkretsResponse(
+                    Identifikator(
+                        lokalid = Lokalid(it.lokalid),
+                        gyldighetsdato = it.gyldighet.gyldigFra)
+                )
+            }
+    }
+
+}

@@ -68,7 +68,8 @@ class WebSecurityConfig @Autowired constructor(private val environment: Environm
             return filterChainForSecurityOff(httpSecurity)
         } else {
             // Request-matcher for filter-kjede: Kun for denne pathen denne SecurityFilterChain vil brukes
-            return httpSecurity.antMatcher("/v1/ekstern/matrikkel/**")
+            return httpSecurity
+                .antMatcher("/v1/ekstern/**")
                 .addFilterAfter(apiKeyFilter(), AbstractPreAuthenticatedProcessingFilter::class.java)
                 // Defaulter til 401 Unauthorized dersom det kastes exception i filterkjeden
                 .exceptionHandling().authenticationEntryPoint(UnauthorizedEntryPoint("API_KEY_FILTER_CHAIN"))
@@ -165,10 +166,6 @@ class WebSecurityConfig @Autowired constructor(private val environment: Environm
         } else {
             super.jwksRetriever()
         }
-    }
-
-    override fun getAutModulHostURL(): String {
-        return "http://aut-idporten.aut:8080"
     }
 
     override fun getDateTimeToUseForTokenVerification(): ZonedDateTime? {

@@ -4,7 +4,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import no.kartverket.nibas.api.v1.common.Flatetype
-import no.kartverket.nibas.inndelinger.FlateService
+import no.kartverket.nibas.service.FlateService
 import no.kartverket.nibas.repository.FlatedanningCustomSQLRepository
 import no.kartverket.nibas.sosi.common.SosiKoder
 import no.kartverket.nibas.sosi.deserializer.NibasSosiDeserializer
