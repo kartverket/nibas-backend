@@ -11,20 +11,22 @@ import org.locationtech.jts.geom.GeometryFactory
 import java.time.LocalDate
 import java.time.ZonedDateTime
 
-class StemmekretsBuilder(private val id: String = "1",
-                         private var grenser: List<Grense> = emptyList(),
-                         private var kommune: Kommune? = KommuneBuilder.DEFAULT_KOMMUNE,
-                         private var lokalId: Lokalid = Lokalid(LOKALID),
-                         private var stemmekretsnavn: String = "Nordre Follo",
-                         private var stemmekretsnummer: String = "9",
-                         private var tellekretsnavn: String = "Nordre Follo Tellekrets",
-                         private var tellekretsnummer: String = "98",
-                         private var endretdato: ZonedDateTime = ZonedDateTime.now(),
-                         private var datafangstdato: ZonedDateTime = ZonedDateTime.now(),
-                         private var gyldigFra: LocalDate = LocalDate.now(),
-                         private var gyldigTil: LocalDate? = null,
-                         private var informasjonstekst: String = INFORMASJONTEKST,
-                         private var opphav: String = OPPHAV) {
+class StemmekretsBuilder(
+    private val id: String = "1",
+    private var grenser: List<Grense> = emptyList(),
+    private var kommune: Kommune? = KommuneBuilder.DEFAULT_KOMMUNE,
+    private var lokalId: Lokalid = Lokalid(LOKALID),
+    private var stemmekretsnavn: String = "Nordre Follo",
+    private var stemmekretsnummer: String = "9",
+    private var tellekretsnavn: String = "Nordre Follo Tellekrets",
+    private var tellekretsnummer: String = "98",
+    private var endretdato: ZonedDateTime = ZonedDateTime.now(),
+    private var datafangstdato: ZonedDateTime = ZonedDateTime.now(),
+    private var gyldigFra: LocalDate = LocalDate.now(),
+    private var gyldigTil: LocalDate? = null,
+    private var informasjonstekst: String = INFORMASJONTEKST,
+    private var opphav: String = OPPHAV
+) {
 
     companion object {
         val DEFAULT_STEMMEKRETS: Stemmekrets = StemmekretsBuilder().build()
@@ -53,8 +55,14 @@ class StemmekretsBuilder(private val id: String = "1",
 
         stemmekrets.posisjon = GeometryFactory().createPoint(Coordinate(1.0, 1.0))
         stemmekrets.omraade = GeometryFactory().createMultiPolygon(arrayOf(GeometryFactory().createPolygon()))
-        grenser.forEach {
-            stemmekrets.addGrensekobling(it, GrenseKoblingAttributter())
+
+        var forrigeGrense = grenser.lastOrNull()
+        grenser.forEachIndexed { index, grense ->
+            stemmekrets.addGrensekobling(grense, GrenseKoblingAttributter(
+                rekkefoelge = index,
+                retningMedKlokken = getRetningMedKlokken(grense, forrigeGrense)
+            ))
+            forrigeGrense = grense
         }
 
         return stemmekrets
@@ -78,5 +86,20 @@ class StemmekretsBuilder(private val id: String = "1",
     fun withGrenser(vararg grenser: Grense): StemmekretsBuilder {
         this.grenser = this.grenser.plus(grenser.toList())
         return this
+    }
+
+    private fun getRetningMedKlokken(grense: Grense, forrigeGrense: Grense?): Boolean {
+        if (forrigeGrense == null) {
+            return true
+        }
+
+        if (grense.grense.startPoint == forrigeGrense.grense.startPoint || grense.grense.startPoint == forrigeGrense.grense.endPoint) {
+            return true
+        }
+        if (grense.grense.endPoint == forrigeGrense.grense.startPoint || grense.grense.endPoint == forrigeGrense.grense.endPoint) {
+            return false
+        }
+
+        throw RuntimeException("Grensen toucher hverken startpunkt eller endepunktet til forrige grense. Er rekkefølgen riktig?")
     }
 }

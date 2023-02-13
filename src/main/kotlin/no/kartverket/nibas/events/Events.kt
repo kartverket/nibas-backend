@@ -5,6 +5,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import no.kartverket.nibas.config.AsynchronousSpringEventsConfig
 import no.kartverket.nibas.domain.Flate
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
@@ -23,18 +24,24 @@ class NibasEventListener constructor(private val messagingGateway: AsynchronousS
 }
 
 @Component
-class NibasEventPublisher (private val nibasEventsService: NibasEventsService) {
+class NibasEventPublisher (
+    private val nibasEventsService: NibasEventsService,
+    @Value("\${spring.cloud.gcp.pubsub.enabled:true}")
+    val eventPublishingEnabled: Boolean = true
+) {
 
     fun publishNibasEvent(enhet: Flate, eventType: EventType) {
-        nibasEventsService.publishEvent(
-            NibasEvent(inntreffer = enhet.gyldighet.gyldigFra,
-                eventRader = setOf (
-                    EventRad(uuid = enhet.id,
-                        eventType = eventType,
-                        flateType = enhet.type,
-                        lokalid = enhet.lokalid),
+        if(eventPublishingEnabled) {
+            nibasEventsService.publishEvent(
+                NibasEvent(inntreffer = enhet.gyldighet.gyldigFra,
+                    eventRader = setOf (
+                        EventRad(uuid = enhet.id,
+                            eventType = eventType,
+                            flateType = enhet.type,
+                            lokalid = enhet.lokalid),
+                    )
                 )
             )
-        )
+        }
     }
 }

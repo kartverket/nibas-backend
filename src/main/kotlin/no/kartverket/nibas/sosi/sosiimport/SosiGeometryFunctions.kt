@@ -127,15 +127,25 @@ object SosiGeometryFunctions {
         return multiPolygon
     }
 
+
     /**
      * Danner et multipolygon basert på en eller flere flater med potensielt et eller flere hull
      */
     fun dannFlaterMedHullBasertPaaGeometri(grenserMedKorrektRetning: List<GrenseMedLokalid>, enhetsLokalid: String? = null): MultiPolygon {
+        val geometryFactory = GeometryFactory()
+        val kompletteFlater = finnFlaterForGrenser(grenserMedKorrektRetning, enhetsLokalid)
+            .map { FlatedanningResult.KomplettFlate(it) }
+
+        val multiPolygon = dannMultipolygon(kompletteFlater, geometryFactory)
+        validateGeometry(multiPolygon)
+        return multiPolygon
+    }
+
+    fun finnFlaterForGrenser(grenserMedKorrektRetning: List<GrenseMedLokalid>, enhetsLokalid: String? = null): List<List<GrenseMedLokalid>> {
         var gjenstaaendeGrenser = grenserMedKorrektRetning
 
         val kompletteFlater: MutableList<FlatedanningResult.KomplettFlate> = mutableListOf()
         val ukompletteFlater: MutableList<FlatedanningResult.UkomplettFlate> = mutableListOf()
-        val geometryFactory = getGeometryFactory(null)
 
         while (gjenstaaendeGrenser.isNotEmpty()) {
             when (val result = finnGrenserSomDannerEnFlate(gjenstaaendeGrenser, enhetsLokalid)) {
@@ -154,9 +164,7 @@ object SosiGeometryFunctions {
             throw RuntimeException("Klarte ikke å danne flate grunnet ukomplette flater, antall som feiler: ${ukompletteFlater.size}")
         }
 
-        val multiPolygon = dannMultipolygon(kompletteFlater, geometryFactory)
-        validateGeometry(multiPolygon)
-        return multiPolygon
+        return kompletteFlater.map { it.sorterteGrenser }
     }
 
     private fun dannMultipolygon(

@@ -5,15 +5,18 @@ import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.builders.StemmekretsBuilder
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Stemmekrets
+import no.kartverket.nibas.inndelinger.utils.StemmekretsHelper
 import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ActiveProfiles
@@ -47,7 +50,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
     private val grenseLokallid = Lokalid("888")
 
     @Test
-    fun hentEksisterendeStemmekretsMedDagensDato() {
+    fun `hent eksisterende stemmekrets med dagens dato`() {
         val stemmekrets = saveStemmekrets(lokalid = stemmekretsLokalid)
         saveKommune(stemmekretser = listOf(stemmekrets))
 
@@ -58,7 +61,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
     }
 
     @Test
-    fun hentVersjonAvStemmekretsFramITid() {
+    fun `hent versjon av stemmekrets fram i tid`() {
         saveStemmekretsMed1FramtidigVersjon(stemmekretsLokalid)
         assertThat(stemmekretsRepository.findAllByLokalid(stemmekretsLokalid.value).size).isEqualTo(2)
 
@@ -68,13 +71,13 @@ class StemmekretsServiceIT : TestWithDbContainer() {
     }
 
     @Test
-    fun hentAntallFramtidigeVersjoner() {
+    fun `hent antall framtidige versjoner`() {
         saveStemmekretsMed1FramtidigVersjon(stemmekretsLokalid)
         assertThat(stemmekretsService.hentAntallGyldigeVersjonerFramITidFor(Identifikator(stemmekretsLokalid, november28In2022))).isEqualTo(1)
     }
 
     @Test
-    fun hentGrenserForStemmekretsFramITid() {
+    fun `hent grenser for stemmekrets fram i tid`() {
         val identifikatorFor1Jan23 = Identifikator(stemmekretsLokalid, jan1In2023)
 
         val grense3 = saveGrenseAvTypeKommunegrense(id = "4002", lokalid = grenseLokallid, gyldigFra = jan1In2024)
@@ -115,12 +118,80 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         assertThat(stemmekretsService.hentFramtidigeVersjonerForStemmekrets(stemmekretsLokalid, december1In2022)).hasSize(1)
     }
 
-    fun saveGrenseAvTypeKommunegrense(id: String = "12000",
-                                      lokalid: Lokalid = Lokalid("ac7e05cd-fb07-4277-ad95-63c32c1370d0"),
-                                      gyldigFra: LocalDate = october1In2022,
-                                      gyldigTil: LocalDate? = null,
-                                      opphav: String = "Eidsvoll",
-                                      nesteVersjon: Grense? = null): Grense {
+    @Test
+    fun `slaaSammenStemmekretser ny krets skal bruke viderefoert navn og nummer`() {
+        val (vestreKrets, oesteKrets) = saveStemmekretserForSammenslaaing(gyldigFra = LocalDate.parse("2022-01-01"))
+
+        stemmekretsService.slaaSammenStemmekretser(
+            viderefortStemmekretsId = Identifikator(Lokalid(vestreKrets.lokalid), LocalDate.parse("2022-01-01")),
+            stemmekretserTilSammenSlaaing = listOf(Identifikator(Lokalid(oesteKrets.lokalid), LocalDate.parse("2022-01-01"))),
+            viderefortNavn = "Sammenslått krets",
+            viderefortNummer = "nytt nummer",
+            sammenslaaingsDato = LocalDate.parse("2022-02-01"),
+            endringstype = Endringstype.VEDTATT_SAMMENSLAAING
+        )
+
+        val sammenslattStemmekrets = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(vestreKrets.lokalid), LocalDate.parse("2022-02-01")))
+
+        assertThat(sammenslattStemmekrets?.stemmekretsnavn).isEqualTo("Sammenslått krets")
+        assertThat(sammenslattStemmekrets?.stemmekretsnummer).isEqualTo("nytt nummer")
+    }
+
+    @Test
+    fun `slaaSammenStemmekretser skal inneholde alle grenser utenom delte grenser`() {
+        val (vestreKrets, oesteKrets) = saveStemmekretserForSammenslaaing(gyldigFra = LocalDate.parse("2022-01-01"))
+
+        stemmekretsService.slaaSammenStemmekretser(
+            viderefortStemmekretsId = Identifikator(Lokalid(vestreKrets.lokalid), LocalDate.parse("2022-01-01")),
+            stemmekretserTilSammenSlaaing = listOf(Identifikator(Lokalid(oesteKrets.lokalid), LocalDate.parse("2022-01-01"))),
+            viderefortNavn = "Sammenslått krets",
+            viderefortNummer = "nytt nummer",
+            sammenslaaingsDato = LocalDate.parse("2022-02-01"),
+            endringstype = Endringstype.VEDTATT_SAMMENSLAAING
+        )
+
+        val sammenslattStemmekrets = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(vestreKrets.lokalid), LocalDate.parse("2022-02-01")))
+
+        val antallGrenser = vestreKrets.grenser.size + oesteKrets.grenser.size
+        val grenseIder = sammenslattStemmekrets?.grenser?.map { it.grense.id }
+
+        assertThat(sammenslattStemmekrets?.grenser?.size).isLessThan(antallGrenser)
+        assertThat(grenseIder).doesNotContain("grenseDelt")
+    }
+
+    @Disabled("Trenger litt smartere metode for å danne grenser for test-kretser")
+    @Test
+    fun `slaaSammenStemmekretser skal beholde hull i stemmekretsen`() {
+        val (vestreKrets, oesteKrets) = saveStemmekretserForSammenslaaing(gyldigFra = LocalDate.parse("2022-01-01"), medHull = true)
+
+        stemmekretsService.slaaSammenStemmekretser(
+            viderefortStemmekretsId = Identifikator(Lokalid(vestreKrets.lokalid), LocalDate.parse("2022-01-01")),
+            stemmekretserTilSammenSlaaing = listOf(Identifikator(Lokalid(oesteKrets.lokalid), LocalDate.parse("2022-01-01"))),
+            viderefortNavn = "Sammenslått krets",
+            viderefortNummer = "nytt nummer",
+            sammenslaaingsDato = LocalDate.parse("2022-02-01"),
+            endringstype = Endringstype.VEDTATT_SAMMENSLAAING
+        )
+
+        val sammenslattStemmekrets = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(vestreKrets.lokalid), LocalDate.parse("2022-02-01")))
+
+        // Det er en delt grense, så vi vil beholde alle grenser utenom 1 fra hver
+        val antallGrenser = vestreKrets.grenser.size + oesteKrets.grenser.size - 2
+        assertThat(sammenslattStemmekrets?.grenser?.size).isEqualTo(antallGrenser)
+
+        // Vi skal ha 4 grenser som danner ett hull
+        val hullGrenser = sammenslattStemmekrets?.grenser?.filter { it.grenseKoblingAttributter.hullIndeks != null }
+        assertThat(hullGrenser).hasSize(4)
+    }
+
+    fun saveGrenseAvTypeKommunegrense(
+        id: String = "12000",
+        lokalid: Lokalid = Lokalid("ac7e05cd-fb07-4277-ad95-63c32c1370d0"),
+        gyldigFra: LocalDate = october1In2022,
+        gyldigTil: LocalDate? = null,
+        opphav: String = "Eidsvoll",
+        nesteVersjon: Grense? = null
+    ): Grense {
         return grenseRepository.save(GrenseBuilder(
             id = id,
             lokalId = lokalid,
@@ -129,6 +200,33 @@ class StemmekretsServiceIT : TestWithDbContainer() {
             opphav = opphav,
             nesteVersjon = nesteVersjon
         ).buildKommunegrense())
+    }
+
+    private fun saveStemmekretserForSammenslaaing(gyldigFra: LocalDate, medHull: Boolean = false): List<Stemmekrets> {
+        val grenserForVest = if (medHull) {
+            StemmekretsHelper.getGrensterForVestligStemmekrets() + StemmekretsHelper.getHullVestligStemmekrets()
+        } else {
+            StemmekretsHelper.getGrensterForVestligStemmekrets()
+        }
+
+        val kretsVest = saveStemmekrets(
+            id = "1",
+            lokalid = Lokalid("123"),
+            gyldigFra = gyldigFra,
+            stemmekretsnavn = "Vestre krets",
+            grenser = grenserForVest.save()
+        )
+
+        val kretsOest = saveStemmekrets(
+            id = "2",
+            lokalid = Lokalid("234"),
+            gyldigFra = gyldigFra,
+            stemmekretsnavn = "Østre krets",
+            grenser = StemmekretsHelper.getGrensterForOestligStemmekrets().save()
+        )
+
+        saveKommune(stemmekretser = listOf(kretsVest, kretsOest))
+        return listOf(kretsVest, kretsOest)
     }
 
     private fun saveStemmekretsMed1FramtidigVersjon(stemmekretsLokalid: Lokalid) {
@@ -165,6 +263,9 @@ class StemmekretsServiceIT : TestWithDbContainer() {
             grenser = grenser
         ).build())
     }
+
+    private fun List<Grense>.save() =
+        this.map { grenseRepository.save(it) }
 }
 
 fun assertGrenser(grensekoblinger: List<GrenseKobling>,

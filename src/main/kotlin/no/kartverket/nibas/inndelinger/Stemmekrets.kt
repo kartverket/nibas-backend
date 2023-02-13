@@ -17,7 +17,9 @@ import no.kartverket.nibas.common.UgyldigTilstandException
 import no.kartverket.nibas.common.createIdentifikator
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.GrenseKobling
+import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.Stemmekrets
+import no.kartverket.nibas.domain.StemmekretsGrenseKobling
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.kodelister.createKommunenummerFromUUID
 import no.kartverket.nibas.repository.OptimistiskLaasException
@@ -26,6 +28,9 @@ import no.kartverket.nibas.repository.findAllByLokalidSortedByGyldigFra
 import no.kartverket.nibas.repository.findAntallFramtidigeVersjonerForIdentifikator
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
+import no.kartverket.nibas.sosi.sosiimport.GrenseMedLokalid
+import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
+import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions.lagFlate
 import org.locationtech.jts.geom.Geometry
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -109,7 +114,34 @@ class StemmekretsService(private val stemmekretsRepository: StemmekretsRepositor
         sammenslaaingsDato: LocalDate,
         endringstype: Endringstype
     ) {
-        throw NotImplementedError("Forsøkte å gjrøe en sammenslåing av stemmekretser. Men sammenslåing av stemmekretser er ikke ferdig implementert enda")
+        val viderefortStemmekrets = hentStemmekrets(viderefortStemmekretsId)
+            ?: throw NotFoundException("Videreført stemmekrets med identifikatior: $viderefortStemmekretsId ble ikke funnet")
+
+        val stemmekretserSomUtgaar = stemmekretserTilSammenSlaaing
+            .map { hentStemmekrets(it) ?: throw NotFoundException("Stemmekrets til sammenslåing med identifikator: $it ble ikke funnet") }
+
+        stemmekretserSomUtgaar.forEach { it.setGyldigTil(sammenslaaingsDato) }
+
+        val nyStemmekrets = createNyVersjonAvStemmekrets(viderefortStemmekrets, sammenslaaingsDato, endringstype)
+            .apply {
+                stemmekretsnavn = viderefortNavn
+                stemmekretsnummer = viderefortNummer
+            }
+
+        val alleStemmekretsGrensekoblinger = viderefortStemmekrets.grenser + stemmekretserSomUtgaar.flatMap { it.grenser }
+
+        // Hvis er grense deler 2 stemmekretser som er med i sammenslåingen så er den ikke en del
+        // av et skall eller hull i den nye stemmekretsen
+        val viderefoerteGrensekoblinger = alleStemmekretsGrensekoblinger
+            .filter { grenseErIkkeDeltMellomToStemmekretser(it, alleStemmekretsGrensekoblinger) }
+
+        nyStemmekrets.grenser = oppdaterGrensekoblingsAtributterForGrenser(
+            stemmekrets = nyStemmekrets,
+            grensekoblinger = viderefoerteGrensekoblinger,
+            gamleGrensekoblinger = alleStemmekretsGrensekoblinger
+        ).toMutableSet()
+
+        nyStemmekrets.oppdaterOmraade()
     }
 
     private fun createNyVersjonAvStemmekrets(stemmekrets: Stemmekrets, gyldigFra: LocalDate, endringstype: Endringstype): Stemmekrets {
@@ -126,6 +158,66 @@ class StemmekretsService(private val stemmekretsRepository: StemmekretsRepositor
             .also { stemmekrets.setGyldigTil(gyldigFra)  }
     }
 
+    private fun grenseErIkkeDeltMellomToStemmekretser(grenseKobling: StemmekretsGrenseKobling, alleGrensekoblinger: Collection<StemmekretsGrenseKobling>) =
+        alleGrensekoblinger.count { grenseKobling.grense.id == it.grense.id } == 1
+
+    private fun oppdaterGrensekoblingsAtributterForGrenser(stemmekrets: Stemmekrets, grensekoblinger: Collection<StemmekretsGrenseKobling>, gamleGrensekoblinger: Collection<StemmekretsGrenseKobling>): List<StemmekretsGrenseKobling> {
+        val alleFlaterOgHull = SosiGeometryFunctions.finnFlaterForGrenser(
+            grensekoblinger.map { GrenseMedLokalid(it.grense.grense, Lokalid(it.grense.lokalid)) }
+        )
+
+        val flaterSomPolygon = alleFlaterOgHull.map { grense -> lagFlate(grense.map { it.grense }, emptyList()) }
+        val alleSkall = alleFlaterOgHull.filterIndexed { index, _ -> flateErEtSkall(flaterSomPolygon[index], flaterSomPolygon) }
+
+        // Hull-index må vært strengt stigende for alle hull for en krets, selv om de er hull i ulike flater
+        var hullIndex = 0
+        return alleSkall.flatMapIndexed { flateIndex, skall ->
+            val skallPolygon = lagFlate(skall.map { it.grense }, emptyList())
+            val hullIFlaten = alleFlaterOgHull.filterIndexed { hullIndex, _ -> flateErHullISkall(flaterSomPolygon[hullIndex], skallPolygon) }
+
+            val grensekoblingerForSkall = skall.mapIndexed { skallGrenseIndex, grenseMedLokalid ->
+                lagNyGrensekobling(
+                    grense = grenseMedLokalid,
+                    stemmekrets = stemmekrets,
+                    rekkefoelge = skallGrenseIndex,
+                    flateIndex = flateIndex,
+                    gamleGrensekoblinger = gamleGrensekoblinger
+                )
+            }
+
+            val grensekoblingerForHull = hullIFlaten.flatMap { grenseMedLokalids ->
+                grenseMedLokalids.mapIndexed { hullGrenseIndex, hullGrense ->
+                    lagNyGrensekobling(
+                        grense = hullGrense,
+                        stemmekrets = stemmekrets,
+                        rekkefoelge = hullGrenseIndex,
+                        flateIndex = flateIndex,
+                        hullIndex = hullIndex++,
+                        gamleGrensekoblinger = gamleGrensekoblinger
+                    )
+                }
+            }
+
+            grensekoblingerForSkall + grensekoblingerForHull
+        }
+    }
+
+    private fun lagNyGrensekobling(grense: GrenseMedLokalid, stemmekrets: Stemmekrets, rekkefoelge: Int, flateIndex: Int, hullIndex: Int? = null, gamleGrensekoblinger: Collection<StemmekretsGrenseKobling>): StemmekretsGrenseKobling {
+        val gammelGrenskobling = gamleGrensekoblinger.find { grense.lokalid.value == it.grense.lokalid }
+            ?: throw RuntimeException("Klarte ikke finne gammel grensekobling for grense med id ${grense.lokalid.value}. Dette skal ikke skje og tyder på programmeringsfeil.")
+
+        return StemmekretsGrenseKobling(
+            stemmekrets = stemmekrets,
+            grense = gammelGrenskobling.grense,
+            grenseKoblingAttributter = GrenseKoblingAttributter(
+                retningMedKlokken = gammelGrenskobling.grenseKoblingAttributter.retningMedKlokken,
+                rekkefoelge = rekkefoelge,
+                flateIndeks = flateIndex,
+                hullIndeks = hullIndex
+            )
+        )
+    }
+
     private fun nesteVersjonForStemmekrets(lokalId: Lokalid): Int =
         stemmekretsRepository
             .findAllByLokalid(lokalId.value)
@@ -135,6 +227,12 @@ class StemmekretsService(private val stemmekretsRepository: StemmekretsRepositor
     fun hentAlleVersjonerMedGyldigFraEtterGittDato(lokalId: Lokalid, dato: LocalDate): List<Stemmekrets> =
         stemmekretsRepository.findAllByLokalidSortedByGyldigFra(lokalId)
             .filter { it.gyldighet.gyldigFra.isAfter(dato) }
+
+    private fun flateErHullISkall(flate: Geometry, skall: Geometry) =
+        flate.within(skall) && (flate != skall)
+
+    private fun flateErEtSkall(flate: Geometry, alleFlater: List<Geometry>) =
+        alleFlater.all { flate == it || !flate.within(it) }
 }
 
 fun Stemmekrets.applyMappingFromStemmekretsRequest(stemmekretsRequest: StemmekretsRequest): Stemmekrets =
