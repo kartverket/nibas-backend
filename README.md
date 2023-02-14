@@ -79,8 +79,7 @@ For å teste et endepunkt (med autentisering påskrudd) uten å kalle det via ni
 dette enklest ved å gjøre følgende:
 
 * gå til test (https://nibas.test.skip.statkart.no/) (bruk vpn eller vdi)
-* logg inn med en av følgende brukere (brukernavn og passord finnes her https://docs.digdir.no/idporten_testbrukere.html)
-    * 21079408678, 21079408597, 21079408406, 21079408325, 21079408244
+* logg inn med en av brukerne definert på Testbrukere-siden (https://kartverket.atlassian.net/wiki/spaces/TNIBAS/pages/534282277/Testbrukere)
 * inspiser det initielle kallet for å hente fylker (chrome dev tools eller lignende) og finn Authorization-headeren.
 * kopier med verdien av denne headeren og legg det på som en ny header med nøkkel "Authorization" i det verktøyet du bruker for å teste API-et (eksempelvis
   postman)
@@ -100,9 +99,9 @@ eksempel [WebSecurityConfigTest](src/test/kotlin/no/kartverket/nibas/config/WebS
 
 ### Testbrukere i lokal Vault
 Dersom du ønsker å teste med påskrudd sikkerhet lokalt, må det legges inn testbrukere i lokal vault.
-Dette gjøres ved å legge inn følgende på sti `nibas/nibas-backend/nibas.authorized.users`: `b7f27cc2c77bceef60c7f7fdbbf6f3f9,c9bb6f93d076772dcaa47bf99bd4a4bc,0a5a25c693355ecb9119f7a5dfc31dfd,da7503ebff0141c38adb2656d730c472,c7c794d9483f5d807e996ff478d76db3`
+Dette gjøres ved å legge inn følgende på sti `nibas/nibas-backend/nibas.authorized.users`: `42dfc6b0432747c8ed8aeea84562f201,4952921544649dddf0f20b4449ccaa5c,bd23d991ffd8b950373470ed4b27e965,5c3f2c0ce444a612bacd939912fccce9`
 Dette tilsvarer fødselsnummer for følgende testbrukere:
-21079408678,21079408597,21079408406,21079408325,21079408244
+11841497939,18929197670,05865396092,03894999895
 
 ## Hente docker image fra ghcr.io
 
