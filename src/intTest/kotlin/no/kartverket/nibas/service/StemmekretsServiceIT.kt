@@ -1,5 +1,7 @@
 package no.kartverket.nibas.service
 
+import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
+import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.builders.StemmekretsBuilder
@@ -13,11 +15,13 @@ import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.service.utils.StemmekretsHelper
 import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.KommuneRepository
+import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
@@ -122,11 +126,15 @@ class StemmekretsServiceIT : TestWithDbContainer() {
     fun `slaaSammenStemmekretser ny krets skal bruke viderefoert navn og nummer`() {
         val (vestreKrets, oesteKrets) = saveStemmekretserForSammenslaaing(gyldigFra = LocalDate.parse("2022-01-01"))
 
+        val sammenslaaingsendringRequest = StemmekretsSammenslaaingsendringRequest(
+            viderefoertStemmekrets = IdentifikatorMedVersjon(vestreKrets.lokalid, 1),
+            stemmekretserTilSammenslaaing = listOf(IdentifikatorMedVersjon(oesteKrets.lokalid, 1)),
+            stemmekretsNavn = "Sammenslått krets",
+            stemmekretsNummer = "nytt nummer"
+        )
+
         stemmekretsService.slaaSammenStemmekretser(
-            viderefortStemmekretsId = Identifikator(Lokalid(vestreKrets.lokalid), LocalDate.parse("2022-01-01")),
-            stemmekretserTilSammenSlaaing = listOf(Identifikator(Lokalid(oesteKrets.lokalid), LocalDate.parse("2022-01-01"))),
-            viderefortNavn = "Sammenslått krets",
-            viderefortNummer = "nytt nummer",
+            sammenslaaingsendringRequest = sammenslaaingsendringRequest,
             sammenslaaingsDato = LocalDate.parse("2022-02-01"),
             endringstype = Endringstype.VEDTATT_SAMMENSLAAING
         )
@@ -141,11 +149,15 @@ class StemmekretsServiceIT : TestWithDbContainer() {
     fun `slaaSammenStemmekretser skal inneholde alle grenser utenom delte grenser`() {
         val (vestreKrets, oesteKrets) = saveStemmekretserForSammenslaaing(gyldigFra = LocalDate.parse("2022-01-01"))
 
+        val sammenslaaingsendringRequest = StemmekretsSammenslaaingsendringRequest(
+            viderefoertStemmekrets = IdentifikatorMedVersjon(vestreKrets.lokalid, 1),
+            stemmekretserTilSammenslaaing = listOf(IdentifikatorMedVersjon(oesteKrets.lokalid, 1)),
+            stemmekretsNavn = "Sammenslått krets",
+            stemmekretsNummer = "nytt nummer"
+        )
+
         stemmekretsService.slaaSammenStemmekretser(
-            viderefortStemmekretsId = Identifikator(Lokalid(vestreKrets.lokalid), LocalDate.parse("2022-01-01")),
-            stemmekretserTilSammenSlaaing = listOf(Identifikator(Lokalid(oesteKrets.lokalid), LocalDate.parse("2022-01-01"))),
-            viderefortNavn = "Sammenslått krets",
-            viderefortNummer = "nytt nummer",
+            sammenslaaingsendringRequest = sammenslaaingsendringRequest,
             sammenslaaingsDato = LocalDate.parse("2022-02-01"),
             endringstype = Endringstype.VEDTATT_SAMMENSLAAING
         )
@@ -159,16 +171,59 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         assertThat(grenseIder).doesNotContain("grenseDelt")
     }
 
+    @Test
+    fun `slaaSammenStemmekretser skal skal kaste konflikt om den feiler optimstiskLaas-sjekken for den viderefoerte stemmekretsen`() {
+        val (vestreKrets, oesteKrets) = saveStemmekretserForSammenslaaing(gyldigFra = LocalDate.parse("2022-01-01"))
+
+        val sammenslaaingsendringRequest = StemmekretsSammenslaaingsendringRequest(
+            viderefoertStemmekrets = IdentifikatorMedVersjon(vestreKrets.lokalid, 5),
+            stemmekretserTilSammenslaaing = listOf(IdentifikatorMedVersjon(oesteKrets.lokalid, 1)),
+            stemmekretsNavn = "Sammenslått krets",
+            stemmekretsNummer = "nytt nummer"
+        )
+
+        assertThrows<OptimistiskLaasException> {
+            stemmekretsService.slaaSammenStemmekretser(
+                sammenslaaingsendringRequest = sammenslaaingsendringRequest,
+                sammenslaaingsDato = LocalDate.parse("2022-02-01"),
+                endringstype = Endringstype.VEDTATT_SAMMENSLAAING
+            )
+        }
+    }
+    @Test
+    fun `slaaSammenStemmekretser skal skal kaste konflikt om den feiler optimstiskLaas-sjekken for en av stemmekretsene til sammenslaaing`() {
+        val (vestreKrets, oesteKrets) = saveStemmekretserForSammenslaaing(gyldigFra = LocalDate.parse("2022-01-01"))
+
+        val sammenslaaingsendringRequest = StemmekretsSammenslaaingsendringRequest(
+            viderefoertStemmekrets = IdentifikatorMedVersjon(vestreKrets.lokalid, 1),
+            stemmekretserTilSammenslaaing = listOf(IdentifikatorMedVersjon(oesteKrets.lokalid, 5)),
+            stemmekretsNavn = "Sammenslått krets",
+            stemmekretsNummer = "nytt nummer"
+        )
+
+        assertThrows<OptimistiskLaasException> {
+            stemmekretsService.slaaSammenStemmekretser(
+                sammenslaaingsendringRequest = sammenslaaingsendringRequest,
+                sammenslaaingsDato = LocalDate.parse("2022-02-01"),
+                endringstype = Endringstype.VEDTATT_SAMMENSLAAING
+            )
+        }
+    }
+
     @Disabled("Trenger litt smartere metode for å danne grenser for test-kretser")
     @Test
     fun `slaaSammenStemmekretser skal beholde hull i stemmekretsen`() {
         val (vestreKrets, oesteKrets) = saveStemmekretserForSammenslaaing(gyldigFra = LocalDate.parse("2022-01-01"), medHull = true)
 
+        val sammenslaaingsendringRequest = StemmekretsSammenslaaingsendringRequest(
+            viderefoertStemmekrets = IdentifikatorMedVersjon(vestreKrets.lokalid, 1),
+            stemmekretserTilSammenslaaing = listOf(IdentifikatorMedVersjon(oesteKrets.lokalid, 1)),
+            stemmekretsNavn = "Sammenslått krets",
+            stemmekretsNummer = "nytt nummer"
+        )
+
         stemmekretsService.slaaSammenStemmekretser(
-            viderefortStemmekretsId = Identifikator(Lokalid(vestreKrets.lokalid), LocalDate.parse("2022-01-01")),
-            stemmekretserTilSammenSlaaing = listOf(Identifikator(Lokalid(oesteKrets.lokalid), LocalDate.parse("2022-01-01"))),
-            viderefortNavn = "Sammenslått krets",
-            viderefortNummer = "nytt nummer",
+            sammenslaaingsendringRequest = sammenslaaingsendringRequest,
             sammenslaaingsDato = LocalDate.parse("2022-02-01"),
             endringstype = Endringstype.VEDTATT_SAMMENSLAAING
         )

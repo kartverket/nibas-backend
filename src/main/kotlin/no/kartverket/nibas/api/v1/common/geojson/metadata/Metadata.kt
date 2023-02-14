@@ -4,11 +4,11 @@ import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import io.swagger.v3.oas.annotations.media.DiscriminatorMapping
 import io.swagger.v3.oas.annotations.media.Schema
-import no.kartverket.nibas.api.v1.response.Kommunenummer
 import no.kartverket.nibas.domain.ContainsSosiIdentifikasjon
 import no.kartverket.nibas.domain.PosisjonskvalitetEmbeddable
 import java.time.LocalDate
 import java.time.ZonedDateTime
+import javax.validation.constraints.NotNull
 
 const val FLATE_METADATA_SCHEMA: String = "FlateMetadata"
 const val ADMINISTRATIV_GRENSE_METADATA_SCHEMA: String = "AdministrativGrenseMetadata"
@@ -224,6 +224,16 @@ data class Identifikasjon(
     @Schema(description = "Lokal id som identifiserer geometrien. Dette er en globalt unik id.")
     override val lokalid: String
 ) : ContainsSosiIdentifikasjon
+
+@Schema(description = "Identifikator av en stemmekrets eller grunnkrets")
+data class IdentifikatorMedVersjon(
+    @Schema(description = "LokalId for stemmekrets/grunnkretsen")
+    val lokalId: String,
+
+    @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
+    @NotNull
+    val version: Int
+)
 
 data class Dokref(
     @Schema(description = "ID for dokumentasjonsreferansen.")

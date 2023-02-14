@@ -4,7 +4,9 @@ import io.swagger.v3.oas.annotations.media.Schema
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
+import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
 import no.kartverket.nibas.common.Lokalid
+import java.io.Serializable
 import java.time.LocalDate
 import javax.validation.constraints.NotBlank
 import javax.validation.constraints.NotNull
@@ -167,3 +169,14 @@ data class StemmekretsRequestResolved(
     val stemmekretsRequest: StemmekretsRequest
 )
 
+@Schema(description = "Representasjon av sammenslåing av en stemmekrets med 1 eller flere andre stemmekretser i samme kommune")
+data class StemmekretsSammenslaaingsendringRequest (
+    @Schema (description = "Identifikator til den stemmekretsen som skal videreføres")
+    val viderefoertStemmekrets: IdentifikatorMedVersjon,
+    @Schema(description = "Liste av identifikatorer som skal bli del av den videreførte stemmekretsen")
+    val stemmekretserTilSammenslaaing: List<IdentifikatorMedVersjon>,
+    @Schema (description = "Navnet til den sammenslåtte stemmekretsen")
+    val stemmekretsNavn: String,
+    @Schema (description = "Stemmekretsnummeret til den sammenslåtte stemmekretsen")
+    val stemmekretsNummer: String
+): Serializable

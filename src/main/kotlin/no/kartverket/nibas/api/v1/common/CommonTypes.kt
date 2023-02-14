@@ -7,6 +7,7 @@ import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
 import no.kartverket.nibas.api.v1.request.KommuneRequest
 import no.kartverket.nibas.api.v1.request.NasjonRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsRequest
+import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
 import java.io.Serializable
 import javax.persistence.AttributeConverter
 import javax.persistence.Converter
@@ -106,7 +107,7 @@ data class Operasjoner(
     @Schema(description = "Endringer på grenser.")
     val grenseendringer: Grenseendringer = Grenseendringer(),
     @Schema(description = "Sammenslåing av stemmekretser i samme kommune.")
-    val stemmekretsSammenslaaingsendring: StemmekretsSammenslaaingsendring? = null,
+    val stemmekretsSammenslaaingsendring: StemmekretsSammenslaaingsendringRequest? = null,
 ) : Serializable
 
 @Schema(description = "Representasjon av endringer på metadata.")
@@ -128,16 +129,4 @@ data class Grenseendringer(
     @Schema(description = "Endringer på features.")
     val endredeFeatures: Map<String, Feature> = emptyMap()
 ) : Serializable
-
-@Schema(description = "Representasjon av sammenslåing av en stemmekrets med 1 eller flere andre stemmekretser i samme kommune")
-data class StemmekretsSammenslaaingsendring (
-    @Schema (description = "LokalIden til den stemmekretsen som skal videreføres")
-    val viderefoertStemmekrets: String,
-    @Schema(description = "Liste av LokalIder som skal bli del av den videreførte stemmekretsen")
-    val stemmekretserTilSammenslaaing: List<String>,
-    @Schema (description = "Navnet til den sammenslåtte stemmekretsen")
-    val stemmekretsNavn: String,
-    @Schema (description = "Stemmekretsnummeret til den sammenslåtte stemmekretsen")
-    val stemmekretsNummer: String
-): Serializable
 

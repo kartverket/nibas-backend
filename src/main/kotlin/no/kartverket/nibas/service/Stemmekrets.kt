@@ -2,6 +2,7 @@ package no.kartverket.nibas.service
 
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.request.StemmekretsRequest
+import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
 import no.kartverket.nibas.api.v1.response.KretsResponse
 import no.kartverket.nibas.api.v1.response.StemmekretsRef
 import no.kartverket.nibas.api.v1.response.StemmekretsResponse
@@ -72,25 +73,34 @@ class StemmekretsService(private val stemmekretsRepository: StemmekretsRepositor
 
     @Transactional(readOnly = false)
     fun slaaSammenStemmekretser(
-        viderefortStemmekretsId: Identifikator,
-        stemmekretserTilSammenSlaaing: List<Identifikator>,
-        viderefortNavn: String,
-        viderefortNummer: String,
+        sammenslaaingsendringRequest: StemmekretsSammenslaaingsendringRequest,
         sammenslaaingsDato: LocalDate,
         endringstype: Endringstype
     ) {
-        val viderefortStemmekrets = hentStemmekrets(viderefortStemmekretsId)
-            ?: throw ResponseException.NotFoundException("Videreført stemmekrets med identifikatior: $viderefortStemmekretsId ble ikke funnet")
+        val identifikatorViderefoerStemmekrets = Identifikator(lokalid = Lokalid(sammenslaaingsendringRequest.viderefoertStemmekrets.lokalId), gyldighetsdato = sammenslaaingsDato)
+        val viderefortStemmekrets = hentStemmekrets(identifikatorViderefoerStemmekrets)
+            ?: throw ResponseException.NotFoundException("Videreført stemmekrets med identifikatior: $identifikatorViderefoerStemmekrets ble ikke funnet")
 
-        val stemmekretserSomUtgaar = stemmekretserTilSammenSlaaing
+        val stemmekretserSomUtgaar = sammenslaaingsendringRequest.stemmekretserTilSammenslaaing
+            .map { Identifikator(lokalid = Lokalid(it.lokalId), gyldighetsdato = sammenslaaingsDato)   }
             .map { hentStemmekrets(it) ?: throw ResponseException.NotFoundException("Stemmekrets til sammenslåing med identifikator: $it ble ikke funnet") }
+
+        val stemmekretserForSjekkeOptimistiskLaas = stemmekretserSomUtgaar.map { stemmekrets ->
+                Pair(stemmekrets, sammenslaaingsendringRequest.stemmekretserTilSammenslaaing.find { it.lokalId == stemmekrets.lokalid }?.version!!)
+            }.plus(Pair(viderefortStemmekrets, sammenslaaingsendringRequest.viderefoertStemmekrets.version))
+
+        stemmekretserForSjekkeOptimistiskLaas
+            .forEach { (stemmekrets, versjon) ->
+                verifiserOptimistiskLaas(versjon, stemmekrets)
+                    ?.let { throw OptimistiskLaasException(it)}
+            }
 
         stemmekretserSomUtgaar.forEach { it.setGyldigTil(sammenslaaingsDato) }
 
         val nyStemmekrets = createNyVersjonAvStemmekrets(viderefortStemmekrets, sammenslaaingsDato, endringstype)
             .apply {
-                stemmekretsnavn = viderefortNavn
-                stemmekretsnummer = viderefortNummer
+                stemmekretsnavn = sammenslaaingsendringRequest.stemmekretsNavn
+                stemmekretsnummer = sammenslaaingsendringRequest.stemmekretsNummer
             }
 
         val alleStemmekretsGrensekoblinger = viderefortStemmekrets.grenser + stemmekretserSomUtgaar.flatMap { it.grenser }
