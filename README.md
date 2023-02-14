@@ -239,9 +239,6 @@ Om integrasjonen mot nibas-events skal fungerer, må du gjøre følgende:
 Miljøvariabel `nibas-events.host` må settes til aktuell nibas-events applikasjon. Denne skal inneholde host:port.
 Kjører nibas-events med security, må det også finnes en miljøvariabel `api.key.publisher`. Den samme som nibas-events autentiserer mot.
 
-Sett miljøvariabelen `GOOGLE_CLOUD_PROJECT` til korrekt nibas gcp project id. (Mot det miljø du vil importere til)
-Autentiser deg mot GCP med kommandoen `gcloud auth login`
-
 # Opprette database i miljø
 
 For nibas-backend må vi (foreløpig) opprette applikasjonsbruker og database manuelt.

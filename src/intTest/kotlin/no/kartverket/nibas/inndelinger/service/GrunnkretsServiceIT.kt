@@ -25,9 +25,8 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.Month
-import java.util.*
 
-@ActiveProfiles("security-off")
+@ActiveProfiles(profiles = ["security-off", "eventsDisabled"])
 @Transactional
 class GrunnkretsServiceIT : TestWithDbContainer() {
 

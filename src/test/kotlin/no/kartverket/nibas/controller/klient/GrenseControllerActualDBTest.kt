@@ -1,7 +1,6 @@
 package no.kartverket.nibas.controller.klient
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import no.kartverket.nibas.TestConfiguration
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.metadata.AdministrativGrenseMetadata
@@ -18,7 +17,6 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
@@ -36,7 +34,6 @@ import kotlin.test.Ignore
 @ActiveProfiles("dev", "security-off")
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import(TestConfiguration::class)
 class GrenseControllerActualDBTest {
 
     @Autowired

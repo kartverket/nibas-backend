@@ -5,7 +5,6 @@ import io.mockk.every
 import io.mockk.mockkStatic
 import io.mockk.slot
 import io.mockk.verify
-import no.kartverket.nibas.TestConfiguration
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
@@ -29,13 +28,10 @@ import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.context.annotation.Import
 import java.time.LocalDate
 import java.time.Month
-import java.util.*
 
 @SpringBootTest
-@Import(TestConfiguration::class)
 class GrenseServiceTest {
 
     @Autowired

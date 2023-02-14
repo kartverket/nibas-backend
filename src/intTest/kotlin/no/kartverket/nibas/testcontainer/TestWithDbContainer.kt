@@ -1,17 +1,13 @@
 package no.kartverket.nibas.testcontainer
 
-import no.kartverket.nibas.TestConfiguration
-import no.kartverket.nibas.repository.*
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment
-import org.springframework.context.annotation.Import
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.utility.DockerImageName
 
 @SpringBootTest(webEnvironment = WebEnvironment.NONE)
-@Import(TestConfiguration::class)
 class TestWithDbContainer {
 
     companion object dbContainer : PostgreSQLContainer<dbContainer>(

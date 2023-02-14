@@ -44,8 +44,6 @@ fun asciiArt(appCtx: ConfigurableApplicationContext) {
     val logger = LoggerFactory.getLogger(NibasBackendApplication::class.java)
     val env = appCtx.environment
     val datasourceUrlProp = "spring.datasource.url"
-    val pubsubEnabledProp = "spring.cloud.gcp.pubsub.enabled"
-    val gcpCoreEnabledProp = "spring.cloud.gcp.core.enabled"
     val cloudVaultEnabledProp = "spring.cloud.vault.enabled"
 
     val asciiArtTemplate = """
@@ -56,8 +54,6 @@ fun asciiArt(appCtx: ConfigurableApplicationContext) {
 	TLS-version:   {}
 	Configuration: {}
     Datasource url: {}
-    ${pubsubEnabledProp}: {} 
-    ${gcpCoreEnabledProp}: {} 
     ${cloudVaultEnabledProp}: {} 
     
 ----------------------------------------------------------"""
@@ -68,8 +64,6 @@ fun asciiArt(appCtx: ConfigurableApplicationContext) {
         env.getProperty("jdk.tls.client.protocols", ""),
         appCtx.getBean(NibasBackendConfigProps::class.java).toString(),
         env.getProperty(datasourceUrlProp),
-        env.getProperty(pubsubEnabledProp),
-        env.getProperty(gcpCoreEnabledProp),
         env.getProperty(cloudVaultEnabledProp),
     ).toTypedArray())
 }

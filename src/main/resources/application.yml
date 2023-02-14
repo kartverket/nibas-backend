@@ -19,9 +19,6 @@ management:
   info:
     env:
       enabled: true
-  health:
-    pubsub:
-      enabled: false
 
 info:
   application:
@@ -39,11 +36,11 @@ spring:
     group:
       import:
         - "humanReadableLog"
-        - "pubSubDisabled"
+        - "eventsDisabled"
         - "security-off"
       localhost:
         - "humanReadableLog"
-        - "pubSubDisabled"
+        - "eventsDisabled"
   main:
     banner-mode: "OFF"
 
@@ -97,12 +94,6 @@ spring:
         trust-store-password: changeit
       connection-timeout: 5000
       read-timeout: 15000
-    gcp:
-      project-id: ${GOOGLE_CLOUD_PROJECT}
-      pubsub:
-        enabled: true
-      core:
-        enabled: true
   config:
     # Optionally connect to Config Server (Vault). Gjør at vault-pathene ikke evalueres for import.
     import: optional:vault://nibas/nibas-backend,
@@ -117,19 +108,6 @@ nibas:
   cron:
     kodeliste:
       invalidate: 0 0 3 * * *
-  pubsub:
-    topic: nibas-events
----
-spring:
-  config:
-    activate:
-      on-profile: pubSubDisabled
-  cloud:
-    gcp:
-      pubsub:
-        enabled: false
-      core:
-        enabled: false
 ---
 spring:
   config:

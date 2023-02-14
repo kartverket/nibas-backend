@@ -25,6 +25,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.MockBean
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -38,6 +39,7 @@ import org.mockito.Mockito.`when` as whenever
  *
  * OBS: Hvis fila slutter på IntegrationTest blir den ignorert.
  */
+@ActiveProfiles(profiles = ["security-off", "eventsDisabled"])
 @Transactional
 class UtkastService_grunnkretsIT : TestWithDbContainer() {
 

@@ -33,10 +33,6 @@ resource "kubernetes_manifest" "nibas_backend_application" {
           value = var.kubernetes_cluster
         },
         {
-          name  = "GOOGLE_CLOUD_PROJECT"
-          value = var.nibas_project_id
-        },
-        {
           name  = "SPRING_PROFILES_ACTIVE"
           value = var.active_profiles
         }

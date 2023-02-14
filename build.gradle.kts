@@ -59,7 +59,6 @@ val springCloudStarterVaultConfigVersion = "3.1.1"
 val spatial4jVersion = "0.8"
 val kotlinxCoroutinesCoreVersion = "1.6.4"
 val logstashVersion = "7.2"
-val springCloudGcpStarter = "3.4.3"
 val springmockkVersion = "4.0.0"
 
 ext["snakeyaml.version"] = "1.31"
@@ -94,8 +93,6 @@ dependencies {
     implementation("org.springframework.cloud:spring-cloud-starter")
     implementation("org.springframework.cloud:spring-cloud-starter-vault-config:$springCloudStarterVaultConfigVersion")
 
-    implementation("com.google.cloud:spring-cloud-gcp-starter:$springCloudGcpStarter")
-    implementation("com.google.cloud:spring-cloud-gcp-pubsub:$springCloudGcpStarter")
     implementation("org.springframework.integration:spring-integration-core")
 
     // This library provides Hibernate 5.5+ Json column support, which is not natively supported by Hibernate
