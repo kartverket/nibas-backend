@@ -1,10 +1,9 @@
-package no.kartverket.nibas.inndelinger.service
+package no.kartverket.nibas.service
 
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.repository.GrenseRepository
-import no.kartverket.nibas.service.GrenseService
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test

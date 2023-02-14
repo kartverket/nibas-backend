@@ -1,4 +1,4 @@
-package no.kartverket.nibas.inndelinger.service
+package no.kartverket.nibas.service
 
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
@@ -10,11 +10,10 @@ import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Stemmekrets
-import no.kartverket.nibas.inndelinger.utils.StemmekretsHelper
+import no.kartverket.nibas.service.utils.StemmekretsHelper
 import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.StemmekretsRepository
-import no.kartverket.nibas.service.StemmekretsService
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Disabled

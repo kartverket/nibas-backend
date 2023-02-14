@@ -1,4 +1,4 @@
-package no.kartverket.nibas.inndelinger.service
+package no.kartverket.nibas.service
 
 import no.kartverket.nibas.builders.*
 import no.kartverket.nibas.common.Identifikator
@@ -8,7 +8,6 @@ import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.repository.*
-import no.kartverket.nibas.service.NasjonService
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test

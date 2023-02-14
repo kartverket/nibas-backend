@@ -1,4 +1,4 @@
-package no.kartverket.nibas.inndelinger.utils
+package no.kartverket.nibas.service.utils
 
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.domain.Grense

@@ -1,4 +1,4 @@
-package no.kartverket.nibas.inndelinger.service
+package no.kartverket.nibas.service
 
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
@@ -14,8 +14,6 @@ import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.findAllByLokalidSortedByGyldigFra
-import no.kartverket.nibas.service.GrunnkretsRequestWrapper
-import no.kartverket.nibas.service.GrunnkretsService
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
