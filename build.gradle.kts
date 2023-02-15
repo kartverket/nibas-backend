@@ -49,7 +49,7 @@ configurations["intTestRuntimeOnly"].extendsFrom(configurations.runtimeOnly.get(
 
 // Definerer versjoner for avhengigheter som ikke dekkes av BOM
 val hibernateVersion = "5.6.5.Final"
-val springdocOpenapiVersion = "1.6.13"
+val springdocOpenapiVersion = "1.6.14"
 val jtsVersion = "1.19.0"
 val testContainerVersion = "1.17.6"
 val autLibVersion = "1.0.0"
