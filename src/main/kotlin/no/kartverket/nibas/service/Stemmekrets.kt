@@ -225,7 +225,8 @@ fun Stemmekrets.toStemmekretsRef(identifikator: Identifikator, antallFramtidigeV
         navn = this.stemmekretsnavn!!,
         nummer = this.stemmekretsnummer!!,
         href = hrefProvider.getHref(identifikator),
-        antallFramtidigeVersjoner = antallFramtidigeVersjoner
+        antallFramtidigeVersjoner = antallFramtidigeVersjoner,
+        version = this.version,
     )
 }
 
