@@ -18,7 +18,6 @@ import no.kartverket.nibas.sosi.sosiimport.GrunnkretsImporter
 import no.kartverket.nibas.sosi.sosiimport.KommuneImporter
 import no.kartverket.nibas.sosi.sosiimport.NasjonImporter
 import no.kartverket.nibas.sosi.sosiimport.StemmekretsImporter
-import org.locationtech.jts.geom.Geometry
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Profile
@@ -50,13 +49,13 @@ class SosiImportService(
     private final val targetGrunnkrets = "grunnkrets"
     private final val targetStemmekrets = "stemmekrets"
 
-    @Value("\${nibas.import.grunnkretsfil:sosifiler/STAT_enheter_grunnkretser_20221129.sos}")
+    @Value("\${nibas.import.grunnkretsfil:sosifiler/STAT_enheter_grunnkretser_20230214.sos}")
     lateinit var grunnkretsfil: String
 
-    @Value("\${nibas.import.admenhetfil:sosifiler/ADM_Enheter_Norge_v_20221219.sos}")
+    @Value("\${nibas.import.admenhetfil:sosifiler/ADM_Enheter_Norge_20230214.sos}")
     lateinit var admenhetfil: String
 
-    @Value("\${nibas.import.stemmekretsfil:sosifiler/Stemmekretser_Norge_rettekopi_20230105.sos}")
+    @Value("\${nibas.import.stemmekretsfil:sosifiler/Stemmekretser_Norge_20230215.sos}")
     lateinit var stemmekretsfil: String
 
     private val importTargets: List<String> =
@@ -107,13 +106,14 @@ class SosiImportService(
         val resultsGrunnkrets = grunnkretsRoot?.let { importerGrunnkretser(grunnkretsRoot, admEnhetRoot!!) }
         val resultsStemmekrets = stemmekretsRoot?.let { importerStemmekretser(stemmekretsRoot, admEnhetRoot!!) }
 
+        logResults("Grunnkrets import", resultsGrunnkrets)
+        logResults("Stemmekrets import", resultsStemmekrets)
+
         if (dannFlaterForAdministrativeEnheter) {
             logger.info("Skal danne flater for administrative enheter")
             flatedanningCustomSQLRepository.slettGrenserUtenUtstrekning()
             flateService.settFlaterPaaAlleAdministrativeEnheter()
         }
-        logResults("Grunnkrets import", resultsGrunnkrets)
-        logResults("Stemmekrets import", resultsStemmekrets)
     }
 
     private fun fileAsInputStream(filepath: String): InputStream = DefaultResourceLoader().getResource(filepath).file.inputStream()
@@ -293,5 +293,3 @@ class SosiImportService(
         groupedResults.entries.forEach { (key, count) -> logger.info("    $key: $count") }
     }
 }
-
-class SosiImportException(val geometry: Geometry, override val message: String, override val cause: Throwable? = null) : RuntimeException(message, cause)
