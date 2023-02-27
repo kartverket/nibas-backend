@@ -6,13 +6,10 @@ import io.mockk.mockkStatic
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
-import no.kartverket.nibas.config.NibasEventsConfig
-import no.kartverket.nibas.events.NibasEventPublisher
 import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.REPOSITORY_EXTENSIONS_FILEPATH
 import no.kartverket.nibas.repository.findAllFramtidigeVersjonerByIdentifikator
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
-import no.kartverket.nibas.service.GrunnkretsService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -22,7 +19,7 @@ import java.time.LocalDate
 import java.time.Month
 
 
-@SpringBootTest(classes = [GrunnkretsService::class, NibasEventsConfig::class, NibasEventPublisher::class])
+@SpringBootTest(classes = [GrunnkretsService::class])
 class GrunnkretsServiceTest {
 
     private val october1In2022 = LocalDate.of(2022, Month.OCTOBER, 1)

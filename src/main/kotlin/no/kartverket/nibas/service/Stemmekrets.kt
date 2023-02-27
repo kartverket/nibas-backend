@@ -76,7 +76,7 @@ class StemmekretsService(private val stemmekretsRepository: StemmekretsRepositor
         sammenslaaingsendringRequest: StemmekretsSammenslaaingsendringRequest,
         sammenslaaingsDato: LocalDate,
         endringstype: Endringstype
-    ) {
+    ): Pair<Stemmekrets, List<Stemmekrets>> {
         val identifikatorViderefoerStemmekrets = Identifikator(lokalid = Lokalid(sammenslaaingsendringRequest.viderefoertStemmekrets.lokalId), gyldighetsdato = sammenslaaingsDato)
         val viderefortStemmekrets = hentStemmekrets(identifikatorViderefoerStemmekrets)
             ?: throw ResponseException.NotFoundException("Videreført stemmekrets med identifikatior: $identifikatorViderefoerStemmekrets ble ikke funnet")
@@ -117,6 +117,7 @@ class StemmekretsService(private val stemmekretsRepository: StemmekretsRepositor
         ).toMutableSet()
 
         nyStemmekrets.oppdaterOmraade()
+        return Pair(nyStemmekrets, stemmekretserSomUtgaar)
     }
 
     private fun createNyVersjonAvStemmekrets(stemmekrets: Stemmekrets, gyldigFra: LocalDate, endringstype: Endringstype): Stemmekrets {

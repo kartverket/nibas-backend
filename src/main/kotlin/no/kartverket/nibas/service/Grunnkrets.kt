@@ -15,8 +15,6 @@ import no.kartverket.nibas.common.UgyldigTilstandException
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Grunnkrets
-import no.kartverket.nibas.events.EventType
-import no.kartverket.nibas.events.NibasEventPublisher
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.kodelister.createKommunenummerFromUUID
 import no.kartverket.nibas.repository.GrunnkretsRepository
@@ -32,7 +30,7 @@ import java.time.LocalDate
 
 @Transactional
 @Service
-class GrunnkretsService(private val grunnkretsRepository: GrunnkretsRepository, private val nibasEventPublisher: NibasEventPublisher) {
+class GrunnkretsService(private val grunnkretsRepository: GrunnkretsRepository) {
 
     @Transactional(readOnly = true)
     fun hentGrunnkrets(identifikator: Identifikator): Grunnkrets? = grunnkretsRepository.findGyldigObjektForIdentifikator(identifikator)
@@ -57,38 +55,45 @@ class GrunnkretsService(private val grunnkretsRepository: GrunnkretsRepository, 
      * Id her må være lokalid.
      * Vet at grunnkretsRequestWrapper.gyldigFra er satt, og må være lik i dag eller fram i tid.
      */
-    fun oppdaterGrunnkrets(lokalid: Lokalid, grunnkretsRequestWrapper: GrunnkretsRequestWrapper) {
-        val request = grunnkretsRequestWrapper.grunnkretsRequest
-        val gyldigFra = grunnkretsRequestWrapper.gyldigFra
-
-        val grunnkretsHelper = GrunnkretsHelper(grunnkretsRepository.findAllByLokalidSortedByGyldigFra(lokalid))
+    fun oppdaterGrunnkrets(
+        lokalId: Lokalid,
+        gyldigFra: LocalDate,
+        endringstype: Endringstype,
+        oppdatertGrunnkrets: GrunnkretsRequest
+    ): Grunnkrets {
+        val grunnkretsHelper =
+            GrunnkretsHelper(grunnkretsRepository.findAllByLokalidSortedByGyldigFra(lokalId))
 
         // Må bruke grunnkrets som matcher lokalId på gyldigFra-tidspunkt
-        grunnkretsHelper.findRelevantGrunnkretsForGyldigFra(gyldigFra, lokalid)
-            .let { relevantGrunnkrets ->
-                verifiserOptimistiskLaas(request.version, relevantGrunnkrets)?.let { throw OptimistiskLaasException(it) }
+        val relevantGrunnkrets =
+            grunnkretsHelper.findRelevantGrunnkretsForGyldigFra(gyldigFra, lokalId)
+        verifiserOptimistiskLaas(oppdatertGrunnkrets.version, relevantGrunnkrets)?.let {
+            throw OptimistiskLaasException(it)
+        }
 
-                // Må oppdatere forrige rad på tidslinja
-                relevantGrunnkrets.setGyldigTil(gyldigFra)
+        // Må oppdatere forrige rad på tidslinja
+        relevantGrunnkrets.setGyldigTil(gyldigFra)
 
-                // Uansett om gyldigFra er identisk med grunnkretsens gyldigFra eller fram i tid: Lage ny rad (ny uuid, samme lokalid).
-                val nyGrunnkrets = grunnkretsRepository.save(Grunnkrets(lokalid = relevantGrunnkrets.lokalid)
+        // Uansett om gyldigFra er identisk med grunnkretsens gyldigFra eller fram i tid: Lage ny
+        // rad (ny uuid, samme lokalid).
+        val nyGrunnkrets =
+            grunnkretsRepository.save(
+                Grunnkrets(lokalid = relevantGrunnkrets.lokalid)
                     // Mappe alle øvrige felter fra eksisterende grunnkrets
                     .applyMappingFromExistingGrunnkrets(relevantGrunnkrets)
-                    .applyChangesFromRequest(request))
+                    .applyChangesFromRequest(oppdatertGrunnkrets)
+            )
 
-                nyGrunnkrets
-                    .applyCascadingOperationsBasedOnExistingGrunnkrets(relevantGrunnkrets)
-                    .apply {
-                        setGyldigFra(gyldigFra)
-                        if (grunnkretsHelper.existsRowsWithLaterGyldigFraDato(relevantGrunnkrets)) {
-                            // Setter gyldigTil lik gyldigFra for neste rad
-                            setGyldigTil(grunnkretsHelper.getNesteGyldigFraDato(relevantGrunnkrets))
-                        }
-                        this.auditInfo.typeEndring = grunnkretsRequestWrapper.endringstype
-                        this.version = grunnkretsHelper.getNextVersion()
-                    }
-                nibasEventPublisher.publishNibasEvent(nyGrunnkrets, EventType.MODIFIED)
+        return nyGrunnkrets
+            .applyCascadingOperationsBasedOnExistingGrunnkrets(relevantGrunnkrets)
+            .apply {
+                setGyldigFra(gyldigFra)
+                if (grunnkretsHelper.existsRowsWithLaterGyldigFraDato(relevantGrunnkrets)) {
+                    // Setter gyldigTil lik gyldigFra for neste rad
+                    setGyldigTil(grunnkretsHelper.getNesteGyldigFraDato(relevantGrunnkrets))
+                }
+                this.auditInfo.typeEndring = endringstype
+                this.version = grunnkretsHelper.getNextVersion()
             }
     }
 
@@ -176,10 +181,4 @@ fun Grunnkrets.toKretsResponse(kodelisteService: KodelisteService): KretsRespons
             flateToFeature(this, this.version)
         )
     )
-)
-
-data class GrunnkretsRequestWrapper(
-    val grunnkretsRequest: GrunnkretsRequest,
-    val gyldigFra: LocalDate,
-    val endringstype: Endringstype,
 )

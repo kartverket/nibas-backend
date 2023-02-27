@@ -4,16 +4,22 @@ import no.kartverket.nibas.api.v1.common.Grenseendringer
 import no.kartverket.nibas.api.v1.common.Metadataendringer
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
+import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
 import no.kartverket.nibas.api.v1.request.FylkeRequest
+import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
 import no.kartverket.nibas.api.v1.request.KommuneRequest
 import no.kartverket.nibas.api.v1.request.NasjonRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsRequest
+import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
 import no.kartverket.nibas.builders.FeatureBuilder
 import no.kartverket.nibas.builders.FylkeRequestBuilder
+import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.GrunnkretsRequestBuilder
 import no.kartverket.nibas.builders.KommuneRequestBuilder
+import no.kartverket.nibas.builders.NasjonBuilder
 import no.kartverket.nibas.builders.NasjonRequestBuilder
 import no.kartverket.nibas.builders.OpprettUtkastRequestBuilder
+import no.kartverket.nibas.builders.StemmekretsBuilder
 import no.kartverket.nibas.builders.StemmekretsRequestBuilder
 import no.kartverket.nibas.builders.UtkastRequestBuilder
 import no.kartverket.nibas.common.CurrentTime
@@ -23,27 +29,33 @@ import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.utkast.Utkast
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
+import no.kartverket.nibas.events.EventRad
+import no.kartverket.nibas.events.NibasEventPublisher
+import no.kartverket.nibas.repository.UtkastRepository
 import no.kartverket.nibas.service.FylkeService
 import no.kartverket.nibas.service.GrenseService
-import no.kartverket.nibas.service.GrunnkretsRequestWrapper
 import no.kartverket.nibas.service.GrunnkretsService
 import no.kartverket.nibas.service.KommuneService
 import no.kartverket.nibas.service.NasjonService
 import no.kartverket.nibas.service.StemmekretsService
-import no.kartverket.nibas.repository.UtkastRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.mockito.ArgumentCaptor
+import org.mockito.ArgumentMatchers.anyList
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.Mockito.verify
 import org.mockito.MockitoAnnotations
+import org.mockito.kotlin.argThat
+import org.mockito.kotlin.verifyNoInteractions
 import java.time.LocalDate
 import java.time.Month
 import java.util.*
 import org.mockito.Mockito.`when` as whenever
+
 
 internal class UtkastServiceTest {
 
@@ -70,6 +82,10 @@ internal class UtkastServiceTest {
 
     @Mock
     private lateinit var grenseServiceMock: GrenseService
+
+    @Mock
+    private lateinit var nibasEventPublisherMock: NibasEventPublisher
+
     private lateinit var utkastService: UtkastService
 
     @BeforeEach
@@ -79,7 +95,7 @@ internal class UtkastServiceTest {
         whenever(currentTime.asLocalDate()).thenReturn(LocalDate.of(2022, 6, 1))
         val utkastValidatorService = UtkastValidatorService(grunnkretsServiceMock, stemmekretsServiceMock, currentTime)
         utkastService = UtkastService(utkastRepositoryMock, nasjonServiceMock, fylkeServiceMock, kommuneServiceMock, grunnkretsServiceMock,
-            stemmekretsServiceMock, grenseServiceMock, utkastValidatorService)
+            stemmekretsServiceMock, grenseServiceMock, nibasEventPublisherMock, utkastValidatorService)
     }
 
     @Test
@@ -182,9 +198,10 @@ internal class UtkastServiceTest {
         verify(nasjonServiceMock).oppdaterNasjon(any(Lokalid::class.java), any(NasjonRequest::class.java))
         verify(fylkeServiceMock).oppdaterFylke(any(Lokalid::class.java), any(FylkeRequest::class.java))
         verify(kommuneServiceMock).oppdaterKommune(any(Lokalid::class.java), any(KommuneRequest::class.java))
-        verify(grunnkretsServiceMock).oppdaterGrunnkrets(any(Lokalid::class.java), any(GrunnkretsRequestWrapper::class.java))
+        verify(grunnkretsServiceMock).oppdaterGrunnkrets(any(Lokalid::class.java), any(LocalDate::class.java), any(Endringstype::class.java), any(GrunnkretsRequest::class.java))
         verify(stemmekretsServiceMock).oppdaterStemmekrets(any(Lokalid::class.java), any(LocalDate::class.java), any(Endringstype::class.java), any(StemmekretsRequest::class.java))
         verify(grenseServiceMock).lagreGrenser(any(FeatureCollection::class.java), any(LocalDate::class.java))
+        verify(nibasEventPublisherMock).publishNibasEvent(anyList(), any(LocalDate::class.java))
     }
 
     @Test
@@ -212,6 +229,89 @@ internal class UtkastServiceTest {
         assertThat(utkast.operasjoner).isNull()
     }
 
+    @Test
+    fun `lager like mange EventRader som det er av endringer`() {
+
+        val utkast =
+            UtkastBuilder.builder("Utkast for publisering")
+                .withGyldigFra(LocalDate.of(2024, Month.JANUARY, 1))
+                .withOperasjoner(
+                    Operasjoner(
+                        metadataendringer =
+                        Metadataendringer(
+                            nasjonsendringer =
+                            mapOf("Nasjon-UUID-1" to NasjonRequestBuilder.DEFAULT_NASJON),
+                            grunnkretsendringer =
+                            mapOf(
+                                "Grunnkrets-UUID-1" to
+                                    GrunnkretsRequestBuilder.DEFAULT_REQUEST,
+                                "Grunnkrets-UUID-2" to
+                                    GrunnkretsRequestBuilder.DEFAULT_REQUEST
+                            ),
+                            stemmekretsendringer =
+                            mapOf(
+                                "Stemmekrets-UUID-1" to
+                                    StemmekretsRequestBuilder.DEFAULT_REQUEST
+                            )
+                        ),
+                        stemmekretsSammenslaaingsendring = sammenslaaingsendringRequest
+                    )
+                )
+                .build()
+
+        whenever(utkastRepositoryMock.findById(anyString())).thenReturn(Optional.of(utkast))
+        whenever(
+            nasjonServiceMock.oppdaterNasjon(
+                any(Lokalid::class.java),
+                any(NasjonRequest::class.java)
+            )
+        )
+            .thenReturn(NasjonBuilder.DEFAULT_NASJON)
+        whenever(
+            grunnkretsServiceMock.oppdaterGrunnkrets(
+                any(Lokalid::class.java),
+                any(LocalDate::class.java),
+                any(Endringstype::class.java),
+                any(GrunnkretsRequest::class.java)
+            )
+        )
+            .thenReturn(GrunnkretsBuilder.DEFAULT_GRUNNKRETS)
+        whenever(
+            stemmekretsServiceMock.oppdaterStemmekrets(
+                any(Lokalid::class.java),
+                any(LocalDate::class.java),
+                any(Endringstype::class.java),
+                any(StemmekretsRequest::class.java)
+            )
+        )
+            .thenReturn(StemmekretsBuilder.DEFAULT_STEMMEKRETS)
+
+        whenever(
+            stemmekretsServiceMock.slaaSammenStemmekretser(
+                any(StemmekretsSammenslaaingsendringRequest::class.java),
+                any(LocalDate::class.java),
+                any(Endringstype::class.java)
+            )
+        )
+            .thenReturn(
+                Pair(
+                    StemmekretsBuilder().withLokalId("2").build(),
+                    listOf(StemmekretsBuilder.DEFAULT_STEMMEKRETS)
+                )
+            )
+
+        val redigerteFlater = utkastService.publiserEndringer(utkast.operasjoner!!, utkast)
+        assertThat(redigerteFlater.size == 5)
+    }
+
     private fun <T> any(clazz: Class<T>): T = Mockito.any(clazz)
 
+    private val sammenslaaingsendringRequest =
+        StemmekretsSammenslaaingsendringRequest(
+            viderefoertStemmekrets = IdentifikatorMedVersjon("Stemmekrets-UUID-1", 1),
+            stemmekretserTilSammenslaaing =
+            listOf(IdentifikatorMedVersjon("Stemmekrets-UUID-2", 1)),
+            stemmekretsNavn = "Sammenslått krets",
+            stemmekretsNummer = "nytt nummer"
+        )
 }

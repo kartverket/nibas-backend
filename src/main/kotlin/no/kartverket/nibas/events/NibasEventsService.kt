@@ -4,10 +4,10 @@ import org.springframework.http.HttpStatus
 import org.springframework.web.reactive.function.client.WebClient
 import reactor.core.publisher.Mono
 
-class NibasEventsService (
+open class NibasEventsService (
     private val nibasEventsWebClient: WebClient, private val publishUri: String
 ) {
-    fun publishEvent(event: NibasEvent) {
+    open fun publishEvent(event: NibasEvent) {
         nibasEventsWebClient.post()
             .uri(publishUri)
             .body(Mono.just(event), NibasEvent::class.java)

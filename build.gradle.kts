@@ -60,6 +60,7 @@ val spatial4jVersion = "0.8"
 val kotlinxCoroutinesCoreVersion = "1.6.4"
 val logstashVersion = "7.2"
 val springmockkVersion = "4.0.0"
+val kotlinMockitoVersion = "4.1.0"
 
 ext["snakeyaml.version"] = "1.31"
 
@@ -106,6 +107,7 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.batch:spring-batch-test")
     testImplementation("com.ninja-squad:springmockk:$springmockkVersion")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:$kotlinMockitoVersion")
 
     testRuntimeOnly("com.h2database:h2")
 

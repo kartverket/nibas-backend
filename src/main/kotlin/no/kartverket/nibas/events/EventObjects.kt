@@ -16,5 +16,5 @@ data class EventRad (
 )
 
 enum class EventType {
-    ADDED, MODIFIED, EXPIRED
+    EXPIRED, ADDED, MODIFIED
 }

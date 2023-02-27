@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.MockBean
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -32,6 +33,7 @@ import java.time.Month
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
+@ActiveProfiles(profiles = ["eventsDisabled"])
 @Transactional
 class UtkastService_stemmekretsIT : TestWithDbContainer() {
 

@@ -1,15 +1,15 @@
 package no.kartverket.nibas.utkast
 
-import no.kartverket.nibas.api.v1.klient.UtkastApi
+import java.time.LocalDate
 import no.kartverket.nibas.api.v1.common.Grenseendringer
 import no.kartverket.nibas.api.v1.common.Metadataendringer
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
+import no.kartverket.nibas.api.v1.klient.UtkastApi
 import no.kartverket.nibas.api.v1.request.ConflictResolved
-import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
 import no.kartverket.nibas.api.v1.request.OppdaterUtkastRequest
 import no.kartverket.nibas.api.v1.request.OpprettUtkastRequest
-import no.kartverket.nibas.api.v1.request.StemmekretsRequest
+import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
 import no.kartverket.nibas.api.v1.response.AuditInfoResponse
 import no.kartverket.nibas.api.v1.response.UtkastOpprettetResponse
 import no.kartverket.nibas.api.v1.response.UtkastRef
@@ -19,19 +19,22 @@ import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.BadRequestException
 import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.domain.Endringstype
+import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.utkast.Utkast
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
+import no.kartverket.nibas.events.EventRad
+import no.kartverket.nibas.events.EventType
+import no.kartverket.nibas.events.NibasEventPublisher
+import no.kartverket.nibas.repository.OptimistiskLaasException
+import no.kartverket.nibas.repository.UtkastRepository
+import no.kartverket.nibas.repository.verifiserOptimistiskLaas
 import no.kartverket.nibas.service.FylkeService
 import no.kartverket.nibas.service.GrenseService
 import no.kartverket.nibas.service.GrunnkretsService
 import no.kartverket.nibas.service.KommuneService
 import no.kartverket.nibas.service.NasjonService
 import no.kartverket.nibas.service.StemmekretsService
-import no.kartverket.nibas.service.GrunnkretsRequestWrapper
-import no.kartverket.nibas.repository.OptimistiskLaasException
-import no.kartverket.nibas.repository.UtkastRepository
-import no.kartverket.nibas.repository.verifiserOptimistiskLaas
 import no.kartverket.nibas.sporing.AuditInfo
 import no.kartverket.nibas.unwrap
 import org.slf4j.Logger
@@ -41,8 +44,6 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
-import java.time.LocalDate
-
 
 @RestController
 class UtkastController(
@@ -50,7 +51,9 @@ class UtkastController(
     private val hrefProvider: HrefProvider
 ) : UtkastApi {
 
-    override fun opprettUtkast(opprettUtkastRequest: OpprettUtkastRequest): UtkastOpprettetResponse {
+    override fun opprettUtkast(
+        opprettUtkastRequest: OpprettUtkastRequest
+    ): UtkastOpprettetResponse {
         return UtkastOpprettetResponse(id = utkastService.opprettUtkast(opprettUtkastRequest))
     }
 
@@ -73,13 +76,18 @@ class UtkastController(
     }
 
     override fun hentUtkastIStatusOpprettet(): List<UtkastRef> {
-        return utkastService.hentUtkastIStatusOpprettet().map { it.toUtkastRef(hrefProvider) }.sortedBy { it.navn }
+        return utkastService
+            .hentUtkastIStatusOpprettet()
+            .map { it.toUtkastRef(hrefProvider) }
+            .sortedBy { it.navn }
     }
 
-    override fun resolveConflictForFramtidigeVersjoner(id: String, conflictResolved: ConflictResolved) {
+    override fun resolveConflictForFramtidigeVersjoner(
+        id: String,
+        conflictResolved: ConflictResolved
+    ) {
         utkastService.resolveConflictForFramtidigeVersjoner(id, conflictResolved)
     }
-
 }
 
 @Transactional
@@ -92,6 +100,7 @@ class UtkastService(
     private val grunnkretsService: GrunnkretsService,
     private val stemmekretsService: StemmekretsService,
     private val grenseService: GrenseService,
+    private val nibasEventPublisher: NibasEventPublisher,
     private val utkastValidatorService: UtkastValidatorService
 ) {
 
@@ -110,7 +119,9 @@ class UtkastService(
 
     fun oppdaterUtkast(id: String, request: OppdaterUtkastRequest): Utkast? {
         return hentUtkast(id)?.let { eksisterendeUtkast ->
-            verifiserOptimistiskLaas(request.version, eksisterendeUtkast)?.let { throw OptimistiskLaasException(it) }
+            verifiserOptimistiskLaas(request.version, eksisterendeUtkast)?.let {
+                throw OptimistiskLaasException(it)
+            }
 
             eksisterendeUtkast.navn = request.navn
             eksisterendeUtkast.auditInfo.typeEndring = Endringstype.fromValue(request.endringstype)
@@ -126,111 +137,223 @@ class UtkastService(
             operasjoner = null
         }
 
+    @Transactional
     fun publiserUtkast(utkastId: String, nyGyldigFra: LocalDate = LocalDate.now()) {
-        val utkast = hentUtkast(utkastId) ?: throw NotFoundException("Utkast ble ikke funnet for id: $utkastId.")
-        //Vi håndterer ikke fremtidige endringer enda, ved kall fra frontend settes publiseringsdato til dagens dato
+        val utkast =
+            hentUtkast(utkastId)
+                ?: throw NotFoundException("Utkast ble ikke funnet for id: $utkastId.")
+        // Vi håndterer ikke fremtidige endringer enda, ved kall fra frontend settes
+        // publiseringsdato til dagens dato
         utkast.gyldigFra = nyGyldigFra
 
-        when (val utkastValideringResult = utkastValidatorService.validateUtkastKlartForPublisering(utkast)) {
+        when (
+            val utkastValideringResult =
+                utkastValidatorService.validateUtkastKlartForPublisering(utkast)
+        ) {
             is UtkastValidering.UgyldigUtkast -> throw utkastValideringResult.feil
             is UtkastValidering.KlartForPublisering -> {
                 logger.debug(utkast.publiseringsInfo())
 
                 utkast.operasjoner?.let { operasjoner ->
-                    val metadata: Metadataendringer = operasjoner.metadataendringer
-                    val grenseendringer = operasjoner.grenseendringer
-
-                    metadata.nasjonsendringer.forEach { nasjonService.oppdaterNasjon(Lokalid(it.key), it.value) }
-                    metadata.fylkesendringer.forEach { fylkeService.oppdaterFylke(Lokalid(it.key), it.value) }
-                    metadata.kommuneendringer.forEach { kommuneService.oppdaterKommune(Lokalid(it.key), it.value) }
-
-                    publiserGrunnkretsEndringer(metadata.grunnkretsendringer, utkast)
-                    publiserStemmekretsEndringer(metadata.stemmekretsendringer, utkast)
-
-                    val endredeFeatures = grenseendringer.endredeFeatures
-
-                    if (endredeFeatures.isNotEmpty()) {
-                        grenseService.lagreGrenser(FeatureCollection(features = endredeFeatures.map { it.value }))
-                    }
-
-                    operasjoner.stemmekretsSammenslaaingsendring?.let { stemmekretsendring ->
-                        stemmekretsService.slaaSammenStemmekretser(
-                            sammenslaaingsendringRequest = stemmekretsendring,
-                            sammenslaaingsDato = utkast.gyldigFra,
-                            endringstype = utkast.auditInfo.typeEndring
-                        )
-                    }
+                    val flateEndringer = publiserEndringer(operasjoner, utkast)
+                    nibasEventPublisher.publishNibasEvent(flateEndringer, utkast.gyldigFra)
                 }
-
                 utkast.settPublisert()
             }
         }
     }
 
-    private fun publiserGrunnkretsEndringer(grunnkretsendringer: Map<String, GrunnkretsRequest>, utkast: Utkast) {
-        grunnkretsendringer.forEach { grunnkretsEndring ->
-            grunnkretsService.oppdaterGrunnkrets(Lokalid(grunnkretsEndring.key),
-                GrunnkretsRequestWrapper(
-                    grunnkretsRequest = grunnkretsEndring.value,
+    internal fun publiserEndringer(operasjoner: Operasjoner, utkast: Utkast): List<EventRad> {
+        val metadataendringer =
+            publiserMetadataEndringer(
+                operasjoner.metadataendringer,
+                utkast,
+            )
+
+        val sammenslaaingsendringer =
+            publiserSammenslaaingsendringer(operasjoner.stemmekretsSammenslaaingsendring, utkast)
+
+        publiserGrenseendringer(
+            operasjoner.grenseendringer
+        ) // OBS - Genererer per nå ikke events for disse!
+
+        return metadataendringer + sammenslaaingsendringer
+    }
+
+    private fun publiserMetadataEndringer(
+        metadata: Metadataendringer,
+        utkast: Utkast,
+    ): List<EventRad> {
+        val endredeNasjoner =
+            metadata.nasjonsendringer.mapNotNull {
+                nasjonService.oppdaterNasjon(Lokalid(it.key), it.value)
+            }
+
+        val endredeFylker =
+            metadata.fylkesendringer.mapNotNull {
+                fylkeService.oppdaterFylke(Lokalid(it.key), it.value)
+            }
+
+        val endredeKommuner =
+            metadata.kommuneendringer.mapNotNull {
+                kommuneService.oppdaterKommune(Lokalid(it.key), it.value)
+            }
+
+        val endredeGrunnkretser =
+            metadata.grunnkretsendringer.mapNotNull { grunnkretsEndring ->
+                grunnkretsService.oppdaterGrunnkrets(
+                    lokalId = Lokalid(grunnkretsEndring.key),
                     gyldigFra = utkast.gyldigFra,
+                    oppdatertGrunnkrets = grunnkretsEndring.value,
                     endringstype = utkast.auditInfo.typeEndring
                 )
+            }
+
+        val endredeStemmekretser =
+            metadata.stemmekretsendringer.mapNotNull { stemmekretsEndring ->
+                stemmekretsService.oppdaterStemmekrets(
+                    lokalId = Lokalid(stemmekretsEndring.key),
+                    gyldigFra = utkast.gyldigFra,
+                    oppdatertStemmekrets = stemmekretsEndring.value,
+                    endringstype = utkast.auditInfo.typeEndring
+                )
+            }
+
+        val alleEndringer =
+            endredeNasjoner +
+            endredeFylker +
+            endredeKommuner +
+            endredeGrunnkretser +
+            endredeStemmekretser
+        return alleEndringer.map { lagFlateEndring(it, EventType.MODIFIED) }
+    }
+
+    private fun publiserGrenseendringer(grenseendringer: Grenseendringer) {
+        val endredeFeatures = grenseendringer.endredeFeatures
+
+        if (endredeFeatures.isNotEmpty()) {
+            grenseService.lagreGrenser(
+                FeatureCollection(features = endredeFeatures.map { it.value })
             )
         }
     }
 
-    private fun publiserStemmekretsEndringer(stemmekretsendringer: Map<String, StemmekretsRequest>, utkast: Utkast) {
-        stemmekretsendringer.forEach { stemmekretsEndring ->
-            stemmekretsService.oppdaterStemmekrets(
-                lokalId = Lokalid(stemmekretsEndring.key),
-                gyldigFra = utkast.gyldigFra,
-                oppdatertStemmekrets = stemmekretsEndring.value,
+    // Bør utvides til å gjelde fler typer sammenslåinger
+    private fun publiserSammenslaaingsendringer(
+        stemmekretsSammenslaaingsendring: StemmekretsSammenslaaingsendringRequest?,
+        utkast: Utkast,
+    ): List<EventRad> =
+        stemmekretsSammenslaaingsendring?.let { stemmekretsendring ->
+            val (modifiedStemmekrets, expiredStemmekretser) = stemmekretsService.slaaSammenStemmekretser(
+                sammenslaaingsendringRequest = stemmekretsendring,
+                sammenslaaingsDato = utkast.gyldigFra,
                 endringstype = utkast.auditInfo.typeEndring
             )
-        }
-    }
+            expiredStemmekretser.map { lagFlateEndring(it, EventType.EXPIRED) } +
+                lagFlateEndring(modifiedStemmekrets, EventType.MODIFIED)
+        } ?: emptyList()
 
     /**
      * Setter utkastet til PUBLISERT hvis utføringen av requestene som er resolved går bra.
+     *
+     * Må refaktoreres, og er foreløpig ikke i bruk da vi ikke har fremtidige endringer - den er ei
+     * heller i brukbar tilstand.
+     *
+     * Håndterer kun konflikter på én lokalID, det betyr at hvis vi har et utkast der det blir
+     * konflikt på f. eks to grunnkretser eller en grunnkrets og en stemmekrets, så håndterer den
+     * kun den ene.
+     *
+     * Dette gjelder også i frontend, og vi ser at ConflictResolved kun gir én lokalID. For å
+     * forsøke å tydeliggjøre dette bruker vi dermed lokalIDen som sendes med i ConflictResolved for
+     * nå.
+     *
+     * Bør også sees sammen med publiserMetadataendringer
      */
-    fun resolveConflictForFramtidigeVersjoner(utkastId: String, conflictResolved: ConflictResolved) {
-        val utkast = hentUtkast(utkastId) ?: throw NotFoundException("Utkast ble ikke funnet for id: $utkastId.")
+    @Transactional
+    fun resolveConflictForFramtidigeVersjoner(
+        utkastId: String,
+        conflictResolved: ConflictResolved
+    ) {
+        val utkast =
+            hentUtkast(utkastId)
+                ?: throw NotFoundException("Utkast ble ikke funnet for id: $utkastId.")
 
-        conflictResolved.grunnkretsRequests.forEach {
-            val lokalid = it.grunnkretsRequest.identifikasjon.lokalid
-            if (utkastValidatorService.datoErEtterSisteGyldigFraDatoForGrunnkrets(lokalid = lokalid, dato = it.gyldigFra)) {
-                throw modifisertGyldigFraException(utkastId = utkast.id, lokalId = lokalid, type = "Grunnkrets")
-            }
+        val lokalid = conflictResolved.lokalid
 
-            grunnkretsService.oppdaterGrunnkrets(
-                conflictResolved.lokalid, GrunnkretsRequestWrapper(
-                grunnkretsRequest = it.grunnkretsRequest,
-                gyldigFra = it.gyldigFra,
-                endringstype = Endringstype.fromValue(it.endringstype),
-            )
+        val endredeGrunnkretser =
+            conflictResolved.grunnkretsRequests
+                .filter { it.grunnkretsRequest.identifikasjon.lokalid == lokalid.value }
+                .mapNotNull {
+                    if (
+                        utkastValidatorService.datoErEtterSisteGyldigFraDatoForGrunnkrets(
+                            lokalid = lokalid.value,
+                            dato = it.gyldigFra
+                        )
+                    ) {
+                        throw modifisertGyldigFraException(
+                            utkastId = utkast.id,
+                            lokalId = lokalid.value,
+                            type = "Grunnkrets"
+                        )
+                    }
+
+                    grunnkretsService.oppdaterGrunnkrets(
+                        lokalId = lokalid,
+                        gyldigFra = it.gyldigFra,
+                        oppdatertGrunnkrets = it.grunnkretsRequest,
+                        endringstype = Endringstype.fromValue(it.endringstype),
+                    )
+                }
+
+        val endredeStemmekretser =
+            conflictResolved.stemmekretsRequests
+                .filter { it.stemmekretsRequest.identifikasjon.lokalid == lokalid.value }
+                .mapNotNull {
+                    if (
+                        utkastValidatorService.datoErEtterSisteGyldigFraDatoForStemmekrets(
+                            lokalid = lokalid.value,
+                            dato = it.gyldigFra
+                        )
+                    ) {
+                        throw modifisertGyldigFraException(
+                            utkastId = utkast.id,
+                            lokalId = lokalid.value,
+                            type = "Stemmekrets"
+                        )
+                    }
+
+                    stemmekretsService.oppdaterStemmekrets(
+                        lokalId = lokalid,
+                        gyldigFra = it.gyldigFra,
+                        endringstype = Endringstype.fromValue(it.endringstype),
+                        oppdatertStemmekrets = it.stemmekretsRequest
+                    )
+                }
+
+        val endredeKretser = endredeGrunnkretser + endredeStemmekretser
+        endredeKretser.map {
+            nibasEventPublisher.publishNibasEvent(
+                redigerteFlater = listOf(lagFlateEndring(it, EventType.MODIFIED)),
+                inntreffer = it.gyldighet.gyldigFra
             )
         }
-
-        conflictResolved.stemmekretsRequests.forEach {
-            val lokalId = it.stemmekretsRequest.identifikasjon.lokalid
-            if (utkastValidatorService.datoErEtterSisteGyldigFraDatoForStemmekrets(lokalid = lokalId, dato = it.gyldigFra)) {
-                throw modifisertGyldigFraException(utkastId = utkast.id, lokalId = lokalId, type = "Stemmekrets")
-            }
-
-            stemmekretsService.oppdaterStemmekrets(
-                lokalId = conflictResolved.lokalid,
-                gyldigFra = it.gyldigFra,
-                endringstype = Endringstype.fromValue(it.endringstype),
-                oppdatertStemmekrets = it.stemmekretsRequest
-            )
-        }
-
         utkast.settPublisert()
     }
 
     private fun modifisertGyldigFraException(utkastId: String, lokalId: String, type: String) =
-        BadRequestException("Kan ikke publisere utkast med id: $utkastId. GyldigFra-feltet på en av endringene i utkastet er etter siste gyldig fra dato for kretsen. " +
-            "Dette kan tyde på at GyldigFra-feltet ble modifisert under konflikt-håndteringen. Feilen oppsto på $type med lokalId: $lokalId")
+        BadRequestException(
+            "Kan ikke publisere utkast med id: $utkastId. GyldigFra-feltet på en av endringene i utkastet er etter siste gyldig fra dato for kretsen. " +
+                "Dette kan tyde på at GyldigFra-feltet ble modifisert under konflikt-håndteringen. Feilen oppsto på $type med lokalId: $lokalId"
+        )
+
+    private fun lagFlateEndring(flate: Flate, eventType: EventType): EventRad {
+        return EventRad(
+            uuid = flate.id,
+            eventType = eventType,
+            lokalid = flate.lokalid,
+            flateType = flate.type
+        )
+    }
 }
 
 private fun Utkast.publiseringsInfo(): String =
@@ -281,23 +404,20 @@ private fun OpprettUtkastRequest.createUtkast(): Utkast =
         .withOperasjoner(this.operasjoner)
         .build()
 
-private fun Utkast.toUtkastResponse(): UtkastResponse = UtkastResponse(
-    id = this.id,
-    navn = this.navn,
-    endringstype = this.auditInfo.typeEndring.value,
-    status = this.status.value,
-    gyldigFra = this.gyldigFra,
-    operasjoner = this.operasjoner ?: Operasjoner(),
-    opprettetDato = this.opprettetDato,
-    auditInfoResponse = this.auditInfo.toAuditInfoResponse(),
-    version = this.version
-)
+private fun Utkast.toUtkastResponse(): UtkastResponse =
+    UtkastResponse(
+        id = this.id,
+        navn = this.navn,
+        endringstype = this.auditInfo.typeEndring.value,
+        status = this.status.value,
+        gyldigFra = this.gyldigFra,
+        operasjoner = this.operasjoner ?: Operasjoner(),
+        opprettetDato = this.opprettetDato,
+        auditInfoResponse = this.auditInfo.toAuditInfoResponse(),
+        version = this.version
+    )
 
-private fun Utkast.toUtkastRef(hrefProvider: HrefProvider): UtkastRef = UtkastRef(
-    id = id,
-    navn = navn,
-    href = hrefProvider.getHref(id)
-)
+private fun Utkast.toUtkastRef(hrefProvider: HrefProvider): UtkastRef =
+    UtkastRef(id = id, navn = navn, href = hrefProvider.getHref(id))
 
 fun AuditInfo.toAuditInfoResponse(): AuditInfoResponse = AuditInfoResponse(this.endretdato)
-

@@ -129,12 +129,13 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         kommune.grunnkretser.add(grunnkrets)
 
         val now = LocalDate.now()
-        val grunnkretsRequestWrapper = GrunnkretsRequestWrapper(
-            grunnkretsRequest = grunnkretsRequest,
-            gyldigFra = now,
-            endringstype = Endringstype.RETTING)
 
-        grunnkretsService.oppdaterGrunnkrets(identifikator.lokalid, grunnkretsRequestWrapper)
+        grunnkretsService.oppdaterGrunnkrets(
+            lokalId = identifikator.lokalid,
+            oppdatertGrunnkrets = grunnkretsRequest,
+            gyldigFra = now,
+            endringstype = Endringstype.RETTING
+        )
         val grunnkretsEtter = grunnkretsService.hentGrunnkrets(Identifikator(identifikator.lokalid))
 
         assertThat(grunnkretsEtter!!.grunnkretsnummer).isNotEqualTo(grunnkrets.grunnkretsnummer).isEqualTo(grunnkretsRequest.grunnkretsnummer)
