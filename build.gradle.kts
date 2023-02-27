@@ -58,7 +58,7 @@ val hibernateTypes55Version = "2.21.1"
 val springCloudStarterVaultConfigVersion = "3.1.1"
 val spatial4jVersion = "0.8"
 val kotlinxCoroutinesCoreVersion = "1.6.4"
-val logstashVersion = "7.2"
+val logstashVersion = "7.3"
 val springmockkVersion = "4.0.0"
 val kotlinMockitoVersion = "4.1.0"
 
