@@ -1,6 +1,7 @@
 package no.kartverket.nibas.utkast
 
 import no.kartverket.nibas.api.v1.common.Grenseendringer
+import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.Metadataendringer
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
@@ -29,7 +30,6 @@ import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.utkast.Utkast
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
-import no.kartverket.nibas.events.EventRad
 import no.kartverket.nibas.events.NibasEventPublisher
 import no.kartverket.nibas.repository.UtkastRepository
 import no.kartverket.nibas.service.FylkeService
@@ -42,15 +42,12 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.anyList
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.Mockito.verify
 import org.mockito.MockitoAnnotations
-import org.mockito.kotlin.argThat
-import org.mockito.kotlin.verifyNoInteractions
 import java.time.LocalDate
 import java.time.Month
 import java.util.*
@@ -114,6 +111,18 @@ internal class UtkastServiceTest {
     }
 
     @Test
+    fun opprettUtkastMedIkkeEditerbareGrenserGirBadRequest() {
+        val opprettUtkastRequest = OpprettUtkastRequestBuilder()
+            .withNavn("Utkast med ikke-editerbare grenser")
+            .withOperasjoner(operasjonerMedIkkeEditerbareGrenser())
+            .build()
+
+        assertThatThrownBy {utkastService.opprettUtkast(opprettUtkastRequest)}
+            .isInstanceOf(BadRequestException::class.java)
+            .hasMessageContaining("Utkast inneholder 5 ikke-editerbare grenser")
+    }
+
+    @Test
     fun oppdaterUtkast() {
         val utkastBuilder = UtkastBuilder.builder("Utkast 3")
             .withFylkeRequests(mapOf("Fylke-UUID-1" to FylkeRequestBuilder.DEFAULT_REQUEST))
@@ -134,6 +143,16 @@ internal class UtkastServiceTest {
             .build())
         assertThat(oppdatertUtkast).isNotNull
         assertThat(oppdatertUtkast!!.gyldigFra).isEqualTo(feb3)
+    }
+
+    @Test
+    fun oppdaterUtkastMedIkkeEditerbareGrenserGirBadRequest() {
+        val utkast = UtkastRequestBuilder()
+            .withOperasjoner(operasjonerMedIkkeEditerbareGrenser())
+            .build()
+        assertThatThrownBy {utkastService.oppdaterUtkast("123", utkast)}
+            .isInstanceOf(BadRequestException::class.java)
+            .hasMessageContaining("Utkast inneholder 5 ikke-editerbare grenser")
     }
 
     @Test
@@ -314,4 +333,32 @@ internal class UtkastServiceTest {
             stemmekretsNavn = "Sammenslått krets",
             stemmekretsNummer = "nytt nummer"
         )
+
+    companion object {
+        fun operasjonerMedIkkeEditerbareGrenser() = Operasjoner(
+            grenseendringer = Grenseendringer(
+                endredeFeatures = mapOf(
+                    "1" to FeatureBuilder("1").withGrensetype(Grensetype.Fylkesgrense).build(),
+                    "2" to FeatureBuilder("2").withGrensetype(Grensetype.Kommunegrense).build(),
+                    "3" to FeatureBuilder("3").withGrensetype(Grensetype.AvtaltAvgrensningslinje).build(),
+                    "4" to FeatureBuilder("4").withGrensetype(Grensetype.Riksgrense).build(),
+                    "5" to FeatureBuilder("5").withGrensetype(Grensetype.Territorialgrense).build(),
+                    "6" to FeatureBuilder("6").withGrensetype(Grensetype.Grunnkretsgrense).build(),
+                    "7" to FeatureBuilder("7").withGrensetype(Grensetype.Delomraadegrense).build(),
+                    "8" to FeatureBuilder("8").withGrensetype(Grensetype.Stemmekretsgrense).build()
+                )
+            )
+        )
+
+        fun operasjonerMedKunEditerbareGrenser() = Operasjoner(
+            grenseendringer = Grenseendringer(
+                endredeFeatures = mapOf(
+                    "1" to FeatureBuilder("1").withGrensetype(Grensetype.Grunnkretsgrense).build(),
+                    "2" to FeatureBuilder("2").withGrensetype(Grensetype.Delomraadegrense).build(),
+                    "3" to FeatureBuilder("3").withGrensetype(Grensetype.Stemmekretsgrense).build()
+                )
+            )
+        )
+    }
+
 }

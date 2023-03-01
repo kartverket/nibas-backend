@@ -83,4 +83,8 @@ class OpprettUtkastRequestBuilder {
         return this
     }
 
+    fun withOperasjoner(operasjoner: Operasjoner): OpprettUtkastRequestBuilder {
+        this.operasjoner = operasjoner
+        return this
+    }
 }

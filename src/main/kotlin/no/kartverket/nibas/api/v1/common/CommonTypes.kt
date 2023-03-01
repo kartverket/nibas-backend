@@ -31,17 +31,17 @@ enum class KontekstEnhetType {
  * Introduserte en value-attributt for å kunne ha norske tegn i verdi (ut i klienten), men ikke i enum-konstant-navn.
  * NB: dbKey brukes som konstant i database-tabellen for grenser (disse må da endres med omhu).
  */
-enum class Grensetype(val value: String, val dbKey: String) {
-    Kommunegrense("Kommunegrense", "Kommunegrense"),
-    Fylkesgrense("Fylkesgrense", "Fylkesgrense"),
-    Riksgrense("Riksgrense", "Riksgrense"),
-    AvtaltAvgrensningslinje("AvtaltAvgrensningslinje", "AvtaltAvgrensningslinje"),
-    Territorialgrense("Territorialgrense", "Territorialgrense"),
-    Grunnlinje("Grunnlinje", "Grunnlinje"),
-    Lovvirkeomraadegrense("LovVirkeområdeGrense", "LovVirkeområdeGrense"),
-    Grunnkretsgrense("Grunnkretsgrense", "Grunnkretsgrense"),
-    Delomraadegrense("Delområdegrense", "Delområdegrense"),
-    Stemmekretsgrense("Stemmekretsgrense", "Stemmekretsgrense");
+enum class Grensetype(val value: String, val dbKey: String, val editerbar: Boolean) {
+    Kommunegrense("Kommunegrense", "Kommunegrense", false),
+    Fylkesgrense("Fylkesgrense", "Fylkesgrense", false),
+    Riksgrense("Riksgrense", "Riksgrense", false),
+    AvtaltAvgrensningslinje("AvtaltAvgrensningslinje", "AvtaltAvgrensningslinje", false),
+    Territorialgrense("Territorialgrense", "Territorialgrense", false),
+    Grunnlinje("Grunnlinje", "Grunnlinje", false),
+    Lovvirkeomraadegrense("LovVirkeområdeGrense", "LovVirkeområdeGrense", false),
+    Grunnkretsgrense("Grunnkretsgrense", "Grunnkretsgrense", true),
+    Delomraadegrense("Delområdegrense", "Delområdegrense", true),
+    Stemmekretsgrense("Stemmekretsgrense", "Stemmekretsgrense", true);
 
     companion object {
         fun fromValue(valueIn: String): Grensetype {

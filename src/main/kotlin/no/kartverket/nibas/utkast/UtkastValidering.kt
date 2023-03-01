@@ -1,6 +1,8 @@
 package no.kartverket.nibas.utkast
 
+import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.Operasjoner
+import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.common.CurrentTime
 import no.kartverket.nibas.common.FeilVedOppdatering
 import no.kartverket.nibas.common.Identifikator
@@ -19,6 +21,18 @@ class UtkastValidatorService(
     val stemmekretsService: StemmekretsService,
     val currentTime: CurrentTime
 ) {
+
+    fun validateGyldigeOperasjoner(operasjoner: Operasjoner): OperasjonerValidering {
+        val endredeFeatures: Map<String, Feature> = operasjoner.grenseendringer.endredeFeatures
+
+        val featuresSomIkkeErEditerbare = endredeFeatures.filterNot { Grensetype.valueOf(it.value.properties.type).editerbar }
+        if (featuresSomIkkeErEditerbare.isNotEmpty()) {
+            return OperasjonerValidering.UgyldigeOperasjoner(operasjoner, ResponseException.BadRequestException("Utkast inneholder ${featuresSomIkkeErEditerbare.size} ikke-editerbare grenser"))
+        }
+
+        return OperasjonerValidering.GyldigeOperasjoner(operasjoner)
+    }
+
     fun validateUtkastKlartForPublisering(utkast: Utkast): UtkastValidering {
         if (utkast.status != UtkastStatus.OPPRETTET) {
             return UtkastValidering.UgyldigUtkast(utkast, ResponseException.BadRequestException("Kan ikke publisere et utkast i status ${utkast.status}."))
@@ -108,4 +122,9 @@ fun Operasjoner.harIkkeEndringer(): Boolean = !this.harEndringer()
 sealed class UtkastValidering {
     data class KlartForPublisering(val utkast: Utkast): UtkastValidering()
     data class UgyldigUtkast(val utkast: Utkast, val feil: Exception): UtkastValidering()
+}
+
+sealed class OperasjonerValidering {
+    data class GyldigeOperasjoner(val operasjoner: Operasjoner): OperasjonerValidering()
+    data class UgyldigeOperasjoner(val operasjoner: Operasjoner, val feil: Exception): OperasjonerValidering()
 }

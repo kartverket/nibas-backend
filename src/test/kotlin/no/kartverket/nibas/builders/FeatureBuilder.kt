@@ -69,6 +69,7 @@ class FeatureBuilder(private val id: String? = "1") {
                 // TODO: Mangler Metadata for Stemmekretsgrense
                 Grensetype.Stemmekretsgrense -> AdministrativGrenseMetadata(common = commonMetadata)
                 Grensetype.Grunnkretsgrense -> StatistiskgrenseMetadata(common = commonMetadata)
+                Grensetype.Delomraadegrense -> StatistiskgrenseMetadata(common = commonMetadata)
                 else -> throw RuntimeException("Not implemented yet.")
             }
         }

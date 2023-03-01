@@ -106,8 +106,12 @@ class UtkastService(
 
     private val logger: Logger = LoggerFactory.getLogger(UtkastService::class.java)
 
-    fun opprettUtkast(opprettUtkastRequest: OpprettUtkastRequest): String =
-        utkastRepository.save(opprettUtkastRequest.createUtkast()).id
+    fun opprettUtkast(opprettUtkastRequest: OpprettUtkastRequest): String {
+        when (val operasjonerValideringResult = utkastValidatorService.validateGyldigeOperasjoner(opprettUtkastRequest.operasjoner)) {
+            is OperasjonerValidering.UgyldigeOperasjoner -> throw operasjonerValideringResult.feil
+            is OperasjonerValidering.GyldigeOperasjoner -> return utkastRepository.save(opprettUtkastRequest.createUtkast()).id
+        }
+    }
 
     @Transactional(readOnly = true)
     fun hentUtkast(id: String): Utkast? = utkastRepository.findById(id).unwrap()
@@ -118,16 +122,21 @@ class UtkastService(
     }
 
     fun oppdaterUtkast(id: String, request: OppdaterUtkastRequest): Utkast? {
-        return hentUtkast(id)?.let { eksisterendeUtkast ->
-            verifiserOptimistiskLaas(request.version, eksisterendeUtkast)?.let {
-                throw OptimistiskLaasException(it)
-            }
+        when (val operasjonerValideringResult = utkastValidatorService.validateGyldigeOperasjoner(request.operasjoner)) {
+            is OperasjonerValidering.UgyldigeOperasjoner -> throw operasjonerValideringResult.feil
+            is OperasjonerValidering.GyldigeOperasjoner -> {
+                return hentUtkast(id)?.let { eksisterendeUtkast ->
+                    verifiserOptimistiskLaas(request.version, eksisterendeUtkast)?.let {
+                        throw OptimistiskLaasException(it)
+                    }
 
-            eksisterendeUtkast.navn = request.navn
-            eksisterendeUtkast.auditInfo.typeEndring = Endringstype.fromValue(request.endringstype)
-            eksisterendeUtkast.gyldigFra = request.gyldigFra!!
-            eksisterendeUtkast.operasjoner = request.operasjoner
-            utkastRepository.save(eksisterendeUtkast)
+                    eksisterendeUtkast.navn = request.navn
+                    eksisterendeUtkast.auditInfo.typeEndring = Endringstype.fromValue(request.endringstype)
+                    eksisterendeUtkast.gyldigFra = request.gyldigFra!!
+                    eksisterendeUtkast.operasjoner = request.operasjoner
+                    utkastRepository.save(eksisterendeUtkast)
+                }
+            }
         }
     }
 
