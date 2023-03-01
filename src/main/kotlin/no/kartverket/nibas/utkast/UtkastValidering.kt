@@ -99,7 +99,8 @@ fun Operasjoner.harEndringer(): Boolean {
         metadata.kommuneendringer.isNotEmpty() ||
         metadata.grunnkretsendringer.isNotEmpty() ||
         metadata.stemmekretsendringer.isNotEmpty() ||
-        this.grenseendringer.endredeFeatures.isNotEmpty()
+        this.grenseendringer.endredeFeatures.isNotEmpty() ||
+        this.stemmekretsSammenslaaingsendring != null
 }
 
 fun Operasjoner.harIkkeEndringer(): Boolean = !this.harEndringer()

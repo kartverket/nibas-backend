@@ -18,6 +18,7 @@ import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.StemmekretsGrenseKobling
+import no.kartverket.nibas.domain.getGrenseJustertForRetning
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.kodelister.createKommunenummerFromUUID
 import no.kartverket.nibas.repository.OptimistiskLaasException
@@ -139,7 +140,7 @@ class StemmekretsService(private val stemmekretsRepository: StemmekretsRepositor
 
     private fun oppdaterGrensekoblingsAtributterForGrenser(stemmekrets: Stemmekrets, grensekoblinger: Collection<StemmekretsGrenseKobling>, gamleGrensekoblinger: Collection<StemmekretsGrenseKobling>): List<StemmekretsGrenseKobling> {
         val alleFlaterOgHull = SosiGeometryFunctions.finnFlaterForGrenser(
-            grensekoblinger.map { GrenseMedLokalid(it.grense.grense, Lokalid(it.grense.lokalid)) }
+            grensekoblinger.map { GrenseMedLokalid(it.getGrenseJustertForRetning(), Lokalid(it.grense.lokalid)) }
         )
 
         val flaterSomPolygon = alleFlaterOgHull.map { grense -> lagFlate(grense.map { it.grense }, emptyList()) }
