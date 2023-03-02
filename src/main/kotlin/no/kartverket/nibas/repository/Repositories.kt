@@ -47,9 +47,6 @@ interface FylkeRepository : CrudRepositoryWithLokalIdFinder<Fylke, String> {
 }
 
 interface KommuneInformasjonRepository : CrudRepository<KommuneInformasjon, String>
-interface KommuneRepository : CrudRepositoryWithLokalIdFinder<Kommune, String> {
-    fun findByKommunenummer(kommunenummer: String): Kommune?
-}
 
 interface GrunnkretsRepository : CrudRepositoryWithLokalIdFinder<Grunnkrets, String>
 

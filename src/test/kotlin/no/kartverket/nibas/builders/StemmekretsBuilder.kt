@@ -83,6 +83,11 @@ class StemmekretsBuilder(
         return this
     }
 
+    fun withGyldigTil(dateTime: LocalDate): StemmekretsBuilder {
+        this.gyldigTil = dateTime
+        return this
+    }
+
     fun withGrenser(vararg grenser: Grense): StemmekretsBuilder {
         this.grenser = this.grenser.plus(grenser.toList())
         return this

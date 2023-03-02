@@ -13,6 +13,7 @@ import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.common.UgyldigTilstandException
+import no.kartverket.nibas.common.createIdentifikator
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
@@ -48,6 +49,13 @@ class StemmekretsService(private val stemmekretsRepository: StemmekretsRepositor
 
     fun hentGrenserForStemmekrets(identifikator: Identifikator): List<GrenseKobling> {
         return hentStemmekrets(identifikator)?.getGrenser(identifikator.gyldighetsdato) ?: emptyList()
+    }
+
+    fun hentStemmekretserForIds(ids: Set<String>, gyldighetsdato: LocalDate): List<Stemmekrets> {
+        return ids
+            .map { createIdentifikator(it, gyldighetsdato) }
+            .map { hentStemmekrets(it) ?: throw ResponseException.NotFoundException("Stemmekrets med $it ble ikke funnet.") }
+            .sortedBy { it.id }
     }
 
     @Transactional(readOnly = false)

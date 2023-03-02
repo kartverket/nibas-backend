@@ -14,7 +14,7 @@ import no.kartverket.nibas.service.toGrunnkretsResponse
 import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDate
 
-@RestController
+@RestController("KlientGrunnkretsController")
 class GrunnkretsController(
     private val grunnkretsService: GrunnkretsService,
 ) : GrunnkretsApi {

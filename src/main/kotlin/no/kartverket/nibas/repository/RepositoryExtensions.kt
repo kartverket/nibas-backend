@@ -81,7 +81,7 @@ fun <T> CrudRepositoryWithLokalIdFinder<T, String>.findAntallFramtidigeVersjoner
  * Hvis ingen treff returneres null.
  * Hvis flere treff kastes exception (programmeringsfeil).
  */
-private fun <T> findGyldigObjektPaaGyldighetsdato(gyldigObjekter: List<T>, gyldighetsdato: LocalDate = LocalDate.now()): T?
+internal fun <T> findGyldigObjektPaaGyldighetsdato(gyldigObjekter: List<T>, gyldighetsdato: LocalDate = LocalDate.now()): T?
     where T : Gyldig, T : ContainsSosiIdentifikasjon {
     val matchendeObjekter = gyldigObjekter.filter { it.gyldigPaaDato(gyldighetsdato) }
     if (matchendeObjekter.isEmpty()) {

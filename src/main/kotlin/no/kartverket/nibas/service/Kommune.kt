@@ -9,6 +9,7 @@ import no.kartverket.nibas.api.v1.response.toObjektIdentifikator
 import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
@@ -22,6 +23,7 @@ import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.repository.findAllGyldigPaaDato
 import no.kartverket.nibas.repository.findAntallFramtidigeVersjonerForIdentifikator
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
+import no.kartverket.nibas.repository.findGyldigKommuneForKommunenummer
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -33,13 +35,15 @@ class KommuneService(
     private val kommuneRepository: KommuneRepository,
     private val fylkeRepository: FylkeRepository,
     private val administrativenhetnavnRepository: AdministrativenhetnavnRepository,
+    private val kodelisteService: KodelisteService,
 ) {
 
     fun hentAlleKommuner(gyldighetsdato: LocalDate = LocalDate.now()): List<Kommune> = kommuneRepository.findAllGyldigPaaDato(gyldighetsdato)
     fun hentKommune(identifikator: Identifikator): Kommune? = kommuneRepository.findGyldigObjektForIdentifikator(identifikator)
 
-    // Kan vel bli flere treff på findByKommunenummer nå, men brukes bare fra MatrikkelService hvor vi har sagt at vi kan bruke dagens dato for nå
-    fun hentKommuneByKommunenummer(kommunenummerUuid: String): Kommune? = kommuneRepository.findByKommunenummer(kommunenummerUuid)
+    fun hentKommuneByKommunenummer(kommunenummerUuid: String, gyldighetsdato: LocalDate): Kommune? {
+        return kommuneRepository.findGyldigKommuneForKommunenummer(kommunenummerUuid, gyldighetsdato)
+    }
 
     fun hentKommunerForFylke(fylkeIdentifikator: Identifikator): List<Kommune> =
         fylkeRepository.findGyldigObjektForIdentifikator(fylkeIdentifikator)?.getKommuner(fylkeIdentifikator.gyldighetsdato) ?: emptyList()
@@ -77,7 +81,29 @@ class KommuneService(
         return hentKommune(kommuneIdentifikator)?.getStemmekretser(kommuneIdentifikator.gyldighetsdato) ?: emptyList()
     }
 
+    fun hentAlleGrunnkretserForKommune(kommunenummer: String, gyldighetsdato: LocalDate): List<Grunnkrets> {
+        return hentKommuneFraNumeriskNummer(kommunenummer, gyldighetsdato).grunnkretser
+            .filter { it.gyldigPaaDato(LocalDate.now()) }
+            .sortedBy { it.id }
+    }
+
+    fun hentAlleStemmekretserForKommune(numeriskKommunenummer: String, gyldighetsdato: LocalDate): List<Stemmekrets> {
+        return hentKommuneFraNumeriskNummer(numeriskKommunenummer, gyldighetsdato).stemmekretser
+            .filter { it.gyldigPaaDato(gyldighetsdato) }
+            .sortedBy { it.id }
+    }
+
     fun hentAntallGyldigeVersjonerFramITidFor(identifikator: Identifikator): Int = kommuneRepository.findAntallFramtidigeVersjonerForIdentifikator(identifikator)
+
+    private fun hentKommuneFraNumeriskNummer(numeriskKommunenummer: String, gyldighetsdato: LocalDate): Kommune {
+        try {
+            val kommunenummerUUID = kodelisteService.getKommunenummerIdByCodeValue(numeriskKommunenummer)
+            return hentKommuneByKommunenummer(kommunenummerUUID, gyldighetsdato)
+                ?: throw ResponseException.NotFoundException("Fant ikke kommune med nummer: $numeriskKommunenummer")
+        } catch (ex: NoSuchElementException) {
+            throw ResponseException.NotFoundException("Fant ikke kommunenummer-id for $numeriskKommunenummer")
+        }
+    }
 
 }
 

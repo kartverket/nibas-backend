@@ -12,6 +12,7 @@ import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.common.UgyldigTilstandException
+import no.kartverket.nibas.common.createIdentifikator
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Grunnkrets
@@ -45,6 +46,14 @@ class GrunnkretsService(private val grunnkretsRepository: GrunnkretsRepository) 
     @Transactional(readOnly = true)
     fun hentGrenserForGrunnkrets(identifikator: Identifikator): List<GrenseKobling> {
         return hentGrunnkrets(identifikator)?.getGrenser(identifikator.gyldighetsdato) ?: emptyList()
+    }
+
+    @Transactional(readOnly = true)
+    fun hentGrunnkretserForIds(ids: Set<String>, gyldighetsdato: LocalDate): List<Grunnkrets> {
+        return ids
+            .map { createIdentifikator(it, gyldighetsdato) }
+            .map { hentGrunnkrets(it) ?: throw NotFoundException("Grunnkrets med $it ble ikke funnet.") }
+            .sortedBy { it.id }
     }
 
     fun hentAlleVersjonerMedGyldigFraEtterGittDato(lokalId: Lokalid, dato: LocalDate): List<Grunnkrets> =

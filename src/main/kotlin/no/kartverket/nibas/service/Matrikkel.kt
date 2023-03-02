@@ -6,8 +6,6 @@ import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Stemmekrets
-import no.kartverket.nibas.service.KommuneService
-import no.kartverket.nibas.service.StemmekretsService
 import no.kartverket.nibas.kodelister.KodelisteService
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -60,7 +58,7 @@ class MatrikkelService(private val grunnkretsService: GrunnkretsService,
     private fun hentKommuneFraNumeriskNummer(numeriskKommunenummer: String): Kommune {
         try {
             val kommunenummerUUID = kodelisteService.getKommunenummerIdByCodeValue(numeriskKommunenummer)
-            return kommuneService.hentKommuneByKommunenummer(kommunenummerUUID)
+            return kommuneService.hentKommuneByKommunenummer(kommunenummerUUID, LocalDate.now())
                 ?: throw NotFoundException("Fant ikke kommune med nummer: $numeriskKommunenummer")
         } catch (ex: NoSuchElementException) {
             throw NotFoundException("Fant ikke kommunenummer-id for $numeriskKommunenummer")

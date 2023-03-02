@@ -11,7 +11,7 @@ import no.kartverket.nibas.service.posisjonToFeature
 class KretsResponseBuilder(
     private var grunnkrets: Grunnkrets = GrunnkretsBuilder().build(),
     private var stemmekrets: Stemmekrets = StemmekretsBuilder().build(),
-    private var kommunenummer: String = "1787"
+    private var kommunenummer: String = "0301"
 ) {
 
     fun buildForGrunnkrets(): KretsResponse {

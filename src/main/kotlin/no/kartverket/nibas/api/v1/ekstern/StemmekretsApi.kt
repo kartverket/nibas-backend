@@ -2,11 +2,13 @@ package no.kartverket.nibas.api.v1.ekstern
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import no.kartverket.nibas.api.v1.response.KretsResponse
 import no.kartverket.nibas.api.v1.response.StemmekretsResponse
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.MediaType
@@ -23,6 +25,25 @@ import java.util.*
     description = "Endepunkter for å hente informasjon om stemmekretser i Nasjonal inndelingsbase"
 )
 interface StemmekretsApi {
+
+    @Operation(summary = "Henter stemmekretser med gitte id-er", description = "Henter stemmekretser med gitte id-er")
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            description = "Successful operation",
+            content = [
+                Content(
+                    mediaType = "application/json",
+                    array = ArraySchema(schema = Schema(implementation = KretsResponse::class))
+                )
+            ]
+        ),
+        ApiResponse(responseCode = "404", description = "Not Found")
+    )
+    @GetMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun hentStemmekretserForIds(@Parameter(description = "ID-ene til stemmekretsene man vil hente") @RequestParam ids: Set<String>,
+                                @Parameter(description = "Eventuell gyldighetsdato for stemmekrets (default = dagens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+                                @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?): List<KretsResponse>
 
     @Operation(summary = "Hent en stemmekrets med gitt id", description = "Henter stemmekrets med gitt id")
     @ApiResponses(

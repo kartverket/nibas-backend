@@ -7,16 +7,21 @@ import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.builders.KommuneRequestBuilder
+import no.kartverket.nibas.builders.StemmekretsBuilder
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.FylkeRepository
+import no.kartverket.nibas.repository.KOMMUNEREPOSITORY_EXTENSIONS_FILEPATH
 import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.REPOSITORY_EXTENSIONS_FILEPATH
+import no.kartverket.nibas.repository.findGyldigKommuneForKommunenummer
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito.verify
 import org.springframework.beans.factory.annotation.Autowired
@@ -47,10 +52,14 @@ class KommuneServiceTest {
     @MockBean
     private lateinit var administrativenhetnavnRepository: AdministrativenhetnavnRepository
 
+    @MockkBean
+    private lateinit var kodelisteServiceMock: KodelisteService
+
     @BeforeEach
     fun beforeEach() {
         // Bruker her SpringMockK for å kunne mocke ut kall til extension functions
         mockkStatic(REPOSITORY_EXTENSIONS_FILEPATH)
+        mockkStatic(KOMMUNEREPOSITORY_EXTENSIONS_FILEPATH)
     }
 
     @Test
@@ -167,5 +176,81 @@ class KommuneServiceTest {
 
         val expectedListOfGrunnkretsIds = listOf("1", "2")
         assertThat(kommunesGrunnkretser.map { it.id }).isEqualTo(expectedListOfGrunnkretsIds)
+    }
+
+    @Test
+    fun `hentAlleStemmekretserForKommune returnerer stemmekretser for gyldighetsdato`() {
+        val stemmekrets1 =
+            StemmekretsBuilder(id = "1").withGyldigFra(LocalDate.of(2020, Month.JANUARY, 1)).build()
+        val stemmekrets2 =
+            StemmekretsBuilder(id = "2").withGyldigFra(LocalDate.of(2019, Month.JANUARY, 1)).build()
+        val stemmekrets3 =
+            StemmekretsBuilder(id = "3")
+                .withGyldigFra(LocalDate.of(2019, Month.JANUARY, 1))
+                .withGyldigTil(LocalDate.of(2020, Month.JANUARY, 1))
+                .build()
+        val gyldighetsdato: LocalDate = LocalDate.of(2023, Month.JANUARY, 1)
+        val kommunenummer = "0301"
+        val kommunenummerUUID = "23b34165-bd8b-4eae-9356-4237ca68f287"
+        val kommune =
+            KommuneBuilder()
+                .withNavn("Oslo")
+                .withStemmekrets(stemmekrets1)
+                .withStemmekrets(stemmekrets2)
+                .withStemmekrets(stemmekrets3)
+                .build()
+
+        every { kodelisteServiceMock.getKommunenummerIdByCodeValue(eq(kommunenummer)) } returns
+            kommunenummerUUID
+        every {
+            kommuneRepositoryKotlinMock.findGyldigKommuneForKommunenummer(
+                eq(kommunenummerUUID),
+                eq(gyldighetsdato)
+            )
+        } returns kommune
+
+        val stemmekretser =
+            kommuneService.hentAlleStemmekretserForKommune(kommunenummer, gyldighetsdato)
+        assertEquals(stemmekretser, listOf(stemmekrets1, stemmekrets2))
+    }
+
+    @Test
+    fun `hentAlleGrunnkretserForKommune returnerer grunnkretser for gyldighetsdato`() {
+        val gk1 =
+            GrunnkretsBuilder(id = "1", lokalId = Lokalid("87"))
+                .withGyldigFra(LocalDate.of(2020, Month.JANUARY, 1))
+                .build()
+        val gk2 =
+            GrunnkretsBuilder(id = "2", lokalId = Lokalid("88"))
+                .withGyldigFra(LocalDate.of(2020, Month.JANUARY, 1))
+                .build()
+        val gk3 =
+            GrunnkretsBuilder(id = "3", lokalId = Lokalid("88"))
+                .withGyldigFra(LocalDate.of(2019, Month.JANUARY, 1))
+                .withGyldigTil(LocalDate.of(2020, Month.JANUARY, 1))
+                .build()
+        val gyldighetsdato: LocalDate = LocalDate.of(2023, Month.JANUARY, 1)
+        val kommunenummer = "0301"
+        val kommunenummerUUID = "23b34165-bd8b-4eae-9356-4237ca68f287"
+        val kommune =
+            KommuneBuilder()
+                .withNavn("Oslo")
+                .withGrunnkrets(gk1)
+                .withGrunnkrets(gk2)
+                .withGrunnkrets(gk3)
+                .build()
+
+        every { kodelisteServiceMock.getKommunenummerIdByCodeValue(eq(kommunenummer)) } returns
+            kommunenummerUUID
+        every {
+            kommuneRepositoryKotlinMock.findGyldigKommuneForKommunenummer(
+                eq(kommunenummerUUID),
+                eq(gyldighetsdato)
+            )
+        } returns kommune
+
+        val grunnkretser =
+            kommuneService.hentAlleGrunnkretserForKommune(kommunenummer, gyldighetsdato)
+        assertEquals(grunnkretser, listOf(gk1, gk2))
     }
 }

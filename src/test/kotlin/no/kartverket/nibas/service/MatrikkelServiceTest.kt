@@ -5,14 +5,11 @@ import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.builders.StemmekretsBuilder
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.kodelister.KodelisteService
-import no.kartverket.nibas.service.GrunnkretsService
-import no.kartverket.nibas.service.KommuneService
-import no.kartverket.nibas.service.MatrikkelService
-import no.kartverket.nibas.service.StemmekretsService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mock
+import org.mockito.Mockito
 import org.mockito.Mockito.anyString
 import org.mockito.MockitoAnnotations
 import java.time.LocalDate
@@ -53,7 +50,7 @@ internal class MatrikkelServiceTest {
         val stemmekrets2 = StemmekretsBuilder(id = "2")
             .withGyldigFra(LocalDate.of(2019, Month.JANUARY, 1))
             .build()
-        whenever(kommuneServiceMock.hentKommuneByKommunenummer(anyString())).thenReturn(
+        whenever(kommuneServiceMock.hentKommuneByKommunenummer(anyString(), any(LocalDate::class.java))).thenReturn(
             KommuneBuilder()
                 .withNavn("Oslo")
                 .withStemmekrets(stemmekrets1)
@@ -78,7 +75,7 @@ internal class MatrikkelServiceTest {
         )
             .withGyldigFra(LocalDate.of(2020, Month.JANUARY, 1))
             .build()
-        whenever(kommuneServiceMock.hentKommuneByKommunenummer(anyString())).thenReturn(
+        whenever(kommuneServiceMock.hentKommuneByKommunenummer(anyString(), any(LocalDate::class.java))).thenReturn(
             KommuneBuilder()
                 .withNavn("Hole")
                 .withGrunnkrets(gk1)
@@ -88,5 +85,7 @@ internal class MatrikkelServiceTest {
         val grunnkretser = matrikkelService.hentAlleGrunnkretserForKommune("1787")
         assertThat(grunnkretser).isEqualTo(listOf(gk1, gk2))
     }
+
+    private fun <T> any(clazz: Class<T>): T = Mockito.any(clazz)
 
 }

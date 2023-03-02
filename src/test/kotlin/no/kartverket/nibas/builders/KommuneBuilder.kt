@@ -84,4 +84,13 @@ class KommuneBuilder(
         return this
     }
 
+    fun withGyldigFra(dato: LocalDate): KommuneBuilder {
+        this.gyldigFra = dato
+        return this
+    }
+    fun withGyldigTil(dato: LocalDate): KommuneBuilder {
+        this.gyldigTil = dato
+        return this
+    }
+
 }

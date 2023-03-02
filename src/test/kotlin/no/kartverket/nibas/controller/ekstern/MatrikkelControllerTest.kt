@@ -25,8 +25,8 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.mockito.Mockito.`when` as whenever
 
-const val GRUNNKRETSER_ENDPOINT = "/v1/ekstern/matrikkel/grunnkretser"
-const val STEMMEKRETSER_ENDPOINT = "/v1/ekstern/matrikkel/stemmekretser"
+const val GRUNNKRETSER_MATRIKKEL_ENDPOINT = "/v1/ekstern/matrikkel/grunnkretser"
+const val STEMMEKRETSER_MATRIKKEL_ENDPOINT = "/v1/ekstern/matrikkel/stemmekretser"
 
 
 /**
@@ -44,7 +44,7 @@ internal class MatrikkelControllerTest : NibasMvcTest() {
 
     @BeforeEach
     fun beforeEach() {
-        whenever(kodelisteServiceMock.getCodeValueByKommunenummerId(anyString())).thenReturn("1787")
+        whenever(kodelisteServiceMock.getCodeValueByKommunenummerId(anyString())).thenReturn("0301")
     }
 
     @Test
@@ -56,7 +56,7 @@ internal class MatrikkelControllerTest : NibasMvcTest() {
 
         whenever(matrikkelService.hentStemmekretserForIds(anySet())).thenReturn(listOf(stemmekrets))
 
-        val responseAsString = invokeAndExpectStatusOK("$STEMMEKRETSER_ENDPOINT?id=1")
+        val responseAsString = invokeAndExpectStatusOK("$STEMMEKRETSER_MATRIKKEL_ENDPOINT?id=1")
         assertThat(responseAsString).isEqualTo(expectedResponseAsJson)
     }
 
@@ -74,7 +74,7 @@ internal class MatrikkelControllerTest : NibasMvcTest() {
 
         whenever(matrikkelService.hentStemmekretserForIds(anySet())).thenReturn(listOf(stemmekrets1, stemmekrets2))
 
-        val responseAsString = invokeAndExpectStatusOK("$STEMMEKRETSER_ENDPOINT?id=2,1")
+        val responseAsString = invokeAndExpectStatusOK("$STEMMEKRETSER_MATRIKKEL_ENDPOINT?id=2,1")
         assertThat(responseAsString).isEqualTo(expectedResponseAsJson)
     }
 
@@ -87,7 +87,7 @@ internal class MatrikkelControllerTest : NibasMvcTest() {
 
         whenever(matrikkelService.hentGrunnkretserForIds(anySet())).thenReturn(listOf(grunnkrets))
 
-        val responseAsString = invokeAndExpectStatusOK("$GRUNNKRETSER_ENDPOINT?id=1")
+        val responseAsString = invokeAndExpectStatusOK("$GRUNNKRETSER_MATRIKKEL_ENDPOINT?id=1")
         assertThat(responseAsString).isEqualTo(expectedResponseAsJson)
     }
 
@@ -105,7 +105,7 @@ internal class MatrikkelControllerTest : NibasMvcTest() {
 
         whenever(matrikkelService.hentGrunnkretserForIds(anySet())).thenReturn(listOf(grunnkrets1, grunnkrets2))
 
-        val responseAsString = invokeAndExpectStatusOK("$GRUNNKRETSER_ENDPOINT?id=b7,a5")
+        val responseAsString = invokeAndExpectStatusOK("$GRUNNKRETSER_MATRIKKEL_ENDPOINT?id=b7,a5")
         assertThat(responseAsString).isEqualTo(expectedResponseAsJson)
     }
 
