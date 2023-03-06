@@ -24,7 +24,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.time.LocalDate
 import org.mockito.Mockito.`when` as whenever
 
-const val GRUNNKRETSER_ENDPOINT = "/v1/ekstern/grunnkretser"
+const val EKSTERN_GRUNNKRETSER_ENDPOINT = "/v1/ekstern/grunnkretser"
 
 @ImportAutoConfiguration(WebSecurityConfig::class)
 @WebMvcTest(GrunnkretsController::class)
@@ -50,7 +50,7 @@ internal class GrunnkretsControllerTest : NibasMvcTest() {
 
         whenever(grunnkretsService.hentGrunnkretserForIds(anySet(), any(LocalDate::class.java))).thenReturn(listOf(grunnkrets))
 
-        val responseAsString = invokeAndExpectStatusOK("$GRUNNKRETSER_ENDPOINT?ids=1")
+        val responseAsString = invokeAndExpectStatusOK("$EKSTERN_GRUNNKRETSER_ENDPOINT?ids=1")
         Assertions.assertThat(responseAsString).isEqualTo(expectedResponseAsJson)
     }
 
@@ -68,7 +68,7 @@ internal class GrunnkretsControllerTest : NibasMvcTest() {
 
         whenever(grunnkretsService.hentGrunnkretserForIds(anySet(), any(LocalDate::class.java))).thenReturn(listOf(grunnkrets1, grunnkrets2))
 
-        val responseAsString = invokeAndExpectStatusOK("$GRUNNKRETSER_ENDPOINT?ids=b7,a5&gyldighetsdato=2023-02-27")
+        val responseAsString = invokeAndExpectStatusOK("$EKSTERN_GRUNNKRETSER_ENDPOINT?ids=b7,a5&gyldighetsdato=2023-02-27")
         Assertions.assertThat(responseAsString).isEqualTo(expectedResponseAsJson)
     }
 

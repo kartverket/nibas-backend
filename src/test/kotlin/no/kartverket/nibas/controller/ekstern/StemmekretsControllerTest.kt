@@ -25,7 +25,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.time.LocalDate
 import org.mockito.Mockito.`when` as whenever
 
-const val STEMMEKRETSER_ENDPOINT = "/v1/ekstern/stemmekretser"
+const val EKSTERN_STEMMEKRETSER_ENDPOINT = "/v1/ekstern/stemmekretser"
 
 @ImportAutoConfiguration(WebSecurityConfig::class)
 @WebMvcTest(StemmekretsController::class)
@@ -45,7 +45,7 @@ internal class StemmekretsControllerTest : NibasMvcTest() {
     @Test
     fun hentStemmekretsReturns200_OK() {
         whenever(stemmekretsService.hentStemmekrets(any(Identifikator::class.java))).thenReturn(StemmekretsBuilder.DEFAULT_STEMMEKRETS)
-        get("$STEMMEKRETSER_ENDPOINT/1", status().isOk)
+        get("$EKSTERN_STEMMEKRETSER_ENDPOINT/1", status().isOk)
     }
 
     @Test
@@ -58,7 +58,7 @@ internal class StemmekretsControllerTest : NibasMvcTest() {
         whenever(stemmekretsService.hentStemmekretserForIds(anySet(), any(LocalDate::class.java)))
             .thenReturn(listOf(stemmekrets))
 
-        val responseAsString = invokeAndExpectStatusOK("$STEMMEKRETSER_ENDPOINT?ids=1")
+        val responseAsString = invokeAndExpectStatusOK("$EKSTERN_STEMMEKRETSER_ENDPOINT?ids=1")
         Assertions.assertThat(responseAsString).isEqualTo(expectedResponseAsJson)
     }
 
@@ -75,7 +75,7 @@ internal class StemmekretsControllerTest : NibasMvcTest() {
         whenever(stemmekretsService.hentStemmekretserForIds(anySet(), any(LocalDate::class.java)))
             .thenReturn(listOf(stemmekrets1, stemmekrets2))
 
-        val responseAsString = invokeAndExpectStatusOK("$STEMMEKRETSER_ENDPOINT?ids=2,1&gyldighetsdato=2023-02-27")
+        val responseAsString = invokeAndExpectStatusOK("$EKSTERN_STEMMEKRETSER_ENDPOINT?ids=2,1&gyldighetsdato=2023-02-27")
         Assertions.assertThat(responseAsString).isEqualTo(expectedResponseAsJson)
     }
 

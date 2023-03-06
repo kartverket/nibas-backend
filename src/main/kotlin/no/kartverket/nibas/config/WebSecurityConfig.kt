@@ -42,7 +42,7 @@ import jakarta.servlet.http.HttpServletResponse
 /**
  * Sikkerhetskonfigurasjon for sikring av endepunkter.
  * Requester evalueres mot 2 SecurityFilterChain:
- * - SecurityFilterChain for path "/v1/ekstern/matrikkel/'**" (høyest pri)
+ * - SecurityFilterChain for path "/v1/ekstern/'**" (høyest pri)
  * - SecurityFilterChain for øvrige pather (lavest pri)
  * En får kun match mot 1 av disse.
  *
@@ -56,7 +56,7 @@ import jakarta.servlet.http.HttpServletResponse
 class WebSecurityConfig @Autowired constructor(private val environment: Environment) : DefaultWebSecurityConfig(environment) {
 
     /**
-     * Sikkerhetskonfigurasjon for path "/v1/ekstern/matrikkel/'**".
+     * Sikkerhetskonfigurasjon for path "/v1/ekstern/'**".
      * Har høyest prioritet (lavest Order).
      *
      * Requestene må ha tilstedeværelse av Basic Authorization-header med gyldig apiKey.
