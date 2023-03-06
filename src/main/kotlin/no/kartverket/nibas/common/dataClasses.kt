@@ -1,5 +1,6 @@
 package no.kartverket.nibas.common
 
+import java.io.Serializable
 import java.time.LocalDate
 
 data class Lokalid(val value: String)

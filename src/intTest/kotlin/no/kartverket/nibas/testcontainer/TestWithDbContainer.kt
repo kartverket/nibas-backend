@@ -7,7 +7,7 @@ import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.utility.DockerImageName
 
-@SpringBootTest(webEnvironment = WebEnvironment.NONE)
+@SpringBootTest(webEnvironment = WebEnvironment.MOCK)
 class TestWithDbContainer {
 
     companion object dbContainer : PostgreSQLContainer<dbContainer>(

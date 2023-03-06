@@ -6,10 +6,9 @@ import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
 import no.kartverket.nibas.common.Lokalid
-import java.io.Serializable
 import java.time.LocalDate
-import javax.validation.constraints.NotBlank
-import javax.validation.constraints.NotNull
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotNull
 
 data class NasjonRequest(
     @Schema(description = "Navnene til nasjonen")
@@ -179,4 +178,4 @@ data class StemmekretsSammenslaaingsendringRequest (
     val stemmekretsNavn: String,
     @Schema (description = "Stemmekretsnummeret til den sammenslåtte stemmekretsen")
     val stemmekretsNummer: String
-): Serializable
+)

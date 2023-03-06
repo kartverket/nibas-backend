@@ -9,7 +9,7 @@ import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Metadata
 import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
-import javax.validation.constraints.NotNull
+import jakarta.validation.constraints.NotNull
 
 const val DISCRIMINATOR_FIELD: String = "type"
 const val POINT_SCHEMA: String = "Point"

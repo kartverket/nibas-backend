@@ -17,10 +17,10 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Component
 import java.time.LocalDate
 import java.time.ZonedDateTime
-import javax.annotation.PostConstruct
-import javax.persistence.Column
-import javax.persistence.Embeddable
-import javax.persistence.EntityManagerFactory
+import jakarta.annotation.PostConstruct
+import jakarta.persistence.Column
+import jakarta.persistence.Embeddable
+import jakarta.persistence.EntityManagerFactory
 
 
 interface UserFacade {

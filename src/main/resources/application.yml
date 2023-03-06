@@ -56,7 +56,6 @@ spring:
     driver-class-name: org.postgresql.Driver
 
   jpa:
-    database-platform: org.hibernate.spatial.dialect.postgis.PostgisDialect
     # Øker ytelsen ved import betraktelig dersom den settes til false, men resten av applikasjonen håndterer det per nå ikke. Se også https://stackoverflow.com/questions/30549489/what-is-this-spring-jpa-open-in-view-true-property-in-spring-boot
     # open-in-view: false
     # Dersom man vil vises hibernate-spørringene i loggen

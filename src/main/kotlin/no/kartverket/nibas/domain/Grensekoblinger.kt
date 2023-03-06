@@ -4,8 +4,8 @@ import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.common.Identifikator
 import org.locationtech.jts.geom.LineString
 import java.time.LocalDate
-import javax.persistence.Column
-import javax.persistence.Embeddable
+import jakarta.persistence.Column
+import jakarta.persistence.Embeddable
 
 
 interface GrenseKobling {

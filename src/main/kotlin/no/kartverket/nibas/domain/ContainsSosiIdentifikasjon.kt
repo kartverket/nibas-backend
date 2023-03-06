@@ -1,5 +1,7 @@
 package no.kartverket.nibas.domain
 
+import java.io.Serializable
+
 /**
  * Datatype Identifikasjon er beskrevet her:
  * https://objektkatalog.geonorge.no/Diagram/Index/EAID_F47F753A_C178_4be5_91FE_2BFB2AD68F3B

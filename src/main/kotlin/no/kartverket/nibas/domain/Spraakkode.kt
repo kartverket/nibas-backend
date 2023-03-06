@@ -1,6 +1,6 @@
 package no.kartverket.nibas.domain
 
-import javax.persistence.*
+import jakarta.persistence.*
 
 @Table(name = "spraakkode")
 @Entity

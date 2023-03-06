@@ -8,7 +8,7 @@ import no.kartverket.nibas.domain.ContainsSosiIdentifikasjon
 import no.kartverket.nibas.domain.PosisjonskvalitetEmbeddable
 import java.time.LocalDate
 import java.time.ZonedDateTime
-import javax.validation.constraints.NotNull
+import jakarta.validation.constraints.NotNull
 
 const val FLATE_METADATA_SCHEMA: String = "FlateMetadata"
 const val ADMINISTRATIV_GRENSE_METADATA_SCHEMA: String = "AdministrativGrenseMetadata"

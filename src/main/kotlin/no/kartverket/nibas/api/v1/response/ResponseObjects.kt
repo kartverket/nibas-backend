@@ -10,6 +10,7 @@ import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.sporing.Gyldighet
 import org.springframework.http.HttpStatus
+import java.io.Serializable
 import java.time.LocalDate
 import java.time.ZonedDateTime
 

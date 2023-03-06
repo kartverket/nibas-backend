@@ -23,7 +23,7 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.time.LocalDate
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 import kotlin.test.Ignore
 
 /**

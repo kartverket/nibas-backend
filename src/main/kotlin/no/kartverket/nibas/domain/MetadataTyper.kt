@@ -9,8 +9,8 @@ import no.kartverket.nibas.sporing.Sporbar
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.function.Supplier
-import javax.persistence.Column
-import javax.persistence.Embeddable
+import jakarta.persistence.Column
+import jakarta.persistence.Embeddable
 
 @Embeddable
 data class PosisjonskvalitetEmbeddable(

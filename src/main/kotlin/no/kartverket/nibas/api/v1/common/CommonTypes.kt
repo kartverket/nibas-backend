@@ -9,9 +9,9 @@ import no.kartverket.nibas.api.v1.request.NasjonRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
 import java.io.Serializable
-import javax.persistence.AttributeConverter
-import javax.persistence.Converter
-import javax.validation.constraints.NotNull
+import jakarta.persistence.AttributeConverter
+import jakarta.persistence.Converter
+import jakarta.validation.constraints.NotNull
 
 /**
  * Definerer flatene/enhetene i domenet.
@@ -108,7 +108,7 @@ data class Operasjoner(
     val grenseendringer: Grenseendringer = Grenseendringer(),
     @Schema(description = "Sammenslåing av stemmekretser i samme kommune.")
     val stemmekretsSammenslaaingsendring: StemmekretsSammenslaaingsendringRequest? = null,
-) : Serializable
+)
 
 @Schema(description = "Representasjon av endringer på metadata.")
 data class Metadataendringer(
@@ -122,11 +122,11 @@ data class Metadataendringer(
     val grunnkretsendringer: Map<String, GrunnkretsRequest> = emptyMap(),
     @Schema(description = "Endringer på stemmekrets.")
     val stemmekretsendringer: Map<String, StemmekretsRequest> = emptyMap()
-) : Serializable
+)
 
 @Schema(description = "Representasjon av endringer på grensegeometri.")
 data class Grenseendringer(
     @Schema(description = "Endringer på features.")
     val endredeFeatures: Map<String, Feature> = emptyMap()
-) : Serializable
+)
 

@@ -1,7 +1,7 @@
 package no.kartverket.nibas.domain
 
 import java.util.*
-import javax.persistence.*
+import jakarta.persistence.*
 
 @Table(name = "delomraade")
 @Entity

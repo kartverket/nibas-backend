@@ -6,7 +6,7 @@ import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import java.io.Serializable
 import java.time.LocalDate
 import java.util.*
-import javax.persistence.*
+import jakarta.persistence.*
 
 @Table(name = "stemmekrets")
 @Entity

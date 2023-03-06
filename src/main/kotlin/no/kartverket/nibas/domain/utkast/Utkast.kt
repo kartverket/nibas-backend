@@ -1,6 +1,6 @@
 package no.kartverket.nibas.domain.utkast
 
-import com.vladmihalcea.hibernate.type.json.JsonBinaryType
+import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.request.FylkeRequest
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
@@ -10,24 +10,23 @@ import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.sporing.AuditInfo
 import no.kartverket.nibas.sporing.Laasbar
 import no.kartverket.nibas.sporing.Sporbar
+import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.annotations.Type
-import org.hibernate.annotations.TypeDef
-import org.hibernate.annotations.TypeDefs
+import org.hibernate.type.SqlTypes
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.*
-import javax.persistence.Column
-import javax.persistence.Embedded
-import javax.persistence.Entity
-import javax.persistence.Id
-import javax.persistence.Table
-import javax.persistence.Version
+import jakarta.persistence.Column
+import jakarta.persistence.Embedded
+import jakarta.persistence.Entity
+import jakarta.persistence.Id
+import jakarta.persistence.Table
+import jakarta.persistence.Version
 
 /**
  * Navn og endringstype settes i konstruktør da de er påkrevd ved opprettelse av utkastet.
  */
 @Table(name = "utkast")
-@TypeDefs(TypeDef(name = "jsonb", typeClass = JsonBinaryType::class))
 @Entity
 class Utkast(
     @Id
@@ -37,7 +36,8 @@ class Utkast(
     @Column(name = "navn")
     var navn: String,
 
-    @Type(type = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Type(JsonBinaryType::class)
     @Column(columnDefinition = "jsonb", name = "utkast")
     var operasjoner: Operasjoner? = Operasjoner()
 ) : Sporbar, Laasbar {

@@ -17,7 +17,7 @@ import org.springframework.core.annotation.Order
 import org.springframework.core.env.Environment
 import org.springframework.http.HttpStatus
 import org.springframework.security.authentication.AbstractAuthenticationToken
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
@@ -34,9 +34,9 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.function.Supplier
-import javax.servlet.FilterChain
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.FilterChain
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 
 
 /**
@@ -48,11 +48,11 @@ import javax.servlet.http.HttpServletResponse
  *
  * Dersom man ikke vil ha på sikkerhet kan man kjøre med spring-profilen 'security-off'.
  * EnableWebSecurity slår på Spring Security.
- * EnableGlobalMethodSecurity gir oss mulighet til å bruke Secured-annotasjoner på metodene.
+ * EnableMethodSecurity gir oss mulighet til å bruke Secured-annotasjoner på metodene.
  */
 @Configuration
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(securedEnabled = true)
+@EnableMethodSecurity(securedEnabled = true)
 class WebSecurityConfig @Autowired constructor(private val environment: Environment) : DefaultWebSecurityConfig(environment) {
 
     /**
@@ -67,9 +67,9 @@ class WebSecurityConfig @Autowired constructor(private val environment: Environm
         if (startedWithSecurityOff()) {
             return filterChainForSecurityOff(httpSecurity)
         } else {
-            // Request-matcher for filter-kjede: Kun for denne pathen denne SecurityFilterChain vil brukes
+//             Request-matcher for filter-kjede: Kun for denne pathen denne SecurityFilterChain vil brukes
             return httpSecurity
-                .antMatcher("/v1/ekstern/**")
+                .securityMatcher("/v1/ekstern/**")
                 .addFilterAfter(apiKeyFilter(), AbstractPreAuthenticatedProcessingFilter::class.java)
                 // Defaulter til 401 Unauthorized dersom det kastes exception i filterkjeden
                 .exceptionHandling().authenticationEntryPoint(UnauthorizedEntryPoint("API_KEY_FILTER_CHAIN"))
@@ -79,9 +79,10 @@ class WebSecurityConfig @Autowired constructor(private val environment: Environm
                 // Ingen sesjon vil opprettes eller brukes av Spring Security
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-                // Krever bare at alle requester er authenticated (ingen rolle)
-                .authorizeRequests().anyRequest().authenticated()
-                .and()
+                .authorizeHttpRequests {
+                    // Krever bare at alle requester er authenticated (ingen rolle)
+                    it.anyRequest().authenticated()
+                }
                 .build()
         }
     }
@@ -100,15 +101,15 @@ class WebSecurityConfig @Autowired constructor(private val environment: Environm
             return filterChainForSecurityOff(httpSecurity)
         } else {
             // Request-matcher for filter-kjede: Alle pather skal inn i jwt-filter
-            return httpSecurity.antMatcher("/**")
+            return httpSecurity.securityMatcher("/**")
                 // Skal tillate stiene under (anbefalt måte fra Spring Security 5.7 for å ignore)
                 .authorizeHttpRequests {
 
                     // Er åpne for alle
-                    it.antMatchers("/actuator/health", "/actuator/info", "/api-docs/**", "/swagger-ui/**").permitAll()
+                    it.requestMatchers("/actuator/health", "/actuator/info", "/api-docs/**", "/swagger-ui/**").permitAll()
 
                     // Krever administrator-rolle ROLE_NIBAS_ADMIN
-                    it.antMatchers("/v1/admin/**").hasRole("NIBAS_ADMIN")
+                    it.requestMatchers("/v1/admin/**").hasRole("NIBAS_ADMIN")
 
                     // Alle øvrige requests må ha rolle ROLE_NIBAS
                     it.anyRequest().hasRole("NIBAS")

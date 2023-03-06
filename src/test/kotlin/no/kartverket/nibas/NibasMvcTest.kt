@@ -18,7 +18,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 
 
-@ActiveProfiles("dev", "security-off")
+@ActiveProfiles("dev", "security-off", "humanReadableLog")
 @ImportAutoConfiguration(WebSecurityConfig::class)
 @WebMvcTest
 open class NibasMvcTest {

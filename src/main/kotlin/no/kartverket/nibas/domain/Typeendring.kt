@@ -1,12 +1,11 @@
 package no.kartverket.nibas.domain
 
-import javax.persistence.*
+import jakarta.persistence.*
 
 @Table(name = "typeendring")
 @Entity
 class Typeendring {
     @Id
-    
     @Column(name = "identifier", nullable = false)
     var id: String? = null
 }
@@ -52,7 +51,7 @@ class EndringstypeConverter : AttributeConverter<Endringstype, String> {
         return attribute.dbKey
     }
 
-    override fun convertToEntityAttribute(dbKey: String): Endringstype {
-        return Endringstype.fromDbKey(dbKey)
+    override fun convertToEntityAttribute(dbKey: String?): Endringstype? {
+        return dbKey?.let { Endringstype.fromDbKey(it) }
     }
 }

@@ -9,11 +9,12 @@ import org.locationtech.jts.geom.MultiPolygon
 import org.locationtech.jts.geom.Point
 import java.time.ZonedDateTime
 import java.util.*
-import javax.persistence.Column
-import javax.persistence.Embedded
-import javax.persistence.Id
-import javax.persistence.MappedSuperclass
-import javax.persistence.Version
+import jakarta.persistence.Column
+import jakarta.persistence.Embedded
+import jakarta.persistence.Id
+import jakarta.persistence.MappedSuperclass
+import jakarta.persistence.OneToMany
+import jakarta.persistence.Version
 
 @MappedSuperclass
 abstract class AdministrativEnhet(
@@ -54,7 +55,8 @@ abstract class AdministrativEnhet(
     @Column(name = "foerstedigitaliseringsdato")
     override var foerstedigitaliseringsdato: ZonedDateTime = ZonedDateTime.now()
 
-    @javax.persistence.Transient
+    @jakarta.persistence.Transient
+    @OneToMany
     var administrativenhetnavn: MutableSet<Administrativenhetnavn> = mutableSetOf()
 
 }

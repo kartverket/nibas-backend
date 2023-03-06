@@ -44,6 +44,7 @@ import org.mockito.Mockito.verify
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.time.LocalDate
@@ -122,7 +123,7 @@ internal class UtkastControllerTest : NibasMvcTest() {
     fun hentUtkastMedUkjentIdGir404NotFound() {
         whenever(utkastServiceMock.hentUtkast(anyString())).thenReturn(null)
         get("/v1/utkast/123", responseAsserts = MockResponseAsserts(
-            expectedContentType = null,
+            expectedContentType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
             resultMatchers = listOf(status().isNotFound)
         ))
     }

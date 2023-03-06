@@ -15,7 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ActiveProfiles
 import java.time.LocalDate
 import java.time.Month
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 
 @ActiveProfiles("security-off")
 @Transactional

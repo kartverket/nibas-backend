@@ -1,7 +1,7 @@
 package no.kartverket.nibas.domain.utkast
 
-import javax.persistence.AttributeConverter
-import javax.persistence.Converter
+import jakarta.persistence.AttributeConverter
+import jakarta.persistence.Converter
 
 /**
  * value-attributt gir mulighet for å kunne ha norske tegn i verdi (ut i klienten), men ikke i enum-konstant-navn.
