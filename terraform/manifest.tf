@@ -53,8 +53,11 @@ resource "kubernetes_manifest" "nibas_backend_application" {
       }
 
       readiness = {
-        path = "/actuator/health"
-        port = 8080
+        path             = "/actuator/health"
+        port             = 8080
+        failureThreshold = 3
+        timeout          = 1
+        initialDelay     = 90
       }
 
       resources = {
