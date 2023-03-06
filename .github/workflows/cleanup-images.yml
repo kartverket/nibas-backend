@@ -1,12 +1,17 @@
 name: cleanup-github-container-images
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '00 1 * * 1'  # 01:00 on Mondays.
 
 jobs:
   clean:
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
     steps:
       - uses: actions/delete-package-versions@v4
         with:
           package-name: 'nibas-backend'
           package-type: 'container'
-          num-old-versions-to-delete: 3
+          min-versions-to-keep: 20
