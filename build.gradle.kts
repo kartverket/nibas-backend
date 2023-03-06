@@ -49,7 +49,7 @@ configurations["intTestRuntimeOnly"].extendsFrom(configurations.runtimeOnly.get(
 
 // Definerer versjoner for avhengigheter som ikke dekkes av BOM
 val hibernateVersion = "6.1.7.Final"
-val springdocOpenapiVersion = "1.6.14"
+val springdocOpenapiVersion2 = "2.0.2"
 val jtsVersion = "1.19.0"
 val testContainerVersion = "1.17.6"
 val autLibVersion = "2.0.0"
@@ -76,9 +76,9 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-validation")
-    implementation("org.springdoc:springdoc-openapi-webmvc-core:$springdocOpenapiVersion")
-    implementation("org.springdoc:springdoc-openapi-kotlin:$springdocOpenapiVersion")
-    implementation("org.springdoc:springdoc-openapi-ui:$springdocOpenapiVersion")
+    implementation("org.springdoc:springdoc-openapi-starter-common:$springdocOpenapiVersion2")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:$springdocOpenapiVersion2")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:$springdocOpenapiVersion2")
     implementation("org.locationtech.jts:jts-core:$jtsVersion")
     implementation("org.locationtech.jts:jts:$jtsVersion")
     implementation("org.locationtech.jts:jts-modules:$jtsVersion")
