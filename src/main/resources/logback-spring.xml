@@ -13,7 +13,7 @@
         </encoder>
     </appender>
 
-    <root level="INFO">
+    <root level="DEBUG">
         <springProfile name="!humanReadableLog">
             <appender-ref ref="stdout_json"/>
         </springProfile>

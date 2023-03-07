@@ -51,7 +51,7 @@ import jakarta.servlet.http.HttpServletResponse
  * EnableMethodSecurity gir oss mulighet til å bruke Secured-annotasjoner på metodene.
  */
 @Configuration
-@EnableWebSecurity
+@EnableWebSecurity(debug = true)
 @EnableMethodSecurity(securedEnabled = true)
 class WebSecurityConfig @Autowired constructor(private val environment: Environment) : DefaultWebSecurityConfig(environment) {
 
