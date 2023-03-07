@@ -75,6 +75,10 @@ resource "kubernetes_manifest" "nibas_backend_application" {
           rules = [
             {
               application = "nibas-frontend"
+            },
+            {
+              application = "dataplattform-proxy"
+              namespace   = "dataplattform"
             }
           ]
         }
