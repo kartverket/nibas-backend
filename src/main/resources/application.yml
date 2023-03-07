@@ -12,6 +12,9 @@ management:
       enabled: true
     health:
       enabled: true
+      probes:
+        enabled: true
+      show-details: always
     metrics:
       enabled: true
     env:
@@ -19,6 +22,9 @@ management:
   info:
     env:
       enabled: true
+  health:
+    vault:
+      enabled: false
 
 info:
   application:

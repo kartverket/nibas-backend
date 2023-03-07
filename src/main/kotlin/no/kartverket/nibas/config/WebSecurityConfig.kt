@@ -51,7 +51,7 @@ import jakarta.servlet.http.HttpServletResponse
  * EnableMethodSecurity gir oss mulighet til å bruke Secured-annotasjoner på metodene.
  */
 @Configuration
-@EnableWebSecurity(debug = true)
+@EnableWebSecurity
 @EnableMethodSecurity(securedEnabled = true)
 class WebSecurityConfig @Autowired constructor(private val environment: Environment) : DefaultWebSecurityConfig(environment) {
 
@@ -106,7 +106,7 @@ class WebSecurityConfig @Autowired constructor(private val environment: Environm
                 .authorizeHttpRequests {
 
                     // Er åpne for alle
-                    it.requestMatchers("/actuator/health", "/actuator/info", "/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
+                    it.requestMatchers("/actuator/health/**", "/actuator/info", "/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
 
                     // Krever administrator-rolle ROLE_NIBAS_ADMIN
                     it.requestMatchers("/v1/admin/**").hasRole("NIBAS_ADMIN")

@@ -45,18 +45,18 @@ resource "kubernetes_manifest" "nibas_backend_application" {
       # as intended. Returning a non-200 code will make kubernetes restart the app.
       # Liveness is optional, but when provided path and port is required
       liveness = {
-        path             = "/actuator/health"
+        path             = "/actuator/health/liveness"
         port             = 8080
         failureThreshold = 3
-        timeout          = 1
+        timeout          = 5
         initialDelay     = 90
       }
 
       readiness = {
-        path             = "/actuator/health"
+        path             = "/actuator/health/readiness"
         port             = 8080
         failureThreshold = 3
-        timeout          = 1
+        timeout          = 5
         initialDelay     = 90
       }
 
