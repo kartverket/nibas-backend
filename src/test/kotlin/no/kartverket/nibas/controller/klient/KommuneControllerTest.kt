@@ -3,6 +3,7 @@ package no.kartverket.nibas.controller.klient
 import no.kartverket.nibas.MockResponseAsserts
 import no.kartverket.nibas.NibasMvcTest
 import no.kartverket.nibas.api.v1.response.GrunnkretsRef
+import no.kartverket.nibas.api.v1.response.Kommunenummer
 import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
@@ -106,7 +107,8 @@ class KommuneControllerTest : NibasMvcTest() {
                         navn = "Voi",
                         grunnkretsnummer = "8989",
                         href = href,
-                        antallFramtidigeVersjoner = 1
+                        antallFramtidigeVersjoner = 1,
+                        kommunenummer = Kommunenummer("UUID-1", "0301"),
                     )),
                 resultMatchers = listOf(status().isOk)
             ))

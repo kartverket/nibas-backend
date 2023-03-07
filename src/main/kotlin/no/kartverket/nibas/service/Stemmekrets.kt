@@ -229,12 +229,13 @@ fun Stemmekrets.applyMappingFromStemmekretsRequest(stemmekretsRequest: Stemmekre
         stemmekretsRequest.valgdistriktsnummer?.let { this.valgdistriktsnummer = it }
     }
 
-fun Stemmekrets.toStemmekretsRef(identifikator: Identifikator, antallFramtidigeVersjoner: Int = 0, hrefProvider: HrefProvider): StemmekretsRef {
+fun Stemmekrets.toStemmekretsRef(identifikator: Identifikator, antallFramtidigeVersjoner: Int = 0, hrefProvider: HrefProvider, kodelisteService: KodelisteService): StemmekretsRef {
     return StemmekretsRef(
         id = identifikator.toObjektIdentifikator(),
         navn = this.stemmekretsnavn!!,
         nummer = this.stemmekretsnummer!!,
         href = hrefProvider.getHref(identifikator),
+        kommunenummer = kodelisteService.createKommunenummerFromUUID(this.kommune.kommunenummer),
         antallFramtidigeVersjoner = antallFramtidigeVersjoner,
         version = this.version,
     )

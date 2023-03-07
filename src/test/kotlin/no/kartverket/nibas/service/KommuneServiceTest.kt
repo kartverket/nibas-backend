@@ -8,6 +8,7 @@ import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.builders.KommuneRequestBuilder
 import no.kartverket.nibas.builders.StemmekretsBuilder
+import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.kodelister.KodelisteService
@@ -21,7 +22,6 @@ import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito.verify
 import org.springframework.beans.factory.annotation.Autowired
@@ -48,6 +48,9 @@ class KommuneServiceTest {
 
     @MockBean
     private lateinit var fylkeRepository: FylkeRepository
+
+    @MockBean
+    private lateinit var hrefProvider: HrefProvider
 
     @MockBean
     private lateinit var administrativenhetnavnRepository: AdministrativenhetnavnRepository

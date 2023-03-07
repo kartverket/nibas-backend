@@ -5,6 +5,7 @@ import no.kartverket.nibas.NibasMvcTest
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.response.GrunnkretsResponse
 import no.kartverket.nibas.api.v1.response.GyldighetResponse
+import no.kartverket.nibas.api.v1.response.Kommunenummer
 import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.common.Identifikator
@@ -14,7 +15,9 @@ import no.kartverket.nibas.service.flateToFeature
 import no.kartverket.nibas.service.posisjonToFeature
 import no.kartverket.nibas.kodelister.KodelisteType
 import no.kartverket.nibas.kodelister.MissingKodelisteItemException
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito.anyString
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -28,6 +31,11 @@ internal class GrunnkretsControllerTest : NibasMvcTest() {
     @MockBean
     private lateinit var grunnkretsService: GrunnkretsService
 
+    @BeforeEach
+    fun beforeEach() {
+        whenever(kodelisteServiceMock.getCodeValueByKommunenummerId(anyString())).thenReturn("0301")
+    }
+
     @Test
     fun hentGrunnkretsReturns200_OK() {
         whenever(grunnkretsService.hentGrunnkrets(any(Identifikator::class.java))).thenReturn(GrunnkretsBuilder.DEFAULT_GRUNNKRETS)
@@ -36,7 +44,7 @@ internal class GrunnkretsControllerTest : NibasMvcTest() {
 
     @Test
     fun manglendeItemForKodelisteReturns500_InternalServerError() {
-        val id: String = UUID.randomUUID().toString();
+        val id: String = UUID.randomUUID().toString()
         whenever(grunnkretsService.hentGrunnkrets(any(Identifikator::class.java))).thenThrow(MissingKodelisteItemException(KodelisteType.KOMMUNENUMMER, id))
         get("/v1/grunnkretser/$id", status().isInternalServerError)
     }
@@ -79,6 +87,7 @@ internal class GrunnkretsControllerTest : NibasMvcTest() {
                     gyldigTil = jan1In2024),
                 oppdateringsdato = oppdateringstidspunkt,
                 endringstype = "Kvalitetsheving",
+                kommunenummer = Kommunenummer(id = "UUID-1", kodeverdi = "0301"),
                 features = FeatureCollection(features = listOf(
                     posisjonToFeature(grunnkrets1.posisjon, 1),
                     flateToFeature(grunnkrets1, 1))),
@@ -92,6 +101,7 @@ internal class GrunnkretsControllerTest : NibasMvcTest() {
                     gyldigTil = null),
                 oppdateringsdato = oppdateringstidspunkt,
                 endringstype = "Kvalitetsheving",
+                kommunenummer = Kommunenummer(id = "UUID-1", kodeverdi = "0301"),
                 features = FeatureCollection(features = listOf(
                     posisjonToFeature(grunnkrets2.posisjon, 1),
                     flateToFeature(grunnkrets2, 1))),

@@ -5,6 +5,7 @@ import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.request.KommuneRequest
 import no.kartverket.nibas.api.v1.response.KommuneRef
 import no.kartverket.nibas.api.v1.response.KommuneResponse
+import no.kartverket.nibas.api.v1.response.Kommunenummer
 import no.kartverket.nibas.api.v1.response.toObjektIdentifikator
 import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
@@ -36,6 +37,7 @@ class KommuneService(
     private val fylkeRepository: FylkeRepository,
     private val administrativenhetnavnRepository: AdministrativenhetnavnRepository,
     private val kodelisteService: KodelisteService,
+    private val hrefProvider: HrefProvider
 ) {
 
     fun hentAlleKommuner(gyldighetsdato: LocalDate = LocalDate.now()): List<Kommune> = kommuneRepository.findAllGyldigPaaDato(gyldighetsdato)
@@ -95,6 +97,19 @@ class KommuneService(
 
     fun hentAntallGyldigeVersjonerFramITidFor(identifikator: Identifikator): Int = kommuneRepository.findAntallFramtidigeVersjonerForIdentifikator(identifikator)
 
+    fun kommuneToKommuneRef(kommune: Kommune, datoToUse: LocalDate): KommuneRef {
+        val kommuneIdentifikator = Identifikator(Lokalid(kommune.lokalid), datoToUse)
+        val antallFramtidigeVersjoner = hentAntallGyldigeVersjonerFramITidFor(kommuneIdentifikator)
+
+        return KommuneRef(
+            id = kommuneIdentifikator.toObjektIdentifikator(),
+            navn = kommune.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version) },
+            href = hrefProvider.getHref(kommuneIdentifikator),
+            kommunenummer = kodelisteService.createKommunenummerFromUUID(kommune.kommunenummer),
+            antallFramtidigeVersjoner = antallFramtidigeVersjoner
+        )
+    }
+
     private fun hentKommuneFraNumeriskNummer(numeriskKommunenummer: String, gyldighetsdato: LocalDate): Kommune {
         try {
             val kommunenummerUUID = kodelisteService.getKommunenummerIdByCodeValue(numeriskKommunenummer)
@@ -107,19 +122,10 @@ class KommuneService(
 
 }
 
-fun Kommune.toKommuneRef(identifikator: Identifikator, antallFramtidigeVersjoner: Int = 0, hrefProvider: HrefProvider): KommuneRef {
-    return KommuneRef(
-        id = identifikator.toObjektIdentifikator(),
-        navn = this.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version) },
-        href = hrefProvider.getHref(identifikator),
-        antallFramtidigeVersjoner = antallFramtidigeVersjoner
-    )
-}
-
-fun Kommune.toKommuneResponse(identifikator: Identifikator, kodelisteService: KodelisteService): KommuneResponse = KommuneResponse(
+fun Kommune.toKommuneResponse(identifikator: Identifikator, kommunenummer: Kommunenummer): KommuneResponse = KommuneResponse(
     id = identifikator.toObjektIdentifikator(),
     administrativenhetnavn = this.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version) },
-    kommunenummer = kodelisteService.createKommunenummerFromUUID(this.kommunenummer),
+    kommunenummer = kommunenummer,
     samiskforvaltningsomraade = this.samiskforvaltningsomraade!!,
     oppdateringsdato = this.auditInfo.endretdato,
     features = FeatureCollection(features = listOf(posisjonToFeature(this.posisjon, this.version), flateToFeature(this, this.version))),

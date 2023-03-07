@@ -10,7 +10,6 @@ import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.sporing.Gyldighet
 import org.springframework.http.HttpStatus
-import java.io.Serializable
 import java.time.LocalDate
 import java.time.ZonedDateTime
 
@@ -58,6 +57,9 @@ data class KommuneRef(
     @Schema(description = "URL til full representasjon av kommunen")
     val href: String,
 
+    @Schema(description = "Kommunenummeret til kommunen")
+    val kommunenummer: Kommunenummer,
+
     @Schema(description = "Antall publiserte framtidige gyldige versjoner.")
     val antallFramtidigeVersjoner: Int = 0
 )
@@ -73,6 +75,9 @@ data class GrunnkretsRef(
 
     @Schema(description = "URL til full representasjon av grunnkretsen")
     val href: String,
+
+    @Schema(description = "Kommunenummeret til grunnkretsen")
+    val kommunenummer: Kommunenummer,
 
     @Schema(description = "Nummeret til grunnkretsen")
     val grunnkretsnummer: String,
@@ -95,6 +100,9 @@ data class StemmekretsRef(
 
     @Schema(description = "URL til full representasjon av stemmekrets")
     val href: String,
+
+    @Schema(description = "Kommunenummeret til stemmekretsen")
+    val kommunenummer: Kommunenummer,
 
     @Schema(description = "Antall publiserte framtidige gyldige versjoner.")
     val antallFramtidigeVersjoner: Int = 0,
@@ -193,6 +201,9 @@ data class GrunnkretsResponse(
 
     @Schema(description = "Siste oppdateringstidspunkt for objektet")
     val oppdateringsdato: ZonedDateTime,
+
+    @Schema(description = "Kommunenummeret til grunnkretsen")
+    val kommunenummer: Kommunenummer,
 
     @Schema(description = "Typen endring som ble gjort på objektet")
     val endringstype: String?,

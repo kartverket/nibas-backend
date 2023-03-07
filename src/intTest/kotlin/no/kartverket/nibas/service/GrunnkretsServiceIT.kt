@@ -144,7 +144,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         assertThat(grunnkretsEtter.gyldighet.gyldigFra).isEqualTo(now)
     }
 
-    private fun lagGrenserForGrunnkrets(grunnkretsLokalid: Lokalid, kommune: Kommune? = null): Grunnkrets {
+    private fun lagGrenserForGrunnkrets(grunnkretsLokalid: Lokalid, kommune: Kommune = KommuneBuilder.DEFAULT_KOMMUNE): Grunnkrets {
         val x1 = 23857.0
         val y1 = 675635.0
 
@@ -194,7 +194,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
                                gyldigFra: LocalDate = october1In2022,
                                gyldigTil: LocalDate? = null,
                                grunnkrnr: String = "42270304",
-                               kommune: Kommune? = null,
+                               kommune: Kommune = KommuneBuilder.DEFAULT_KOMMUNE,
                                grenser: List<Grense> = emptyList()): Grunnkrets {
         return grunnkretsRepository.save(GrunnkretsBuilder(
             id = id,

@@ -94,7 +94,6 @@ class EnhetsgrenseRepositoryTest : TestWithDbContainer() {
             gyldigFra = gyldigFra,
             gyldigTil = gyldigTil,
             grunnkretsnummer = grunnkrnr,
-            kommune = null,
             grenser = grenser
         ).build())
     }

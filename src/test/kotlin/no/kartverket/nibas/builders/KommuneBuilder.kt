@@ -13,9 +13,9 @@ import java.time.LocalDate
 import java.time.ZonedDateTime
 
 class KommuneBuilder(
-    private val id: String = "1",
+    private val id: String = "a7dabf8d-4597-4735-b3cd-db462c61c39e",
     private var kommunenummer: String = "UUID-1",
-    private var lokalId: Lokalid = Lokalid("123"),
+    private var lokalId: Lokalid = Lokalid("fe328f8d-fbde-4c21-ab28-cbc583be401f"),
     private var navn: String = "Bergen",
     private var spraak: String = "NOR",
     private var samiskforvaltningsomraade: Boolean = false,

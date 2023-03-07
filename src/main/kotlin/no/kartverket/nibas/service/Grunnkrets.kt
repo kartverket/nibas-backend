@@ -4,6 +4,7 @@ import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
 import no.kartverket.nibas.api.v1.response.GrunnkretsRef
 import no.kartverket.nibas.api.v1.response.GrunnkretsResponse
+import no.kartverket.nibas.api.v1.response.Kommunenummer
 import no.kartverket.nibas.api.v1.response.KretsResponse
 import no.kartverket.nibas.api.v1.response.toGyldighetResponse
 import no.kartverket.nibas.api.v1.response.toObjektIdentifikator
@@ -153,23 +154,25 @@ private fun Grunnkrets.applyChangesFromRequest(request: GrunnkretsRequest): Grun
     }
 }
 
-fun Grunnkrets.toGrunnkretsRef(identifikator: Identifikator, antallFramtidigeVersjoner: Int = 0, hrefProvider: HrefProvider): GrunnkretsRef =
+fun Grunnkrets.toGrunnkretsRef(identifikator: Identifikator, antallFramtidigeVersjoner: Int = 0, hrefProvider: HrefProvider, kodelisteService: KodelisteService): GrunnkretsRef =
     GrunnkretsRef(
         id = identifikator.toObjektIdentifikator(),
         navn = this.grunnkretsnavn!!,
         grunnkretsnummer = this.grunnkretsnummer!!,
         href = hrefProvider.getHref(identifikator),
+        kommunenummer = kodelisteService.createKommunenummerFromUUID(this.kommune.kommunenummer),
         antallFramtidigeVersjoner = antallFramtidigeVersjoner
     )
 
 
-fun Grunnkrets.toGrunnkretsResponse(identifikator: Identifikator): GrunnkretsResponse =
+fun Grunnkrets.toGrunnkretsResponse(identifikator: Identifikator, kommunenummer: Kommunenummer): GrunnkretsResponse =
     GrunnkretsResponse(
         id = identifikator.toObjektIdentifikator(),
         navn = this.grunnkretsnavn!!,
         grunnkretsnummer = this.grunnkretsnummer!!,
         gyldighet = this.gyldighet.toGyldighetResponse(),
         oppdateringsdato = this.auditInfo.endretdato,
+        kommunenummer = kommunenummer,
         endringstype = this.auditInfo.typeEndring.value,
         features = FeatureCollection(features = listOf(
             posisjonToFeature(this.posisjon, this.version),

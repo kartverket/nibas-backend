@@ -11,16 +11,15 @@ import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.common.createIdentifikator
-import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.service.StemmekretsService
 import no.kartverket.nibas.service.GrunnkretsService
 import no.kartverket.nibas.service.KommuneService
 import no.kartverket.nibas.service.grenseKoblingToFeature
 import no.kartverket.nibas.service.toGrunnkretsRef
-import no.kartverket.nibas.service.toKommuneRef
 import no.kartverket.nibas.service.toKommuneResponse
 import no.kartverket.nibas.service.toStemmekretsRef
 import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.kodelister.createKommunenummerFromUUID
 import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDate
 
@@ -37,19 +36,20 @@ class KommuneController(
         val datoToUse: LocalDate = gyldighetsdato ?: LocalDate.now()
         return if (fylkeId == null) {
             kommuneService.hentAlleKommuner(datoToUse).map {
-                kommuneToKommuneRef(it, datoToUse)
+                kommuneService.kommuneToKommuneRef(it, datoToUse)
             }
         } else {
             kommuneService.hentKommunerForFylke(Identifikator(Lokalid(fylkeId), datoToUse)).map {
-                kommuneToKommuneRef(it, datoToUse)
+                kommuneService.kommuneToKommuneRef(it, datoToUse)
             }
         }
     }
 
     override fun hentKommune(lokalid: String, gyldighetsdato: LocalDate?): KommuneResponse {
         val identifikator = createIdentifikator(lokalid, gyldighetsdato)
-        return kommuneService.hentKommune(identifikator)?.toKommuneResponse(identifikator, kodelisteService)
-            ?: throw NotFoundException("Kommune $identifikator ble ikke funnet.")
+        return kommuneService.hentKommune(identifikator)?.let {
+            it.toKommuneResponse(identifikator, kodelisteService.createKommunenummerFromUUID(it.kommunenummer))
+        } ?: throw NotFoundException("Kommune $identifikator ble ikke funnet.")
     }
 
     override fun hentGrenserForKommune(lokalid: String, gyldighetsdato: LocalDate?): FeatureCollection {
@@ -71,7 +71,7 @@ class KommuneController(
         val kommuneIdentifikator = createIdentifikator(lokalid, gyldighetsdato)
         return kommuneService.hentKommunesGrunnkretser(kommuneIdentifikator).map {
             val identifikatorForGrunnkrets = Identifikator(lokalid = Lokalid(it.lokalid), gyldighetsdato = kommuneIdentifikator.gyldighetsdato)
-            it.toGrunnkretsRef(identifikatorForGrunnkrets, grunnkretsService.hentAntallGyldigeVersjonerFramITidFor(identifikatorForGrunnkrets), hrefProvider)
+            it.toGrunnkretsRef(identifikatorForGrunnkrets, grunnkretsService.hentAntallGyldigeVersjonerFramITidFor(identifikatorForGrunnkrets), hrefProvider, kodelisteService)
         }
     }
 
@@ -79,13 +79,7 @@ class KommuneController(
         val kommuneIdentifikator = createIdentifikator(lokalid, gyldighetsdato)
         return kommuneService.hentKommunesStemmekretser(kommuneIdentifikator).map {
             val identifikatorForStemmekrets = Identifikator(lokalid = Lokalid(it.lokalid), gyldighetsdato = kommuneIdentifikator.gyldighetsdato)
-            it.toStemmekretsRef(identifikatorForStemmekrets, stemmekretsService.hentAntallGyldigeVersjonerFramITidFor(identifikatorForStemmekrets), hrefProvider)
+            it.toStemmekretsRef(identifikatorForStemmekrets, stemmekretsService.hentAntallGyldigeVersjonerFramITidFor(identifikatorForStemmekrets), hrefProvider, kodelisteService)
         }
-    }
-
-    private fun kommuneToKommuneRef(kommune: Kommune, datoToUse: LocalDate): KommuneRef {
-        val kommuneIdentifikator = Identifikator(Lokalid(kommune.lokalid), datoToUse)
-        val antallFramtidigeVersjoner = kommuneService.hentAntallGyldigeVersjonerFramITidFor(kommuneIdentifikator)
-        return kommune.toKommuneRef(kommuneIdentifikator, antallFramtidigeVersjoner, hrefProvider)
     }
 }
