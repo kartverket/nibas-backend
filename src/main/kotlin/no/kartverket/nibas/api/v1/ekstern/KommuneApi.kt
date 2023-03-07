@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import no.kartverket.nibas.api.v1.response.KommuneRef
 import no.kartverket.nibas.api.v1.response.KommuneResponse
 import no.kartverket.nibas.api.v1.response.KretsResponse
 import org.springframework.format.annotation.DateTimeFormat
@@ -25,6 +26,25 @@ import java.util.*
     description = "Endepunkter for å hente informasjon om kommuner i Nasjonal inndelingsbase"
 )
 interface KommuneApi {
+
+    @Operation(summary = "Hent alle kommuner", description = "Henter alle kommuner i Nasjonal inndelingsbase.")
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            description = "Successful operation",
+            content = [Content(
+                mediaType = "application/json",
+                array = ArraySchema(schema = Schema(implementation = KommuneRef::class))
+            )]
+        )
+    )
+    @GetMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun hentKommuner(
+        @Parameter(description = "Valgfri id til et fylke for å filtrere kommuner innenfor et fylke")
+        @RequestParam(name = "fylkeid", required = false) fylkeId: String?,
+        @Parameter(description = "Eventuell gyldighetsdato for kommune (default = dagens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?
+    ): List<KommuneRef>
 
     @Operation(summary = "Hent en kommune med gitt id", description = "Henter kommune med gitt id")
     @ApiResponses(

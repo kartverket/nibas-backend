@@ -30,6 +30,17 @@ class FylkeControllerTest : NibasMvcTest() {
     }
 
     @Test
+    fun thatHentAlleReturns200_OK() {
+        val fylke = FylkeBuilder()
+            .withNavn("Vestland")
+            .build()
+
+        whenever(fylkeService.hentAlleFylker()).thenReturn(listOf(fylke))
+        whenever(kodelisteServiceMock.getCodeValueByFylkesnummerId(anyString())).thenReturn("1")
+        get("/v1/ekstern/fylker", status().isOk)
+    }
+
+    @Test
     fun thatHentEnReturns200_OK() {
         whenever(fylkeService.hentFylke(any(Identifikator::class.java))).thenReturn(
             FylkeBuilder()

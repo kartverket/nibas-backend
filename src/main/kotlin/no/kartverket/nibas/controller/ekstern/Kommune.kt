@@ -1,13 +1,19 @@
 package no.kartverket.nibas.controller.ekstern
 
 import no.kartverket.nibas.api.v1.ekstern.KommuneApi
+import no.kartverket.nibas.api.v1.response.KommuneRef
 import no.kartverket.nibas.api.v1.response.KommuneResponse
 import no.kartverket.nibas.api.v1.response.KretsResponse
+import no.kartverket.nibas.common.HrefProvider
+import no.kartverket.nibas.common.Identifikator
+import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.common.createIdentifikator
+import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.service.KommuneService
 import no.kartverket.nibas.service.toKommuneResponse
 import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.service.toKommuneRef
 import no.kartverket.nibas.service.toKretsResponse
 import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDate
@@ -16,8 +22,21 @@ import java.time.LocalDate
 class KommuneController(
     private val kommuneService: KommuneService,
     private val kodelisteService: KodelisteService,
+    private val hrefProvider: HrefProvider
 ) : KommuneApi {
 
+    override fun hentKommuner(fylkeId: String?, gyldighetsdato: LocalDate?): List<KommuneRef> {
+        val datoToUse: LocalDate = gyldighetsdato ?: LocalDate.now()
+        return if (fylkeId == null) {
+            kommuneService.hentAlleKommuner(datoToUse).map {
+                kommuneToKommuneRef(it, datoToUse)
+            }
+        } else {
+            kommuneService.hentKommunerForFylke(Identifikator(Lokalid(fylkeId), datoToUse)).map {
+                kommuneToKommuneRef(it, datoToUse)
+            }
+        }
+    }
     override fun hentKommune(lokalid: String, gyldighetsdato: LocalDate?): KommuneResponse {
         val identifikator = createIdentifikator(lokalid, gyldighetsdato)
         return kommuneService.hentKommune(identifikator)?.toKommuneResponse(identifikator, kodelisteService)
@@ -32,5 +51,11 @@ class KommuneController(
     override fun hentAlleGrunnkretserForKommune(kommunenummer: String, gyldighetsdato: LocalDate?): List<KretsResponse> {
         val dato = gyldighetsdato ?: LocalDate.now()
         return kommuneService.hentAlleGrunnkretserForKommune(kommunenummer, dato).map { it.toKretsResponse(kodelisteService) }
+    }
+
+    private fun kommuneToKommuneRef(kommune: Kommune, datoToUse: LocalDate): KommuneRef {
+        val kommuneIdentifikator = Identifikator(Lokalid(kommune.lokalid), datoToUse)
+        val antallFramtidigeVersjoner = kommuneService.hentAntallGyldigeVersjonerFramITidFor(kommuneIdentifikator)
+        return kommune.toKommuneRef(kommuneIdentifikator, antallFramtidigeVersjoner, hrefProvider)
     }
 }

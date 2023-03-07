@@ -44,6 +44,16 @@ class KommuneControllerTest : NibasMvcTest() {
     }
 
     @Test
+    fun thatHentAlleReturns200_OK() {
+        val kommune = KommuneBuilder("1")
+            .withNavn("Oslo")
+            .build()
+
+        whenever(kommuneService.hentAlleKommuner()).thenReturn(listOf(kommune))
+        get("/v1/ekstern/kommuner", status().isOk)
+    }
+
+    @Test
     fun thatHentEnReturns200_OK() {
         whenever(kommuneService.hentKommune(any(Identifikator::class.java)))
             .thenReturn(KommuneBuilder.DEFAULT_KOMMUNE)
