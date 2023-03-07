@@ -118,4 +118,7 @@ resource "kubernetes_manifest" "nibas_backend_application" {
       }
     }
   }
+  field_manager {
+    force_conflicts = true
+  }
 }
