@@ -1,0 +1,1 @@
+drop table stemmekrets_stemmekretsgrense;
