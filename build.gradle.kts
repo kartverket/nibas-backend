@@ -59,7 +59,7 @@ val springCloudStarterVaultConfigVersion = "4.0.0"
 val spatial4jVersion = "0.8"
 val kotlinxCoroutinesCoreVersion = "1.6.4"
 val logstashVersion = "7.3"
-val springmockkVersion = "4.0.1"
+val springmockkVersion = "4.0.2"
 val kotlinMockitoVersion = "4.1.0"
 
 ext["snakeyaml.version"] = "1.31"
