@@ -4,6 +4,7 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.request.ConflictResolved
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequestResolved
+import no.kartverket.nibas.api.v1.response.Kommunenummer
 import no.kartverket.nibas.common.CurrentTime
 import no.kartverket.nibas.common.FeilVedOppdatering
 import no.kartverket.nibas.common.Identifikator
@@ -13,6 +14,8 @@ import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
+import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.kodelister.createKommunenummerFromUUID
 import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.repository.UtkastRepository
@@ -23,6 +26,7 @@ import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import org.assertj.core.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito.anyString
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.test.context.ActiveProfiles
@@ -49,6 +53,9 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
     @MockBean
     private lateinit var currentTime: CurrentTime
 
+    @MockBean
+    private lateinit var kodelisteServiceMock: KodelisteService
+
     @Autowired
     private lateinit var utkastService: UtkastService
     @Autowired
@@ -67,8 +74,8 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
     private val voi = "Voi"
 
     private val opprinneligGrunnkretsnr = "42190204"
-    private val grunnkretsnr1234 = "1234"
-    private val grunnkretsnr4589 = "4589"
+    private val grunnkretsnr6789 = "12345678"
+    private val grunnkretsnr0123 = "12340123"
 
     private val october23In2022 = ZonedDateTime.of(LocalDateTime.of(2022, Month.OCTOBER, 23, 12, 0), ZoneId.systemDefault())
     private val october24In2022 = ZonedDateTime.of(LocalDateTime.of(2022, Month.OCTOBER, 24, 12, 0), ZoneId.systemDefault())
@@ -82,6 +89,7 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
     fun beforeEach() {
         whenever(currentTime.asLocalDate()).thenReturn(LocalDate.of(2022, 6, 1))
         whenever(userFacade.getAuthenticatedUser()).thenReturn("Testbruker 123")
+        whenever(kodelisteServiceMock.getCodeValueByKommunenummerId(anyString())).thenReturn("1234")
     }
 
     /**
@@ -93,7 +101,7 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
      *  -gyldigTil null
      *
      * Request 1:
-     * GrunnkretsRequest: Grunnkretsnr 1234, grunnkretsnavn: Moi gyldigFra 1.1.23
+     * GrunnkretsRequest: Grunnkretsnr 12345678, grunnkretsnavn: Moi gyldigFra 1.1.23
      */
     @Test
     fun publiserUtkast01MedNyttGrunnkretsnummer() {
@@ -112,10 +120,10 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
      *  -gyldigTil null
      *
      * Request 1:
-     * GrunnkretsRequest: Grunnkretsnr 1234, grunnkretsnavn: Moi gyldigFra 1.1.23
+     * GrunnkretsRequest: Grunnkretsnr 12345678, grunnkretsnavn: Moi gyldigFra 1.1.23
      *
      * Request 2:
-     * GrunnkretsRequest: Grunnkretsnr 1234, grunnkretsnavn: Voi, gyldigFra 1.1.24
+     * GrunnkretsRequest: Grunnkretsnr 12345678, grunnkretsnavn: Voi, gyldigFra 1.1.24
      *
      */
     @Test
@@ -138,13 +146,13 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
      *  -gyldigTil null
      *
      * Request 1:
-     * GrunnkretsRequest: Grunnkretsnr 1234, grunnkretsnavn: Moi gyldigFra 1.1.23
+     * GrunnkretsRequest: Grunnkretsnr 12345678, grunnkretsnavn: Moi gyldigFra 1.1.23
      *
      * Request 2:
-     * GrunnkretsRequest: Grunnkretsnr 1234, grunnkretsnavn: Voi, gyldigFra 1.1.24
+     * GrunnkretsRequest: Grunnkretsnr 12345678, grunnkretsnavn: Voi, gyldigFra 1.1.24
      *
      * Request 3:
-     * GrunnkretsRequest: Grunnkretsnr 4589, grunnkretsnavn: Moi, gyldigFra 1.7.23
+     * GrunnkretsRequest: Grunnkretsnr 12340123, grunnkretsnavn: Moi, gyldigFra 1.7.23
      *
      */
     @Test
@@ -170,18 +178,18 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
      *  -gyldigFra 21.10.22
      *  -gyldigTil null
      *
-     * Request 1 "Nytt grunnkretsnr 1234 fra 1.1.23":
-     * GrunnkretsRequest: Grunnkretsnr 1234, grunnkretsnavn: Moi gyldigFra 1.1.23
+     * Request 1 "Nytt grunnkretsnr 12345678 fra 1.1.23":
+     * GrunnkretsRequest: Grunnkretsnr 12345678, grunnkretsnavn: Moi gyldigFra 1.1.23
      *
      * Request 2 "Nytt grunnkretsnavn Voi fra 1.1.24":
-     * GrunnkretsRequest: Grunnkretsnr 1234, grunnkretsnavn: Voi, gyldigFra 1.1.24
+     * GrunnkretsRequest: Grunnkretsnr 12345678, grunnkretsnavn: Voi, gyldigFra 1.1.24
      *
-     * Request 3 "Nytt grunnkretsnr 4589 fra 1.7.23":
-     * GrunnkretsRequest: Grunnkretsnr 4589, grunnkretsnavn: Moi, gyldigFra 1.7.23
+     * Request 3 "Nytt grunnkretsnr 12340123 fra 1.7.23":
+     * GrunnkretsRequest: Grunnkretsnr 12340123, grunnkretsnavn: Moi, gyldigFra 1.7.23
      *
      * Fikser konflikt i nr 3 med kall til resolveKonflikter med følgende requester:
-     * - GrunnkretsRequest: Grunnkretsnr 4589, grunnkretsnavn: Moi, gyldigFra 1.7.23
-     * - GrunnkretsRequest: Grunnkretsnr 4589, grunnkretsnavn: Voi, gyldigFra 1.1.24
+     * - GrunnkretsRequest: Grunnkretsnr 12340123, grunnkretsnavn: Moi, gyldigFra 1.7.23
+     * - GrunnkretsRequest: Grunnkretsnr 12340123, grunnkretsnavn: Voi, gyldigFra 1.1.24
      */
     @Test
     fun publiserUtkast04ResolverKonfliktPaaAlleredePubliserteFramtidigeEndringer() {
@@ -193,7 +201,7 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
         // 2. Endrer grunnkretsnavn
         nyttGrunnkretsnavnJan24()
 
-        // 3. Forsøker å endre grunnkretsnummer til 4589 med gyldigFra 1.7.23 (selv om vi allerede har publisert endring som gjelder fra 1.1.24)
+        // 3. Forsøker å endre grunnkretsnummer til 12340123 med gyldigFra 1.7.23 (selv om vi allerede har publisert endring som gjelder fra 1.1.24)
         // (Bruker her version 2 fordi den vil være basert på tilstanden i databasen 1.7.23)
         val resultatFraForsoekPaaPublisering = nyttGrunnkretsNummerFraJuli23SkalGiFeil()
         val utkastId = resultatFraForsoekPaaPublisering.idForUtkastSomBleOpprettet
@@ -209,16 +217,16 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
             conflictResolved = ConflictResolved(
                 lokalid = Lokalid(lokalidOfGrunnkrets),
                 grunnkretsRequests = listOf(
-                    // Gjentar endring av grunnkretsnr til 4589 fra 1.7.23
+                    // Gjentar endring av grunnkretsnr til 12340123 fra 1.7.23
                     GrunnkretsRequestResolved(
                         gyldigFra = july1In2023,
                         endringstype = Endringstype.KVALITETSHEVING.value,
-                        grunnkretsRequest = createGrunnkretsRequest(moi, grunnkretsnr4589, 2)),
-                    // Gjentar endring av nytt navn Voi fra 1.1.24 (men her er også rett grunnkretsnr 4589 med)
+                        grunnkretsRequest = createGrunnkretsRequest(moi, grunnkretsnr0123, 2)),
+                    // Gjentar endring av nytt navn Voi fra 1.1.24 (men her er også rett grunnkretsnr 12340123 med)
                     GrunnkretsRequestResolved(
                         gyldigFra = january1In2024,
                         endringstype = Endringstype.KVALITETSHEVING.value,
-                        grunnkretsRequest = createGrunnkretsRequest(voi, grunnkretsnr4589, 3)
+                        grunnkretsRequest = createGrunnkretsRequest(voi, grunnkretsnr0123, 3)
                     )
                 )))
 
@@ -228,10 +236,10 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
         val grunnkretsList = findAllGrunnkretserSortedByVersion()
         assertThat(grunnkretsList.size).isEqualTo(5)
         assertGrunnkrets(grunnkretsList[0], opprinneligGrunnkretsnr, moi, Gyldighet(gyldigFra = november25In2022, gyldigTil = january1In2023), 1)
-        assertGrunnkrets(grunnkretsList[1], grunnkretsnr1234, moi, Gyldighet(gyldigFra = january1In2023, gyldigTil = july1In2023), 2)
-        assertGrunnkrets(grunnkretsList[2], grunnkretsnr1234, voi, Gyldighet(gyldigFra = january1In2024, gyldigTil = null, slettet = true), 3)
-        assertGrunnkrets(grunnkretsList[3], grunnkretsnr4589, moi, Gyldighet(gyldigFra = july1In2023, gyldigTil = january1In2024), 4)
-        assertGrunnkrets(grunnkretsList[4], grunnkretsnr4589, voi, Gyldighet(gyldigFra = january1In2024), 5)
+        assertGrunnkrets(grunnkretsList[1], grunnkretsnr6789, moi, Gyldighet(gyldigFra = january1In2023, gyldigTil = july1In2023), 2)
+        assertGrunnkrets(grunnkretsList[2], grunnkretsnr6789, voi, Gyldighet(gyldigFra = january1In2024, gyldigTil = null, slettet = true), 3)
+        assertGrunnkrets(grunnkretsList[3], grunnkretsnr0123, moi, Gyldighet(gyldigFra = july1In2023, gyldigTil = january1In2024), 4)
+        assertGrunnkrets(grunnkretsList[4], grunnkretsnr0123, voi, Gyldighet(gyldigFra = january1In2024), 5)
     }
 
     /**
@@ -242,18 +250,18 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
      *  -gyldigFra 21.10.22
      *  -gyldigTil null
      *
-     * Request 1 "Nytt grunnkretsnr 1234 fra 1.1.23":
-     * GrunnkretsRequest: Grunnkretsnr 1234, grunnkretsnavn: Moi gyldigFra 1.1.23
+     * Request 1 "Nytt grunnkretsnr 12345678 fra 1.1.23":
+     * GrunnkretsRequest: Grunnkretsnr 12345678, grunnkretsnavn: Moi gyldigFra 1.1.23
      *
      * Request 2 "Nytt grunnkretsnavn Voi fra 1.1.24":
-     * GrunnkretsRequest: Grunnkretsnr 1234, grunnkretsnavn: Voi, gyldigFra 1.1.24
+     * GrunnkretsRequest: Grunnkretsnr 12345678, grunnkretsnavn: Voi, gyldigFra 1.1.24
      *
-     * Request 3 "Nytt grunnkretsnr 4589 fra 1.7.23":
-     * GrunnkretsRequest: Grunnkretsnr 4589, grunnkretsnavn: Moi, gyldigFra 1.7.23
+     * Request 3 "Nytt grunnkretsnr 12340123 fra 1.7.23":
+     * GrunnkretsRequest: Grunnkretsnr 12340123, grunnkretsnavn: Moi, gyldigFra 1.7.23
      *
      * Forsøker å fikse konflikt i nr 3 med kall til resolveKonflikter med følgende requester:
-     * - GrunnkretsRequest: Grunnkretsnr 4589, grunnkretsnavn: Moi, gyldigFra 1.7.23
-     * - GrunnkretsRequest: Grunnkretsnr 4589, grunnkretsnavn: Voi, gyldigFra 1.2.24 (Her er gyldigFra endret fra 1.1 til 1.2)
+     * - GrunnkretsRequest: Grunnkretsnr 12340123, grunnkretsnavn: Moi, gyldigFra 1.7.23
+     * - GrunnkretsRequest: Grunnkretsnr 12340123, grunnkretsnavn: Voi, gyldigFra 1.2.24 (Her er gyldigFra endret fra 1.1 til 1.2)
      */
     @Test
     fun publiserUtkast05ResolverKonfliktMedFeilTidspunktSkalGiFeil() {
@@ -265,7 +273,7 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
         // 2. Endrer grunnkretsnavn
         nyttGrunnkretsnavnJan24()
 
-        // 3. Forsøker å endre grunnkretsnummer til 4589 med gyldigFra 1.7.23 (selv om vi allerede har publisert endring som gjelder fra 1.1.24)
+        // 3. Forsøker å endre grunnkretsnummer til 12340123 med gyldigFra 1.7.23 (selv om vi allerede har publisert endring som gjelder fra 1.1.24)
         // (Bruker her version 2 fordi den vil være basert på tilstanden i databasen 1.7.23)
         val resultatFraForsoekPaaPublisering = nyttGrunnkretsNummerFraJuli23SkalGiFeil()
         val utkastId = resultatFraForsoekPaaPublisering.idForUtkastSomBleOpprettet
@@ -282,16 +290,16 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
                 conflictResolved = ConflictResolved(
                     lokalid = Lokalid(lokalidOfGrunnkrets),
                     grunnkretsRequests = listOf(
-                        // Gjentar endring av grunnkretsnr til 4589 fra 1.7.23
+                        // Gjentar endring av grunnkretsnr til 12340123 fra 1.7.23
                         GrunnkretsRequestResolved(
                             gyldigFra = july1In2023,
                             endringstype = Endringstype.KVALITETSHEVING.value,
-                            grunnkretsRequest = createGrunnkretsRequest(moi, grunnkretsnr4589, 2)),
-                        // Gjentar endring av nytt navn Voi, men denne gangen gyldigFra 1.2.24 (her er rett grunnkretsnr 4589 med, men feil dato)
+                            grunnkretsRequest = createGrunnkretsRequest(moi, grunnkretsnr0123, 2)),
+                        // Gjentar endring av nytt navn Voi, men denne gangen gyldigFra 1.2.24 (her er rett grunnkretsnr 12340123 med, men feil dato)
                         GrunnkretsRequestResolved(
                             gyldigFra = february1In2024,
                             endringstype = Endringstype.KVALITETSHEVING.value,
-                            grunnkretsRequest = createGrunnkretsRequest(voi, grunnkretsnr4589, 3)
+                            grunnkretsRequest = createGrunnkretsRequest(voi, grunnkretsnr0123, 3)
                         )
                     )))
         }.isInstanceOf(ResponseException.BadRequestException::class.java)
@@ -310,11 +318,11 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
     private fun nyttGrunnkretsNummerFraJuli23SkalGiFeil(): ResultatFraForsoekPaaPublisering {
         val grunnkretsRequest = createGrunnkretsRequest(
             grkrNavn = moi,
-            grkrNr = grunnkretsnr4589,
+            grkrNr = grunnkretsnr0123,
             version = 2)
 
         val utkastId = saveGrunnkretsUtkast(
-            navn = "Jeg vil endre grunnkretsnr til 4589 fra 1.7.23",
+            navn = "Jeg vil endre grunnkretsnr til 12340123 fra 1.7.23",
             oppdateringsdato = october24In2022,
             gyldigFra = july1In2023,
             grunnkretsRequest
@@ -338,7 +346,7 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
     private fun nyttGrunnkretsnavnJan24(): List<Grunnkrets> {
         saveAndPubliserGrunnkretsUtkast(
             navn = "Jeg vil endre grunnkretsens navn til Voi",
-            grkrNr = grunnkretsnr1234,
+            grkrNr = grunnkretsnr6789,
             grkrNavn = voi,
             oppdateringsdato = october24In2022,
             gyldigFra = january1In2024,
@@ -347,15 +355,15 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
         val grunnkretsList = findAllGrunnkretserSortedByVersion()
         assertThat(grunnkretsList.size).isEqualTo(3)
         assertGrunnkrets(grunnkretsList[0], opprinneligGrunnkretsnr, moi, Gyldighet(gyldigFra = november25In2022, gyldigTil = january1In2023), 1)
-        assertGrunnkrets(grunnkretsList[1], grunnkretsnr1234, moi, Gyldighet(gyldigFra = january1In2023, gyldigTil = january1In2024), 2)
-        assertGrunnkrets(grunnkretsList[2], grunnkretsnr1234, voi, Gyldighet(gyldigFra = january1In2024), 3)
+        assertGrunnkrets(grunnkretsList[1], grunnkretsnr6789, moi, Gyldighet(gyldigFra = january1In2023, gyldigTil = january1In2024), 2)
+        assertGrunnkrets(grunnkretsList[2], grunnkretsnr6789, voi, Gyldighet(gyldigFra = january1In2024), 3)
         return grunnkretsList
     }
 
     private fun nyttGrunnkretsnummerJan23() {
         saveAndPubliserGrunnkretsUtkast(
-            navn = "Jeg vil endre grunnkretsnr til 1234",
-            grkrNr = grunnkretsnr1234,
+            navn = "Jeg vil endre grunnkretsnr til 12345678",
+            grkrNr = grunnkretsnr6789,
             grkrNavn = moi,
             oppdateringsdato = october23In2022,
             gyldigFra = january1In2023,
@@ -365,7 +373,7 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
         val grunnkretsList = findAllGrunnkretserSortedByVersion()
         assertThat(grunnkretsList.size).isEqualTo(2)
         assertGrunnkrets(grunnkretsList[0], opprinneligGrunnkretsnr, moi, Gyldighet(gyldigFra = november25In2022, gyldigTil = january1In2023), 1)
-        assertGrunnkrets(grunnkretsList[1], grunnkretsnr1234, moi, Gyldighet(gyldigFra = january1In2023), 2)
+        assertGrunnkrets(grunnkretsList[1], grunnkretsnr6789, moi, Gyldighet(gyldigFra = january1In2023), 2)
     }
 
     private fun saveAndPubliserGrunnkretsUtkast(navn: String, grkrNr: String, grkrNavn: String,

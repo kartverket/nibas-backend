@@ -3,9 +3,17 @@ package no.kartverket.nibas.utkast
 import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
+import no.kartverket.nibas.api.v1.common.Metadataendringer
+import no.kartverket.nibas.api.v1.common.Operasjoner
+import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
+import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
+import no.kartverket.nibas.builders.GrunnkretsBuilder
+import no.kartverket.nibas.builders.GrunnkretsRequestBuilder
+import no.kartverket.nibas.builders.StemmekretsRequestBuilder
 import no.kartverket.nibas.common.CurrentTime
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
+import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.service.GrunnkretsService
 import no.kartverket.nibas.service.StemmekretsService
 import no.kartverket.nibas.utkast.UtkastServiceTest.Companion.operasjonerMedIkkeEditerbareGrenser
@@ -25,6 +33,9 @@ class UtkastValideringTest {
     private lateinit var stemmekretsServiceMock: StemmekretsService
 
     @MockK
+    private lateinit var kodelisteServiceMock: KodelisteService
+
+    @MockK
     private lateinit var currentTime: CurrentTime
 
     private lateinit var utkastValidatorService: UtkastValidatorService
@@ -33,7 +44,9 @@ class UtkastValideringTest {
     fun setup () {
         MockKAnnotations.init(this)
         every { currentTime.asLocalDate() }  returns LocalDate.of(2022, 6, 1)
-        utkastValidatorService = UtkastValidatorService(grunnkretsServiceMock, stemmekretsServiceMock, currentTime)
+        every { grunnkretsServiceMock.hentGrunnkrets(any()) }  returns GrunnkretsBuilder.DEFAULT_GRUNNKRETS
+        every { kodelisteServiceMock.getCodeValueByKommunenummerId(any()) } returns "0301"
+        utkastValidatorService = UtkastValidatorService(grunnkretsServiceMock, stemmekretsServiceMock, kodelisteServiceMock, currentTime)
     }
 
     @Test
@@ -74,12 +87,209 @@ class UtkastValideringTest {
     }
 
     @Test
-    fun `valider operasjoner med kun editerbare grenser gir gyldige operasjoner`() {
-        val operasjoner = operasjonerMedKunEditerbareGrenser()
+    fun `valider at metadataoperasjoner med blankt grunnkretsnavn gir ugyldige operasjoner`() {
+        val operasjoner =
+            Operasjoner(
+                metadataendringer =
+                Metadataendringer(
+                    grunnkretsendringer =
+                    mapOf(
+                        "1" to GrunnkretsRequestBuilder(navn = "gyldigNavn").build(),
+                        "2" to GrunnkretsRequestBuilder(navn = "").build(),
+                    )
+                )
+            )
 
-        val validateGyldigeOperasjoner = utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
-        assertThat(validateGyldigeOperasjoner).isInstanceOf(OperasjonerValidering.GyldigeOperasjoner::class.java)
+        val validateGyldigeOperasjoner =
+            utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
+        assertThat(validateGyldigeOperasjoner)
+            .isInstanceOf(OperasjonerValidering.UgyldigeOperasjoner::class.java)
     }
 
+    @Test
+    fun `valider at metadataoperasjoner med blankt stemmekretsnavn gir ugyldige operasjoner`() {
+        val operasjoner =
+            Operasjoner(
+                metadataendringer =
+                Metadataendringer(
+                    stemmekretsendringer =
+                    mapOf("1" to StemmekretsRequestBuilder(stemmekretsnavn = "").build())
+                )
+            )
 
+        val validateGyldigeOperasjoner =
+            utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
+        assertThat(validateGyldigeOperasjoner)
+            .isInstanceOf(OperasjonerValidering.UgyldigeOperasjoner::class.java)
+    }
+
+    @Test
+    fun `valider at sammenslaaingsoperasjoner med blankt stemmekretsnavn gir ugyldige operasjoner`() {
+        val operasjoner =
+            Operasjoner(
+                stemmekretsSammenslaaingsendring =
+                StemmekretsSammenslaaingsendringRequest(
+                    viderefoertStemmekrets = IdentifikatorMedVersjon("1", 5),
+                    stemmekretserTilSammenslaaing = listOf(IdentifikatorMedVersjon("2", 1)),
+                    stemmekretsNavn = "",
+                    stemmekretsNummer = "1234567"
+                )
+            )
+
+        val validateGyldigeOperasjoner =
+            utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
+        assertThat(validateGyldigeOperasjoner)
+            .isInstanceOf(OperasjonerValidering.UgyldigeOperasjoner::class.java)
+    }
+
+    @Test
+    fun `valider at metadataoperasjoner med blankt grunnkretsnummer gir ugyldige operasjoner`() {
+        val operasjoner =
+            Operasjoner(
+                metadataendringer =
+                Metadataendringer(
+                    grunnkretsendringer =
+                    mapOf("1" to GrunnkretsRequestBuilder(grunnkretsnummer = "").build())
+                )
+            )
+
+        val validateGyldigeOperasjoner =
+            utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
+        assertThat(validateGyldigeOperasjoner)
+            .isInstanceOf(OperasjonerValidering.UgyldigeOperasjoner::class.java)
+    }
+
+    @Test
+    fun `valider at metadataoperasjoner med 0 som stemmekretsnummer gir ugyldige operasjoner`() {
+        val operasjoner =
+            Operasjoner(
+                metadataendringer =
+                Metadataendringer(
+                    stemmekretsendringer =
+                    mapOf("1" to StemmekretsRequestBuilder(stemmekretsnummer = "0").build())
+                )
+            )
+
+        val validateGyldigeOperasjoner =
+            utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
+        assertThat(validateGyldigeOperasjoner)
+            .isInstanceOf(OperasjonerValidering.UgyldigeOperasjoner::class.java)
+    }
+
+    @Test
+    fun `valider at sammenslaaingsoperasjoner med stemmekretsnummer med bokstaver gir ugyldige operasjoner`() {
+        val operasjoner =
+            Operasjoner(
+                stemmekretsSammenslaaingsendring =
+                StemmekretsSammenslaaingsendringRequest(
+                    viderefoertStemmekrets = IdentifikatorMedVersjon("1", 5),
+                    stemmekretserTilSammenslaaing = listOf(IdentifikatorMedVersjon("2", 1)),
+                    stemmekretsNavn = "gyldigNavn",
+                    stemmekretsNummer = "ugyldigNummer"
+                )
+            )
+
+        val validateGyldigeOperasjoner =
+            utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
+        assertThat(validateGyldigeOperasjoner)
+            .isInstanceOf(OperasjonerValidering.UgyldigeOperasjoner::class.java)
+    }
+
+    @Test
+    fun `valider at grunnkretsnummer med mindre enn 8 siffer gir ugyldige operasjoner`() {
+        val operasjoner =
+            Operasjoner(
+                metadataendringer =
+                Metadataendringer(
+                    grunnkretsendringer =
+                    mapOf("1" to GrunnkretsRequestBuilder(grunnkretsnummer = "1234567").build())
+                )
+            )
+
+        val validateGyldigeOperasjoner =
+            utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
+        assertThat(validateGyldigeOperasjoner)
+            .isInstanceOf(OperasjonerValidering.UgyldigeOperasjoner::class.java)
+    }
+
+    @Test
+    fun `valider at grunnkretsnummer med mer enn 8 siffer gir ugyldige operasjoner`() {
+        val operasjoner =
+            Operasjoner(
+                metadataendringer =
+                Metadataendringer(
+                    grunnkretsendringer =
+                    mapOf("1" to GrunnkretsRequestBuilder(grunnkretsnummer = "123456789").build())
+                )
+            )
+
+        val validateGyldigeOperasjoner =
+            utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
+        assertThat(validateGyldigeOperasjoner)
+            .isInstanceOf(OperasjonerValidering.UgyldigeOperasjoner::class.java)
+    }
+
+    @Test
+    fun `valider at stemmekretsnummer med mer enn 4 siffer gir ugyldige operasjoner`() {
+        val operasjoner =
+            Operasjoner(
+                metadataendringer =
+                Metadataendringer(
+                    stemmekretsendringer =
+                    mapOf("1" to StemmekretsRequestBuilder(stemmekretsnummer = "12345").build())
+                )
+            )
+
+        val validateGyldigeOperasjoner =
+            utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
+        assertThat(validateGyldigeOperasjoner)
+            .isInstanceOf(OperasjonerValidering.UgyldigeOperasjoner::class.java)
+    }
+
+    @Test
+    fun `valider at grunnkretsnummer som ikke matcher med kommunenummer gir ugyldige operasjoner`() {
+        val operasjoner =
+            Operasjoner(
+                metadataendringer =
+                Metadataendringer(
+                    grunnkretsendringer =
+                    mapOf("1" to GrunnkretsRequestBuilder(grunnkretsnummer = "12345678").build())
+                )
+            )
+
+        val validateGyldigeOperasjoner =
+            utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
+        assertThat(validateGyldigeOperasjoner)
+            .isInstanceOf(OperasjonerValidering.UgyldigeOperasjoner::class.java)
+    }
+
+    @Test
+    fun `valider at godkjente operasjoner gir gyldige operasjoner`() {
+        val operasjoner =
+            Operasjoner(
+                metadataendringer =
+                Metadataendringer(
+                    grunnkretsendringer =
+                    mapOf(
+                        "1" to GrunnkretsRequestBuilder.DEFAULT_REQUEST,
+                        "2" to GrunnkretsRequestBuilder(lokalId = "2").build(),
+                    ),
+                    stemmekretsendringer =
+                    mapOf("1" to StemmekretsRequestBuilder(stemmekretsnummer = "123").build())
+                ),
+                stemmekretsSammenslaaingsendring =
+                StemmekretsSammenslaaingsendringRequest(
+                    viderefoertStemmekrets = IdentifikatorMedVersjon("1", 5),
+                    stemmekretserTilSammenslaaing = listOf(IdentifikatorMedVersjon("2", 1)),
+                    stemmekretsNavn = "gyldigNavn",
+                    stemmekretsNummer = "4"
+                ),
+                grenseendringer = operasjonerMedKunEditerbareGrenser().grenseendringer
+            )
+
+        val validateGyldigeOperasjoner =
+            utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
+        assertThat(validateGyldigeOperasjoner)
+            .isInstanceOf(OperasjonerValidering.GyldigeOperasjoner::class.java)
+    }
 }

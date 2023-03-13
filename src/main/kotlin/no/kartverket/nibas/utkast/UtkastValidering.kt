@@ -1,5 +1,6 @@
 package no.kartverket.nibas.utkast
 
+import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.Feature
@@ -10,6 +11,7 @@ import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.domain.utkast.Utkast
 import no.kartverket.nibas.domain.utkast.UtkastStatus
+import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.service.GrunnkretsService
 import no.kartverket.nibas.service.StemmekretsService
 import org.springframework.stereotype.Service
@@ -19,6 +21,7 @@ import java.time.LocalDate
 class UtkastValidatorService(
     val grunnkretsService: GrunnkretsService,
     val stemmekretsService: StemmekretsService,
+    val kodelisteService: KodelisteService,
     val currentTime: CurrentTime
 ) {
 
@@ -27,8 +30,11 @@ class UtkastValidatorService(
 
         val featuresSomIkkeErEditerbare = endredeFeatures.filterNot { Grensetype.valueOf(it.value.properties.type).editerbar }
         if (featuresSomIkkeErEditerbare.isNotEmpty()) {
-            return OperasjonerValidering.UgyldigeOperasjoner(operasjoner, ResponseException.BadRequestException("Utkast inneholder ${featuresSomIkkeErEditerbare.size} ikke-editerbare grenser"))
+            return OperasjonerValidering.UgyldigeOperasjoner(operasjoner, ResponseException.BadRequestException("Utkast inneholder ${featuresSomIkkeErEditerbare.size} ikke-redigerbare grenser"))
         }
+
+        val kretsinfoValideringsfeil = validerKretsinfoEndringer(operasjoner)
+        if (kretsinfoValideringsfeil != null) return kretsinfoValideringsfeil
 
         return OperasjonerValidering.GyldigeOperasjoner(operasjoner)
     }
@@ -47,12 +53,17 @@ class UtkastValidatorService(
             return UtkastValidering.UgyldigUtkast(utkast, ResponseException.BadRequestException("Kan ikke publisere et utkast uten endringer."))
         }
 
-        val grunnkretsValideringsFeil = validerGrunnkretsEndringer(utkast)
+        val operasjonerValideringResult = validateGyldigeOperasjoner(utkast.operasjoner!!)
+        if (operasjonerValideringResult is OperasjonerValidering.UgyldigeOperasjoner) {
+            return UtkastValidering.UgyldigUtkast(utkast, operasjonerValideringResult.feil)
+        }
+
+        val grunnkretsValideringsFeil = validerGrunnkretsEndringerKonflikt(utkast)
         if (grunnkretsValideringsFeil != null) {
             return UtkastValidering.UgyldigUtkast(utkast, grunnkretsValideringsFeil)
         }
 
-        val stemmekretsValideringsFeil = validerStemmekretsEndringer(utkast)
+        val stemmekretsValideringsFeil = validerStemmekretsEndringerKonflikt(utkast)
         if (stemmekretsValideringsFeil != null) {
             return UtkastValidering.UgyldigUtkast(utkast, stemmekretsValideringsFeil)
         }
@@ -72,7 +83,64 @@ class UtkastValidatorService(
         return dato.isAfter(sisteGyldigeStemmekrets.gyldighet.gyldigFra)
     }
 
-    private fun validerGrunnkretsEndringer(utkast: Utkast): FeilVedOppdatering.OppdateringException? {
+    fun validerKretsinfoEndringer(
+        operasjoner: Operasjoner
+    ): OperasjonerValidering.UgyldigeOperasjoner? {
+        val harUgyldigMetadataendringPaaGrunnkrets =
+            operasjoner.metadataendringer.grunnkretsendringer.values.any {
+                isMetadataendringUgyldig(
+                    Flatetype.GRUNNKRETS,
+                    it.navn,
+                    it.grunnkretsnummer,
+                    it.identifikasjon.lokalid
+                )
+            }
+        if (harUgyldigMetadataendringPaaGrunnkrets)
+            return OperasjonerValidering.UgyldigeOperasjoner(
+                operasjoner,
+                ResponseException.BadRequestException(
+                    "Utkast inneholder ugyldige metadataendringer på grunnkrets"
+                )
+            )
+
+        val harUgyldigMetadataendringPaaStemmekrets =
+            operasjoner.metadataendringer.stemmekretsendringer.values.any {
+                isMetadataendringUgyldig(
+                    Flatetype.STEMMEKRETS,
+                    it.stemmekretsnavn,
+                    it.stemmekretsnummer,
+                    it.identifikasjon.lokalid
+                )
+            }
+        if (harUgyldigMetadataendringPaaStemmekrets)
+            return OperasjonerValidering.UgyldigeOperasjoner(
+                operasjoner,
+                ResponseException.BadRequestException(
+                    "Utkast inneholder ugyldige metadataendringer på stemmekrets"
+                )
+            )
+
+        val harUgyldigMetadataendringPaaStemmekretsSammenslaaing =
+            if (operasjoner.stemmekretsSammenslaaingsendring != null)
+                isMetadataendringUgyldig(
+                    Flatetype.STEMMEKRETS,
+                    operasjoner.stemmekretsSammenslaaingsendring.stemmekretsNavn,
+                    operasjoner.stemmekretsSammenslaaingsendring.stemmekretsNummer,
+                    operasjoner.stemmekretsSammenslaaingsendring.viderefoertStemmekrets.lokalId
+                )
+            else false
+        if (harUgyldigMetadataendringPaaStemmekretsSammenslaaing)
+            return OperasjonerValidering.UgyldigeOperasjoner(
+                operasjoner,
+                ResponseException.BadRequestException(
+                    "Utkast inneholder ugyldige metadataendringer på sammenslåing"
+                )
+            )
+
+        return null
+    }
+
+    private fun validerGrunnkretsEndringerKonflikt(utkast: Utkast): FeilVedOppdatering.OppdateringException? {
         return utkast.operasjoner?.metadataendringer?.grunnkretsendringer?.firstNotNullOfOrNull { grunnkretsendring ->
             val senerePubliserteEndringer = grunnkretsService.hentAlleVersjonerMedGyldigFraEtterGittDato(lokalId = Lokalid(grunnkretsendring.key), dato = utkast.gyldigFra)
 
@@ -88,7 +156,7 @@ class UtkastValidatorService(
         }
     }
 
-    private fun validerStemmekretsEndringer(utkast: Utkast): FeilVedOppdatering.OppdateringException? {
+    private fun validerStemmekretsEndringerKonflikt(utkast: Utkast): FeilVedOppdatering.OppdateringException? {
         return utkast.operasjoner?.metadataendringer?.stemmekretsendringer?.firstNotNullOfOrNull { stemmekretsendring ->
             val senerePubliserteEndringer = stemmekretsService.hentAlleVersjonerMedGyldigFraEtterGittDato(lokalId = Lokalid(stemmekretsendring.key), dato = utkast.gyldigFra)
 
@@ -102,6 +170,52 @@ class UtkastValidatorService(
                 null
             }
         }
+    }
+
+
+    /** Tenkt som generisk metadataendring-sjekker,
+     * men fungerer foreløpig kun for grunnkretser og stemmekretser **/
+    private fun isMetadataendringUgyldig(flatetype: Flatetype, navn: String?, kretsnummer: String?, lokalid: String): Boolean {
+        if (isUgyldigKretsnummerEllerNavn(kretsnummer, navn)) {
+            return true
+        }
+
+        if (flatetype == Flatetype.GRUNNKRETS && isUgyldigGrunnkretsnummer(kretsnummer, lokalid)) {
+            return true
+        }
+
+        if (flatetype == Flatetype.STEMMEKRETS && isUgyldigStemmekretsnummer(kretsnummer)) {
+            return true
+        }
+
+        return false
+    }
+    private fun isUgyldigKretsnummerEllerNavn(kretsnummer: String?, kretsnavn: String?): Boolean {
+        val numeriskKretsnummer = kretsnummer?.toIntOrNull()
+        if (numeriskKretsnummer == null || numeriskKretsnummer == 0) {
+            return true
+        }
+
+        return kretsnavn.isNullOrBlank()
+    }
+
+    private fun isUgyldigGrunnkretsnummer(nummer: String?, lokalid: String): Boolean {
+        if (nummer?.length != 8) return true
+
+        val grunnkrets =
+            grunnkretsService.hentGrunnkrets(
+                Identifikator(lokalid = Lokalid(lokalid), gyldighetsdato = LocalDate.now())
+            )
+
+        val kommunenummerUUID = grunnkrets?.kommune?.kommunenummer
+        if (kommunenummerUUID.isNullOrBlank()) return true
+
+        val kommunenummer = kodelisteService.getCodeValueByKommunenummerId(kommunenummerUUID)
+        return nummer.take(4) != kommunenummer
+    }
+
+    private fun isUgyldigStemmekretsnummer(nummer: String?): Boolean {
+        return nummer?.length!! > 4;
     }
 
 }

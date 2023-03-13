@@ -24,6 +24,7 @@ import no.kartverket.nibas.builders.StemmekretsBuilder
 import no.kartverket.nibas.builders.StemmekretsRequestBuilder
 import no.kartverket.nibas.builders.UtkastRequestBuilder
 import no.kartverket.nibas.common.CurrentTime
+import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.BadRequestException
 import no.kartverket.nibas.domain.Endringstype
@@ -31,6 +32,7 @@ import no.kartverket.nibas.domain.utkast.Utkast
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
 import no.kartverket.nibas.events.NibasEventPublisher
+import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.UtkastRepository
 import no.kartverket.nibas.service.FylkeService
 import no.kartverket.nibas.service.GrenseService
@@ -75,6 +77,9 @@ internal class UtkastServiceTest {
     private lateinit var stemmekretsServiceMock: StemmekretsService
 
     @Mock
+    private lateinit var kodelisteServiceMock: KodelisteService
+
+    @Mock
     private lateinit var currentTime: CurrentTime
 
     @Mock
@@ -90,7 +95,7 @@ internal class UtkastServiceTest {
         MockitoAnnotations.openMocks(this)
 
         whenever(currentTime.asLocalDate()).thenReturn(LocalDate.of(2022, 6, 1))
-        val utkastValidatorService = UtkastValidatorService(grunnkretsServiceMock, stemmekretsServiceMock, currentTime)
+        val utkastValidatorService = UtkastValidatorService(grunnkretsServiceMock, stemmekretsServiceMock, kodelisteServiceMock, currentTime)
         utkastService = UtkastService(utkastRepositoryMock, nasjonServiceMock, fylkeServiceMock, kommuneServiceMock, grunnkretsServiceMock,
             stemmekretsServiceMock, grenseServiceMock, nibasEventPublisherMock, utkastValidatorService)
     }
@@ -119,7 +124,23 @@ internal class UtkastServiceTest {
 
         assertThatThrownBy {utkastService.opprettUtkast(opprettUtkastRequest)}
             .isInstanceOf(BadRequestException::class.java)
-            .hasMessageContaining("Utkast inneholder 5 ikke-editerbare grenser")
+            .hasMessageContaining("Utkast inneholder 5 ikke-redigerbare grenser")
+    }
+
+    @Test
+    fun opprettUtkastMedBlanktStemmekretsnavnGirBadRequest() {
+        val opprettUtkastRequest = OpprettUtkastRequestBuilder()
+            .withNavn("Utkast med blankt stemmekretsnavn")
+            .withOperasjoner(Operasjoner(
+                metadataendringer = Metadataendringer(
+                    stemmekretsendringer = mapOf("1" to StemmekretsRequestBuilder(stemmekretsnavn = "").build())
+                )
+            ))
+            .build()
+
+        assertThatThrownBy {utkastService.opprettUtkast(opprettUtkastRequest)}
+            .isInstanceOf(BadRequestException::class.java)
+            .hasMessageContaining("ugyldige metadataendringer")
     }
 
     @Test
@@ -152,7 +173,23 @@ internal class UtkastServiceTest {
             .build()
         assertThatThrownBy {utkastService.oppdaterUtkast("123", utkast)}
             .isInstanceOf(BadRequestException::class.java)
-            .hasMessageContaining("Utkast inneholder 5 ikke-editerbare grenser")
+            .hasMessageContaining("Utkast inneholder 5 ikke-redigerbare grenser")
+    }
+
+    @Test
+    fun oppdaterUtkastMedUgyldigGrunnkretsnummerGirBadRequest() {
+        val opprettUtkastRequest = OpprettUtkastRequestBuilder()
+            .withNavn("Utkast med for kort grunnkretsnummer")
+            .withOperasjoner(Operasjoner(
+                metadataendringer = Metadataendringer(
+                    grunnkretsendringer = mapOf("1" to GrunnkretsRequestBuilder(grunnkretsnummer = "1234567").build())
+                )
+            ))
+            .build()
+
+        assertThatThrownBy {utkastService.opprettUtkast(opprettUtkastRequest)}
+            .isInstanceOf(BadRequestException::class.java)
+            .hasMessageContaining("ugyldige metadataendringer")
     }
 
     @Test
@@ -203,11 +240,13 @@ internal class UtkastServiceTest {
                     stemmekretsendringer = mapOf("Stemmekrets-UUID-1" to StemmekretsRequestBuilder.DEFAULT_REQUEST)
                 ),
                 grenseendringer = Grenseendringer(
-                    endredeFeatures = mapOf("56" to FeatureBuilder("56").build())
+                    endredeFeatures = mapOf("56" to FeatureBuilder("56").withGrensetype(Grensetype.Grunnkretsgrense).build())
                 )
             ))
             .build()
         whenever(utkastRepositoryMock.findById(anyString())).thenReturn(Optional.of(utkast))
+        whenever(grunnkretsServiceMock.hentGrunnkrets(any(Identifikator::class.java))).thenReturn(GrunnkretsBuilder.DEFAULT_GRUNNKRETS)
+        whenever(kodelisteServiceMock.getCodeValueByKommunenummerId(anyString())).thenReturn("0301")
 
         utkastService.publiserUtkast(utkast.id)
 

@@ -68,6 +68,11 @@ class GrunnkretsBuilder(
         return this
     }
 
+    fun withNavn(navn: String): GrunnkretsBuilder {
+        this.grunnkretsnavn = navn
+        return this
+    }
+
     fun withEndretDato(zonedDateTime: ZonedDateTime): GrunnkretsBuilder {
         this.endretdato = zonedDateTime
         return this
