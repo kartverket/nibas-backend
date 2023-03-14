@@ -13,6 +13,8 @@ import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
+import no.kartverket.nibas.events.NibasEventPublisher
+import no.kartverket.nibas.events.PublishEventException
 import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.repository.UtkastRepository
 import no.kartverket.nibas.sporing.AuditInfo
@@ -51,6 +53,9 @@ class UtkastService_stemmekretsIT : TestWithDbContainer() {
     @Autowired
     private lateinit var stemmekretsRepository: StemmekretsRepository
 
+    @Autowired
+    private lateinit var nibasEventPublisher: NibasEventPublisher
+
     // ID for Kommune med kommunenummerId som matcher i Geonorge og vår cache
     private val kommuneIdGeonorge = "e24e9dcf-4ae9-475c-afc2-1a5c49f166e4"
 
@@ -76,6 +81,15 @@ class UtkastService_stemmekretsIT : TestWithDbContainer() {
     fun beforeEach() {
         Mockito.`when`(currentTime.asLocalDate()).thenReturn(LocalDate.of(2022, 6, 1))
         Mockito.`when`(userFacade.getAuthenticatedUser()).thenReturn("Testbruker 123")
+    }
+
+    @Test
+    fun publiserUtkastUtenEventRad() {
+        Assertions.assertThatThrownBy {
+            nibasEventPublisher.publishNibasEvent(emptyList(), LocalDate.now())
+        }
+            .isInstanceOf(PublishEventException::class.java)
+            .hasMessageContaining("Event må inneholde minst 1 EventRad")
     }
 
     @Test
