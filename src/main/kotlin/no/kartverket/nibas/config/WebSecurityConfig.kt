@@ -8,23 +8,18 @@ import no.kartverket.aut.lib.jwt.impl.JwtAuthenticationRequestFilter
 import no.kartverket.aut.lib.jwt.impl.SecurityContextUpdater
 import no.kartverket.aut.lib.security.DefaultWebSecurityConfig
 import no.kartverket.nibas.common.md5
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
 import org.springframework.core.env.Environment
-import org.springframework.http.HttpStatus
 import org.springframework.security.authentication.AbstractAuthenticationToken
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
-import org.springframework.security.core.AuthenticationException
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
-import org.springframework.security.web.AuthenticationEntryPoint
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter
 import org.springframework.util.StringUtils
@@ -71,18 +66,12 @@ class WebSecurityConfig @Autowired constructor(private val environment: Environm
             return httpSecurity
                 .securityMatcher("/v1/ekstern/**")
                 .addFilterAfter(apiKeyFilter(), AbstractPreAuthenticatedProcessingFilter::class.java)
-                // Defaulter til 401 Unauthorized dersom det kastes exception i filterkjeden
-                .exceptionHandling().authenticationEntryPoint(UnauthorizedEntryPoint("API_KEY_FILTER_CHAIN"))
-                .and()
                 // Slår av CSRF
                 .csrf().disable()
                 // Ingen sesjon vil opprettes eller brukes av Spring Security
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
-                .authorizeHttpRequests {
-                    // Krever bare at alle requester er authenticated (ingen rolle)
-                    it.anyRequest().authenticated()
-                }
+                .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
+                // Krever bare at alle requester er authenticated (ingen rolle)
+                .authorizeHttpRequests { it.anyRequest().authenticated() }
                 .build()
         }
     }
@@ -104,7 +93,6 @@ class WebSecurityConfig @Autowired constructor(private val environment: Environm
             return httpSecurity.securityMatcher("/**")
                 // Skal tillate stiene under (anbefalt måte fra Spring Security 5.7 for å ignore)
                 .authorizeHttpRequests {
-
                     // Er åpne for alle
                     it.requestMatchers("/actuator/health/**", "/actuator/info", "/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
 
@@ -115,14 +103,10 @@ class WebSecurityConfig @Autowired constructor(private val environment: Environm
                     it.anyRequest().hasRole("NIBAS")
                 }
                 .addFilterAfter(jwtRequestFilter(), AbstractPreAuthenticatedProcessingFilter::class.java)
-                // Defaulter til 401 Unauthorized dersom det kastes exception i filterkjeden
-                .exceptionHandling().authenticationEntryPoint(UnauthorizedEntryPoint("JWT_FILTER_CHAIN"))
-                .and()
                 // Slår av CSRF
                 .csrf().disable()
                 // Ingen sesjon vil opprettes eller brukes av Spring Security
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
+                .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
                 .build()
         }
     }
@@ -200,19 +184,6 @@ class NibasAuthorizerPlugin constructor(private val users: List<String>, private
 
         return grantedRoles
     }
-}
-
-/**
- * AuthenticationEntryPoint som setter status til 401 Unauthorized. Gir mulighet til å logge utfall.
- */
-class UnauthorizedEntryPoint(private val nameOfFilterChain: String) : AuthenticationEntryPoint {
-    private val logger: Logger = LoggerFactory.getLogger(this::class.java)
-
-    override fun commence(request: HttpServletRequest, response: HttpServletResponse, authException: AuthenticationException) {
-        logger.debug("Returnerer 401 Unauthorized for filterkjede '$nameOfFilterChain'")
-        response.status = HttpStatus.UNAUTHORIZED.value()
-    }
-
 }
 
 /**
