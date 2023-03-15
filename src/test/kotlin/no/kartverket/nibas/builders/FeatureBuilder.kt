@@ -43,7 +43,7 @@ class FeatureBuilder(private val id: String? = "1") {
 
     fun build(): Feature {
         var properties = FeatureProperties(
-            type = grenseType.toString(),
+            type = grenseType.value,
             srid = this.srid,
             version = grenseVersjon,
             kontekstEgenskaper = KontekstEgenskaper(
