@@ -230,6 +230,23 @@ class UtkastValideringTest {
     }
 
     @Test
+    fun `valider at negativt grunnkretsnummer gir ugyldige operasjoner`() {
+        val operasjoner =
+            Operasjoner(
+                metadataendringer =
+                Metadataendringer(
+                    grunnkretsendringer =
+                    mapOf("1" to GrunnkretsRequestBuilder(grunnkretsnummer = "-12345678").build())
+                )
+            )
+
+        val validateGyldigeOperasjoner =
+            utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
+        assertThat(validateGyldigeOperasjoner)
+            .isInstanceOf(OperasjonerValidering.UgyldigeOperasjoner::class.java)
+    }
+
+    @Test
     fun `valider at stemmekretsnummer med mer enn 4 siffer gir ugyldige operasjoner`() {
         val operasjoner =
             Operasjoner(
@@ -237,6 +254,23 @@ class UtkastValideringTest {
                 Metadataendringer(
                     stemmekretsendringer =
                     mapOf("1" to StemmekretsRequestBuilder(stemmekretsnummer = "12345").build())
+                )
+            )
+
+        val validateGyldigeOperasjoner =
+            utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
+        assertThat(validateGyldigeOperasjoner)
+            .isInstanceOf(OperasjonerValidering.UgyldigeOperasjoner::class.java)
+    }
+
+    @Test
+    fun `valider at negativt stemmekretsnummer gir ugyldige operasjoner`() {
+        val operasjoner =
+            Operasjoner(
+                metadataendringer =
+                Metadataendringer(
+                    stemmekretsendringer =
+                    mapOf("1" to StemmekretsRequestBuilder(stemmekretsnummer = "-123").build())
                 )
             )
 

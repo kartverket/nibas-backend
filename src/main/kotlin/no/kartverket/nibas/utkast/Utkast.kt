@@ -1,6 +1,6 @@
 package no.kartverket.nibas.utkast
 
-import java.time.LocalDate
+import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grenseendringer
 import no.kartverket.nibas.api.v1.common.Metadataendringer
 import no.kartverket.nibas.api.v1.common.Operasjoner
@@ -44,6 +44,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
+import java.time.LocalDate
 
 @RestController
 class UtkastController(
@@ -292,7 +293,19 @@ class UtkastService(
         val endredeGrunnkretser =
             conflictResolved.grunnkretsRequests
                 .filter { it.grunnkretsRequest.identifikasjon.lokalid == lokalid.value }
-                .mapNotNull {
+                .map {
+                    val grunnkretsRequest = it.grunnkretsRequest
+                    if (utkastValidatorService.isMetadataendringUgyldig(
+                            Flatetype.GRUNNKRETS,
+                            grunnkretsRequest.navn,
+                            grunnkretsRequest.grunnkretsnummer,
+                            grunnkretsRequest.identifikasjon.lokalid)
+                    ) {
+                        throw BadRequestException(
+                            "Utkast inneholder ugyldige metadataendringer på grunnkrets"
+                        )
+                    }
+
                     if (
                         utkastValidatorService.datoErEtterSisteGyldigFraDatoForGrunnkrets(
                             lokalid = lokalid.value,
@@ -309,7 +322,7 @@ class UtkastService(
                     grunnkretsService.oppdaterGrunnkrets(
                         lokalId = lokalid,
                         gyldigFra = it.gyldigFra,
-                        oppdatertGrunnkrets = it.grunnkretsRequest,
+                        oppdatertGrunnkrets = grunnkretsRequest,
                         endringstype = Endringstype.fromValue(it.endringstype),
                     )
                 }
@@ -318,6 +331,17 @@ class UtkastService(
             conflictResolved.stemmekretsRequests
                 .filter { it.stemmekretsRequest.identifikasjon.lokalid == lokalid.value }
                 .mapNotNull {
+                    val stemmekretsRequest = it.stemmekretsRequest
+                    if (utkastValidatorService.isMetadataendringUgyldig(
+                            Flatetype.STEMMEKRETS,
+                            stemmekretsRequest.stemmekretsnavn,
+                            stemmekretsRequest.stemmekretsnummer,
+                            stemmekretsRequest.identifikasjon.lokalid)
+                    ) {
+                        throw BadRequestException(
+                            "Utkast inneholder ugyldige metadataendringer på stemmekrets"
+                        )
+                    }
                     if (
                         utkastValidatorService.datoErEtterSisteGyldigFraDatoForStemmekrets(
                             lokalid = lokalid.value,
@@ -335,7 +359,7 @@ class UtkastService(
                         lokalId = lokalid,
                         gyldigFra = it.gyldigFra,
                         endringstype = Endringstype.fromValue(it.endringstype),
-                        oppdatertStemmekrets = it.stemmekretsRequest
+                        oppdatertStemmekrets = stemmekretsRequest
                     )
                 }
 

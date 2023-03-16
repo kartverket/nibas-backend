@@ -175,7 +175,11 @@ class UtkastValidatorService(
 
     /** Tenkt som generisk metadataendring-sjekker,
      * men fungerer foreløpig kun for grunnkretser og stemmekretser **/
-    private fun isMetadataendringUgyldig(flatetype: Flatetype, navn: String?, kretsnummer: String?, lokalid: String): Boolean {
+    internal fun isMetadataendringUgyldig(flatetype: Flatetype, navn: String?, kretsnummer: String?, lokalid: String): Boolean {
+        if (navn == null || kretsnummer == null) {
+            return true
+        }
+
         if (isUgyldigKretsnummerEllerNavn(kretsnummer, navn)) {
             return true
         }
@@ -190,17 +194,17 @@ class UtkastValidatorService(
 
         return false
     }
-    private fun isUgyldigKretsnummerEllerNavn(kretsnummer: String?, kretsnavn: String?): Boolean {
-        val numeriskKretsnummer = kretsnummer?.toIntOrNull()
-        if (numeriskKretsnummer == null || numeriskKretsnummer == 0) {
+    private fun isUgyldigKretsnummerEllerNavn(kretsnummer: String, kretsnavn: String): Boolean {
+        val numeriskKretsnummer = kretsnummer.toIntOrNull()
+        if (numeriskKretsnummer == null || numeriskKretsnummer <= 0) {
             return true
         }
 
-        return kretsnavn.isNullOrBlank()
+        return kretsnavn.isBlank()
     }
 
-    private fun isUgyldigGrunnkretsnummer(nummer: String?, lokalid: String): Boolean {
-        if (nummer?.length != 8) return true
+    private fun isUgyldigGrunnkretsnummer(nummer: String, lokalid: String): Boolean {
+        if (nummer.length != 8) return true
 
         val grunnkrets =
             grunnkretsService.hentGrunnkrets(
@@ -214,8 +218,8 @@ class UtkastValidatorService(
         return nummer.take(4) != kommunenummer
     }
 
-    private fun isUgyldigStemmekretsnummer(nummer: String?): Boolean {
-        return nummer?.length!! > 4;
+    private fun isUgyldigStemmekretsnummer(nummer: String): Boolean {
+        return nummer.length > 4
     }
 
 }

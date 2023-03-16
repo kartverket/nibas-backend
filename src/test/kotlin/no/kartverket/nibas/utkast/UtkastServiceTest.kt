@@ -5,12 +5,16 @@ import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.Metadataendringer
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
+import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
+import no.kartverket.nibas.api.v1.request.ConflictResolved
 import no.kartverket.nibas.api.v1.request.FylkeRequest
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
+import no.kartverket.nibas.api.v1.request.GrunnkretsRequestResolved
 import no.kartverket.nibas.api.v1.request.KommuneRequest
 import no.kartverket.nibas.api.v1.request.NasjonRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsRequest
+import no.kartverket.nibas.api.v1.request.StemmekretsRequestResolved
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
 import no.kartverket.nibas.builders.FeatureBuilder
 import no.kartverket.nibas.builders.FylkeRequestBuilder
@@ -193,6 +197,22 @@ internal class UtkastServiceTest {
     }
 
     @Test
+    fun oppdaterUtkastMedIkkeNumeriskGrunnkretsnummerGirBadRequest() {
+        val opprettUtkastRequest = OpprettUtkastRequestBuilder()
+            .withNavn("Utkast med for ikke-numerisk grunnkretsnummer")
+            .withOperasjoner(Operasjoner(
+                metadataendringer = Metadataendringer(
+                    grunnkretsendringer = mapOf("1" to GrunnkretsRequestBuilder(grunnkretsnummer = "grunnkretsnummer").build())
+                )
+            ))
+            .build()
+
+        assertThatThrownBy {utkastService.opprettUtkast(opprettUtkastRequest)}
+            .isInstanceOf(BadRequestException::class.java)
+            .hasMessageContaining("ugyldige metadataendringer")
+    }
+
+    @Test
     fun publiserUtkastMedAnnenStatusEnnOpprettetGirBadRequestEx() {
         val publisertUtkast = UtkastBuilder.builder("Utkast for publisering")
             .withStatus(UtkastStatus.PUBLISERT)
@@ -260,6 +280,64 @@ internal class UtkastServiceTest {
         verify(stemmekretsServiceMock).oppdaterStemmekrets(any(Lokalid::class.java), any(LocalDate::class.java), any(Endringstype::class.java), any(StemmekretsRequest::class.java))
         verify(grenseServiceMock).lagreGrenser(any(FeatureCollection::class.java), any(LocalDate::class.java))
         verify(nibasEventPublisherMock).publishNibasEvent(anyList(), any(LocalDate::class.java))
+    }
+
+    @Test
+    fun `framtidige versjoner konflikt resolved gir 400 bad request ved ugyldig grunnkretsnummer (for få sifre)`() {
+        val lokalid = Lokalid("abcd-38383")
+        val conflictResolved = ConflictResolved(
+            lokalid = lokalid,
+            grunnkretsRequests = listOf(
+                GrunnkretsRequestResolved(
+                    gyldigFra = LocalDate.now(),
+                    endringstype = Endringstype.KVALITETSHEVING.value,
+                    grunnkretsRequest = GrunnkretsRequest(
+                        navn = "Grunnkrets",
+                        grunnkretsnummer = "1111",
+                        identifikasjon = Identifikasjon(lokalid = lokalid.value),
+                        version = 1,
+                    )
+                ),
+            )
+        )
+
+        val utkast = UtkastBuilder.builder("Utkast").build()
+
+        whenever(utkastRepositoryMock.findById(anyString())).thenReturn(Optional.of(utkast))
+        whenever(grunnkretsServiceMock.hentGrunnkrets(any(Identifikator::class.java))).thenReturn(GrunnkretsBuilder.DEFAULT_GRUNNKRETS)
+        whenever(kodelisteServiceMock.getCodeValueByKommunenummerId(anyString())).thenReturn("1234")
+
+        assertThatThrownBy {
+            utkastService.resolveConflictForFramtidigeVersjoner(lokalid.value, conflictResolved)
+        }.isInstanceOf(BadRequestException::class.java)
+    }
+
+    @Test
+    fun `framtidige versjoner konflikt resolved gir 400 bad request ved ugyldig stemmekretsnummer (for mange sifre)`() {
+        val lokalid = Lokalid("abcd-38383")
+        val conflictResolved = ConflictResolved(
+            lokalid = lokalid,
+            stemmekretsRequests = listOf(
+                StemmekretsRequestResolved(
+                    gyldigFra = LocalDate.now(),
+                    endringstype = Endringstype.KVALITETSHEVING.value,
+                    stemmekretsRequest = StemmekretsRequest(
+                        stemmekretsnavn = "Grunnkrets",
+                        stemmekretsnummer = "555555",
+                        identifikasjon = Identifikasjon(lokalid = lokalid.value),
+                        version = 1,
+                    )
+                ),
+            ),
+        )
+
+        val utkast = UtkastBuilder.builder("Utkast").build()
+
+        whenever(utkastRepositoryMock.findById(anyString())).thenReturn(Optional.of(utkast))
+
+        assertThatThrownBy {
+            utkastService.resolveConflictForFramtidigeVersjoner(lokalid.value, conflictResolved)
+        }.isInstanceOf(BadRequestException::class.java)
     }
 
     @Test
