@@ -5,10 +5,10 @@ import no.kartverket.nibas.api.v1.response.KretsResponse
 import no.kartverket.nibas.api.v1.response.StemmekretsResponse
 import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.common.createIdentifikator
-import no.kartverket.nibas.service.StemmekretsService
-import no.kartverket.nibas.service.toStemmekretsResponse
+import no.kartverket.nibas.extensions.flate.toKretsResponse
+import no.kartverket.nibas.extensions.flate.toStemmekretsResponse
 import no.kartverket.nibas.kodelister.KodelisteService
-import no.kartverket.nibas.service.toKretsResponse
+import no.kartverket.nibas.service.StemmekretsService
 import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDate
 

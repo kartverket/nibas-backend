@@ -6,18 +6,19 @@ import no.kartverket.nibas.api.v1.response.GrunnkretsRef
 import no.kartverket.nibas.api.v1.response.KommuneRef
 import no.kartverket.nibas.api.v1.response.KommuneResponse
 import no.kartverket.nibas.api.v1.response.StemmekretsRef
+import no.kartverket.nibas.api.v1.response.toObjektIdentifikator
 import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.common.createIdentifikator
+import no.kartverket.nibas.domain.Grunnkrets
+import no.kartverket.nibas.domain.Stemmekrets
+import no.kartverket.nibas.extensions.flate.toKommuneResponse
 import no.kartverket.nibas.service.StemmekretsService
 import no.kartverket.nibas.service.GrunnkretsService
 import no.kartverket.nibas.service.KommuneService
-import no.kartverket.nibas.service.grenseKoblingToFeature
-import no.kartverket.nibas.service.toGrunnkretsRef
-import no.kartverket.nibas.service.toKommuneResponse
-import no.kartverket.nibas.service.toStemmekretsRef
+import no.kartverket.nibas.extensions.geometry.grenseKoblingToFeature
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.kodelister.createKommunenummerFromUUID
 import org.springframework.web.bind.annotation.RestController
@@ -59,11 +60,7 @@ class KommuneController(
             throw NotFoundException("Fant ingen grenser for $identifikator")
         }
         return FeatureCollection(
-            features = grenseKoblinger.map {
-                grenseKoblingToFeature(
-                    grenseKobling = it,
-                    gyldighetsdato = identifikator.gyldighetsdato)
-            }
+            features = grenseKoblinger.map { it.grenseKoblingToFeature(gyldighetsdato = identifikator.gyldighetsdato) }
         )
     }
 
@@ -83,3 +80,22 @@ class KommuneController(
         }
     }
 }
+
+private fun Grunnkrets.toGrunnkretsRef(identifikator: Identifikator, antallFramtidigeVersjoner: Int = 0, hrefProvider: HrefProvider, kodelisteService: KodelisteService): GrunnkretsRef = GrunnkretsRef(
+    id = identifikator.toObjektIdentifikator(),
+    navn = this.grunnkretsnavn!!,
+    grunnkretsnummer = this.grunnkretsnummer!!,
+    href = hrefProvider.getHref(identifikator),
+    kommunenummer = kodelisteService.createKommunenummerFromUUID(this.kommune.kommunenummer),
+    antallFramtidigeVersjoner = antallFramtidigeVersjoner
+)
+
+fun Stemmekrets.toStemmekretsRef(identifikator: Identifikator, antallFramtidigeVersjoner: Int = 0, hrefProvider: HrefProvider, kodelisteService: KodelisteService): StemmekretsRef = StemmekretsRef(
+    id = identifikator.toObjektIdentifikator(),
+    navn = this.stemmekretsnavn!!,
+    nummer = this.stemmekretsnummer!!,
+    href = hrefProvider.getHref(identifikator),
+    kommunenummer = kodelisteService.createKommunenummerFromUUID(this.kommune.kommunenummer),
+    antallFramtidigeVersjoner = antallFramtidigeVersjoner,
+    version = this.version,
+)

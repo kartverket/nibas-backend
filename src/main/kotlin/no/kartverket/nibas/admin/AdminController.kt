@@ -1,6 +1,5 @@
 package no.kartverket.nibas.admin
 
-import no.kartverket.nibas.api.v1.AdminApi
 import no.kartverket.nibas.kodelister.KodelisteService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.RestController

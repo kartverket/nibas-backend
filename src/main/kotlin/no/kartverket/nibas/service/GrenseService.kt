@@ -1,21 +1,15 @@
 package no.kartverket.nibas.service
 
 import no.kartverket.nibas.api.v1.common.Grensetype
-import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
-import no.kartverket.nibas.api.v1.common.geojson.FeatureProperties
-import no.kartverket.nibas.api.v1.common.geojson.KontekstEgenskaper
-import no.kartverket.nibas.api.v1.common.geojson.MultiPolygon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.AdministrativGrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.AvtaltAvgrensningslinjeMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.KommunalKretsgrenseMetadata
-import no.kartverket.nibas.api.v1.common.geojson.metadata.MetadataMapper
 import no.kartverket.nibas.api.v1.common.geojson.metadata.MetadataUpdater
 import no.kartverket.nibas.api.v1.common.geojson.metadata.RiksgrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.StatistiskgrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.TerritorialgrenseMetadata
-import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
@@ -24,12 +18,12 @@ import no.kartverket.nibas.common.UgyldigTilstandException
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.Grense
-import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.StemmekretsGrenseKobling
+import no.kartverket.nibas.extensions.geometry.toLineString
 import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.KonfliktVersjon
@@ -38,8 +32,6 @@ import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.repository.findAllGyldigeObjekterForIdentifikatorer
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
-import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
-import org.locationtech.jts.geom.Point
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -287,84 +279,4 @@ class GrenseService(
         }
         return grense
     }
-
-}
-
-/**
- * Default angitt kontekst er Grunnkrets.
- * Kontekstegenskapene retning, rekkefoelge, flateIndeks, hullIndeks gir nå kun mening for
- * Grunnkrets/Stemmekrets.
- * Metoden tar inn gyldighetsdato, defaulter til dagens dato. Dette for å kunne velge rett versjon av Grense-objektet dersom det finnes framtidige versjoner.
- */
-fun grenseKoblingToFeature(
-    grenseKobling: GrenseKobling,
-    kontekstType: KontekstEnhetType = KontekstEnhetType.GRUNNKRETS,
-    gyldighetsdato: LocalDate = LocalDate.now()
-): Feature {
-    val feature = grenseKobling.getRelevantGrense(gyldighetsdato).toFeature()
-    val koblingAttributter = grenseKobling.grenseKoblingAttributter
-    return feature.copy(
-        properties = feature.properties.copy(
-            kontekstEgenskaper = KontekstEgenskaper(
-                id = ObjektIdentifikator(
-                    lokalid = Lokalid(grenseKobling.getEnhetKobletTilGrense().lokalid),
-                    gyldighetsdato = gyldighetsdato
-                ),
-                type = kontekstType,
-                retningMedKlokken = koblingAttributter.retningMedKlokken,
-                rekkefoelge = koblingAttributter.rekkefoelge,
-                flateIndeks = koblingAttributter.flateIndeks,
-                hullIndeks = koblingAttributter.hullIndeks
-            )
-        )
-    )
-}
-
-fun Grense.toFeature(): Feature {
-    val grensetype = this.grensetype
-    var featureProperties = FeatureProperties(type = grensetype.value, srid = this.grense.srid, version = this.version)
-    val metadataMapper = MetadataMapper()
-    featureProperties = when (grensetype) {
-        Grensetype.Fylkesgrense -> featureProperties.copy(metadata = metadataMapper.toMetadataForAdministrativGrense(this))
-        Grensetype.Kommunegrense -> featureProperties.copy(metadata = metadataMapper.toMetadataForAdministrativGrense(this))
-        Grensetype.Riksgrense -> featureProperties.copy(metadata = metadataMapper.toMetadataForRiksgrense(this))
-        Grensetype.AvtaltAvgrensningslinje -> featureProperties.copy(metadata = metadataMapper.toMetadataForAvtaltAvgrensningslinje(this))
-        Grensetype.Territorialgrense -> featureProperties.copy(metadata = metadataMapper.toMetadataForTerritorialgrense(this))
-        Grensetype.Grunnlinje -> featureProperties.copy(metadata = metadataMapper.toMetadataForGrunnlinje(this))
-        Grensetype.Delomraadegrense -> featureProperties.copy(metadata = metadataMapper.toMetadataForStatistiskGrense(this))
-        Grensetype.Grunnkretsgrense -> featureProperties.copy(metadata = metadataMapper.toMetadataForStatistiskGrense(this))
-        Grensetype.Stemmekretsgrense -> featureProperties.copy(metadata = metadataMapper.toMetadataForKommunalKretsgrense(this))
-        else -> throw RuntimeException("Ikke støttet å mappe til metadata for grensetype: " + grensetype.name)
-    }
-
-    return Feature(
-        // Feature må ha en id, men denne må være objektets lokalid
-        id = this.lokalid,
-        properties = featureProperties,
-        geometry = this.grense.toDto()
-    )
-}
-
-fun posisjonToFeature(posisjon: Point?, version: Int): Feature =
-    Feature(
-        properties = FeatureProperties(type = "Posisjon", srid = posisjon!!.srid, version = version),
-        geometry = posisjon.toDto()
-    )
-
-fun flateToFeature(flate: Flate, version: Int): Feature {
-    var featureProperties = FeatureProperties(
-        type = flate.type.name,
-        srid = flate.omraade?.srid ?: SosiGeometryFunctions.defaultSrid,
-        version = version
-    )
-    val metadataMapper = MetadataMapper()
-
-    featureProperties = featureProperties.copy(metadata = metadataMapper.toMetadata(flate))
-
-    return Feature(
-        // Feature må ha en id, men denne må være objektets lokalid
-        id = flate.lokalid,
-        properties = featureProperties,
-        geometry = flate.omraade?.toDto() ?: MultiPolygon(coordinates = emptyList()),
-    )
 }

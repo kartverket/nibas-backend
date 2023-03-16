@@ -4,15 +4,20 @@ import no.kartverket.nibas.api.v1.klient.GrunnkretsApi
 import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.response.GrunnkretsResponse
+import no.kartverket.nibas.api.v1.response.Kommunenummer
+import no.kartverket.nibas.api.v1.response.toGyldighetResponse
+import no.kartverket.nibas.api.v1.response.toObjektIdentifikator
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.common.createIdentifikator
+import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.kodelister.createKommunenummerFromUUID
 import no.kartverket.nibas.service.GrunnkretsService
-import no.kartverket.nibas.service.grenseKoblingToFeature
-import no.kartverket.nibas.service.toGrunnkretsResponse
+import no.kartverket.nibas.extensions.geometry.flateToFeature
+import no.kartverket.nibas.extensions.geometry.grenseKoblingToFeature
+import no.kartverket.nibas.extensions.geometry.posisjonToFeature
 import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDate
 
@@ -38,7 +43,7 @@ class GrunnkretsController(
         return FeatureCollection(
             features = grensekoblinger
                 .sortedBy { it.grenseKoblingAttributter.rekkefoelge }
-                .map { grenseKoblingToFeature(it, KontekstEnhetType.GRUNNKRETS, identifikator.gyldighetsdato) }
+                .map { it.grenseKoblingToFeature(KontekstEnhetType.GRUNNKRETS, identifikator.gyldighetsdato) }
         )
     }
 
@@ -54,5 +59,20 @@ class GrunnkretsController(
                 )
             }
     }
-
 }
+
+private fun Grunnkrets.toGrunnkretsResponse(identifikator: Identifikator, kommunenummer: Kommunenummer): GrunnkretsResponse =
+    GrunnkretsResponse(
+        id = identifikator.toObjektIdentifikator(),
+        navn = this.grunnkretsnavn!!,
+        grunnkretsnummer = this.grunnkretsnummer!!,
+        gyldighet = this.gyldighet.toGyldighetResponse(),
+        oppdateringsdato = this.auditInfo.endretdato,
+        kommunenummer = kommunenummer,
+        endringstype = this.auditInfo.typeEndring.value,
+        features = FeatureCollection(features = listOf(
+            this.posisjon.posisjonToFeature(this.version),
+            flateToFeature(this.version)
+        )),
+        version = this.version
+    )

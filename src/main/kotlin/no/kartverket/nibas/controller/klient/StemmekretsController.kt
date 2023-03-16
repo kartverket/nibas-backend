@@ -8,9 +8,9 @@ import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.common.createIdentifikator
+import no.kartverket.nibas.extensions.flate.toStemmekretsResponse
 import no.kartverket.nibas.service.StemmekretsService
-import no.kartverket.nibas.service.grenseKoblingToFeature
-import no.kartverket.nibas.service.toStemmekretsResponse
+import no.kartverket.nibas.extensions.geometry.grenseKoblingToFeature
 import no.kartverket.nibas.kodelister.KodelisteService
 import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDate
@@ -36,7 +36,7 @@ class StemmekretsController(
         return FeatureCollection(
             features = grenser
                 .sortedBy { it.grenseKoblingAttributter.rekkefoelge }
-                .map { grenseKoblingToFeature(it, KontekstEnhetType.STEMMEKRETS, identifikator.gyldighetsdato) }
+                .map { it.grenseKoblingToFeature(KontekstEnhetType.STEMMEKRETS, identifikator.gyldighetsdato) }
         )
     }
 

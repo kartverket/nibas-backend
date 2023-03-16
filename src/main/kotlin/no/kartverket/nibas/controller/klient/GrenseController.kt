@@ -5,7 +5,7 @@ import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.common.createIdentifikator
 import no.kartverket.nibas.service.GrenseService
-import no.kartverket.nibas.service.toFeature
+import no.kartverket.nibas.extensions.geometry.grenseToFeature
 import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDate
 
@@ -16,7 +16,7 @@ class GrenseController(
 
     override fun hentGrense(lokalid: String, gyldighetsdato: LocalDate?): Feature {
         val identifikatorForGrense = createIdentifikator(lokalid, gyldighetsdato)
-        return grenseService.hentGrense(identifikatorForGrense)?.toFeature()
+        return grenseService.hentGrense(identifikatorForGrense)?.grenseToFeature()
             ?: throw NotFoundException("Grense $identifikatorForGrense ble ikke funnet.")
     }
 

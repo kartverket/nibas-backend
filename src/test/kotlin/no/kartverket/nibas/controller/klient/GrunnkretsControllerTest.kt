@@ -11,8 +11,8 @@ import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.service.GrunnkretsService
-import no.kartverket.nibas.service.flateToFeature
-import no.kartverket.nibas.service.posisjonToFeature
+import no.kartverket.nibas.extensions.geometry.flateToFeature
+import no.kartverket.nibas.extensions.geometry.posisjonToFeature
 import no.kartverket.nibas.kodelister.KodelisteType
 import no.kartverket.nibas.kodelister.MissingKodelisteItemException
 import org.junit.jupiter.api.BeforeEach
@@ -89,8 +89,8 @@ internal class GrunnkretsControllerTest : NibasMvcTest() {
                 endringstype = "Kvalitetsheving",
                 kommunenummer = Kommunenummer(id = "UUID-1", kodeverdi = "0301"),
                 features = FeatureCollection(features = listOf(
-                    posisjonToFeature(grunnkrets1.posisjon, 1),
-                    flateToFeature(grunnkrets1, 1))),
+                    grunnkrets1.posisjon.posisjonToFeature(1),
+                    grunnkrets1.flateToFeature(1))),
                 version = 1),
             GrunnkretsResponse(
                 id = ObjektIdentifikator(lokalId, gyldighetsdato = jan1In2024),
@@ -103,8 +103,8 @@ internal class GrunnkretsControllerTest : NibasMvcTest() {
                 endringstype = "Kvalitetsheving",
                 kommunenummer = Kommunenummer(id = "UUID-1", kodeverdi = "0301"),
                 features = FeatureCollection(features = listOf(
-                    posisjonToFeature(grunnkrets2.posisjon, 1),
-                    flateToFeature(grunnkrets2, 1))),
+                    grunnkrets2.posisjon.posisjonToFeature(1),
+                    grunnkrets2.flateToFeature(1))),
                 version = 1)
         )
 
@@ -119,6 +119,4 @@ internal class GrunnkretsControllerTest : NibasMvcTest() {
                 resultMatchers = listOf(status().isOk)
             ))
     }
-
-
 }

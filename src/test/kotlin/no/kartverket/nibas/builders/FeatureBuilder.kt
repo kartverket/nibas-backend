@@ -17,7 +17,7 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.StatistiskgrenseMetada
 import no.kartverket.nibas.api.v1.common.geojson.metadata.TerritorialgrenseMetadata
 import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
 import no.kartverket.nibas.common.Lokalid
-import no.kartverket.nibas.service.toDto
+import no.kartverket.nibas.extensions.geometry.geometryToDto
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.Geometry
@@ -26,9 +26,6 @@ import java.time.LocalDate
 import java.time.ZonedDateTime
 
 class FeatureBuilder(private val id: String? = "1") {
-    companion object {
-        val DEFAULT_FEATURE = FeatureBuilder().build()
-    }
 
     private var grenseType: Grensetype = Grensetype.Kommunegrense
     private var grenseVersjon = 1
@@ -78,7 +75,7 @@ class FeatureBuilder(private val id: String? = "1") {
         return Feature(
             id = id,
             properties = properties,
-            geometry = geometry.toDto()
+            geometry = geometry.geometryToDto()
         )
     }
 
@@ -119,11 +116,6 @@ class FeatureBuilder(private val id: String? = "1") {
 
     fun withRekkefoelge(rekkefoelge: Int): FeatureBuilder {
         this.rekkefoelge = rekkefoelge
-        return this
-    }
-
-    fun withSrid(srid: Int): FeatureBuilder {
-        this.srid = srid
         return this
     }
 }

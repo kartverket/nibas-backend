@@ -2,9 +2,9 @@ package no.kartverket.nibas.controller.ekstern
 
 import no.kartverket.nibas.api.v1.ekstern.GrunnkretsApi
 import no.kartverket.nibas.api.v1.response.KretsResponse
+import no.kartverket.nibas.extensions.flate.toKretsResponse
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.service.GrunnkretsService
-import no.kartverket.nibas.service.toKretsResponse
 import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDate
 

@@ -1,6 +1,7 @@
 package no.kartverket.nibas.service
 
 import no.kartverket.nibas.api.v1.common.geojson.MultiPolygon
+import no.kartverket.nibas.extensions.geometry.multiPolygonToDto
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -26,7 +27,7 @@ internal class GeometryExtensionsKtTest {
             Pair(3.0, 1.0)
         ))
         val multiPolygon = factory.createMultiPolygon(arrayOf(polygon, polygon2))
-        val resultDto = multiPolygon.toDto()
+        val resultDto = multiPolygon.multiPolygonToDto()
 
         val expectedDto = MultiPolygon(
             coordinates =

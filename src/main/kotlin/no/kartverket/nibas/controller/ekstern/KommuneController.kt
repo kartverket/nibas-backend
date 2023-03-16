@@ -8,11 +8,11 @@ import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.common.createIdentifikator
+import no.kartverket.nibas.extensions.flate.toKommuneResponse
+import no.kartverket.nibas.extensions.flate.toKretsResponse
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.kodelister.createKommunenummerFromUUID
 import no.kartverket.nibas.service.KommuneService
-import no.kartverket.nibas.service.toKommuneResponse
-import no.kartverket.nibas.service.toKretsResponse
 import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDate
 

@@ -5,8 +5,8 @@ import no.kartverket.nibas.api.v1.response.Kommunenummer
 import no.kartverket.nibas.api.v1.response.KretsResponse
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Stemmekrets
-import no.kartverket.nibas.service.flateToFeature
-import no.kartverket.nibas.service.posisjonToFeature
+import no.kartverket.nibas.extensions.geometry.flateToFeature
+import no.kartverket.nibas.extensions.geometry.posisjonToFeature
 
 class KretsResponseBuilder(
     private var grunnkrets: Grunnkrets = GrunnkretsBuilder().build(),
@@ -22,8 +22,8 @@ class KretsResponseBuilder(
             kommunenummer = Kommunenummer(grunnkrets.kommune.kommunenummer, kommunenummer),
             features = FeatureCollection(
                 features = listOf(
-                    posisjonToFeature(grunnkrets.posisjon, grunnkrets.version),
-                    flateToFeature(grunnkrets, grunnkrets.version)
+                    grunnkrets.posisjon.posisjonToFeature(grunnkrets.version),
+                    grunnkrets.flateToFeature(grunnkrets.version)
                 )
             ),
         )
@@ -37,11 +37,10 @@ class KretsResponseBuilder(
             kommunenummer = Kommunenummer(stemmekrets.kommune.kommunenummer, kommunenummer),
             features = FeatureCollection(
                 features = listOf(
-                    posisjonToFeature(stemmekrets.posisjon, stemmekrets.version),
-                    flateToFeature(stemmekrets, stemmekrets.version)
+                    stemmekrets.posisjon.posisjonToFeature(stemmekrets.version),
+                    stemmekrets.flateToFeature(stemmekrets.version)
                 )
             ),
         )
     }
-
 }

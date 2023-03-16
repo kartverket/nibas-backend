@@ -12,7 +12,7 @@ import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.events.PublishEventException
 import no.kartverket.nibas.kodelister.MissingKodelisteItemException
 import no.kartverket.nibas.repository.OptimistiskLaasException
-import no.kartverket.nibas.service.toDto
+import no.kartverket.nibas.extensions.geometry.posisjonToDto
 import no.kartverket.nibas.sosi.sosiimport.GeometriFailedToBeCreatedException
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import no.kartverket.nibas.sosi.sosiimport.UgyldigGeometriException
@@ -45,7 +45,7 @@ class CustomRestExceptionHandler : ResponseEntityExceptionHandler() {
         val errorResponse = GeometriErrorResponse(
             geometryType = ugyldigGEx.geometry::class.java.simpleName,
             validationError = topologyValidationError.message,
-            feilLokasjon = SosiGeometryFunctions.coordinateToPoint(topologyValidationError.coordinate).toDto(),
+            feilLokasjon = SosiGeometryFunctions.coordinateToPoint(topologyValidationError.coordinate).posisjonToDto(),
             message = ugyldigGEx.message!!
         )
         return handleExceptionInternal(ugyldigGEx, errorResponse, HttpHeaders(), errorResponse.httpStatus, request)
@@ -54,7 +54,7 @@ class CustomRestExceptionHandler : ResponseEntityExceptionHandler() {
     @ExceptionHandler(value = [GeometriFailedToBeCreatedException::class])
     fun handleGeometriFailedToBeCreatedException(ex: GeometriFailedToBeCreatedException, request: WebRequest): ResponseEntity<Any>? {
         val errorResponse = GeometriErrorResponse(
-            feilLokasjon = ex.point.toDto(),
+            feilLokasjon = ex.point.posisjonToDto(),
             message = ex.message!!
         )
         return handleExceptionInternal(ex, errorResponse, HttpHeaders(), errorResponse.httpStatus, request)

@@ -4,7 +4,6 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.request.ConflictResolved
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequestResolved
-import no.kartverket.nibas.api.v1.response.Kommunenummer
 import no.kartverket.nibas.common.CurrentTime
 import no.kartverket.nibas.common.FeilVedOppdatering
 import no.kartverket.nibas.common.Identifikator
@@ -15,10 +14,9 @@ import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
 import no.kartverket.nibas.kodelister.KodelisteService
-import no.kartverket.nibas.kodelister.createKommunenummerFromUUID
 import no.kartverket.nibas.repository.GrunnkretsRepository
-import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.repository.UtkastRepository
+import no.kartverket.nibas.service.utkast.UtkastService
 import no.kartverket.nibas.sporing.AuditInfo
 import no.kartverket.nibas.sporing.Gyldighet
 import no.kartverket.nibas.sporing.UserFacade
@@ -62,8 +60,6 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
     private lateinit var utkastRepository: UtkastRepository
     @Autowired
     private lateinit var grunnkretsRepository: GrunnkretsRepository
-    @Autowired
-    private lateinit var stemmekretsRepository: StemmekretsRepository
 
     private val lokalidOfGrunnkrets = "c54fb55e-15d0-4528-8b88-f58d6c74bd87"
 

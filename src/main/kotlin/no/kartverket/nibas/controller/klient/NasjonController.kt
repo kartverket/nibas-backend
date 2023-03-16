@@ -1,17 +1,21 @@
 package no.kartverket.nibas.controller.klient
 
-import no.kartverket.nibas.api.v1.klient.NasjonApi
+import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
+import no.kartverket.nibas.api.v1.klient.NasjonApi
+import no.kartverket.nibas.api.v1.response.NasjonRef
 import no.kartverket.nibas.api.v1.response.NasjonResponse
+import no.kartverket.nibas.api.v1.response.toObjektIdentifikator
 import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.common.createIdentifikator
+import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.service.NasjonService
-import no.kartverket.nibas.service.grenseKoblingToFeature
-import no.kartverket.nibas.service.toNasjonRef
-import no.kartverket.nibas.service.toNasjonResponse
+import no.kartverket.nibas.extensions.geometry.flateToFeature
+import no.kartverket.nibas.extensions.geometry.grenseKoblingToFeature
+import no.kartverket.nibas.extensions.geometry.posisjonToFeature
 import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDate
 import no.kartverket.nibas.api.v1.response.NasjonRef as NasjonRefResponse
@@ -43,11 +47,24 @@ class NasjonController(
             throw NotFoundException("Fant ingen grenser for $identifikator")
         }
         return FeatureCollection(
-            features = grensekoblinger.map {
-                grenseKoblingToFeature(
-                    grenseKobling = it,
-                    gyldighetsdato = identifikator.gyldighetsdato)
-            }
+            features = grensekoblinger.map { it.grenseKoblingToFeature(gyldighetsdato = identifikator.gyldighetsdato) }
         )
     }
 }
+
+fun Nasjon.toNasjonRef(identifikator: Identifikator, antallFramtidigeVersjoner: Int = 0, hrefProvider: HrefProvider): NasjonRefResponse =
+    NasjonRef(
+        id = identifikator.toObjektIdentifikator(),
+        navn = administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version) },
+        href = hrefProvider.getHref(identifikator),
+        antallFramtidigeVersjoner = antallFramtidigeVersjoner
+    )
+
+
+fun Nasjon.toNasjonResponse(identifikator: Identifikator): NasjonResponse =
+    NasjonResponse(
+        id = identifikator.toObjektIdentifikator(),
+        administrativenhetnavn = administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version) },
+        features = FeatureCollection(features = listOf(posisjon.posisjonToFeature(version), flateToFeature(version))),
+        version = version
+    )

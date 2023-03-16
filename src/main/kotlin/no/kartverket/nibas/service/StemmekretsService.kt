@@ -1,14 +1,7 @@
 package no.kartverket.nibas.service
 
-import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.request.StemmekretsRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
-import no.kartverket.nibas.api.v1.response.KretsResponse
-import no.kartverket.nibas.api.v1.response.StemmekretsRef
-import no.kartverket.nibas.api.v1.response.StemmekretsResponse
-import no.kartverket.nibas.api.v1.response.toGyldighetResponse
-import no.kartverket.nibas.api.v1.response.toObjektIdentifikator
-import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
@@ -20,8 +13,6 @@ import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.StemmekretsGrenseKobling
 import no.kartverket.nibas.domain.getGrenseJustertForRetning
-import no.kartverket.nibas.kodelister.KodelisteService
-import no.kartverket.nibas.kodelister.createKommunenummerFromUUID
 import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.repository.findAllByLokalidSortedByGyldigFra
@@ -237,50 +228,3 @@ fun Stemmekrets.applyChangesFromRequest(stemmekretsRequest: StemmekretsRequest):
         stemmekretsRequest.tellekretsnavn?.let { this.tellekretsnavn = it }
         stemmekretsRequest.valgdistriktsnummer?.let { this.valgdistriktsnummer = it }
     }
-
-fun Stemmekrets.toStemmekretsRef(identifikator: Identifikator, antallFramtidigeVersjoner: Int = 0, hrefProvider: HrefProvider, kodelisteService: KodelisteService): StemmekretsRef {
-    return StemmekretsRef(
-        id = identifikator.toObjektIdentifikator(),
-        navn = this.stemmekretsnavn!!,
-        nummer = this.stemmekretsnummer!!,
-        href = hrefProvider.getHref(identifikator),
-        kommunenummer = kodelisteService.createKommunenummerFromUUID(this.kommune.kommunenummer),
-        antallFramtidigeVersjoner = antallFramtidigeVersjoner,
-        version = this.version,
-    )
-}
-
-fun Stemmekrets.toStemmekretsResponse(identifikator: Identifikator, kodelisteService: KodelisteService): StemmekretsResponse {
-    return StemmekretsResponse(
-        id = identifikator.toObjektIdentifikator(),
-        stemmekretsnavn = this.stemmekretsnavn!!,
-        stemmekretsnummer = this.stemmekretsnummer!!,
-        kommunenummer = kodelisteService.createKommunenummerFromUUID(this.kommune.kommunenummer),
-        valgdistriktsnummer = this.valgdistriktsnummer,
-        tellekretsnavn = this.tellekretsnavn,
-        gyldighet = this.gyldighet.toGyldighetResponse(),
-        endringstype = this.auditInfo.typeEndring.value,
-        oppdateringsdato = this.auditInfo.endretdato,
-        tellekretsnummer = this.tellekretsnummer,
-        features = FeatureCollection(features = listOf(
-            posisjonToFeature(this.posisjon, this.version),
-            flateToFeature(this, this.version)
-        )),
-        version = this.version
-    )
-}
-
-fun Stemmekrets.toKretsResponse(kodelisteService: KodelisteService): KretsResponse = KretsResponse(
-    id = this.lokalid,
-    navn = this.stemmekretsnavn!!,
-    nummer = this.stemmekretsnummer!!,
-    kommunenummer = kodelisteService.createKommunenummerFromUUID(this.kommune.kommunenummer),
-    features = FeatureCollection(
-        features = listOf(
-            posisjonToFeature(this.posisjon, this.version),
-            flateToFeature(this, this.version)
-        )
-    )
-)
-
-

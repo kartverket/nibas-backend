@@ -1,11 +1,6 @@
 package no.kartverket.nibas.service
 
-import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
-import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.request.NasjonRequest
-import no.kartverket.nibas.api.v1.response.NasjonResponse
-import no.kartverket.nibas.api.v1.response.toObjektIdentifikator
-import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.GrenseKobling
@@ -20,7 +15,6 @@ import no.kartverket.nibas.repository.verifiserOptimistiskLaas
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
-import no.kartverket.nibas.api.v1.response.NasjonRef as NasjonRefResponse
 
 @Transactional(readOnly = true)
 @Service
@@ -54,20 +48,3 @@ class NasjonService(
 
     fun hentAntallGyldigeVersjonerFramITidFor(identifikator: Identifikator): Int = nasjonRepository.findAntallFramtidigeVersjonerForIdentifikator(identifikator)
 }
-
-fun Nasjon.toNasjonRef(identifikator: Identifikator, antallFramtidigeVersjoner: Int = 0, hrefProvider: HrefProvider): NasjonRefResponse =
-    NasjonRefResponse(
-        id = identifikator.toObjektIdentifikator(),
-        navn = this.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version) },
-        href = hrefProvider.getHref(identifikator),
-        antallFramtidigeVersjoner = antallFramtidigeVersjoner
-    )
-
-
-fun Nasjon.toNasjonResponse(identifikator: Identifikator): NasjonResponse =
-    NasjonResponse(
-        id = identifikator.toObjektIdentifikator(),
-        administrativenhetnavn = this.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version) },
-        features = FeatureCollection(features = listOf(posisjonToFeature(this.posisjon, this.version), flateToFeature(this, this.version))),
-        version = this.version
-    )

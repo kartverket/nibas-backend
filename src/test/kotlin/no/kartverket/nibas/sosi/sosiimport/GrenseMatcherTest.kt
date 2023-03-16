@@ -20,9 +20,9 @@ internal class GrenseMatcherTest {
         val opprinneligKnutepunkt = Coordinate(3.0, 2.0)
         val nyttKnutepunkt = Coordinate(3.0, 3.0)
 
-        var segment1 = lagSosiGeometri("", Coordinate(1.0, 2.0), nyttKnutepunkt)
-        var segment2 = lagSosiGeometri("", nyttKnutepunkt, Coordinate(4.0, 1.0))
-        var segment3 = lagSosiGeometri("", nyttKnutepunkt, Coordinate(4.0, 5.0))
+        val segment1 = lagSosiGeometri("", Coordinate(1.0, 2.0), nyttKnutepunkt)
+        val segment2 = lagSosiGeometri("", nyttKnutepunkt, Coordinate(4.0, 1.0))
+        val segment3 = lagSosiGeometri("", nyttKnutepunkt, Coordinate(4.0, 5.0))
 
         val grenseMatcher = GrenseMatcher()
         val splittSegment1 = grenseMatcher.splittGrense("", segment1, Coordinate(1.0, 2.0), opprinneligKnutepunkt)
@@ -308,8 +308,8 @@ internal class GrenseMatcherTest {
 
     private fun lagSosiGeometri(referanse: String, vararg koordinater: Coordinate): SosiGeometri {
         val sosiKoordinater = koordinater.map { koordinat ->
-            SosiKoordinat(koordinat.y.toString(), koordinat.x.toString()) as SosiVerdi
-        }.toMutableList()
+            SosiKoordinat(koordinat.y.toString(), koordinat.x.toString())
+        }.toMutableList<SosiVerdi>()
 
         val nordOest = SosiNordOest(niva = 1, verdier = sosiKoordinater)
         val geometri = SosiGeometri(type = "KURVE", 1, mutableListOf(SosiVerdi(referanse)))

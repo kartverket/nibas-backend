@@ -8,10 +8,10 @@ import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.common.createIdentifikator
-import no.kartverket.nibas.service.FylkeService
-import no.kartverket.nibas.service.toFylkeResponse
+import no.kartverket.nibas.extensions.flate.toFylkeRef
+import no.kartverket.nibas.extensions.flate.toFylkeResponse
 import no.kartverket.nibas.kodelister.KodelisteService
-import no.kartverket.nibas.service.toFylkeRef
+import no.kartverket.nibas.service.FylkeService
 import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDate
 
@@ -35,4 +35,3 @@ class FylkeController(
         }
     }
 }
-

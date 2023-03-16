@@ -1,11 +1,8 @@
 package no.kartverket.nibas.service
 
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
-import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.request.KommuneRequest
 import no.kartverket.nibas.api.v1.response.KommuneRef
-import no.kartverket.nibas.api.v1.response.KommuneResponse
-import no.kartverket.nibas.api.v1.response.Kommunenummer
 import no.kartverket.nibas.api.v1.response.toObjektIdentifikator
 import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
@@ -23,8 +20,8 @@ import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.repository.findAllGyldigPaaDato
 import no.kartverket.nibas.repository.findAntallFramtidigeVersjonerForIdentifikator
-import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import no.kartverket.nibas.repository.findGyldigKommuneForKommunenummer
+import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -119,15 +116,4 @@ class KommuneService(
             throw ResponseException.NotFoundException("Fant ikke kommunenummer-id for $numeriskKommunenummer")
         }
     }
-
 }
-
-fun Kommune.toKommuneResponse(identifikator: Identifikator, kommunenummer: Kommunenummer): KommuneResponse = KommuneResponse(
-    id = identifikator.toObjektIdentifikator(),
-    administrativenhetnavn = this.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version) },
-    kommunenummer = kommunenummer,
-    samiskforvaltningsomraade = this.samiskforvaltningsomraade!!,
-    oppdateringsdato = this.auditInfo.endretdato,
-    features = FeatureCollection(features = listOf(posisjonToFeature(this.posisjon, this.version), flateToFeature(this, this.version))),
-    version = this.version
-)

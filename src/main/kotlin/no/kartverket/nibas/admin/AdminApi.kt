@@ -1,4 +1,4 @@
-package no.kartverket.nibas.api.v1
+package no.kartverket.nibas.admin
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse

@@ -17,6 +17,7 @@ import no.kartverket.nibas.events.NibasEventPublisher
 import no.kartverket.nibas.events.PublishEventException
 import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.repository.UtkastRepository
+import no.kartverket.nibas.service.utkast.UtkastService
 import no.kartverket.nibas.sporing.AuditInfo
 import no.kartverket.nibas.sporing.Gyldighet
 import no.kartverket.nibas.sporing.UserFacade

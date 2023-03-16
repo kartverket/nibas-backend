@@ -33,7 +33,6 @@ class FlateService @Autowired constructor(
     private val kodelisteService: KodelisteService,
     private val enhetsGrenseRepository: EnhetsGrenseRepository
 ) {
-
     private val logger = LoggerFactory.getLogger(this.javaClass.name)
 
     fun oppdaterFlaterFor(enheterSomSkalFlatedannes: Set<Flate>) {
@@ -111,5 +110,4 @@ class FlateService @Autowired constructor(
         is Stemmekrets -> enhet.stemmekretsnavn
         else -> "Ukjent enhet"
     }
-
 }
