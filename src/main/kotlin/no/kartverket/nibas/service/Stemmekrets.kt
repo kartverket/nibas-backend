@@ -59,14 +59,23 @@ class StemmekretsService(private val stemmekretsRepository: StemmekretsRepositor
     }
 
     @Transactional(readOnly = false)
-    fun oppdaterStemmekrets(lokalId: Lokalid, gyldigFra: LocalDate, endringstype: Endringstype ,oppdatertStemmekrets: StemmekretsRequest): Stemmekrets? {
-        return hentStemmekrets(Identifikator(lokalId, gyldigFra))?.let { gammelStemmekrets ->
-            verifiserOptimistiskLaas(oppdatertStemmekrets.version, gammelStemmekrets)?.let { throw OptimistiskLaasException(it) }
+    fun oppdaterStemmekrets(
+        lokalId: Lokalid,
+        gyldigFra: LocalDate,
+        endringstype: Endringstype,
+        oppdatertStemmekrets: StemmekretsRequest
+    ): Stemmekrets {
 
-            createNyVersjonAvStemmekrets(gammelStemmekrets, gyldigFra, endringstype)
-                .applyMappingFromStemmekretsRequest(oppdatertStemmekrets)
-                .also { gammelStemmekrets.setGyldigTil(gyldigFra) }
+        val identifikator = Identifikator(lokalId, gyldigFra)
+        val gammelStemmekrets = hentStemmekrets(identifikator)
+            ?: throw ResponseException.NotFoundException("Stemmekrets med $identifikator ble ikke funnet.")
+
+        verifiserOptimistiskLaas(oppdatertStemmekrets.version, gammelStemmekrets)?.let {
+            throw OptimistiskLaasException(it)
         }
+
+        return createNyVersjonAvStemmekrets(gammelStemmekrets, gyldigFra, endringstype)
+            .applyChangesFromRequest(oppdatertStemmekrets)
     }
 
     fun hentAntallGyldigeVersjonerFramITidFor(identifikator: Identifikator): Int =
@@ -129,7 +138,7 @@ class StemmekretsService(private val stemmekretsRepository: StemmekretsRepositor
         return Pair(nyStemmekrets, stemmekretserSomUtgaar)
     }
 
-    private fun createNyVersjonAvStemmekrets(stemmekrets: Stemmekrets, gyldigFra: LocalDate, endringstype: Endringstype): Stemmekrets {
+    fun createNyVersjonAvStemmekrets(stemmekrets: Stemmekrets, gyldigFra: LocalDate, endringstype: Endringstype): Stemmekrets {
         return stemmekretsRepository.save(
             Stemmekrets(lokalid = stemmekrets.lokalid)
                 .apply {
@@ -220,7 +229,7 @@ class StemmekretsService(private val stemmekretsRepository: StemmekretsRepositor
         alleFlater.all { flate == it || !flate.within(it) }
 }
 
-fun Stemmekrets.applyMappingFromStemmekretsRequest(stemmekretsRequest: StemmekretsRequest): Stemmekrets =
+fun Stemmekrets.applyChangesFromRequest(stemmekretsRequest: StemmekretsRequest): Stemmekrets =
     this.apply {
         stemmekretsRequest.stemmekretsnavn?.let { this.stemmekretsnavn = it }
         stemmekretsRequest.stemmekretsnummer?.let { this.stemmekretsnummer = it }

@@ -26,7 +26,6 @@ import java.time.ZonedDateTime
 import java.util.*
 
 
-// Unit test av GrenseUpdater
 internal class MetadataUpdaterTest {
 
     @Mock
@@ -90,6 +89,10 @@ internal class MetadataUpdaterTest {
 
     @Test
     fun updateAdministrativGrense() {
+        val opprinneligInformasjonstekst = fylkesgrense.informasjonstekst
+        val opprinneligKvalitet = fylkesgrense.kvalitet
+        val opprinneligeDokumentasjonsreferanser = fylkesgrense.dokumentasjonsreferanser
+
         val newGyldigFraDato: LocalDate = gyldigFraTidspunkt.plusMonths(1)
         val updatedMetadata = administrativGrenseMetadata.copy(
             common = administrativGrenseMetadata.common.copy(
@@ -97,11 +100,18 @@ internal class MetadataUpdaterTest {
             )
         )
         val updatedFylkesgrense: Grense = metadataUpdater.updateAdministrativGrense(fylkesgrense, updatedMetadata)
-        assertThat(updatedFylkesgrense.gyldighet.gyldigFra).isEqualTo(newGyldigFraDato)
+        assertThat(updatedFylkesgrense.informasjonstekst).isNotEqualTo(opprinneligInformasjonstekst).isEqualTo(updatedMetadata.common.informasjon)
+        assertThat(updatedFylkesgrense.kvalitet!!.noeyaktighet).isNotEqualTo(opprinneligKvalitet!!.noeyaktighet)
+            .isEqualTo(updatedMetadata.commonGrense.posisjonskvalitet!!.noeyaktighet)
+        assertThat(updatedFylkesgrense.dokumentasjonsreferanser).isEqualTo(opprinneligeDokumentasjonsreferanser)
     }
 
     @Test
     fun updateTerritorialGrense() {
+        val opprinneligInformasjonstekst = fylkesgrense.informasjonstekst
+        val opprinneligKvalitet = fylkesgrense.kvalitet
+        val opprinneligeDokumentasjonsreferanser = fylkesgrense.dokumentasjonsreferanser
+
         val newGyldigFraDato: LocalDate = gyldigFraTidspunkt.plusMonths(1)
         val updatedMetadata = territorialgrenseMetadata.copy(
             common = territorialgrenseMetadata.common.copy(
@@ -109,7 +119,10 @@ internal class MetadataUpdaterTest {
             )
         )
         val updatedFylkesgrense: Grense = metadataUpdater.updateTerritoritalgrense(fylkesgrense, updatedMetadata)
-        assertThat(updatedFylkesgrense.gyldighet.gyldigFra).isEqualTo(newGyldigFraDato)
+        assertThat(updatedFylkesgrense.informasjonstekst).isNotEqualTo(opprinneligInformasjonstekst).isEqualTo(updatedMetadata.common.informasjon)
+        assertThat(updatedFylkesgrense.kvalitet!!.noeyaktighet).isNotEqualTo(opprinneligKvalitet!!.noeyaktighet)
+            .isEqualTo(updatedMetadata.commonGrense.posisjonskvalitet!!.noeyaktighet)
+        assertThat(updatedFylkesgrense.dokumentasjonsreferanser).isEqualTo(opprinneligeDokumentasjonsreferanser)
     }
 
     private fun expectedCommonMetadata() = CommonMetadata(
@@ -119,13 +132,13 @@ internal class MetadataUpdaterTest {
         gyldigTil = null,
         sporingsinformasjon = Sporingsinformasjon(oppdateringsdato = oppdDato),
         opphav = "opphav3",
-        informasjon = INFORMASJONTEKST
+        informasjon = INFORMASJONTEKST + " og det tredje"
     )
 
     private fun expectedCommonGrensedata() = CommonGrenseMetadata(
         posisjonskvalitet = Posisjonskvalitet(
             maalemetode = KodelisteEntry(id = MaalemetodeKodeEnum.TERRENGMAALT.uuid, href = maalemetodeHref),
-            noeyaktighet = 200
+            noeyaktighet = 205
         ),
     )
 }

@@ -53,7 +53,7 @@ class Stemmekrets(
 
     fun getGrenser(gyldighetsdato: LocalDate = LocalDate.now()): List<GrenseKobling> = getGrenserAvTyper(tillatteGrensetyper(), gyldighetsdato)
 
-    fun oppdaterOmraade() {
+    override fun oppdaterOmraade() {
         omraade = SosiGeometryFunctions.beregnFlate(getGrenser().toSet())
     }
 
@@ -84,13 +84,25 @@ class Stemmekrets(
     }
 
     fun addGrensekobling(grense: Grense, grenseKoblingAttributter: GrenseKoblingAttributter) {
-        grenser.add(
-            StemmekretsGrenseKobling(
-                stemmekrets = this,
-                grense = grense,
-                grenseKoblingAttributter = grenseKoblingAttributter
-            )
+        val stemmekretsGrenseKobling = StemmekretsGrenseKobling(
+            stemmekrets = this,
+            grense = grense,
+            grenseKoblingAttributter = grenseKoblingAttributter
         )
+        //Legger grensekoblingen til i begge steder den hører til, ellers feiler tester
+        grenser.add(stemmekretsGrenseKobling)
+        grense.stemmekretser.add(stemmekretsGrenseKobling)
+    }
+
+    override fun replaceGrensekobling(gammelGrense: Grense, grense: Grense, grenseKoblingAttributter: GrenseKoblingAttributter) {
+        if (!tillatteGrensetyper().contains(grense.grensetype)) {
+            throw RuntimeException("Kan ikke oppdatere/legge til ${grense.grensetype.name} på enhet Stemmekrets")
+        }
+        if (grenser.removeIf { it.grense.id == gammelGrense.id }) {
+            //Grensa ble tatt vekk fra stemmekretsen. Fjerner stemmekretsen også fra grensa (koblingen fra den andre veien), ellers feiler tester
+            gammelGrense.stemmekretser.removeIf { it.stemmekrets.id == this.id }
+            addGrensekobling(grense, grenseKoblingAttributter)
+        }
     }
 
     override fun toString(): String {
@@ -117,15 +129,9 @@ class Stemmekrets(
     fun applyCascadingOperationsBasedOnExistingStemmekrets (gammelStemmekrets: Stemmekrets) : Stemmekrets {
         gammelStemmekrets.kommune.addStemmekrets(this)
 
-        grenser = gammelStemmekrets.grenser.map { grensekobling ->
-            StemmekretsGrenseKobling(
-                stemmekrets = this,
-                grense = grensekobling.grense,
-                grenseKoblingAttributter = grensekobling.grenseKoblingAttributter
-            )
-        }.toMutableSet()
-
-        oppdaterOmraade()
+        gammelStemmekrets.grenser.forEach { gammelGrenseKobling ->
+            addGrensekobling(grense = gammelGrenseKobling.grense, grenseKoblingAttributter = gammelGrenseKobling.grenseKoblingAttributter)
+        }
 
         informasjonselementer = gammelStemmekrets.informasjonselementer.map { stemmekretsInformasjon ->
             StemmekretsInformasjon(stemmekrets = this).also { it.informasjon = stemmekretsInformasjon.informasjon }
@@ -141,8 +147,6 @@ class Stemmekrets(
         Grensetype.AvtaltAvgrensningslinje,
         Grensetype.Territorialgrense,
         Grensetype.Riksgrense)
-
-
 }
 
 /**

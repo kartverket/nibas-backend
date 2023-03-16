@@ -9,6 +9,7 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.AdministrativGrenseMet
 import no.kartverket.nibas.api.v1.common.geojson.metadata.AvtaltAvgrensningslinjeMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.CommonMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
+import no.kartverket.nibas.api.v1.common.geojson.metadata.KommunalKretsgrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Metadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.RiksgrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Sporingsinformasjon
@@ -66,8 +67,7 @@ class FeatureBuilder(private val id: String? = "1") {
                 Grensetype.Riksgrense -> RiksgrenseMetadata(common = commonMetadata)
                 Grensetype.Territorialgrense -> TerritorialgrenseMetadata(common = commonMetadata)
                 Grensetype.AvtaltAvgrensningslinje -> AvtaltAvgrensningslinjeMetadata(common = commonMetadata)
-                // TODO: Mangler Metadata for Stemmekretsgrense
-                Grensetype.Stemmekretsgrense -> AdministrativGrenseMetadata(common = commonMetadata)
+                Grensetype.Stemmekretsgrense -> KommunalKretsgrenseMetadata(common = commonMetadata)
                 Grensetype.Grunnkretsgrense -> StatistiskgrenseMetadata(common = commonMetadata)
                 Grensetype.Delomraadegrense -> StatistiskgrenseMetadata(common = commonMetadata)
                 else -> throw RuntimeException("Not implemented yet.")
@@ -84,6 +84,11 @@ class FeatureBuilder(private val id: String? = "1") {
 
     fun withGrensetype(grenseType: Grensetype): FeatureBuilder {
         this.grenseType = grenseType
+        return this
+    }
+
+    fun withGrenseversjon(grenseversjon: Int): FeatureBuilder {
+        this.grenseVersjon = grenseversjon
         return this
     }
 

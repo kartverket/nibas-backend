@@ -57,7 +57,6 @@ class MetadataUpdater() {
      */
     private fun CommonMetadataProperties.updateWithCommonMetadata(common: CommonMetadata) {
         this.datafangstdato = common.datafangstdato
-        this.gyldighet = Gyldighet(common.gyldigFra, common.gyldigTil)
         this.setInfo(common.informasjon)
         this.opphav = common.opphav
     }

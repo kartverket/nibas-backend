@@ -20,6 +20,7 @@ import no.kartverket.nibas.builders.FeatureBuilder
 import no.kartverket.nibas.builders.FylkeRequestBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.GrunnkretsRequestBuilder
+import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.builders.KommuneRequestBuilder
 import no.kartverket.nibas.builders.NasjonBuilder
 import no.kartverket.nibas.builders.NasjonRequestBuilder
@@ -278,7 +279,7 @@ internal class UtkastServiceTest {
         verify(kommuneServiceMock).oppdaterKommune(any(Lokalid::class.java), any(KommuneRequest::class.java))
         verify(grunnkretsServiceMock).oppdaterGrunnkrets(any(Lokalid::class.java), any(LocalDate::class.java), any(Endringstype::class.java), any(GrunnkretsRequest::class.java))
         verify(stemmekretsServiceMock).oppdaterStemmekrets(any(Lokalid::class.java), any(LocalDate::class.java), any(Endringstype::class.java), any(StemmekretsRequest::class.java))
-        verify(grenseServiceMock).lagreGrenser(any(FeatureCollection::class.java), any(LocalDate::class.java))
+        verify(grenseServiceMock).lagreGrenser(any(FeatureCollection::class.java), any(LocalDate::class.java), any(Endringstype::class.java))
         verify(nibasEventPublisherMock).publishNibasEvent(anyList(), any(LocalDate::class.java))
     }
 
@@ -390,7 +391,10 @@ internal class UtkastServiceTest {
                                     StemmekretsRequestBuilder.DEFAULT_REQUEST
                             )
                         ),
-                        stemmekretsSammenslaaingsendring = sammenslaaingsendringRequest
+                        stemmekretsSammenslaaingsendring = sammenslaaingsendringRequest,
+                        grenseendringer = Grenseendringer(
+                            endredeFeatures = mapOf("56" to FeatureBuilder("56").build())
+                        )
                     )
                 )
                 .build()
@@ -436,8 +440,22 @@ internal class UtkastServiceTest {
                 )
             )
 
+        whenever(
+            grenseServiceMock.lagreGrenser(
+                any(FeatureCollection::class.java),
+                any(LocalDate::class.java),
+                any(Endringstype::class.java)
+            )
+        )
+            .thenReturn(
+                setOf(
+                    GrunnkretsBuilder().withLokalId("2grunn").build(),
+                    KommuneBuilder.DEFAULT_KOMMUNE
+                )
+            )
+
         val redigerteFlater = utkastService.publiserEndringer(utkast.operasjoner!!, utkast)
-        assertThat(redigerteFlater.size == 5)
+        assertThat(redigerteFlater).hasSize(8)
     }
 
     private fun <T> any(clazz: Class<T>): T = Mockito.any(clazz)

@@ -33,6 +33,7 @@ class GrenseBuilder(private val id: String = "1",
                     private var gyldigFra: LocalDate = LocalDate.now(),
                     private var gyldigTil: LocalDate? = null,
                     private var opphav: String = "Eidsvoll",
+                    private var versjon: Int = 1,
                     private var nesteVersjon: Grense? = null) {
 
     fun buildFylkesgrense(): Grense {
@@ -63,6 +64,7 @@ class GrenseBuilder(private val id: String = "1",
         grense.grense = grenseGeometri
         grense.gyldighet = Gyldighet(gyldigFra, gyldigTil)
         grense.opphav = opphav
+        grense.version = versjon
         if (nesteVersjon != null) {
             grense.nesteVersjon = nesteVersjon
         }
@@ -77,6 +79,11 @@ class GrenseBuilder(private val id: String = "1",
         this.grenseGeometri = GeometryFactory().createLineString(coordinates.toTypedArray())
         return this
     }
+    fun withVersjon(versjon: Int): GrenseBuilder {
+        this.versjon = versjon
+        return this
+    }
+
 
 }
 

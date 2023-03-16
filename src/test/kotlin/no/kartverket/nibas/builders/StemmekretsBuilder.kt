@@ -6,6 +6,7 @@ import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.sporing.Gyldighet
+import no.kartverket.nibas.utils.GrenseHelper
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
 import java.time.LocalDate
@@ -53,16 +54,22 @@ class StemmekretsBuilder(
         stemmekrets.setInfo(informasjonstekst)
         stemmekrets.opphav = opphav
 
-        stemmekrets.posisjon = GeometryFactory().createPoint(Coordinate(1.0, 1.0))
-        stemmekrets.omraade = GeometryFactory().createMultiPolygon(arrayOf(GeometryFactory().createPolygon()))
-
         var forrigeGrense = grenser.lastOrNull()
         grenser.forEachIndexed { index, grense ->
             stemmekrets.addGrensekobling(grense, GrenseKoblingAttributter(
                 rekkefoelge = index,
-                retningMedKlokken = getRetningMedKlokken(grense, forrigeGrense)
+                retningMedKlokken = GrenseHelper.getRetningMedKlokken(grense, forrigeGrense)
             ))
             forrigeGrense = grense
+        }
+        stemmekrets.posisjon = GeometryFactory().createPoint(Coordinate(1.0, 1.0))
+        if (grenser.isNotEmpty()) {
+            stemmekrets.oppdaterOmraade()
+            if (!stemmekrets.omraade!!.isEmpty) {
+                stemmekrets.posisjon = stemmekrets.omraade?.interiorPoint
+            }
+        } else {
+            stemmekrets.omraade = GeometryFactory().createMultiPolygon(arrayOf(GeometryFactory().createPolygon()))
         }
 
         return stemmekrets
@@ -93,18 +100,4 @@ class StemmekretsBuilder(
         return this
     }
 
-    private fun getRetningMedKlokken(grense: Grense, forrigeGrense: Grense?): Boolean {
-        if (forrigeGrense == null) {
-            return true
-        }
-
-        if (grense.grense.startPoint == forrigeGrense.grense.startPoint || grense.grense.startPoint == forrigeGrense.grense.endPoint) {
-            return true
-        }
-        if (grense.grense.endPoint == forrigeGrense.grense.startPoint || grense.grense.endPoint == forrigeGrense.grense.endPoint) {
-            return false
-        }
-
-        throw RuntimeException("Grensen toucher hverken startpunkt eller endepunktet til forrige grense. Er rekkefølgen riktig?")
-    }
 }

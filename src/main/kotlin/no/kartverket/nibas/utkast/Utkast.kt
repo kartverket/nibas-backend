@@ -177,17 +177,15 @@ class UtkastService(
         val metadataendringer =
             publiserMetadataEndringer(
                 operasjoner.metadataendringer,
-                utkast,
+                utkast
             )
 
         val sammenslaaingsendringer =
             publiserSammenslaaingsendringer(operasjoner.stemmekretsSammenslaaingsendring, utkast)
 
-        publiserGrenseendringer(
-            operasjoner.grenseendringer
-        ) // OBS - Genererer per nå ikke events for disse!
+        val grenseendringer = publiserGrenseendringer(operasjoner.grenseendringer, utkast)
 
-        return metadataendringer + sammenslaaingsendringer
+        return metadataendringer + sammenslaaingsendringer + grenseendringer
     }
 
     private fun publiserMetadataEndringer(
@@ -238,14 +236,19 @@ class UtkastService(
         return alleEndringer.map { lagFlateEndring(it, EventType.MODIFIED) }
     }
 
-    private fun publiserGrenseendringer(grenseendringer: Grenseendringer) {
+    private fun publiserGrenseendringer(grenseendringer: Grenseendringer, utkast: Utkast) : List<EventRad> {
         val endredeFeatures = grenseendringer.endredeFeatures
+        var eventer: List<EventRad> = emptyList()
 
         if (endredeFeatures.isNotEmpty()) {
-            grenseService.lagreGrenser(
-                FeatureCollection(features = endredeFeatures.map { it.value })
+            val flaterMedGrenseendring = grenseService.lagreGrenser(
+                FeatureCollection(features = endredeFeatures.map { it.value }),
+                gyldighetsdato = utkast.gyldigFra,
+                endringstype = utkast.auditInfo.typeEndring
             )
+            eventer = flaterMedGrenseendring.map { lagFlateEndring(it, EventType.MODIFIED) }
         }
+        return eventer
     }
 
     // Bør utvides til å gjelde fler typer sammenslåinger
@@ -330,7 +333,7 @@ class UtkastService(
         val endredeStemmekretser =
             conflictResolved.stemmekretsRequests
                 .filter { it.stemmekretsRequest.identifikasjon.lokalid == lokalid.value }
-                .mapNotNull {
+                .map {
                     val stemmekretsRequest = it.stemmekretsRequest
                     if (utkastValidatorService.isMetadataendringUgyldig(
                             Flatetype.STEMMEKRETS,

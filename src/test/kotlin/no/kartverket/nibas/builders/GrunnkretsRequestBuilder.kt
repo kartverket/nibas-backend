@@ -14,6 +14,11 @@ class GrunnkretsRequestBuilder(
         val DEFAULT_REQUEST = GrunnkretsRequestBuilder().build()
     }
 
+    fun withLokalId(lokalId: String): GrunnkretsRequestBuilder {
+        this.lokalId = lokalId
+        return this
+    }
+
     fun build(): GrunnkretsRequest = GrunnkretsRequest(
         navn = navn,
         grunnkretsnummer = grunnkretsnummer,

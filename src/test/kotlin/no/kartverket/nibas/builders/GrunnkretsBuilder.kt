@@ -8,6 +8,7 @@ import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.sporing.Gyldighet
+import no.kartverket.nibas.utils.GrenseHelper
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
 import java.time.LocalDate
@@ -49,10 +50,26 @@ class GrunnkretsBuilder(
         grunnkrets.opphav = opphav
         grunnkrets.auditInfo.typeEndring = typeEndring
 
+        var forrigeGrense = grenser.lastOrNull()
+        grenser.forEachIndexed { index, grense ->
+            grunnkrets.addGrensekobling(grense, GrenseKoblingAttributter(
+                rekkefoelge = index,
+                retningMedKlokken = GrenseHelper.getRetningMedKlokken(grense, forrigeGrense)
+            ))
+            forrigeGrense = grense
+        }
         grunnkrets.posisjon = GeometryFactory().createPoint(Coordinate(1.0, 1.0))
         grunnkrets.omraade = GeometryFactory().createMultiPolygon(arrayOf(GeometryFactory().createPolygon()))
-        grenser.forEach {
-            grunnkrets.addGrensekobling(it, GrenseKoblingAttributter())
+
+        //Hack fordi noen tester lager grenser uten linestring
+        try {
+            if (grenser.isNotEmpty()) {
+                grunnkrets.oppdaterOmraade()
+                if (!grunnkrets.omraade!!.isEmpty) {
+                    grunnkrets.posisjon = grunnkrets.omraade?.interiorPoint
+                }
+            }
+        } catch (_: UninitializedPropertyAccessException) {
         }
 
         return grunnkrets

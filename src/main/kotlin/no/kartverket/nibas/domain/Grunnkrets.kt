@@ -49,7 +49,7 @@ class Grunnkrets(
         doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { GrunnkretsInformasjon(this) }
     }
 
-    fun oppdaterOmraade() {
+    override fun oppdaterOmraade() {
         omraade = SosiGeometryFunctions.beregnFlate(getGrenser().toSet())
     }
 
@@ -89,18 +89,24 @@ class Grunnkrets(
         Grensetype.Riksgrense)
 
     fun addGrensekobling(grense: Grense, grenseKoblingAttributter: GrenseKoblingAttributter) {
-        grenser.add(
-            GrunnkretsGrenseKobling(
-                grunnkrets = this,
-                grense = grense,
-                grenseKoblingAttributter = grenseKoblingAttributter
-            )
+        val grunnkretsGrenseKobling = GrunnkretsGrenseKobling(
+            grunnkrets = this,
+            grense = grense,
+            grenseKoblingAttributter = grenseKoblingAttributter
         )
+        //Legger grensekoblingen til i begge steder den hører til, ellers feiler tester
+        grenser.add(grunnkretsGrenseKobling)
+        grense.grunnkretser.add(grunnkretsGrenseKobling)
     }
 
-    fun addGrenseKoblingerFrom(grensekoblinger: Set<GrunnkretsGrenseKobling>) {
-        grensekoblinger.forEach {
-            addGrensekobling(it.grense, it.grenseKoblingAttributter)
+    override fun replaceGrensekobling(gammelGrense: Grense, grense: Grense, grenseKoblingAttributter: GrenseKoblingAttributter) {
+        if (!tillatteGrensetyper().contains(grense.grensetype)) {
+            throw RuntimeException("Kan ikke oppdatere/legge til ${grense.grensetype.name} på enhet Grunnkrets")
+        }
+        if (grenser.removeIf { it.grense.id == gammelGrense.id }) {
+            //Grensa ble tatt vekk fra grunnkretsen. Fjerner grunnkretsen også fra grensa (koblingen fra den andre veien), ellers feiler tester
+            gammelGrense.grunnkretser.removeIf { it.grunnkrets.id == this.id }
+            addGrensekobling(grense, grenseKoblingAttributter)
         }
     }
 
@@ -110,23 +116,30 @@ class Grunnkrets(
         }
     }
 
-    fun applyCascadingOperationsBasedOnExistingGrunnkrets(relevantGrunnkrets: Grunnkrets): Grunnkrets {
+    fun applyCascadingOperationsBasedOnExistingGrunnkrets(gammelGrunnkrets: Grunnkrets): Grunnkrets {
         return this.apply {
             // Må legge til denne Grunnkrets på eksisterende Grunnkrets sin kommune
-            relevantGrunnkrets.kommune.addGrunnkrets(this)
+            gammelGrunnkrets.kommune.addGrunnkrets(this)
             // For eksisterende Grunnkrets sine informasjonselementer (1 i tallet), lag nye koblinger med denne Grunnkrets
-            addInformasjonselementerFrom(relevantGrunnkrets.informasjonselementer)
-            // For eksisterende Grunnkrets sine grensekoblinger, lag nye koblinger fra grense og grensekoblingAttributter
-            addGrenseKoblingerFrom(relevantGrunnkrets.grenser)
+            addInformasjonselementerFrom(gammelGrunnkrets.informasjonselementer)
+
+            gammelGrunnkrets.grenser.forEach { gammelGrenseKobling ->
+                addGrensekobling(grense = gammelGrenseKobling.grense, grenseKoblingAttributter = gammelGrenseKobling.grenseKoblingAttributter)
+            }
         }
     }
 
-    fun applyMappingFromExistingGrunnkrets(relevantGrunnkrets: Grunnkrets): Grunnkrets {
+    fun applyMappingFromExistingGrunnkrets(gammelGrunnkrets: Grunnkrets): Grunnkrets {
         return this.apply {
-            datafangstdato = relevantGrunnkrets.datafangstdato
-            opphav = relevantGrunnkrets.opphav
-            posisjon = relevantGrunnkrets.posisjon
-            omraade = relevantGrunnkrets.omraade
+            gammelGrunnkrets.gyldighet.gyldigTil?.let { setGyldigTil(it) }
+            grunnkretsnummer = gammelGrunnkrets.grunnkretsnummer
+            grunnkretsnavn = gammelGrunnkrets.grunnkretsnavn
+            datafangstdato = gammelGrunnkrets.datafangstdato
+            foerstedigitaliseringsdato = gammelGrunnkrets.foerstedigitaliseringsdato
+            opphav = gammelGrunnkrets.opphav
+            posisjon = gammelGrunnkrets.posisjon
+            omraade = gammelGrunnkrets.omraade
+            utledetFra = gammelGrunnkrets.utledetFra
         }
     }
 }

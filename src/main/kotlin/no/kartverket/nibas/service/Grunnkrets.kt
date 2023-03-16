@@ -61,51 +61,60 @@ class GrunnkretsService(private val grunnkretsRepository: GrunnkretsRepository) 
         grunnkretsRepository.findAllByLokalidSortedByGyldigFra(lokalId)
             .filter { it.gyldighet.gyldigFra.isAfter(dato) }
 
-    /**
-     * Id her må være lokalid.
-     * Vet at grunnkretsRequestWrapper.gyldigFra er satt, og må være lik i dag eller fram i tid.
-     */
     fun oppdaterGrunnkrets(
         lokalId: Lokalid,
         gyldigFra: LocalDate,
         endringstype: Endringstype,
         oppdatertGrunnkrets: GrunnkretsRequest
     ): Grunnkrets {
-        val grunnkretsHelper =
-            GrunnkretsHelper(grunnkretsRepository.findAllByLokalidSortedByGyldigFra(lokalId))
+        val identifikator = Identifikator(lokalId, gyldigFra)
+        val gammelGrunnkrets = hentGrunnkrets(identifikator)
+            ?: throw NotFoundException("Grunnkrets med $identifikator ble ikke funnet.")
 
-        // Må bruke grunnkrets som matcher lokalId på gyldigFra-tidspunkt
-        val relevantGrunnkrets =
-            grunnkretsHelper.findRelevantGrunnkretsForGyldigFra(gyldigFra, lokalId)
-        verifiserOptimistiskLaas(oppdatertGrunnkrets.version, relevantGrunnkrets)?.let {
+        verifiserOptimistiskLaas(oppdatertGrunnkrets.version, gammelGrunnkrets)?.let {
             throw OptimistiskLaasException(it)
         }
 
-        // Må oppdatere forrige rad på tidslinja
-        relevantGrunnkrets.setGyldigTil(gyldigFra)
+        //Lar dette med GrunnkretsHelper ligge, det har noe å gjøre med evt flere fremtidige endringer på grunnkrets
+        val grunnkretsHelper = GrunnkretsHelper(grunnkretsRepository.findAllByLokalidSortedByGyldigFra(lokalId))
+
+        // Må bruke grunnkrets som matcher lokalId på gyldigFra-tidspunkt
+        val relevantGrunnkrets = grunnkretsHelper.findRelevantGrunnkretsForGyldigFra(gyldigFra, lokalId)
 
         // Uansett om gyldigFra er identisk med grunnkretsens gyldigFra eller fram i tid: Lage ny
         // rad (ny uuid, samme lokalid).
-        val nyGrunnkrets =
-            grunnkretsRepository.save(
-                Grunnkrets(lokalid = relevantGrunnkrets.lokalid)
-                    // Mappe alle øvrige felter fra eksisterende grunnkrets
-                    .applyMappingFromExistingGrunnkrets(relevantGrunnkrets)
-                    .applyChangesFromRequest(oppdatertGrunnkrets)
-            )
+        val nyGrunnkrets = createNyVersjonAvGrunnkrets(gammelGrunnkrets, gyldigFra, endringstype)
+            .applyChangesFromRequest(oppdatertGrunnkrets)
 
         return nyGrunnkrets
-            .applyCascadingOperationsBasedOnExistingGrunnkrets(relevantGrunnkrets)
             .apply {
                 setGyldigFra(gyldigFra)
                 if (grunnkretsHelper.existsRowsWithLaterGyldigFraDato(relevantGrunnkrets)) {
                     // Setter gyldigTil lik gyldigFra for neste rad
                     setGyldigTil(grunnkretsHelper.getNesteGyldigFraDato(relevantGrunnkrets))
                 }
-                this.auditInfo.typeEndring = endringstype
-                this.version = grunnkretsHelper.getNextVersion()
             }
     }
+
+    fun createNyVersjonAvGrunnkrets(grunnkrets: Grunnkrets, gyldigFra: LocalDate, endringstype: Endringstype): Grunnkrets {
+        return grunnkretsRepository.save(
+            Grunnkrets(lokalid = grunnkrets.lokalid)
+                .apply {
+                    applyMappingFromExistingGrunnkrets(grunnkrets)
+                    setGyldigFra(gyldigFra)
+                    version = nesteVersjonForGrunnkrets(Lokalid(grunnkrets.lokalid))
+                    auditInfo.typeEndring = endringstype
+                }
+        )
+            .applyCascadingOperationsBasedOnExistingGrunnkrets(grunnkrets)
+            .also { grunnkrets.setGyldigTil(gyldigFra)  }
+    }
+
+    private fun nesteVersjonForGrunnkrets(lokalId: Lokalid): Int =
+        grunnkretsRepository
+            .findAllByLokalid(lokalId.value)
+            .maxBy { it.version }
+            .version + 1
 
     /**
      * Returnerer liste med grunnkretser som matcher lokalid og gyldighetsdato.

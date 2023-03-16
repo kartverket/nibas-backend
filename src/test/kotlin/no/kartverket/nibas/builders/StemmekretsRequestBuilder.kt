@@ -18,6 +18,11 @@ class StemmekretsRequestBuilder(
         val DEFAULT_REQUEST = StemmekretsRequestBuilder().build()
     }
 
+    fun withLokalId(lokalId: String): StemmekretsRequestBuilder {
+        this.lokalId = lokalId
+        return this
+    }
+
     fun build(): StemmekretsRequest = StemmekretsRequest(
         stemmekretsnummer = stemmekretsnummer,
         identifikasjon = Identifikasjon(

@@ -128,6 +128,7 @@ class Grense(
     }
 
     fun updateDokumentasjonsreferanser(dokRefList: List<Dokref>) {
+        //TODO mangler gyldighet på dokumentasjonsreferanser
         dokRefList.forEach { dokRef ->
             val dokRefId = dokRef.id
             var dokumentasjonsreferanse = this.dokumentasjonsreferanser.find { dokumentasjonsreferanse -> dokumentasjonsreferanse.id == dokRefId }
@@ -201,4 +202,23 @@ class Grense(
         finnRelevantGrenseForTyperOgDato(grensetyper, gyldighetsdato) != null
 
     fun harGrenseTypeContainedInSet(grensetyper: Set<Grensetype>): Boolean = grensetyper.contains(this.grensetype)
+
+    fun applyMappingFromExistingGrense(gammelGrense: Grense): Grense {
+        return this.apply {
+            gammelGrense.gyldighet.gyldigTil?.let { setGyldigTil(it) }
+            datafangstdato = gammelGrense.datafangstdato
+            opphav = gammelGrense.opphav
+            grensetype = gammelGrense.grensetype
+            kvalitet = gammelGrense.kvalitet
+            setInfo(gammelGrense.informasjonstekst)
+
+            grense = gammelGrense.grense
+        }
+    }
+
+    fun applyCascadingOperationsBasedOnExistingGrense(gammelGrense: Grense): Grense {
+        return this.apply {
+            dokumentasjonsreferanser.addAll(gammelGrense.dokumentasjonsreferanser)
+        }
+    }
 }
