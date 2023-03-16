@@ -16,6 +16,9 @@ import no.kartverket.nibas.domain.utkast.UtkastStatus
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.service.GrunnkretsService
 import no.kartverket.nibas.service.StemmekretsService
+import no.kartverket.nibas.service.utkast.OperasjonerValidering
+import no.kartverket.nibas.service.utkast.UtkastValidatorService
+import no.kartverket.nibas.service.utkast.UtkastValidering
 import no.kartverket.nibas.utkast.UtkastServiceTest.Companion.operasjonerMedIkkeEditerbareGrenser
 import no.kartverket.nibas.utkast.UtkastServiceTest.Companion.operasjonerMedKunEditerbareGrenser
 import org.assertj.core.api.Assertions.assertThat

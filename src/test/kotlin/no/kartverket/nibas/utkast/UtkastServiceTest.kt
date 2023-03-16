@@ -45,6 +45,8 @@ import no.kartverket.nibas.service.GrunnkretsService
 import no.kartverket.nibas.service.KommuneService
 import no.kartverket.nibas.service.NasjonService
 import no.kartverket.nibas.service.StemmekretsService
+import no.kartverket.nibas.service.utkast.UtkastService
+import no.kartverket.nibas.service.utkast.UtkastValidatorService
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
@@ -284,7 +286,7 @@ internal class UtkastServiceTest {
     }
 
     @Test
-    fun `framtidige versjoner konflikt resolved gir 400 bad request ved ugyldig grunnkretsnummer (for få sifre)`() {
+    fun `framtidige versjoner konflikt resolved gir 400 bad request ved ugyldig grunnkretsnummer (for faa sifre)`() {
         val lokalid = Lokalid("abcd-38383")
         val conflictResolved = ConflictResolved(
             lokalid = lokalid,

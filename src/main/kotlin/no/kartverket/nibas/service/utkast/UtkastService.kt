@@ -1,23 +1,16 @@
-package no.kartverket.nibas.utkast
+package no.kartverket.nibas.service.utkast
 
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grenseendringer
 import no.kartverket.nibas.api.v1.common.Metadataendringer
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
-import no.kartverket.nibas.api.v1.klient.UtkastApi
 import no.kartverket.nibas.api.v1.request.ConflictResolved
 import no.kartverket.nibas.api.v1.request.OppdaterUtkastRequest
 import no.kartverket.nibas.api.v1.request.OpprettUtkastRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
-import no.kartverket.nibas.api.v1.response.AuditInfoResponse
-import no.kartverket.nibas.api.v1.response.UtkastOpprettetResponse
-import no.kartverket.nibas.api.v1.response.UtkastRef
-import no.kartverket.nibas.api.v1.response.UtkastResponse
-import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Lokalid
-import no.kartverket.nibas.common.ResponseException.BadRequestException
-import no.kartverket.nibas.common.ResponseException.NotFoundException
+import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.utkast.Utkast
@@ -35,61 +28,13 @@ import no.kartverket.nibas.service.GrunnkretsService
 import no.kartverket.nibas.service.KommuneService
 import no.kartverket.nibas.service.NasjonService
 import no.kartverket.nibas.service.StemmekretsService
-import no.kartverket.nibas.sporing.AuditInfo
+import no.kartverket.nibas.service.utkast.extensions.publiseringsInfo
 import no.kartverket.nibas.unwrap
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
 import java.time.LocalDate
-
-@RestController
-class UtkastController(
-    private val utkastService: UtkastService,
-    private val hrefProvider: HrefProvider
-) : UtkastApi {
-
-    override fun opprettUtkast(
-        opprettUtkastRequest: OpprettUtkastRequest
-    ): UtkastOpprettetResponse {
-        return UtkastOpprettetResponse(id = utkastService.opprettUtkast(opprettUtkastRequest))
-    }
-
-    override fun hentUtkast(id: String): UtkastResponse {
-        return utkastService.hentUtkast(id)?.toUtkastResponse()
-            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
-    }
-
-    override fun oppdaterUtkast(id: String, utkast: OppdaterUtkastRequest): UtkastResponse {
-        return utkastService.oppdaterUtkast(id, utkast)?.toUtkastResponse()
-            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
-    }
-
-    override fun forkastUtkast(id: String) {
-        utkastService.forkastUtkast(id) ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
-    }
-
-    override fun publiserUtkast(id: String) {
-        utkastService.publiserUtkast(id)
-    }
-
-    override fun hentUtkastIStatusOpprettet(): List<UtkastRef> {
-        return utkastService
-            .hentUtkastIStatusOpprettet()
-            .map { it.toUtkastRef(hrefProvider) }
-            .sortedBy { it.navn }
-    }
-
-    override fun resolveConflictForFramtidigeVersjoner(
-        id: String,
-        conflictResolved: ConflictResolved
-    ) {
-        utkastService.resolveConflictForFramtidigeVersjoner(id, conflictResolved)
-    }
-}
 
 @Transactional
 @Service
@@ -151,7 +96,7 @@ class UtkastService(
     fun publiserUtkast(utkastId: String, nyGyldigFra: LocalDate = LocalDate.now()) {
         val utkast =
             hentUtkast(utkastId)
-                ?: throw NotFoundException("Utkast ble ikke funnet for id: $utkastId.")
+                ?: throw ResponseException.NotFoundException("Utkast ble ikke funnet for id: $utkastId.")
         // Vi håndterer ikke fremtidige endringer enda, ved kall fra frontend settes
         // publiseringsdato til dagens dato
         utkast.gyldigFra = nyGyldigFra
@@ -229,10 +174,10 @@ class UtkastService(
 
         val alleEndringer =
             endredeNasjoner +
-            endredeFylker +
-            endredeKommuner +
-            endredeGrunnkretser +
-            endredeStemmekretser
+                endredeFylker +
+                endredeKommuner +
+                endredeGrunnkretser +
+                endredeStemmekretser
         return alleEndringer.map { lagFlateEndring(it, EventType.MODIFIED) }
     }
 
@@ -289,7 +234,7 @@ class UtkastService(
     ) {
         val utkast =
             hentUtkast(utkastId)
-                ?: throw NotFoundException("Utkast ble ikke funnet for id: $utkastId.")
+                ?: throw ResponseException.NotFoundException("Utkast ble ikke funnet for id: $utkastId.")
 
         val lokalid = conflictResolved.lokalid
 
@@ -304,7 +249,7 @@ class UtkastService(
                             grunnkretsRequest.grunnkretsnummer,
                             grunnkretsRequest.identifikasjon.lokalid)
                     ) {
-                        throw BadRequestException(
+                        throw ResponseException.BadRequestException(
                             "Utkast inneholder ugyldige metadataendringer på grunnkrets"
                         )
                     }
@@ -341,7 +286,7 @@ class UtkastService(
                             stemmekretsRequest.stemmekretsnummer,
                             stemmekretsRequest.identifikasjon.lokalid)
                     ) {
-                        throw BadRequestException(
+                        throw ResponseException.BadRequestException(
                             "Utkast inneholder ugyldige metadataendringer på stemmekrets"
                         )
                     }
@@ -377,7 +322,7 @@ class UtkastService(
     }
 
     private fun modifisertGyldigFraException(utkastId: String, lokalId: String, type: String) =
-        BadRequestException(
+        ResponseException.BadRequestException(
             "Kan ikke publisere utkast med id: $utkastId. GyldigFra-feltet på en av endringene i utkastet er etter siste gyldig fra dato for kretsen. " +
                 "Dette kan tyde på at GyldigFra-feltet ble modifisert under konflikt-håndteringen. Feilen oppsto på $type med lokalId: $lokalId"
         )
@@ -392,68 +337,7 @@ class UtkastService(
     }
 }
 
-private fun Utkast.publiseringsInfo(): String =
-    StringBuilder("Publiserer utkast '${this.navn}' (id: ${this.id}): ")
-        .append(this.operasjoner?.metadataendringer?.logFriendlyString() ?: "")
-        .append(this.operasjoner?.grenseendringer?.logFriendlyString() ?: "")
-        .append("\n")
-        .toString()
-
-private fun Metadataendringer.logFriendlyString(): String {
-    val logBuilder = StringBuilder("")
-    val nasjon = this.nasjonsendringer
-    val fylke = this.fylkesendringer
-    val kommune = this.kommuneendringer
-    val grunnkrets = this.grunnkretsendringer
-    val stemmekrets = this.stemmekretsendringer
-    val newLine = "\n -> "
-    if (nasjon.isNotEmpty()) {
-        logBuilder.append(newLine).append("Nasjonsendringer: ${nasjon.size}")
-    }
-    if (fylke.isNotEmpty()) {
-        logBuilder.append(newLine).append("Fylkesendringer: ${fylke.size}")
-    }
-    if (kommune.isNotEmpty()) {
-        logBuilder.append(newLine).append("Kommuneendringer: ${kommune.size}")
-    }
-    if (grunnkrets.isNotEmpty()) {
-        logBuilder.append(newLine).append("Grunnkretsendringer: ${grunnkrets.size}")
-    }
-    if (stemmekrets.isNotEmpty()) {
-        logBuilder.append(newLine).append("Stemmekretsendringer: ${stemmekrets.size}")
-    }
-    return logBuilder.toString()
-}
-
-private fun Grenseendringer.logFriendlyString(): String {
-    val logBuilder = StringBuilder("")
-    val newLine = "\n -> "
-    val endredeFeatures = this.endredeFeatures
-    if (endredeFeatures.isNotEmpty()) {
-        logBuilder.append(newLine).append("Grenseendringer: ${endredeFeatures.size}")
-    }
-    return logBuilder.toString()
-}
-
 private fun OpprettUtkastRequest.createUtkast(): Utkast =
     UtkastBuilder.builder(this.navn, Endringstype.fromValue(this.endringstype))
         .withOperasjoner(this.operasjoner)
         .build()
-
-private fun Utkast.toUtkastResponse(): UtkastResponse =
-    UtkastResponse(
-        id = this.id,
-        navn = this.navn,
-        endringstype = this.auditInfo.typeEndring.value,
-        status = this.status.value,
-        gyldigFra = this.gyldigFra,
-        operasjoner = this.operasjoner ?: Operasjoner(),
-        opprettetDato = this.opprettetDato,
-        auditInfoResponse = this.auditInfo.toAuditInfoResponse(),
-        version = this.version
-    )
-
-private fun Utkast.toUtkastRef(hrefProvider: HrefProvider): UtkastRef =
-    UtkastRef(id = id, navn = navn, href = hrefProvider.getHref(id))
-
-fun AuditInfo.toAuditInfoResponse(): AuditInfoResponse = AuditInfoResponse(this.endretdato)

@@ -1,4 +1,4 @@
-package no.kartverket.nibas.utkast
+package no.kartverket.nibas.service.utkast
 
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grensetype
@@ -224,7 +224,7 @@ class UtkastValidatorService(
 
 }
 
-fun Operasjoner.harEndringer(): Boolean {
+private fun Operasjoner.harEndringer(): Boolean {
     val metadata = this.metadataendringer
     return metadata.nasjonsendringer.isNotEmpty() ||
         metadata.fylkesendringer.isNotEmpty() ||
@@ -235,7 +235,7 @@ fun Operasjoner.harEndringer(): Boolean {
         this.stemmekretsSammenslaaingsendring != null
 }
 
-fun Operasjoner.harIkkeEndringer(): Boolean = !this.harEndringer()
+private fun Operasjoner.harIkkeEndringer(): Boolean = !this.harEndringer()
 
 sealed class UtkastValidering {
     data class KlartForPublisering(val utkast: Utkast): UtkastValidering()
