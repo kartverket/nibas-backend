@@ -4,15 +4,14 @@ import no.kartverket.nibas.api.v1.ekstern.KommuneApi
 import no.kartverket.nibas.api.v1.response.KommuneRef
 import no.kartverket.nibas.api.v1.response.KommuneResponse
 import no.kartverket.nibas.api.v1.response.KretsResponse
-import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.common.createIdentifikator
-import no.kartverket.nibas.service.KommuneService
-import no.kartverket.nibas.service.toKommuneResponse
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.kodelister.createKommunenummerFromUUID
+import no.kartverket.nibas.service.KommuneService
+import no.kartverket.nibas.service.toKommuneResponse
 import no.kartverket.nibas.service.toKretsResponse
 import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDate
@@ -21,7 +20,6 @@ import java.time.LocalDate
 class KommuneController(
     private val kommuneService: KommuneService,
     private val kodelisteService: KodelisteService,
-    private val hrefProvider: HrefProvider
 ) : KommuneApi {
 
     override fun hentKommuner(fylkeId: String?, gyldighetsdato: LocalDate?): List<KommuneRef> {

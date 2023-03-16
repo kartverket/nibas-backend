@@ -151,8 +151,6 @@ private class GrunnkretsHelper(private val grunnkretserSortedByGyldigFra: List<G
     private fun findIndex(grunnkrets: Grunnkrets) =
         grunnkretserSortedByGyldigFra.indices.find { grunnkretserSortedByGyldigFra[it].id == grunnkrets.id }
             ?: throw RuntimeException("Did not find index for grunnkrets $grunnkrets")
-
-    fun getNextVersion() = grunnkretserSortedByGyldigFra.maxBy { it.version }.version + 1
 }
 
 // Setter feltene som faktisk kan endres i request

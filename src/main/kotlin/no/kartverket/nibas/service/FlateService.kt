@@ -80,7 +80,7 @@ class FlateService @Autowired constructor(
         kommuner.forEach { kommune ->
             logger.info("Oppdaterer flate for ${finnNavn(kommune)}")
             val kommunenummerVerdi = kodelisteService.getCodeValueByKommunenummerId(kommune.kommunenummer)
-            var kommunegrenser = enhetsGrenseRepository.hentGrenserMedRiktigRetning(kommunenummerVerdi, kommune.tillatteGrensetyper())
+            val kommunegrenser = enhetsGrenseRepository.hentGrenserMedRiktigRetning(kommunenummerVerdi, kommune.tillatteGrensetyper())
             kommune.omraade = SosiGeometryFunctions.dannFlaterMedHullBasertPaaGeometri(kommunegrenser.map{ GrenseMedLokalid(it.grense, it.lokalid) }, kommune.lokalid)
             kommuneRepository.save(kommune)
         }
@@ -90,7 +90,7 @@ class FlateService @Autowired constructor(
         fylker.forEach { fylke ->
             logger.info("Oppdaterer flate for ${finnNavn(fylke)}")
             val fylkesnummerVerdi = kodelisteService.getCodeValueByFylkesnummerId(fylke.fylkesnummer)
-            var fylkesgrenser = enhetsGrenseRepository.hentGrenserMedRiktigRetning(fylkesnummerVerdi!!, fylke.tillatteGrensetyper())
+            val fylkesgrenser = enhetsGrenseRepository.hentGrenserMedRiktigRetning(fylkesnummerVerdi!!, fylke.tillatteGrensetyper())
             fylke.omraade = SosiGeometryFunctions.dannFlaterMedHullBasertPaaGeometri(fylkesgrenser.map{ GrenseMedLokalid(it.grense, it.lokalid) })
             fylkeRepository.save(fylke)
         }
@@ -99,7 +99,7 @@ class FlateService @Autowired constructor(
     private fun oppdaterNasjonsflate(nasjoner: List<Nasjon>) {
         nasjoner.forEach { nasjon ->
             logger.info("Oppdaterer flate for ${finnNavn(nasjon)}")
-            var riksgrenser = enhetsGrenseRepository.hentGrenserMedRiktigRetning("", nasjon.tillatteGrensetyper())
+            val riksgrenser = enhetsGrenseRepository.hentGrenserMedRiktigRetning("", nasjon.tillatteGrensetyper())
             nasjon.omraade = SosiGeometryFunctions.dannFlaterMedHullBasertPaaGeometri(riksgrenser.map{ GrenseMedLokalid(it.grense, it.lokalid) })
             nasjonRepository.save(nasjon)
         }
