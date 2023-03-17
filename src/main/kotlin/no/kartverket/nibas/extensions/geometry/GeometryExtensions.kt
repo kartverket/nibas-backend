@@ -51,23 +51,15 @@ fun LineString.lineStringToDto() = LineStringDto(
     coordinates = this.coordinates.map { listOf(it.x, it.y) })
 
 fun MultiPolygon.multiPolygonToDto(): MultiPolygonDto {
-    val listOfPolygons: MutableList<List<List<List<Double>>>> = mutableListOf()
-    getPolygons().forEach { polygon ->
-        val listOfRings: MutableList<List<List<Double>>> = mutableListOf()
-        polygon.getRings()
-            .forEach { linearRing ->
-                val listOfCoordinates: MutableList<List<Double>> = mutableListOf()
-                linearRing.coordinates.toList()
-                    .forEach { coordinate ->
-                        val listOfXAndY = listOf(coordinate.x, coordinate.y)
-                        listOfCoordinates.add(listOfXAndY)
-                    }
-                listOfRings.add(listOfCoordinates)
-            }
-        listOfPolygons.add(listOfRings)
-    }
     return MultiPolygonDto(
-        coordinates = listOfPolygons
+        coordinates =
+        getPolygons().map { polygon ->
+            polygon.getRings().map { linearRing ->
+                linearRing.coordinates.toList().map { coordinate ->
+                    listOf(coordinate.x, coordinate.y)
+                }
+            }
+        }
     )
 }
 
