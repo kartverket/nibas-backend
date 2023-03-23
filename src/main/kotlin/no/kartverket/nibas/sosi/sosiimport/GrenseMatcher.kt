@@ -112,7 +112,7 @@ class GrenseMatcher {
     }
 
     private fun match(kurveRef: SosiReferanse, grense: SosiGeometri, kommuneFlater: List<SosiFlate>): List<SplitTilImport> {
-        var grenserSomDekker = finnGrenserSomDekker(kommuneFlater, grense)
+        val grenserSomDekker = finnGrenserSomDekker(kommuneFlater, grense)
 
         if(grenserSomDekker.isEmpty()) {
             logger.warn("Matching feilet for grense med lokalid: ${grense.getIdent()?.getLokalId()}")
@@ -213,9 +213,9 @@ class GrenseMatcher {
         val initialWindowSize = 1
         var maxWindowSize = min(30, skalSjekkesMot.size)
         val grenseReferanse = grense.getVerdiMedIndex(0)
-        if (grenseReferanse != null && grenseReferanse.contains("13897")) {
-            logger.info("Grense $grenseReferanse må ha et større vindu for å å finne en match, setter det til 40.")
-            maxWindowSize = 40;
+        if (grenseReferanse != null && (grenseReferanse.contains("13897") || grenseReferanse.contains("379378"))) {
+            logger.info("Grense $grenseReferanse må ha et større vindu for å å finne en match, setter det til 50.")
+            maxWindowSize = 50
         }
         var currentWindowSize = initialWindowSize
 
@@ -259,7 +259,7 @@ class GrenseMatcher {
             true -> listOf(splittGrense(referanse, grenserSomDekker.first(), startCoord, sluttCoord)).map { SplitTilImport(it, ref, grense) }
             false -> {
                 val grenseMedStartKoordinat = finnGrenseSegmentMedKoordinat(startCoord, grenserSomDekker) ?: grenserSomDekker.first()
-                var grenseMedSluttKoordinat = finnGrenseSegmentMedKoordinat(sluttCoord, grenserSomDekker) ?: grenserSomDekker.last()
+                val grenseMedSluttKoordinat = finnGrenseSegmentMedKoordinat(sluttCoord, grenserSomDekker) ?: grenserSomDekker.last()
                 if (grenserSomDekker.size >= 2 && grenseMedStartKoordinat == grenseMedSluttKoordinat) {
                     logger.warn("Samme grense dekker både start og slutt, men det er oppgitt at grensa skal dekkes av flere grenser")
                 }

@@ -3,6 +3,7 @@ package no.kartverket.nibas.service
 import no.kartverket.nibas.builders.FylkeBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
+import no.kartverket.nibas.builders.NasjonBuilder
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.EnhetsGrenseRepository
@@ -17,6 +18,7 @@ import no.kartverket.nibas.sosi.sosiimport.GrenseMedLokalid
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import no.kartverket.nibas.sporing.Gyldighet
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
 import org.locationtech.jts.geom.LineString
@@ -95,6 +97,66 @@ class FlateServiceTest {
         assertEquals(kommuneflate, kommune.omraade)
         verify(fylkeRepository).save(fylke)
         assertEquals(fylkesflate, fylke.omraade)
+    }
+
+    @Test
+    fun `oppdater kommuneflater som feiler kaster feil`() {
+        val kommunegrenser: MutableList<Grenserad> = mutableListOf(createGrenserad(GeometryFactory().createLineString(arrayOf(
+            Coordinate(1.0, 1.0),
+            Coordinate(2.0, 1.0),
+            Coordinate(20.0, 20.0),
+            Coordinate(10.0, 20.0),
+            ))
+        ))
+
+        val kommune = KommuneBuilder().build()
+
+        whenever(kodelisteService.getCodeValueByKommunenummerId(kommune.kommunenummer)).thenReturn("123")
+        whenever(enhetsGrenseRepository.hentGrenserMedRiktigRetning("123", kommune.tillatteGrensetyper())).thenReturn(kommunegrenser)
+        assertThrows<RuntimeException> { flateService.oppdaterFlaterFor(setOf(kommune)) }
+    }
+
+    @Test
+    fun `oppdater fylkesflater som feiler kaster feil`() {
+        val fylkesflater: MutableList<Grenserad> = mutableListOf(
+            createGrenserad(GeometryFactory().createLineString(arrayOf(
+                Coordinate(1.0, 1.0),
+                Coordinate(2.0, 1.0),
+                Coordinate(20.0, 20.0),
+                Coordinate(10.0, 20.0),
+            ))),
+            createGrenserad(GeometryFactory().createLineString(arrayOf(
+                Coordinate(12.0, 20.0),
+                Coordinate(1.0, 1.0)
+            )))
+        )
+
+        val fylke = FylkeBuilder().build()
+
+        whenever(kodelisteService.getCodeValueByFylkesnummerId(fylke.fylkesnummer)).thenReturn("123")
+        whenever(enhetsGrenseRepository.hentGrenserMedRiktigRetning("123", fylke.tillatteGrensetyper())).thenReturn(fylkesflater)
+        assertThrows<RuntimeException> { flateService.oppdaterFlaterFor(setOf(fylke)) }
+    }
+
+    @Test
+    fun `oppdater nasjon som feiler kaster feil`() {
+        val nasjonsflate: MutableList<Grenserad> = mutableListOf(
+            createGrenserad(GeometryFactory().createLineString(arrayOf(
+                Coordinate(1.0, 1.0),
+                Coordinate(2.0, 1.0),
+                Coordinate(20.0, 20.0),
+                Coordinate(10.0, 20.0),
+            ))),
+            createGrenserad(GeometryFactory().createLineString(arrayOf(
+                Coordinate(12.0, 20.0),
+                Coordinate(1.0, 1.0)
+            )))
+        )
+
+        val nasjon = NasjonBuilder().build()
+
+        whenever(enhetsGrenseRepository.hentGrenserMedRiktigRetning("", nasjon.tillatteGrensetyper())).thenReturn(nasjonsflate)
+        assertThrows<RuntimeException> { flateService.oppdaterFlaterFor(setOf(nasjon)) }
     }
 
     private fun createGrenserad(grense: LineString): Grenserad {

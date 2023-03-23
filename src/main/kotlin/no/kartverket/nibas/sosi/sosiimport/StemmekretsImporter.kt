@@ -4,17 +4,13 @@ import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.StemmekretsRepository
-import no.kartverket.nibas.sosi.common.SosiKoder
-import no.kartverket.nibas.sosi.model.SosiBuep
 import no.kartverket.nibas.sosi.model.SosiFlate
 import no.kartverket.nibas.sosi.model.SosiGeometri
-import no.kartverket.nibas.sosi.model.SosiKurve
-import no.kartverket.nibas.sosi.model.SosiObjekt
 import org.locationtech.jts.geom.Coordinate
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
-import java.util.logging.Logger
 
 @Component
 class StemmekretsImporter @Autowired constructor(private val kommunalKretsImporter: KommunalKretsImporter,
@@ -23,7 +19,7 @@ class StemmekretsImporter @Autowired constructor(private val kommunalKretsImport
                                                  private val kommuneRepository: KommuneRepository,
                                                  private val kodelisteService: KodelisteService) {
 
-    val logger: Logger = Logger.getLogger(this::class.java.name)
+    private val logger = LoggerFactory.getLogger(this::class.java)
 
     @Transactional
     fun importerSosiStemmekrets(flater: List<SosiFlate>, stemmekretsgrenser: List<SosiGeometri>, erstatningskoordinater: MutableMap<Coordinate, Erstatningskoordinat>, matchedeGrenser: MutableMap<String, List<SplitTilImport>>) {

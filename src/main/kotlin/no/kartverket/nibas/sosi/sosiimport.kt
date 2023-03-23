@@ -4,7 +4,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import no.kartverket.nibas.api.v1.common.Flatetype
-import no.kartverket.nibas.service.FlateService
 import no.kartverket.nibas.repository.FlatedanningCustomSQLRepository
 import no.kartverket.nibas.sosi.common.SosiKoder
 import no.kartverket.nibas.sosi.deserializer.NibasSosiDeserializer
@@ -17,6 +16,7 @@ import no.kartverket.nibas.sosi.sosiimport.GrenseMatcher
 import no.kartverket.nibas.sosi.sosiimport.GrunnkretsImporter
 import no.kartverket.nibas.sosi.sosiimport.KommuneImporter
 import no.kartverket.nibas.sosi.sosiimport.NasjonImporter
+import no.kartverket.nibas.sosi.sosiimport.SosiImportFlateService
 import no.kartverket.nibas.sosi.sosiimport.StemmekretsImporter
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -37,7 +37,7 @@ class SosiImportService(
     private val grunnkretsImporter: GrunnkretsImporter,
     private val stemmekretsImporter: StemmekretsImporter,
     private val environment: Environment,
-    private val flateService: FlateService,
+    private val sosiImportFlateService: SosiImportFlateService,
     private val flatedanningCustomSQLRepository: FlatedanningCustomSQLRepository
 ) {
 
@@ -55,7 +55,7 @@ class SosiImportService(
     @Value("\${nibas.import.admenhetfil:sosifiler/ADM_Enheter_Norge_20230214.sos}")
     lateinit var admenhetfil: String
 
-    @Value("\${nibas.import.stemmekretsfil:sosifiler/Stemmekretser_Norge_20230215.sos}")
+    @Value("\${nibas.import.stemmekretsfil:sosifiler/Stemmekretser_Norge_20230321.sos}")
     lateinit var stemmekretsfil: String
 
     private val importTargets: List<String> =
@@ -103,17 +103,18 @@ class SosiImportService(
             admEnhetRoot?.let { importerAdministrativeEnheter(admEnhetRoot)}
         }
 
-        val resultsGrunnkrets = grunnkretsRoot?.let { importerGrunnkretser(grunnkretsRoot, admEnhetRoot!!) }
         val resultsStemmekrets = stemmekretsRoot?.let { importerStemmekretser(stemmekretsRoot, admEnhetRoot!!) }
-
-        logResults("Grunnkrets import", resultsGrunnkrets)
-        logResults("Stemmekrets import", resultsStemmekrets)
+        val resultsGrunnkrets = grunnkretsRoot?.let { importerGrunnkretser(grunnkretsRoot, admEnhetRoot!!) }
 
         if (dannFlaterForAdministrativeEnheter) {
             logger.info("Skal danne flater for administrative enheter")
             flatedanningCustomSQLRepository.slettGrenserUtenUtstrekning()
-            flateService.settFlaterPaaAlleAdministrativeEnheter()
+            val resultatFlatedanning = sosiImportFlateService.settFlaterPaaAlleAdministrativeEnheter()
+            logResults("Flatedanning", resultatFlatedanning)
         }
+        logResults("Grunnkrets import", resultsGrunnkrets)
+        logResults("Stemmekrets import", resultsStemmekrets)
+
     }
 
     private fun fileAsInputStream(filepath: String): InputStream = DefaultResourceLoader().getResource(filepath).file.inputStream()
