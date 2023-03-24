@@ -13,6 +13,7 @@ import no.kartverket.nibas.api.v1.request.OppdaterUtkastRequest
 import no.kartverket.nibas.api.v1.request.OpprettUtkastRequest
 import no.kartverket.nibas.api.v1.response.ApiErrorResponse
 import no.kartverket.nibas.api.v1.response.ConflictResponseWrapper
+import no.kartverket.nibas.api.v1.response.GeometriErrorResponse
 import no.kartverket.nibas.api.v1.response.UtkastOpprettetResponse
 import no.kartverket.nibas.api.v1.response.UtkastRef
 import no.kartverket.nibas.api.v1.response.UtkastResponse
@@ -74,7 +75,7 @@ interface UtkastApi {
 
     @Operation(summary = "Publiserer utkastet med gitt id.", description = "Publiserer utkastet med gitt id.")
     @Response200OK
-    @Response400BadRequest
+    @Response400GeometriFeil
     @Response404NotFound
     @Response409Conflict
     @PostMapping("/{id}/publiser", produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -96,7 +97,7 @@ interface UtkastApi {
 
     @Operation(summary = "Publiserer utkastet for resolvet konflikt.", description = "Publiserer utkastet for resolvet konflikt.")
     @Response200OK
-    @Response400BadRequest
+    @Response400GeometriFeil
     @Response404NotFound
     @Response409Conflict
     @PostMapping("/{id}/resolved", produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -148,3 +149,14 @@ annotation class Response404NotFound
     )]
 )
 annotation class Response409Conflict
+
+@ApiResponse(
+    responseCode = "400", description = "GeometriFeil",
+    content = [
+        Content(
+            mediaType = "application/json",
+            schema = Schema(oneOf = [GeometriErrorResponse::class, ApiErrorResponse::class])
+        )
+    ]
+)
+annotation class Response400GeometriFeil
