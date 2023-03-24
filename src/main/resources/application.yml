@@ -135,6 +135,9 @@ spring:
   config:
     activate:
       on-profile: import
+  autoconfigure:
+    # For å kunne bruke siste versjon av springdoc-openapi også for importen (https://github.com/springdoc/springdoc-openapi/issues/2142)
+    exclude: org.springdoc.core.configuration.SpringDocJacksonKotlinModuleConfiguration
   main:
     web-application-type: none
   jpa:
