@@ -9,6 +9,7 @@ import no.kartverket.nibas.service.FlateService
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 
 @Service
@@ -21,6 +22,7 @@ class SosiImportFlateService @Autowired constructor(
 
     private val logger = LoggerFactory.getLogger(this.javaClass.name)
 
+    @Transactional
     fun settFlaterPaaAlleAdministrativeEnheter(gyldighetsdato: LocalDate = LocalDate.now()): List<Result<Unit>> {
         val resultatForOppdateringAvKommuneflater = kommuneRepository.findAllGyldigPaaDato(gyldighetsdato).toList().map {
             wrapOppdateringIResult(it)
@@ -42,7 +44,7 @@ class SosiImportFlateService @Autowired constructor(
             flateService.oppdaterFlaterFor(setOf(flate))
             Result.success(Unit)
         } catch (ex: Exception) {
-            logger.warn("Klarte ikke å oppdatere flate for ${flateService.finnNavn(flate)}")
+            logger.warn("Klarte ikke å oppdatere flate", ex)
             Result.failure(ex)
         }
     }
