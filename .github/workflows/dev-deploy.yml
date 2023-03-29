@@ -19,7 +19,7 @@ jobs:
       image_tag: ${{ steps.setOutput.outputs.image_tag }}
 
     steps:
-      - uses: szenius/set-timezone@v1.1
+      - uses: szenius/set-timezone@v1.2
         with:
           timezoneLinux: "Europe/Oslo"
       - uses: actions/checkout@v3

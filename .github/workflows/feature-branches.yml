@@ -2,7 +2,7 @@ name: nibas-feature-branches
 
 on:
   push:
-    branches-ignore:    
+    branches-ignore:
       - 'master'
 
 jobs:
@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: szenius/set-timezone@v1.1
+      - uses: szenius/set-timezone@v1.2
         with:
           timezoneLinux: "Europe/Oslo"
       - uses: actions/checkout@v3
