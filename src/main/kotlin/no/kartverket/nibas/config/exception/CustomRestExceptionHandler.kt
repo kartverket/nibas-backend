@@ -14,6 +14,7 @@ import no.kartverket.nibas.kodelister.MissingKodelisteItemException
 import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.extensions.geometry.posisjonToDto
 import no.kartverket.nibas.sosi.sosiimport.GeometriFailedToBeCreatedException
+import no.kartverket.nibas.sosi.sosiimport.IkkeSammenhengendePolygonException
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import no.kartverket.nibas.sosi.sosiimport.UgyldigGeometriException
 import org.springframework.core.log.LogFormatUtils
@@ -46,16 +47,26 @@ class CustomRestExceptionHandler : ResponseEntityExceptionHandler() {
             geometryType = ugyldigGEx.geometry::class.java.simpleName,
             validationError = topologyValidationError.message,
             feilLokasjon = SosiGeometryFunctions.coordinateToPoint(topologyValidationError.coordinate).posisjonToDto(),
-            message = ugyldigGEx.message!!
+            message = ugyldigGEx?.message ?: "Ukjent feil"
         )
         return handleExceptionInternal(ugyldigGEx, errorResponse, HttpHeaders(), errorResponse.httpStatus, request)
+    }
+
+    @ExceptionHandler(value = [IkkeSammenhengendePolygonException::class])
+    fun handleIkkeSammenhengendePolygonException(ex: IkkeSammenhengendePolygonException, request: WebRequest): ResponseEntity<Any>? {
+        val errorResponse = GeometriErrorResponse(
+            feilLokasjon = ex.startPunkt.posisjonToDto(),
+            message = ex?.message ?: "Ukjent feil",
+            validationError = "Ikke-sammenhengende grenser"
+        )
+        return handleExceptionInternal(ex, errorResponse, HttpHeaders(), errorResponse.httpStatus, request)
     }
 
     @ExceptionHandler(value = [GeometriFailedToBeCreatedException::class])
     fun handleGeometriFailedToBeCreatedException(ex: GeometriFailedToBeCreatedException, request: WebRequest): ResponseEntity<Any>? {
         val errorResponse = GeometriErrorResponse(
             feilLokasjon = ex.point.posisjonToDto(),
-            message = ex.message!!
+            message = ex?.message ?: "Ukjent feil",
         )
         return handleExceptionInternal(ex, errorResponse, HttpHeaders(), errorResponse.httpStatus, request)
     }

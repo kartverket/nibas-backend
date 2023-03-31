@@ -365,8 +365,8 @@ class UgyldigGeometriException(val geometry: Geometry,
                                val topologyValidationError: TopologyValidationError)
     : RuntimeException("Geometri-objekt er ikke gyldig: $geometry. Validation-feil: ${topologyValidationError.message}. Feil-lokasjon: ${topologyValidationError.coordinate}")
 
-class IkkeSammenhengendePolygonException(sluttPunkt: Geometry,
-                                         startPunkt: Geometry,
+class IkkeSammenhengendePolygonException(sluttPunkt: Point,
+                                         val startPunkt: Point,
                                          topologyValidationError: TopologyValidationError)
     : RuntimeException("Polygon som skal dannes har ikke-sammenhengende punkter, sluttpunkt: ${sluttPunkt.coordinate}, startPunkt: ${startPunkt.coordinate}. Validation-feil: ${topologyValidationError.message}.")
 
