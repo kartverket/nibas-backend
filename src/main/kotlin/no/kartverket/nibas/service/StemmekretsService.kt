@@ -117,7 +117,12 @@ class StemmekretsService(private val stemmekretsRepository: StemmekretsRepositor
         // Hvis er grense deler 2 stemmekretser som er med i sammenslåingen så er den ikke en del
         // av et skall eller hull i den nye stemmekretsen
         val viderefoerteGrensekoblinger = alleStemmekretsGrensekoblinger
-            .filter { grenseErIkkeDeltMellomToStemmekretser(it, alleStemmekretsGrensekoblinger) }
+            .filter { grenseDelerIkke2StemmekretserSomBlirSlaattSammen(it, alleStemmekretsGrensekoblinger) }
+
+        val grensekoblingerSomUtgaar = alleStemmekretsGrensekoblinger
+            .filter { grenseDeler2StemmekretserSomBlirSlaattSammen(it, alleStemmekretsGrensekoblinger) }
+
+        grensekoblingerSomUtgaar.forEach { it.grense.setGyldigTil(sammenslaaingsDato) }
 
         nyStemmekrets.grenser = oppdaterGrensekoblingsAtributterForGrenser(
             stemmekrets = nyStemmekrets,
@@ -143,8 +148,11 @@ class StemmekretsService(private val stemmekretsRepository: StemmekretsRepositor
             .also { stemmekrets.setGyldigTil(gyldigFra)  }
     }
 
-    private fun grenseErIkkeDeltMellomToStemmekretser(grenseKobling: StemmekretsGrenseKobling, alleGrensekoblinger: Collection<StemmekretsGrenseKobling>) =
-        alleGrensekoblinger.count { grenseKobling.grense.id == it.grense.id } == 1
+    private fun grenseDelerIkke2StemmekretserSomBlirSlaattSammen(grenseKobling: StemmekretsGrenseKobling, alleGrensekoblinger: Collection<StemmekretsGrenseKobling>) =
+        !grenseDeler2StemmekretserSomBlirSlaattSammen(grenseKobling, alleGrensekoblinger)
+
+    private fun grenseDeler2StemmekretserSomBlirSlaattSammen(grenseKobling: StemmekretsGrenseKobling, alleGrensekoblinger: Collection<StemmekretsGrenseKobling>) =
+        alleGrensekoblinger.count { grenseKobling.grense.id == it.grense.id } == 2
 
     private fun oppdaterGrensekoblingsAtributterForGrenser(stemmekrets: Stemmekrets, grensekoblinger: Collection<StemmekretsGrenseKobling>, gamleGrensekoblinger: Collection<StemmekretsGrenseKobling>): List<StemmekretsGrenseKobling> {
         val alleFlaterOgHull = SosiGeometryFunctions.finnFlaterForGrenser(
