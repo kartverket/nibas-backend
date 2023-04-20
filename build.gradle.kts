@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.springframework.boot.gradle.tasks.bundling.BootJar
 
 plugins {
-    val kotlinPluginVersion = "1.8.10"
+    val kotlinPluginVersion = "1.8.20"
 
     id("org.springframework.boot") version "3.0.5"
     id("io.spring.dependency-management") version "1.1.0"
@@ -49,13 +49,13 @@ configurations["intTestRuntimeOnly"].extendsFrom(configurations.runtimeOnly.get(
 
 // Definerer versjoner for avhengigheter som ikke dekkes av BOM
 val hibernateVersion = "6.1.7.Final"
-val springdocOpenapiVersion2 = "2.0.4"
+val springdocOpenapiVersion2 = "2.1.0"
 val jtsVersion = "1.19.0"
 val testContainerVersion = "1.17.6"
 val autLibVersion = "2.0.0"
 val flywayVersion = "9.16.1"
-val hypersistenceUtilsHibernate60Version = "3.3.0"
-val springCloudStarterVaultConfigVersion = "4.0.0"
+val hypersistenceUtilsHibernate60Version = "3.3.2"
+val springCloudStarterVaultConfigVersion = "4.0.1"
 val spatial4jVersion = "0.8"
 val kotlinxCoroutinesCoreVersion = "1.6.4"
 val logstashVersion = "7.3"
