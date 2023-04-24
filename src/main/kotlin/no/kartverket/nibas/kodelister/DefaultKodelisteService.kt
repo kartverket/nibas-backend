@@ -14,8 +14,8 @@ class DefaultKodelisteService constructor(private val kodelisteFetcher: Kodelist
                                           private val landKodeRepository: LandKodeRepository) : KodelisteService {
     private val logger: Logger = Logger.getLogger(this::class.java.name)
     private val malemetodeKodeUri = "malemetode-kode.json?"
-    private val kommunenummerUri = "kommunenummer.json?"
-    private val fylkesnummerUri = "fylkesnummer.json?"
+    private val kommunenummerUri = "inndelinger/inndelingsbase/kommunenummer.json?"
+    private val fylkesnummerUri = "inndelinger/inndelingsbase/fylkesnummer.json?"
     private val kodelisteByTypeMap: MutableMap<KodelisteType, Map<String, CachetKodelisteItem>> = mutableMapOf()
 
     @Transactional(readOnly = false)
