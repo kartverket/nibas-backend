@@ -2,7 +2,7 @@
 <configuration>
     <appender name="stdout_json" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-            <provider class="net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider" />
+            <provider class="net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider"/>
         </encoder>
     </appender>
     <appender name="stdout_humanreadable" class="ch.qos.logback.core.ConsoleAppender">
@@ -13,12 +13,14 @@
         </encoder>
     </appender>
 
-    <root level="INFO">
-        <springProfile name="!humanReadableLog">
+    <springProfile name="!humanReadableLog">
+        <root level="INFO">
             <appender-ref ref="stdout_json"/>
-        </springProfile>
-        <springProfile name="humanReadableLog">
+        </root>
+    </springProfile>
+    <springProfile name="humanReadableLog">
+        <root level="INFO">
             <appender-ref ref="stdout_humanreadable"/>
-        </springProfile>
-    </root>
+        </root>
+    </springProfile>
 </configuration>
