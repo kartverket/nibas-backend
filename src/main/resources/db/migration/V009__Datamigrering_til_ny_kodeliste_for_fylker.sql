@@ -1,0 +1,13 @@
+UPDATE fylke set fylkesnummer='1d99a0a3-418d-4e5d-ba9a-62925cbb9313' WHERE fylkesnummer='0f2eaf98-8b95-4931-9a32-9a821d63516d';
+UPDATE fylke set fylkesnummer='c499a315-0cd5-4e99-8acf-bd6f4803799a' WHERE fylkesnummer='35c80b41-2e63-4096-bed2-b5b0f0542d18';
+UPDATE fylke set fylkesnummer='55116149-6ccf-4494-91c8-84b03896d2cd' WHERE fylkesnummer='8423b12f-20b1-47ab-add4-cf30ae7dbd2a';
+UPDATE fylke set fylkesnummer='acc1de30-7452-42be-bc66-be1414bd7a05' WHERE fylkesnummer='758e5be4-648d-4213-8602-91ce8a7693f9';
+UPDATE fylke set fylkesnummer='d8bbf827-3ad2-4821-bc89-f284dc119644' WHERE fylkesnummer='eaf86844-77c5-4cac-aeb6-35f105910e41';
+UPDATE fylke set fylkesnummer='0e404bae-6907-411e-a16a-f019ee82e67b' WHERE fylkesnummer='03220222-0075-41f5-b603-44fe2505ede2';
+UPDATE fylke set fylkesnummer='b33c1714-447b-4a07-bf88-0a30dc7c30fb' WHERE fylkesnummer='bcb9fbdd-8e96-4207-b7bc-504ee845d9f2';
+UPDATE fylke set fylkesnummer='e79b7a63-13ff-4ba5-b4ef-0dfa4e6af1df' WHERE fylkesnummer='fea53cdd-7e83-4856-ad8a-1ee6dfa3012f';
+UPDATE fylke set fylkesnummer='770b61ec-0f3a-4836-80e6-675d5d7384a1' WHERE fylkesnummer='2028e336-f60b-437b-9ec6-84e9dc2e646a';
+UPDATE fylke set fylkesnummer='07cf48f2-178e-469a-9f94-1a38d30ae35e' WHERE fylkesnummer='77c14c5f-51ea-4b80-8746-32035193b811';
+UPDATE fylke set fylkesnummer='7639bb3e-e2fa-4b89-bb07-ff3835c3374e' WHERE fylkesnummer='c2a5bf46-f37a-4b36-a010-8cde2a2ec712';
+UPDATE fylke set fylkesnummer='efe425f5-fc7f-4a29-a70d-31363ec6a306' WHERE fylkesnummer='b06eb17a-27c3-43a0-bcfc-ce45ded5fd74';
+UPDATE fylke set fylkesnummer='44eed5a0-c5b2-46de-b654-60ada5744f0b' WHERE fylkesnummer='ef8cc5bb-7cfb-40e8-b730-e5be2415937c';
