@@ -90,7 +90,7 @@ jobs:
           with:
             repository: kartverket/smia-apps
             ref: main
-            token: ${{ secrets.GITHUB_TOKEN }}
+            token: ${{ secrets.PAT_ARGOCD }}
 
         - name: Update smia-apps
           run: |
