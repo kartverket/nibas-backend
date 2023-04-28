@@ -81,6 +81,27 @@ jobs:
                   echo "dev_auth_project_number=747318126147" >> $GITHUB_OUTPUT
                   echo "dev_service_account=nibas-deploy@nibas-dev-075c.iam.gserviceaccount.com" >> $GITHUB_OUTPUT
 
+    deploy-argo:
+      needs: build
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout the repository
+          uses: actions/checkout@v3
+          with:
+            repository: kartverket/smia-apps
+            ref: main
+            token: ${{ secrets.GITHUB_TOKEN }}
+
+        - name: Update smia-apps
+          run: |
+            echo "\"ghcr.io/kartverket/nibas-backend:${{ needs.build.outputs.new_tag }}\"" > dev/nibas-main/backend-version
+            echo "\"ghcr.io/kartverket/nibas-backend:${{ needs.build.outputs.new_tag }}\"" > test/nibas-main/backend-version
+            git config --global user.email "smia@kartverket.no"
+            git config --global user.name "SMIA CI"
+            git add .
+            git commit -m "Oppdaterer backend til ${{ needs.build.outputs.new_tag }} for test og dev"
+            git push
+
     deploy-dev:
         needs: [build, set-variables]
         name: Deploy to dev
