@@ -83,24 +83,14 @@ jobs:
 
     deploy-argo:
       needs: build
-      runs-on: ubuntu-latest
-      steps:
-        - name: Checkout the repository
-          uses: actions/checkout@v3
-          with:
-            repository: kartverket/smia-apps
-            ref: main
-            token: ${{ secrets.PAT_ARGOCD }}
-
-        - name: Update smia-apps
-          run: |
-            echo "\"ghcr.io/kartverket/nibas-backend:${{ needs.build.outputs.new_tag }}\"" > dev/nibas-main/nibas-backend-version
-            echo "\"ghcr.io/kartverket/nibas-backend:${{ needs.build.outputs.new_tag }}\"" > test/nibas-main/nibas-backend-version
-            git config --global user.email "smia@kartverket.no"
-            git config --global user.name "SMIA CI"
-            git add .
-            git commit -m "Oppdaterer backend til ${{ needs.build.outputs.new_tag }} for test og dev"
-            git push
+      uses: kartverket/smia-apps/.github/workflows/release-app.yml@main
+      with:
+        application: nibas-backend
+        image_url: ghcr.io/kartverket/nibas-backend:${{ needs.build.outputs.new_tag }}
+        deploy_dev: true
+        deploy_test: true
+      secrets:
+        PAT_TOKEN: ${{ secrets.PAT_ARGOCD }}
 
     deploy-dev:
         needs: [build, set-variables]
