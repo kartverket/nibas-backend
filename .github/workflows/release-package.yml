@@ -94,8 +94,8 @@ jobs:
 
         - name: Update smia-apps
           run: |
-            echo "\"ghcr.io/kartverket/nibas-backend:${{ needs.build.outputs.new_tag }}\"" > dev/nibas-main/backend-version
-            echo "\"ghcr.io/kartverket/nibas-backend:${{ needs.build.outputs.new_tag }}\"" > test/nibas-main/backend-version
+            echo "\"ghcr.io/kartverket/nibas-backend:${{ needs.build.outputs.new_tag }}\"" > dev/nibas-main/nibas-backend-version
+            echo "\"ghcr.io/kartverket/nibas-backend:${{ needs.build.outputs.new_tag }}\"" > test/nibas-main/nibas-backend-version
             git config --global user.email "smia@kartverket.no"
             git config --global user.name "SMIA CI"
             git add .
