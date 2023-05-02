@@ -1,0 +1,18 @@
+name: nibas-promote-to-prod
+on: workflow_dispatch
+
+env:
+  image_name: nibas-backend
+  registry: ghcr.io
+  registry_path: kartverket
+
+jobs:
+  deploy-argo:
+    needs: build
+    uses: kartverket/smia-apps/.github/workflows/promote-app.yml@main
+    with:
+      application: nibas-backend
+      from_env: test
+      to_env: prod
+    secrets:
+      PAT_TOKEN: ${{ secrets.PAT_ARGOCD }}

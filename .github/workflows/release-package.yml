@@ -1,182 +1,96 @@
 name: nibas-backend
 on:
-    push:
-        branches: [master]
-    workflow_dispatch:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
 
 env:
-    image_name: nibas-backend
-    registry: ghcr.io
-    registry_path: kartverket
+  image_name: nibas-backend
+  registry: ghcr.io
+  registry_path: kartverket
 
 jobs:
-    build:
-        runs-on: ubuntu-latest
-        permissions:
-            contents: write
-            packages: write
-            security-events: write
-            actions: read
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      security-events: write
+      actions: read
 
-        outputs:
-            new_tag: ${{ steps.tag_version.outputs.new_tag }}
-            image_url: ${{ steps.setOutput.outputs.image_url }}
+    outputs:
+      new_tag: ${{ steps.tag_version.outputs.new_tag }}
+      image_url: ${{ steps.setOutput.outputs.image_url }}
 
-        steps:
-            - uses: szenius/set-timezone@v1.2
-              with:
-                  timezoneLinux: "Europe/Oslo"
-            - uses: actions/checkout@v3
-            - name: Set up JDK
-              uses: actions/setup-java@v3
-              with:
-                  java-version: "17"
-                  distribution: "temurin"
-            - name: Grant execute permission for gradlew
-              run: chmod +x gradlew
-            - name: Build with Gradle
-              run: ./gradlew build --info
-              env:
-                  GH_USERNAME: ${{ secrets.PAT_USERNAME }}
-                  PAT: ${{ secrets.PAT_SCOPE_READ_PACKAGE }}
-
-            - name: Bump version and push tag
-              id: tag_version
-              uses: mathieudutour/github-tag-action@v6.1
-              with:
-                  github_token: ${{ github.token }}
-
-            - name: Login to Github Container Registry
-              uses: docker/login-action@v2
-              with:
-                  registry: ${{ env.registry }}
-                  username: ${{ github.actor }}
-                  password: ${{ github.token }}
-
-            - name: Build docker and push
-              id: build
-              uses: docker/build-push-action@v4
-              with:
-                  context: .
-                  push: true
-                  tags: ${{ env.registry }}/${{ github.repository }}:${{ steps.tag_version.outputs.new_tag }} , ${{ env.registry }}/${{ github.repository }}:latest
-                  build-args: |
-                      project_version_arg=${{ steps.tag_version.outputs.new_tag }}
-
-            - name: Set output with build values
-              id: setOutput
-              # Note: The image url is output in both `registry/repository:tag` and `registry/repository@digest` formats
-              run: |
-                  echo "image_url=${{ env.registry }}/${{ github.repository }}@${{ steps.build.outputs.digest }}" >> $GITHUB_OUTPUT
-
-    set-variables:
-        runs-on: ubuntu-latest
-        outputs:
-            dev_auth_project_number: ${{ steps.set-dev-variables.outputs.dev_auth_project_number }}
-            dev_service_account: ${{ steps.set-dev-variables.outputs.dev_service_account }}
-        steps:
-            - name: Set dev variables
-              id: set-dev-variables
-              run: |
-                  echo "dev_auth_project_number=747318126147" >> $GITHUB_OUTPUT
-                  echo "dev_service_account=nibas-deploy@nibas-dev-075c.iam.gserviceaccount.com" >> $GITHUB_OUTPUT
-
-    deploy-argo:
-      needs: build
-      uses: kartverket/smia-apps/.github/workflows/release-app.yml@main
-      with:
-        application: nibas-backend
-        image_url: ghcr.io/kartverket/nibas-backend:${{ needs.build.outputs.new_tag }}
-        deploy_dev: true
-        deploy_test: true
-      secrets:
-        PAT_TOKEN: ${{ secrets.PAT_ARGOCD }}
-
-    deploy-dev:
-        needs: [build, set-variables]
-        name: Deploy to dev
-        permissions:
-            id-token: write
-            pull-requests: write
-            contents: read
-            packages: write
-        uses: kartverket/github-workflows/.github/workflows/run-terraform.yml@v4.0.0
+    steps:
+      - uses: szenius/set-timezone@v1.2
         with:
-            runner: atkv1-dev
-            environment: dev
-            kubernetes_cluster: atkv1-dev
-            terraform_workspace: dev
-            terraform_option_1: -var-file=variables/dev.tfvars
-            terraform_option_2: -var=image=ghcr.io/kartverket/nibas-backend:${{ needs.build.outputs.new_tag }}
-            terraform_init_option_1: -backend-config=backend/dev.gcs.tfbackend
-            working_directory: terraform
-            auth_project_number: ${{ needs.set-variables.outputs.dev_auth_project_number}}
-            service_account: ${{ needs.set-variables.outputs.dev_service_account}}
-            project_id: kubernetes-dev-94b9
-            deploy_on: "refs/heads/master"
-            vault_role: nibas-backend-write-role
-
-    security-scans:
-        needs: [build, set-variables]
-        name: Security Scans
-        permissions:
-            contents: read
-            packages: write
-            id-token: write
-            actions: read
-            security-events: write
-        uses: kartverket/github-workflows/.github/workflows/run-security-scans.yml@v4.0.0
+          timezoneLinux: "Europe/Oslo"
+      - uses: actions/checkout@v3
+      - name: Set up JDK
+        uses: actions/setup-java@v3
         with:
-            auth_project_number: ${{ needs.set-variables.outputs.dev_auth_project_number}}
-            service_account: ${{ needs.set-variables.outputs.dev_service_account}}
-            image_url: ${{ needs.build.outputs.image_url}}
+          java-version: "17"
+          distribution: "temurin"
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Build with Gradle
+        run: ./gradlew build --info
+        env:
+          GH_USERNAME: ${{ secrets.PAT_USERNAME }}
+          PAT: ${{ secrets.PAT_SCOPE_READ_PACKAGE }}
 
-    deploy-test:
-        needs: [build, security-scans]
-        name: Deploy to test
-        permissions:
-            id-token: write
-            pull-requests: write
-            contents: read
-            packages: write
-        uses: kartverket/github-workflows/.github/workflows/run-terraform.yml@v4.0.0
+      - name: Bump version and push tag
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.1
         with:
-            runner: atkv1-test
-            environment: test
-            kubernetes_cluster: atkv1-test
-            terraform_workspace: test
-            terraform_option_1: -var-file=variables/test.tfvars
-            terraform_option_2: -var=image=ghcr.io/kartverket/nibas-backend:${{ needs.build.outputs.new_tag }}
-            terraform_init_option_1: -backend-config=backend/test.gcs.tfbackend
-            working_directory: terraform
-            auth_project_number: 935702487708
-            service_account: nibas-deploy@nibas-test-36cb.iam.gserviceaccount.com
-            project_id: kubernetes-test-94f6
-            deploy_on: "refs/heads/master"
-            vault_role: nibas-backend-write-role
+          github_token: ${{ github.token }}
 
-    deploy-prod:
-        needs: [build, security-scans, deploy-test]
-        name: Deploy to prod
-        permissions:
-            id-token: write
-            pull-requests: write
-            contents: read
-            packages: write
-        uses: kartverket/github-workflows/.github/workflows/run-terraform.yml@v4.0.0
+      - name: Login to Github Container Registry
+        uses: docker/login-action@v2
         with:
-            runner: atkv1-prod
-            environment: prod
-            kubernetes_cluster: atkv1-prod
-            terraform_option_1: -var-file=variables/prod.tfvars
-            terraform_option_2: -var=image=ghcr.io/kartverket/nibas-backend:${{ needs.build.outputs.new_tag }}
-            terraform_init_option_1: -backend-config=backend/prod.gcs.tfbackend
-            working_directory: terraform
-            auth_project_number: 468770754406
-            service_account: nibas-deploy@nibas-prod-732a.iam.gserviceaccount.com
-            project_id: kubernetes-prod-e4a2
-            deploy_on: "refs/heads/master"
-            vault_role: nibas-backend-write-role
+          registry: ${{ env.registry }}
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
 
+      - name: Build docker and push
+        id: build
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ${{ env.registry }}/${{ github.repository }}:${{ steps.tag_version.outputs.new_tag }} , ${{ env.registry }}/${{ github.repository }}:latest
+          build-args: |
+            project_version_arg=${{ steps.tag_version.outputs.new_tag }}
 
+      - name: Set output with build values
+        id: setOutput
+        # Note: The image url is output in both `registry/repository:tag` and `registry/repository@digest` formats
+        run: |
+          echo "image_url=${{ env.registry }}/${{ github.repository }}@${{ steps.build.outputs.digest }}" >> $GITHUB_OUTPUT
 
+  deploy-argo:
+    needs: build
+    uses: kartverket/smia-apps/.github/workflows/release-app.yml@main
+    with:
+      application: nibas-backend
+      image_url: ghcr.io/kartverket/nibas-backend:${{ needs.build.outputs.new_tag }}
+      deploy_dev: true
+      deploy_test: true
+    secrets:
+      PAT_TOKEN: ${{ secrets.PAT_ARGOCD }}
+
+  security-scans:
+    needs: build
+    name: Security Scans
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      actions: read
+      security-events: write
+    uses: kartverket/github-workflows/.github/workflows/run-security-scans.yml@v4.0.1
+    with:
+      auth_project_number: 747318126147
+      service_account: nibas-deploy@nibas-dev-075c.iam.gserviceaccount.com
+      image_url: ${{ needs.build.outputs.image_url}}

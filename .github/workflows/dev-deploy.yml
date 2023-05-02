@@ -62,38 +62,12 @@ jobs:
         run: |
           echo "image_tag=${{ github.ref_name }}-${{ steps.git_hash.outputs.git_hash }}" >> $GITHUB_OUTPUT
 
-  set-variables:
-    runs-on: ubuntu-latest
-    outputs:
-      dev_auth_project_number: ${{ steps.set-dev-variables.outputs.dev_auth_project_number }}
-      dev_service_account: ${{ steps.set-dev-variables.outputs.dev_service_account }}
-    steps:
-      - name: Set dev variables
-        id: set-dev-variables
-        run: |
-          echo "dev_auth_project_number=747318126147" >> $GITHUB_OUTPUT
-          echo "dev_service_account=nibas-deploy@nibas-dev-075c.iam.gserviceaccount.com" >> $GITHUB_OUTPUT
-
-  deploy-dev:
-    needs: [build, set-variables]
-    name: Deploy to dev
-    permissions:
-      id-token: write
-      pull-requests: write
-      contents: read
-      packages: write
-    uses: kartverket/github-workflows/.github/workflows/run-terraform.yml@v4.0.0
+  deploy-argo:
+    needs: build
+    uses: kartverket/smia-apps/.github/workflows/release-app.yml@main
     with:
-      runner: atkv1-dev
-      environment: dev
-      kubernetes_cluster: atkv1-dev
-      terraform_workspace: dev
-      terraform_option_1: -var-file=variables/dev.tfvars
-      terraform_option_2: -var=image=ghcr.io/kartverket/nibas-backend:${{ needs.build.outputs.image_tag }}
-      terraform_init_option_1: -backend-config=backend/dev.gcs.tfbackend
-      working_directory: terraform
-      auth_project_number: ${{ needs.set-variables.outputs.dev_auth_project_number}}
-      service_account: ${{ needs.set-variables.outputs.dev_service_account}}
-      vault_role: nibas-backend-write-role
-      project_id: kubernetes-dev-94b9
-      deploy_on: ${{ github.ref }}
+      application: nibas-backend
+      image_url: ghcr.io/kartverket/nibas-backend:${{ needs.build.outputs.image_tag }}
+      deploy_dev: true
+    secrets:
+      PAT_TOKEN: ${{ secrets.PAT_ARGOCD }}
