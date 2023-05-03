@@ -74,7 +74,7 @@ jobs:
     uses: kartverket/smia-apps/.github/workflows/release-app.yml@main
     with:
       application: nibas-backend
-      image_url: ghcr.io/kartverket/nibas-backend:${{ needs.build.outputs.new_tag }}
+      version: ${{ needs.build.outputs.new_tag }}
       deploy_dev: true
       deploy_test: true
     secrets:
