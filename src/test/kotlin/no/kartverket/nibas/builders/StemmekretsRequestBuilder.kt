@@ -23,6 +23,11 @@ class StemmekretsRequestBuilder(
         return this
     }
 
+    fun withStemmekretsnummer(stemmekretsnummer: String): StemmekretsRequestBuilder {
+        this.stemmekretsnummer = stemmekretsnummer
+        return this
+    }
+
     fun build(): StemmekretsRequest = StemmekretsRequest(
         stemmekretsnummer = stemmekretsnummer,
         identifikasjon = Identifikasjon(

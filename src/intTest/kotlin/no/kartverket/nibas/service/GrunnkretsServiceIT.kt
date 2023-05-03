@@ -15,6 +15,7 @@ import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.builders.MaalemetodeKodeEnum
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.Grense
@@ -26,6 +27,7 @@ import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.findAllByLokalidSortedByGyldigFra
 import no.kartverket.nibas.utils.GrenseHelper
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
+import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.locationtech.jts.geom.Coordinate
@@ -35,6 +37,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.Month
+import java.util.*
 
 @ActiveProfiles(profiles = ["security-off", "eventsDisabled"])
 @Transactional
@@ -86,7 +89,24 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
 
         val framtidigGrunnkrets = grunnkretsService.hentGrunnkrets(Identifikator(grunnkretsLokalid, jan1In2023))
         assertThat(framtidigGrunnkrets).isNotNull
-        assertThat(framtidigGrunnkrets!!.grunnkretsnummer).isEqualTo("569")
+        assertThat(framtidigGrunnkrets!!.grunnkretsnummer).isEqualTo("42270304")
+        assertThat(framtidigGrunnkrets.grunnkretsnavn).isEqualTo("Måsvann")
+    }
+
+    @Test
+    fun `finn grunnkrets med samme grunnkretsnummer og ulik lokalid`() {
+        val grunnkretsLokalid = Lokalid("ac7e05cd-fb07-4270-ad95-e3c32c137ba6")
+        saveGrunnkretsMed1FramtidigVersjon(grunnkretsLokalid)
+        val grunnkrets = grunnkretsService.hentGrunnkrets(Identifikator(grunnkretsLokalid, jan1In2023))
+
+        //Uten å ta hensyn til gyldighet og med vilkårlig lokalid skal det finnes to grunnkretser med gitt grunnkretsnummer
+        var grunnkretser = grunnkretsRepository.findAllByGrunnkretsnummerAndLokalidIsNot(grunnkrets!!.grunnkretsnummer!!, "xx")
+        assertThat(grunnkretser).hasSize(2)
+
+        //Uten å ta hensyn til gyldighet og med gitt lokalid som ikke skal finnes skal det ikke finnes noen grunnkretser med gitt grunnkretsnummer
+        //Dvs det finnes ikke noen ANDRE grunnkretser enn den som skal valideres med gitt grunnkretsnummer
+        grunnkretser = grunnkretsRepository.findAllByGrunnkretsnummerAndLokalidIsNot(grunnkrets.grunnkretsnummer!!, grunnkrets.lokalid)
+        assertThat(grunnkretser).isEmpty()
     }
 
     @Test
@@ -184,6 +204,27 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
     }
 
     @Test
+    fun `oppdatering av grunnkrets til et allerede brukt grunnkretsnummer skal gi feil`() {
+        val opprinneligDato = LocalDate.parse("2022-01-01")
+        val datoForOppdatering = october1In2022
+        val (vestreKrets, oestreKrets) = saveNaboGrunnkretser(gyldigFra = opprinneligDato)
+
+        val grunnkretsRequest = GrunnkretsRequestBuilder().withLokalId(oestreKrets.lokalid).withGrunnkretsnummer(vestreKrets.grunnkretsnummer!!).build()
+        val identifikator = Identifikator(Lokalid(grunnkretsRequest.identifikasjon.lokalid), datoForOppdatering)
+
+        Assertions.assertThatThrownBy {
+            grunnkretsService.oppdaterGrunnkrets(
+                lokalId = identifikator.lokalid,
+                oppdatertGrunnkrets = grunnkretsRequest,
+                gyldigFra = datoForOppdatering,
+                endringstype = Endringstype.RETTING
+            )
+        }.isInstanceOf(ResponseException.BadRequestException::class.java)
+            .hasMessageContaining("Det finnes en annen grunnkrets med grunnkretsnummer " + vestreKrets.grunnkretsnummer +
+                " innen gyldighet " + datoForOppdatering + " og framover")
+
+    }
+        @Test
     fun `endre grense for grunnkrets skal opprette nye versjoner for grensa og dens grunnkretser`() {
         val opprinneligDato = LocalDate.parse("2022-01-01")
         val endringsdato = LocalDate.parse("2022-02-01")
@@ -592,14 +633,13 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
             id = "9000",
             lokalid = grunnkretsLokalid,
             gyldigFra = october1In2022,
-            gyldigTil = jan1In2023,
-            grunnkretsnummer = "568",
+            gyldigTil = jan1In2023
         )
         val grunnkretsFramtidigVersjon = saveGrunnkrets(
             id = "9001",
             lokalid = grunnkretsLokalid,
             gyldigFra = jan1In2023,
-            grunnkretsnummer = "569",
+            grunnkretsnavn = "Måsvann",
         )
         saveKommune(grunnkretser = listOf(grunnkrets, grunnkretsFramtidigVersjon))
     }
@@ -622,7 +662,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
             GrenseHelper.getGrenserForVestligKrets(gyldigFra, Grensetype.Grunnkretsgrense)
         }
 
-        //Lagrer grensene først, for å være sikker på at de tilgjengelige for å knyttes til kretsene
+        //Lagrer grensene først, for å være sikker på at de er tilgjengelige for å knyttes til kretsene
         val lagredeGrenserForVest = grenseRepository.saveAll(grenserForVest)
         val lagredeGrenserForOest = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(gyldigFra, Grensetype.Grunnkretsgrense))
         grenseRepository.flush()

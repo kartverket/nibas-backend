@@ -202,6 +202,20 @@ data class Gyldighet(
         return gyldigTil == null || gyldigTil.isAfter(this.gyldigFra)
     }
 
+    fun overlapperMed(annenGyldighet: Gyldighet): Boolean {
+        //Hvis en av gyldighetene har slettetflagget satt, finnes egentlig ikke gyldigheten, og overlapper derfor ikke
+        if (this.slettet || annenGyldighet.slettet) {
+            return false
+        }
+        //Hvis en av gyldighetene har ugyldig intervall, er det ikke noen vits å teste mer. Det vil isåfall komme valideringsfeil fra et annet sted
+        if (!this.isValidInterval() || !annenGyldighet.isValidInterval()) {
+            return false
+        }
+
+        return this.gyldigFra.isBefore(annenGyldighet.gyldigTil ?: LocalDate.MAX) &&
+            annenGyldighet.gyldigFra.isBefore(this.gyldigTil ?: LocalDate.MAX)
+    }
+
     override fun toString(): String {
         return "Gyldighet [gyldigFra=$gyldigFra, gyldigTil=$gyldigTil, slettet=$slettet]"
     }

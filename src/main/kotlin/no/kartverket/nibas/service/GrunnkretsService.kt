@@ -3,6 +3,7 @@ package no.kartverket.nibas.service
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.common.UgyldigTilstandException
 import no.kartverket.nibas.common.createIdentifikator
@@ -51,6 +52,20 @@ class GrunnkretsService(private val grunnkretsRepository: GrunnkretsRepository) 
         grunnkretsRepository.findAllByLokalidSortedByGyldigFra(lokalId)
             .filter { it.gyldighet.gyldigFra.isAfter(dato) }
 
+    fun finnesAnnenGrunnkretsMedSammeGrunnkretsnummer(grunnkrets: Grunnkrets): Boolean {
+        //Returnerer false hvis grunnkretsnummer ikke er gitt, isåfall vil det komme valideringsfeil fra et annet sted
+        grunnkrets.grunnkretsnummer ?: return false
+
+        val andreKretserMedSammeGrunnkretsnummer =
+            grunnkretsRepository.findAllByGrunnkretsnummerAndLokalidIsNot(grunnkrets.grunnkretsnummer!!, grunnkrets.lokalid)
+
+        if (andreKretserMedSammeGrunnkretsnummer.isEmpty()) {
+            return false
+        }
+        //Sjekk om noen av de funnede grunnkretsene har sammenfallende gyldighet med grunnkretsen som skal valideres
+        return andreKretserMedSammeGrunnkretsnummer.any { funnet -> funnet.gyldighet.overlapperMed(grunnkrets.gyldighet) }
+    }
+
     fun oppdaterGrunnkrets(
         lokalId: Lokalid,
         gyldigFra: LocalDate,
@@ -76,9 +91,13 @@ class GrunnkretsService(private val grunnkretsRepository: GrunnkretsRepository) 
         val nyGrunnkrets = createNyVersjonAvGrunnkrets(gammelGrunnkrets, gyldigFra, endringstype)
             .applyChangesFromRequest(oppdatertGrunnkrets)
 
+        if (finnesAnnenGrunnkretsMedSammeGrunnkretsnummer(nyGrunnkrets))
+            throw ResponseException.BadRequestException("Det finnes en annen grunnkrets med grunnkretsnummer ${nyGrunnkrets.grunnkretsnummer} " +
+                "innen gyldighet ${nyGrunnkrets.gyldighet.gyldigFra} " +
+                (if (nyGrunnkrets.gyldighet.gyldigTil != null) "til ${nyGrunnkrets.gyldighet.gyldigTil}" else "og framover") )
+
         return nyGrunnkrets
             .apply {
-                setGyldigFra(gyldigFra)
                 if (grunnkretsHelper.existsRowsWithLaterGyldigFraDato(relevantGrunnkrets)) {
                     // Setter gyldigTil lik gyldigFra for neste rad
                     setGyldigTil(grunnkretsHelper.getNesteGyldigFraDato(relevantGrunnkrets))

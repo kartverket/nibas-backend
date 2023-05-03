@@ -16,6 +16,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import java.time.LocalDate
 import java.time.Month
 import kotlin.test.assertEquals
+import org.assertj.core.api.Assertions.assertThat
 
 @SpringBootTest(classes = [StemmekretsService::class])
 class StemmekretsServiceTest {
@@ -53,5 +54,17 @@ class StemmekretsServiceTest {
 
         val stemmekretser = stemmekretsService.hentStemmekretserForIds(setOf("2", "1"), gyldighetsdato)
         assertEquals(listOf(stemmekrets1, stemmekrets2), stemmekretser)
+    }
+
+    @Test
+    fun `generer varianter av stemmekretsnummer`() {
+        assertThat(lagMuligeStemmekretsnumre("1")).containsExactlyInAnyOrder("1", "01", "001", "0001")
+        assertThat(lagMuligeStemmekretsnumre("01")).containsExactlyInAnyOrder("1", "01", "001", "0001")
+        assertThat(lagMuligeStemmekretsnumre("001")).containsExactlyInAnyOrder("1", "01", "001", "0001")
+        assertThat(lagMuligeStemmekretsnumre("0001")).containsExactlyInAnyOrder("1", "01", "001", "0001")
+
+        assertThat(lagMuligeStemmekretsnumre("1001")).containsExactlyInAnyOrder("1001")
+        assertThat(lagMuligeStemmekretsnumre("")).isEmpty()
+        assertThat(lagMuligeStemmekretsnumre("x")).isEmpty()
     }
 }

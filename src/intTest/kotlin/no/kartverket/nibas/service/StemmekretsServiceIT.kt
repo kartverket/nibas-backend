@@ -17,6 +17,7 @@ import no.kartverket.nibas.builders.StemmekretsBuilder
 import no.kartverket.nibas.builders.StemmekretsRequestBuilder
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.Grense
@@ -29,6 +30,7 @@ import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import no.kartverket.nibas.utils.GrenseHelper
+import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
@@ -40,6 +42,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.Month
+import java.util.*
 
 @ActiveProfiles("security-off")
 @Transactional
@@ -88,6 +91,25 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         val framtidigStemmekrets = stemmekretsService.hentStemmekrets(Identifikator(stemmekretsLokalid, jan1In2023))
         assertThat(framtidigStemmekrets).isNotNull
         assertThat(framtidigStemmekrets!!.stemmekretsnavn).isEqualTo("Nedre Singsaker")
+    }
+
+    @Test
+    fun `finn stemmekrets med samme stemmekretsnummer og ulik lokalid`() {
+        saveStemmekretsMed1FramtidigVersjon(stemmekretsLokalid)
+
+        val stemmekrets = stemmekretsService.hentStemmekrets(Identifikator(stemmekretsLokalid, jan1In2023))
+        val muligeStemmekretsnumre = lagMuligeStemmekretsnumre(stemmekrets!!.stemmekretsnummer!!)
+
+        //Uten å ta hensyn til gyldighet og med vilkårlig lokalid skal det finnes to stemmekretser med gitt stemmekretsnummer
+        var stemmekretser = stemmekretsRepository.findAllByStemmekretsnummerInAndLokalidIsNotAndKommune_Lokalid(
+            muligeStemmekretsnumre, "xx", stemmekrets.kommune.lokalid)
+        assertThat(stemmekretser).hasSize(2)
+
+        //Uten å ta hensyn til gyldighet og med gitt lokalid som ikke skal finnes skal det ikke finnes noen stemmekretser med gitt stemmekretsnummer
+        //Dvs det finnes ikke noen ANDRE stemmekretser enn den som skal valideres med gitt stemmekretsnummer og kommune
+        stemmekretser = stemmekretsRepository.findAllByStemmekretsnummerInAndLokalidIsNotAndKommune_Lokalid(
+            muligeStemmekretsnumre, stemmekrets.lokalid, stemmekrets.kommune.lokalid)
+        assertThat(stemmekretser).isEmpty()
     }
 
     @Test
@@ -509,6 +531,50 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         assertThat(nyGrense.auditInfo.typeEndring).isEqualTo(Endringstype.FASTSETTING)
     }
 
+    @Test
+    fun `oppdatering av stemmekrets til et allerede brukt stemmekretsnummer skal gi feil`() {
+        val opprinneligDato = LocalDate.parse("2022-01-01")
+        val datoForOppdatering = october1In2022
+        val (vestreKrets, oestreKrets) = saveNaboStemmekretser(gyldigFra = opprinneligDato)
+
+        val stemmekretsRequest = StemmekretsRequestBuilder().withLokalId(vestreKrets.lokalid).withStemmekretsnummer(oestreKrets.stemmekretsnummer!!).build()
+        val identifikator = Identifikator(Lokalid(stemmekretsRequest.identifikasjon.lokalid), datoForOppdatering)
+
+        Assertions.assertThatThrownBy {
+            stemmekretsService.oppdaterStemmekrets(
+                lokalId = identifikator.lokalid,
+                oppdatertStemmekrets = stemmekretsRequest,
+                gyldigFra = datoForOppdatering,
+                endringstype = Endringstype.RETTING
+            )
+        }.isInstanceOf(ResponseException.BadRequestException::class.java)
+            .hasMessageContaining("Det finnes en annen stemmekrets i kommune " + oestreKrets.kommune.kommunenummer +
+                " med stemmekretsnummer " + oestreKrets.stemmekretsnummer + " innen gyldighet " + datoForOppdatering + " og framover")
+    }
+
+    @Test
+    fun `slaa sammen Vestre og Oestre stemmekretser med gjenbruk av nummer fra Tredje skal gi feil`() {
+        val (vestreKrets, oestreKrets, tredjeKrets) = saveNaboStemmekretser(gyldigFra = LocalDate.parse("2022-01-01"), medTredjeKrets = true)
+
+        val sammenslaaingsendringRequest = StemmekretsSammenslaaingsendringRequest(
+            viderefoertStemmekrets = IdentifikatorMedVersjon(vestreKrets.lokalid, 1),
+            stemmekretserTilSammenslaaing = listOf(IdentifikatorMedVersjon(oestreKrets.lokalid, 1)),
+            stemmekretsNavn = "Sammenslått krets",
+            stemmekretsNummer = tredjeKrets.stemmekretsnummer!!
+        )
+
+        val sammenslaingsdato = LocalDate.parse("2022-02-01")
+        Assertions.assertThatThrownBy {
+            stemmekretsService.slaaSammenStemmekretser(
+                sammenslaaingsendringRequest = sammenslaaingsendringRequest,
+                sammenslaaingsDato = sammenslaingsdato,
+                endringstype = Endringstype.VEDTATT_SAMMENSLAAING
+            )
+        }.isInstanceOf(ResponseException.BadRequestException::class.java)
+            .hasMessageContaining("Det finnes en annen stemmekrets i kommune " + tredjeKrets.kommune.kommunenummer +
+                " med stemmekretsnummer " + tredjeKrets.stemmekretsnummer + " innen gyldighet " + sammenslaingsdato + " og framover")
+    }
+
     private fun assertOmradeGyldighetVersjon(vestreKretsEtterLagring: Stemmekrets, oestreKretsEtterLagring: Stemmekrets,
                                              opprinneligVestreKrets: Stemmekrets, opprinneligOestreKrets: Stemmekrets) {
         assertThat(vestreKretsEtterLagring.gyldighet.gyldigTil).isNull()
@@ -646,7 +712,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         ).buildKommunegrense())
     }
 
-    private fun saveNaboStemmekretser(gyldigFra: LocalDate, medHull: Boolean = false): List<Stemmekrets> {
+    private fun saveNaboStemmekretser(gyldigFra: LocalDate, medHull: Boolean = false, medTredjeKrets: Boolean = false): List<Stemmekrets> {
         val grenserForVest = if (medHull) {
             GrenseHelper.getGrenserForVestligKrets(gyldigFra, Grensetype.Stemmekretsgrense) +
                 GrenseHelper.getHullVestligKrets(gyldigFra, Grensetype.Stemmekretsgrense)
@@ -654,7 +720,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
             GrenseHelper.getGrenserForVestligKrets(gyldigFra, Grensetype.Stemmekretsgrense)
         }
 
-        //Lagrer grensene først, for å være sikker på at de tilgjengelige for å knyttes til kretsene
+        //Lagrer grensene først, for å være sikker på at de er tilgjengelige for å knyttes til kretsene
         val lagredeGrenserForVest = grenseRepository.saveAll(grenserForVest)
         val lagredeGrenserForOest = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(gyldigFra, Grensetype.Stemmekretsgrense))
         grenseRepository.flush()
@@ -677,9 +743,22 @@ class StemmekretsServiceIT : TestWithDbContainer() {
             grenser = lagredeGrenserForOest
         )
 
-        saveKommune(stemmekretser = listOf(kretsVest, kretsOest))
+        val stemmekretsMutableList = mutableListOf(kretsVest, kretsOest)
+        if (medTredjeKrets) {
+            val tredjeKrets = saveStemmekrets(
+                id = "3",
+                lokalid = Lokalid("345"),
+                gyldigFra = gyldigFra,
+                stemmekretsnummer = "22",
+                stemmekretsnavn = "Tredje krets"
+            )
+            stemmekretsMutableList.add(tredjeKrets)
+        }
+
+        val stemmekretser = stemmekretsMutableList.toList()
+        saveKommune(stemmekretser = stemmekretser)
         grenseRepository.flush()
-        return listOf(kretsVest, kretsOest)
+        return stemmekretser
     }
 
     private fun saveStemmekretsMed1FramtidigVersjon(stemmekretsLokalid: Lokalid) {

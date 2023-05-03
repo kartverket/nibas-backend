@@ -7,7 +7,6 @@ import no.kartverket.nibas.domain.Fylke
 import no.kartverket.nibas.domain.FylkeInformasjon
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.Grunnkrets
-import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.KommuneInformasjon
 import no.kartverket.nibas.domain.Landkode
 import no.kartverket.nibas.domain.Nasjon
@@ -23,12 +22,14 @@ import org.springframework.data.repository.NoRepositoryBean
 
 @NoRepositoryBean
 interface CrudRepositoryWithLokalIdFinder<T, ID> : CrudRepository<T, ID> {
+    //Kun til bruk i import, det er kun da det bare er en forekomst med gitt lokalid.
     fun findByLokalid(lokalid: String): T?
     fun findAllByLokalid(lokalid: String): List<T>
 }
 
 @NoRepositoryBean
 interface JpaRepositoryWithLokalIdFinder<T, ID> : JpaRepository<T, ID> {
+    //Kun til bruk i import, det er kun da det bare er en forekomst med gitt lokalid.
     fun findByLokalid(lokalid: String): T?
 
     fun findAllByLokalid(lokalid: String): List<T>
@@ -43,14 +44,28 @@ interface AdministrativenhetnavnRepository : CrudRepository<Administrativenhetna
 interface NasjonRepository : CrudRepositoryWithLokalIdFinder<Nasjon, String>
 interface FylkeInformasjonRepository : CrudRepository<FylkeInformasjon, String>
 interface FylkeRepository : CrudRepositoryWithLokalIdFinder<Fylke, String> {
+    //Kun til bruk i import, det er kun da det bare er ett fylke med gitt fylkesnummer.
     fun findByFylkesnummer(fylkesnummer_id: String): Fylke?
 }
 
 interface KommuneInformasjonRepository : CrudRepository<KommuneInformasjon, String>
 
-interface GrunnkretsRepository : CrudRepositoryWithLokalIdFinder<Grunnkrets, String>
+interface GrunnkretsRepository : CrudRepositoryWithLokalIdFinder<Grunnkrets, String> {
+    /**
+     * Finn alle grunnkretser med gitt grunnkretsnummer hvor lokalid ikke er lik paramert lokalid.
+     * Trenger ikke ha med lokalid for kommune, siden grunnkretsnummer inneholder kommunenummer
+     */
+    fun findAllByGrunnkretsnummerAndLokalidIsNot(grunnkretsnummer: String, lokalid: String): List<Grunnkrets>
+}
 
-interface StemmekretsRepository : CrudRepositoryWithLokalIdFinder<Stemmekrets, String>
+interface StemmekretsRepository : CrudRepositoryWithLokalIdFinder<Stemmekrets, String> {
+    /**
+     * Finn alle stemmekretser med gitt stemmekretsnummer hvor lokalid ikke er lik paramert lokalid, og med kommune med ønsket lokalid for kommune.
+     * Sender inn en kolleksjon med stemmekretsnumre, for å kunne søke med en og flere ledende nuller
+     * Stemmekretsnumrene 5, 05, 005 og 0005 skal tolkes som like
+     */
+    fun findAllByStemmekretsnummerInAndLokalidIsNotAndKommune_Lokalid(stemmekretsnummer: Set<String>, lokalid: String, kommune_lokalid: String): List<Stemmekrets>
+}
 
 interface GrenseRepository : JpaRepositoryWithLokalIdFinder<Grense, String>
 

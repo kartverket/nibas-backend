@@ -19,6 +19,11 @@ class GrunnkretsRequestBuilder(
         return this
     }
 
+    fun withGrunnkretsnummer(grunnkretsnummer: String): GrunnkretsRequestBuilder {
+        this.grunnkretsnummer = grunnkretsnummer
+        return this
+    }
+
     fun build(): GrunnkretsRequest = GrunnkretsRequest(
         navn = navn,
         grunnkretsnummer = grunnkretsnummer,

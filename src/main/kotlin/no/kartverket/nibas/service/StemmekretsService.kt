@@ -65,8 +65,15 @@ class StemmekretsService(private val stemmekretsRepository: StemmekretsRepositor
             throw OptimistiskLaasException(it)
         }
 
-        return createNyVersjonAvStemmekrets(gammelStemmekrets, gyldigFra, endringstype)
+        val nyStemmekrets = createNyVersjonAvStemmekrets(gammelStemmekrets, gyldigFra, endringstype)
             .applyChangesFromRequest(oppdatertStemmekrets)
+
+        if (finnesAnnenStemmekretsMedSammeKommuneOgStemmekretsnummer(nyStemmekrets))
+            throw ResponseException.BadRequestException("Det finnes en annen stemmekrets i kommune ${nyStemmekrets.kommune.kommunenummer} " +
+                "med stemmekretsnummer ${nyStemmekrets.stemmekretsnummer} innen gyldighet ${nyStemmekrets.gyldighet.gyldigFra} " +
+                (if (nyStemmekrets.gyldighet.gyldigTil != null) "til ${nyStemmekrets.gyldighet.gyldigTil}" else "og framover") )
+
+        return nyStemmekrets
     }
 
     fun hentAntallGyldigeVersjonerFramITidFor(identifikator: Identifikator): Int =
@@ -114,7 +121,7 @@ class StemmekretsService(private val stemmekretsRepository: StemmekretsRepositor
 
         val alleStemmekretsGrensekoblinger = viderefortStemmekrets.grenser + stemmekretserSomUtgaar.flatMap { it.grenser }
 
-        // Hvis er grense deler 2 stemmekretser som er med i sammenslåingen så er den ikke en del
+        // Hvis en grense deler 2 stemmekretser som er med i sammenslåingen så er den ikke en del
         // av et skall eller hull i den nye stemmekretsen
         val viderefoerteGrensekoblinger = alleStemmekretsGrensekoblinger
             .filter { grenseDelerIkke2StemmekretserSomBlirSlaattSammen(it, alleStemmekretsGrensekoblinger) }
@@ -131,6 +138,13 @@ class StemmekretsService(private val stemmekretsRepository: StemmekretsRepositor
         ).toMutableSet()
 
         nyStemmekrets.oppdaterOmraade()
+
+        if (finnesAnnenStemmekretsMedSammeKommuneOgStemmekretsnummer(nyStemmekrets))
+            throw ResponseException.BadRequestException("Det finnes en annen stemmekrets i kommune ${nyStemmekrets.kommune.kommunenummer} " +
+                "med stemmekretsnummer ${nyStemmekrets.stemmekretsnummer} innen gyldighet ${nyStemmekrets.gyldighet.gyldigFra} " +
+                (if (nyStemmekrets.gyldighet.gyldigTil != null) "til ${nyStemmekrets.gyldighet.gyldigTil}" else "og framover") )
+
+
         return Pair(nyStemmekrets, stemmekretserSomUtgaar)
     }
 
@@ -221,6 +235,20 @@ class StemmekretsService(private val stemmekretsRepository: StemmekretsRepositor
         stemmekretsRepository.findAllByLokalidSortedByGyldigFra(lokalId)
             .filter { it.gyldighet.gyldigFra.isAfter(dato) }
 
+    fun finnesAnnenStemmekretsMedSammeKommuneOgStemmekretsnummer(stemmekrets: Stemmekrets): Boolean {
+        //Returnerer false hvis stemmekretsnummer ikke er gitt, isåfall vil det komme valideringsfeil fra et annet sted
+        val muligeStemmekretsnumre = stemmekrets.stemmekretsnummer?.let { lagMuligeStemmekretsnumre(it) } ?: return false
+
+        val andreKretserMedSammeStemmekretsnummer = stemmekretsRepository.findAllByStemmekretsnummerInAndLokalidIsNotAndKommune_Lokalid(
+            muligeStemmekretsnumre, stemmekrets.lokalid, stemmekrets.kommune.lokalid)
+
+        if (andreKretserMedSammeStemmekretsnummer.isEmpty()) {
+            return false
+        }
+        //Sjekk om noen av de funnede stemmekretsene har sammenfallende gyldighet med stemmekretsen som skal valideres
+        return andreKretserMedSammeStemmekretsnummer.any { funnet -> funnet.gyldighet.overlapperMed(stemmekrets.gyldighet) }
+    }
+
     private fun flateErHullISkall(flate: Geometry, skall: Geometry) =
         flate.within(skall) && (flate != skall)
 
@@ -236,3 +264,22 @@ fun Stemmekrets.applyChangesFromRequest(stemmekretsRequest: StemmekretsRequest):
         stemmekretsRequest.tellekretsnavn?.let { this.tellekretsnavn = it }
         stemmekretsRequest.valgdistriktsnummer?.let { this.valgdistriktsnummer = it }
     }
+
+
+/**
+ * Trekk ut numerisk stemmekretsnummer fra paramert nummer (f.eks "05" er 5)
+ * og lag et sett med de mulige tekstlige stemmekretsnumrene med ledende nuller, inntil nummeret er på 4 tegn
+ */
+fun lagMuligeStemmekretsnumre(stemmekretsnummer: String): Set<String> {
+    val set: MutableSet<String> = mutableSetOf()
+
+    val numeriskStemmekretsnummer = stemmekretsnummer.toIntOrNull()
+    if (numeriskStemmekretsnummer != null) {
+        var nummer = numeriskStemmekretsnummer.toString()
+        while (nummer.length <= 4) {
+            set.add(nummer)
+            nummer = "0" + nummer
+        }
+    }
+    return set.toSet()
+}
