@@ -8,6 +8,8 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import no.kartverket.nibas.api.v1.DefaultFeatureCollectionApiResponses
+import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.response.KretsResponse
 import no.kartverket.nibas.api.v1.response.StemmekretsResponse
 import org.springframework.format.annotation.DateTimeFormat
@@ -65,4 +67,16 @@ interface StemmekretsApi {
                         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
                         @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?
     ): StemmekretsResponse
+
+    @Operation(
+        summary = "Hent grensene til en gitt stemmekrets",
+        description = "Henter grensene til en stemmekrets med gitt id"
+    )
+    @DefaultFeatureCollectionApiResponses
+    @GetMapping("/{id}/grenser", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun hentGrenserForStemmekrets(@Parameter(description = "ID-en til stemmekretsen man vil hente") @PathVariable(name = "id") lokalid: String,
+                                  @Parameter(description = "Eventuell gyldighetsdato for stemmekrets (default = dagens dato")
+                                  @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+                                  @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?
+    ): FeatureCollection
 }
