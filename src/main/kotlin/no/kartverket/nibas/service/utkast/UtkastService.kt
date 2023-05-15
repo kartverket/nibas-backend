@@ -119,14 +119,14 @@ class UtkastService(
     }
 
     internal fun publiserEndringer(operasjoner: Operasjoner, utkast: Utkast): List<EventRad> {
+        val sammenslaaingsendringer =
+            publiserSammenslaaingsendringer(operasjoner.stemmekretsSammenslaaingsendring, utkast)
+
         val metadataendringer =
             publiserMetadataEndringer(
                 operasjoner.metadataendringer,
                 utkast
             )
-
-        val sammenslaaingsendringer =
-            publiserSammenslaaingsendringer(operasjoner.stemmekretsSammenslaaingsendring, utkast)
 
         val grenseendringer = publiserGrenseendringer(operasjoner.grenseendringer, utkast)
 
