@@ -94,7 +94,10 @@ data class AdministrativEnhetNavn(
 
     @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
     @NotNull
-    val version: Int
+    val version: Int,
+
+    @Schema(description = "Rekkefølge på navn")
+    val rekkefoelge: Int? = null
 )
 
 // TODO: Utvide med felter for sammenslåing og oppsplitting

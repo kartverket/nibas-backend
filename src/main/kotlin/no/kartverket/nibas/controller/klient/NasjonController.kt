@@ -55,7 +55,7 @@ class NasjonController(
 fun Nasjon.toNasjonRef(identifikator: Identifikator, antallFramtidigeVersjoner: Int = 0, hrefProvider: HrefProvider): NasjonRefResponse =
     NasjonRef(
         id = identifikator.toObjektIdentifikator(),
-        navn = administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version) },
+        navn = administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version, it.rekkefoelge) },
         href = hrefProvider.getHref(identifikator),
         antallFramtidigeVersjoner = antallFramtidigeVersjoner
     )
@@ -64,7 +64,7 @@ fun Nasjon.toNasjonRef(identifikator: Identifikator, antallFramtidigeVersjoner: 
 fun Nasjon.toNasjonResponse(identifikator: Identifikator): NasjonResponse =
     NasjonResponse(
         id = identifikator.toObjektIdentifikator(),
-        administrativenhetnavn = administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version) },
+        administrativenhetnavn = administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version, it.rekkefoelge) },
         features = FeatureCollection(features = listOf(posisjon.posisjonToFeature(version), flateToFeature(version))),
         version = version
     )

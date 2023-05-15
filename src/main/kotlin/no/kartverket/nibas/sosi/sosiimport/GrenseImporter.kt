@@ -7,7 +7,6 @@ import no.kartverket.nibas.domain.GrenseMedAttributter
 import no.kartverket.nibas.domain.KobletTilGrense
 import no.kartverket.nibas.sosi.common.SosiKoder
 import no.kartverket.nibas.sosi.model.SosiGeometri
-import no.kartverket.nibas.sosi.model.SosiIdent
 import no.kartverket.nibas.sosi.model.SosiReferanse
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.operation.distance.DistanceOp
@@ -73,7 +72,8 @@ class GrenseImporter {
 
                 var skalImporteres: List<SplitTilImport>? = matchedeGrenser[ref.getVerdiUtenParentes()]
 
-                if (skalImporteres == null || skalImporteres.isEmpty()) {
+
+                if (skalImporteres.isNullOrEmpty()) {
                     logger.warn("Grense $referanse har ikke blitt lagt i matchede grenser, trolig pga feil i grensematching (enten på denne) eller på en tidligere grense for tilhørende grunnkrets")
                 } else {
                     logger.debug("Skal importere grense-ref ${ref.getVerdiUtenParentes()}, matchet opp av ${skalImporteres.size} grenser")
@@ -91,7 +91,7 @@ class GrenseImporter {
 
                         if (erKretsgrense(grense)) {
                             //Opprinnelig grense er ikke matchet, dvs den er en kretsgrense og kun ett element. Da ønsker vi å flytte fra gammelt knutepunkt til nytt knutepunkt
-                            skalImporteres.map {
+                            skalImporteres.forEach {
                                 val koordinaterForGrenseMedRiktigRetning: Array<Coordinate> = grenseMedRiktigRetning.coordinates
 
                                 //Enten finner man nytt punkt i mappet, ellers brukes opprinnelig punkt
@@ -104,9 +104,8 @@ class GrenseImporter {
                                     false -> SosiGeometryFunctions.getGeometryFactory().createLineString(koordinaterForGrenseMedRiktigRetning.reversed().toTypedArray())
                                 }
 
-                                SplitTilImport(SplitRef(splittetGrense, it.splitRef.basertPaGrense, it.splitRef.basertPaGrense.erRetningMedKlokken), it.originalRef, it.originalGrense)
-                            }.forEach {
-                                oppdaterKrets(krets, it, skallIndex, hullIndex)
+                                val splittetGrenseRef = SplitTilImport(SplitRef(splittetGrense, it.splitRef.basertPaGrense, it.splitRef.basertPaGrense.erRetningMedKlokken), it.originalRef, it.originalGrense)
+                                oppdaterKrets(krets, splittetGrenseRef, skallIndex, hullIndex)
                             }
                         }
                         else {
@@ -147,14 +146,14 @@ class GrenseImporter {
 
     private fun oppdaterKrets(
         krets: KobletTilGrense,
-        it: SplitTilImport,
+        importSplitRef: SplitTilImport,
         skallIndex: Int,
         hullIndex: Int?
     ) {
         krets.oppdaterEllerLeggTilGrenseKobling(
             GrenseMedAttributter(
-                grense = importerGrense(it),
-                attributter = GrenseKoblingAttributter(it.splitRef.opprinneligRetningMedKlokken, krets.antallGrenser(), skallIndex, hullIndex)))
+                grense = importerGrense(importSplitRef),
+                attributter = GrenseKoblingAttributter(importSplitRef.splitRef.opprinneligRetningMedKlokken, krets.antallGrenser(), skallIndex, hullIndex)))
     }
 
     private fun skalGrensenImporteres(

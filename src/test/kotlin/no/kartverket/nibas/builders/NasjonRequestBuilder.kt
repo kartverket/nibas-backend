@@ -14,7 +14,7 @@ class NasjonRequestBuilder {
     private var lokalId: String = "123"
 
     fun build(): NasjonRequest = NasjonRequest(
-        listOf(AdministrativEnhetNavn(navn, spraak, version = 1)),
+        listOf(AdministrativEnhetNavn(navn, spraak, version = 1, rekkefoelge = null)),
         lokalid = lokalId,
         version = 1)
 

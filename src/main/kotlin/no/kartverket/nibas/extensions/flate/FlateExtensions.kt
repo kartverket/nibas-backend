@@ -37,7 +37,7 @@ fun Grunnkrets.toKretsResponse(kodelisteService: KodelisteService): KretsRespons
 
 fun Fylke.toFylkeRef(identifikator: Identifikator, antallFramtidigeVersjoner: Int = 0, hrefProvider: HrefProvider): FylkeRef = FylkeRef(
     id = identifikator.toObjektIdentifikator(),
-    navn = administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version) },
+    navn = administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version, it.rekkefoelge) },
     href = hrefProvider.getHref(identifikator),
     antallFramtidigeVersjoner = antallFramtidigeVersjoner
 )
@@ -45,7 +45,7 @@ fun Fylke.toFylkeRef(identifikator: Identifikator, antallFramtidigeVersjoner: In
 
 fun Fylke.toFylkeResponse(identifikator: Identifikator, kodelisteService: KodelisteService): FylkeResponse = FylkeResponse(
     id = identifikator.toObjektIdentifikator(),
-    administrativenhetnavn = administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version) },
+    administrativenhetnavn = administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version, it.rekkefoelge) },
     fylkesnummer = Fylkesnummer(
         id = fylkesnummer,
         kodeverdi = kodelisteService.getCodeValueByFylkesnummerId(fylkesnummer)?.toInt()!!
@@ -58,7 +58,7 @@ fun Fylke.toFylkeResponse(identifikator: Identifikator, kodelisteService: Kodeli
 
 fun Kommune.toKommuneResponse(identifikator: Identifikator, kommunenummer: Kommunenummer): KommuneResponse = KommuneResponse(
     id = identifikator.toObjektIdentifikator(),
-    administrativenhetnavn = administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version) },
+    administrativenhetnavn = administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version, it.rekkefoelge) },
     kommunenummer = kommunenummer,
     samiskforvaltningsomraade = samiskforvaltningsomraade!!,
     oppdateringsdato = auditInfo.endretdato,

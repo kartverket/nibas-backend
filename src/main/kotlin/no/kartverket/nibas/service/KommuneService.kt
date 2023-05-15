@@ -100,7 +100,7 @@ class KommuneService(
 
         return KommuneRef(
             id = kommuneIdentifikator.toObjektIdentifikator(),
-            navn = kommune.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version) },
+            navn = kommune.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version, it.rekkefoelge) },
             href = hrefProvider.getHref(kommuneIdentifikator),
             kommunenummer = kodelisteService.createKommunenummerFromUUID(kommune.kommunenummer),
             antallFramtidigeVersjoner = antallFramtidigeVersjoner
