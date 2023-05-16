@@ -65,12 +65,27 @@ jobs:
 
       - name: Set output with build values
         id: setOutput
-        # Note: The image url is output in both `registry/repository:tag` and `registry/repository@digest` formats
         run: |
           echo "image_url=${{ env.registry }}/${{ github.repository }}@${{ steps.build.outputs.digest }}" >> $GITHUB_OUTPUT
 
-  deploy-argo:
+  pharos:
+    name: Run Pharos security scan
     needs: build
+    permissions:
+      actions: read
+      packages: read
+      contents: read
+      security-events: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Run Pharos"
+        uses: kartverket/pharos@v0.1.1
+        with:
+          allow_severity_level: critical
+          image_url: ${{ needs.build.outputs.image_url }}
+
+  deploy-argo:
+    needs: pharos
     uses: kartverket/smia-apps/.github/workflows/release-app.yml@main
     with:
       application: nibas-backend
@@ -79,18 +94,3 @@ jobs:
       deploy_test: true
     secrets:
       PAT_TOKEN: ${{ secrets.PAT_ARGOCD }}
-
-  security-scans:
-    needs: build
-    name: Security Scans
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-      actions: read
-      security-events: write
-    uses: kartverket/github-workflows/.github/workflows/run-security-scans.yml@v4.0.1
-    with:
-      auth_project_number: 747318126147
-      service_account: nibas-deploy@nibas-dev-075c.iam.gserviceaccount.com
-      image_url: ${{ needs.build.outputs.image_url}}
