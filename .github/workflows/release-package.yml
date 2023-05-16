@@ -85,7 +85,7 @@ jobs:
           image_url: ${{ needs.build.outputs.image_url }}
 
   deploy-argo:
-    needs: pharos
+    needs: [pharos, build]
     uses: kartverket/smia-apps/.github/workflows/release-app.yml@main
     with:
       application: nibas-backend
