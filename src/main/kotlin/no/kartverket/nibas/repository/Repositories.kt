@@ -22,17 +22,18 @@ import org.springframework.data.repository.NoRepositoryBean
 
 @NoRepositoryBean
 interface CrudRepositoryWithLokalIdFinder<T, ID> : CrudRepository<T, ID> {
-    //Kun til bruk i import, det er kun da det bare er en forekomst med gitt lokalid.
-    fun findByLokalid(lokalid: String): T?
     fun findAllByLokalid(lokalid: String): List<T>
+
+    fun findLastByLokalid(lokalid: String): T? =
+        findAllByLokalid(lokalid).lastOrNull()
 }
 
 @NoRepositoryBean
 interface JpaRepositoryWithLokalIdFinder<T, ID> : JpaRepository<T, ID> {
-    //Kun til bruk i import, det er kun da det bare er en forekomst med gitt lokalid.
-    fun findByLokalid(lokalid: String): T?
-
     fun findAllByLokalid(lokalid: String): List<T>
+
+    fun findLastByLokalid(lokalid: String): T? =
+        findAllByLokalid(lokalid).lastOrNull()
 }
 
 interface LandKodeRepository : CrudRepository<Landkode, String>

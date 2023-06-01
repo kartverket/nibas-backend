@@ -2,7 +2,6 @@ package no.kartverket.nibas.sosi.sosiimport
 
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.repository.GrenseRepository
-import no.kartverket.nibas.sosi.model.SosiGeometri
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import java.util.logging.Logger
@@ -22,7 +21,7 @@ class FylkesgrenseImporter {
     lateinit var dokumentasjonsreferanseImporter: DokumentasjonsreferanseImporter
 
     fun importerFylkesgrense(sosiFylkesgrense: SplitTilImport): Grense {
-        return when (val existing = grenseRepository.findByLokalid(sosiFylkesgrense.lokalId())) {
+        return when (val existing = grenseRepository.findLastByLokalid(sosiFylkesgrense.lokalId())) {
             null -> {
                 val fylkesgrense = grenseRepository.save(
                     administrativGrenseImporter.importer(sosiFylkesgrense)

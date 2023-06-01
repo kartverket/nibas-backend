@@ -31,9 +31,9 @@ class NasjonImporter {
 
     @Transactional
     fun importerSosiNasjon(flate: SosiFlate) {
-        when (nasjonRepository.findByLokalid(flate.getIdent()?.getLokalId()!!)) {
+        when (nasjonRepository.findLastByLokalid(flate.getIdent()?.getLokalId()!!)) {
             null -> {
-                var nasjon = administrativEnhetImporter.importer(flate) as Nasjon
+                val nasjon = administrativEnhetImporter.importer(flate) as Nasjon
                 nasjonRepository.save(nasjon)
 
                 flate.getNasjonnavn().forEach { sosiNasjonnavn ->

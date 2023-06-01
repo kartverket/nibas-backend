@@ -21,7 +21,7 @@ class LovVirkeomraadeGrenseImporter @Autowired constructor(
     fun importLovVirkeomradeGrense(skalImporteres: SplitTilImport): Grense {
         val sosiLovvirkeomraadegrense = skalImporteres.splitRef.basertPaGrense
         return when (val existing =
-            grenseRepository.findByLokalid(skalImporteres.lokalId())) {
+            grenseRepository.findLastByLokalid(skalImporteres.lokalId())) {
             null -> {
                 var lovvirkeomraadegrense = createGrense(skalImporteres.lokalId(), Grensetype.Lovvirkeomraadegrense)
                 lovvirkeomraadegrense.datafangstdato = sosiLovvirkeomraadegrense.getDatafangstDato()

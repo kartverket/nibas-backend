@@ -4,12 +4,8 @@ import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.KommuneRepository
-import no.kartverket.nibas.sosi.common.SosiKoder
-import no.kartverket.nibas.sosi.model.SosiBuep
 import no.kartverket.nibas.sosi.model.SosiFlate
 import no.kartverket.nibas.sosi.model.SosiGeometri
-import no.kartverket.nibas.sosi.model.SosiKurve
-import no.kartverket.nibas.sosi.model.SosiObjekt
 import no.kartverket.nibas.sporing.Gyldighet
 import org.locationtech.jts.geom.Coordinate
 import org.springframework.beans.factory.annotation.Autowired
@@ -32,7 +28,7 @@ class GrunnkretsImporter @Autowired constructor(
         // Henter egenskapene bare fra første flate. Egenskapene er/skal være like på tvers av flatene.
         val flate = flater.first()
         val sosiIdent = flate.getIdent()
-        if (grunnkretsRepository.findByLokalid(sosiIdent?.getLokalId()!!) != null) {
+        if (grunnkretsRepository.findLastByLokalid(sosiIdent?.getLokalId()!!) != null) {
             logger.info("Bruker eksisterende flate")
         } else {
             val lokalid: String? = sosiIdent.getValidLokalId()

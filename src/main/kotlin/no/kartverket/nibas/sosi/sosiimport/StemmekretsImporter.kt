@@ -27,7 +27,7 @@ class StemmekretsImporter @Autowired constructor(private val kommunalKretsImport
         val forsteFlate = flater.first()
         val sosiIdent = forsteFlate.getIdent()
 
-        if (stemmekretsRepository.findByLokalid(sosiIdent?.getLokalId()!!) != null) {
+        if (stemmekretsRepository.findLastByLokalid(sosiIdent?.getLokalId()!!) != null) {
             logger.info("Stemmekrets med lokalId ${sosiIdent.getLokalId()!!} er allerede importert, bruker eksisterende stemmekrets")
         } else {
             val stemmekrets = kommunalKretsImporter.importer(forsteFlate) as Stemmekrets

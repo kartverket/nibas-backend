@@ -21,7 +21,7 @@ class TerritorialgrenseImporter @Autowired constructor(
     fun importSosiTerritorialgrense(skalImporteres: SplitTilImport): Grense {
         val sosiTerritorialgrense = skalImporteres.splitRef.basertPaGrense
         return when (val existing =
-            grenseRepository.findByLokalid(skalImporteres.lokalId())) {
+            grenseRepository.findLastByLokalid(skalImporteres.lokalId())) {
             null -> {
                 var territorialgrense = createGrense(skalImporteres.lokalId(), Grensetype.Territorialgrense)
 

@@ -6,7 +6,6 @@ import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.sporing.Gyldighet
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component
 import java.util.logging.Logger
 
@@ -21,7 +20,7 @@ class GrunnlinjeImporter @Autowired constructor(
 
     fun importGrunnlinje(skalImporteres: SplitTilImport): Grense {
         val sosiGrunnlinje = skalImporteres.splitRef.basertPaGrense
-        return when (val existing = grenseRepository.findByLokalid(skalImporteres.lokalId())) {
+        return when (val existing = grenseRepository.findLastByLokalid(skalImporteres.lokalId())) {
             null -> {
                 var grunnlinje = createGrense(skalImporteres.lokalId(), Grensetype.Grunnlinje)
                 grunnlinje.datafangstdato = sosiGrunnlinje.getDatafangstDato()

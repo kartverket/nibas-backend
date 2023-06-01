@@ -33,7 +33,7 @@ class FylkeImporter @Autowired constructor(
     @Transactional
     fun importerSosiFylke(flate: SosiFlate) {
         val lokalid = flate.getIdent()?.getLokalId()!!
-        when (fylkeRepository.findByLokalid(lokalid)) {
+        when (fylkeRepository.findLastByLokalid(lokalid)) {
             null -> {
                 var fylke = administrativEnhetImporter.importer(flate) as Fylke
 

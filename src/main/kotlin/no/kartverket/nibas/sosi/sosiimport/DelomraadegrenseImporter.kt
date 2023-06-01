@@ -2,7 +2,6 @@ package no.kartverket.nibas.sosi.sosiimport
 
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.repository.GrenseRepository
-import no.kartverket.nibas.sosi.model.SosiGeometri
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
@@ -15,7 +14,7 @@ class DelomraadegrenseImporter @Autowired constructor(
     lateinit var statistiskGrenseImporter: StatistiskGrenseImporter
 
     fun importerDelomraadegrense(skalImporteres: SplitTilImport): Grense {
-        return when (val eksisterende = grenseRepository.findByLokalid(skalImporteres.lokalId())) {
+        return when (val eksisterende = grenseRepository.findLastByLokalid(skalImporteres.lokalId())) {
             null -> {
                 return grenseRepository.save(statistiskGrenseImporter.importer(skalImporteres))
             }

@@ -21,7 +21,7 @@ class AvtaltAvgrensningslinjeImporter @Autowired constructor(
         val sosiAvtaltAvgrensningslinje = skalImporteres.splitRef.basertPaGrense
 
         return when (val existing =
-            grenseRepository.findByLokalid(skalImporteres.lokalId())) {
+            grenseRepository.findLastByLokalid(skalImporteres.lokalId())) {
             null -> {
                 var avtaltavgrensningslinje = createGrense(skalImporteres.lokalId(), Grensetype.AvtaltAvgrensningslinje)
                 avtaltavgrensningslinje.opphav = sosiAvtaltAvgrensningslinje.getOpphav()
