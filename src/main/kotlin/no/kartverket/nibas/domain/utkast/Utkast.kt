@@ -79,7 +79,7 @@ class UtkastBuilder private constructor(val navn: String, private val endringsty
     fun build(): Utkast {
         val utkast = Utkast(
             navn = navn,
-            operasjoner = this.operasjoner
+            operasjoner = this.operasjoner,
         )
         utkast.auditInfo.typeEndring = this.endringstype
         utkast.gyldigFra = this.gyldigFra

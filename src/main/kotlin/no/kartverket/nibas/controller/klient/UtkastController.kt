@@ -51,7 +51,6 @@ class UtkastController(
         return utkastService
             .hentUtkastIStatusOpprettet()
             .map { it.toUtkastRef(hrefProvider) }
-            .sortedBy { it.navn }
     }
 
     override fun resolveConflictForFramtidigeVersjoner(
@@ -76,6 +75,11 @@ private fun Utkast.toUtkastResponse(): UtkastResponse =
     )
 
 private fun Utkast.toUtkastRef(hrefProvider: HrefProvider): UtkastRef =
-    UtkastRef(id = id, navn = navn, href = hrefProvider.getHref(id))
+    UtkastRef(
+        id = id,
+        navn = navn,
+        href = hrefProvider.getHref(id),
+        opprettetDato = opprettetDato
+    )
 
 fun AuditInfo.toAuditInfoResponse(): AuditInfoResponse = AuditInfoResponse(this.endretdato)

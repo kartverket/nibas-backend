@@ -1,5 +1,7 @@
 package no.kartverket.nibas.utkast
 
+import io.mockk.every
+import io.mockk.mockkStatic
 import no.kartverket.nibas.MockResponseAsserts
 import no.kartverket.nibas.NibasMvcTest
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
@@ -54,6 +56,7 @@ import java.time.LocalDateTime
 import java.time.Month
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import org.mockito.Mockito.`when` as whenever
 
 
@@ -295,6 +298,10 @@ internal class UtkastControllerTest : NibasMvcTest() {
 
     @Test
     fun hentAktiveUtkastGir200OK() {
+        val idag = ZonedDateTime.now()
+        mockkStatic(ZonedDateTime::class)
+        every { ZonedDateTime.now() } returns idag
+
         val kommuneRequests = mapOf("UUID-1" to KommuneRequestBuilder.DEFAULT_REQUEST)
         val navn2 = "Utkast 2"
         val utkast2 = UtkastBuilder.builder(navn2)
@@ -312,16 +319,19 @@ internal class UtkastControllerTest : NibasMvcTest() {
 
         val utkastRefs = listOf(
             UtkastRef(
-                id = utkast.id,
-                navn = navn,
-                href = href
-            ),
-            UtkastRef(
                 id = utkast2.id,
                 navn = navn2,
-                href = href
+                href = href,
+                opprettetDato = idag
+            ),
+            UtkastRef(
+                id = utkast.id,
+                navn = navn,
+                href = href,
+                opprettetDato = idag
             )
         )
+
         get(
             url = "/v1/utkast",
             responseAsserts = MockResponseAsserts(

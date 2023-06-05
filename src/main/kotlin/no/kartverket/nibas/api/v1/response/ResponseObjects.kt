@@ -118,7 +118,9 @@ data class UtkastRef(
     @Schema(description = "Navnet på utkastet")
     val navn: String,
     @Schema(description = "URL til full representasjon av utkastet.")
-    val href: String
+    val href: String,
+    @Schema(description = "Tidspunktet utkastet ble opprettet.")
+    val opprettetDato: ZonedDateTime,
 )
 
 @Schema(description = "Representasjon av en nasjon")
