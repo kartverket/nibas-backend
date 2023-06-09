@@ -7,9 +7,12 @@ import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.common.UgyldigTilstandException
 import no.kartverket.nibas.common.createIdentifikator
+import no.kartverket.nibas.common.getInSpraak
+import no.kartverket.nibas.common.toNorskFormat
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Grunnkrets
+import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.repository.findAllByLokalidSortedByGyldigFra
@@ -23,7 +26,10 @@ import java.time.LocalDate
 
 @Transactional
 @Service
-class GrunnkretsService(private val grunnkretsRepository: GrunnkretsRepository) {
+class GrunnkretsService(
+    private val grunnkretsRepository: GrunnkretsRepository,
+    private val kodelisteService: KodelisteService
+) {
 
     @Transactional(readOnly = true)
     fun hentGrunnkrets(identifikator: Identifikator): Grunnkrets? = grunnkretsRepository.findGyldigObjektForIdentifikator(identifikator)
@@ -91,10 +97,19 @@ class GrunnkretsService(private val grunnkretsRepository: GrunnkretsRepository) 
         val nyGrunnkrets = createNyVersjonAvGrunnkrets(gammelGrunnkrets, gyldigFra, endringstype)
             .applyChangesFromRequest(oppdatertGrunnkrets)
 
-        if (finnesAnnenGrunnkretsMedSammeGrunnkretsnummer(nyGrunnkrets))
-            throw ResponseException.BadRequestException("Det finnes en annen grunnkrets med grunnkretsnummer ${nyGrunnkrets.grunnkretsnummer} " +
-                "innen gyldighet ${nyGrunnkrets.gyldighet.gyldigFra} " +
-                (if (nyGrunnkrets.gyldighet.gyldigTil != null) "til ${nyGrunnkrets.gyldighet.gyldigTil}" else "og framover") )
+        if (finnesAnnenGrunnkretsMedSammeGrunnkretsnummer(nyGrunnkrets)) {
+            val kommunenavn = nyGrunnkrets.kommune.administrativenhetnavn.getInSpraak("nor") ?: "UKJENT KOMMUNE"
+            val kommunenummer = kodelisteService.getCodeValueByKommunenummerId(nyGrunnkrets.kommune.kommunenummer)
+            val gyldigFraTekst = nyGrunnkrets.gyldighet.gyldigFra.toNorskFormat()
+            val gyldigTilTekst = nyGrunnkrets.gyldighet.gyldigTil?.let { "til ${it.toNorskFormat()}" } ?: "og fremover"
+
+            throw ResponseException.BadRequestException(
+                title = "Duplikate kretsnummer innenfor samme kommune",
+                msg = "Kretsnummer ${nyGrunnkrets.grunnkretsnummer} er brukt på flere grunnkretser innenfor kommunen (${kommunenummer} ${kommunenavn}) " +
+                    "med gyldighet som overlapper med $gyldigFraTekst $gyldigTilTekst. " +
+                    "Vennligst gi grunnkretsene unike kretsnumre før du fortsetter."
+            )
+        }
 
         return nyGrunnkrets
             .apply {

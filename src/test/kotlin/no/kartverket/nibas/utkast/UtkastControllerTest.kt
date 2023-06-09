@@ -14,6 +14,7 @@ import no.kartverket.nibas.api.v1.response.ApiErrorResponse
 import no.kartverket.nibas.api.v1.response.AuditInfoResponse
 import no.kartverket.nibas.api.v1.response.ConflictResponse
 import no.kartverket.nibas.api.v1.response.ConflictResponseWrapper
+import no.kartverket.nibas.api.v1.response.ErrorDescription
 import no.kartverket.nibas.api.v1.response.FramtidigVersjonConflict
 import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.response.UtkastOpprettetResponse
@@ -39,6 +40,7 @@ import no.kartverket.nibas.sosi.sosiimport.GeometriFailedToBeCreatedException
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import no.kartverket.nibas.sosi.sosiimport.UgyldigGeometriException
 import no.kartverket.nibas.sporing.AuditInfo
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
@@ -47,16 +49,14 @@ import org.mockito.Mockito.anyString
 import org.mockito.Mockito.verify
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.boot.test.mock.mockito.MockBean
-import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.Month
 import java.time.ZoneId
 import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
+import java.util.UUID
 import org.mockito.Mockito.`when` as whenever
 
 
@@ -64,12 +64,19 @@ import org.mockito.Mockito.`when` as whenever
 internal class UtkastControllerTest : NibasMvcTest() {
 
     private val publiserUrl = "/v1/utkast/123/publiser"
+    private val mockUuid = UUID.randomUUID()
 
     @MockBean
     private lateinit var utkastServiceMock: UtkastService
 
     @MockBean
     private lateinit var hrefProviderMock: HrefProvider
+
+    @BeforeEach
+    fun setup() {
+        mockkStatic(UUID::class)
+        every { UUID.randomUUID() } returns mockUuid
+    }
 
     @Test
     fun opprettUtkastGir201Created() {
@@ -199,7 +206,7 @@ internal class UtkastControllerTest : NibasMvcTest() {
         post(
             url = publiserUrl,
             responseAsserts = MockResponseAsserts(
-                expectedResponseObject = ApiErrorResponse(HttpStatus.NOT_FOUND, errorMsg),
+                expectedResponseObject = ApiErrorResponse(errorCode = mockUuid.toString(), errorDescription = ErrorDescription(title = "404: Ikke funnet", description = errorMsg)),
                 resultMatchers = listOf(status().isNotFound)
             )
         )
@@ -213,7 +220,7 @@ internal class UtkastControllerTest : NibasMvcTest() {
         post(
             url = publiserUrl,
             responseAsserts = MockResponseAsserts(
-                expectedResponseObject = ApiErrorResponse(HttpStatus.BAD_REQUEST, msg),
+                expectedResponseObject = ApiErrorResponse(errorCode = mockUuid.toString(), errorDescription = ErrorDescription(title = "404: Ikke funnet", description = msg)),
                 resultMatchers = listOf(status().isBadRequest)
             )
         )
@@ -258,18 +265,12 @@ internal class UtkastControllerTest : NibasMvcTest() {
                 topologyValidationError = TopologyValidationError(6, Coordinate(0.0, 1.0))))
 
         val expectedHttpStatus = status().isBadRequest
-        val geometryTypeMatcher = MockMvcResultMatchers.jsonPath("$.geometryType").value("Polygon")
-        val validationErrorMatcher = MockMvcResultMatchers.jsonPath("$.validationError").value("Ring Self-intersection")
-        val feilLokasjonMatcherType = MockMvcResultMatchers.jsonPath("$.feilLokasjon.type").value("Point")
-        val feilLokasjonMatcherCoordinatesX = MockMvcResultMatchers.jsonPath("$.feilLokasjon.coordinates[0]").value("0.0")
-        val feilLokasjonMatcherCoordinatesY = MockMvcResultMatchers.jsonPath("$.feilLokasjon.coordinates[1]").value("1.0")
 
         post(
             url = publiserUrl,
             responseAsserts = MockResponseAsserts(
-                resultMatchers = listOf(
-                    expectedHttpStatus, geometryTypeMatcher, validationErrorMatcher, feilLokasjonMatcherType,
-                    feilLokasjonMatcherCoordinatesX, feilLokasjonMatcherCoordinatesY))
+                resultMatchers = listOf(expectedHttpStatus)
+            )
         )
 
         verify(utkastServiceMock).publiserUtkast(anyString(), any(LocalDate::class.java))
@@ -281,17 +282,13 @@ internal class UtkastControllerTest : NibasMvcTest() {
             GeometriFailedToBeCreatedException(point = SosiGeometryFunctions.coordinateToPoint(Coordinate(0.0, 1.0))))
 
         val expectedHttpStatus = status().isBadRequest
-        val geometryTypeMatcher = MockMvcResultMatchers.jsonPath("$.geometryType").value(null)
-        val validationErrorMatcher = MockMvcResultMatchers.jsonPath("$.validationError").value(null)
-        val feilLokasjonMatcherType = MockMvcResultMatchers.jsonPath("$.feilLokasjon.type").value("Point")
-        val feilLokasjonMatcherCoordinatesX = MockMvcResultMatchers.jsonPath("$.feilLokasjon.coordinates[0]").value("0.0")
-        val feilLokasjonMatcherCoordinatesY = MockMvcResultMatchers.jsonPath("$.feilLokasjon.coordinates[1]").value("1.0")
 
         post(
             url = publiserUrl,
             responseAsserts = MockResponseAsserts(
-                resultMatchers = listOf(expectedHttpStatus, geometryTypeMatcher, validationErrorMatcher, feilLokasjonMatcherType,
-                    feilLokasjonMatcherCoordinatesX, feilLokasjonMatcherCoordinatesY)))
+                resultMatchers = listOf(expectedHttpStatus)
+            )
+        )
 
         verify(utkastServiceMock).publiserUtkast(anyString(), any(LocalDate::class.java))
     }

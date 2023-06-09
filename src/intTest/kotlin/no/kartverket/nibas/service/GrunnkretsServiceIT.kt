@@ -21,6 +21,7 @@ import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
+import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.KommuneRepository
@@ -29,10 +30,13 @@ import no.kartverket.nibas.utils.GrenseHelper
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
+import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -58,6 +62,9 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
     @Autowired
     private lateinit var grenseService: GrenseService
 
+    @MockBean
+    private lateinit var kodelisteServiceMock: KodelisteService
+
     private val lokalidOfGrunnkretsInDataset = Lokalid("c54fb55e-15d0-4528-8b88-f58d6c74bd87")
     private val earlyDate = LocalDate.of(2000, 1, 1)
     private val october1In2022 = LocalDate.of(2022, Month.OCTOBER, 1)
@@ -68,6 +75,11 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
 
     private val grenseLokallid = Lokalid("888")
     private val grunnkretsLokalid = Lokalid("1001")
+
+    @BeforeEach
+    fun beforeEach() {
+        Mockito.`when`(kodelisteServiceMock.getCodeValueByKommunenummerId(Mockito.anyString())).thenReturn("1234")
+    }
 
     @Test
     fun hentEksisterendeGrunnkretsMedDagensDato() {
@@ -220,8 +232,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
                 endringstype = Endringstype.RETTING
             )
         }.isInstanceOf(ResponseException.BadRequestException::class.java)
-            .hasMessageContaining("Det finnes en annen grunnkrets med grunnkretsnummer " + vestreKrets.grunnkretsnummer +
-                " innen gyldighet " + datoForOppdatering + " og framover")
+            .hasMessageContaining("Kretsnummer ${vestreKrets.grunnkretsnummer} er brukt på flere grunnkretser innenfor kommunen")
 
     }
         @Test

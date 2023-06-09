@@ -284,25 +284,6 @@ data class Kommunenummer(
     val kodeverdi: String
 )
 
-@Schema(description = "Respons-type for geometrifeil")
-data class GeometriErrorResponse(
-
-    @Schema(description = "HttpStatus for responsen")
-    val httpStatus: HttpStatus = HttpStatus.BAD_REQUEST,
-
-    @Schema(description = "Type geometriobjekt")
-    val geometryType: String? = null,
-
-    @Schema(description = "Valideringsfeil")
-    val validationError: String? = null,
-
-    @Schema(description = "Beskriver lokasjonen for feilen")
-    val feilLokasjon: Point,
-
-    @Schema(description = "Generell beskrivelse")
-    val message: String,
-)
-
 @Schema(description = "Returtype for opprettelse av utkast")
 data class UtkastOpprettetResponse(
     @Schema(description = "Unik uuid for utkastet")
@@ -370,6 +351,25 @@ data class ConflictResponse(
     val melding: String?
 )
 
+data class ErrorDescription(
+    @Schema(description = "Tittelen på feilmeldingen som skal vises.")
+    val title: String = "Noe gikk galt",
+
+    @Schema(description = "En beskrivende forklaring av feilen som oppstod.")
+    val description: String,
+
+    @Schema(description = "Litt tilleggsinfo relatert til feilen om man vil gi noe mer forklaring av konteksten. Ikke obligatorisk.")
+    val additionalInfo: String? = null,
+)
+
+data class ApiErrorResponse(
+    @Schema(description = "En unik feilkode for denne feilen som kan vises til bruker. Denne feilkoden burde også være med i loggene så man finner igjen feilen som oppstod.")
+    val errorCode: String,
+
+    @Schema(description = "En forklaring av feilen som oppstod. Denne er ment til å kunne vises direkte til brukeren.")
+    val errorDescription: ErrorDescription,
+)
+
 data class FramtidigVersjonConflict(
     @Schema(description = "Identifikatoren til objektet som ble forsøkt oppdatert.")
     val id: ObjektIdentifikator,
@@ -378,29 +378,13 @@ data class FramtidigVersjonConflict(
     @Schema(description = "Identifikator til objekt(et/ene) som har en nyere gyldigFra-dato og er i konflikt med endringen.")
     val affectedIds: List<ObjektIdentifikator> = emptyList(),
     @Schema(description = "Beskrivelse av hva som har gått galt.")
-    val melding: String?
+    val melding: String?,
 )
 
 data class ObjektIdentifikator(val lokalid: Lokalid, val gyldighetsdato: LocalDate)
 
 fun Identifikator.toObjektIdentifikator(): ObjektIdentifikator = ObjektIdentifikator(this.lokalid, this.gyldighetsdato)
 fun ObjektIdentifikator.toIdentifikator(): Identifikator = Identifikator(this.lokalid, this.gyldighetsdato)
-
-data class MissingKodelisteItemResponse(
-    @Schema(description = "HttpStatus for responsen")
-    val httpStatus: HttpStatus = HttpStatus.INTERNAL_SERVER_ERROR,
-
-    @Schema(description = "Hva gikk galt")
-    val message: String
-)
-
-data class ApiErrorResponse(
-    @Schema(description = "HttpStatus for responsen.")
-    val httpStatus: HttpStatus,
-
-    @Schema(description = "Beskrivelse av hva som har gått galt.")
-    val melding: String?
-)
 
 data class GyldighetResponse(
     @Schema(description = "Tidspunktet objektet er gyldig fra")

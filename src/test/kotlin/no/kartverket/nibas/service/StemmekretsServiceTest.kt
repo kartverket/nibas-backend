@@ -6,6 +6,7 @@ import io.mockk.mockkStatic
 import no.kartverket.nibas.builders.StemmekretsBuilder
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.REPOSITORY_EXTENSIONS_FILEPATH
 import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
@@ -26,6 +27,9 @@ class StemmekretsServiceTest {
 
     @MockkBean
     private lateinit var stemmekretsRepositoryMock: StemmekretsRepository
+
+    @MockkBean
+    private lateinit var kodelisteServiceMock: KodelisteService
 
     @BeforeEach
     fun beforeEach() {

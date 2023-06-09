@@ -24,6 +24,7 @@ import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Stemmekrets
+import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.OptimistiskLaasException
@@ -32,12 +33,15 @@ import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import no.kartverket.nibas.utils.GrenseHelper
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
+import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -63,6 +67,9 @@ class StemmekretsServiceIT : TestWithDbContainer() {
     @Autowired
     private lateinit var grenseService: GrenseService
 
+    @MockBean
+    private lateinit var kodelisteServiceMock: KodelisteService
+
     private val october1In2022 = LocalDate.of(2022, Month.OCTOBER, 1)
     private val november28In2022 = LocalDate.of(2022, Month.NOVEMBER, 28)
     private val december1In2022 = LocalDate.of(2022, Month.DECEMBER, 1)
@@ -71,6 +78,11 @@ class StemmekretsServiceIT : TestWithDbContainer() {
 
     private val stemmekretsLokalid = Lokalid("ac7e05cd-fb07-4270-ad95-88c320137ba6")
     private val grenseLokallid = Lokalid("888")
+
+    @BeforeEach
+    fun beforeEach() {
+        Mockito.`when`(kodelisteServiceMock.getCodeValueByKommunenummerId(Mockito.anyString())).thenReturn("1234")
+    }
 
     @Test
     fun `hent eksisterende stemmekrets med dagens dato`() {
@@ -548,8 +560,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
                 endringstype = Endringstype.RETTING
             )
         }.isInstanceOf(ResponseException.BadRequestException::class.java)
-            .hasMessageContaining("Det finnes en annen stemmekrets i kommune " + oestreKrets.kommune.kommunenummer +
-                " med stemmekretsnummer " + oestreKrets.stemmekretsnummer + " innen gyldighet " + datoForOppdatering + " og framover")
+            .hasMessageContaining("Kretsnummer ${oestreKrets.stemmekretsnummer} er brukt på flere stemmekretser innenfor kommunen")
     }
 
     @Test
@@ -571,8 +582,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
                 endringstype = Endringstype.VEDTATT_SAMMENSLAAING
             )
         }.isInstanceOf(ResponseException.BadRequestException::class.java)
-            .hasMessageContaining("Det finnes en annen stemmekrets i kommune " + tredjeKrets.kommune.kommunenummer +
-                " med stemmekretsnummer " + tredjeKrets.stemmekretsnummer + " innen gyldighet " + sammenslaingsdato + " og framover")
+            .hasMessageContaining("Kretsnummer 22 er brukt på flere stemmekretser innenfor kommunen")
     }
 
     private fun assertOmradeGyldighetVersjon(vestreKretsEtterLagring: Stemmekrets, oestreKretsEtterLagring: Stemmekrets,
