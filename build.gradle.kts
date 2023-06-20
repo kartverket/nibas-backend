@@ -4,13 +4,13 @@ import org.springframework.boot.gradle.tasks.bundling.BootJar
 plugins {
     val kotlinPluginVersion = "1.8.21"
 
-    id("org.springframework.boot") version "3.0.6"
+    id("org.springframework.boot") version "3.1.0"
     id("io.spring.dependency-management") version "1.1.0"
     kotlin("jvm") version kotlinPluginVersion
     kotlin("plugin.spring") version kotlinPluginVersion
     kotlin("plugin.jpa") version kotlinPluginVersion
     kotlin("plugin.allopen") version kotlinPluginVersion
-    id("org.flywaydb.flyway") version "9.16.3"
+    id("org.flywaydb.flyway") version "9.19.1"
 }
 
 group = "no.kartverket.nibas"
@@ -48,21 +48,19 @@ val intTestImplementation: Configuration by configurations.getting {
 configurations["intTestRuntimeOnly"].extendsFrom(configurations.runtimeOnly.get())
 
 // Definerer versjoner for avhengigheter som ikke dekkes av BOM
-val hibernateVersion = "6.1.7.Final"
 val springdocOpenapiVersion2 = "2.1.0"
 val jtsVersion = "1.19.0"
-val testContainerVersion = "1.18.0"
+val testContainerVersion = "1.18.1"
 val autLibVersion = "2.0.0"
 val flywayVersion = "9.18.0"
-val hypersistenceUtilsHibernate60Version = "3.3.2"
+val hypersistenceUtilsHibernate62Version = "3.4.1"
 val springCloudStarterVaultConfigVersion = "4.0.1"
 val spatial4jVersion = "0.8"
-val kotlinxCoroutinesCoreVersion = "1.6.4"
+val kotlinxCoroutinesCoreVersion = "1.7.1"
 val logstashVersion = "7.3"
 val springmockkVersion = "4.0.2"
 val kotlinMockitoVersion = "4.1.0"
-
-ext["snakeyaml.version"] = "1.31"
+val hibernateVersion = "6.2.1.Final"
 
 dependencies {
     implementation("no.kartverket.aut:aut-lib:$autLibVersion")
@@ -89,6 +87,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinxCoroutinesCoreVersion")
     implementation("org.locationtech.spatial4j:spatial4j:$spatial4jVersion")
     implementation("org.hibernate.orm:hibernate-spatial:$hibernateVersion")
+    implementation("org.hibernate.orm:hibernate-core:$hibernateVersion")
     implementation("net.logstash.logback:logstash-logback-encoder:$logstashVersion")
     implementation("org.springframework.cloud:spring-cloud-starter")
     implementation("org.springframework.cloud:spring-cloud-starter-vault-config:$springCloudStarterVaultConfigVersion")
@@ -96,7 +95,7 @@ dependencies {
     implementation("org.springframework.integration:spring-integration-core")
 
     // This library provides Hibernate 5.5+ Json column support, which is not natively supported by Hibernate
-    implementation("io.hypersistence:hypersistence-utils-hibernate-60:$hypersistenceUtilsHibernate60Version")
+    implementation("io.hypersistence:hypersistence-utils-hibernate-62:$hypersistenceUtilsHibernate62Version")
 
     runtimeOnly("org.flywaydb:flyway-core:$flywayVersion")
     runtimeOnly("org.postgresql:postgresql")
