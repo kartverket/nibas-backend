@@ -92,5 +92,6 @@ jobs:
       version: ${{ needs.build.outputs.new_tag }}
       deploy_dev: true
       deploy_test: true
+      deploy_prod: true
     secrets:
       PAT_TOKEN: ${{ secrets.PAT_ARGOCD }}
