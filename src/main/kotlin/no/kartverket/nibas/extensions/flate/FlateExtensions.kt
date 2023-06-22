@@ -48,7 +48,7 @@ fun Fylke.toFylkeResponse(identifikator: Identifikator, kodelisteService: Kodeli
     administrativenhetnavn = administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version, it.rekkefoelge) },
     fylkesnummer = Fylkesnummer(
         id = fylkesnummer,
-        kodeverdi = kodelisteService.getCodeValueByFylkesnummerId(fylkesnummer)?.toInt()!!
+        kodeverdi = kodelisteService.getCodeValueByFylkesnummerId(fylkesnummer)!!
     ),
     samiskforvaltningsomraade = samiskforvaltningsomraade!!,
     oppdateringsdato = auditInfo.endretdato,

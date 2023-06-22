@@ -80,7 +80,7 @@ data class Fylkesnummer(
     val id: String,
 
     @Schema(description = "Det faktiske fylkesnummeret")
-    val kodeverdi: Int
+    val kodeverdi: String
 )
 
 @Schema(description = "Representasjon av et navn")
