@@ -8,7 +8,6 @@ import no.kartverket.nibas.api.v1.response.FramtidigVersjonConflict
 import no.kartverket.nibas.api.v1.response.toObjektIdentifikator
 import no.kartverket.nibas.common.FeilVedOppdatering
 import no.kartverket.nibas.common.ResponseException
-import no.kartverket.nibas.events.PublishEventException
 import no.kartverket.nibas.kodelister.MissingKodelisteItemException
 import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.sosi.sosiimport.GeometriFailedToBeCreatedException
@@ -112,8 +111,8 @@ class CustomRestExceptionHandler : ResponseEntityExceptionHandler() {
         return handleException(ex, errorDescription, HttpHeaders(), httpStatus, request)
     }
 
-    @ExceptionHandler(value = [PublishEventException::class])
-    fun handlePublishEventException(ex: PublishEventException, request: WebRequest): ResponseEntity<Any>? {
+    @ExceptionHandler(value = [Exception::class])
+    fun handleAllOtherExceptions(ex: Exception, request: WebRequest): ResponseEntity<Any>? {
         val httpStatus = HttpStatus.INTERNAL_SERVER_ERROR
         val errorDescription = ErrorDescription(
             description = ex.message ?: "Ukjent server-feil"
