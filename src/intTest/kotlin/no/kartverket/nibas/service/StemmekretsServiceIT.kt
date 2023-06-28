@@ -10,10 +10,7 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.KommunalKretsgrenseMet
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Posisjonskvalitet
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
 import no.kartverket.nibas.builders.FeatureBuilder
-import no.kartverket.nibas.builders.GrenseBuilder
-import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.builders.MaalemetodeKodeEnum
-import no.kartverket.nibas.builders.StemmekretsBuilder
 import no.kartverket.nibas.builders.StemmekretsRequestBuilder
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
@@ -22,11 +19,9 @@ import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseKobling
-import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.GrenseRepository
-import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
@@ -54,9 +49,6 @@ class StemmekretsServiceIT : TestWithDbContainer() {
 
     @Autowired
     private lateinit var stemmekretsService: StemmekretsService
-
-    @Autowired
-    private lateinit var kommuneRepository: KommuneRepository
 
     @Autowired
     private lateinit var stemmekretsRepository: StemmekretsRepository
@@ -186,7 +178,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
             grenser = lagredeGrenserForKrets
         )
 
-        saveKommune(stemmekretser = listOf(stemmekrets), kommunenummer = "4227")
+        saveKommune(kommunenummer = "4227", stemmekretser = listOf(stemmekrets))
         val now = LocalDate.now()
         val opprinneligStemmekrets = stemmekretsService.hentStemmekrets(identifikator)
 
@@ -269,6 +261,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
             )
         }
     }
+
     @Test
     fun `slaaSammenStemmekretser skal skal kaste konflikt om den feiler optimistiskLaas-sjekken for en av stemmekretsene til sammenslaaing`() {
         val (vestreKrets, oestreKrets) = saveNaboStemmekretser(gyldigFra = LocalDate.parse("2022-01-01"))
@@ -674,7 +667,9 @@ class StemmekretsServiceIT : TestWithDbContainer() {
             .withRetning(grenseKobling.grenseKoblingAttributter.retningMedKlokken)
             .build()
 
-        val features = if (featureAnnenOppdatertGrense != null ) listOf(oppdatertGrensefeature, featureAnnenOppdatertGrense) else listOf(oppdatertGrensefeature)
+        val features = if (featureAnnenOppdatertGrense != null)
+            listOf(oppdatertGrensefeature, featureAnnenOppdatertGrense) else listOf(oppdatertGrensefeature)
+
         return grenseService.lagreGrenser(
             grenser = FeatureCollection(features = features),
             gyldighetsdato = endringsdato,
@@ -704,24 +699,6 @@ class StemmekretsServiceIT : TestWithDbContainer() {
             .build()
     }
 
-    fun saveGrenseAvTypeKommunegrense(
-        id: String = "12000",
-        lokalid: Lokalid = Lokalid("ac7e05cd-fb07-4277-ad95-63c32c1370d0"),
-        gyldigFra: LocalDate = october1In2022,
-        gyldigTil: LocalDate? = null,
-        opphav: String = "Eidsvoll",
-        nesteVersjon: Grense? = null
-    ): Grense {
-        return grenseRepository.save(GrenseBuilder(
-            id = id,
-            lokalId = lokalid,
-            gyldigFra = gyldigFra,
-            gyldigTil = gyldigTil,
-            opphav = opphav,
-            nesteVersjon = nesteVersjon
-        ).buildKommunegrense())
-    }
-
     private fun saveNaboStemmekretser(gyldigFra: LocalDate, medHull: Boolean = false, medTredjeKrets: Boolean = false): List<Stemmekrets> {
         val grenserForVest = if (medHull) {
             GrenseHelper.getGrenserForVestligKrets(gyldigFra, Grensetype.Stemmekretsgrense) +
@@ -738,18 +715,18 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         val kretsVest = saveStemmekrets(
             id = "1",
             lokalid = Lokalid("123"),
-            gyldigFra = gyldigFra,
             stemmekretsnummer = "20",
             stemmekretsnavn = "Vestre krets",
+            gyldigFra = gyldigFra,
             grenser = lagredeGrenserForVest
         )
 
         val kretsOest = saveStemmekrets(
             id = "2",
             lokalid = Lokalid("234"),
-            gyldigFra = gyldigFra,
             stemmekretsnummer = "21",
             stemmekretsnavn = "Østre krets",
+            gyldigFra = gyldigFra,
             grenser = lagredeGrenserForOest
         )
 
@@ -758,9 +735,9 @@ class StemmekretsServiceIT : TestWithDbContainer() {
             val tredjeKrets = saveStemmekrets(
                 id = "3",
                 lokalid = Lokalid("345"),
-                gyldigFra = gyldigFra,
                 stemmekretsnummer = "22",
-                stemmekretsnavn = "Tredje krets"
+                stemmekretsnavn = "Tredje krets",
+                gyldigFra = gyldigFra
             )
             stemmekretsMutableList.add(tredjeKrets)
         }
@@ -773,39 +750,8 @@ class StemmekretsServiceIT : TestWithDbContainer() {
 
     private fun saveStemmekretsMed1FramtidigVersjon(stemmekretsLokalid: Lokalid) {
         val stemmekrets = saveStemmekrets(id = "9000", lokalid = stemmekretsLokalid, gyldigTil = jan1In2023)
-        val stemmekrets2 = saveStemmekrets(id = "9001", lokalid = stemmekretsLokalid, gyldigFra = jan1In2023, stemmekretsnavn = "Nedre Singsaker")
+        val stemmekrets2 = saveStemmekrets(id = "9001", lokalid = stemmekretsLokalid, stemmekretsnavn = "Nedre Singsaker", gyldigFra = jan1In2023)
         saveKommune(stemmekretser = listOf(stemmekrets, stemmekrets2))
-    }
-
-    private fun saveKommune(stemmekretser: List<Stemmekrets> = emptyList(), kommunenummer: String = "0301"): Kommune {
-        return kommuneRepository.save(KommuneBuilder(
-            id = "9000",
-            lokalId = Lokalid("abc-123"),
-            gyldigFra = october1In2022,
-            kommunenummer = kommunenummer,
-            stemmekretser = stemmekretser
-        ).buildWithoutAdministrativenhetnavn())
-    }
-
-    private fun saveStemmekrets(
-        id: String = "9000",
-        lokalid: Lokalid,
-        gyldigFra: LocalDate = october1In2022,
-        gyldigTil: LocalDate? = null,
-        stemmekretsnummer: String = "9",
-        stemmekretsnavn: String = "Øvre Singsaker",
-        grenser: List<Grense> = emptyList()
-    ): Stemmekrets {
-        return stemmekretsRepository.save(StemmekretsBuilder(
-            id = id,
-            lokalId = lokalid,
-            gyldigFra = gyldigFra,
-            gyldigTil = gyldigTil,
-            stemmekretsnummer = stemmekretsnummer,
-            stemmekretsnavn = stemmekretsnavn,
-            kommune = null,
-            grenser = grenser
-        ).build())
     }
 
 }

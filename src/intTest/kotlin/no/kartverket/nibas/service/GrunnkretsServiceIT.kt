@@ -9,7 +9,6 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.Posisjonskvalitet
 import no.kartverket.nibas.api.v1.common.geojson.metadata.StatistiskgrenseMetadata
 import no.kartverket.nibas.builders.FeatureBuilder
 import no.kartverket.nibas.builders.GrenseBuilder
-import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.GrunnkretsRequestBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.builders.MaalemetodeKodeEnum
@@ -24,10 +23,9 @@ import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.GrunnkretsRepository
-import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.findAllByLokalidSortedByGyldigFra
-import no.kartverket.nibas.utils.GrenseHelper
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
+import no.kartverket.nibas.utils.GrenseHelper
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -49,9 +47,6 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
 
     @Autowired
     private lateinit var grunnkretsService: GrunnkretsService
-
-    @Autowired
-    private lateinit var kommuneRepository: KommuneRepository
 
     @Autowired
     private lateinit var grunnkretsRepository: GrunnkretsRepository
@@ -148,7 +143,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         val grunnkrets2 = saveGrunnkrets(id = "1302", lokalid = grunnkretsLokalid, gyldigFra = december1In2022, gyldigTil = jan1In2024, grenser = listOf(grense1))
         val grunnkrets3 = saveGrunnkrets(id = "1303", lokalid = grunnkretsLokalid, gyldigFra = jan1In2024, grenser = listOf(grense1))
 
-        saveKommune(grunnkretser = listOf(grunnkrets1, grunnkrets2, grunnkrets3))
+        saveKommune(gyldigFra = october1In2022, grunnkretser = listOf(grunnkrets1, grunnkrets2, grunnkrets3))
 
         val grensekoblinger = grunnkretsService.hentGrenserForGrunnkrets(identifikatorFor1Jan23)
         assertGrenser(grensekoblinger,
@@ -169,7 +164,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
     @Test
     fun oppdaterGrunnkretsMedDagensDato() {
         val grunnkretsRequest = GrunnkretsRequestBuilder.DEFAULT_REQUEST
-        val kommune = saveKommune(kommunenummer = "4227")
+        val kommune = saveKommune(kommunenummer = "4227", gyldigFra = october1In2022)
 
         val identifikator = Identifikator(Lokalid(grunnkretsRequest.identifikasjon.lokalid), october1In2022)
         val grunnkrets = lagGrenserForGrunnkrets(identifikator.lokalid, kommune)
@@ -235,7 +230,8 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
             .hasMessageContaining("Kretsnummer ${vestreKrets.grunnkretsnummer} er brukt på flere grunnkretser innenfor kommunen")
 
     }
-        @Test
+
+    @Test
     fun `endre grense for grunnkrets skal opprette nye versjoner for grensa og dens grunnkretser`() {
         val opprinneligDato = LocalDate.parse("2022-01-01")
         val endringsdato = LocalDate.parse("2022-02-01")
@@ -603,42 +599,6 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         return saveGrunnkrets(lokalid = grunnkretsLokalid, kommune = kommune, grenser = listOf(grense1, grense2, grense3))
     }
 
-    fun saveGrenseAvTypeKommunegrense(id: String = "12000",
-                                      lokalid: Lokalid = Lokalid("ac7e05cd-fb07-4277-ad95-63c32c1370d0"),
-                                      gyldigFra: LocalDate = october1In2022,
-                                      gyldigTil: LocalDate? = null,
-                                      opphav: String = "Eidsvoll",
-                                      nesteVersjon: Grense? = null): Grense {
-        return grenseRepository.save(GrenseBuilder(
-            id = id,
-            lokalId = lokalid,
-            gyldigFra = gyldigFra,
-            gyldigTil = gyldigTil,
-            opphav = opphav,
-            nesteVersjon = nesteVersjon
-        ).buildKommunegrense())
-    }
-
-    private fun saveGrunnkrets(id: String = "9000",
-                               lokalid: Lokalid = Lokalid("1001"),
-                               gyldigFra: LocalDate = october1In2022,
-                               gyldigTil: LocalDate? = null,
-                               grunnkretsnummer: String = "42270304",
-                               grunnkretsnavn: String = "Dåsvatn",
-                               kommune: Kommune = KommuneBuilder.DEFAULT_KOMMUNE,
-                               grenser: List<Grense> = emptyList()): Grunnkrets {
-        return grunnkretsRepository.save(GrunnkretsBuilder(
-            id = id,
-            lokalId = lokalid,
-            gyldigFra = gyldigFra,
-            gyldigTil = gyldigTil,
-            grunnkretsnummer = grunnkretsnummer,
-            grunnkretsnavn = grunnkretsnavn,
-            kommune = kommune,
-            grenser = grenser
-        ).build())
-    }
-
     private fun saveGrunnkretsMed1FramtidigVersjon(grunnkretsLokalid: Lokalid) {
         val grunnkrets = saveGrunnkrets(
             id = "9000",
@@ -649,20 +609,10 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         val grunnkretsFramtidigVersjon = saveGrunnkrets(
             id = "9001",
             lokalid = grunnkretsLokalid,
-            gyldigFra = jan1In2023,
             grunnkretsnavn = "Måsvann",
+            gyldigFra = jan1In2023,
         )
         saveKommune(grunnkretser = listOf(grunnkrets, grunnkretsFramtidigVersjon))
-    }
-
-    private fun saveKommune(grunnkretser: List<Grunnkrets> = emptyList(), kommunenummer: String = "0301"): Kommune {
-        return kommuneRepository.save(KommuneBuilder(
-            id = "9000",
-            lokalId = Lokalid("abc-123"),
-            gyldigFra = october1In2022,
-            kommunenummer = kommunenummer,
-            grunnkretser = grunnkretser
-        ).buildWithoutAdministrativenhetnavn())
     }
 
     private fun saveNaboGrunnkretser(gyldigFra: LocalDate, medHull: Boolean = false): List<Grunnkrets> {
@@ -681,18 +631,18 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         val kretsVest = saveGrunnkrets(
             id = "1",
             lokalid = Lokalid("123"),
-            gyldigFra = gyldigFra,
             grunnkretsnummer = "03010020",
             grunnkretsnavn = "Vestre krets",
+            gyldigFra = gyldigFra,
             grenser = lagredeGrenserForVest
         )
 
         val kretsOest = saveGrunnkrets(
             id = "2",
             lokalid = Lokalid("234"),
-            gyldigFra = gyldigFra,
             grunnkretsnummer = "03010021",
             grunnkretsnavn = "Østre krets",
+            gyldigFra = gyldigFra,
             grenser = lagredeGrenserForOest
         )
 

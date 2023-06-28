@@ -1,12 +1,8 @@
 package no.kartverket.nibas.service
 
-import no.kartverket.nibas.builders.FylkeBuilder
-import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
-import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.repository.FylkeRepository
-import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -24,11 +20,7 @@ class FylkeServiceIT : TestWithDbContainer() {
     private lateinit var fylkeService: FylkeService
 
     @Autowired
-    private lateinit var kommuneRepository: KommuneRepository
-
-    @Autowired
     private lateinit var fylkeRepository: FylkeRepository
-    private val october1In2022 = LocalDate.of(2022, Month.OCTOBER, 1)
     private val november28In2022 = LocalDate.of(2022, Month.NOVEMBER, 28)
     private val jan1In2023 = LocalDate.of(2023, Month.JANUARY, 1)
 
@@ -68,9 +60,9 @@ class FylkeServiceIT : TestWithDbContainer() {
         val july2In2019 = LocalDate.of(2019, Month.JULY, 2)
 
         val kommune = saveKommune()
-        saveFylke(id = "19000", lokalid = Lokalid("1002"), kommune = kommune, gyldigFra = jan1In2019)
-        saveFylke(id = "9000", lokalid = Lokalid("1001"), kommune = kommune, gyldigFra = july1In2019, gyldigTil = july2In2019)
-        saveFylke(id = "9001", lokalid = Lokalid("1001"), kommune = kommune, gyldigFra = july2In2019) // Framtidig versjon av 9000
+        saveFylke(id = "19000", lokalid = Lokalid("1002"), gyldigFra = jan1In2019, kommune = kommune)
+        saveFylke(id = "9000", lokalid = Lokalid("1001"), gyldigFra = july1In2019, gyldigTil = july2In2019, kommune = kommune)
+        saveFylke(id = "9001", lokalid = Lokalid("1001"), gyldigFra = july2In2019, kommune = kommune) // Framtidig versjon av 9000
 
         assertThat(fylkeService.hentAlleFylker(july1In2019).map { it.id }).isEqualTo(listOf("19000", "9000"))
         assertThat(fylkeService.hentAlleFylker(july2In2019).map { it.id }).isEqualTo(listOf("19000", "9001"))
@@ -78,33 +70,8 @@ class FylkeServiceIT : TestWithDbContainer() {
 
     private fun saveFylkeMed1FramtidigVersjon(lokalIdOfFylke: Lokalid) {
         val kommune = saveKommune()
-        saveFylke(id = "9000", lokalid = lokalIdOfFylke, kommune = kommune, gyldigTil = jan1In2023)
-        saveFylke(id = "9001", lokalid = lokalIdOfFylke, kommune = kommune, gyldigFra = jan1In2023, fylkesnummer = "53")
+        saveFylke(id = "9000", lokalid = lokalIdOfFylke, gyldigTil = jan1In2023, kommune = kommune)
+        saveFylke(id = "9001", lokalid = lokalIdOfFylke, fylkesnummer = "53", gyldigFra = jan1In2023, kommune = kommune)
     }
 
-    private fun saveFylke(id: String = "9000",
-                          lokalid: Lokalid = Lokalid("ac7e05cd-fb07-4277-ad95-63c32c1370d0"),
-                          kommune: Kommune,
-                          gyldigFra: LocalDate = october1In2022,
-                          gyldigTil: LocalDate? = null,
-                          fylkesnummer: String = "89") {
-        val fylke = FylkeBuilder(
-            id = id,
-            lokalId = lokalid,
-            gyldigFra = gyldigFra,
-            gyldigTil = gyldigTil,
-            kommuner = listOf(kommune),
-            fylkesnummer = fylkesnummer)
-            .buildWithoutAdministrativenhetnavn()
-        fylkeRepository.save(fylke)
-    }
-
-    private fun saveKommune(): Kommune {
-        return kommuneRepository.save(KommuneBuilder(
-            id = "9000",
-            lokalId = Lokalid("abc-123"),
-            gyldigFra = october1In2022,
-            kommunenummer = "0301",
-        ).buildWithoutAdministrativenhetnavn())
-    }
 }
