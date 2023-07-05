@@ -146,7 +146,7 @@ class GrenseService(
             //todo Får bare inn én krets tilhørende grensa (TS-918). Må sjekke om grensa har flere kretser og oppdatere kretsen på den andre sida
             //Må jobbe på en kopi av lista, for ikke å få ConcurrentModificationException
             val gamleStemmekretsKoblinger = mutableSetOf<StemmekretsGrenseKobling>()
-            gamleStemmekretsKoblinger.addAll(gammelGrense.stemmekretser)
+            gamleStemmekretsKoblinger.addAll(gammelGrense.gyldigeStemmekretsGrenseKoblinger())
 
             gamleStemmekretsKoblinger.forEach {
                 lagEvtNyVersjonAvStemmekretsOgLeggTilNyGrense(flaterSomHarFaattNyVersjon, Identifikator(Lokalid(it.stemmekrets.lokalid), gyldighetsdato),
@@ -161,7 +161,7 @@ class GrenseService(
             }
 
             val gamleGrunnkretsKoblinger = mutableSetOf<GrunnkretsGrenseKobling>()
-            gamleGrunnkretsKoblinger.addAll(gammelGrense.grunnkretser)
+            gamleGrunnkretsKoblinger.addAll(gammelGrense.gyldigeGrunnkretsGrenseKoblinger())
 
             gamleGrunnkretsKoblinger.forEach {
                 lagEvtNyVersjonAvGrunnkretsOgLeggTilNyGrense(flaterSomHarFaattNyVersjon, Identifikator(Lokalid(it.grunnkrets.lokalid), gyldighetsdato),
@@ -178,7 +178,7 @@ class GrenseService(
         grenseRepository.flush()
         return flaterSomHarFaattNyVersjon.values.toSet()
     }
-    
+
     fun createNyVersjonAvGrense(grense: Grense, gyldigFra: LocalDate, endringstype: Endringstype): Grense {
         return grenseRepository.saveAndFlush(
             Grense(lokalid = grense.lokalid, grensetype = grense.grensetype)

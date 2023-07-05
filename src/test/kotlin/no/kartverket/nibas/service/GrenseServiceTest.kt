@@ -2,18 +2,24 @@ package no.kartverket.nibas.service
 
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
+import io.mockk.justRun
 import io.mockk.mockkStatic
+import io.mockk.verify
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.builders.FeatureBuilder
 import no.kartverket.nibas.builders.GrenseBuilder
+import no.kartverket.nibas.builders.StemmekretsBuilder
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.BadRequestException
 import no.kartverket.nibas.domain.Endringstype
-import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
+import no.kartverket.nibas.domain.Grense
+import no.kartverket.nibas.domain.GrenseKoblingAttributter
+import no.kartverket.nibas.domain.StemmekretsGrenseKobling
 import no.kartverket.nibas.repository.*
+import no.kartverket.nibas.utils.GrenseHelper
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
@@ -30,10 +36,13 @@ class GrenseServiceTest {
     lateinit var grenseService: GrenseService
 
     @MockkBean
-    private lateinit var grenseRepositoryKotlinMock: GrenseRepository
+    private lateinit var stemmekretsServiceMock: StemmekretsService
 
     @MockkBean
-    private lateinit var grunnkretsRepositoryKotlinMock: GrunnkretsRepository
+    private lateinit var flateServiceMock: FlateService
+
+    @MockkBean
+    private lateinit var grenseRepositoryKotlinMock: GrenseRepository
 
     @MockkBean
     private lateinit var stemmekretsRepositoryKotlinMock: StemmekretsRepository
@@ -42,14 +51,6 @@ class GrenseServiceTest {
     fun beforeEach() {
         // Bruker her SpringMockK for å kunne mocke ut kall til extension functions
         mockkStatic(REPOSITORY_EXTENSIONS_FILEPATH)
-    }
-
-    private fun assertRekkefoelge(grunnkretsGrenseKobling: GrunnkretsGrenseKobling, rekkefoelge: Int) {
-        assertThat(grunnkretsGrenseKobling.grenseKoblingAttributter.rekkefoelge).isEqualTo(rekkefoelge)
-    }
-
-    private fun assertRetningMotKlokka(grunnkretsGrenseKobling: GrunnkretsGrenseKobling) {
-        assertThat(grunnkretsGrenseKobling.grenseKoblingAttributter.retningMedKlokken).isEqualTo(false)
     }
 
     @Test
@@ -134,6 +135,66 @@ class GrenseServiceTest {
         every { grenseRepositoryKotlinMock.findGyldigObjektForIdentifikator(grenseIdentifikator) } returns null
 
         assertThat(grenseService.hentGrense(grenseIdentifikator)).isNull()
+    }
+
+    @Test
+    fun `lagreGrenser skal bare oppdatere gyldige kretser`() {
+
+        val gyldighetsdato = LocalDate.now()
+        val lokalid = "grenseVestLokalid"
+
+        val feature = FeatureBuilder(lokalid)
+            .withGrenseversjon(1)
+            .withGrensetype(Grensetype.Stemmekretsgrense)
+            .build()
+
+        val grenserForKrets = GrenseHelper.getGrenserForVestligKrets(LocalDate.now(), Grensetype.Stemmekretsgrense)
+
+        val gyldigStemmekrets = StemmekretsBuilder()
+            .withGrenser(grenserForKrets)
+            .build()
+
+        val ugyldigStemmekrets = StemmekretsBuilder()
+            .withGyldigFra(LocalDate.now().minusDays(10))
+            .withGyldigTil(LocalDate.now().minusDays(5))
+            .build()
+
+        //Grense som skal oppdateres får sett med koblinger til begge kretser
+        val grenseSomSkalOppdateres = grenserForKrets.find { it.lokalid == lokalid }
+
+        grenseSomSkalOppdateres?.let { grense ->
+            val koblinger = mutableSetOf<StemmekretsGrenseKobling>()
+            koblinger.add(
+                StemmekretsGrenseKobling(
+                    gyldigStemmekrets,
+                    grense,
+                    GrenseKoblingAttributter(rekkefoelge = 0)))
+
+            koblinger.add(
+                StemmekretsGrenseKobling(
+                    ugyldigStemmekrets,
+                    grense,
+                    GrenseKoblingAttributter(rekkefoelge = 0)))
+
+            grense.stemmekretser = koblinger
+        }
+
+        val nyGrense = Grense(id = "nyGrense", lokalid = lokalid, grensetype = Grensetype.Stemmekretsgrense)
+
+        val grenseIdentifikator = Identifikator(Lokalid(lokalid), gyldighetsdato)
+        every { grenseRepositoryKotlinMock.findAllGyldigeObjekterForIdentifikatorer(allAny()) } returns mapOf(grenseIdentifikator to grenseSomSkalOppdateres!!)
+        every { grenseRepositoryKotlinMock.findAllByLokalid(lokalid) } returns listOf(grenseSomSkalOppdateres, nyGrense)
+        every { grenseRepositoryKotlinMock.saveAndFlush(allAny()) } returns nyGrense
+        every { stemmekretsRepositoryKotlinMock.findGyldigObjektForIdentifikator(any())} returns gyldigStemmekrets
+        every { stemmekretsServiceMock.createNyVersjonAvStemmekrets(any(), any(), any()) } returns gyldigStemmekrets
+        justRun { grenseRepositoryKotlinMock.flush() }
+        justRun { flateServiceMock.oppdaterFlaterFor(any()) }
+
+        grenseService.lagreGrenser(FeatureCollection(features = listOf(feature)), endringstype = Endringstype.VEDTATT_GRENSEJUSTERING)
+
+        // Det skal kun lages en ny versjon av den gyldige stemmekretsen
+        verify(exactly = 1) { stemmekretsServiceMock.createNyVersjonAvStemmekrets(gyldigStemmekrets, LocalDate.now(), Endringstype.VEDTATT_GRENSEJUSTERING) }
+        verify(exactly = 0) { stemmekretsServiceMock.createNyVersjonAvStemmekrets(ugyldigStemmekrets, LocalDate.now(), Endringstype.VEDTATT_GRENSEJUSTERING) }
     }
 
 }

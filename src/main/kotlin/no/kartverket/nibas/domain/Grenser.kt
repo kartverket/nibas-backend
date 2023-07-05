@@ -96,7 +96,10 @@ class Grense(
     var nesteVersjon: Grense? = null
 
     fun grunnkretser(): Set<Grunnkrets> = grunnkretser.map { it.grunnkrets }.toSet()
+    fun gyldigeGrunnkretsGrenseKoblinger(gyldighetsdato: LocalDate = LocalDate.now()): Set<GrunnkretsGrenseKobling> = grunnkretser.filter { it.grunnkrets.gyldigPaaDato(gyldighetsdato) }.toSet()
     fun stemmekretser(): Set<Stemmekrets> = stemmekretser.map { it.stemmekrets }.toSet()
+    fun gyldigeStemmekretsGrenseKoblinger(gyldighetsdato: LocalDate = LocalDate.now()): Set<StemmekretsGrenseKobling> = stemmekretser.filter { it.stemmekrets.gyldigPaaDato(gyldighetsdato) }.toSet()
+
     fun kommuner(): Set<Kommune> = grunnkretser().map { it.kommune }.toSet()
 
     fun fylker(): Set<Fylke> = kommuner().map { it.fylke }.toSet()

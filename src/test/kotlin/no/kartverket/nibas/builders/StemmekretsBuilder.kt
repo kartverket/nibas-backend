@@ -95,8 +95,8 @@ class StemmekretsBuilder(
         return this
     }
 
-    fun withGrenser(vararg grenser: Grense): StemmekretsBuilder {
-        this.grenser = this.grenser.plus(grenser.toList())
+    fun withGrenser(grenser: List<Grense>): StemmekretsBuilder {
+        this.grenser = this.grenser.plus(grenser)
         return this
     }
 

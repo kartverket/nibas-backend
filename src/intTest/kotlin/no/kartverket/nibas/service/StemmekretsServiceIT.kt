@@ -263,7 +263,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
     }
 
     @Test
-    fun `slaaSammenStemmekretser skal skal kaste konflikt om den feiler optimistiskLaas-sjekken for en av stemmekretsene til sammenslaaing`() {
+    fun `slaaSammenStemmekretser skal kaste konflikt om den feiler optimistiskLaas-sjekken for en av stemmekretsene til sammenslaaing`() {
         val (vestreKrets, oestreKrets) = saveNaboStemmekretser(gyldigFra = LocalDate.parse("2022-01-01"))
 
         val sammenslaaingsendringRequest = StemmekretsSammenslaaingsendringRequest(
