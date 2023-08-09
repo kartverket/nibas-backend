@@ -13,6 +13,7 @@ import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.sosi.sosiimport.GeometriFailedToBeCreatedException
 import no.kartverket.nibas.sosi.sosiimport.IkkeSammenhengendePolygonException
 import no.kartverket.nibas.sosi.sosiimport.UgyldigGeometriException
+import org.locationtech.jts.operation.valid.TopologyValidationError
 import org.slf4j.MDC
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -40,10 +41,9 @@ class CustomRestExceptionHandler : ResponseEntityExceptionHandler() {
 
     @ExceptionHandler(value = [UgyldigGeometriException::class])
     fun handleUgyldigGeometriException(ugyldigGEx: UgyldigGeometriException, request: WebRequest): ResponseEntity<Any>? {
-        val topologyValidationError = ugyldigGEx.topologyValidationError.message
         val errorDescription = ErrorDescription(
             title = "Feil med geometri",
-            description = "Det er ble oppdaget feil med geometrien i utkastet. Feilen er av type $topologyValidationError"
+            description = "Det er ble oppdaget feil med geometrien i utkastet: ${topologyErrorToCustomText(ugyldigGEx.topologyValidationError)}"
         )
         return handleException(ugyldigGEx, errorDescription, HttpHeaders(), HttpStatus.BAD_REQUEST, request)
     }
@@ -128,4 +128,14 @@ class CustomRestExceptionHandler : ResponseEntityExceptionHandler() {
         )
         return super.handleExceptionInternal(ex, body, headers, statusCode, request)
     }
+
+    private fun topologyErrorToCustomText(topologyError: TopologyValidationError): String =
+        when(topologyError.errorType) {
+            TopologyValidationError.SELF_INTERSECTION -> "En grense kan ikke krysse en annen grense."
+            TopologyValidationError.RING_SELF_INTERSECTION -> "En grense kan ikke krysse en annen grense."
+            TopologyValidationError.INVALID_COORDINATE -> "Grensen inneholder ett eller flere punkter med ugyldig koordinat."
+            TopologyValidationError.TOO_FEW_POINTS -> "For få grensepunkter i flaten."
+            TopologyValidationError.RING_NOT_CLOSED -> "Flaten er ikke lukket."
+            else -> "Ukjent feil med feilkode [${topologyError.errorType} - ${topologyError.message}]"
+        }
 }
