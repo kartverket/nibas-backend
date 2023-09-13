@@ -1,4 +1,4 @@
-name: nibas-backend
+name: Release app
 on:
   push:
     branches: [ master ]
@@ -11,62 +11,15 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
     permissions:
       contents: write
       packages: write
       security-events: write
       actions: read
-
-    outputs:
-      new_tag: ${{ steps.tag_version.outputs.new_tag }}
-      image_url: ${{ steps.setOutput.outputs.image_url }}
-
-    steps:
-      - uses: szenius/set-timezone@v1.2
-        with:
-          timezoneLinux: "Europe/Oslo"
-      - uses: actions/checkout@v3
-      - name: Set up JDK
-        uses: actions/setup-java@v3
-        with:
-          java-version: "17"
-          distribution: "temurin"
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-      - name: Build with Gradle
-        run: ./gradlew build --info
-        env:
-          GH_USERNAME: ${{ secrets.PAT_USERNAME }}
-          PAT: ${{ secrets.PAT_SCOPE_READ_PACKAGE }}
-
-      - name: Bump version and push tag
-        id: tag_version
-        uses: mathieudutour/github-tag-action@v6.1
-        with:
-          github_token: ${{ github.token }}
-
-      - name: Login to Github Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ${{ env.registry }}
-          username: ${{ github.actor }}
-          password: ${{ github.token }}
-
-      - name: Build docker and push
-        id: build
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          push: true
-          tags: ${{ env.registry }}/${{ github.repository }}:${{ steps.tag_version.outputs.new_tag }} , ${{ env.registry }}/${{ github.repository }}:latest
-          build-args: |
-            project_version_arg=${{ steps.tag_version.outputs.new_tag }}
-
-      - name: Set output with build values
-        id: setOutput
-        run: |
-          echo "image_url=${{ env.registry }}/${{ github.repository }}@${{ steps.build.outputs.digest }}" >> $GITHUB_OUTPUT
+    uses: kartverket/nibas-backend/.github/workflows/build-app.yml
+    with:
+      deploy_ghcr: true
+    secrets: inherit
 
   pharos:
     name: Run Pharos security scan
@@ -89,7 +42,7 @@ jobs:
     uses: kartverket/smia-apps/.github/workflows/release-app.yml@main
     with:
       application: nibas-backend
-      version: ${{ needs.build.outputs.new_tag }}
+      version: ${{ needs.build.outputs.version }}
       deploy_dev: true
       deploy_test: true
       deploy_prod: true

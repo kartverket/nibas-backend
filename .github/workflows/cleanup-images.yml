@@ -1,4 +1,4 @@
-name: cleanup-github-container-images
+name: Cleanup old images
 on:
   workflow_dispatch:
   schedule:

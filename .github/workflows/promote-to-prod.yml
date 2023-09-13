@@ -1,4 +1,4 @@
-name: nibas-promote-to-prod
+name: Promote test to prod
 on: workflow_dispatch
 
 env:
