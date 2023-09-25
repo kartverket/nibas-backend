@@ -30,7 +30,7 @@ class StemmekretsImporter @Autowired constructor(private val kommunalKretsImport
         if (stemmekretsRepository.findLastByLokalid(sosiIdent?.getLokalId()!!) != null) {
             logger.info("Stemmekrets med lokalId ${sosiIdent.getLokalId()!!} er allerede importert, bruker eksisterende stemmekrets")
         } else {
-            val stemmekrets = kommunalKretsImporter.importer(forsteFlate) as Stemmekrets
+            var stemmekrets = kommunalKretsImporter.importer(forsteFlate) as Stemmekrets
             val stemmekretsId = forsteFlate.getStemmekretsId()
             stemmekrets.stemmekretsnummer = stemmekretsId?.getStemmekretsnummer()
             stemmekrets.stemmekretsnavn = stemmekretsId?.getStemmekretsnavn()
@@ -38,13 +38,8 @@ class StemmekretsImporter @Autowired constructor(private val kommunalKretsImport
             stemmekrets.tellekretsnavn = stemmekretsId?.getTellekretsnavn()
             stemmekrets.valgdistriktsnummer = stemmekretsId?.getValgdistriktsnummer()
 
-            stemmekrets.posisjon = SosiGeometryFunctions.sosiKoordinatToPoint(forsteFlate.getAlleSosiNordOest(), forsteFlate.koordsys)
-
-            // Setter kommunenummerId fra GeoNorge samt kobling til kommune
-            val kommunenummerId = kodelisteService.getKommunenummerIdByCodeValue(forsteFlate.getKommunenummer())
-            stemmekrets.kommune = kommuneRepository.findByKommunenummer(kommunenummerId)!!
-
             stemmekrets.setInfo(forsteFlate.getInformasjon())
+            stemmekrets.posisjon = SosiGeometryFunctions.sosiKoordinatToPoint(forsteFlate.getAlleSosiNordOest(), forsteFlate.koordsys)
 
             flater.forEachIndexed { skall_index, gkFlate ->
                 gkFlate.getSkallReferanser().forEachIndexed { rekkefoelge, ref ->
@@ -59,7 +54,12 @@ class StemmekretsImporter @Autowired constructor(private val kommunalKretsImport
             }
 
             stemmekrets.oppdaterOmraade()
-            stemmekretsRepository.save(stemmekrets)
+            stemmekrets = stemmekretsRepository.save(stemmekrets)
+
+            // Setter kommunenummerId fra GeoNorge samt kobling til kommune
+            val kommunenummerId = kodelisteService.getKommunenummerIdByCodeValue(forsteFlate.getKommunenummer())
+            val kommune = kommuneRepository.findByKommunenummer(kommunenummerId)!!
+            kommune.addStemmekrets(stemmekrets)
         }
     }
 }

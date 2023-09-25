@@ -2,7 +2,6 @@ package no.kartverket.nibas.service
 
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
-import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -18,9 +17,6 @@ class GrenseServiceIT : TestWithDbContainer() {
 
     @Autowired
     private lateinit var grenseService: GrenseService
-
-    @Autowired
-    private lateinit var grenseRepository: GrenseRepository
 
     private val november28In2022 = LocalDate.of(2022, Month.NOVEMBER, 28)
     private val jan1In2023 = LocalDate.of(2023, Month.JANUARY, 1)

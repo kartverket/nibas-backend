@@ -16,9 +16,6 @@ import jakarta.transaction.Transactional
 class EnhetsgrenseRepositoryTest : TestWithDbContainer() {
 
     @Autowired
-    private lateinit var grenseRepository: GrenseRepository
-
-    @Autowired
     private lateinit var enhetsGrenseRepository: EnhetsGrenseRepository
 
     private val october1In2022 = LocalDate.of(2022, Month.OCTOBER, 1)
@@ -48,7 +45,7 @@ class EnhetsgrenseRepositoryTest : TestWithDbContainer() {
         val grunnkrets2 = saveGrunnkrets(id = "102", lokalid = grunnkretsLokalid, grunnkretsnummer = grunnkrnr, gyldigFra = december1In2022, gyldigTil = jan1In2024, grenser = listOf(grense1))
         val grunnkrets3 = saveGrunnkrets(id = "103", lokalid = grunnkretsLokalid, grunnkretsnummer = grunnkrnr, gyldigFra = jan1In2024, grenser = listOf(grense1))
 
-        saveKommune(id = "123", lokalid = Lokalid("750"), kommunenummer = kommunenr, grunnkretser = listOf(grunnkrets1, grunnkrets2, grunnkrets3))
+        saveKommuneOgUnikLokalid(id = "123", lokalid = "750", kommunenummer = kommunenr, grunnkretser = listOf(grunnkrets1, grunnkrets2, grunnkrets3))
         grenseRepository.flush()
 
         val rows = enhetsGrenseRepository.hentGrenserMedRiktigRetning(kommunenr, tillatteGrensetyperKommune, jan1In2023)

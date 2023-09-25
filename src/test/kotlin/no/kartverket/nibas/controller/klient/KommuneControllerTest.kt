@@ -98,12 +98,11 @@ class KommuneControllerTest : NibasMvcTest() {
         whenever(kommuneService.hentKommunesGrunnkretser(any(Identifikator::class.java))).thenReturn(listOf(grunnkrets))
         whenever(grunnkretsService.hentAntallGyldigeVersjonerFramITidFor(any(Identifikator::class.java))).thenReturn(1)
 
-        val november1In2022 = LocalDate.of(2022, Month.NOVEMBER, 1)
-        get("/v1/kommuner/1/grunnkretser?gyldighetsdato=${formattedDateString(november1In2022)}",
+        get("/v1/kommuner/1/grunnkretser?gyldighetsdato=${formattedDateString(LocalDate.now())}",
             responseAsserts = MockResponseAsserts(
                 expectedResponseObject = listOf(
                     GrunnkretsRef(
-                        id = ObjektIdentifikator(lokalid = Lokalid("123"), gyldighetsdato = november1In2022),
+                        id = ObjektIdentifikator(lokalid = Lokalid("123"), gyldighetsdato = LocalDate.now()),
                         navn = "Voi",
                         grunnkretsnummer = "8989",
                         href = href,

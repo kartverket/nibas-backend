@@ -17,7 +17,6 @@ import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.NasjonRepository
 import no.kartverket.nibas.repository.REPOSITORY_EXTENSIONS_FILEPATH
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
-import no.kartverket.nibas.service.NasjonService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -114,7 +113,7 @@ class NasjonServiceTest {
 
         nasjonService.oppdaterNasjon(lokalid, oppdatertNasjon)
 
-        val forventetNavnToSave = eksisterende.administrativenhetnavn.first()
+        val forventetNavnToSave = eksisterende.nasjonLokalid.administrativenhetnavn.first()
         forventetNavnToSave.navn = navn
 
         verify(administrativenhetnavnRepository).save(forventetNavnToSave)

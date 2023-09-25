@@ -1,5 +1,6 @@
 package no.kartverket.nibas.testcontainer
 
+import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.builders.FylkeBuilder
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
@@ -7,17 +8,24 @@ import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.builders.NasjonBuilder
 import no.kartverket.nibas.builders.StemmekretsBuilder
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.domain.Administrativenhetnavn
 import no.kartverket.nibas.domain.Fylke
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
+import no.kartverket.nibas.domain.Nasjon
+import no.kartverket.nibas.domain.Spraakkode
 import no.kartverket.nibas.domain.Stemmekrets
+import no.kartverket.nibas.domain.UnikLokalid
+import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.FylkeRepository
 import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.NasjonRepository
 import no.kartverket.nibas.repository.StemmekretsRepository
+import no.kartverket.nibas.repository.UnikLokalidRepository
+import no.kartverket.nibas.sporing.Gyldighet
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment
@@ -27,27 +35,34 @@ import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.utility.DockerImageName
 import java.time.LocalDate
 import java.time.Month
+import java.util.*
 
 @SpringBootTest(webEnvironment = WebEnvironment.MOCK)
 class TestWithDbContainer {
 
     @Autowired
-    private lateinit var nasjonRepository: NasjonRepository
+    lateinit var unikLokalidRepository: UnikLokalidRepository
 
     @Autowired
-    private lateinit var fylkeRepository: FylkeRepository
+    lateinit var nasjonRepository: NasjonRepository
 
     @Autowired
-    private lateinit var kommuneRepository: KommuneRepository
+    lateinit var fylkeRepository: FylkeRepository
 
     @Autowired
-    private lateinit var grunnkretsRepository: GrunnkretsRepository
+    lateinit var kommuneRepository: KommuneRepository
 
     @Autowired
-    private lateinit var stemmekretsRepository: StemmekretsRepository
+    lateinit var grunnkretsRepository: GrunnkretsRepository
 
     @Autowired
-    private lateinit var grenseRepository: GrenseRepository
+    lateinit var stemmekretsRepository: StemmekretsRepository
+
+    @Autowired
+    lateinit var grenseRepository: GrenseRepository
+
+    @Autowired
+    lateinit var administrativenhetnavnRepository: AdministrativenhetnavnRepository
 
     companion object dbContainer : PostgreSQLContainer<dbContainer>(
         DockerImageName.parse("postgis/postgis:14-3.2-alpine").asCompatibleSubstituteFor("postgres")
@@ -70,83 +85,176 @@ class TestWithDbContainer {
     }
 
     fun saveNasjon(id: String = "nasjon-9000",
-                   lokalid: Lokalid = Lokalid("nasjon-fb07-4277-ad95-63c32c1370d0"),
+                   unikLokalid: UnikLokalid = UnikLokalid("nasjon-fb07-4277-ad95-63c32c1370d0", Flatetype.NASJON),
                    gyldigFra: LocalDate = LocalDate.of(2022, Month.OCTOBER, 1),
                    gyldigTil: LocalDate? = null,
                    fylker: List<Fylke> = emptyList(),
-                   opphav: String = "Eidsvoll") {
+                   administrativenhetnavn: List<Administrativenhetnavn> = emptyList(),
+                   opphav: String = "Eidsvoll"): Nasjon {
 
         val nasjon = NasjonBuilder(
             id = id,
-            lokalId = lokalid,
-            fylker = fylker,
+            unikLokalid = unikLokalid,
             gyldigFra = gyldigFra,
             gyldigTil = gyldigTil,
             opphav = opphav)
-            .buildWithoutAdministrativenhetnavn()
+            .buildUtenUnikLokalidOgTilknytninger()
 
-        nasjonRepository.save(nasjon)
+        val save = nasjonRepository.save(nasjon)
+        save.addNasjonTilUnikLokalid(unikLokalid)
+
+        fylker.forEach { save.addFylke(it) }
+        administrativenhetnavn.forEach { save.addAdministrativenhetNavn(it) }
+
+        return save
     }
 
-    fun saveFylke(id: String = "fylkeEnKommune-9000",
-                  lokalid: Lokalid = Lokalid("fylkeEnKommune-fb07-4277-ad95-63c32c1370d0"),
-                  fylkesnummer: String = "89",
-                  gyldigFra: LocalDate = LocalDate.of(2022, Month.OCTOBER, 1),
-                  gyldigTil: LocalDate? = null,
-                  kommune: Kommune) {
+    fun saveNasjonOgUnikLokalid(id: String = "nasjon-9000",
+                                lokalid: String = "nasjon-fb07-4277-ad95-63c32c1370d0",
+                                gyldigFra: LocalDate = LocalDate.of(2022, Month.OCTOBER, 1),
+                                gyldigTil: LocalDate? = null,
+                                fylker: List<Fylke> = emptyList(),
+                                administrativenhetnavn: List<Administrativenhetnavn> = emptyList(),
+                                opphav: String = "Eidsvoll"): Nasjon {
 
-        val fylke = FylkeBuilder(
+        val unikLokalid = saveUnikLokalid(lokalid, Flatetype.NASJON)
+
+        return saveNasjon(
             id = id,
-            lokalId = lokalid,
+            unikLokalid = unikLokalid,
             gyldigFra = gyldigFra,
             gyldigTil = gyldigTil,
-            kommuner = listOf(kommune),
-            fylkesnummer = fylkesnummer)
-            .buildWithoutAdministrativenhetnavn()
-
-        fylkeRepository.save(fylke)
+            fylker = fylker,
+            administrativenhetnavn = administrativenhetnavn,
+            opphav = opphav
+        )
     }
 
-    fun saveFylke(id: String = "fylkeFlereKommuner-9000",
-                  lokalid: Lokalid = Lokalid("fylkeFlereKommuner-fb07-4277-ad95-63c32c1370d0"),
+    fun saveUnikLokalid(
+        lokalid: String = UUID.randomUUID().toString(),
+        flatetype: Flatetype
+    ): UnikLokalid {
+        val unikLokalid = UnikLokalid(lokalid, flatetype)
+        return unikLokalidRepository.save(unikLokalid)
+    }
+
+    fun saveAdministrativenhetnavn(
+        lokalid: String = UUID.randomUUID().toString(),
+        navn: String,
+        spraakid: String,
+        rekkefoelge: Int,
+        gyldigFra: LocalDate = LocalDate.of(2022, Month.OCTOBER, 1),
+        gyldigTil: LocalDate? = null
+    ): Administrativenhetnavn {
+        val administrativenhetnavn = Administrativenhetnavn(lokalid = lokalid)
+        administrativenhetnavn.navn = navn
+        val spraakkode = Spraakkode()
+        spraakkode.id = spraakid
+        spraakkode.description = spraakid
+        administrativenhetnavn.spraak = spraakkode
+        administrativenhetnavn.rekkefoelge = rekkefoelge
+        administrativenhetnavn.gyldighet = Gyldighet(gyldigFra, gyldigTil)
+
+        return administrativenhetnavnRepository.save(administrativenhetnavn)
+    }
+
+    fun saveFylke(id: String = "fylke-9000",
+                  unikLokalid: UnikLokalid = UnikLokalid("fylke-fb07-4277-ad95-63c32c1370d0", Flatetype.FYLKE),
                   fylkesnummer: String = "89",
                   gyldigFra: LocalDate = LocalDate.of(2022, Month.OCTOBER, 1),
                   gyldigTil: LocalDate? = null,
-                  kommuner: List<Kommune> = emptyList()): Fylke {
+                  kommuner: List<Kommune> = emptyList(),
+                  administrativenhetnavn: List<Administrativenhetnavn> = emptyList()): Fylke {
 
         val fylke = FylkeBuilder(
             id = id,
-            lokalId = lokalid,
+            unikLokalid = unikLokalid,
+            gyldigFra = gyldigFra,
+            gyldigTil = gyldigTil,
+            fylkesnummer = fylkesnummer)
+            .buildUtenUnikLokalidOgTilknytninger()
+
+        val save = fylkeRepository.save(fylke)
+        save.addFylkeTilUnikLokalid(unikLokalid)
+
+        kommuner.forEach { save.addKommune(it) }
+        administrativenhetnavn.forEach { save.addAdministrativenhetNavn(it) }
+
+        return save
+    }
+
+    fun saveFylkeOgUnikLokalid(id: String = "fylke-9000",
+                               lokalid: String = "fylke-fb07-4277-ad95-63c32c1370d0",
+                               fylkesnummer: String = "89",
+                               gyldigFra: LocalDate = LocalDate.of(2022, Month.OCTOBER, 1),
+                               gyldigTil: LocalDate? = null,
+                               kommuner: List<Kommune> = emptyList(),
+                               administrativenhetnavn: List<Administrativenhetnavn> = emptyList()): Fylke {
+
+        val unikLokalid = saveUnikLokalid(lokalid, Flatetype.FYLKE)
+
+        return saveFylke(
+            id = id,
+            unikLokalid = unikLokalid,
+            fylkesnummer = fylkesnummer,
             gyldigFra = gyldigFra,
             gyldigTil = gyldigTil,
             kommuner = kommuner,
-            fylkesnummer = fylkesnummer)
-            .buildWithoutAdministrativenhetnavn()
-
-        return fylkeRepository.save(fylke)
+            administrativenhetnavn = administrativenhetnavn
+        )
     }
 
     // Kommunenummer er egentlig en uuid, forenklet med en firesifret verdi
     fun saveKommune(
         id: String = "kommune-9000",
-        lokalid: Lokalid = Lokalid("abc-123"),
+        unikLokalid: UnikLokalid = UnikLokalid("abc-123", Flatetype.KOMMUNE),
         kommunenummer: String = "0301",
         gyldigFra: LocalDate = LocalDate.of(2022, Month.OCTOBER, 1),
         gyldigTil: LocalDate? = null,
+        administrativenhetnavn: List<Administrativenhetnavn> = emptyList(),
         grunnkretser: List<Grunnkrets> = emptyList(),
         stemmekretser: List<Stemmekrets> = emptyList()): Kommune {
 
         val kommune = KommuneBuilder(
             id = id,
-            lokalId = lokalid,
+            unikLokalid = unikLokalid,
             gyldigFra = gyldigFra,
             gyldigTil = gyldigTil,
+            kommunenummer = kommunenummer
+        ).buildUtenUnikLokalidOgTilkntninger()
+
+        val save = kommuneRepository.save(kommune)
+        save.addKommuneTilUnikLokalid(unikLokalid)
+
+        grunnkretser.forEach { save.addGrunnkrets(it) }
+        stemmekretser.forEach { save.addStemmekrets(it) }
+        administrativenhetnavn.forEach { save.addAdministrativenhetNavn(it) }
+
+        return save
+    }
+
+    fun saveKommuneOgUnikLokalid(
+        id: String = "kommune-9000",
+        lokalid: String = "abc-123",
+        kommunenummer: String = "0301",
+        gyldigFra: LocalDate = LocalDate.of(2022, Month.OCTOBER, 1),
+        gyldigTil: LocalDate? = null,
+        administrativenhetnavn: List<Administrativenhetnavn> = emptyList(),
+        grunnkretser: List<Grunnkrets> = emptyList(),
+        stemmekretser: List<Stemmekrets> = emptyList()): Kommune {
+
+        val unikLokalid = saveUnikLokalid(lokalid = lokalid, flatetype = Flatetype.KOMMUNE)
+
+        return saveKommune(
+            id = id,
+            unikLokalid = unikLokalid,
             kommunenummer = kommunenummer,
+            gyldigFra = gyldigFra,
+            gyldigTil = gyldigTil,
+            administrativenhetnavn = administrativenhetnavn,
             grunnkretser = grunnkretser,
             stemmekretser = stemmekretser
-        ).buildWithoutAdministrativenhetnavn()
-
-        return kommuneRepository.save(kommune)
+        )
     }
 
     fun saveGrunnkrets(id: String = "grunnkrets-9000",
@@ -167,7 +275,7 @@ class TestWithDbContainer {
             grunnkretsnavn = grunnkretsnavn,
             kommune = kommune,
             grenser = grenser)
-            .build()
+            .buildUtenKommune()
 
         return grunnkretsRepository.save(grunnkrets)
     }

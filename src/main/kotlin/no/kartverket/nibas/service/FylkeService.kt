@@ -39,7 +39,7 @@ class FylkeService(
 
             // Finner basert på språkkode, og oppdaterer den
             oppdatertFylke.administrativenhetnavn.forEach { navn ->
-                gammel.administrativenhetnavn.first { it.spraak?.id == navn.spraak }.let { gammeltNavn ->
+                gammel.fylkeLokalid.administrativenhetnavn.first { it.spraak?.id == navn.spraak }.let { gammeltNavn ->
                     verifiserOptimistiskLaas(navn.version, gammeltNavn)?.let { throw OptimistiskLaasException(it) }
                     gammeltNavn.navn = navn.navn
                     administrativenhetnavnRepository.save(gammeltNavn)

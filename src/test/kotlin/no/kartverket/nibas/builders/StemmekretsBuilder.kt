@@ -45,9 +45,7 @@ class StemmekretsBuilder(
 
         stemmekrets.auditInfo.endretdato = endretdato
 
-        if (kommune != null) {
-            stemmekrets.kommune = kommune!!
-        }
+        kommune?.addStemmekrets(stemmekrets)
 
         stemmekrets.auditInfo.endretdato = endretdato
         stemmekrets.gyldighet = Gyldighet(gyldigFra, gyldigTil)

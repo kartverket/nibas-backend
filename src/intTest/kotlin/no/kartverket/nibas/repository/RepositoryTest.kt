@@ -27,16 +27,10 @@ import org.mockito.Mockito.`when` as whenever
 class RepositoryTest : TestWithDbContainer() {
 
     @Autowired
-    private lateinit var grunnkretsRepository: GrunnkretsRepository
-
-    @Autowired
     private lateinit var utkastRepository: UtkastRepository
 
     @Autowired
     private lateinit var spraakkodeRepository: SpraakkodeRepository
-
-    @Autowired
-    private lateinit var grenseRepository: GrenseRepository
 
     // Later som nåværende dato er 8.10.2022
     private val currentDate = LocalDate.of(2022, Month.OCTOBER, 8)

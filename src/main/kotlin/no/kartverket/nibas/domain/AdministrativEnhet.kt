@@ -7,13 +7,13 @@ import no.kartverket.nibas.sporing.Laasbar
 import no.kartverket.nibas.sporing.Sporbar
 import org.locationtech.jts.geom.MultiPolygon
 import org.locationtech.jts.geom.Point
+import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.*
 import jakarta.persistence.Column
 import jakarta.persistence.Embedded
 import jakarta.persistence.Id
 import jakarta.persistence.MappedSuperclass
-import jakarta.persistence.OneToMany
 import jakarta.persistence.Version
 
 @MappedSuperclass
@@ -55,8 +55,5 @@ abstract class AdministrativEnhet(
     @Column(name = "foerstedigitaliseringsdato")
     override var foerstedigitaliseringsdato: ZonedDateTime = ZonedDateTime.now()
 
-    @jakarta.persistence.Transient
-    @OneToMany
-    var administrativenhetnavn: MutableSet<Administrativenhetnavn> = mutableSetOf()
-
+    fun getAdministrativenhetNavn(gyldighetsdato: LocalDate = LocalDate.now()): List<Administrativenhetnavn> = emptyList()
 }

@@ -1,14 +1,17 @@
 package no.kartverket.nibas.sosi.sosiimport
 
+import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.domain.Administrativenhetnavn
 import no.kartverket.nibas.domain.Fylke
 import no.kartverket.nibas.domain.FylkeInformasjon
+import no.kartverket.nibas.domain.UnikLokalid
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.FylkeInformasjonRepository
 import no.kartverket.nibas.repository.FylkeRepository
 import no.kartverket.nibas.repository.NasjonRepository
 import no.kartverket.nibas.repository.SpraakkodeRepository
+import no.kartverket.nibas.repository.UnikLokalidRepository
 import no.kartverket.nibas.sosi.model.SosiFlate
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
@@ -25,6 +28,7 @@ class FylkeImporter @Autowired constructor(
     private val fylkeInformasjonRepository: FylkeInformasjonRepository,
     private val administrativenhetnavnRepository: AdministrativenhetnavnRepository,
     private val spraakkodeRepository: SpraakkodeRepository,
+    private var unikLokalidRepository: UnikLokalidRepository,
     private val administrativEnhetImporter: AdministrativEnhetImporter
 ) {
 
@@ -37,15 +41,18 @@ class FylkeImporter @Autowired constructor(
             null -> {
                 var fylke = administrativEnhetImporter.importer(flate) as Fylke
 
-                fylke.fylkesnummer =
-                    kodelisteService.getFylkesnummerIdByCodeValue(
-                        flate.getFylkesnummer()
+                fylke.fylkesnummer = kodelisteService.getFylkesnummerIdByCodeValue(flate.getFylkesnummer()
                             ?: throw RuntimeException("Fylkesnummer ikke satt i modellen for fylke med flate-id $lokalid")
                     )
                 fylke.samiskforvaltningsomraade = flate.isSamiskForvaltningsomrade()
+                var unikLokalid = UnikLokalid(fylke.lokalid, Flatetype.FYLKE)
+                unikLokalid = unikLokalidRepository.save(unikLokalid)
 
-                fylke.nasjon = nasjonRepository.findAll().first()
                 fylke = fylkeRepository.save(fylke)
+                fylke.addFylkeTilUnikLokalid(unikLokalid)
+
+                val nasjon = nasjonRepository.findAll().first()
+                nasjon.addFylke(fylke)
 
                 if (flate.getInformasjon() != null) {
                     val fylkeInformasjon = FylkeInformasjon(fylke)
@@ -55,12 +62,12 @@ class FylkeImporter @Autowired constructor(
                 }
 
                 flate.getFylkesnavn().forEach { sosiFylkesnavn ->
-                    val fylkesnavn = Administrativenhetnavn()
+                    var fylkesnavn = Administrativenhetnavn()
                     fylkesnavn.navn = sosiFylkesnavn.getNavn()
                     fylkesnavn.spraak = sosiFylkesnavn.getSprak()?.let { spraakkodeRepository.findByIdOrNull(it) }
                     fylkesnavn.rekkefoelge = sosiFylkesnavn.getRekkefolge()
-                    fylkesnavn.fylkeFk = fylke
-                    administrativenhetnavnRepository.save(fylkesnavn)
+                    fylkesnavn = administrativenhetnavnRepository.save(fylkesnavn)
+                    fylke.addAdministrativenhetNavn(fylkesnavn)
                 }
             }
             else -> {}

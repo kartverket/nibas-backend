@@ -30,7 +30,9 @@ class GrunnkretsController(
     override fun hentGrunnkrets(lokalid: String, gyldighetsdato: LocalDate?): GrunnkretsResponse {
         val identifikator = createIdentifikator(lokalid, gyldighetsdato)
         return grunnkretsService.hentGrunnkrets(identifikator)?.let {
-            it.toGrunnkretsResponse(identifikator, kodelisteService.createKommunenummerFromUUID(it.kommune.kommunenummer))
+            it.toGrunnkretsResponse(identifikator,
+                kommunenummer = it.getKommune(it.gyldighet.gyldigFra)?.let { kodelisteService.createKommunenummerFromUUID(it.kommunenummer) }
+                    ?: Kommunenummer(id = "Ukjent", kodeverdi = "Ukjent"))
         } ?: throw NotFoundException("Grunnkrets $identifikator ble ikke funnet.")
     }
 
@@ -55,7 +57,8 @@ class GrunnkretsController(
                     Identifikator(
                         lokalid = Lokalid(it.lokalid),
                         gyldighetsdato = it.gyldighet.gyldigFra),
-                    kodelisteService.createKommunenummerFromUUID(it.kommune.kommunenummer)
+                    kommunenummer = it.getKommune(it.gyldighet.gyldigFra)?.let { kodelisteService.createKommunenummerFromUUID(it.kommunenummer) }
+                        ?: Kommunenummer(id = "Ukjent", kodeverdi = "Ukjent")
                 )
             }
     }

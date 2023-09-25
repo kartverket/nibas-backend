@@ -13,10 +13,12 @@ import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.domain.Spraakkode
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.Typeendring
+import no.kartverket.nibas.domain.UnikLokalid
 import no.kartverket.nibas.domain.utkast.Utkast
 import no.kartverket.nibas.domain.utkast.UtkastStatus
 import no.kartverket.nibas.sporing.Laasbar
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.NoRepositoryBean
 
@@ -42,6 +44,7 @@ interface DokumentasjonsreferanseRepository : CrudRepository<Dokumentasjonsrefer
 interface DokumentasjonsreferanseDokumentlinkRepository : CrudRepository<DokumentasjonsreferanseDokumentlink, String>
 interface SpraakkodeRepository : CrudRepository<Spraakkode, String>
 interface AdministrativenhetnavnRepository : CrudRepository<Administrativenhetnavn, String>
+interface UnikLokalidRepository : CrudRepositoryWithLokalIdFinder<UnikLokalid, String>
 interface NasjonRepository : CrudRepositoryWithLokalIdFinder<Nasjon, String>
 interface FylkeInformasjonRepository : CrudRepository<FylkeInformasjon, String>
 interface FylkeRepository : CrudRepositoryWithLokalIdFinder<Fylke, String> {
@@ -65,7 +68,8 @@ interface StemmekretsRepository : CrudRepositoryWithLokalIdFinder<Stemmekrets, S
      * Sender inn en kolleksjon med stemmekretsnumre, for å kunne søke med en og flere ledende nuller
      * Stemmekretsnumrene 5, 05, 005 og 0005 skal tolkes som like
      */
-    fun findAllByStemmekretsnummerInAndLokalidIsNotAndKommune_Lokalid(stemmekretsnummer: Set<String>, lokalid: String, kommune_lokalid: String): List<Stemmekrets>
+    @Query(value = "SELECT * from stemmekrets s where s.stemmekretsnummer in (:stemmekretsnummer) and s.lokalid != (:lokalid) and s.kommunelokalid = (:kommune_lokalid) ", nativeQuery = true)
+    fun findAllByStemmekretsnummerInAndLokalidIsNotAndKommuneLokalid(stemmekretsnummer: Set<String>, lokalid: String, kommune_lokalid: String): List<Stemmekrets>
 }
 
 interface GrenseRepository : JpaRepositoryWithLokalIdFinder<Grense, String>

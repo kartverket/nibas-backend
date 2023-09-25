@@ -21,9 +21,7 @@ import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.kodelister.KodelisteService
-import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.OptimistiskLaasException
-import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import no.kartverket.nibas.utils.GrenseHelper
 import org.assertj.core.api.Assertions
@@ -51,12 +49,6 @@ class StemmekretsServiceIT : TestWithDbContainer() {
     private lateinit var stemmekretsService: StemmekretsService
 
     @Autowired
-    private lateinit var stemmekretsRepository: StemmekretsRepository
-
-    @Autowired
-    private lateinit var grenseRepository: GrenseRepository
-
-    @Autowired
     private lateinit var grenseService: GrenseService
 
     @MockBean
@@ -79,7 +71,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
     @Test
     fun `hent eksisterende stemmekrets med dagens dato`() {
         val stemmekrets = saveStemmekrets(lokalid = stemmekretsLokalid)
-        saveKommune(stemmekretser = listOf(stemmekrets))
+        saveKommuneOgUnikLokalid(stemmekretser = listOf(stemmekrets))
 
         assertThat(stemmekretsRepository.findAllByLokalid(stemmekretsLokalid.value).size).isEqualTo(1)
 
@@ -92,27 +84,28 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         saveStemmekretsMed1FramtidigVersjon(stemmekretsLokalid)
         assertThat(stemmekretsRepository.findAllByLokalid(stemmekretsLokalid.value).size).isEqualTo(2)
 
-        val framtidigStemmekrets = stemmekretsService.hentStemmekrets(Identifikator(stemmekretsLokalid, jan1In2023))
-        assertThat(framtidigStemmekrets).isNotNull
-        assertThat(framtidigStemmekrets!!.stemmekretsnavn).isEqualTo("Nedre Singsaker")
+        val framtidigStemmekrets = stemmekretsService.hentStemmekrets(Identifikator(stemmekretsLokalid, jan1In2023))!!
+        assertThat(framtidigStemmekrets.stemmekretsnavn).isEqualTo("Nedre Singsaker")
     }
 
     @Test
     fun `finn stemmekrets med samme stemmekretsnummer og ulik lokalid`() {
         saveStemmekretsMed1FramtidigVersjon(stemmekretsLokalid)
+        grenseRepository.flush()
 
-        val stemmekrets = stemmekretsService.hentStemmekrets(Identifikator(stemmekretsLokalid, jan1In2023))
-        val muligeStemmekretsnumre = lagMuligeStemmekretsnumre(stemmekrets!!.stemmekretsnummer!!)
+        val stemmekrets = stemmekretsService.hentStemmekrets(Identifikator(stemmekretsLokalid, jan1In2023))!!
+        val muligeStemmekretsnumre = lagMuligeStemmekretsnumre(stemmekrets.stemmekretsnummer!!)
 
         //Uten å ta hensyn til gyldighet og med vilkårlig lokalid skal det finnes to stemmekretser med gitt stemmekretsnummer
-        var stemmekretser = stemmekretsRepository.findAllByStemmekretsnummerInAndLokalidIsNotAndKommune_Lokalid(
-            muligeStemmekretsnumre, "xx", stemmekrets.kommune.lokalid)
+        val kommune = stemmekrets.getKommune(jan1In2023)!!
+        var stemmekretser = stemmekretsRepository.findAllByStemmekretsnummerInAndLokalidIsNotAndKommuneLokalid(
+            muligeStemmekretsnumre, "xx", kommune.lokalid)
         assertThat(stemmekretser).hasSize(2)
 
         //Uten å ta hensyn til gyldighet og med gitt lokalid som ikke skal finnes skal det ikke finnes noen stemmekretser med gitt stemmekretsnummer
         //Dvs det finnes ikke noen ANDRE stemmekretser enn den som skal valideres med gitt stemmekretsnummer og kommune
-        stemmekretser = stemmekretsRepository.findAllByStemmekretsnummerInAndLokalidIsNotAndKommune_Lokalid(
-            muligeStemmekretsnumre, stemmekrets.lokalid, stemmekrets.kommune.lokalid)
+        stemmekretser = stemmekretsRepository.findAllByStemmekretsnummerInAndLokalidIsNotAndKommuneLokalid(
+            muligeStemmekretsnumre, stemmekrets.lokalid, kommune.lokalid)
         assertThat(stemmekretser).isEmpty()
     }
 
@@ -134,7 +127,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         val stemmekrets2 = saveStemmekrets(id = "302", lokalid = stemmekretsLokalid, gyldigFra = december1In2022, gyldigTil = jan1In2024, grenser = listOf(grense1))
         val stemmekrets3 = saveStemmekrets(id = "303", lokalid = stemmekretsLokalid, gyldigFra = jan1In2024, grenser = listOf(grense1))
 
-        saveKommune(stemmekretser = listOf(stemmekrets1, stemmekrets2, stemmekrets3))
+        saveKommuneOgUnikLokalid(stemmekretser = listOf(stemmekrets1, stemmekrets2, stemmekrets3))
 
         val grensekoblinger = stemmekretsService.hentGrenserForStemmekrets(identifikatorFor1Jan23)
 
@@ -178,9 +171,10 @@ class StemmekretsServiceIT : TestWithDbContainer() {
             grenser = lagredeGrenserForKrets
         )
 
-        saveKommune(kommunenummer = "4227", stemmekretser = listOf(stemmekrets))
+        saveKommuneOgUnikLokalid(kommunenummer = "4227", stemmekretser = listOf(stemmekrets))
+
         val now = LocalDate.now()
-        val opprinneligStemmekrets = stemmekretsService.hentStemmekrets(identifikator)
+        val opprinneligStemmekrets = stemmekretsService.hentStemmekrets(identifikator)!!
 
         stemmekretsService.oppdaterStemmekrets(
             lokalId = identifikator.lokalid,
@@ -189,10 +183,10 @@ class StemmekretsServiceIT : TestWithDbContainer() {
             endringstype = Endringstype.RETTING
         )
 
-        val opprinneligStemmekretsEtter = stemmekretsService.hentStemmekrets(identifikator)
-        val stemmekretsEtter = stemmekretsService.hentStemmekrets(Identifikator(identifikator.lokalid))
+        val opprinneligStemmekretsEtter = stemmekretsService.hentStemmekrets(identifikator)!!
+        val stemmekretsEtter = stemmekretsService.hentStemmekrets(Identifikator(identifikator.lokalid))!!
 
-        assertThat(stemmekretsEtter!!.stemmekretsnummer).isNotEqualTo(stemmekrets.stemmekretsnummer)
+        assertThat(stemmekretsEtter.stemmekretsnummer).isNotEqualTo(stemmekrets.stemmekretsnummer)
             .isEqualTo(stemmekretsRequest.stemmekretsnummer)
         assertThat(stemmekretsEtter.stemmekretsnavn).isNotEqualTo(stemmekrets.stemmekretsnavn)
             .isEqualTo(stemmekretsRequest.stemmekretsnavn)
@@ -200,10 +194,10 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         assertThat(stemmekretsEtter.posisjon).isEqualTo(stemmekrets.posisjon)
         assertThat(stemmekretsEtter.gyldighet.gyldigFra).isEqualTo(now)
 
-        assertThat(opprinneligStemmekretsEtter!!.gyldighet.gyldigFra).isEqualTo(october1In2022)
+        assertThat(opprinneligStemmekretsEtter.gyldighet.gyldigFra).isEqualTo(october1In2022)
         assertThat(opprinneligStemmekretsEtter.gyldighet.gyldigTil).isEqualTo(now)
 
-        val grenseObjIdsForOpprinneligStemmekrets = opprinneligStemmekrets!!.grenser.map { it.grense.id }
+        val grenseObjIdsForOpprinneligStemmekrets = opprinneligStemmekrets.grenser.map { it.grense.id }
         val grenseObjIdsForOpprinneligStemmekretsEtter = opprinneligStemmekretsEtter.grenser.map { it.grense.id }
         val grenseObjIdsForNyStemmekrets = stemmekretsEtter.grenser.map { it.grense.id }
 
@@ -322,24 +316,24 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         val deltGrenseLokalid = "grenseDeltLokalid"
         val (vestreKrets, oestreKrets) = saveNaboStemmekretser(gyldigFra = opprinneligDato)
 
-        val deltGrense = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), opprinneligDato))
-        assertThat(deltGrense!!.stemmekretser).hasSize(2)
+        val deltGrense = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), opprinneligDato))!!
+        assertThat(deltGrense.stemmekretser).hasSize(2)
         assertThat(deltGrense.stemmekretser.map { it.stemmekrets.id }).containsExactlyInAnyOrder(vestreKrets.id, oestreKrets.id)
 
         val flaterSomErEndret = utfoerGrenseendring(kretsSomSkalHaGrenseendring = vestreKrets, opprinneligDato = opprinneligDato, endringsdato = endringsdato)
 
-        val opprinneligVestreKrets = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(vestreKrets.lokalid), opprinneligDato))
-        val opprinneligOestreKrets = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(oestreKrets.lokalid), opprinneligDato))
-        assertThat(opprinneligVestreKrets!!.gyldighet.gyldigTil).isEqualTo(endringsdato)
-        assertThat(opprinneligOestreKrets!!.gyldighet.gyldigTil).isEqualTo(endringsdato)
+        val opprinneligVestreKrets = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(vestreKrets.lokalid), opprinneligDato))!!
+        val opprinneligOestreKrets = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(oestreKrets.lokalid), opprinneligDato))!!
+        assertThat(opprinneligVestreKrets.gyldighet.gyldigTil).isEqualTo(endringsdato)
+        assertThat(opprinneligOestreKrets.gyldighet.gyldigTil).isEqualTo(endringsdato)
 
-        val vestreKretsEtterLagring = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(vestreKrets.lokalid), endringsdato))
-        val oestreKretsEtterLagring = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(oestreKrets.lokalid), endringsdato))
-        assertOmradeGyldighetVersjon(vestreKretsEtterLagring!!, oestreKretsEtterLagring!!, opprinneligVestreKrets, opprinneligOestreKrets)
+        val vestreKretsEtterLagring = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(vestreKrets.lokalid), endringsdato))!!
+        val oestreKretsEtterLagring = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(oestreKrets.lokalid), endringsdato))!!
+        assertOmradeGyldighetVersjon(vestreKretsEtterLagring, oestreKretsEtterLagring, opprinneligVestreKrets, opprinneligOestreKrets)
         assertThat(flaterSomErEndret).containsExactlyInAnyOrder(vestreKretsEtterLagring, oestreKretsEtterLagring)
 
-        val opprinneligDeltGrense = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), opprinneligDato))
-        assertThat(opprinneligDeltGrense!!.stemmekretser).hasSize(2)
+        val opprinneligDeltGrense = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), opprinneligDato))!!
+        assertThat(opprinneligDeltGrense.stemmekretser).hasSize(2)
         assertThat(opprinneligDeltGrense.stemmekretser.map { it.stemmekrets.id })
             .containsExactlyInAnyOrder(opprinneligVestreKrets.id, opprinneligOestreKrets.id)
 
@@ -354,26 +348,26 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         val deltGrenseLokalid = "grenseDeltLokalid"
         val (vestreKrets, oestreKrets) = saveNaboStemmekretser(gyldigFra = opprinneligDato)
 
-        val deltGrense = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), opprinneligDato))
-        assertThat(deltGrense!!.stemmekretser).hasSize(2)
+        val deltGrense = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), opprinneligDato))!!
+        assertThat(deltGrense.stemmekretser).hasSize(2)
         assertThat(deltGrense.stemmekretser.map { it.stemmekrets.id }).containsExactlyInAnyOrder(vestreKrets.id, oestreKrets.id)
 
         val featureForAnnenGrense = lagFeatureEndreYkoordinat(vestreKrets, opprinneligDato, endringsdato, "grenseNordVestLokalid")
         val flaterSomErEndret = utfoerGrenseendring(kretsSomSkalHaGrenseendring = vestreKrets, opprinneligDato = opprinneligDato,
             endringsdato = endringsdato, featureForAnnenGrense)
 
-        val opprinneligVestreKrets = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(vestreKrets.lokalid), opprinneligDato))
-        val opprinneligOestreKrets = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(oestreKrets.lokalid), opprinneligDato))
-        assertThat(opprinneligVestreKrets!!.gyldighet.gyldigTil).isEqualTo(endringsdato)
-        assertThat(opprinneligOestreKrets!!.gyldighet.gyldigTil).isEqualTo(endringsdato)
+        val opprinneligVestreKrets = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(vestreKrets.lokalid), opprinneligDato))!!
+        val opprinneligOestreKrets = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(oestreKrets.lokalid), opprinneligDato))!!
+        assertThat(opprinneligVestreKrets.gyldighet.gyldigTil).isEqualTo(endringsdato)
+        assertThat(opprinneligOestreKrets.gyldighet.gyldigTil).isEqualTo(endringsdato)
 
-        val vestreKretsEtterLagring = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(vestreKrets.lokalid), endringsdato))
-        val oestreKretsEtterLagring = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(oestreKrets.lokalid), endringsdato))
-        assertOmradeGyldighetVersjon(vestreKretsEtterLagring!!, oestreKretsEtterLagring!!, opprinneligVestreKrets, opprinneligOestreKrets)
+        val vestreKretsEtterLagring = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(vestreKrets.lokalid), endringsdato))!!
+        val oestreKretsEtterLagring = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(oestreKrets.lokalid), endringsdato))!!
+        assertOmradeGyldighetVersjon(vestreKretsEtterLagring, oestreKretsEtterLagring, opprinneligVestreKrets, opprinneligOestreKrets)
         assertThat(flaterSomErEndret).containsExactlyInAnyOrder(vestreKretsEtterLagring, oestreKretsEtterLagring)
 
-        val opprinneligDeltGrense = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), opprinneligDato))
-        assertThat(opprinneligDeltGrense!!.stemmekretser).hasSize(2)
+        val opprinneligDeltGrense = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), opprinneligDato))!!
+        assertThat(opprinneligDeltGrense.stemmekretser).hasSize(2)
         assertThat(opprinneligDeltGrense.stemmekretser.map { it.stemmekrets.id })
             .containsExactlyInAnyOrder(opprinneligVestreKrets.id, opprinneligOestreKrets.id)
 
@@ -391,26 +385,26 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         val deltGrenseLokalid = "grenseDeltLokalid"
         val (vestreKrets, oestreKrets) = saveNaboStemmekretser(gyldigFra = opprinneligDato)
 
-        val deltGrense = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), opprinneligDato))
-        assertThat(deltGrense!!.stemmekretser).hasSize(2)
+        val deltGrense = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), opprinneligDato))!!
+        assertThat(deltGrense.stemmekretser).hasSize(2)
         assertThat(deltGrense.stemmekretser.map { it.stemmekrets.id }).containsExactlyInAnyOrder(vestreKrets.id, oestreKrets.id)
 
         val featureForAnnenGrense = lagFeatureEndreYkoordinat(oestreKrets, opprinneligDato, endringsdato, "grenseNordØstLokalid")
         val flaterSomErEndret = utfoerGrenseendring(kretsSomSkalHaGrenseendring = vestreKrets, opprinneligDato = opprinneligDato,
             endringsdato = endringsdato, featureForAnnenGrense)
 
-        val opprinneligVestreKrets = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(vestreKrets.lokalid), opprinneligDato))
-        val opprinneligOestreKrets = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(oestreKrets.lokalid), opprinneligDato))
-        assertThat(opprinneligVestreKrets!!.gyldighet.gyldigTil).isEqualTo(endringsdato)
-        assertThat(opprinneligOestreKrets!!.gyldighet.gyldigTil).isEqualTo(endringsdato)
+        val opprinneligVestreKrets = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(vestreKrets.lokalid), opprinneligDato))!!
+        val opprinneligOestreKrets = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(oestreKrets.lokalid), opprinneligDato))!!
+        assertThat(opprinneligVestreKrets.gyldighet.gyldigTil).isEqualTo(endringsdato)
+        assertThat(opprinneligOestreKrets.gyldighet.gyldigTil).isEqualTo(endringsdato)
 
-        val vestreKretsEtterLagring = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(vestreKrets.lokalid), endringsdato))
-        val oestreKretsEtterLagring = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(oestreKrets.lokalid), endringsdato))
-        assertOmradeGyldighetVersjon(vestreKretsEtterLagring!!, oestreKretsEtterLagring!!, opprinneligVestreKrets, opprinneligOestreKrets)
+        val vestreKretsEtterLagring = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(vestreKrets.lokalid), endringsdato))!!
+        val oestreKretsEtterLagring = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(oestreKrets.lokalid), endringsdato))!!
+        assertOmradeGyldighetVersjon(vestreKretsEtterLagring, oestreKretsEtterLagring, opprinneligVestreKrets, opprinneligOestreKrets)
         assertThat(flaterSomErEndret).containsExactlyInAnyOrder(vestreKretsEtterLagring, oestreKretsEtterLagring)
 
-        val opprinneligDeltGrense = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), opprinneligDato))
-        assertThat(opprinneligDeltGrense!!.stemmekretser).hasSize(2)
+        val opprinneligDeltGrense = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), opprinneligDato))!!
+        assertThat(opprinneligDeltGrense.stemmekretser).hasSize(2)
         assertThat(opprinneligDeltGrense.stemmekretser.map { it.stemmekrets.id })
             .containsExactlyInAnyOrder(opprinneligVestreKrets.id, opprinneligOestreKrets.id)
 
@@ -429,30 +423,30 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         val deltGrenseLokalid = "grenseDeltLokalid"
         val (vestreKrets, oestreKrets) = saveNaboStemmekretser(gyldigFra = opprinneligDato)
 
-        val vestreStemmekretsEtterOppdatering = utfoerMetadataoppdatering(kretsSomSkalOppdateres = vestreKrets, datoForOppdatering = datoForOppdatering)
+        val vestreStemmekretsEtterOppdatering = utfoerMetadataoppdatering(kretsSomSkalOppdateres = vestreKrets, datoForOppdatering = datoForOppdatering)!!
 
-        val deltGrense = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), datoForOppdatering))
-        assertThat(deltGrense!!.stemmekretser).hasSize(3)
+        val deltGrense = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), datoForOppdatering))!!
+        assertThat(deltGrense.stemmekretser).hasSize(3)
         assertThat(deltGrense.stemmekretser.map { it.stemmekrets.id })
-            .containsExactlyInAnyOrder(vestreKrets.id, oestreKrets.id, vestreStemmekretsEtterOppdatering!!.id)
+            .containsExactlyInAnyOrder(vestreKrets.id, oestreKrets.id, vestreStemmekretsEtterOppdatering.id)
 
         val flaterSomErEndret = utfoerGrenseendring(kretsSomSkalHaGrenseendring = vestreKrets, opprinneligDato = datoForOppdatering,
             endringsdato = datoForGrenseendring)
 
-        val opprinneligVestreKrets = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(vestreKrets.lokalid), datoForOppdatering))
-        val opprinneligOestreKrets = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(oestreKrets.lokalid), datoForOppdatering))
-        assertThat(opprinneligVestreKrets!!.gyldighet.gyldigTil).isEqualTo(datoForGrenseendring)
-        assertThat(opprinneligOestreKrets!!.gyldighet.gyldigTil).isEqualTo(datoForGrenseendring)
+        val opprinneligVestreKrets = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(vestreKrets.lokalid), datoForOppdatering))!!
+        val opprinneligOestreKrets = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(oestreKrets.lokalid), datoForOppdatering))!!
+        assertThat(opprinneligVestreKrets.gyldighet.gyldigTil).isEqualTo(datoForGrenseendring)
+        assertThat(opprinneligOestreKrets.gyldighet.gyldigTil).isEqualTo(datoForGrenseendring)
 
-        val vestreKretsEtterLagring = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(vestreKrets.lokalid), datoForGrenseendring))
-        val oestreKretsEtterLagring = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(oestreKrets.lokalid), datoForGrenseendring))
-        assertOmradeGyldighetVersjon(vestreKretsEtterLagring!!, oestreKretsEtterLagring!!, opprinneligVestreKrets, opprinneligOestreKrets)
+        val vestreKretsEtterLagring = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(vestreKrets.lokalid), datoForGrenseendring))!!
+        val oestreKretsEtterLagring = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(oestreKrets.lokalid), datoForGrenseendring))!!
+        assertOmradeGyldighetVersjon(vestreKretsEtterLagring, oestreKretsEtterLagring, opprinneligVestreKrets, opprinneligOestreKrets)
         assertThat(flaterSomErEndret).containsExactlyInAnyOrder(vestreKretsEtterLagring, oestreKretsEtterLagring)
 
-        val opprinneligDeltGrense = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), opprinneligDato))
+        val opprinneligDeltGrense = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), opprinneligDato))!!
 
         //Sjekker at gammel versjon av grensa ikke har fått endra sine stemmekretser
-        assertThat(opprinneligDeltGrense!!.stemmekretser).hasSize(3)
+        assertThat(opprinneligDeltGrense.stemmekretser).hasSize(3)
         assertThat(opprinneligDeltGrense.stemmekretser.map { it.stemmekrets.id })
             .containsExactlyInAnyOrder(vestreKrets.id, oestreKrets.id, vestreStemmekretsEtterOppdatering.id)
 
@@ -468,31 +462,31 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         val deltGrenseLokalid = "grenseDeltLokalid"
         val (vestreKrets, oestreKrets) = saveNaboStemmekretser(gyldigFra = opprinneligDato)
 
-        val oestreStemmekretsEtterOppdatering = utfoerMetadataoppdatering(kretsSomSkalOppdateres = oestreKrets, datoForOppdatering = datoForOppdatering)
+        val oestreStemmekretsEtterOppdatering = utfoerMetadataoppdatering(kretsSomSkalOppdateres = oestreKrets, datoForOppdatering = datoForOppdatering)!!
 
-        val deltGrense = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), datoForOppdatering))
-        assertThat(deltGrense!!.stemmekretser).hasSize(3)
+        val deltGrense = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), datoForOppdatering))!!
+        assertThat(deltGrense.stemmekretser).hasSize(3)
         assertThat(deltGrense.stemmekretser.map { it.stemmekrets.id })
-            .containsExactlyInAnyOrder(vestreKrets.id, oestreKrets.id, oestreStemmekretsEtterOppdatering!!.id)
+            .containsExactlyInAnyOrder(vestreKrets.id, oestreKrets.id, oestreStemmekretsEtterOppdatering.id)
 
         val flaterSomErEndret = utfoerGrenseendring(kretsSomSkalHaGrenseendring = vestreKrets, opprinneligDato = datoForOppdatering,
             endringsdato = datoForGrenseendring)
 
-        val opprinneligVestreKrets = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(vestreKrets.lokalid), datoForOppdatering))
-        val opprinneligOestreKrets = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(oestreKrets.lokalid), datoForOppdatering))
-        assertThat(opprinneligVestreKrets!!.gyldighet.gyldigTil).isEqualTo(datoForGrenseendring)
-        assertThat(opprinneligOestreKrets!!.gyldighet.gyldigTil).isEqualTo(datoForGrenseendring)
+        val opprinneligVestreKrets = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(vestreKrets.lokalid), datoForOppdatering))!!
+        val opprinneligOestreKrets = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(oestreKrets.lokalid), datoForOppdatering))!!
+        assertThat(opprinneligVestreKrets.gyldighet.gyldigTil).isEqualTo(datoForGrenseendring)
+        assertThat(opprinneligOestreKrets.gyldighet.gyldigTil).isEqualTo(datoForGrenseendring)
 
-        val vestreKretsEtterLagring = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(vestreKrets.lokalid), datoForGrenseendring))
-        val oestreKretsEtterLagring = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(oestreKrets.lokalid), datoForGrenseendring))
-        assertOmradeGyldighetVersjon(vestreKretsEtterLagring!!, oestreKretsEtterLagring!!, opprinneligVestreKrets, opprinneligOestreKrets)
+        val vestreKretsEtterLagring = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(vestreKrets.lokalid), datoForGrenseendring))!!
+        val oestreKretsEtterLagring = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(oestreKrets.lokalid), datoForGrenseendring))!!
+        assertOmradeGyldighetVersjon(vestreKretsEtterLagring, oestreKretsEtterLagring, opprinneligVestreKrets, opprinneligOestreKrets)
 
         assertThat(flaterSomErEndret).containsExactlyInAnyOrder(vestreKretsEtterLagring, oestreKretsEtterLagring)
 
-        val opprinneligDeltGrense = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), opprinneligDato))
+        val opprinneligDeltGrense = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), opprinneligDato))!!
 
         //Sjekker at gammel versjon av grensa ikke har fått endra sine stemmekretser
-        assertThat(opprinneligDeltGrense!!.stemmekretser).hasSize(3)
+        assertThat(opprinneligDeltGrense.stemmekretser).hasSize(3)
         assertThat(opprinneligDeltGrense.stemmekretser.map { it.stemmekrets.id })
             .containsExactlyInAnyOrder(vestreKrets.id, oestreKrets.id, oestreStemmekretsEtterOppdatering.id)
 
@@ -516,11 +510,11 @@ class StemmekretsServiceIT : TestWithDbContainer() {
             gyldighetsdato = endringsdato, endringstype = Endringstype.FASTSETTING
         )
 
-        val opprinneligOestreKrets = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(oestreKrets.lokalid), opprinneligDato))
-        assertThat(opprinneligOestreKrets!!.gyldighet.gyldigTil).isEqualTo(endringsdato)
+        val opprinneligOestreKrets = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(oestreKrets.lokalid), opprinneligDato))!!
+        assertThat(opprinneligOestreKrets.gyldighet.gyldigTil).isEqualTo(endringsdato)
 
-        val oestreKretsEtterLagring = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(oestreKrets.lokalid), endringsdato))
-        assertThat(oestreKretsEtterLagring!!.gyldighet.gyldigTil).isNull()
+        val oestreKretsEtterLagring = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(oestreKrets.lokalid), endringsdato))!!
+        assertThat(oestreKretsEtterLagring.gyldighet.gyldigTil).isNull()
         assertThat(oestreKretsEtterLagring.omraade).isNotEqualTo(opprinneligOestreKrets.omraade)
         assertThat(oestreKretsEtterLagring.version).isGreaterThan(opprinneligOestreKrets.version)
         assertThat(oestreKretsEtterLagring.auditInfo.typeEndring).isEqualTo(Endringstype.FASTSETTING)
@@ -529,8 +523,8 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         assertAnnenGrenseEtterGrenseendring("grenseNordØst", "grenseNordØstLokalid", endringsdato, opprinneligDato,
             oestreKretsEtterLagring, opprinneligOestreKrets)
 
-        val nyGrense = grenseService.hentGrense(Identifikator(Lokalid("grenseNordØstLokalid"), endringsdato))
-        assertThat(nyGrense!!.kvalitet!!.noeyaktighet).isEqualTo(100)
+        val nyGrense = grenseService.hentGrense(Identifikator(Lokalid("grenseNordØstLokalid"), endringsdato))!!
+        assertThat(nyGrense.kvalitet!!.noeyaktighet).isEqualTo(100)
         assertThat(nyGrense.kvalitet!!.maalemetode).isEqualTo(MaalemetodeKodeEnum.TERRENGMAALT.uuid)
         assertThat(nyGrense.informasjonstekst).isEqualTo("En eller annen informasjon")
         assertThat(nyGrense.auditInfo.typeEndring).isEqualTo(Endringstype.FASTSETTING)
@@ -592,8 +586,8 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         @Suppress("SameParameterValue") deltGrenseLokalid: String, datoForGrenseendring: LocalDate, opprinneligGrense: Grense,
         vestreKretsEtterLagring: Stemmekrets, oestreKretsEtterLagring: Stemmekrets, opprinneligVestreKrets: Stemmekrets, opprinneligOestreKrets: Stemmekrets
     ) {
-        val deltGrenseEtterGrenseendring = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), datoForGrenseendring))
-        assertThat(deltGrenseEtterGrenseendring!!.stemmekretser).hasSize(2)
+        val deltGrenseEtterGrenseendring = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), datoForGrenseendring))!!
+        assertThat(deltGrenseEtterGrenseendring.stemmekretser).hasSize(2)
         assertThat(deltGrenseEtterGrenseendring.stemmekretser.map { it.stemmekrets.id })
             .containsExactlyInAnyOrder(vestreKretsEtterLagring.id, oestreKretsEtterLagring.id)
 
@@ -614,12 +608,12 @@ class StemmekretsServiceIT : TestWithDbContainer() {
     private fun assertAnnenGrenseEtterGrenseendring(annenGrenseId: String, annenGrenseLokalid: String, datoForGrenseendring: LocalDate,
                                                     opprinneligDato: LocalDate, kretsEtterLagring: Stemmekrets, opprinneligKrets: Stemmekrets) {
 
-        val opprinneligGrense = grenseService.hentGrense(Identifikator(Lokalid(annenGrenseLokalid), opprinneligDato))
-        assertThat(opprinneligGrense!!.stemmekretser).hasSize(1)
+        val opprinneligGrense = grenseService.hentGrense(Identifikator(Lokalid(annenGrenseLokalid), opprinneligDato))!!
+        assertThat(opprinneligGrense.stemmekretser).hasSize(1)
         assertThat(opprinneligGrense.stemmekretser.map { it.stemmekrets.id }).containsExactlyInAnyOrder(opprinneligKrets.id)
 
-        val annenGrenseEtterGrenseendring = grenseService.hentGrense(Identifikator(Lokalid(annenGrenseLokalid), datoForGrenseendring))
-        assertThat(annenGrenseEtterGrenseendring!!.stemmekretser).hasSize(1)
+        val annenGrenseEtterGrenseendring = grenseService.hentGrense(Identifikator(Lokalid(annenGrenseLokalid), datoForGrenseendring))!!
+        assertThat(annenGrenseEtterGrenseendring.stemmekretser).hasSize(1)
         assertThat(annenGrenseEtterGrenseendring.stemmekretser.map { it.stemmekrets.id }).containsExactlyInAnyOrder(kretsEtterLagring.id)
 
         assertThat(opprinneligGrense.gyldighet.gyldigTil).isEqualTo(datoForGrenseendring)
@@ -743,7 +737,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         }
 
         val stemmekretser = stemmekretsMutableList.toList()
-        saveKommune(stemmekretser = stemmekretser)
+        saveKommuneOgUnikLokalid(stemmekretser = stemmekretser, gyldigFra = gyldigFra)
         grenseRepository.flush()
         return stemmekretser
     }
@@ -751,7 +745,8 @@ class StemmekretsServiceIT : TestWithDbContainer() {
     private fun saveStemmekretsMed1FramtidigVersjon(stemmekretsLokalid: Lokalid) {
         val stemmekrets = saveStemmekrets(id = "9000", lokalid = stemmekretsLokalid, gyldigTil = jan1In2023)
         val stemmekrets2 = saveStemmekrets(id = "9001", lokalid = stemmekretsLokalid, stemmekretsnavn = "Nedre Singsaker", gyldigFra = jan1In2023)
-        saveKommune(stemmekretser = listOf(stemmekrets, stemmekrets2))
+
+        saveKommuneOgUnikLokalid(stemmekretser = listOf(stemmekrets, stemmekrets2))
     }
 
 }

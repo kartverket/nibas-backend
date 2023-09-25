@@ -19,7 +19,7 @@ class KretsResponseBuilder(
             id = grunnkrets.lokalid,
             navn = grunnkrets.grunnkretsnavn!!,
             nummer = grunnkrets.grunnkretsnummer!!,
-            kommunenummer = Kommunenummer(grunnkrets.kommune.kommunenummer, kommunenummer),
+            kommunenummer = Kommunenummer(grunnkrets.getKommune(grunnkrets.gyldighet.gyldigFra)!!.kommunenummer, kommunenummer),
             features = FeatureCollection(
                 features = listOf(
                     grunnkrets.posisjon.posisjonToFeature(grunnkrets.version),
@@ -34,7 +34,7 @@ class KretsResponseBuilder(
             id = stemmekrets.lokalid,
             navn = stemmekrets.stemmekretsnavn!!,
             nummer = stemmekrets.stemmekretsnummer!!,
-            kommunenummer = Kommunenummer(stemmekrets.kommune.kommunenummer, kommunenummer),
+            kommunenummer = Kommunenummer(stemmekrets.getKommune(stemmekrets.gyldighet.gyldigFra)!!.kommunenummer, kommunenummer),
             features = FeatureCollection(
                 features = listOf(
                     stemmekrets.posisjon.posisjonToFeature(stemmekrets.version),

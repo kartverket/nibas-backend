@@ -100,19 +100,24 @@ class Grense(
     fun stemmekretser(): Set<Stemmekrets> = stemmekretser.map { it.stemmekrets }.toSet()
     fun gyldigeStemmekretsGrenseKoblinger(gyldighetsdato: LocalDate = LocalDate.now()): Set<StemmekretsGrenseKobling> = stemmekretser.filter { it.stemmekrets.gyldigPaaDato(gyldighetsdato) }.toSet()
 
-    fun kommuner(): Set<Kommune> = grunnkretser().map { it.kommune }.toSet()
+    fun kommuner(gyldighetsdato: LocalDate = LocalDate.now()): Set<Kommune> =
+        grunnkretser().map { it.getKommune(gyldighetsdato) }.filterNotNull().toSet()
 
-    fun fylker(): Set<Fylke> = kommuner().map { it.fylke }.toSet()
+    fun fylker(gyldighetsdato: LocalDate = LocalDate.now()): Set<Fylke> =
+        kommuner(gyldighetsdato).map { it.getFylke(gyldighetsdato) }.filterNotNull().toSet()
 
-    fun nasjoner(): Set<Nasjon> = fylker().map { it.nasjon }.toSet()
+    fun nasjoner(gyldighetsdato: LocalDate = LocalDate.now()): Set<Nasjon> =
+        fylker(gyldighetsdato).map { it.getNasjon(gyldighetsdato) }.filterNotNull().toSet()
 
     fun finnFlaterOppTilGrunnkrets(): Set<Flate> = grunnkretser()
 
     fun finnFlaterOppTilKommune(): Set<Flate> = HashSet(finnFlaterOppTilGrunnkrets() + kommuner())
 
-    fun finnFlaterOppTilFylke(): Set<Flate> = HashSet(finnFlaterOppTilKommune() + fylker())
+    fun finnFlaterOppTilFylke(gyldighetsdato: LocalDate = LocalDate.now()): Set<Flate> =
+        HashSet(finnFlaterOppTilKommune() + fylker(gyldighetsdato))
 
-    fun finnFlaterOppTilNasjon(): Set<Flate> = HashSet(finnFlaterOppTilFylke() + nasjoner())
+    fun finnFlaterOppTilNasjon(gyldighetsdato: LocalDate = LocalDate.now()): Set<Flate> =
+        HashSet(finnFlaterOppTilFylke(gyldighetsdato) + nasjoner(gyldighetsdato))
 
     fun finnFlaterOppTilStemmekrets(): Set<Flate> = stemmekretser()
 

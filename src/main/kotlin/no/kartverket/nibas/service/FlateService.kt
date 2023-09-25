@@ -1,5 +1,6 @@
 package no.kartverket.nibas.service
 
+import no.kartverket.nibas.common.getInSpraak
 import no.kartverket.nibas.domain.AdministrativEnhet
 import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.Fylke
@@ -80,7 +81,7 @@ class FlateService @Autowired constructor(
     }
 
     fun finnNavn(enhet: Flate): String? = when (enhet) {
-        is AdministrativEnhet -> enhet.administrativenhetnavn.map { it.navn }.toString()
+        is AdministrativEnhet -> enhet.getAdministrativenhetNavn(enhet.gyldighet.gyldigFra).getInSpraak("nor")
         is Grunnkrets -> enhet.grunnkretsnavn
         is Stemmekrets -> enhet.stemmekretsnavn
         else -> "Ukjent enhet"

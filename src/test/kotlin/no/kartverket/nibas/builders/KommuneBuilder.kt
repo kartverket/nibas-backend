@@ -1,11 +1,12 @@
 package no.kartverket.nibas.builders
 
-import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.domain.Administrativenhetnavn
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Spraakkode
 import no.kartverket.nibas.domain.Stemmekrets
+import no.kartverket.nibas.domain.UnikLokalid
 import no.kartverket.nibas.sporing.Gyldighet
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
@@ -15,8 +16,8 @@ import java.time.ZonedDateTime
 class KommuneBuilder(
     private val id: String = "a7dabf8d-4597-4735-b3cd-db462c61c39e",
     private var kommunenummer: String = "UUID-1",
-    private var lokalId: Lokalid = Lokalid("fe328f8d-fbde-4c21-ab28-cbc583be401f"),
-    private var navn: String = "Bergen",
+    private var unikLokalid: UnikLokalid = UnikLokalid("fe328f8d-fbde-4c21-ab28-cbc583be401f", Flatetype.KOMMUNE),
+    private var navn: String? = null,
     private var spraak: String = "NOR",
     private var samiskforvaltningsomraade: Boolean = false,
     private var endretdato: ZonedDateTime = ZonedDateTime.now(),
@@ -24,11 +25,12 @@ class KommuneBuilder(
     private var stemmekretser: List<Stemmekrets> = listOf(),
     private var gyldigFra: LocalDate = LocalDate.now(),
     private var gyldigTil: LocalDate? = null,
-    private var utledetFra: Kommune? = null
+    private var utledetFra: Kommune? = null,
+    private var administrativenhetnavn: List<Administrativenhetnavn> = emptyList(),
 ) {
 
     companion object {
-        val DEFAULT_KOMMUNE = KommuneBuilder().build()
+        val DEFAULT_KOMMUNE = KommuneBuilder().withNavn("Bergen").build()
     }
 
     fun withNavn(navn: String, spraak: String = "NOR"): KommuneBuilder {
@@ -38,17 +40,30 @@ class KommuneBuilder(
     }
 
     fun build(): Kommune {
-        val kommune = Kommune(id = this.id, lokalid = lokalId.value)
-        val spraakkode = Spraakkode()
-        spraakkode.id = spraak
-        spraakkode.description = spraak
+        val kommune = buildUtenUnikLokalidOgTilkntninger()
+        kommune.addKommuneTilUnikLokalid(unikLokalid)
 
-        val administrativenhetnavn = Administrativenhetnavn()
-        administrativenhetnavn.navn = navn
-        administrativenhetnavn.spraak = spraakkode
+        grunnkretser.forEach { kommune.addGrunnkrets(it) }
+        stemmekretser.forEach { kommune.addStemmekrets(it) }
+        administrativenhetnavn.forEach { kommune.addAdministrativenhetNavn(it) }
 
-        kommune.administrativenhetnavn = mutableSetOf(administrativenhetnavn)
-        administrativenhetnavn.kommuneFk = kommune
+        return kommune
+    }
+
+    fun buildUtenUnikLokalidOgTilkntninger(): Kommune {
+        val kommune = Kommune(id = this.id, lokalid = unikLokalid.lokalid)
+
+        if (navn != null) {
+            val spraakkode = Spraakkode()
+            spraakkode.id = spraak
+            spraakkode.description = spraak
+
+            val admNavn = Administrativenhetnavn()
+            admNavn.navn = navn
+            admNavn.spraak = spraakkode
+
+            administrativenhetnavn = listOf(admNavn)
+        }
 
         kommune.kommunenummer = kommunenummer
         kommune.samiskforvaltningsomraade = samiskforvaltningsomraade
@@ -56,22 +71,10 @@ class KommuneBuilder(
         kommune.posisjon = GeometryFactory().createPoint(Coordinate(1.0, 1.0))
         kommune.omraade = GeometryFactory().createMultiPolygon(arrayOf(GeometryFactory().createPolygon()))
 
-        grunnkretser.forEach { kommune.addGrunnkrets(it) }
-        stemmekretser.forEach { kommune.addStemmekrets(it) }
-
         kommune.gyldighet = Gyldighet(gyldigFra, gyldigTil)
         kommune.utledetFra = utledetFra
 
         return kommune
-    }
-
-    fun buildWithoutAdministrativenhetnavn(): Kommune {
-        return build().apply { this.administrativenhetnavn.clear() }
-    }
-
-    fun withLokalId(lokalId: String): KommuneBuilder {
-        this.lokalId = Lokalid(lokalId)
-        return this
     }
 
     fun withGrunnkrets(grunnkrets: Grunnkrets): KommuneBuilder {

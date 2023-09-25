@@ -14,7 +14,6 @@ import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
 import no.kartverket.nibas.kodelister.KodelisteService
-import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.UtkastRepository
 import no.kartverket.nibas.service.utkast.UtkastService
 import no.kartverket.nibas.sporing.AuditInfo
@@ -58,8 +57,6 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
     private lateinit var utkastService: UtkastService
     @Autowired
     private lateinit var utkastRepository: UtkastRepository
-    @Autowired
-    private lateinit var grunnkretsRepository: GrunnkretsRepository
 
     private val lokalidOfGrunnkrets = "c54fb55e-15d0-4528-8b88-f58d6c74bd87"
 
@@ -434,7 +431,7 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
         assertThat(grunnkrets.grunnkretsnavn).isEqualTo(grunnkretsnavn)
         assertThat(grunnkrets.gyldighet).isEqualTo(gyldighetsintervall)
         assertThat(grunnkrets.version).isEqualTo(version)
-        assertThat(grunnkrets.kommune.id).isEqualTo(kommuneIdGeonorge)
+        assertThat(grunnkrets.getKommune(gyldighetsintervall.gyldigFra)!!.id).isEqualTo(kommuneIdGeonorge)
     }
 
     private fun assertUtkastIsPublisert(utkastId: String) = assertStatusEr(utkastId, UtkastStatus.PUBLISERT)

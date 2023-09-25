@@ -101,7 +101,7 @@ class FylkeServiceTest {
 
         fylkeService.oppdaterFylke(lokalid, oppdatertFylke)
 
-        val forventetNavnToSave = eksisterende.administrativenhetnavn.first()
+        val forventetNavnToSave = eksisterende.fylkeLokalid.administrativenhetnavn.first()
         forventetNavnToSave.navn = navn
 
         verify(administrativenhetnavnRepository).save(forventetNavnToSave)

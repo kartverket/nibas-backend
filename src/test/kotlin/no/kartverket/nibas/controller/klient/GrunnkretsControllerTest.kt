@@ -8,6 +8,7 @@ import no.kartverket.nibas.api.v1.response.GyldighetResponse
 import no.kartverket.nibas.api.v1.response.Kommunenummer
 import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
 import no.kartverket.nibas.builders.GrunnkretsBuilder
+import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.service.GrunnkretsService
@@ -61,12 +62,15 @@ internal class GrunnkretsControllerTest : NibasMvcTest() {
         val jan1In2024 = LocalDate.of(2024, Month.JANUARY, 1)
         val oppdateringstidspunkt = ZonedDateTime.of(LocalDateTime.of(2022, Month.DECEMBER, 14, 12, 7, 8, 0), ZoneId.systemDefault())
 
+        val kommune = KommuneBuilder().withNavn("Bergen").withGyldigFra(jan1In2023).build()
+
         val lokalId = Lokalid("123")
         val grunnkrets1 = GrunnkretsBuilder(
             id = "1",
             lokalId = lokalId,
             gyldigFra = jan1In2023,
             gyldigTil = jan1In2024,
+            kommune = kommune,
             endretdato = oppdateringstidspunkt)
             .build()
 
@@ -74,6 +78,7 @@ internal class GrunnkretsControllerTest : NibasMvcTest() {
             id = "2",
             lokalId = lokalId,
             gyldigFra = jan1In2024,
+            kommune = kommune,
             endretdato = oppdateringstidspunkt)
             .build()
 

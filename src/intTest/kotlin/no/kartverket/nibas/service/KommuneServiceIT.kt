@@ -1,5 +1,6 @@
 package no.kartverket.nibas.service
 
+import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.builders.*
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
@@ -20,9 +21,6 @@ class KommuneServiceIT : TestWithDbContainer() {
 
     @Autowired
     private lateinit var kommuneService: KommuneService
-
-    @Autowired
-    private lateinit var kommuneRepository: KommuneRepository
 
     private val lokalidOfKommuneInDataSet = "ac7e05cd-fb07-4270-ad95-e3c32c1370d0"
     private val october1In2022 = LocalDate.of(2022, Month.OCTOBER, 1)
@@ -65,9 +63,9 @@ class KommuneServiceIT : TestWithDbContainer() {
         val july2In2019 = LocalDate.of(2019, Month.JULY, 2)
         val july3In2019 = LocalDate.of(2019, Month.JULY, 3)
 
-        saveKommune(id = "9000", lokalid = Lokalid("1001"), gyldigFra = july1In2019, gyldigTil = july2In2019)
-        saveKommune(id = "9001", lokalid = Lokalid("1002"), gyldigFra = july2In2019, gyldigTil = july3In2019)
-        saveKommune(id = "9002", lokalid = Lokalid("1003"), gyldigFra = july3In2019, gyldigTil = null)
+        saveKommuneOgUnikLokalid(id = "9000", lokalid = "1001", gyldigFra = july1In2019, gyldigTil = july2In2019)
+        saveKommuneOgUnikLokalid(id = "9001", lokalid = "1002", gyldigFra = july2In2019, gyldigTil = july3In2019)
+        saveKommuneOgUnikLokalid(id = "9002", lokalid = "1003", gyldigFra = july3In2019, gyldigTil = null)
 
         assertThat(kommuneService.hentAlleKommuner(july1In2019).map { it.id }).isEqualTo(listOf("9000"))
         assertThat(kommuneService.hentAlleKommuner(july2In2019).map { it.id }).isEqualTo(listOf("9001"))
@@ -78,13 +76,14 @@ class KommuneServiceIT : TestWithDbContainer() {
     fun hentKommunerForFylke() {
         val fylkeLokalid = Lokalid("ac7e05cd-fb07-4270-ad95-73c32c137054")
         val kommuneLokalid = Lokalid("ac7e05cd-eb08-4270-ad95-73c32c137054")
+        val unikLokalidFylke = saveUnikLokalid(fylkeLokalid.value, Flatetype.FYLKE)
 
-        val kommune = saveKommune(id = "9000", lokalid = kommuneLokalid, gyldigFra = october1In2022, gyldigTil = jan1In2023)
-        val kommuneFramITid = saveKommune(id = "9001", lokalid = kommuneLokalid, gyldigFra = jan1In2023)
-        val kommuneMedAnnenLokalid = saveKommune(id = "9002", lokalid = Lokalid("ac7e05cd-eb08-4270-ad99-73c32c137054"), gyldigFra = jan1In2023)
+        val kommune = saveKommuneOgUnikLokalid(id = "9000", lokalid = kommuneLokalid.value, gyldigFra = october1In2022, gyldigTil = jan1In2023)
+        val kommuneFramITid = saveKommune(id = "9001", unikLokalid = kommune.kommuneLokalid, gyldigFra = jan1In2023)
+        val kommuneMedAnnenLokalid = saveKommuneOgUnikLokalid(id = "9002", lokalid = "ac7e05cd-eb08-4270-ad99-73c32c137054", gyldigFra = jan1In2023)
 
-        saveFylke(id = "11000", lokalid = fylkeLokalid, gyldigFra = october1In2022, gyldigTil = jan1In2023, kommuner = listOf(kommune, kommuneFramITid))
-        saveFylke(id = "11001", lokalid = fylkeLokalid, gyldigFra = jan1In2023, kommuner = listOf(kommune, kommuneFramITid, kommuneMedAnnenLokalid))
+        saveFylke(id = "11000", unikLokalid = unikLokalidFylke, gyldigFra = october1In2022, gyldigTil = jan1In2023, kommuner = listOf(kommune, kommuneFramITid))
+        saveFylke(id = "11001", unikLokalid = unikLokalidFylke, gyldigFra = jan1In2023, kommuner = listOf(kommune, kommuneFramITid, kommuneMedAnnenLokalid))
 
         val kommunerForFylke = kommuneService.hentKommunerForFylke(Identifikator(fylkeLokalid, november28In2022))
         assertThat(kommunerForFylke.map { it.id }).isEqualTo(listOf("9000"))
@@ -98,8 +97,10 @@ class KommuneServiceIT : TestWithDbContainer() {
         val grunnkrets3 = saveGrunnkrets(id = "8002", lokalid = grunnkretsLokalid, gyldigFra = jan1In2023)
 
         val kommuneLokalid = Lokalid("ac7e05cd-eb08-4270-ad95-73c32c137054")
-        saveKommune(id = "9000", lokalid = kommuneLokalid, gyldigFra = october1In2022, gyldigTil = jan1In2023, grunnkretser = listOf(grunnkrets1, grunnkrets2))
-        saveKommune(id = "9001", lokalid = kommuneLokalid, gyldigFra = jan1In2023, grunnkretser = listOf(grunnkrets1, grunnkrets2, grunnkrets3))
+        val unikLokalid = saveUnikLokalid(kommuneLokalid.value, Flatetype.KOMMUNE)
+
+        saveKommune(id = "9000", unikLokalid = unikLokalid, gyldigFra = october1In2022, gyldigTil = jan1In2023, grunnkretser = listOf(grunnkrets1, grunnkrets2))
+        saveKommune(id = "9001", unikLokalid = unikLokalid, gyldigFra = jan1In2023, grunnkretser = listOf(grunnkrets1, grunnkrets2, grunnkrets3))
 
         val grunnkretserForKommune = kommuneService.hentKommunesGrunnkretser(Identifikator(kommuneLokalid, november28In2022))
         assertThat(grunnkretserForKommune.map { it.id }).isEqualTo(listOf("8001"))
@@ -113,8 +114,10 @@ class KommuneServiceIT : TestWithDbContainer() {
         val stemmekrets3 = saveStemmekrets(id = "8002", lokalid = stemmekretsLokalid, gyldigFra = jan1In2023)
 
         val kommuneLokalid = Lokalid("ac7e05cd-eb08-4270-ad95-73c32c137054")
-        saveKommune(id = "9000", lokalid = kommuneLokalid, gyldigFra = october1In2022, gyldigTil = jan1In2023, stemmekretser = listOf(stemmekrets1, stemmekrets2))
-        saveKommune(id = "9001", lokalid = kommuneLokalid, gyldigFra = jan1In2023, stemmekretser = listOf(stemmekrets1, stemmekrets2, stemmekrets3))
+        val unikLokalid = saveUnikLokalid(kommuneLokalid.value, Flatetype.KOMMUNE)
+
+        saveKommune(id = "9000", unikLokalid = unikLokalid, gyldigFra = october1In2022, gyldigTil = jan1In2023, stemmekretser = listOf(stemmekrets1, stemmekrets2))
+        saveKommune(id = "9001", unikLokalid = unikLokalid, gyldigFra = jan1In2023, stemmekretser = listOf(stemmekrets1, stemmekrets2, stemmekrets3))
 
         val stemmekretserForKommune = kommuneService.hentKommunesStemmekretser(Identifikator(kommuneLokalid, november28In2022))
         assertThat(stemmekretserForKommune.map { it.id }).isEqualTo(listOf("8001"))
@@ -136,7 +139,7 @@ class KommuneServiceIT : TestWithDbContainer() {
         val grunnkrets3 = saveGrunnkrets(id = "103", lokalid = grunnkretsLokalid, gyldigFra = jan1In2024, grenser = listOf(grense1))
 
         val identifikatorFor1Jan23 = Identifikator(kommuneLokalid, jan1In2023)
-        saveKommune(id = "123", lokalid = kommuneLokalid, gyldigFra = october1In2022, grunnkretser = listOf(grunnkrets1, grunnkrets2, grunnkrets3))
+        saveKommuneOgUnikLokalid(id = "123", lokalid = kommuneLokalid.value, gyldigFra = october1In2022, grunnkretser = listOf(grunnkrets1, grunnkrets2, grunnkrets3))
 
         val grensekoblinger = kommuneService.hentGrenserForKommune(identifikatorFor1Jan23)
 
@@ -150,8 +153,246 @@ class KommuneServiceIT : TestWithDbContainer() {
     }
 
     private fun saveKommuneMed1FramtidigVersjon(kommuneLokalid: Lokalid) {
-        saveKommune(lokalid = kommuneLokalid, gyldigFra = october1In2022, gyldigTil = jan1In2023)
-        saveKommune(id = "9001", lokalid = kommuneLokalid, kommunenummer = "0302", gyldigFra = jan1In2023)
+        val unikLokalid = saveUnikLokalid(kommuneLokalid.value, Flatetype.KOMMUNE)
+        saveKommune(unikLokalid = unikLokalid, gyldigFra = october1In2022, gyldigTil = jan1In2023)
+        saveKommune(id = "9001", unikLokalid = unikLokalid, kommunenummer = "0302", gyldigFra = jan1In2023)
+    }
+
+    @Test
+    fun `sjekk pekere mellom kommune og navn`() {
+        val norskNavn = saveAdministrativenhetnavn(navn = "Karasjok", spraakid = "nor", rekkefoelge = 1)
+
+        val lokalIdOfKommune = Lokalid("ac7e05cd-fb65-4277-ad95-63c32c1370d0")
+        val kommune = saveKommuneOgUnikLokalid(lokalid = lokalIdOfKommune.value, administrativenhetnavn = listOf(norskNavn))
+
+        var kommuneList = kommuneRepository.findAllByLokalid(lokalIdOfKommune.value)
+        assertThat(kommuneList).hasSize(1)
+        var lagretKommune = kommuneList.first()
+
+        var admNavnSet = lagretKommune.kommuneLokalid.administrativenhetnavn
+        assertThat(admNavnSet).hasSize(1)
+        val administrativenhetnavn = admNavnSet.first()
+        assertThat(administrativenhetnavn.spraak!!.id).isEqualTo("nor")
+        assertThat(administrativenhetnavn.navn).isEqualTo(norskNavn.navn)
+        assertThat(administrativenhetnavn.rekkefoelge).isEqualTo(1)
+        assertThat(administrativenhetnavn.administrativenhetLokalid.kommuner).hasSize(1).extracting("id").contains(kommune.id)
+
+        var lagretNorskNavn = administrativenhetnavnRepository.findById(norskNavn.id).get()
+        assertThat(lagretNorskNavn.administrativenhetLokalid.kommuner).hasSize(1).extracting("id").contains(kommune.id)
+
+        //Kommune har ikke noen navn ved dato før navnet oppsto, men har det for dagens dato
+        assertThat(lagretKommune.getAdministrativenhetNavn(LocalDate.of(2020, Month.NOVEMBER, 28))).isEmpty()
+        assertThat(lagretKommune.getAdministrativenhetNavn()).hasSize(1).extracting("id").contains(lagretNorskNavn.id)
+
+        //Administrativenhetnavn har ikke noe kommune ved dato før kommunen oppsto, man har det for dagens dato
+        assertThat(lagretNorskNavn.getKommune(LocalDate.of(2020, Month.NOVEMBER, 28))).isNull()
+        assertThat(lagretNorskNavn.getKommune()!!.id).isEqualTo(lagretKommune.id)
+
+        //Ett navn til for samme kommune
+        val samiskNavn = saveAdministrativenhetnavn(navn = "Kárášjohka", spraakid = "sme", rekkefoelge = 2, gyldigFra = november28In2022)
+        kommune.addAdministrativenhetNavn(samiskNavn)
+
+        kommuneList = kommuneRepository.findAllByLokalid(lokalIdOfKommune.value)
+        assertThat(kommuneList).hasSize(1)
+        lagretKommune = kommuneList.first()
+
+        admNavnSet = lagretKommune.kommuneLokalid.administrativenhetnavn
+        assertThat(admNavnSet).hasSize(2).extracting("id").contains(norskNavn.id, samiskNavn.id)
+        admNavnSet.forEach { k ->
+            assertThat(k.administrativenhetLokalid.kommuner).hasSize(1).extracting("id").contains(lagretKommune.id)
+            assertThat(k.getKommune()!!.id).isEqualTo(lagretKommune.id)
+            assertThat(k.getKommune(november28In2022)!!.id).isEqualTo(lagretKommune.id)
+            assertThat(k.getKommune(october1In2022)!!.id).isEqualTo(lagretKommune.id)
+        }
+        //Kommune har ikke noen navn ved dato før navnet oppsto, men har det for dagens dato
+        assertThat(lagretKommune.getAdministrativenhetNavn(LocalDate.of(2020, Month.NOVEMBER, 28))).isEmpty()
+        assertThat(lagretKommune.getAdministrativenhetNavn()).hasSize(2).extracting("id").contains(norskNavn.id, samiskNavn.id)
+        assertThat(lagretKommune.getAdministrativenhetNavn(october1In2022)).hasSize(1).extracting("id").contains(norskNavn.id)
+        assertThat(lagretKommune.getAdministrativenhetNavn(november28In2022)).hasSize(2).extracting("id").contains(norskNavn.id, samiskNavn.id)
+
+        //Ny versjon av kommunen
+        lagretKommune.setGyldigTil(jan1In2023)
+        kommuneRepository.save(lagretKommune)
+        val kommuneVersjon2 = saveKommune(id = "kommuneVersjon2", unikLokalid = lagretKommune.kommuneLokalid, gyldigFra = jan1In2023,
+            administrativenhetnavn = lagretKommune.kommuneLokalid.administrativenhetnavn.toList())
+
+        kommuneList = kommuneRepository.findAllByLokalid(lokalIdOfKommune.value)
+        assertThat(kommuneList).hasSize(2).extracting("id").contains(kommune.id, kommuneVersjon2.id)
+        kommuneList.forEach { n ->
+            assertThat(n.kommuneLokalid.administrativenhetnavn).hasSize(2).extracting("id").contains(norskNavn.id, samiskNavn.id)
+            assertThat(n.getAdministrativenhetNavn()).hasSize(2).extracting("id").contains(norskNavn.id, samiskNavn.id)
+            assertThat(n.getAdministrativenhetNavn(october1In2022)).hasSize(1).extracting("id").contains(norskNavn.id)
+            assertThat(n.getAdministrativenhetNavn(november28In2022)).hasSize(2).extracting("id").contains(norskNavn.id, samiskNavn.id)
+        }
+
+        lagretNorskNavn = administrativenhetnavnRepository.findById(norskNavn.id).get()
+        assertThat(lagretNorskNavn.administrativenhetLokalid.kommuner).hasSize(2).extracting("id").contains(kommune.id, kommuneVersjon2.id)
+        assertThat(lagretNorskNavn.getKommune(october1In2022)!!.id).isEqualTo(lagretKommune.id)
+        assertThat(lagretNorskNavn.getKommune(jan1In2023)!!.id).isEqualTo(kommuneVersjon2.id)
+
+        val lagretSamiskNavn = administrativenhetnavnRepository.findById(samiskNavn.id).get()
+        assertThat(lagretSamiskNavn.administrativenhetLokalid.kommuner).hasSize(2).extracting("id").contains(kommune.id, kommuneVersjon2.id)
+        assertThat(lagretSamiskNavn.getKommune(october1In2022)!!.id).isEqualTo(lagretKommune.id)
+        assertThat(lagretSamiskNavn.getKommune(jan1In2023)!!.id).isEqualTo(kommuneVersjon2.id)
+
+        lagretSamiskNavn.setGyldigTil(jan1In2023)
+        administrativenhetnavnRepository.save(lagretSamiskNavn)
+        val samiskNavnVersjon2 = saveAdministrativenhetnavn(lokalid = samiskNavn.lokalid, navn = "Romsa 2", spraakid = "sme", rekkefoelge = 2, gyldigFra = jan1In2023)
+        kommuneList.forEach {
+            it.addAdministrativenhetNavn(samiskNavnVersjon2)
+            kommuneRepository.save(it)}
+
+        kommuneList = kommuneRepository.findAllByLokalid(lokalIdOfKommune.value)
+        assertThat(kommuneList).hasSize(2).extracting("id").contains(kommune.id, kommuneVersjon2.id)
+        kommuneList.forEach { n ->
+            assertThat(n.kommuneLokalid.administrativenhetnavn).hasSize(3).extracting("id").contains(norskNavn.id, samiskNavn.id, samiskNavnVersjon2.id)
+            assertThat(n.getAdministrativenhetNavn()).hasSize(2).extracting("id").contains(norskNavn.id, samiskNavnVersjon2.id)
+            assertThat(n.getAdministrativenhetNavn(october1In2022)).hasSize(1).extracting("id").contains(norskNavn.id)
+            assertThat(n.getAdministrativenhetNavn(november28In2022)).hasSize(2).extracting("id").contains(norskNavn.id, samiskNavn.id)
+        }
+
+    }
+
+    @Test
+    fun `sjekk pekere mellom kommune og stemmekrets`() {
+        val stemmekretsLokalid = Lokalid("stemmekretsLokalid")
+        val stemmekrets = saveStemmekrets(lokalid = stemmekretsLokalid)
+        val lokalIdOfKommune = Lokalid("lokalIdOfKommune")
+        val kommuneUnikLokalid = saveUnikLokalid(lokalIdOfKommune.value, Flatetype.KOMMUNE)
+
+        saveKommune(unikLokalid = kommuneUnikLokalid, stemmekretser = listOf(stemmekrets))
+        val lagretStemmekrets = stemmekretsRepository.findLastByLokalid(stemmekrets.lokalid)!!
+
+        var kommuneList = kommuneRepository.findAllByLokalid(lokalIdOfKommune.value)
+        assertThat(kommuneList).hasSize(1)
+        var lagretKommune = kommuneList.first()
+
+        //Initielt én stemmekrets og en kommune - skal peke på hverandre
+        assertThat(lagretKommune.kommuneLokalid.stemmekretser).hasSize(1).extracting("id").contains(lagretStemmekrets.id)
+        assertThat(lagretStemmekrets.kommuneLokalid.kommuner).hasSize(1).extracting("id").contains(lagretKommune.id)
+
+        //Kommune har ikke noen stemmekretser ved dato før stemmekretsen oppsto, men har det for dagens dato
+        assertThat(lagretKommune.getStemmekretser(LocalDate.of(2020, Month.NOVEMBER, 28))).isEmpty()
+        assertThat(lagretKommune.getStemmekretser()).hasSize(1).extracting("id").contains(lagretStemmekrets.id)
+
+        //Stemmekrets har ikke noe kommune ved dato før kommunen oppsto, man har det for dagens dato
+        assertThat(lagretStemmekrets.getKommune(LocalDate.of(2020, Month.NOVEMBER, 28))).isNull()
+        assertThat(lagretStemmekrets.getKommune()!!.id).isEqualTo(lagretKommune.id)
+
+        //Ny versjon av stemmekretsen, knyttet til samme kommune
+        lagretStemmekrets.setGyldigTil(november28In2022)
+        stemmekretsRepository.save(lagretStemmekrets)
+        val stemmekretsVersjon2 = saveStemmekrets(id = "stemmekretsVersjon2", lokalid = stemmekretsLokalid, gyldigFra = november28In2022)
+        lagretKommune.addStemmekrets(stemmekretsVersjon2)
+        kommuneRepository.save(lagretKommune)
+
+        lagretKommune = kommuneRepository.findLastByLokalid(lokalIdOfKommune.value)!!
+        assertThat(lagretKommune.kommuneLokalid.stemmekretser).hasSize(2).extracting("id").contains(lagretStemmekrets.id, stemmekretsVersjon2.id)
+        assertThat(lagretKommune.getStemmekretser(LocalDate.of(2020, Month.NOVEMBER, 28))).isEmpty()
+        assertThat(lagretKommune.getStemmekretser(october1In2022)).hasSize(1).extracting("id").contains(lagretStemmekrets.id)
+        assertThat(lagretKommune.getStemmekretser(november28In2022)).hasSize(1).extracting("id").contains(stemmekretsVersjon2.id)
+
+        var stemmekretsList = stemmekretsRepository.findAllByLokalid(stemmekrets.lokalid)
+        assertThat(stemmekretsList).hasSize(2)
+        stemmekretsList.forEach { k ->
+            assertThat(k.kommuneLokalid.kommuner).hasSize(1).extracting("id").contains(lagretKommune.id)
+            assertThat(k.getKommune()!!.id).isEqualTo(lagretKommune.id)
+            assertThat(k.getKommune(november28In2022)!!.id).isEqualTo(lagretKommune.id)
+            assertThat(k.getKommune(october1In2022)!!.id).isEqualTo(lagretKommune.id)
+        }
+
+        //Ny versjon av kommunen, knyttet til samme stemmekretser
+        lagretKommune.setGyldigTil(jan1In2023)
+        kommuneRepository.save(lagretKommune)
+        val kommuneVersjon2 = saveKommune(id = "kommuneVersjon2", unikLokalid = kommuneUnikLokalid, gyldigFra = jan1In2023, stemmekretser = stemmekretsList)
+
+        kommuneList = kommuneRepository.findAllByLokalid(lokalIdOfKommune.value)
+        assertThat(kommuneList).hasSize(2)
+        kommuneList.forEach { n ->
+            assertThat(n.kommuneLokalid.stemmekretser).hasSize(2).extracting("id").contains(lagretStemmekrets.id, stemmekretsVersjon2.id)
+            assertThat(n.getStemmekretser(october1In2022)).hasSize(1).extracting("id").contains(lagretStemmekrets.id)
+            assertThat(n.getStemmekretser(november28In2022)).hasSize(1).extracting("id").contains(stemmekretsVersjon2.id)
+        }
+
+        stemmekretsList = stemmekretsRepository.findAllByLokalid(stemmekrets.lokalid)
+        assertThat(stemmekretsList).hasSize(2)
+        stemmekretsList.forEach { k ->
+            assertThat(k.kommuneLokalid.kommuner).hasSize(2).extracting("id").contains(lagretKommune.id, kommuneVersjon2.id)
+            assertThat(k.getKommune(october1In2022)!!.id).isEqualTo(lagretKommune.id)
+            assertThat(k.getKommune(november28In2022)!!.id).isEqualTo(lagretKommune.id)
+            assertThat(k.getKommune(jan1In2023)!!.id).isEqualTo(kommuneVersjon2.id)
+        }
+    }
+    
+    @Test
+    fun `sjekk pekere mellom kommune og grunnkrets`() {
+        val grunnkretsLokalid = Lokalid("grunnkretsLokalid")
+        val grunnkrets = saveGrunnkrets(lokalid = grunnkretsLokalid)
+        val lokalIdOfKommune = Lokalid("lokalIdOfKommune")
+        val kommuneUnikLokalid = saveUnikLokalid(lokalIdOfKommune.value, Flatetype.KOMMUNE)
+
+        saveKommune(unikLokalid = kommuneUnikLokalid, grunnkretser = listOf(grunnkrets))
+        val lagretGrunnkrets = grunnkretsRepository.findLastByLokalid(grunnkrets.lokalid)!!
+
+        var kommuneList = kommuneRepository.findAllByLokalid(lokalIdOfKommune.value)
+        assertThat(kommuneList).hasSize(1)
+        var lagretKommune = kommuneList.first()
+
+        //Initielt én grunnkrets og en kommune - skal peke på hverandre
+        assertThat(lagretKommune.kommuneLokalid.grunnkretser).hasSize(1).extracting("id").contains(lagretGrunnkrets.id)
+        assertThat(lagretGrunnkrets.kommuneLokalid.kommuner).hasSize(1).extracting("id").contains(lagretKommune.id)
+
+        //Kommune har ikke noen grunnkretser ved dato før grunnkretsen oppsto, men har det for dagens dato
+        assertThat(lagretKommune.getGrunnkretser(LocalDate.of(2020, Month.NOVEMBER, 28))).isEmpty()
+        assertThat(lagretKommune.getGrunnkretser()).hasSize(1).extracting("id").contains(lagretGrunnkrets.id)
+
+        //Grunnkrets har ikke noe kommune ved dato før kommunen oppsto, man har det for dagens dato
+        assertThat(lagretGrunnkrets.getKommune(LocalDate.of(2020, Month.NOVEMBER, 28))).isNull()
+        assertThat(lagretGrunnkrets.getKommune()!!.id).isEqualTo(lagretKommune.id)
+
+        //Ny versjon av grunnkretsen, knyttet til samme kommune
+        lagretGrunnkrets.setGyldigTil(november28In2022)
+        grunnkretsRepository.save(lagretGrunnkrets)
+        val grunnkretsVersjon2 = saveGrunnkrets(id = "grunnkretsVersjon2", lokalid = grunnkretsLokalid, gyldigFra = november28In2022)
+        lagretKommune.addGrunnkrets(grunnkretsVersjon2)
+        kommuneRepository.save(lagretKommune)
+
+        lagretKommune = kommuneRepository.findLastByLokalid(lokalIdOfKommune.value)!!
+        assertThat(lagretKommune.kommuneLokalid.grunnkretser).hasSize(2).extracting("id").contains(lagretGrunnkrets.id, grunnkretsVersjon2.id)
+        assertThat(lagretKommune.getGrunnkretser(LocalDate.of(2020, Month.NOVEMBER, 28))).isEmpty()
+        assertThat(lagretKommune.getGrunnkretser(october1In2022)).hasSize(1).extracting("id").contains(lagretGrunnkrets.id)
+        assertThat(lagretKommune.getGrunnkretser(november28In2022)).hasSize(1).extracting("id").contains(grunnkretsVersjon2.id)
+
+        var grunnkretsList = grunnkretsRepository.findAllByLokalid(grunnkrets.lokalid)
+        assertThat(grunnkretsList).hasSize(2)
+        grunnkretsList.forEach { k ->
+            assertThat(k.kommuneLokalid.kommuner).hasSize(1).extracting("id").contains(lagretKommune.id)
+            assertThat(k.getKommune()!!.id).isEqualTo(lagretKommune.id)
+            assertThat(k.getKommune(november28In2022)!!.id).isEqualTo(lagretKommune.id)
+            assertThat(k.getKommune(october1In2022)!!.id).isEqualTo(lagretKommune.id)
+        }
+
+        //Ny versjon av kommunen, knyttet til samme grunnkretser
+        lagretKommune.setGyldigTil(jan1In2023)
+        kommuneRepository.save(lagretKommune)
+        val kommuneVersjon2 = saveKommune(id = "kommuneVersjon2", unikLokalid = kommuneUnikLokalid, gyldigFra = jan1In2023, grunnkretser = grunnkretsList)
+
+        kommuneList = kommuneRepository.findAllByLokalid(lokalIdOfKommune.value)
+        assertThat(kommuneList).hasSize(2)
+        kommuneList.forEach { n ->
+            assertThat(n.kommuneLokalid.grunnkretser).hasSize(2).extracting("id").contains(lagretGrunnkrets.id, grunnkretsVersjon2.id)
+            assertThat(n.getGrunnkretser(october1In2022)).hasSize(1).extracting("id").contains(lagretGrunnkrets.id)
+            assertThat(n.getGrunnkretser(november28In2022)).hasSize(1).extracting("id").contains(grunnkretsVersjon2.id)
+        }
+
+        grunnkretsList = grunnkretsRepository.findAllByLokalid(grunnkrets.lokalid)
+        assertThat(grunnkretsList).hasSize(2)
+        grunnkretsList.forEach { k ->
+            assertThat(k.kommuneLokalid.kommuner).hasSize(2).extracting("id").contains(lagretKommune.id, kommuneVersjon2.id)
+            assertThat(k.getKommune(october1In2022)!!.id).isEqualTo(lagretKommune.id)
+            assertThat(k.getKommune(november28In2022)!!.id).isEqualTo(lagretKommune.id)
+            assertThat(k.getKommune(jan1In2023)!!.id).isEqualTo(kommuneVersjon2.id)
+        }
     }
 
 }

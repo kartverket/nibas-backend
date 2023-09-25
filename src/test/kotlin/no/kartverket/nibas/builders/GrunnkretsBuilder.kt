@@ -36,18 +36,24 @@ class GrunnkretsBuilder(
     }
 
     fun build(): Grunnkrets {
+        val grunnkrets = buildUtenKommune()
+
+        kommune.addGrunnkrets(grunnkrets)
+
+        return grunnkrets
+    }
+
+    fun buildUtenKommune(): Grunnkrets {
         val grunnkrets = Grunnkrets(id = this.id, lokalid = lokalId.value)
 
         grunnkrets.datafangstdato = datafangstdato
 
         grunnkrets.grunnkretsnavn = grunnkretsnavn
         grunnkrets.grunnkretsnummer = grunnkretsnummer
-        grunnkrets.auditInfo.endretdato = endretdato
-        grunnkrets.kommune = kommune
-        grunnkrets.auditInfo.endretdato = endretdato
         grunnkrets.gyldighet = Gyldighet(gyldigFra, gyldigTil, slettet)
         grunnkrets.setInfo(informasjonstekst)
         grunnkrets.opphav = opphav
+        grunnkrets.auditInfo.endretdato = endretdato
         grunnkrets.auditInfo.typeEndring = typeEndring
 
         var forrigeGrense = grenser.lastOrNull()

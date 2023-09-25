@@ -1,10 +1,11 @@
 package no.kartverket.nibas.builders
 
-import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.domain.Administrativenhetnavn
 import no.kartverket.nibas.domain.Fylke
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Spraakkode
+import no.kartverket.nibas.domain.UnikLokalid
 import no.kartverket.nibas.sporing.Gyldighet
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
@@ -15,8 +16,8 @@ class FylkeBuilder(
     private val id: String = "1",
     private var objtype: String = "Fylke",
     private var fylkesnummer: String = "UUID-2",
-    private var lokalId: Lokalid = Lokalid("123"),
-    private var navn: String = "Vestland",
+    private var unikLokalid: UnikLokalid = UnikLokalid("fylke123", Flatetype.FYLKE),
+    private var navn: String? = null,
     private var spraak: String = "NOR",
     private var samiskforvaltningsomraade: Boolean = false,
     private var endretdato: ZonedDateTime = ZonedDateTime.now(),
@@ -24,10 +25,11 @@ class FylkeBuilder(
     private var version: Int = 1,
     private var gyldigFra: LocalDate = LocalDate.now(),
     private var gyldigTil: LocalDate? = null,
+    private var administrativenhetnavn: List<Administrativenhetnavn> = emptyList(),
 ) {
 
     companion object {
-        val DEFAULT_FYLKE = FylkeBuilder().build()
+        val DEFAULT_FYLKE = FylkeBuilder().withNavn("Vestland").build()
     }
 
     fun withNavn(navn: String, spraak: String = "NOR"): FylkeBuilder {
@@ -37,17 +39,28 @@ class FylkeBuilder(
     }
 
     fun build(): Fylke {
-        val fylke = Fylke(id = this.id, lokalid = lokalId.value)
-        val spraakkode = Spraakkode()
-        spraakkode.id = spraak
-        spraakkode.description = spraak
+        val fylke = buildUtenUnikLokalidOgTilknytninger()
+        fylke.addFylkeTilUnikLokalid(unikLokalid)
 
-        val administrativenhetnavn = Administrativenhetnavn()
-        administrativenhetnavn.navn = navn
-        administrativenhetnavn.spraak = spraakkode
+        kommuner.forEach { fylke.addKommune(it) }
+        administrativenhetnavn.forEach { fylke.addAdministrativenhetNavn(it) }
+        return fylke
+    }
 
-        fylke.administrativenhetnavn = mutableSetOf(administrativenhetnavn)
-        administrativenhetnavn.fylkeFk = fylke
+    fun buildUtenUnikLokalidOgTilknytninger(): Fylke {
+        val fylke = Fylke(id = this.id, lokalid = unikLokalid.lokalid)
+
+        if (navn != null) {
+            val spraakkode = Spraakkode()
+            spraakkode.id = spraak
+            spraakkode.description = spraak
+
+            val admNavn = Administrativenhetnavn()
+            admNavn.navn = navn
+            admNavn.spraak = spraakkode
+
+            administrativenhetnavn = listOf(admNavn)
+        }
 
         fylke.objtype = objtype
         fylke.fylkesnummer = fylkesnummer
@@ -58,19 +71,7 @@ class FylkeBuilder(
         fylke.version = version
         fylke.gyldighet = Gyldighet(gyldigFra, gyldigTil)
 
-        kommuner.forEach {
-            fylke.addKommune(it)
-        }
         return fylke
-    }
-
-    fun buildWithoutAdministrativenhetnavn(): Fylke {
-        return build().apply { this.administrativenhetnavn.clear() }
-    }
-
-    fun withLokalId(lokalId: String): FylkeBuilder {
-        this.lokalId = Lokalid(lokalId)
-        return this
     }
 
     fun withFylkesnummer(fylkesnummer: String): FylkeBuilder {

@@ -15,7 +15,6 @@ import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
 import no.kartverket.nibas.events.NibasEventPublisher
 import no.kartverket.nibas.events.PublishEventException
-import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.repository.UtkastRepository
 import no.kartverket.nibas.service.utkast.UtkastService
 import no.kartverket.nibas.sporing.AuditInfo
@@ -52,9 +51,6 @@ class UtkastService_stemmekretsIT : TestWithDbContainer() {
     private lateinit var utkastRepository: UtkastRepository
 
     @Autowired
-    private lateinit var stemmekretsRepository: StemmekretsRepository
-
-    @Autowired
     private lateinit var nibasEventPublisher: NibasEventPublisher
 
     // ID for Kommune med kommunenummerId som matcher i Geonorge og vår cache
@@ -68,7 +64,6 @@ class UtkastService_stemmekretsIT : TestWithDbContainer() {
     private val stemmekretsnr1234 = "1234"
     private val stemmekretsnr4567 = "4567"
 
-
     private val october23In2022 = ZonedDateTime.of(LocalDateTime.of(2022, Month.OCTOBER, 23, 12, 0), ZoneId.systemDefault())
     private val october24In2022 = ZonedDateTime.of(LocalDateTime.of(2022, Month.OCTOBER, 24, 12, 0), ZoneId.systemDefault())
     private val november25In2022 = LocalDate.of(2022, Month.NOVEMBER, 25)
@@ -76,7 +71,6 @@ class UtkastService_stemmekretsIT : TestWithDbContainer() {
     private val july1In2023 = LocalDate.of(2023, Month.JULY, 1)
     private val january1In2024 = LocalDate.of(2024, Month.JANUARY, 1)
     private val february1In2024 = LocalDate.of(2024, Month.FEBRUARY, 1)
-
 
     @BeforeEach
     fun beforeEach() {
@@ -280,8 +274,24 @@ class UtkastService_stemmekretsIT : TestWithDbContainer() {
     }
 
     private fun assert1StemmekretsPresent() {
+        //Sjekker en del uniklokalid-relasjoner, at det hentes korrekt fra data som faktisk er lagret i en database
+        val kommune = kommuneRepository.findById("e24e9dcf-4ae9-475c-afc2-1a5c49f166e4").get()
+        Assertions.assertThat(kommune.lokalid).isEqualTo("ffd39f1e-f20e-4559-80c9-42b911aac29b")
+        Assertions.assertThat(kommune.lokalid).isEqualTo(kommune.kommuneLokalid.lokalid)
 
-        Assertions.assertThat(findAllStemmekretserSortedByVersion().size).isEqualTo(1)
+        val stemmekretsList = findAllStemmekretserSortedByVersion()
+        Assertions.assertThat(stemmekretsList).hasSize(1)
+
+        val first = stemmekretsList.first()
+        Assertions.assertThat(first.kommuneLokalid).isEqualTo(kommune.kommuneLokalid)
+        Assertions.assertThat(first.lokalid).isEqualTo("e5ff0e76-ab1b-4e25-83bf-66e1bd2e6946")
+
+        Assertions.assertThat(kommune.kommuneLokalid.stemmekretser).hasSize(1).extracting("id").contains("51d3699c-2294-4419-a398-aaa3207a87cf")
+        Assertions.assertThat(kommune.kommuneLokalid.kommuner).hasSize(2)
+            .extracting("id").contains("e24e9dcf-4ae9-475c-afc2-1a5c49f166e4", "ny-e24e9dcf-4ae9-475c-afc2-1a5c49f166e4")
+        Assertions.assertThat(kommune.fylkeLokalid.fylker).hasSize(2)
+            .extracting("id").contains("f2e85556-471b-4807-a1bf-6da7478e7cda", "ny-47f4ef26-f1c1-4bbf-9f1b-8e37e70cc6a1")
+        Assertions.assertThat(kommune.fylkeLokalid.kommunerForFylke).hasSize(52)
     }
 
     private fun saveAndPubliserStemmekretsUtkast(navn: String, stemmekretsNr: String, stemmekretsNavn: String,
@@ -346,7 +356,7 @@ class UtkastService_stemmekretsIT : TestWithDbContainer() {
         Assertions.assertThat(stemmekrets.stemmekretsnavn).isEqualTo(stemmekretssnavn)
         Assertions.assertThat(stemmekrets.gyldighet).isEqualTo(gyldighetsintervall)
         Assertions.assertThat(stemmekrets.version).isEqualTo(version)
-        Assertions.assertThat(stemmekrets.kommune.id).isEqualTo(kommuneIdGeonorge)
+        Assertions.assertThat(stemmekrets.getKommune(gyldighetsintervall.gyldigFra)!!.id).isEqualTo(kommuneIdGeonorge)
     }
 
     private fun assertUtkastIsPublisert(utkastId: String) = assertStatusEr(utkastId, UtkastStatus.PUBLISERT)

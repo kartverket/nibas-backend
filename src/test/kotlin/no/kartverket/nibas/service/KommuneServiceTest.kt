@@ -122,7 +122,7 @@ class KommuneServiceTest {
 
         kommuneService.oppdaterKommune(lokalid, oppdatertKommune)
 
-        val forventetNavnToSave = eksisterende.administrativenhetnavn.first()
+        val forventetNavnToSave = eksisterende.kommuneLokalid.administrativenhetnavn.first()
         forventetNavnToSave.navn = navn
 
         verify(administrativenhetnavnRepository).save(forventetNavnToSave)
@@ -165,7 +165,6 @@ class KommuneServiceTest {
 
         val kommune = KommuneBuilder(
             id = kommuneId,
-            lokalId = Lokalid("1000"),
             navn = "Bergen",
             grunnkretser = mutableListOf(grunnkretsStorvatn, grunnkretsMoi, grunnkretsMoiFremtidigVersjon)
         ).build()

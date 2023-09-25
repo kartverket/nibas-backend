@@ -21,8 +21,6 @@ import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.kodelister.KodelisteService
-import no.kartverket.nibas.repository.GrenseRepository
-import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.findAllByLokalidSortedByGyldigFra
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import no.kartverket.nibas.utils.GrenseHelper
@@ -47,12 +45,6 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
 
     @Autowired
     private lateinit var grunnkretsService: GrunnkretsService
-
-    @Autowired
-    private lateinit var grunnkretsRepository: GrunnkretsRepository
-
-    @Autowired
-    private lateinit var grenseRepository: GrenseRepository
 
     @Autowired
     private lateinit var grenseService: GrenseService
@@ -119,7 +111,8 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
     @Test
     fun hentGrenserForEksisterendeGrunnkretsMedDagensDato() {
         val identifikator = Identifikator(Lokalid("1001"), november28In2022)
-        lagGrenserForGrunnkrets(identifikator.lokalid)
+        val kommune = saveKommuneOgUnikLokalid(kommunenummer = "4227", gyldigFra = october1In2022)
+        lagGrenserForGrunnkrets(identifikator.lokalid, kommune)
 
         val grensekoblinger = grunnkretsService.hentGrenserForGrunnkrets(identifikator)
         assertThat(grensekoblinger).isNotEmpty
@@ -143,7 +136,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         val grunnkrets2 = saveGrunnkrets(id = "1302", lokalid = grunnkretsLokalid, gyldigFra = december1In2022, gyldigTil = jan1In2024, grenser = listOf(grense1))
         val grunnkrets3 = saveGrunnkrets(id = "1303", lokalid = grunnkretsLokalid, gyldigFra = jan1In2024, grenser = listOf(grense1))
 
-        saveKommune(gyldigFra = october1In2022, grunnkretser = listOf(grunnkrets1, grunnkrets2, grunnkrets3))
+        saveKommuneOgUnikLokalid(gyldigFra = october1In2022, grunnkretser = listOf(grunnkrets1, grunnkrets2, grunnkrets3))
 
         val grensekoblinger = grunnkretsService.hentGrenserForGrunnkrets(identifikatorFor1Jan23)
         assertGrenser(grensekoblinger,
@@ -164,11 +157,10 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
     @Test
     fun oppdaterGrunnkretsMedDagensDato() {
         val grunnkretsRequest = GrunnkretsRequestBuilder.DEFAULT_REQUEST
-        val kommune = saveKommune(kommunenummer = "4227", gyldigFra = october1In2022)
+        val kommune = saveKommuneOgUnikLokalid(kommunenummer = "4227", gyldigFra = october1In2022)
 
         val identifikator = Identifikator(Lokalid(grunnkretsRequest.identifikasjon.lokalid), october1In2022)
         val grunnkrets = lagGrenserForGrunnkrets(identifikator.lokalid, kommune)
-        kommune.grunnkretser.add(grunnkrets)
 
         val now = LocalDate.now()
         val opprinneligGrunnkrets = grunnkretsService.hentGrunnkrets(identifikator)
@@ -596,7 +588,9 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
 
         grenseRepository.flush()
 
-        return saveGrunnkrets(lokalid = grunnkretsLokalid, kommune = kommune, grenser = listOf(grense1, grense2, grense3))
+        val grunnkrets = saveGrunnkrets(lokalid = grunnkretsLokalid, kommune = kommune, grenser = listOf(grense1, grense2, grense3))
+        kommune.addGrunnkrets(grunnkrets)
+        return grunnkrets
     }
 
     private fun saveGrunnkretsMed1FramtidigVersjon(grunnkretsLokalid: Lokalid) {
@@ -612,7 +606,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
             grunnkretsnavn = "Måsvann",
             gyldigFra = jan1In2023,
         )
-        saveKommune(grunnkretser = listOf(grunnkrets, grunnkretsFramtidigVersjon))
+        saveKommuneOgUnikLokalid(grunnkretser = listOf(grunnkrets, grunnkretsFramtidigVersjon))
     }
 
     private fun saveNaboGrunnkretser(gyldigFra: LocalDate, medHull: Boolean = false): List<Grunnkrets> {
@@ -646,7 +640,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
             grenser = lagredeGrenserForOest
         )
 
-        saveKommune(grunnkretser = listOf(kretsVest, kretsOest))
+        saveKommuneOgUnikLokalid(grunnkretser = listOf(kretsVest, kretsOest), gyldigFra = gyldigFra)
         grenseRepository.flush()
         return listOf(kretsVest, kretsOest)
     }

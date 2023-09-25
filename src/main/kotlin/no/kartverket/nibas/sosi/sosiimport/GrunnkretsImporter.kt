@@ -32,14 +32,10 @@ class GrunnkretsImporter @Autowired constructor(
             logger.info("Bruker eksisterende flate")
         } else {
             val lokalid: String? = sosiIdent.getValidLokalId()
-            val grunnkrets = if (lokalid != null) Grunnkrets(lokalid = lokalid) else Grunnkrets()
-
-            val kommunenummerId = kodelisteService.getKommunenummerIdByCodeValue(flate.getKommunenummer())
-            grunnkrets.kommune = kommuneRepository.findByKommunenummer(kommunenummerId)!!
+            var grunnkrets = if (lokalid != null) Grunnkrets(lokalid = lokalid) else Grunnkrets()
 
             grunnkrets.datafangstdato = flate.getDatafangstDato()
             grunnkrets.gyldighet = Gyldighet(flate.getGyldigFra(), flate.getGyldigTil())
-            grunnkrets.setInfo(flate.getInformasjon())
             grunnkrets.opphav = flate.getOpphav()
 
             grunnkrets.grunnkretsnummer = flate.getGrunnkretsId()?.getGrunnkretsnummer()
@@ -63,7 +59,11 @@ class GrunnkretsImporter @Autowired constructor(
             }
 
             grunnkrets.oppdaterOmraade()
-            grunnkretsRepository.save(grunnkrets)
+            grunnkrets = grunnkretsRepository.save(grunnkrets)
+
+            val kommunenummerId = kodelisteService.getKommunenummerIdByCodeValue(flate.getKommunenummer())
+            val kommune = kommuneRepository.findByKommunenummer(kommunenummerId)!!
+            kommune.addGrunnkrets(grunnkrets)
         }
     }
 }

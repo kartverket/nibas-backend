@@ -3,6 +3,7 @@ package no.kartverket.nibas.domain
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
+import org.hibernate.annotations.Where
 import java.io.Serializable
 import java.time.LocalDate
 import java.util.*
@@ -38,11 +39,12 @@ class Stemmekrets(
     @OneToMany(mappedBy = "stemmekrets", cascade = [CascadeType.ALL])
     var grenser: MutableSet<StemmekretsGrenseKobling> = Collections.synchronizedSet(mutableSetOf())
 
-    @ManyToOne
-    @JoinColumn(name = "kommune_fk")
-    lateinit var kommune: Kommune
+    @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    @JoinColumn(name = "kommunelokalid", referencedColumnName = "lokalid")
+    @Where(clause="flatetype='KOMMUNE'")
+    lateinit var kommuneLokalid : UnikLokalid
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "utledetfra")
     var utledetFra: Stemmekrets? = null
 
@@ -52,6 +54,13 @@ class Stemmekrets(
     }
 
     fun getGrenser(gyldighetsdato: LocalDate = LocalDate.now()): List<GrenseKobling> = getGrenserAvTyper(tillatteGrensetyper(), gyldighetsdato)
+
+    /**
+     * Henter kretsen sin kommune på en gitt dato. Hvis man gir en dato hvor kommunen med gitt lokalid ikke er gyldig, returneres null
+     */
+    fun getKommune(gyldighetsdato: LocalDate = LocalDate.now()): Kommune? {
+        return kommuneLokalid.kommuner.filter { it.gyldigPaaDato(gyldighetsdato) }.firstOrNull()
+    }
 
     override fun oppdaterOmraade() {
         omraade = SosiGeometryFunctions.beregnFlate(getGrenser().toSet())
@@ -126,8 +135,8 @@ class Stemmekrets(
             opphav = gammelStemmekrets.opphav
         }
 
-    fun applyCascadingOperationsBasedOnExistingStemmekrets (gammelStemmekrets: Stemmekrets) : Stemmekrets {
-        gammelStemmekrets.kommune.addStemmekrets(this)
+    fun applyCascadingOperationsBasedOnExistingStemmekrets (gammelStemmekrets: Stemmekrets, gyldigFra: LocalDate = LocalDate.now()) : Stemmekrets {
+        gammelStemmekrets.getKommune(gyldigFra)!!.addStemmekrets(this)
 
         gammelStemmekrets.grenser.forEach { gammelGrenseKobling ->
             addGrensekobling(grense = gammelGrenseKobling.grense, grenseKoblingAttributter = gammelGrenseKobling.grenseKoblingAttributter)

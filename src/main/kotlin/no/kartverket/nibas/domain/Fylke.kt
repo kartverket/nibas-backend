@@ -2,11 +2,13 @@ package no.kartverket.nibas.domain
 
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grensetype
+import org.hibernate.annotations.Where
 import java.time.LocalDate
 import java.util.*
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.FetchType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
@@ -29,22 +31,22 @@ class Fylke(
     @Column(name = "samiskforvaltningsomraade")
     var samiskforvaltningsomraade: Boolean? = null
 
-    @ManyToOne
-    @JoinColumn(name = "nasjon_fk")
-    lateinit var nasjon: Nasjon
+    @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    @JoinColumn(name = "nasjonlokalid", referencedColumnName = "lokalid")
+    @Where(clause="flatetype='NASJON'")
+    lateinit var nasjonLokalid : UnikLokalid
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "utledetfra")
     var utledetFra: Fylke? = null
 
+    @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    @JoinColumn(name = "lokalid", referencedColumnName = "lokalid", insertable = false, updatable = false)
+    @Where(clause="flatetype='FYLKE'")
+    lateinit var fylkeLokalid : UnikLokalid
+
     @OneToMany(mappedBy = "fylkeFk", cascade = [CascadeType.ALL])
     var informasjonselementer: MutableSet<FylkeInformasjon> = mutableSetOf()
-
-    @OneToMany(mappedBy = "fylkeFk")
-    override var administrativenhetnavn: MutableSet<Administrativenhetnavn> = mutableSetOf()
-
-    @OneToMany(mappedBy = "fylke", cascade = [CascadeType.ALL])
-    var kommuner: MutableSet<Kommune> = mutableSetOf()
 
     override fun getInfo(): String? = doGetInfoFromSingletonCollection(informasjonselementer)
 
@@ -60,12 +62,36 @@ class Fylke(
     }
 
     fun addKommune(kommune: Kommune) {
-        kommune.fylke = this
-        kommuner.add(kommune)
+        kommune.fylkeLokalid = fylkeLokalid
+        fylkeLokalid.kommunerForFylke.add(kommune)
     }
 
     fun getKommuner(gyldighetsdato: LocalDate = LocalDate.now()): List<Kommune> {
-        return kommuner.filter { it.gyldigPaaDato(gyldighetsdato) }
+        return fylkeLokalid.kommunerForFylke.filter { it.gyldigPaaDato(gyldighetsdato) }
+    }
+
+    /**
+     * Henter fylket sin nasjon på en gitt dato. Hvis man gir en dato hvor nasjonen med gitt lokalid ikke er gyldig, returneres null
+     */
+    fun getNasjon(gyldighetsdato: LocalDate = LocalDate.now()): Nasjon? {
+        return nasjonLokalid.nasjoner.filter { it.gyldigPaaDato(gyldighetsdato) }.firstOrNull()
+    }
+
+    fun addAdministrativenhetNavn(navn: Administrativenhetnavn) {
+        navn.administrativenhetLokalid = fylkeLokalid
+        fylkeLokalid.administrativenhetnavn.add(navn)
+    }
+
+    override fun getAdministrativenhetNavn(gyldighetsdato: LocalDate): List<Administrativenhetnavn> {
+        return fylkeLokalid.administrativenhetnavn.filter { it.gyldigPaaDato(gyldighetsdato) }
+    }
+
+    /**
+     * Knytt denne versjonen av fylket til dets lokalid
+     */
+    fun addFylkeTilUnikLokalid(unikLokalid: UnikLokalid) {
+        fylkeLokalid = unikLokalid
+        unikLokalid.fylker.add(this)
     }
 
     fun tillatteGrensetyper(): Set<Grensetype> = setOf(

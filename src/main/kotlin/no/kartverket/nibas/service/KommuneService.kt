@@ -61,7 +61,7 @@ class KommuneService(
 
             // Finner basert på språkkode, og oppdaterer den
             oppdatertKommune.administrativenhetnavn.forEach { navn ->
-                gammel.administrativenhetnavn.first { it.spraak?.id == navn.spraak }.let { gammeltNavn ->
+                gammel.kommuneLokalid.administrativenhetnavn.first { it.spraak?.id == navn.spraak }.let { gammeltNavn ->
                     verifiserOptimistiskLaas(navn.version, gammeltNavn)?.let { throw OptimistiskLaasException(it) }
                     gammeltNavn.navn = navn.navn
                     administrativenhetnavnRepository.save(gammeltNavn)
@@ -81,13 +81,13 @@ class KommuneService(
     }
 
     fun hentAlleGrunnkretserForKommune(kommunenummer: String, gyldighetsdato: LocalDate): List<Grunnkrets> {
-        return hentKommuneFraNumeriskNummer(kommunenummer, gyldighetsdato).grunnkretser
+        return hentKommuneFraNumeriskNummer(kommunenummer, gyldighetsdato).kommuneLokalid.grunnkretser
             .filter { it.gyldigPaaDato(LocalDate.now()) }
             .sortedBy { it.id }
     }
 
     fun hentAlleStemmekretserForKommune(numeriskKommunenummer: String, gyldighetsdato: LocalDate): List<Stemmekrets> {
-        return hentKommuneFraNumeriskNummer(numeriskKommunenummer, gyldighetsdato).stemmekretser
+        return hentKommuneFraNumeriskNummer(numeriskKommunenummer, gyldighetsdato).kommuneLokalid.stemmekretser
             .filter { it.gyldigPaaDato(gyldighetsdato) }
             .sortedBy { it.id }
     }
@@ -95,13 +95,14 @@ class KommuneService(
     fun hentAntallGyldigeVersjonerFramITidFor(identifikator: Identifikator): Int = kommuneRepository.findAntallFramtidigeVersjonerForIdentifikator(identifikator)
 
     fun kommuneToKommuneRef(kommune: Kommune, datoToUse: LocalDate): KommuneRef {
-        val kommuneIdentifikator = Identifikator(Lokalid(kommune.lokalid), datoToUse)
-        val antallFramtidigeVersjoner = hentAntallGyldigeVersjonerFramITidFor(kommuneIdentifikator)
+        val identifikator = Identifikator(Lokalid(kommune.lokalid), datoToUse)
+        val antallFramtidigeVersjoner = hentAntallGyldigeVersjonerFramITidFor(identifikator)
 
         return KommuneRef(
-            id = kommuneIdentifikator.toObjektIdentifikator(),
-            navn = kommune.administrativenhetnavn.map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version, it.rekkefoelge) },
-            href = hrefProvider.getHref(kommuneIdentifikator),
+            id = identifikator.toObjektIdentifikator(),
+            navn = kommune.getAdministrativenhetNavn(identifikator.gyldighetsdato)
+                .map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version, it.rekkefoelge) },
+            href = hrefProvider.getHref(identifikator),
             kommunenummer = kodelisteService.createKommunenummerFromUUID(kommune.kommunenummer),
             antallFramtidigeVersjoner = antallFramtidigeVersjoner
         )

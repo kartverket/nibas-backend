@@ -1,14 +1,17 @@
 package no.kartverket.nibas.sosi.sosiimport
 
+import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.domain.Administrativenhetnavn
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.KommuneInformasjon
+import no.kartverket.nibas.domain.UnikLokalid
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.FylkeRepository
 import no.kartverket.nibas.repository.KommuneInformasjonRepository
 import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.SpraakkodeRepository
+import no.kartverket.nibas.repository.UnikLokalidRepository
 import no.kartverket.nibas.sosi.model.SosiFlate
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
@@ -24,6 +27,7 @@ class KommuneImporter @Autowired constructor(
     private val kommuneRepository: KommuneRepository,
     private val administrativenhetnavnRepository: AdministrativenhetnavnRepository,
     private val spraakkodeRepository: SpraakkodeRepository,
+    private var unikLokalidRepository: UnikLokalidRepository,
     private val administrativEnhetImporter: AdministrativEnhetImporter
 ) {
 
@@ -39,13 +43,16 @@ class KommuneImporter @Autowired constructor(
         kommune.kommunenummer = kodelisteService.getKommunenummerIdByCodeValue(forsteFlate.getKommunenummer())
         kommune.samiskforvaltningsomraade = forsteFlate.isSamiskForvaltningsomrade()
 
-        // Fylkesnummer er de to første sifferne i kommunenummeret
-        kommune.fylke = fylkeRepository.findByFylkesnummer(
-            kodelisteService.getFylkesnummerIdByCodeValue(
-                forsteFlate.getKommunenummer().substring(0, 2)
-            )
-        )!!
+        var unikLokalid = UnikLokalid(kommune.lokalid, Flatetype.KOMMUNE)
+        unikLokalid = unikLokalidRepository.save(unikLokalid)
+
         kommune = kommuneRepository.save(kommune)
+        kommune.addKommuneTilUnikLokalid(unikLokalid)
+
+        // Fylkesnummer er de to første sifferne i kommunenummeret
+        val fylke = fylkeRepository.findByFylkesnummer(kodelisteService.getFylkesnummerIdByCodeValue(
+            forsteFlate.getKommunenummer().substring(0, 2)))!!
+        fylke.addKommune(kommune)
 
         if (forsteFlate.getInformasjon() != null) {
             val kommuneInformasjon = KommuneInformasjon(kommune)
@@ -55,12 +62,13 @@ class KommuneImporter @Autowired constructor(
         }
 
         forsteFlate.getKommunenavn().forEach { sosiKommunenavn ->
-            val kommunenavn = Administrativenhetnavn()
+            var kommunenavn = Administrativenhetnavn()
             kommunenavn.navn = sosiKommunenavn.getNavn()
             kommunenavn.spraak = sosiKommunenavn.getSprak()?.let { spraakkodeRepository.findByIdOrNull(it) }
             kommunenavn.rekkefoelge = sosiKommunenavn.getRekkefolge()
-            kommunenavn.kommuneFk = kommune
-            administrativenhetnavnRepository.save(kommunenavn)
+            kommunenavn = administrativenhetnavnRepository.save(kommunenavn)
+
+            kommune.addAdministrativenhetNavn(kommunenavn)
         }
     }
 }

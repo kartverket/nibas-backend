@@ -206,12 +206,9 @@ class UtkastValidatorService(
     private fun isUgyldigGrunnkretsnummer(nummer: String, lokalid: String): Boolean {
         if (nummer.length != 8) return true
 
-        val grunnkrets =
-            grunnkretsService.hentGrunnkrets(
-                Identifikator(lokalid = Lokalid(lokalid), gyldighetsdato = LocalDate.now())
-            )
+        val grunnkrets = grunnkretsService.hentGrunnkrets(Identifikator(lokalid = Lokalid(lokalid), gyldighetsdato = LocalDate.now()))
 
-        val kommunenummerUUID = grunnkrets?.kommune?.kommunenummer
+        val kommunenummerUUID = grunnkrets?.getKommune(grunnkrets.gyldighet.gyldigFra)?.kommunenummer
         if (kommunenummerUUID.isNullOrBlank()) return true
 
         val kommunenummer = kodelisteService.getCodeValueByKommunenummerId(kommunenummerUUID)

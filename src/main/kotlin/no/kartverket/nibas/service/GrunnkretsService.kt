@@ -98,17 +98,7 @@ class GrunnkretsService(
             .applyChangesFromRequest(oppdatertGrunnkrets)
 
         if (finnesAnnenGrunnkretsMedSammeGrunnkretsnummer(nyGrunnkrets)) {
-            val kommunenavn = nyGrunnkrets.kommune.administrativenhetnavn.getInSpraak("nor") ?: "UKJENT KOMMUNE"
-            val kommunenummer = kodelisteService.getCodeValueByKommunenummerId(nyGrunnkrets.kommune.kommunenummer)
-            val gyldigFraTekst = nyGrunnkrets.gyldighet.gyldigFra.toNorskFormat()
-            val gyldigTilTekst = nyGrunnkrets.gyldighet.gyldigTil?.let { "til ${it.toNorskFormat()}" } ?: "og fremover"
-
-            throw ResponseException.BadRequestException(
-                title = "Duplikate kretsnummer innenfor samme kommune",
-                msg = "Kretsnummer ${nyGrunnkrets.grunnkretsnummer} er brukt på flere grunnkretser innenfor kommunen (${kommunenummer} ${kommunenavn}) " +
-                    "med gyldighet som overlapper med $gyldigFraTekst $gyldigTilTekst. " +
-                    "Vennligst gi grunnkretsene unike kretsnumre før du fortsetter."
-            )
+            throw createDuplikatGrunnkretsnummerException(nyGrunnkrets)
         }
 
         return nyGrunnkrets
@@ -118,6 +108,21 @@ class GrunnkretsService(
                     setGyldigTil(grunnkretsHelper.getNesteGyldigFraDato(relevantGrunnkrets))
                 }
             }
+    }
+
+    private fun createDuplikatGrunnkretsnummerException(grunnkrets: Grunnkrets): ResponseException.BadRequestException {
+        val kommune = grunnkrets.getKommune(grunnkrets.gyldighet.gyldigFra)
+        val kommunenavn = kommune?.getAdministrativenhetNavn(grunnkrets.gyldighet.gyldigFra)?.getInSpraak("nor") ?: "UKJENT KOMMUNE"
+        val kommunenummer = kommune?.let { kodelisteService.getCodeValueByKommunenummerId(it.kommunenummer) }
+        val gyldigFraTekst = grunnkrets.gyldighet.gyldigFra.toNorskFormat()
+        val gyldigTilTekst = grunnkrets.gyldighet.gyldigTil?.let { "til ${it.toNorskFormat()}" } ?: "og fremover"
+
+        return ResponseException.BadRequestException(
+            title = "Duplikate kretsnummer innenfor samme kommune",
+            msg = "Kretsnummer ${grunnkrets.grunnkretsnummer} er brukt på flere grunnkretser innenfor kommunen (${kommunenummer} ${kommunenavn}) " +
+                "med gyldighet som overlapper med $gyldigFraTekst $gyldigTilTekst. " +
+                "Vennligst gi grunnkretsene unike kretsnumre før du fortsetter."
+        )
     }
 
     fun createNyVersjonAvGrunnkrets(grunnkrets: Grunnkrets, gyldigFra: LocalDate, endringstype: Endringstype): Grunnkrets {
@@ -130,7 +135,7 @@ class GrunnkretsService(
                     auditInfo.typeEndring = endringstype
                 }
         )
-            .applyCascadingOperationsBasedOnExistingGrunnkrets(grunnkrets)
+            .applyCascadingOperationsBasedOnExistingGrunnkrets(grunnkrets, gyldigFra)
             .also { grunnkrets.setGyldigTil(gyldigFra)  }
     }
 

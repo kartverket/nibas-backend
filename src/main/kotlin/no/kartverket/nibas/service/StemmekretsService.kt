@@ -153,7 +153,7 @@ class StemmekretsService(
     }
 
     fun createNyVersjonAvStemmekrets(stemmekrets: Stemmekrets, gyldigFra: LocalDate, endringstype: Endringstype): Stemmekrets {
-        return stemmekretsRepository.save(
+        val nyStemmekrets = stemmekretsRepository.save(
             Stemmekrets(lokalid = stemmekrets.lokalid)
                 .apply {
                     applyMappingFromExistingStemmekrets(stemmekrets)
@@ -162,13 +162,15 @@ class StemmekretsService(
                     auditInfo.typeEndring = endringstype
                 }
         )
-            .applyCascadingOperationsBasedOnExistingStemmekrets(stemmekrets)
+        return nyStemmekrets
+            .applyCascadingOperationsBasedOnExistingStemmekrets(stemmekrets, gyldigFra)
             .also { stemmekrets.setGyldigTil(gyldigFra)  }
     }
 
     private fun createDuplikatStemmekretsnummerException(stemmekrets: Stemmekrets): ResponseException.BadRequestException {
-        val kommunenavn = stemmekrets.kommune.administrativenhetnavn.getInSpraak("nor") ?: "UKJENT KOMMUNE"
-        val kommunenummer = kodelisteService.getCodeValueByKommunenummerId(stemmekrets.kommune.kommunenummer)
+        val kommune = stemmekrets.getKommune(stemmekrets.gyldighet.gyldigFra)
+        val kommunenavn = kommune?.getAdministrativenhetNavn(stemmekrets.gyldighet.gyldigFra)?.getInSpraak("nor") ?: "UKJENT KOMMUNE"
+        val kommunenummer = kommune?.let { kodelisteService.getCodeValueByKommunenummerId(it.kommunenummer) }
         val gyldigFraTekst = stemmekrets.gyldighet.gyldigFra.toNorskFormat()
         val gyldigTilTekst = stemmekrets.gyldighet.gyldigTil?.let { "til ${it.toNorskFormat()}" } ?: "og fremover"
 
@@ -257,8 +259,9 @@ class StemmekretsService(
         //Returnerer false hvis stemmekretsnummer ikke er gitt, isåfall vil det komme valideringsfeil fra et annet sted
         val muligeStemmekretsnumre = stemmekrets.stemmekretsnummer?.let { lagMuligeStemmekretsnumre(it) } ?: return false
 
-        val andreKretserMedSammeStemmekretsnummer = stemmekretsRepository.findAllByStemmekretsnummerInAndLokalidIsNotAndKommune_Lokalid(
-            muligeStemmekretsnumre, stemmekrets.lokalid, stemmekrets.kommune.lokalid)
+        val kommune = stemmekrets.getKommune(stemmekrets.gyldighet.gyldigFra)!!
+        val andreKretserMedSammeStemmekretsnummer = stemmekretsRepository.findAllByStemmekretsnummerInAndLokalidIsNotAndKommuneLokalid(
+            muligeStemmekretsnumre, stemmekrets.lokalid, kommune.lokalid)
 
         if (andreKretserMedSammeStemmekretsnummer.isEmpty()) {
             return false

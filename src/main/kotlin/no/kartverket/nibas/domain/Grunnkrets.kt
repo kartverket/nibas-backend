@@ -3,6 +3,7 @@ package no.kartverket.nibas.domain
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
+import org.hibernate.annotations.Where
 import java.io.Serializable
 import java.time.LocalDate
 import java.util.*
@@ -25,15 +26,16 @@ class Grunnkrets(
     @Column(name = "grunnkretsnavn")
     var grunnkretsnavn: String? = null
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "delomraadeinndeling_fk")
     var delomraadeinndelingFk: Delomraade? = null
 
-    @ManyToOne
-    @JoinColumn(name = "kommune_fk")
-    lateinit var kommune: Kommune
+    @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    @JoinColumn(name = "kommunelokalid", referencedColumnName = "lokalid")
+    @Where(clause="flatetype='KOMMUNE'")
+    lateinit var kommuneLokalid : UnikLokalid
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "utledetfra")
     var utledetFra: Grunnkrets? = null
 
@@ -47,6 +49,13 @@ class Grunnkrets(
 
     override fun setInfo(updatedInfo: String?) {
         doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { GrunnkretsInformasjon(this) }
+    }
+
+    /**
+     * Henter kretsen sin kommune på en gitt dato. Hvis man gir en dato hvor kommunen med gitt lokalid ikke er gyldig, returneres null
+     */
+    fun getKommune(gyldighetsdato: LocalDate = LocalDate.now()): Kommune? {
+        return kommuneLokalid.kommuner.filter { it.gyldigPaaDato(gyldighetsdato) }.firstOrNull()
     }
 
     override fun oppdaterOmraade() {
@@ -116,10 +125,10 @@ class Grunnkrets(
         }
     }
 
-    fun applyCascadingOperationsBasedOnExistingGrunnkrets(gammelGrunnkrets: Grunnkrets): Grunnkrets {
+    fun applyCascadingOperationsBasedOnExistingGrunnkrets(gammelGrunnkrets: Grunnkrets, gyldigFra: LocalDate = LocalDate.now()): Grunnkrets {
         return this.apply {
             // Må legge til denne Grunnkrets på eksisterende Grunnkrets sin kommune
-            gammelGrunnkrets.kommune.addGrunnkrets(this)
+            gammelGrunnkrets.getKommune(gyldigFra)!!.addGrunnkrets(this)
             // For eksisterende Grunnkrets sine informasjonselementer (1 i tallet), lag nye koblinger med denne Grunnkrets
             addInformasjonselementerFrom(gammelGrunnkrets.informasjonselementer)
 

@@ -49,7 +49,6 @@ class FylkeControllerTest : NibasMvcTest() {
         whenever(fylkeService.hentFylke(any(Identifikator::class.java))).thenReturn(
             FylkeBuilder()
                 .withNavn("Vestland")
-                .withLokalId("123")
                 .withFylkesnummer("UUID-123")
                 .build()
         )

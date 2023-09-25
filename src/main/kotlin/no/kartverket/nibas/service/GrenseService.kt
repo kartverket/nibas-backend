@@ -75,10 +75,10 @@ class GrenseService(
                 when (Grensetype.fromValue(it.properties.type)) {
                     //TODO: Når vi slår sammen administrative grenser for stemme- og grunnkrets må vi huske å oppdatere stemmekretsene også når vi oppdatererer en administrativ grense. Pr nå tas ikke disse flatene med utenfor "stemmekrets-sfæren"
                     Grensetype.Kommunegrense -> grense.finnFlaterOppTilKommune()
-                    Grensetype.Fylkesgrense -> grense.finnFlaterOppTilFylke()
-                    Grensetype.Riksgrense -> grense.finnFlaterOppTilNasjon()
-                    Grensetype.AvtaltAvgrensningslinje -> grense.finnFlaterOppTilNasjon()
-                    Grensetype.Territorialgrense -> grense.finnFlaterOppTilNasjon()
+                    Grensetype.Fylkesgrense -> grense.finnFlaterOppTilFylke(gyldighetsdato)
+                    Grensetype.Riksgrense -> grense.finnFlaterOppTilNasjon(gyldighetsdato)
+                    Grensetype.AvtaltAvgrensningslinje -> grense.finnFlaterOppTilNasjon(gyldighetsdato)
+                    Grensetype.Territorialgrense -> grense.finnFlaterOppTilNasjon(gyldighetsdato)
                     Grensetype.Grunnkretsgrense -> grense.finnFlaterOppTilGrunnkrets()
                     Grensetype.Delomraadegrense -> grense.finnFlaterOppTilGrunnkrets()
                     Grensetype.Stemmekretsgrense -> grense.finnFlaterOppTilStemmekrets()

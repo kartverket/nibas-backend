@@ -5,6 +5,7 @@ import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.response.GrunnkretsRef
 import no.kartverket.nibas.api.v1.response.KommuneRef
 import no.kartverket.nibas.api.v1.response.KommuneResponse
+import no.kartverket.nibas.api.v1.response.Kommunenummer
 import no.kartverket.nibas.api.v1.response.StemmekretsRef
 import no.kartverket.nibas.api.v1.response.toObjektIdentifikator
 import no.kartverket.nibas.common.HrefProvider
@@ -86,7 +87,8 @@ private fun Grunnkrets.toGrunnkretsRef(identifikator: Identifikator, antallFramt
     navn = this.grunnkretsnavn!!,
     grunnkretsnummer = this.grunnkretsnummer!!,
     href = hrefProvider.getHref(identifikator),
-    kommunenummer = kodelisteService.createKommunenummerFromUUID(this.kommune.kommunenummer),
+    kommunenummer = this.getKommune(identifikator.gyldighetsdato)?.let { kodelisteService.createKommunenummerFromUUID(it.kommunenummer) }
+        ?: Kommunenummer(id = "Ukjent", kodeverdi = "Ukjent"),
     antallFramtidigeVersjoner = antallFramtidigeVersjoner
 )
 
@@ -95,7 +97,8 @@ fun Stemmekrets.toStemmekretsRef(identifikator: Identifikator, antallFramtidigeV
     navn = this.stemmekretsnavn!!,
     nummer = this.stemmekretsnummer!!,
     href = hrefProvider.getHref(identifikator),
-    kommunenummer = kodelisteService.createKommunenummerFromUUID(this.kommune.kommunenummer),
+    kommunenummer = this.getKommune(identifikator.gyldighetsdato)?.let { kodelisteService.createKommunenummerFromUUID(it.kommunenummer) }
+        ?: Kommunenummer(id = "Ukjent", kodeverdi = "Ukjent"),
     antallFramtidigeVersjoner = antallFramtidigeVersjoner,
     version = this.version,
 )
