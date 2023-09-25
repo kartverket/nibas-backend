@@ -77,6 +77,34 @@ class Nasjon(
         Grensetype.AvtaltAvgrensningslinje,
         Grensetype.Territorialgrense,
         Grensetype.Riksgrense)
+
+    fun applyMappingFromExistingNasjon(gammelNasjon: Nasjon): Nasjon {
+        return this.apply {
+            gammelNasjon.gyldighet.gyldigTil?.let { setGyldigTil(it) }
+            datafangstdato = gammelNasjon.datafangstdato
+            foerstedigitaliseringsdato = gammelNasjon.foerstedigitaliseringsdato
+            opphav = gammelNasjon.opphav
+            posisjon = gammelNasjon.posisjon
+            omraade = gammelNasjon.omraade
+        }
+    }
+
+    fun applyCascadingOperationsBasedOnExistingNasjon(gammelNasjon: Nasjon, gyldigFra: LocalDate = LocalDate.now()): Nasjon {
+        return this.apply {
+            addNasjonTilUnikLokalid(gammelNasjon.nasjonLokalid)
+
+            // For eksisterende nasjon sine informasjonselementer (1 i tallet), lag nye koblinger med denne nasjonen
+            addInformasjonselementerFrom(gammelNasjon.informasjonselementer)
+
+            //Trenger ikke å knytte fylker og navn til den nye nasjonversjonen, siden de er knyttet vha lokalid
+        }
+    }
+
+    fun addInformasjonselementerFrom(informasjonselementer: Set<NasjonInformasjon>) {
+        informasjonselementer.forEach { fylkenasjonInformasjonnformasjon ->
+            setInfo(fylkenasjonInformasjonnformasjon.informasjon)
+        }
+    }
 }
 
 @Table(name = "nasjon_informasjon")

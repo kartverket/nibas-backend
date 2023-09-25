@@ -142,7 +142,7 @@ class StemmekretsService(
             gamleGrensekoblinger = alleStemmekretsGrensekoblinger
         ).toMutableSet()
 
-        nyStemmekrets.oppdaterOmraade()
+        nyStemmekrets.oppdaterOmraadeOgPosisjon()
 
         if (finnesAnnenStemmekretsMedSammeKommuneOgStemmekretsnummer(nyStemmekrets)) {
             throw createDuplikatStemmekretsnummerException(nyStemmekrets)
@@ -188,9 +188,14 @@ class StemmekretsService(
     private fun grenseDeler2StemmekretserSomBlirSlaattSammen(grenseKobling: StemmekretsGrenseKobling, alleGrensekoblinger: Collection<StemmekretsGrenseKobling>) =
         alleGrensekoblinger.count { grenseKobling.grense.id == it.grense.id } == 2
 
-    private fun oppdaterGrensekoblingsAtributterForGrenser(stemmekrets: Stemmekrets, grensekoblinger: Collection<StemmekretsGrenseKobling>, gamleGrensekoblinger: Collection<StemmekretsGrenseKobling>): List<StemmekretsGrenseKobling> {
+    private fun oppdaterGrensekoblingsAtributterForGrenser(
+        stemmekrets: Stemmekrets,
+        grensekoblinger: Collection<StemmekretsGrenseKobling>,
+        gamleGrensekoblinger: Collection<StemmekretsGrenseKobling>
+    ): List<StemmekretsGrenseKobling> {
+
         val alleFlaterOgHull = SosiGeometryFunctions.finnFlaterForGrenser(
-            grensekoblinger.map { GrenseMedLokalid(it.getGrenseJustertForRetning(), Lokalid(it.grense.lokalid)) }
+            grensekoblinger.map { GrenseMedLokalid(it.getGrenseJustertForRetning(stemmekrets.gyldighet.gyldigFra), Lokalid(it.grense.lokalid)) }
         )
 
         val flaterSomPolygon = alleFlaterOgHull.map { grense -> lagFlate(grense.map { it.grense }, emptyList()) }

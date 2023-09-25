@@ -1,6 +1,7 @@
 package no.kartverket.nibas.controller.klient
 
 import no.kartverket.nibas.NibasMvcTest
+import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.service.FlateService
@@ -28,7 +29,7 @@ class GrenseControllerTest : NibasMvcTest() {
     @Test
     fun thatHentGrenseReturns200_OK() {
         whenever(grenseServiceMock.hentGrense(any(Identifikator::class.java)))
-            .thenReturn(GrenseBuilder().buildKommunegrense())
+            .thenReturn(GrenseBuilder().withGrensetype(Grensetype.Kommunegrense).build())
 
         get("/v1/grenser/1", status().isOk)
     }

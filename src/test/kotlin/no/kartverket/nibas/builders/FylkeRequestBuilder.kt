@@ -10,16 +10,17 @@ class FylkeRequestBuilder() {
 
     private var navn = "Vestland"
     private var spraak = "NOR"
-    private var lokalId = "123"
+    private var lokalId = "fylke123"
     private var fylkesnummerUuid = "UUID-1"
     private var samiskforvaltningsomraade = false
+    private var version = 1
 
     fun build(): FylkeRequest = FylkeRequest(
         administrativenhetnavn = listOf(AdministrativEnhetNavn(navn, spraak, version = 1)),
         lokalid = lokalId,
         fylkesnummerId = fylkesnummerUuid,
         samiskforvaltningsomraade = samiskforvaltningsomraade,
-        version = 1
+        version = version
     )
 
     fun withNavn(navn: String): FylkeRequestBuilder {
@@ -31,4 +32,15 @@ class FylkeRequestBuilder() {
         this.lokalId = lokalId
         return this
     }
+
+    fun withVersion(version: Int): FylkeRequestBuilder {
+        this.version = version
+        return this
+    }
+
+    fun withSamiskforvaltningsomraade(samiskforvaltningsomraade: Boolean): FylkeRequestBuilder {
+        this.samiskforvaltningsomraade = samiskforvaltningsomraade
+        return this
+    }
+
 }

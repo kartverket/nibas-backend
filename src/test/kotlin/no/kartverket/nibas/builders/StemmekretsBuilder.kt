@@ -62,7 +62,7 @@ class StemmekretsBuilder(
         }
         stemmekrets.posisjon = GeometryFactory().createPoint(Coordinate(1.0, 1.0))
         if (grenser.isNotEmpty()) {
-            stemmekrets.oppdaterOmraade()
+            stemmekrets.oppdaterOmraadeOgPosisjon()
             if (!stemmekrets.omraade!!.isEmpty) {
                 stemmekrets.posisjon = stemmekrets.omraade?.interiorPoint
             }

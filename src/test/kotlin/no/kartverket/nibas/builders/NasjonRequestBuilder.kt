@@ -11,12 +11,13 @@ class NasjonRequestBuilder {
 
     private var navn: String = "Norge"
     private var spraak: String = "nor"
-    private var lokalId: String = "123"
+    private var lokalId: String = "nasjon123"
+    private var version = 1
 
     fun build(): NasjonRequest = NasjonRequest(
         listOf(AdministrativEnhetNavn(navn, spraak, version = 1, rekkefoelge = null)),
         lokalid = lokalId,
-        version = 1)
+        version = version)
 
     fun withLokalId(lokalId: String): NasjonRequestBuilder {
         this.lokalId = lokalId
@@ -25,6 +26,11 @@ class NasjonRequestBuilder {
 
     fun withNavn(navn: String): NasjonRequestBuilder {
         this.navn = navn
+        return this
+    }
+
+    fun withVersion(version: Int): NasjonRequestBuilder {
+        this.version = version
         return this
     }
 

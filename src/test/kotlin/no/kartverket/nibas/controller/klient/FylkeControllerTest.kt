@@ -1,6 +1,7 @@
 package no.kartverket.nibas.controller.klient
 
 import no.kartverket.nibas.NibasMvcTest
+import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.builders.FylkeBuilder
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
@@ -68,7 +69,8 @@ class FylkeControllerTest : NibasMvcTest() {
         whenever(
             fylkeService.hentGrenserForFylke(any(Identifikator::class.java))
         ).thenReturn(
-            setOf(GrunnkretsGrenseKobling(grunnkrets = GrunnkretsBuilder().build(), grense = GrenseBuilder().buildFylkesgrense(), GrenseKoblingAttributter()))
+            setOf(GrunnkretsGrenseKobling(grunnkrets = GrunnkretsBuilder().build(),
+                grense = GrenseBuilder().withGrensetype(Grensetype.Fylkesgrense).build(), GrenseKoblingAttributter()))
         )
         get("/v1/fylker/1/grenser", status().isOk)
     }

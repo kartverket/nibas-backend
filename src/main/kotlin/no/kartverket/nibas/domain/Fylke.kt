@@ -99,6 +99,39 @@ class Fylke(
         Grensetype.AvtaltAvgrensningslinje,
         Grensetype.Territorialgrense,
         Grensetype.Riksgrense)
+
+    fun applyMappingFromExistingFylke(gammeltFylke: Fylke): Fylke {
+        return this.apply {
+            gammeltFylke.gyldighet.gyldigTil?.let { setGyldigTil(it) }
+            fylkesnummer = gammeltFylke.fylkesnummer
+            samiskforvaltningsomraade = gammeltFylke.samiskforvaltningsomraade
+            datafangstdato = gammeltFylke.datafangstdato
+            foerstedigitaliseringsdato = gammeltFylke.foerstedigitaliseringsdato
+            opphav = gammeltFylke.opphav
+            posisjon = gammeltFylke.posisjon
+            omraade = gammeltFylke.omraade
+            utledetFra = gammeltFylke.utledetFra
+        }
+    }
+
+    fun applyCascadingOperationsBasedOnExistingFylke(gammeltFylke: Fylke, gyldigFra: LocalDate = LocalDate.now()): Fylke {
+        return this.apply {
+            addFylkeTilUnikLokalid(gammeltFylke.fylkeLokalid)
+
+            // Må legge til dette fylket på eksisterende fylke sin nasjon
+            gammeltFylke.getNasjon(gyldighetsdato = gyldigFra)!!.addFylke(this)
+            // For eksisterende fylke sine informasjonselementer (1 i tallet), lag nye koblinger med denntte fylket
+            addInformasjonselementerFrom(gammeltFylke.informasjonselementer)
+
+            //Trenger ikke å knytte kommuner og navn til den nye fylkeversjonen, siden de er knyttet vha lokalid
+        }
+    }
+
+    fun addInformasjonselementerFrom(informasjonselementer: Set<FylkeInformasjon>) {
+        informasjonselementer.forEach { fylkeInformasjon ->
+            setInfo(fylkeInformasjon.informasjon)
+        }
+    }
 }
 
 @Table(name = "fylke_informasjon")

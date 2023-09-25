@@ -1,6 +1,7 @@
 package no.kartverket.nibas.controller.klient
 
 import no.kartverket.nibas.NibasMvcTest
+import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.NasjonBuilder
@@ -55,7 +56,8 @@ class NasjonControllerTest : NibasMvcTest() {
         whenever(
             nasjonService.hentGrenserForNasjon(any(Identifikator::class.java))
         ).thenReturn(
-            setOf(GrunnkretsGrenseKobling(grunnkrets = GrunnkretsBuilder().build(), grense = GrenseBuilder().buildRiksgrense(), GrenseKoblingAttributter()))
+            setOf(GrunnkretsGrenseKobling(grunnkrets = GrunnkretsBuilder().build(),
+                grense = GrenseBuilder().withGrensetype(Grensetype.Riksgrense).build(), GrenseKoblingAttributter()))
         )
         get("/v1/nasjoner/1/grenser", status().isOk)
     }

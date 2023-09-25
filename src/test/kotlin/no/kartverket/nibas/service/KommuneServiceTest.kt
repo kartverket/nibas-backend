@@ -11,6 +11,8 @@ import no.kartverket.nibas.builders.StemmekretsBuilder
 import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.common.ResponseException
+import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.FylkeRepository
@@ -19,11 +21,11 @@ import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.REPOSITORY_EXTENSIONS_FILEPATH
 import no.kartverket.nibas.repository.findGyldigKommuneForKommunenummer
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
+import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyString
-import org.mockito.Mockito.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.mock.mockito.MockBean
@@ -31,7 +33,6 @@ import java.time.LocalDate
 import java.time.Month
 import java.util.*
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
 import org.mockito.Mockito.`when` as whenever
 
 @SpringBootTest(classes = [KommuneService::class])
@@ -47,12 +48,15 @@ class KommuneServiceTest {
     private lateinit var kommuneRepositoryMock: KommuneRepository
 
     @MockBean
+    @Suppress("unused")
     private lateinit var fylkeRepository: FylkeRepository
 
     @MockBean
+    @Suppress("unused")
     private lateinit var hrefProvider: HrefProvider
 
     @MockBean
+    @Suppress("unused")
     private lateinit var administrativenhetnavnRepository: AdministrativenhetnavnRepository
 
     @MockkBean
@@ -101,31 +105,13 @@ class KommuneServiceTest {
     @Test
     fun thatOppdaterKommuneReturnsNullWhenKommuneNotFound() {
         whenever(kommuneRepositoryMock.findById(anyString())).thenReturn(Optional.empty())
-        assertNull(
-            kommuneService.oppdaterKommune(Lokalid("1"), KommuneRequestBuilder.DEFAULT_REQUEST),
-            "Expected to not find the kommune"
-        )
-    }
 
-    @Test
-    fun thatOppdaterKommuneSavesAnUpdatedVersion() {
-        val lokalIdValue = "1000"
-        val navn = "Bergen"
-
-        val eksisterende = KommuneBuilder.DEFAULT_KOMMUNE
-        val oppdatertKommune =
-            KommuneRequestBuilder().withLokalId(lokalIdValue).withNavn(navn).build()
-
-        val lokalid = Lokalid(lokalIdValue)
-        val kommuneIdentifikator = Identifikator(lokalid = lokalid)
-        every { kommuneRepositoryKotlinMock.findGyldigObjektForIdentifikator(kommuneIdentifikator) } returns eksisterende
-
-        kommuneService.oppdaterKommune(lokalid, oppdatertKommune)
-
-        val forventetNavnToSave = eksisterende.kommuneLokalid.administrativenhetnavn.first()
-        forventetNavnToSave.navn = navn
-
-        verify(administrativenhetnavnRepository).save(forventetNavnToSave)
+        Assertions.assertThatThrownBy {
+            kommuneService.oppdaterKommune(Lokalid("1"), LocalDate.now(), Endringstype.FASTSETTING, KommuneRequestBuilder.DEFAULT_REQUEST)
+        }
+            .isInstanceOf(ResponseException.NotFoundException::class.java)
+            .hasMessageContaining("Kommune med Identifikator")
+            .hasMessageContaining("ble ikke funnet")
     }
 
     /**

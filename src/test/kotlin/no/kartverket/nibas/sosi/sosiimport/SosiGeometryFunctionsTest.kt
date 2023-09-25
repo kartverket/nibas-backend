@@ -1,5 +1,6 @@
 package no.kartverket.nibas.sosi.sosiimport
 
+import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.common.Lokalid
@@ -361,7 +362,7 @@ internal class SosiGeometryFunctionsTest {
     private fun grunnkretsGrenseKobling(coordinates: List<Coordinate>, rekkefoelge: Int) =
         GrunnkretsGrenseKobling(GrunnkretsBuilder().build(), GrenseBuilder()
             .withGrenseGeometri(coordinates)
-            .buildGrunnkretsgrense(),
+            .withGrensetype(Grensetype.Grunnkretsgrense).build(),
             GrenseKoblingAttributter(rekkefoelge = rekkefoelge))
 }
 

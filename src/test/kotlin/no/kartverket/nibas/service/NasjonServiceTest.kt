@@ -11,21 +11,23 @@ import no.kartverket.nibas.builders.NasjonBuilder
 import no.kartverket.nibas.builders.NasjonRequestBuilder
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.common.ResponseException
+import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.NasjonRepository
 import no.kartverket.nibas.repository.REPOSITORY_EXTENSIONS_FILEPATH
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
+import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.mock.mockito.MockBean
+import java.time.LocalDate
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
 
 fun assertGrensekoblinger(grenseKoblinger: Set<GrenseKobling>, grensetype: Grensetype, size: Int, msg: String) {
     assertThat(grenseKoblinger.map { it.grense }
@@ -41,9 +43,11 @@ class NasjonServiceTest {
     lateinit var nasjonService: NasjonService
 
     @MockBean
+    @Suppress("unused")
     private lateinit var nasjonRepository: NasjonRepository
 
     @MockBean
+    @Suppress("unused")
     private lateinit var administrativenhetnavnRepository: AdministrativenhetnavnRepository
 
     @MockkBean
@@ -91,34 +95,15 @@ class NasjonServiceTest {
     }
 
     @Test
-    fun thatOppdaterFylkeReturnsNullWhenFylkeNotFound() {
+    fun thatOppdaterNasjonReturnsNullWhenNasjonNotFound() {
         returnNullForLokalid1()
-        assertNull(
-            nasjonService.oppdaterNasjon(Lokalid("1"), NasjonRequestBuilder.DEFAULT_NASJON),
-            "Expected to not find the nasjon"
-        )
-    }
 
-    @Test
-    fun thatOppdaterNasjonSavesAnUpdatedVersion() {
-        val lokalIdValue = "1000"
-        val navn = "Sverige"
-
-        val eksisterende = NasjonBuilder.DEFAULT_NASJON
-        val oppdatertNasjon = NasjonRequestBuilder().withLokalId(lokalIdValue).withNavn(navn).build()
-
-        val lokalid = Lokalid(lokalIdValue)
-        val nasjonIdentifikator = Identifikator(lokalid = lokalid)
-        every { nasjonRepositoryKotlinMock.findGyldigObjektForIdentifikator(nasjonIdentifikator) } returns eksisterende
-
-        nasjonService.oppdaterNasjon(lokalid, oppdatertNasjon)
-
-        val forventetNavnToSave = eksisterende.nasjonLokalid.administrativenhetnavn.first()
-        forventetNavnToSave.navn = navn
-
-        verify(administrativenhetnavnRepository).save(forventetNavnToSave)
-        verify(nasjonRepository).save(eksisterende)
-
+        Assertions.assertThatThrownBy {
+            nasjonService.oppdaterNasjon(Lokalid("1"), LocalDate.now(), Endringstype.FASTSETTING, NasjonRequestBuilder.DEFAULT_NASJON)
+        }
+            .isInstanceOf(ResponseException.NotFoundException::class.java)
+            .hasMessageContaining("Nasjon med Identifikator")
+            .hasMessageContaining("ble ikke funnet")
     }
 
     private fun returnNullForLokalid1(): Identifikator {

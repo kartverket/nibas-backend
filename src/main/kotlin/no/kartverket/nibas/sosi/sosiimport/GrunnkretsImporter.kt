@@ -58,7 +58,7 @@ class GrunnkretsImporter @Autowired constructor(
                 }
             }
 
-            grunnkrets.oppdaterOmraade()
+            grunnkrets.oppdaterOmraadeOgPosisjon()
             grunnkrets = grunnkretsRepository.save(grunnkrets)
 
             val kommunenummerId = kodelisteService.getKommunenummerIdByCodeValue(flate.getKommunenummer())

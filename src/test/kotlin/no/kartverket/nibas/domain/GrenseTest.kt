@@ -18,10 +18,7 @@ class GrenseTest {
 
     @Test
     fun finnRelevantGrenseForTyperOgDato_FinnerGrensaSelv() {
-        val grunnkretsgrense = GrenseBuilder(
-            id = "17",
-            gyldigFra = october1In2022
-        ).buildGrunnkretsgrense()
+        val grunnkretsgrense = GrenseBuilder(id = "17", gyldigFra = october1In2022).withGrensetype(Grensetype.Grunnkretsgrense).build()
         assertThat(grunnkretsgrense.finnRelevantGrenseForTyperOgDato(grensetyper, november28In2022)!!.id).isEqualTo("17")
         assertThat(grunnkretsgrense.erRelevantGrenseForTyperOgDato(grensetyper, november28In2022)).isTrue
     }
@@ -34,7 +31,7 @@ class GrenseTest {
             id = "2002",
             lokalId = lokalidForGrense,
             gyldigFra = jan1In2024
-        ).buildGrunnkretsgrense()
+        ).withGrensetype(Grensetype.Grunnkretsgrense).build()
 
         val grunnkretsgrenseGyldigI2023 = GrenseBuilder(
             id = "2001",
@@ -42,7 +39,7 @@ class GrenseTest {
             gyldigFra = jan1In2023,
             gyldigTil = jan1In2024,
             nesteVersjon = grunnkretsgrenseGyldigI2024
-        ).buildGrunnkretsgrense()
+        ).withGrensetype(Grensetype.Grunnkretsgrense).build()
 
         val grunnkretsgrense = GrenseBuilder(
             id = "2000",
@@ -50,7 +47,7 @@ class GrenseTest {
             gyldigFra = october1In2022,
             gyldigTil = jan1In2023,
             nesteVersjon = grunnkretsgrenseGyldigI2023
-        ).buildGrunnkretsgrense()
+        ).withGrensetype(Grensetype.Grunnkretsgrense).build()
 
         assertThat(grunnkretsgrense.finnRelevantGrenseForTyperOgDato(grensetyper, jan1In2023)!!.id).isEqualTo("2001")
         assertThat(grunnkretsgrense.erRelevantGrenseForTyperOgDato(grensetyper, jan1In2023)).isTrue

@@ -108,6 +108,39 @@ class Kommune(
         Grensetype.AvtaltAvgrensningslinje,
         Grensetype.Territorialgrense,
         Grensetype.Riksgrense)
+
+    fun applyMappingFromExistingKommune(gammelKommune: Kommune): Kommune {
+        return this.apply {
+            gammelKommune.gyldighet.gyldigTil?.let { setGyldigTil(it) }
+            kommunenummer = gammelKommune.kommunenummer
+            samiskforvaltningsomraade = gammelKommune.samiskforvaltningsomraade
+            datafangstdato = gammelKommune.datafangstdato
+            foerstedigitaliseringsdato = gammelKommune.foerstedigitaliseringsdato
+            opphav = gammelKommune.opphav
+            posisjon = gammelKommune.posisjon
+            omraade = gammelKommune.omraade
+            utledetFra = gammelKommune.utledetFra
+        }
+    }
+
+    fun applyCascadingOperationsBasedOnExistingKommune(gammelKommune: Kommune, gyldigFra: LocalDate = LocalDate.now()): Kommune {
+        return this.apply {
+            addKommuneTilUnikLokalid(gammelKommune.kommuneLokalid)
+
+            // Må legge til denne Kommunen på eksisterende kommune sitt fylke
+            gammelKommune.getFylke(gyldighetsdato = gyldigFra)!!.addKommune(this)
+            // For eksisterende Kommune sine informasjonselementer (1 i tallet), lag nye koblinger med denne Kommunen
+            addInformasjonselementerFrom(gammelKommune.informasjonselementer)
+
+            //Trenger ikke å knytte stemmekretser, grunnkretser og navn til den nye kommuneversjonen, siden de er knyttet vha lokalid
+        }
+    }
+
+    fun addInformasjonselementerFrom(informasjonselementer: Set<KommuneInformasjon>) {
+        informasjonselementer.forEach { kommuneInformasjon ->
+            setInfo(kommuneInformasjon.informasjon)
+        }
+    }
 }
 
 @Table(name = "kommune_informasjon")

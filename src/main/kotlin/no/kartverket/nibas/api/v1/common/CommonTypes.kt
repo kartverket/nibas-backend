@@ -8,7 +8,6 @@ import no.kartverket.nibas.api.v1.request.KommuneRequest
 import no.kartverket.nibas.api.v1.request.NasjonRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
-import java.io.Serializable
 import jakarta.persistence.AttributeConverter
 import jakarta.persistence.Converter
 import jakarta.validation.constraints.NotNull
@@ -58,6 +57,10 @@ enum class Grensetype(val value: String, val dbKey: String, val editerbar: Boole
             } catch (e: NoSuchElementException) {
                 throw IllegalArgumentException("Invalid dbKey: $dbKeyIn")
             }
+        }
+
+        fun erNasjonsgrense(grensetype: Grensetype) : Boolean {
+            return AvtaltAvgrensningslinje == grensetype || Riksgrense == grensetype || Territorialgrense == grensetype
         }
     }
 }

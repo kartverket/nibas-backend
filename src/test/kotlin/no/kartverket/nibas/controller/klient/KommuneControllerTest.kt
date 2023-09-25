@@ -2,6 +2,7 @@ package no.kartverket.nibas.controller.klient
 
 import no.kartverket.nibas.MockResponseAsserts
 import no.kartverket.nibas.NibasMvcTest
+import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.response.GrunnkretsRef
 import no.kartverket.nibas.api.v1.response.Kommunenummer
 import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
@@ -77,7 +78,8 @@ class KommuneControllerTest : NibasMvcTest() {
         whenever(
             kommuneService.hentGrenserForKommune(any(Identifikator::class.java))
         ).thenReturn(
-            setOf(GrunnkretsGrenseKobling(grunnkrets = GrunnkretsBuilder().build(), grense = GrenseBuilder().buildKommunegrense(), GrenseKoblingAttributter()))
+            setOf(GrunnkretsGrenseKobling(grunnkrets = GrunnkretsBuilder().build(),
+                grense = GrenseBuilder().withGrensetype(Grensetype.Kommunegrense).build(), GrenseKoblingAttributter()))
         )
         get("/v1/kommuner/1/grenser", status().isOk)
     }

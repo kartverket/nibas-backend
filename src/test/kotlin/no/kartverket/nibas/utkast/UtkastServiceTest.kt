@@ -276,9 +276,9 @@ internal class UtkastServiceTest {
         assertThat(utkast.status).isEqualTo(UtkastStatus.PUBLISERT)
         assertThat(utkast.operasjoner).isNull()
 
-        verify(nasjonServiceMock).oppdaterNasjon(any(Lokalid::class.java), any(NasjonRequest::class.java))
-        verify(fylkeServiceMock).oppdaterFylke(any(Lokalid::class.java), any(FylkeRequest::class.java))
-        verify(kommuneServiceMock).oppdaterKommune(any(Lokalid::class.java), any(KommuneRequest::class.java))
+        verify(nasjonServiceMock).oppdaterNasjon(any(Lokalid::class.java), any(LocalDate::class.java), any(Endringstype::class.java), any(NasjonRequest::class.java))
+        verify(fylkeServiceMock).oppdaterFylke(any(Lokalid::class.java), any(LocalDate::class.java), any(Endringstype::class.java), any(FylkeRequest::class.java))
+        verify(kommuneServiceMock).oppdaterKommune(any(Lokalid::class.java), any(LocalDate::class.java), any(Endringstype::class.java), any(KommuneRequest::class.java))
         verify(grunnkretsServiceMock).oppdaterGrunnkrets(any(Lokalid::class.java), any(LocalDate::class.java), any(Endringstype::class.java), any(GrunnkretsRequest::class.java))
         verify(stemmekretsServiceMock).oppdaterStemmekrets(any(Lokalid::class.java), any(LocalDate::class.java), any(Endringstype::class.java), any(StemmekretsRequest::class.java))
         verify(grenseServiceMock).lagreGrenser(any(FeatureCollection::class.java), any(LocalDate::class.java), any(Endringstype::class.java))
@@ -405,6 +405,8 @@ internal class UtkastServiceTest {
         whenever(
             nasjonServiceMock.oppdaterNasjon(
                 any(Lokalid::class.java),
+                any(LocalDate::class.java),
+                any(Endringstype::class.java),
                 any(NasjonRequest::class.java)
             )
         )

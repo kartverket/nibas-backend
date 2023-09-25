@@ -10,21 +10,23 @@ import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.common.ResponseException
+import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.FylkeRepository
 import no.kartverket.nibas.repository.REPOSITORY_EXTENSIONS_FILEPATH
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
+import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyString
-import org.mockito.Mockito.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.mock.mockito.MockBean
+import java.time.LocalDate
 import java.util.*
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
 import org.mockito.Mockito.`when` as whenever
 
 @SpringBootTest(classes = [FylkeService::class])
@@ -40,6 +42,7 @@ class FylkeServiceTest {
     private lateinit var fylkeRepositoryKotlinMock: FylkeRepository
 
     @MockBean
+    @Suppress("unused")
     private lateinit var administrativenhetnavnRepository: AdministrativenhetnavnRepository
 
     @BeforeEach
@@ -84,27 +87,13 @@ class FylkeServiceTest {
     @Test
     fun thatOppdaterFylkeReturnsNullWhenFylkeNotFound() {
         whenever(fylkeRepository.findById(anyString())).thenReturn(Optional.empty())
-        assertNull(fylkeService.oppdaterFylke(Lokalid("1"), FylkeRequestBuilder.DEFAULT_REQUEST), "Expected to not find the fylke")
+
+        Assertions.assertThatThrownBy {
+            fylkeService.oppdaterFylke(Lokalid("1"), LocalDate.now(), Endringstype.FASTSETTING, FylkeRequestBuilder.DEFAULT_REQUEST)
+        }
+            .isInstanceOf(ResponseException.NotFoundException::class.java)
+            .hasMessageContaining("Fylke med Identifikator")
+            .hasMessageContaining("ble ikke funnet")
     }
 
-    @Test
-    fun thatOppdaterFylkeSavesAnUpdatedVersion() {
-        val lokalIdValue = "1000"
-        val navn = "Oslo"
-
-        val eksisterende = FylkeBuilder.DEFAULT_FYLKE
-        val oppdatertFylke = FylkeRequestBuilder().withLokalId(lokalIdValue).withNavn(navn).build()
-
-        val lokalid = Lokalid(lokalIdValue)
-        val fylkeIdentifikator = Identifikator(lokalid = lokalid)
-        every { fylkeRepositoryKotlinMock.findGyldigObjektForIdentifikator(fylkeIdentifikator) } returns eksisterende
-
-        fylkeService.oppdaterFylke(lokalid, oppdatertFylke)
-
-        val forventetNavnToSave = eksisterende.fylkeLokalid.administrativenhetnavn.first()
-        forventetNavnToSave.navn = navn
-
-        verify(administrativenhetnavnRepository).save(forventetNavnToSave)
-        verify(fylkeRepository).save(eksisterende)
-    }
 }

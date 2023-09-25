@@ -53,7 +53,7 @@ class StemmekretsImporter @Autowired constructor(private val kommunalKretsImport
                 }
             }
 
-            stemmekrets.oppdaterOmraade()
+            stemmekrets.oppdaterOmraadeOgPosisjon()
             stemmekrets = stemmekretsRepository.save(stemmekrets)
 
             // Setter kommunenummerId fra GeoNorge samt kobling til kommune

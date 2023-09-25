@@ -62,8 +62,11 @@ class Stemmekrets(
         return kommuneLokalid.kommuner.filter { it.gyldigPaaDato(gyldighetsdato) }.firstOrNull()
     }
 
-    override fun oppdaterOmraade() {
-        omraade = SosiGeometryFunctions.beregnFlate(getGrenser().toSet())
+    override fun oppdaterOmraadeOgPosisjon() {
+        omraade = SosiGeometryFunctions.beregnFlate(getGrenser(gyldighetsdato = gyldighet.gyldigFra).toSet(), gyldighet.gyldigFra)
+        if (omraade != null && (posisjon == null || !omraade!!.contains(posisjon))) {
+            posisjon = omraade?.interiorPoint
+        }
     }
 
     override fun oppdaterEllerLeggTilGrenseKobling(grenseMedAttributter: GrenseMedAttributter) {

@@ -138,18 +138,33 @@ class UtkastService(
         utkast: Utkast,
     ): List<EventRad> {
         val endredeNasjoner =
-            metadata.nasjonsendringer.mapNotNull {
-                nasjonService.oppdaterNasjon(Lokalid(it.key), it.value)
+            metadata.nasjonsendringer.mapNotNull { nasjonEndring ->
+                nasjonService.oppdaterNasjon(
+                    lokalid = Lokalid(value = nasjonEndring.key),
+                    gyldigFra = utkast.gyldigFra,
+                    endringstype = utkast.auditInfo.typeEndring,
+                    oppdatertNasjon = nasjonEndring.value
+                )
             }
 
         val endredeFylker =
-            metadata.fylkesendringer.mapNotNull {
-                fylkeService.oppdaterFylke(Lokalid(it.key), it.value)
+            metadata.fylkesendringer.mapNotNull { fylkeEndring ->
+                fylkeService.oppdaterFylke(
+                    lokalid = Lokalid(value = fylkeEndring.key),
+                    gyldigFra = utkast.gyldigFra,
+                    endringstype = utkast.auditInfo.typeEndring,
+                    oppdatertFylke = fylkeEndring.value
+                )
             }
 
         val endredeKommuner =
-            metadata.kommuneendringer.mapNotNull {
-                kommuneService.oppdaterKommune(Lokalid(it.key), it.value)
+            metadata.kommuneendringer.mapNotNull { kommuneEndring ->
+                kommuneService.oppdaterKommune(
+                    lokalid = Lokalid(value = kommuneEndring.key),
+                    gyldigFra = utkast.gyldigFra,
+                    oppdatertKommune = kommuneEndring.value,
+                    endringstype = utkast.auditInfo.typeEndring
+                )
             }
 
         val endredeGrunnkretser =

@@ -1,8 +1,10 @@
 package no.kartverket.nibas.service
 
 import no.kartverket.nibas.api.v1.common.Flatetype
+import no.kartverket.nibas.builders.FylkeRequestBuilder
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -249,6 +251,53 @@ class FylkeServiceIT : TestWithDbContainer() {
         val kommune = saveKommuneOgUnikLokalid()
         saveFylke(id = "9000", unikLokalid = fylkeUnikLokalid, gyldigTil = jan1In2023, kommuner = listOf(kommune))
         saveFylke(id = "9001", unikLokalid = fylkeUnikLokalid, fylkesnummer = "53", gyldigFra = jan1In2023, kommuner = listOf(kommune))
+    }
+
+    @Test
+    fun `oppdaterFylke skal lage nytt fylke og sette gyldigtil for gammelt fylke`() {
+        val fylkeRequest = FylkeRequestBuilder().withVersion(2).withSamiskforvaltningsomraade(true).build()
+
+        val identifikator = Identifikator(Lokalid(fylkeRequest.lokalid), october1In2022)
+
+        val fylke = saveFylkeOgUnikLokalid(
+            id = "2",
+            lokalid = identifikator.lokalid.value,
+            gyldigFra = october1In2022,
+            fylkesnummer = fylkeRequest.fylkesnummerId
+        )
+        saveNasjonOgUnikLokalid(fylker = listOf(fylke))
+        val versjonFoerOppdatering = fylke.version
+
+        val now = LocalDate.now()
+        val opprinneligFylke = fylkeService.hentFylke(identifikator)!!
+
+        fylkeService.oppdaterFylke(
+            lokalid = identifikator.lokalid,
+            oppdatertFylke = fylkeRequest,
+            gyldigFra = now,
+            endringstype = Endringstype.RETTING
+        )
+
+        val opprinneligFylkeEtter = fylkeService.hentFylke(identifikator)!!
+        val fylkeEtter = fylkeService.hentFylke(Identifikator(identifikator.lokalid))!!
+
+        assertThat(fylkeEtter.samiskforvaltningsomraade).isNotEqualTo(fylke.samiskforvaltningsomraade)
+            .isEqualTo(fylkeRequest.samiskforvaltningsomraade)
+        assertThat(fylkeEtter.fylkesnummer).isEqualTo(fylke.fylkesnummer)
+        assertThat(fylkeEtter.omraade).isEqualTo(fylke.omraade)
+        assertThat(fylkeEtter.posisjon).isEqualTo(fylke.posisjon)
+        assertThat(fylkeEtter.gyldighet.gyldigFra).isEqualTo(now)
+        assertThat(fylkeEtter.gyldighet.gyldigTil).isNull()
+
+        assertThat(opprinneligFylkeEtter.gyldighet.gyldigFra).isEqualTo(october1In2022).isEqualTo(opprinneligFylke.gyldighet.gyldigFra)
+        assertThat(opprinneligFylkeEtter.gyldighet.gyldigTil).isEqualTo(now)
+        assertThat(opprinneligFylkeEtter.version).isGreaterThan(versjonFoerOppdatering)
+
+        assertThat(fylkeEtter.fylkeLokalid.lokalid).isEqualTo(opprinneligFylkeEtter.fylkeLokalid.lokalid).isEqualTo(fylke.fylkeLokalid.lokalid)
+        assertThat(fylkeEtter.nasjonLokalid.lokalid).isEqualTo(opprinneligFylkeEtter.nasjonLokalid.lokalid).isEqualTo(fylke.nasjonLokalid.lokalid)
+        assertThat(fylkeEtter.fylkeLokalid).isEqualTo(opprinneligFylkeEtter.fylkeLokalid).isEqualTo(fylke.fylkeLokalid)
+        assertThat(fylkeEtter.nasjonLokalid).isEqualTo(opprinneligFylkeEtter.nasjonLokalid).isEqualTo(fylke.nasjonLokalid)
+
     }
 
 }

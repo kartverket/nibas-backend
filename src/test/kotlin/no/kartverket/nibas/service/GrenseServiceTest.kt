@@ -79,7 +79,7 @@ class GrenseServiceTest {
         // Har en grunnkretsgrense med lokalid 34
         val grense = GrenseBuilder(id = "3400",
             lokalId = Lokalid("34"))
-            .buildGrunnkretsgrense()
+            .withGrensetype(Grensetype.Grunnkretsgrense).build()
         val grenseIdentifikator = Identifikator(Lokalid("34"), gyldighetsdato)
 
         every { grenseRepositoryKotlinMock.findAllGyldigeObjekterForIdentifikatorer(allAny()) } returns mapOf(grenseIdentifikator to grense)
@@ -108,7 +108,7 @@ class GrenseServiceTest {
             lokalId = Lokalid("34"),
             gyldigFra = LocalDate.of(2020, Month.DECEMBER, 8))
             .withVersjon(4)
-            .buildGrunnkretsgrense()
+            .withGrensetype(Grensetype.Grunnkretsgrense).build()
         val grenseIdentifikator = Identifikator(Lokalid("34"), gyldighetsdato)
 
         every { grenseRepositoryKotlinMock.findAllGyldigeObjekterForIdentifikatorer(allAny()) } returns mapOf(grenseIdentifikator to grense)

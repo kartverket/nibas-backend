@@ -106,7 +106,7 @@ class RepositoryTest : TestWithDbContainer() {
 
     @Test
     fun findGrense() {
-        grenseRepository.save(GrenseBuilder(id = "300").buildGrunnkretsgrense())
+        grenseRepository.save(GrenseBuilder(id = "300").build())
         assertThat(grenseRepository.findById("300")).isNotNull
     }
 

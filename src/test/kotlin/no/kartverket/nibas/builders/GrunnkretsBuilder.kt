@@ -70,7 +70,7 @@ class GrunnkretsBuilder(
         //Hack fordi noen tester lager grenser uten linestring
         try {
             if (grenser.isNotEmpty()) {
-                grunnkrets.oppdaterOmraade()
+                grunnkrets.oppdaterOmraadeOgPosisjon()
                 if (!grunnkrets.omraade!!.isEmpty) {
                     grunnkrets.posisjon = grunnkrets.omraade?.interiorPoint
                 }

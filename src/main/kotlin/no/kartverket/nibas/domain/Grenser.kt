@@ -95,13 +95,17 @@ class Grense(
     @JoinColumn(name = "neste_versjon")
     var nesteVersjon: Grense? = null
 
-    fun grunnkretser(): Set<Grunnkrets> = grunnkretser.map { it.grunnkrets }.toSet()
-    fun gyldigeGrunnkretsGrenseKoblinger(gyldighetsdato: LocalDate = LocalDate.now()): Set<GrunnkretsGrenseKobling> = grunnkretser.filter { it.grunnkrets.gyldigPaaDato(gyldighetsdato) }.toSet()
-    fun stemmekretser(): Set<Stemmekrets> = stemmekretser.map { it.stemmekrets }.toSet()
-    fun gyldigeStemmekretsGrenseKoblinger(gyldighetsdato: LocalDate = LocalDate.now()): Set<StemmekretsGrenseKobling> = stemmekretser.filter { it.stemmekrets.gyldigPaaDato(gyldighetsdato) }.toSet()
+    fun grunnkretser(gyldighetsdato: LocalDate = LocalDate.now()): Set<Grunnkrets> =
+        grunnkretser.map { it.grunnkrets }.filter { it.gyldigPaaDato(gyldighetsdato) }.toSet()
+    fun gyldigeGrunnkretsGrenseKoblinger(gyldighetsdato: LocalDate = LocalDate.now()): Set<GrunnkretsGrenseKobling> =
+        grunnkretser.filter { it.grunnkrets.gyldigPaaDato(gyldighetsdato) }.toSet()
+    fun stemmekretser(gyldighetsdato: LocalDate = LocalDate.now()): Set<Stemmekrets> =
+        stemmekretser.map { it.stemmekrets }.filter { it.gyldigPaaDato(gyldighetsdato) }.toSet()
+    fun gyldigeStemmekretsGrenseKoblinger(gyldighetsdato: LocalDate = LocalDate.now()): Set<StemmekretsGrenseKobling> =
+        stemmekretser.filter { it.stemmekrets.gyldigPaaDato(gyldighetsdato) }.toSet()
 
     fun kommuner(gyldighetsdato: LocalDate = LocalDate.now()): Set<Kommune> =
-        grunnkretser().map { it.getKommune(gyldighetsdato) }.filterNotNull().toSet()
+        grunnkretser(gyldighetsdato).map { it.getKommune(gyldighetsdato) }.filterNotNull().toSet()
 
     fun fylker(gyldighetsdato: LocalDate = LocalDate.now()): Set<Fylke> =
         kommuner(gyldighetsdato).map { it.getFylke(gyldighetsdato) }.filterNotNull().toSet()
@@ -109,17 +113,18 @@ class Grense(
     fun nasjoner(gyldighetsdato: LocalDate = LocalDate.now()): Set<Nasjon> =
         fylker(gyldighetsdato).map { it.getNasjon(gyldighetsdato) }.filterNotNull().toSet()
 
-    fun finnFlaterOppTilGrunnkrets(): Set<Flate> = grunnkretser()
+    fun finnFlaterOppTilGrunnkrets(gyldighetsdato: LocalDate = LocalDate.now()): Set<Flate> = grunnkretser(gyldighetsdato)
 
-    fun finnFlaterOppTilKommune(): Set<Flate> = HashSet(finnFlaterOppTilGrunnkrets() + kommuner())
+    fun finnFlaterOppTilKommune(gyldighetsdato: LocalDate = LocalDate.now()): Set<Flate> =
+        HashSet(finnFlaterOppTilGrunnkrets(gyldighetsdato) + kommuner(gyldighetsdato))
 
     fun finnFlaterOppTilFylke(gyldighetsdato: LocalDate = LocalDate.now()): Set<Flate> =
-        HashSet(finnFlaterOppTilKommune() + fylker(gyldighetsdato))
+        HashSet(finnFlaterOppTilKommune(gyldighetsdato) + fylker(gyldighetsdato))
 
     fun finnFlaterOppTilNasjon(gyldighetsdato: LocalDate = LocalDate.now()): Set<Flate> =
         HashSet(finnFlaterOppTilFylke(gyldighetsdato) + nasjoner(gyldighetsdato))
 
-    fun finnFlaterOppTilStemmekrets(): Set<Flate> = stemmekretser()
+    fun finnFlaterOppTilStemmekrets(gyldighetsdato: LocalDate = LocalDate.now()): Set<Flate> = stemmekretser(gyldighetsdato)
 
     override fun getInfo(): String? {
         return informasjonstekst

@@ -8,6 +8,7 @@ import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
+import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
@@ -32,6 +33,7 @@ import java.time.LocalDate
 class KommuneService(
     private val kommuneRepository: KommuneRepository,
     private val fylkeRepository: FylkeRepository,
+    @Suppress("unused") //Er kun ubrukt i påvente av TS-1192
     private val administrativenhetnavnRepository: AdministrativenhetnavnRepository,
     private val kodelisteService: KodelisteService,
     private val hrefProvider: HrefProvider
@@ -52,25 +54,57 @@ class KommuneService(
     }
 
     @Transactional(readOnly = false)
-    fun oppdaterKommune(lokalid: Lokalid, oppdatertKommune: KommuneRequest): Kommune? {
-        return hentKommune(Identifikator(lokalid))?.let { gammel ->
-            verifiserOptimistiskLaas(oppdatertKommune.version, gammel)?.let { throw OptimistiskLaasException(it) }
+    fun oppdaterKommune(
+        lokalid: Lokalid,
+        gyldigFra: LocalDate,
+        endringstype: Endringstype,
+        oppdatertKommune: KommuneRequest
+    ): Kommune? {
 
-            gammel.samiskforvaltningsomraade = oppdatertKommune.samiskforvaltningsomraade
-            gammel.kommunenummer = oppdatertKommune.kommunenummerId
+        val identifikator = Identifikator(lokalid, gyldigFra)
+        val gammelKommune = hentKommune(identifikator)
+            ?: throw ResponseException.NotFoundException("Kommune med $identifikator ble ikke funnet.")
 
-            // Finner basert på språkkode, og oppdaterer den
-            oppdatertKommune.administrativenhetnavn.forEach { navn ->
-                gammel.kommuneLokalid.administrativenhetnavn.first { it.spraak?.id == navn.spraak }.let { gammeltNavn ->
-                    verifiserOptimistiskLaas(navn.version, gammeltNavn)?.let { throw OptimistiskLaasException(it) }
-                    gammeltNavn.navn = navn.navn
-                    administrativenhetnavnRepository.save(gammeltNavn)
-                }
-            }
-
-            kommuneRepository.save(gammel)
+        verifiserOptimistiskLaas(oppdatertKommune.version, gammelKommune)?.let {
+            throw OptimistiskLaasException(it)
         }
+
+        val nyKommune = createNyVersjonAvKommune(kommune = gammelKommune, gyldigFra = gyldigFra, endringstype = endringstype)
+            .applyChangesFromRequest(oppdatertKommune)
+
+        return nyKommune
+
+        //Kommentert vekk det med adm.enhetnavn, siden klienten pr.nå ikke oppdaterer navn. Lot det ligge pga TS-1192
+//            // Finner basert på språkkode, og oppdaterer den
+//            oppdatertKommune.administrativenhetnavn.forEach { navn ->
+//                gammel.kommuneLokalid.administrativenhetnavn.first { it.spraak?.id == navn.spraak }.let { gammeltNavn ->
+//                    verifiserOptimistiskLaas(navn.version, gammeltNavn)?.let { throw OptimistiskLaasException(it) }
+//                    gammeltNavn.navn = navn.navn
+//                    administrativenhetnavnRepository.save(gammeltNavn)
+//                }
+//            }
     }
+
+    fun createNyVersjonAvKommune(kommune: Kommune, gyldigFra: LocalDate, endringstype: Endringstype): Kommune {
+        val nyKommune = kommuneRepository.save(
+            Kommune(lokalid = kommune.lokalid)
+                .apply {
+                    applyMappingFromExistingKommune(kommune)
+                    setGyldigFra(gyldigFra)
+                    version = nesteVersjonForKommune(Lokalid(kommune.lokalid))
+                    auditInfo.typeEndring = endringstype
+                }
+        )
+        return nyKommune
+            .applyCascadingOperationsBasedOnExistingKommune(kommune)
+            .also { kommune.setGyldigTil(gyldigFra)  }
+    }
+
+    private fun nesteVersjonForKommune(lokalId: Lokalid): Int =
+        kommuneRepository
+            .findAllByLokalid(lokalId.value)
+            .maxBy { it.version }
+            .version + 1
 
     fun hentKommunesGrunnkretser(kommuneIdentifikator: Identifikator): List<Grunnkrets> {
         return hentKommune(kommuneIdentifikator)?.getGrunnkretser(kommuneIdentifikator.gyldighetsdato) ?: emptyList()
@@ -81,14 +115,12 @@ class KommuneService(
     }
 
     fun hentAlleGrunnkretserForKommune(kommunenummer: String, gyldighetsdato: LocalDate): List<Grunnkrets> {
-        return hentKommuneFraNumeriskNummer(kommunenummer, gyldighetsdato).kommuneLokalid.grunnkretser
-            .filter { it.gyldigPaaDato(LocalDate.now()) }
+        return hentKommuneFraNumeriskNummer(kommunenummer, gyldighetsdato).getGrunnkretser(gyldighetsdato)
             .sortedBy { it.id }
     }
 
     fun hentAlleStemmekretserForKommune(numeriskKommunenummer: String, gyldighetsdato: LocalDate): List<Stemmekrets> {
-        return hentKommuneFraNumeriskNummer(numeriskKommunenummer, gyldighetsdato).kommuneLokalid.stemmekretser
-            .filter { it.gyldigPaaDato(gyldighetsdato) }
+        return hentKommuneFraNumeriskNummer(numeriskKommunenummer, gyldighetsdato).getStemmekretser(gyldighetsdato)
             .sortedBy { it.id }
     }
 
@@ -118,3 +150,9 @@ class KommuneService(
         }
     }
 }
+
+fun Kommune.applyChangesFromRequest(kommuneRequest: KommuneRequest): Kommune =
+    this.apply {
+        kommuneRequest.samiskforvaltningsomraade.let { this.samiskforvaltningsomraade = it }
+    }
+

@@ -395,4 +395,50 @@ class KommuneServiceIT : TestWithDbContainer() {
         }
     }
 
+    @Test
+    fun `oppdaterKommune skal lage ny kommune og sette gyldigtil for gammel kommune`() {
+        val kommuneRequest = KommuneRequestBuilder().withVersion(2).withSamiskforvaltningsomraade(true).build()
+
+        val identifikator = Identifikator(Lokalid(kommuneRequest.lokalid), october1In2022)
+
+        val kommune = saveKommuneOgUnikLokalid(
+            id = "2",
+            lokalid = identifikator.lokalid.value,
+            gyldigFra = october1In2022,
+            kommunenummer = kommuneRequest.kommunenummerId
+        )
+        saveFylkeOgUnikLokalid(kommuner = listOf(kommune))
+        val versjonFoerOppdatering = kommune.version
+
+        val now = LocalDate.now()
+        val opprinneligKommune = kommuneService.hentKommune(identifikator)!!
+
+        kommuneService.oppdaterKommune(
+            lokalid = identifikator.lokalid,
+            oppdatertKommune = kommuneRequest,
+            gyldigFra = now,
+            endringstype = Endringstype.RETTING
+        )
+
+        val opprinneligKommuneEtter = kommuneService.hentKommune(identifikator)!!
+        val kommuneEtter = kommuneService.hentKommune(Identifikator(identifikator.lokalid))!!
+
+        assertThat(kommuneEtter.samiskforvaltningsomraade).isNotEqualTo(kommune.samiskforvaltningsomraade)
+            .isEqualTo(kommuneRequest.samiskforvaltningsomraade)
+        assertThat(kommuneEtter.kommunenummer).isEqualTo(kommune.kommunenummer)
+        assertThat(kommuneEtter.omraade).isEqualTo(kommune.omraade)
+        assertThat(kommuneEtter.posisjon).isEqualTo(kommune.posisjon)
+        assertThat(kommuneEtter.gyldighet.gyldigFra).isEqualTo(now)
+        assertThat(kommuneEtter.gyldighet.gyldigTil).isNull()
+
+        assertThat(opprinneligKommuneEtter.gyldighet.gyldigFra).isEqualTo(october1In2022).isEqualTo(opprinneligKommune.gyldighet.gyldigFra)
+        assertThat(opprinneligKommuneEtter.gyldighet.gyldigTil).isEqualTo(now)
+        assertThat(opprinneligKommuneEtter.version).isGreaterThan(versjonFoerOppdatering)
+
+        assertThat(kommuneEtter.kommuneLokalid.lokalid).isEqualTo(opprinneligKommuneEtter.kommuneLokalid.lokalid).isEqualTo(kommune.kommuneLokalid.lokalid)
+        assertThat(kommuneEtter.fylkeLokalid.lokalid).isEqualTo(opprinneligKommuneEtter.fylkeLokalid.lokalid).isEqualTo(kommune.fylkeLokalid.lokalid)
+        assertThat(kommuneEtter.kommuneLokalid).isEqualTo(opprinneligKommuneEtter.kommuneLokalid).isEqualTo(kommune.kommuneLokalid)
+        assertThat(kommuneEtter.fylkeLokalid).isEqualTo(opprinneligKommuneEtter.fylkeLokalid).isEqualTo(kommune.fylkeLokalid)
+
+    }
 }

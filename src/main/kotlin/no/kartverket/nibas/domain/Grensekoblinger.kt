@@ -16,14 +16,15 @@ interface GrenseKobling {
 
     fun getRelevantGrense(gyldighetsdato: LocalDate = LocalDate.now()): Grense {
         return grense.finnRelevantGrenseForDato(gyldighetsdato)
-            ?: throw RelevantGrenseNotFoundEx("Fant ikke relevant grense for gyldighetsdato $gyldighetsdato og basert på grense i grensekoblng med lokalid ${grense.lokalid}")
+            ?: throw RelevantGrenseNotFoundEx("Fant ikke relevant grense for gyldighetsdato $gyldighetsdato og basert på grense i grensekobling med lokalid ${grense.lokalid}")
     }
 
     class RelevantGrenseNotFoundEx(msg: String) : RuntimeException(msg)
 }
 
-fun GrenseKobling.getGrenseJustertForRetning(): LineString {
-    val lineString = this.getRelevantGrense().grense
+fun GrenseKobling.getGrenseJustertForRetning(gyldighetsdato: LocalDate = LocalDate.now()): LineString {
+    val lineString = this.getRelevantGrense(gyldighetsdato).grense
+
     return when (this.grenseKoblingAttributter.retningMedKlokken) {
         true -> lineString
         false -> lineString.reverse()

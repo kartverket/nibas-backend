@@ -34,33 +34,11 @@ class GrenseBuilder(private val id: String = "1",
                     private var gyldigTil: LocalDate? = null,
                     private var opphav: String = "Eidsvoll",
                     private var versjon: Int = 1,
+                    private var grensetype: Grensetype = Grensetype.Grunnkretsgrense,
                     private var nesteVersjon: Grense? = null) {
 
-    fun buildFylkesgrense(): Grense {
-        return FylkesgrenseBuilder(
-            id = id,
-            lokalid = lokalId,
-            gyldigFra = gyldigFra,
-            gyldigTil = gyldigTil,
-            opphav = opphav,
-            grenseGeometri = grenseGeometri,
-            nesteVersjon = nesteVersjon
-        ).build()
-    }
-
-    fun buildRiksgrense(): Grense {
-        return Grense(id = id, lokalid = lokalId.value, Grensetype.Riksgrense).apply { setFelter(this) }
-    }
-
-    fun buildKommunegrense(): Grense {
-        return Grense(id = id, lokalid = lokalId.value, Grensetype.Kommunegrense).apply { setFelter(this) }
-    }
-
-    fun buildGrunnkretsgrense(): Grense {
-        return Grense(id = id, lokalid = lokalId.value, Grensetype.Grunnkretsgrense).apply { setFelter(this) }
-    }
-
-    private fun setFelter(grense: Grense) {
+    fun build(): Grense {
+        val grense = Grense(id, lokalId.value, grensetype)
         grense.grense = grenseGeometri
         grense.gyldighet = Gyldighet(gyldigFra, gyldigTil)
         grense.opphav = opphav
@@ -68,6 +46,8 @@ class GrenseBuilder(private val id: String = "1",
         if (nesteVersjon != null) {
             grense.nesteVersjon = nesteVersjon
         }
+
+        return grense
     }
 
     fun withLokalId(lokalId: String): GrenseBuilder {
@@ -79,11 +59,16 @@ class GrenseBuilder(private val id: String = "1",
         this.grenseGeometri = GeometryFactory().createLineString(coordinates.toTypedArray())
         return this
     }
+
     fun withVersjon(versjon: Int): GrenseBuilder {
         this.versjon = versjon
         return this
     }
 
+    fun withGrensetype(grensetype: Grensetype): GrenseBuilder {
+        this.grensetype = grensetype
+        return this
+    }
 
 }
 

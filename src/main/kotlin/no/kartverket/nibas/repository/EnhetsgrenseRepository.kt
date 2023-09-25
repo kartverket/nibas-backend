@@ -70,7 +70,7 @@ class EnhetsGrenseRepository(val namedParameterJdbcTemplate: NamedParameterJdbcT
                 it.finnRelevantGrenseForDato(gyldighetsdato, this)
                     ?: throw RuntimeException("Fant ingen relevant grense for grenseid: $it.id og gyldighetsdato: $gyldighetsdato")
             }
-        return grenseRader
+        return grenseRader.distinctBy { it.id }
     }
 
     fun fetchGrenseRow(grenseId: String): Grenserad {

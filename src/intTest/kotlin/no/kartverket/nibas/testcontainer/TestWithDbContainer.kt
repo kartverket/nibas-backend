@@ -1,6 +1,7 @@
 package no.kartverket.nibas.testcontainer
 
 import no.kartverket.nibas.api.v1.common.Flatetype
+import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.builders.FylkeBuilder
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
@@ -317,7 +318,7 @@ class TestWithDbContainer {
             gyldigTil = gyldigTil,
             opphav = opphav,
             nesteVersjon = nesteVersjon
-        ).buildKommunegrense())
+        ).withGrensetype(Grensetype.Kommunegrense).build())
     }
 
     fun saveGrenseAvTypeRiksgrense(id: String = "riksgrense-id",
@@ -333,7 +334,7 @@ class TestWithDbContainer {
             gyldigTil = gyldigTil,
             opphav = opphav,
             nesteVersjon = nesteVersjon
-        ).buildRiksgrense())
+        ).withGrensetype(Grensetype.Riksgrense).build())
     }
 
 }

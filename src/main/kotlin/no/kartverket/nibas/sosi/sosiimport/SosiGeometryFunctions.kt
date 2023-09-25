@@ -19,6 +19,7 @@ import org.locationtech.jts.geom.PrecisionModel
 import org.locationtech.jts.operation.buffer.BufferParameters
 import org.locationtech.jts.operation.valid.IsValidOp
 import org.locationtech.jts.operation.valid.TopologyValidationError
+import java.time.LocalDate
 
 object SosiGeometryFunctions {
     const val defaultSrid = 25833
@@ -249,7 +250,7 @@ object SosiGeometryFunctions {
         return nesteGrense
     }
 
-    fun beregnFlate(grenseKoblinger: Set<GrenseKobling>): MultiPolygon {
+    fun beregnFlate(grenseKoblinger: Set<GrenseKobling>, gyldighetsdato: LocalDate = LocalDate.now()): MultiPolygon {
         val flater: List<Polygon> = grenseKoblinger
             .groupBy { it.grenseKoblingAttributter.flateIndeks }
             .map { entry ->
@@ -261,12 +262,12 @@ object SosiGeometryFunctions {
 
                 val skall: List<LineString> = skallKoblinger
                     .sortedBy { it.grenseKoblingAttributter.rekkefoelge }
-                    .map { it.getGrenseJustertForRetning() }
+                    .map { it.getGrenseJustertForRetning(gyldighetsdato) }
 
                 val hull: List<List<LineString>> = hullKoblinger.map { hullkobling ->
                     hullkobling.value
                         .sortedBy { it.grenseKoblingAttributter.rekkefoelge }
-                        .map { it.getGrenseJustertForRetning() }
+                        .map { it.getGrenseJustertForRetning(gyldighetsdato) }
                 }
 
                 val flate: Polygon = lagFlate(skall, hull)
