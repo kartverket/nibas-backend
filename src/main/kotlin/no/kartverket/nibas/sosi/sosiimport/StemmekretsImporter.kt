@@ -4,6 +4,7 @@ import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.StemmekretsRepository
+import no.kartverket.nibas.repository.findGyldigKommuneForKommunenummer
 import no.kartverket.nibas.sosi.model.SosiFlate
 import no.kartverket.nibas.sosi.model.SosiGeometri
 import org.locationtech.jts.geom.Coordinate
@@ -57,8 +58,11 @@ class StemmekretsImporter @Autowired constructor(private val kommunalKretsImport
             stemmekrets = stemmekretsRepository.save(stemmekrets)
 
             // Setter kommunenummerId fra GeoNorge samt kobling til kommune
-            val kommunenummerId = kodelisteService.getKommunenummerIdByCodeValue(forsteFlate.getKommunenummer())
-            val kommune = kommuneRepository.findByKommunenummer(kommunenummerId)!!
+            val kommunenummerUuid = kodelisteService.getKommunenummerIdByCodeValue(forsteFlate.getKommunenummer())
+            val gyldighetsdato = stemmekrets.gyldighet.gyldigFra
+            val kommune = kommuneRepository.findGyldigKommuneForKommunenummer(kommunenummerUuid, gyldighetsdato)
+                ?: throw RuntimeException("Fant ikke kommune med kommunenummerUuid $kommunenummerUuid og gyldig fra $gyldighetsdato")
+
             kommune.addStemmekrets(stemmekrets)
         }
     }

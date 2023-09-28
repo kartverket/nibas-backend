@@ -21,6 +21,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.NoRepositoryBean
+import java.time.LocalDate
 
 @NoRepositoryBean
 interface CrudRepositoryWithLokalIdFinder<T, ID> : CrudRepository<T, ID> {
@@ -48,8 +49,8 @@ interface UnikLokalidRepository : CrudRepositoryWithLokalIdFinder<UnikLokalid, S
 interface NasjonRepository : CrudRepositoryWithLokalIdFinder<Nasjon, String>
 interface FylkeInformasjonRepository : CrudRepository<FylkeInformasjon, String>
 interface FylkeRepository : CrudRepositoryWithLokalIdFinder<Fylke, String> {
-    //Kun til bruk i import, det er kun da det bare er ett fylke med gitt fylkesnummer.
-    fun findByFylkesnummer(fylkesnummer_id: String): Fylke?
+
+    fun findAllByFylkesnummer(fylkesnummerUuid: String): List<Fylke>
 }
 
 interface KommuneInformasjonRepository : CrudRepository<KommuneInformasjon, String>
@@ -88,3 +89,7 @@ data class KonfliktVersjon(val nyVersjon: Int, val eksisterende: Laasbar) {
 
 class OptimistiskLaasException(vararg val konflikter: KonfliktVersjon)
     : RuntimeException("Det er ikke samsvar med versjon")
+
+fun FylkeRepository.findGyldigFylkeForFylkesnummer(fylkesnummerUuid: String, gyldighetsdato: LocalDate = LocalDate.now()): Fylke? {
+    return findGyldigObjektPaaGyldighetsdato(findAllByFylkesnummer(fylkesnummerUuid), gyldighetsdato)
+}

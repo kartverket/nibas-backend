@@ -119,6 +119,32 @@ class RepositoryTest : TestWithDbContainer() {
         assertThat(spraakkodeRepository.findById("17").isPresent).isTrue
     }
 
+    @Test
+    fun `test finn fylke med fylkesnummerUuid`(){
+        val fylkesnummerUuid = "03220222-0075-41f5-b603-44fe2505ede2"
+        val fylker = fylkeRepository.findAllByFylkesnummer(fylkesnummerUuid)
+        assertThat(fylker).hasSize(2).extracting("id").contains("f2e85556-471b-4807-a1bf-6da7478e7cda", "ny-47f4ef26-f1c1-4bbf-9f1b-8e37e70cc6a1")
+
+        var fylke = fylkeRepository.findGyldigFylkeForFylkesnummer(fylkesnummerUuid, january1In2023)!!
+        assertThat(fylke.id).isEqualTo("f2e85556-471b-4807-a1bf-6da7478e7cda")
+
+        fylke = fylkeRepository.findGyldigFylkeForFylkesnummer(fylkesnummerUuid, october1In2022)!!
+        assertThat(fylke.id).isEqualTo("ny-47f4ef26-f1c1-4bbf-9f1b-8e37e70cc6a1")
+    }
+
+    @Test
+    fun `test finn kommune med kommunenummerUuid`(){
+        val kommunenummerUuid = "4fae75c2-b82d-4cb2-937d-34aacd760fb8"
+        val kommuner = kommuneRepository.findAllByKommunenummer(kommunenummerUuid)
+        assertThat(kommuner).hasSize(2).extracting("id").contains("e24e9dcf-4ae9-475c-afc2-1a5c49f166e4", "ny-e24e9dcf-4ae9-475c-afc2-1a5c49f166e4")
+
+        var kommune = kommuneRepository.findGyldigKommuneForKommunenummer(kommunenummerUuid, january1In2023)!!
+        assertThat(kommune.id).isEqualTo("e24e9dcf-4ae9-475c-afc2-1a5c49f166e4")
+
+        kommune = kommuneRepository.findGyldigKommuneForKommunenummer(kommunenummerUuid, october1In2022)!!
+        assertThat(kommune.id).isEqualTo("ny-e24e9dcf-4ae9-475c-afc2-1a5c49f166e4")
+    }
+
     private fun createGrunnkrets(lokalid: Lokalid,
                                  gyldigFra: LocalDate = LocalDate.of(2023, Month.JANUARY, 1),
                                  gyldigTil: LocalDate? = null): Grunnkrets {

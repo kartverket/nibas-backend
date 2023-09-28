@@ -6,7 +6,6 @@ import java.time.LocalDate
 const val KOMMUNEREPOSITORY_EXTENSIONS_FILEPATH = "no.kartverket.nibas.repository.KommuneRepositoryKt"
 
 interface KommuneRepository : CrudRepositoryWithLokalIdFinder<Kommune, String> {
-    fun findByKommunenummer(kommunenummer: String): Kommune?
     fun findAllByKommunenummer(kommunenummer: String): List<Kommune>
 }
 

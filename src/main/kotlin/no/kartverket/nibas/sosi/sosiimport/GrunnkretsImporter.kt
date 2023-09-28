@@ -4,6 +4,7 @@ import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.KommuneRepository
+import no.kartverket.nibas.repository.findGyldigKommuneForKommunenummer
 import no.kartverket.nibas.sosi.model.SosiFlate
 import no.kartverket.nibas.sosi.model.SosiGeometri
 import no.kartverket.nibas.sporing.Gyldighet
@@ -61,8 +62,11 @@ class GrunnkretsImporter @Autowired constructor(
             grunnkrets.oppdaterOmraadeOgPosisjon()
             grunnkrets = grunnkretsRepository.save(grunnkrets)
 
-            val kommunenummerId = kodelisteService.getKommunenummerIdByCodeValue(flate.getKommunenummer())
-            val kommune = kommuneRepository.findByKommunenummer(kommunenummerId)!!
+            val kommunenummerUuid = kodelisteService.getKommunenummerIdByCodeValue(flate.getKommunenummer())
+            val gyldighetsdato = grunnkrets.gyldighet.gyldigFra
+            val kommune = kommuneRepository.findGyldigKommuneForKommunenummer(kommunenummerUuid, gyldighetsdato)
+                ?: throw RuntimeException("Fant ikke kommune med kommunenummerUuid $kommunenummerUuid og gyldig fra $gyldighetsdato")
+
             kommune.addGrunnkrets(grunnkrets)
         }
     }
