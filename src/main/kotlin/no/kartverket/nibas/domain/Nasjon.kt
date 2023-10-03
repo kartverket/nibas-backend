@@ -56,7 +56,7 @@ class Nasjon(
         nasjonLokalid.fylkerForNasjon.add(fylke)
     }
 
-    fun addAdministrativenhetNavn(navn: Administrativenhetnavn) {
+    override fun addAdministrativenhetNavn(navn: Administrativenhetnavn) {
         navn.administrativenhetLokalid = nasjonLokalid
         nasjonLokalid.administrativenhetnavn.add(navn)
     }

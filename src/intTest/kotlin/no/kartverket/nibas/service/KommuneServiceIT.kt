@@ -5,11 +5,15 @@ import no.kartverket.nibas.builders.*
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.*
+import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.*
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.tuple
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -18,6 +22,9 @@ import java.time.Month
 @ActiveProfiles("security-off")
 @Transactional
 class KommuneServiceIT : TestWithDbContainer() {
+
+    @MockBean
+    private lateinit var kodelisteServiceMock: KodelisteService
 
     @Autowired
     private lateinit var kommuneService: KommuneService
@@ -35,8 +42,8 @@ class KommuneServiceIT : TestWithDbContainer() {
 
     @Test
     fun hentEksisterendeKommuneMedDagensDato() {
-        assertThat(kommuneService.hentKommune(Identifikator(Lokalid((lokalidOfKommuneInDataSet)), november28In2022))).isNotNull
-        assertThat(kommuneService.hentKommune(Identifikator(Lokalid((lokalidOfKommuneInDataSet))))).isNotNull
+        assertThat(kommuneService.hentKommune(Identifikator(Lokalid(lokalidOfKommuneInDataSet), november28In2022))).isNotNull
+        assertThat(kommuneService.hentKommune(Identifikator(Lokalid(lokalidOfKommuneInDataSet)))).isNotNull
     }
 
     @Test
@@ -439,6 +446,37 @@ class KommuneServiceIT : TestWithDbContainer() {
         assertThat(kommuneEtter.fylkeLokalid.lokalid).isEqualTo(opprinneligKommuneEtter.fylkeLokalid.lokalid).isEqualTo(kommune.fylkeLokalid.lokalid)
         assertThat(kommuneEtter.kommuneLokalid).isEqualTo(opprinneligKommuneEtter.kommuneLokalid).isEqualTo(kommune.kommuneLokalid)
         assertThat(kommuneEtter.fylkeLokalid).isEqualTo(opprinneligKommuneEtter.fylkeLokalid).isEqualTo(kommune.fylkeLokalid)
+    }
 
+    @Test
+    fun `sjekk createNyKommune`() {
+        Mockito.`when`(kodelisteServiceMock.getKommunenummerIdByCodeValue("5622")).thenReturn("b0f1dfb4-2ba3-44a8-9b86-37bea79f6a60")
+        Mockito.`when`(kodelisteServiceMock.getFylkesnummerIdByCodeValue("56")).thenReturn("ee97a593-2f9d-49c7-b251-c0f0cfa8769b")
+
+        val norskNavn = saveAdministrativenhetnavn(navn = "Porsanger", spraakid = "nor", rekkefoelge = 1)
+        val samiskNavn = saveAdministrativenhetnavn(navn = "Porsáŋgu", spraakid = "sme", rekkefoelge = 2)
+        val kvenskNavn = saveAdministrativenhetnavn(navn = "Porsanki", spraakid = "fkv", rekkefoelge = 3)
+
+        val kommune = saveKommuneOgUnikLokalid(lokalid = "5436Porsanger", kommunenummer = "f2c438ec-4551-4245-b6a0-153d53a39dde",
+            administrativenhetnavn = listOf(norskNavn, samiskNavn, kvenskNavn), gyldigTil = jan1In2024)
+        saveFylkeOgUnikLokalid(lokalid = "54TromsOgFinnmark", fylkesnummer = "efe425f5-fc7f-4a29-a70d-31363ec6a306",
+            kommuner = listOf(kommune), gyldigTil = jan1In2024)
+        val nyFinnmark = saveFylkeOgUnikLokalid(lokalid = "56Finnmark", fylkesnummer = "ee97a593-2f9d-49c7-b251-c0f0cfa8769b", gyldigFra = jan1In2024)
+
+        val nyKommune = kommuneService.createNyKommuneMedNyUnikLokalid(
+            kopierFraKommune = kommune,
+            nyttKommunenummerIKlartekst = "5622",
+            gyldigFra = jan1In2024,
+            endringstype = Endringstype.FASTSETTING
+        )
+
+        assertThat(nyKommune.lokalid).isNotEqualTo(kommune.lokalid)
+        assertThat(nyKommune.kommunenummer).isEqualTo("b0f1dfb4-2ba3-44a8-9b86-37bea79f6a60")
+        assertThat(nyKommune.getFylke(jan1In2024)!!.lokalid).isEqualTo(nyFinnmark.lokalid)
+        assertThat(nyFinnmark.fylkeLokalid.kommunerForFylke).hasSize(1).extracting("id").contains(nyKommune.id)
+
+        assertThat(nyKommune.kommuneLokalid.administrativenhetnavn).hasSize(3).extracting("navn", "rekkefoelge", "spraak.id")
+            .contains(tuple("Porsanger", 1, "nor"), tuple("Porsáŋgu", 2, "sme"), tuple("Porsanki", 3, "fkv"))
+        assertThat(nyKommune.kommuneLokalid.administrativenhetnavn).extracting("id").doesNotContain(norskNavn.id, samiskNavn.id, kvenskNavn.id)
     }
 }

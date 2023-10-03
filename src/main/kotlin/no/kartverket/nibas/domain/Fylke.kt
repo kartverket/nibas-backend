@@ -77,7 +77,7 @@ class Fylke(
         return nasjonLokalid.nasjoner.filter { it.gyldigPaaDato(gyldighetsdato) }.firstOrNull()
     }
 
-    fun addAdministrativenhetNavn(navn: Administrativenhetnavn) {
+    override fun addAdministrativenhetNavn(navn: Administrativenhetnavn) {
         navn.administrativenhetLokalid = fylkeLokalid
         fylkeLokalid.administrativenhetnavn.add(navn)
     }

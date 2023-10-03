@@ -85,7 +85,7 @@ class Kommune(
         return fylkeLokalid.fylker.filter { it.gyldigPaaDato(gyldighetsdato) }.firstOrNull()
     }
 
-    fun addAdministrativenhetNavn(navn: Administrativenhetnavn) {
+    override fun addAdministrativenhetNavn(navn: Administrativenhetnavn) {
         navn.administrativenhetLokalid = kommuneLokalid
         kommuneLokalid.administrativenhetnavn.add(navn)
     }
@@ -111,7 +111,6 @@ class Kommune(
 
     fun applyMappingFromExistingKommune(gammelKommune: Kommune): Kommune {
         return this.apply {
-            gammelKommune.gyldighet.gyldigTil?.let { setGyldigTil(it) }
             kommunenummer = gammelKommune.kommunenummer
             samiskforvaltningsomraade = gammelKommune.samiskforvaltningsomraade
             datafangstdato = gammelKommune.datafangstdato

@@ -19,21 +19,19 @@ import no.kartverket.nibas.repository.FylkeRepository
 import no.kartverket.nibas.repository.KOMMUNEREPOSITORY_EXTENSIONS_FILEPATH
 import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.REPOSITORY_EXTENSIONS_FILEPATH
+import no.kartverket.nibas.repository.UnikLokalidRepository
 import no.kartverket.nibas.repository.findGyldigKommuneForKommunenummer
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.ArgumentMatchers.anyString
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.mock.mockito.MockBean
 import java.time.LocalDate
 import java.time.Month
 import java.util.*
 import kotlin.test.assertEquals
-import org.mockito.Mockito.`when` as whenever
 
 @SpringBootTest(classes = [KommuneService::class])
 class KommuneServiceTest {
@@ -42,22 +40,27 @@ class KommuneServiceTest {
     lateinit var kommuneService: KommuneService
 
     @MockkBean
-    private lateinit var kommuneRepositoryKotlinMock: KommuneRepository
-
-    @MockBean
     private lateinit var kommuneRepositoryMock: KommuneRepository
 
-    @MockBean
+    @MockkBean
     @Suppress("unused")
     private lateinit var fylkeRepository: FylkeRepository
 
-    @MockBean
+    @MockkBean
+    @Suppress("unused")
+    private lateinit var unikLokalidRepository: UnikLokalidRepository
+
+    @MockkBean
     @Suppress("unused")
     private lateinit var hrefProvider: HrefProvider
 
-    @MockBean
+    @MockkBean
     @Suppress("unused")
     private lateinit var administrativenhetnavnRepository: AdministrativenhetnavnRepository
+
+    @MockkBean
+    @Suppress("unused")
+    private lateinit var administrativenhetnavnService: AdministrativenhetnavnService
 
     @MockkBean
     private lateinit var kodelisteServiceMock: KodelisteService
@@ -71,7 +74,7 @@ class KommuneServiceTest {
 
     @Test
     fun hentGrenserForKommuneReturnsNullWhenKommuneNotFound() {
-        whenever(kommuneRepositoryMock.findById(anyString())).thenReturn(Optional.empty())
+        every { kommuneRepositoryMock.findAllByLokalid(any()) } returns emptyList()
         assertThat(kommuneService.hentGrenserForKommune(Identifikator(Lokalid("1")))).isEmpty()
     }
 
@@ -90,7 +93,7 @@ class KommuneServiceTest {
                 )
                 .build())
             .build()
-        every { kommuneRepositoryKotlinMock.findGyldigObjektForIdentifikator(kommuneIdentifikator) } returns kommune
+        every { kommuneRepositoryMock.findGyldigObjektForIdentifikator(kommuneIdentifikator) } returns kommune
 
         val grenserForKommune = kommuneService.hentGrenserForKommune(kommuneIdentifikator)
         assertEquals(15, grenserForKommune.size, "Expected 15 borders")
@@ -104,7 +107,7 @@ class KommuneServiceTest {
 
     @Test
     fun thatOppdaterKommuneReturnsNullWhenKommuneNotFound() {
-        whenever(kommuneRepositoryMock.findById(anyString())).thenReturn(Optional.empty())
+        every { kommuneRepositoryMock.findAllByLokalid(any()) } returns emptyList()
 
         Assertions.assertThatThrownBy {
             kommuneService.oppdaterKommune(Lokalid("1"), LocalDate.now(), Endringstype.FASTSETTING, KommuneRequestBuilder.DEFAULT_REQUEST)
@@ -158,7 +161,7 @@ class KommuneServiceTest {
         val kommuneIdentifikator = Identifikator(
             lokalid = Lokalid(kommuneId),
             gyldighetsdato = todayIsNovember22In2022)
-        every { kommuneRepositoryKotlinMock.findGyldigObjektForIdentifikator(kommuneIdentifikator) } returns kommune
+        every { kommuneRepositoryMock.findGyldigObjektForIdentifikator(kommuneIdentifikator) } returns kommune
 
         val kommunesGrunnkretser = kommuneService.hentKommunesGrunnkretser(kommuneIdentifikator)
 
@@ -191,14 +194,13 @@ class KommuneServiceTest {
         every { kodelisteServiceMock.getKommunenummerIdByCodeValue(eq(kommunenummer)) } returns
             kommunenummerUUID
         every {
-            kommuneRepositoryKotlinMock.findGyldigKommuneForKommunenummer(
+            kommuneRepositoryMock.findGyldigKommuneForKommunenummer(
                 eq(kommunenummerUUID),
                 eq(gyldighetsdato)
             )
         } returns kommune
 
-        val stemmekretser =
-            kommuneService.hentAlleStemmekretserForKommune(kommunenummer, gyldighetsdato)
+        val stemmekretser = kommuneService.hentAlleStemmekretserForKommune(kommunenummer, gyldighetsdato)
         assertEquals(stemmekretser, listOf(stemmekrets1, stemmekrets2))
     }
 
@@ -231,14 +233,13 @@ class KommuneServiceTest {
         every { kodelisteServiceMock.getKommunenummerIdByCodeValue(eq(kommunenummer)) } returns
             kommunenummerUUID
         every {
-            kommuneRepositoryKotlinMock.findGyldigKommuneForKommunenummer(
+            kommuneRepositoryMock.findGyldigKommuneForKommunenummer(
                 eq(kommunenummerUUID),
                 eq(gyldighetsdato)
             )
         } returns kommune
 
-        val grunnkretser =
-            kommuneService.hentAlleGrunnkretserForKommune(kommunenummer, gyldighetsdato)
+        val grunnkretser = kommuneService.hentAlleGrunnkretserForKommune(kommunenummer, gyldighetsdato)
         assertEquals(grunnkretser, listOf(gk1, gk2))
     }
 }

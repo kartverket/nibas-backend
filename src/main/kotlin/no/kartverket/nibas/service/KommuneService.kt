@@ -1,6 +1,7 @@
 package no.kartverket.nibas.service
 
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
+import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.request.KommuneRequest
 import no.kartverket.nibas.api.v1.response.KommuneRef
 import no.kartverket.nibas.api.v1.response.toObjektIdentifikator
@@ -13,14 +14,17 @@ import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Stemmekrets
+import no.kartverket.nibas.domain.UnikLokalid
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.kodelister.createKommunenummerFromUUID
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.FylkeRepository
 import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.OptimistiskLaasException
+import no.kartverket.nibas.repository.UnikLokalidRepository
 import no.kartverket.nibas.repository.findAllGyldigPaaDato
 import no.kartverket.nibas.repository.findAntallFramtidigeVersjonerForIdentifikator
+import no.kartverket.nibas.repository.findGyldigFylkeForFylkesnummer
 import no.kartverket.nibas.repository.findGyldigKommuneForKommunenummer
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
@@ -35,7 +39,9 @@ class KommuneService(
     private val fylkeRepository: FylkeRepository,
     @Suppress("unused") //Er kun ubrukt i påvente av TS-1192
     private val administrativenhetnavnRepository: AdministrativenhetnavnRepository,
+    private var unikLokalidRepository: UnikLokalidRepository,
     private val kodelisteService: KodelisteService,
+    private val administrativenhetnavnService: AdministrativenhetnavnService,
     private val hrefProvider: HrefProvider
 ) {
 
@@ -88,8 +94,9 @@ class KommuneService(
     fun createNyVersjonAvKommune(kommune: Kommune, gyldigFra: LocalDate, endringstype: Endringstype): Kommune {
         val nyKommune = kommuneRepository.save(
             Kommune(lokalid = kommune.lokalid)
+                .applyMappingFromExistingKommune(kommune)
                 .apply {
-                    applyMappingFromExistingKommune(kommune)
+                    kommune.gyldighet.gyldigTil?.let { setGyldigTil(it) }
                     setGyldigFra(gyldigFra)
                     version = nesteVersjonForKommune(Lokalid(kommune.lokalid))
                     auditInfo.typeEndring = endringstype
@@ -98,6 +105,45 @@ class KommuneService(
         return nyKommune
             .applyCascadingOperationsBasedOnExistingKommune(kommune)
             .also { kommune.setGyldigTil(gyldigFra)  }
+    }
+
+    fun createNyKommuneMedNyUnikLokalid(
+        kopierFraKommune: Kommune,
+        nyttKommunenummerIKlartekst: String,
+        gyldigFra: LocalDate,
+        endringstype: Endringstype
+    ): Kommune {
+        var nyKommune = Kommune()
+            .apply {
+                applyMappingFromExistingKommune(kopierFraKommune)
+                setGyldigFra(gyldigFra)
+                kommunenummer = kodelisteService.getKommunenummerIdByCodeValue(nyttKommunenummerIKlartekst)
+                version = 1
+                auditInfo.typeEndring = endringstype
+            }
+
+        var unikLokalid = UnikLokalid(nyKommune.lokalid, Flatetype.KOMMUNE)
+        unikLokalid = unikLokalidRepository.save(unikLokalid)
+
+        nyKommune = kommuneRepository.save(nyKommune)
+        nyKommune.addKommuneTilUnikLokalid(unikLokalid)
+
+        // Fylkesnummer er de to første sifrene i kommunenummeret
+        val fylkesnummerUuid = kodelisteService.getFylkesnummerIdByCodeValue(nyttKommunenummerIKlartekst.substring(0, 2))
+        val fylke = fylkeRepository.findGyldigFylkeForFylkesnummer(fylkesnummerUuid, gyldigFra)
+            ?: throw RuntimeException("Fant ikke fylke med fylkesnummerUuid $fylkesnummerUuid og gyldig fra $gyldigFra")
+
+        fylke.addKommune(nyKommune)
+
+        administrativenhetnavnService.createNyeAdmEnhetNavnOgKnyttTilEnhet(
+            admenhetnavnList = kopierFraKommune.getAdministrativenhetNavn(gyldigFra),
+            gyldigFra = gyldigFra,
+            endringstype = endringstype,
+            admEnhet = nyKommune
+        )
+
+        nyKommune.addInformasjonselementerFrom(kopierFraKommune.informasjonselementer)
+        return nyKommune
     }
 
     private fun nesteVersjonForKommune(lokalId: Lokalid): Int =

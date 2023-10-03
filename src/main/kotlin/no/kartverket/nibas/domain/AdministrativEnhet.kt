@@ -56,4 +56,7 @@ abstract class AdministrativEnhet(
     override var foerstedigitaliseringsdato: ZonedDateTime = ZonedDateTime.now()
 
     fun getAdministrativenhetNavn(gyldighetsdato: LocalDate = LocalDate.now()): List<Administrativenhetnavn> = emptyList()
+
+    abstract fun addAdministrativenhetNavn(navn: Administrativenhetnavn)
+
 }
