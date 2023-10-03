@@ -34,17 +34,24 @@ Da vil nedlasting av artifakter (som aut-lib) fra Github fungere og en vil også
 source-jaren bli lastet ned.
 
 ## Kjøre på lokal maskin <a name="lokal"></a>
+Dersom man ønsker å kjøre opp backenden utelukkende for utvikling av frontenden anbefales det å kjøre opp i terminalen for hvert av stegene som følger her. Men for å kunne debugge i IntelliJ så kreves det at man kjører opp backenden i IntelliJ, dermed bør man kjøre opp der dersom man driver med backend-utvikling.
+
 
 Den letteste måten å kjøre det opp lokalt på egen maskin er ved å starte opp databasen og vault
 via docker-compose. Om man kjører docker-compose med filen `docker-compose-local.yml` vil starte
-vault og database i egne containere.
+vault og database i egne containere. Dette kan enten ved å høyreklikke og velge "Run" i IntelliJ eller kjøre følgende kommando i kommandolinjen.
 
 ```html
 docker compose --file docker-compose-local.yml up
 ```
 
 Om man bruker intelliJ kan man da starte main-metoden i `NibasBackendApplication.kt`. Husk å sette
-aktiv spring-profil til `localhost`. Dette gjøres under "Run/Debug Configurations".
+aktiv spring-profil til `localhost,security-off`. Dette gjøres under "Run/Debug Configurations" og vil se slik ut i IntelliJ: 
+
+
+![image](https://github.com/kartverket/nibas-backend/assets/39772759/6f6f8156-70d7-4d34-87df-8535d47980b7)
+
+
 
 Alternativt kan man også starte applikasjonen via terminalen:
 
@@ -62,6 +69,7 @@ Alternativt kan man også starte applikasjonen via terminalen:
 
 Default så vil applikasjonen forsøke å bruke vault fra dev-miljøet. Men om du ønsker å bruke lokalt vault (kjørt opp med docker-compose) kan du overstyre dette
 med å sette miljøvariabelen `VAULT_ADDR=http://localhost:8200`.
+
 
 ## Autentisering <a name="autentisering"></a>
 
@@ -175,6 +183,7 @@ Vi bruker EditorConfig for formatering (som IntelliJ default forstår).
 
 ## Import <a name="import"></a>
 
+
 Sosi-import skal kjøres på lokal maskin mot gitte miljøer med kommandoer vist i eksempler under. Default kjøres import for alle fylker med import av
 adm.enheter, grunnkretser og stemmekretser. En kan overstyre hvilke filer som skal brukes med konfig-properties. I tillegg kan en overstyre med:
 
@@ -226,6 +235,11 @@ Dersom man heller vil kjøre det som en Spring boot-prosess, kan man spesifisere
 ```
 -Dspring.datasource.url=URL_HER -Dspring.datasource.username=USER_HER -Dspring.datasource.password=PASSWORD_HER
 ```
+
+For å kjøre import direkte i IntelliJ kan man sette opp en Run Configuration på følgende format:
+
+
+![image](https://github.com/kartverket/nibas-backend/assets/39772759/5be86c5b-7aea-42f2-88b9-1bb2cf43e7e5)
 
 ### Flatedanning av administrative enheter
 For å kunne flatedanne administrative enheter må evt grenser uten utstrekning slettes (ellers feiler algoritmen for å finne neste grense i flaten).
