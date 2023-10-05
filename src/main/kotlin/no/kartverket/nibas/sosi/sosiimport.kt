@@ -49,7 +49,7 @@ class SosiImportService(
     private final val targetGrunnkrets = "grunnkrets"
     private final val targetStemmekrets = "stemmekrets"
 
-    @Value("\${nibas.import.grunnkretsfil:sosifiler/STAT_enheter_grunnkretser_20230214.sos}")
+    @Value("\${nibas.import.grunnkretsfil:sosifiler/STAT_enheter_grunnkretser_20231003.sos}")
     lateinit var grunnkretsfil: String
 
     @Value("\${nibas.import.admenhetfil:sosifiler/ADM_Enheter_Norge_20230214.sos}")
