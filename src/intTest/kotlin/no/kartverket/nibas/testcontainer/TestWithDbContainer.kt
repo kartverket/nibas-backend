@@ -143,7 +143,7 @@ class TestWithDbContainer {
         lokalid: String = UUID.randomUUID().toString(),
         navn: String,
         spraakid: String,
-        rekkefoelge: Int,
+        rekkefoelge: Int? = null,
         gyldigFra: LocalDate = LocalDate.of(2022, Month.OCTOBER, 1),
         gyldigTil: LocalDate? = null
     ): Administrativenhetnavn {

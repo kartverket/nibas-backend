@@ -102,7 +102,6 @@ class Fylke(
 
     fun applyMappingFromExistingFylke(gammeltFylke: Fylke): Fylke {
         return this.apply {
-            gammeltFylke.gyldighet.gyldigTil?.let { setGyldigTil(it) }
             fylkesnummer = gammeltFylke.fylkesnummer
             samiskforvaltningsomraade = gammeltFylke.samiskforvaltningsomraade
             datafangstdato = gammeltFylke.datafangstdato

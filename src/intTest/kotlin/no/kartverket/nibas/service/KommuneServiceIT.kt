@@ -29,6 +29,9 @@ class KommuneServiceIT : TestWithDbContainer() {
     @Autowired
     private lateinit var kommuneService: KommuneService
 
+    @Autowired
+    private lateinit var administrativenhetnavnService: AdministrativenhetnavnService
+
     private val lokalidOfKommuneInDataSet = "ac7e05cd-fb07-4270-ad95-e3c32c1370d0"
     private val october1In2022 = LocalDate.of(2022, Month.OCTOBER, 1)
     private val november28In2022 = LocalDate.of(2022, Month.NOVEMBER, 28) // Dagens dato
@@ -449,7 +452,7 @@ class KommuneServiceIT : TestWithDbContainer() {
     }
 
     @Test
-    fun `sjekk createNyKommune`() {
+    fun `sjekk createNyKommune i nytt fylke`() {
         Mockito.`when`(kodelisteServiceMock.getKommunenummerIdByCodeValue("5622")).thenReturn("b0f1dfb4-2ba3-44a8-9b86-37bea79f6a60")
         Mockito.`when`(kodelisteServiceMock.getFylkesnummerIdByCodeValue("56")).thenReturn("ee97a593-2f9d-49c7-b251-c0f0cfa8769b")
 
@@ -458,11 +461,11 @@ class KommuneServiceIT : TestWithDbContainer() {
         val kvenskNavn = saveAdministrativenhetnavn(navn = "Porsanki", spraakid = "fkv", rekkefoelge = 3)
 
         val kommune = saveKommuneOgUnikLokalid(lokalid = "5436Porsanger", kommunenummer = "f2c438ec-4551-4245-b6a0-153d53a39dde",
-            administrativenhetnavn = listOf(norskNavn, samiskNavn, kvenskNavn), gyldigTil = jan1In2024)
-        saveFylkeOgUnikLokalid(lokalid = "54TromsOgFinnmark", fylkesnummer = "efe425f5-fc7f-4a29-a70d-31363ec6a306",
-            kommuner = listOf(kommune), gyldigTil = jan1In2024)
+            administrativenhetnavn = listOf(norskNavn, samiskNavn, kvenskNavn))
+        saveFylkeOgUnikLokalid(lokalid = "54TromsOgFinnmark", fylkesnummer = "efe425f5-fc7f-4a29-a70d-31363ec6a306", kommuner = listOf(kommune))
         val nyFinnmark = saveFylkeOgUnikLokalid(lokalid = "56Finnmark", fylkesnummer = "ee97a593-2f9d-49c7-b251-c0f0cfa8769b", gyldigFra = jan1In2024)
 
+        assertThat(kommune.utledetFra).isNull()
         val nyKommune = kommuneService.createNyKommuneMedNyUnikLokalid(
             kopierFraKommune = kommune,
             nyttKommunenummerIKlartekst = "5622",
@@ -472,11 +475,72 @@ class KommuneServiceIT : TestWithDbContainer() {
 
         assertThat(nyKommune.lokalid).isNotEqualTo(kommune.lokalid)
         assertThat(nyKommune.kommunenummer).isEqualTo("b0f1dfb4-2ba3-44a8-9b86-37bea79f6a60")
+        assertThat(nyKommune.utledetFra!!.id).isEqualTo(kommune.id)
+
         assertThat(nyKommune.getFylke(jan1In2024)!!.lokalid).isEqualTo(nyFinnmark.lokalid)
         assertThat(nyFinnmark.fylkeLokalid.kommunerForFylke).hasSize(1).extracting("id").contains(nyKommune.id)
 
         assertThat(nyKommune.kommuneLokalid.administrativenhetnavn).hasSize(3).extracting("navn", "rekkefoelge", "spraak.id")
             .contains(tuple("Porsanger", 1, "nor"), tuple("Porsáŋgu", 2, "sme"), tuple("Porsanki", 3, "fkv"))
         assertThat(nyKommune.kommuneLokalid.administrativenhetnavn).extracting("id").doesNotContain(norskNavn.id, samiskNavn.id, kvenskNavn.id)
+    }
+
+    @Test
+    fun `sjekk createNyKommune i gammelt fylke`() {
+        Mockito.`when`(kodelisteServiceMock.getKommunenummerIdByCodeValue("1508")).thenReturn("9720eabc-0bff-4c93-b05c-95bae39ef2ea")
+        Mockito.`when`(kodelisteServiceMock.getKommunenummerIdByCodeValue("1580")).thenReturn("687f3337-899f-42f8-849d-6f2d5b603dd3")
+        Mockito.`when`(kodelisteServiceMock.getFylkesnummerIdByCodeValue("15")).thenReturn("c499a315-0cd5-4e99-8acf-bd6f4803799a")
+
+        val norskNavn = saveAdministrativenhetnavn(navn = "Ålesund", spraakid = "nor")
+
+        val gamleAalesund = saveKommuneOgUnikLokalid(lokalid = "1507Ålesund", kommunenummer = "afc65fde-8a62-497d-b35d-77345efddee3",
+            administrativenhetnavn = listOf(norskNavn))
+        val moereOgRomsdal = saveFylkeOgUnikLokalid(lokalid = "15MøreOgRomsdal", fylkesnummer = "c499a315-0cd5-4e99-8acf-bd6f4803799a",
+            kommuner = listOf(gamleAalesund))
+
+        assertThat(gamleAalesund.utledetFra).isNull()
+        val nyeAalesund = kommuneService.createNyKommuneMedNyUnikLokalid(
+            kopierFraKommune = gamleAalesund,
+            nyttKommunenummerIKlartekst = "1508",
+            gyldigFra = jan1In2024,
+            endringstype = Endringstype.FASTSETTING
+        )
+
+        assertThat(nyeAalesund.lokalid).isNotEqualTo(gamleAalesund.lokalid)
+        assertThat(nyeAalesund.kommunenummer).isEqualTo("9720eabc-0bff-4c93-b05c-95bae39ef2ea")
+        assertThat(nyeAalesund.utledetFra!!.id).isEqualTo(gamleAalesund.id)
+
+        assertThat(nyeAalesund.getFylke(jan1In2024)!!.lokalid).isEqualTo(moereOgRomsdal.lokalid)
+        assertThat(moereOgRomsdal.fylkeLokalid.kommunerForFylke).hasSize(2).extracting("id").contains(gamleAalesund.id, nyeAalesund.id)
+
+        assertThat(nyeAalesund.kommuneLokalid.administrativenhetnavn).hasSize(1).extracting("navn", "rekkefoelge", "spraak.id")
+            .contains(tuple("Ålesund", null, "nor"))
+        assertThat(nyeAalesund.kommuneLokalid.administrativenhetnavn).extracting("id").doesNotContain(norskNavn.id)
+
+        val haramNavn = administrativenhetnavnService.createNyttAdmEnhetNavn(oppgittNavn = "Haram", spraakForkortelse = "nor")
+        val haram = kommuneService.createNyKommuneMedNyUnikLokalid(
+            kopierFraKommune = gamleAalesund,
+            nyttKommunenummerIKlartekst = "1580",
+            admenhetnavnList = listOf(haramNavn),
+            gyldigFra = jan1In2024,
+            endringstype = Endringstype.FASTSETTING
+        )
+
+        assertThat(haram.lokalid).isNotEqualTo(gamleAalesund.lokalid)
+        assertThat(haram.kommunenummer).isEqualTo("687f3337-899f-42f8-849d-6f2d5b603dd3")
+        assertThat(haram.utledetFra!!.id).isEqualTo(gamleAalesund.id)
+
+        assertThat(haram.getFylke(jan1In2024)!!.lokalid).isEqualTo(moereOgRomsdal.lokalid)
+        assertThat(moereOgRomsdal.fylkeLokalid.kommunerForFylke).hasSize(3).extracting("id").contains(gamleAalesund.id, nyeAalesund.id, haram.id)
+
+        assertThat(haram.kommuneLokalid.administrativenhetnavn).hasSize(1)
+        val navn = haram.kommuneLokalid.administrativenhetnavn.first()
+        assertThat(navn.id).isNotEqualTo(norskNavn.id)
+        assertThat(navn.navn).isEqualTo("Haram")
+        assertThat(navn.spraak!!.id).isEqualTo("nor")
+        assertThat(navn.rekkefoelge).isNull()
+        assertThat(navn.gyldighet.gyldigFra).isEqualTo(jan1In2024)
+        assertThat(navn.gyldighet.gyldigTil).isNull()
+        assertThat(navn.auditInfo.typeEndring).isEqualTo(Endringstype.FASTSETTING)
     }
 }

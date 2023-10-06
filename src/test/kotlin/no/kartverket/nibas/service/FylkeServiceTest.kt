@@ -8,26 +8,27 @@ import no.kartverket.nibas.builders.FylkeBuilder
 import no.kartverket.nibas.builders.FylkeRequestBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
+import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.domain.Endringstype
+import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.FylkeRepository
+import no.kartverket.nibas.repository.NasjonRepository
 import no.kartverket.nibas.repository.REPOSITORY_EXTENSIONS_FILEPATH
+import no.kartverket.nibas.repository.UnikLokalidRepository
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.ArgumentMatchers.anyString
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.mock.mockito.MockBean
 import java.time.LocalDate
 import java.util.*
 import kotlin.test.assertEquals
-import org.mockito.Mockito.`when` as whenever
 
 @SpringBootTest(classes = [FylkeService::class])
 class FylkeServiceTest {
@@ -35,15 +36,32 @@ class FylkeServiceTest {
     @Autowired
     lateinit var fylkeService: FylkeService
 
-    @MockBean
-    private lateinit var fylkeRepository: FylkeRepository
+    @MockkBean
+    private lateinit var fylkeRepositoryMock: FylkeRepository
 
     @MockkBean
-    private lateinit var fylkeRepositoryKotlinMock: FylkeRepository
+    @Suppress("unused")
+    private lateinit var unikLokalidRepository: UnikLokalidRepository
 
-    @MockBean
+    @MockkBean
+    @Suppress("unused")
+    private lateinit var nasjonRepository: NasjonRepository
+
+    @MockkBean
+    @Suppress("unused")
+    private lateinit var hrefProvider: HrefProvider
+
+    @MockkBean
     @Suppress("unused")
     private lateinit var administrativenhetnavnRepository: AdministrativenhetnavnRepository
+
+    @MockkBean
+    @Suppress("unused")
+    private lateinit var administrativenhetnavnService: AdministrativenhetnavnService
+
+    @MockkBean
+    @Suppress("unused")
+    private lateinit var kodelisteServiceMock: KodelisteService
 
     @BeforeEach
     fun beforeEach() {
@@ -54,7 +72,7 @@ class FylkeServiceTest {
     @Test
     fun hentGrenserForFylkeReturnsEmptyCollectionWhenFylkeNotFound() {
         val fylkeIdentifikator = Identifikator(lokalid = Lokalid("1"))
-        every { fylkeRepositoryKotlinMock.findGyldigObjektForIdentifikator(fylkeIdentifikator) } returns null
+        every { fylkeRepositoryMock.findAllByLokalid(any()) } returns emptyList()
 
         assertThat(fylkeService.hentGrenserForFylke(fylkeIdentifikator)).isEmpty()
     }
@@ -73,7 +91,7 @@ class FylkeServiceTest {
                     .build())
                 .build())
             .build()
-        every { fylkeRepositoryKotlinMock.findGyldigObjektForIdentifikator(fylkeIdentifikator) } returns fylke
+        every { fylkeRepositoryMock.findGyldigObjektForIdentifikator(fylkeIdentifikator) } returns fylke
 
         val grenserForFylke = fylkeService.hentGrenserForFylke(fylkeIdentifikator)
         assertEquals(10, grenserForFylke.size, "Expected ten borders")
@@ -86,7 +104,7 @@ class FylkeServiceTest {
 
     @Test
     fun thatOppdaterFylkeReturnsNullWhenFylkeNotFound() {
-        whenever(fylkeRepository.findById(anyString())).thenReturn(Optional.empty())
+        every { fylkeRepositoryMock.findAllByLokalid(any()) } returns emptyList()
 
         Assertions.assertThatThrownBy {
             fylkeService.oppdaterFylke(Lokalid("1"), LocalDate.now(), Endringstype.FASTSETTING, FylkeRequestBuilder.DEFAULT_REQUEST)

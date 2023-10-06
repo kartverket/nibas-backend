@@ -5,10 +5,14 @@ import no.kartverket.nibas.builders.FylkeRequestBuilder
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.Endringstype
+import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
+import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -18,12 +22,19 @@ import java.time.Month
 @Transactional
 class FylkeServiceIT : TestWithDbContainer() {
 
+    @MockBean
+    private lateinit var kodelisteServiceMock: KodelisteService
+
     @Autowired
     private lateinit var fylkeService: FylkeService
+
+    @Autowired
+    private lateinit var administrativenhetnavnService: AdministrativenhetnavnService
 
     private val october1In2022 = LocalDate.of(2022, Month.OCTOBER, 1)
     private val november28In2022 = LocalDate.of(2022, Month.NOVEMBER, 28)
     private val jan1In2023 = LocalDate.of(2023, Month.JANUARY, 1)
+    private val jan1In2024 = LocalDate.of(2024, Month.JANUARY, 1)
 
     @Test
     fun hentEksisterendeFylkeMedDagensDato() {
@@ -297,7 +308,72 @@ class FylkeServiceIT : TestWithDbContainer() {
         assertThat(fylkeEtter.nasjonLokalid.lokalid).isEqualTo(opprinneligFylkeEtter.nasjonLokalid.lokalid).isEqualTo(fylke.nasjonLokalid.lokalid)
         assertThat(fylkeEtter.fylkeLokalid).isEqualTo(opprinneligFylkeEtter.fylkeLokalid).isEqualTo(fylke.fylkeLokalid)
         assertThat(fylkeEtter.nasjonLokalid).isEqualTo(opprinneligFylkeEtter.nasjonLokalid).isEqualTo(fylke.nasjonLokalid)
+    }
 
+    @Test
+    fun `sjekk createNyttFylke`() {
+        Mockito.`when`(kodelisteServiceMock.getFylkesnummerIdByCodeValue("55")).thenReturn("d42b6763-0157-440a-a0eb-3dc24aa87c41")
+        Mockito.`when`(kodelisteServiceMock.getFylkesnummerIdByCodeValue("56")).thenReturn("ee97a593-2f9d-49c7-b251-c0f0cfa8769b")
+
+        val norskNavn = saveAdministrativenhetnavn(navn = "Troms og Finnmark", spraakid = "nor", rekkefoelge = 1)
+        val samiskNavn = saveAdministrativenhetnavn(navn = "Romsa ja Finnmárku", spraakid = "sme", rekkefoelge = 2)
+        val kvenskNavn = saveAdministrativenhetnavn(navn = "Tromssa ja Finmarkku", spraakid = "fkv", rekkefoelge = 3)
+
+        val tromsOgFinnmark = saveFylkeOgUnikLokalid(lokalid = "54TromsOgFinnmark", fylkesnummer = "efe425f5-fc7f-4a29-a70d-31363ec6a306",
+            administrativenhetnavn = listOf(norskNavn, samiskNavn, kvenskNavn))
+        assertThat(tromsOgFinnmark.utledetFra).isNull()
+
+        val nasjon = saveNasjonOgUnikLokalid(fylker = listOf(tromsOgFinnmark))
+
+        val tromsNavnList = listOf(
+            administrativenhetnavnService.createNyttAdmEnhetNavn(oppgittNavn = "Troms", spraakForkortelse = "nor", oppgittRekkefoelge = 1),
+            administrativenhetnavnService.createNyttAdmEnhetNavn(oppgittNavn = "Romsa", spraakForkortelse = "sme", oppgittRekkefoelge = 2),
+            administrativenhetnavnService.createNyttAdmEnhetNavn(oppgittNavn = "Tromssa", spraakForkortelse = "fkv", oppgittRekkefoelge = 3)
+        )
+
+        val nyTroms = fylkeService.createNyttFylkeMedNyUnikLokalid(
+            kopierFraFylke = tromsOgFinnmark,
+            nyttFylkesnummerIKlartekst = "55",
+            admenhetnavnList = tromsNavnList,
+            gyldigFra = jan1In2024,
+            endringstype = Endringstype.FASTSETTING
+        )
+
+        assertThat(nyTroms.lokalid).isNotEqualTo(tromsOgFinnmark.lokalid)
+        assertThat(nyTroms.fylkesnummer).isEqualTo("d42b6763-0157-440a-a0eb-3dc24aa87c41")
+        assertThat(nyTroms.utledetFra!!.id).isEqualTo(tromsOgFinnmark.id)
+
+        assertThat(nyTroms.getNasjon(jan1In2024)!!.lokalid).isEqualTo(nasjon.lokalid)
+        assertThat(nasjon.nasjonLokalid.fylkerForNasjon).hasSize(2).extracting("id").contains(tromsOgFinnmark.id, nyTroms.id)
+
+        assertThat(nyTroms.fylkeLokalid.administrativenhetnavn).hasSize(3).extracting("navn", "rekkefoelge", "spraak.id")
+            .contains(Assertions.tuple("Troms", 1, "nor"), Assertions.tuple("Romsa", 2, "sme"), Assertions.tuple("Tromssa", 3, "fkv"))
+        assertThat(nyTroms.fylkeLokalid.administrativenhetnavn).extracting("id").doesNotContain(norskNavn.id, samiskNavn.id, kvenskNavn.id)
+
+        val finnmarkNavnList = listOf(
+            administrativenhetnavnService.createNyttAdmEnhetNavn(oppgittNavn = "Finnmark", spraakForkortelse = "nor", oppgittRekkefoelge = 2),
+            administrativenhetnavnService.createNyttAdmEnhetNavn(oppgittNavn = "Finnmárku", spraakForkortelse = "sme", oppgittRekkefoelge = 1),
+            administrativenhetnavnService.createNyttAdmEnhetNavn(oppgittNavn = "Finmarkku", spraakForkortelse = "fkv", oppgittRekkefoelge = 3)
+        )
+
+        val nyFinnmark = fylkeService.createNyttFylkeMedNyUnikLokalid(
+            kopierFraFylke = tromsOgFinnmark,
+            nyttFylkesnummerIKlartekst = "56",
+            admenhetnavnList = finnmarkNavnList,
+            gyldigFra = jan1In2024,
+            endringstype = Endringstype.FASTSETTING
+        )
+
+        assertThat(nyFinnmark.lokalid).isNotEqualTo(tromsOgFinnmark.lokalid)
+        assertThat(nyFinnmark.fylkesnummer).isEqualTo("ee97a593-2f9d-49c7-b251-c0f0cfa8769b")
+        assertThat(nyFinnmark.utledetFra!!.id).isEqualTo(tromsOgFinnmark.id)
+
+        assertThat(nyFinnmark.getNasjon(jan1In2024)!!.lokalid).isEqualTo(nasjon.lokalid)
+        assertThat(nasjon.nasjonLokalid.fylkerForNasjon).hasSize(3).extracting("id").contains(tromsOgFinnmark.id, nyFinnmark.id, nyTroms.id)
+
+        assertThat(nyFinnmark.fylkeLokalid.administrativenhetnavn).hasSize(3).extracting("navn", "rekkefoelge", "spraak.id")
+            .contains(Assertions.tuple("Finnmark", 2, "nor"), Assertions.tuple("Finnmárku", 1, "sme"), Assertions.tuple("Finmarkku", 3, "fkv"))
+        assertThat(nyFinnmark.fylkeLokalid.administrativenhetnavn).extracting("id").doesNotContain(norskNavn.id, samiskNavn.id, kvenskNavn.id)
     }
 
 }

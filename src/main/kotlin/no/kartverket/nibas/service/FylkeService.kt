@@ -1,15 +1,21 @@
 package no.kartverket.nibas.service
 
+import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.request.FylkeRequest
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
+import no.kartverket.nibas.domain.Administrativenhetnavn
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Fylke
 import no.kartverket.nibas.domain.GrenseKobling
+import no.kartverket.nibas.domain.UnikLokalid
+import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.FylkeRepository
+import no.kartverket.nibas.repository.NasjonRepository
 import no.kartverket.nibas.repository.OptimistiskLaasException
+import no.kartverket.nibas.repository.UnikLokalidRepository
 import no.kartverket.nibas.repository.findAllGyldigPaaDato
 import no.kartverket.nibas.repository.findAntallFramtidigeVersjonerForIdentifikator
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
@@ -23,7 +29,11 @@ import java.time.LocalDate
 class FylkeService(
     private val fylkeRepository: FylkeRepository,
     @Suppress("unused") //Er kun ubrukt i påvente av TS-1192
-    private val administrativenhetnavnRepository: AdministrativenhetnavnRepository
+    private val administrativenhetnavnRepository: AdministrativenhetnavnRepository,
+    private val nasjonRepository: NasjonRepository,
+    private var unikLokalidRepository: UnikLokalidRepository,
+    private val kodelisteService: KodelisteService,
+    private val administrativenhetnavnService: AdministrativenhetnavnService
 ) {
 
     fun hentAlleFylker(gyldighetsdato: LocalDate = LocalDate.now()): List<Fylke> = fylkeRepository.findAllGyldigPaaDato(gyldighetsdato)
@@ -68,9 +78,10 @@ class FylkeService(
     fun createNyVersjonAvFylke(fylke: Fylke, gyldigFra: LocalDate, endringstype: Endringstype): Fylke {
         val nyFylke = fylkeRepository.save(
             Fylke(lokalid = fylke.lokalid)
+                .applyMappingFromExistingFylke(fylke)
                 .apply {
-                    applyMappingFromExistingFylke(fylke)
                     setGyldigFra(gyldigFra)
+                    fylke.gyldighet.gyldigTil?.let { setGyldigTil(it) }
                     version = nesteVersjonForFylke(Lokalid(fylke.lokalid))
                     auditInfo.typeEndring = endringstype
                 }
@@ -78,6 +89,44 @@ class FylkeService(
         return nyFylke
             .applyCascadingOperationsBasedOnExistingFylke(fylke)
             .also { fylke.setGyldigTil(gyldigFra)  }
+    }
+
+    fun createNyttFylkeMedNyUnikLokalid(
+        kopierFraFylke: Fylke,
+        nyttFylkesnummerIKlartekst: String,
+        admenhetnavnList: List<Administrativenhetnavn>,
+        gyldigFra: LocalDate,
+        endringstype: Endringstype
+    ): Fylke {
+        var nyttFylke = Fylke()
+            .applyMappingFromExistingFylke(kopierFraFylke)
+            .apply {
+                setGyldigFra(gyldigFra)
+                fylkesnummer = kodelisteService.getFylkesnummerIdByCodeValue(nyttFylkesnummerIKlartekst)
+                version = 1
+                auditInfo.typeEndring = endringstype
+                utledetFra = kopierFraFylke
+            }
+
+        var unikLokalid = UnikLokalid(nyttFylke.lokalid, Flatetype.FYLKE)
+        unikLokalid = unikLokalidRepository.save(unikLokalid)
+
+        nyttFylke = fylkeRepository.save(nyttFylke)
+        nyttFylke.addFylkeTilUnikLokalid(unikLokalid)
+
+        val nasjon = nasjonRepository.findAll().firstOrNull { it.gyldigPaaDato(gyldigFra) }
+            ?: throw RuntimeException("Fant ikke nasjon med gyldig fra $gyldigFra")
+        nasjon.addFylke(nyttFylke)
+
+        administrativenhetnavnService.createNyeAdmEnhetNavnOgKnyttTilEnhet(
+            admenhetnavnList = admenhetnavnList,
+            gyldigFra = gyldigFra,
+            endringstype = endringstype,
+            admEnhet = nyttFylke
+        )
+
+        nyttFylke.addInformasjonselementerFrom(kopierFraFylke.informasjonselementer)
+        return nyttFylke
     }
 
     private fun nesteVersjonForFylke(lokalId: Lokalid): Int =

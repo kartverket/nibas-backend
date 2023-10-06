@@ -9,6 +9,7 @@ import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
+import no.kartverket.nibas.domain.Administrativenhetnavn
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Grunnkrets
@@ -110,16 +111,18 @@ class KommuneService(
     fun createNyKommuneMedNyUnikLokalid(
         kopierFraKommune: Kommune,
         nyttKommunenummerIKlartekst: String,
+        admenhetnavnList: List<Administrativenhetnavn> = emptyList(),
         gyldigFra: LocalDate,
         endringstype: Endringstype
     ): Kommune {
         var nyKommune = Kommune()
+            .applyMappingFromExistingKommune(kopierFraKommune)
             .apply {
-                applyMappingFromExistingKommune(kopierFraKommune)
                 setGyldigFra(gyldigFra)
                 kommunenummer = kodelisteService.getKommunenummerIdByCodeValue(nyttKommunenummerIKlartekst)
                 version = 1
                 auditInfo.typeEndring = endringstype
+                utledetFra = kopierFraKommune
             }
 
         var unikLokalid = UnikLokalid(nyKommune.lokalid, Flatetype.KOMMUNE)
@@ -136,7 +139,7 @@ class KommuneService(
         fylke.addKommune(nyKommune)
 
         administrativenhetnavnService.createNyeAdmEnhetNavnOgKnyttTilEnhet(
-            admenhetnavnList = kopierFraKommune.getAdministrativenhetNavn(gyldigFra),
+            admenhetnavnList = if (admenhetnavnList.isNotEmpty()) admenhetnavnList else kopierFraKommune.getAdministrativenhetNavn(gyldigFra),
             gyldigFra = gyldigFra,
             endringstype = endringstype,
             admEnhet = nyKommune
