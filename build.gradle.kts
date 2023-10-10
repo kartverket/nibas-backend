@@ -61,6 +61,7 @@ val logstashVersion = "7.3"
 val springmockkVersion = "4.0.2"
 val kotlinMockitoVersion = "4.1.0"
 val hibernateVersion = "6.2.1.Final"
+val prometheusVersion = "1.11.2"
 
 dependencies {
     implementation("no.kartverket.aut:aut-lib:$autLibVersion")
@@ -91,6 +92,7 @@ dependencies {
     implementation("net.logstash.logback:logstash-logback-encoder:$logstashVersion")
     implementation("org.springframework.cloud:spring-cloud-starter")
     implementation("org.springframework.cloud:spring-cloud-starter-vault-config:$springCloudStarterVaultConfigVersion")
+    implementation("io.micrometer:micrometer-registry-prometheus:$prometheusVersion")
 
     implementation("org.springframework.integration:spring-integration-core")
 

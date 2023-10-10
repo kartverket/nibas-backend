@@ -1,24 +1,19 @@
 management:
+  server:
+    port: 8081
   endpoints:
-    enabled-by-default: false
     web:
       exposure:
-        include: 'info, health'
+        include: 'health, prometheus'
     jmx:
       exposure:
         include: '*'
   endpoint:
-    info:
-      enabled: true
     health:
       enabled: true
       probes:
         enabled: true
       show-details: always
-    metrics:
-      enabled: true
-    env:
-      enabled: true
   info:
     env:
       enabled: true
