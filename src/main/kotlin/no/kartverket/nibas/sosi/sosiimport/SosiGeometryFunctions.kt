@@ -260,14 +260,19 @@ object SosiGeometryFunctions {
                 val hullKoblinger: Map<Int, List<GrenseKobling>> = (koblingerForFlate - skallKoblinger)
                     .groupBy { it.grenseKoblingAttributter.hullIndeks!! }
 
+                // Etter hvert som vi får flere versjoner av grensene vil hver versjon peke på den nåværende versjonen som gyldig grense for denne koblingen.
+                // Vi må derfor hente ut kun de distinkte grensene for å sikre at flatedanningen fungerer
+
                 val skall: List<LineString> = skallKoblinger
                     .sortedBy { it.grenseKoblingAttributter.rekkefoelge }
                     .map { it.getGrenseJustertForRetning(gyldighetsdato) }
+                    .distinct()
 
                 val hull: List<List<LineString>> = hullKoblinger.map { hullkobling ->
                     hullkobling.value
                         .sortedBy { it.grenseKoblingAttributter.rekkefoelge }
                         .map { it.getGrenseJustertForRetning(gyldighetsdato) }
+                        .distinct()
                 }
 
                 val flate: Polygon = lagFlate(skall, hull)

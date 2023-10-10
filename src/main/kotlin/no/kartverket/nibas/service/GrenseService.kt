@@ -70,15 +70,11 @@ class GrenseService(
 
         val millis = measureTimeMillis {
             val features = grenser.features
-            features
-                .groupBy { it.properties.type }
-                .forEach { mapEntry ->
-                    oppdaterteKretser.addAll(doLagreGrenser(
-                        features = mapEntry.value,
-                        gyldighetsdato = gyldighetsdato,
-                        endringstype = endringstype
-                    ))
-                }
+            oppdaterteKretser.addAll(doLagreGrenser(
+                features = features,
+                gyldighetsdato = gyldighetsdato,
+                endringstype = endringstype
+            ))
 
             enheterSomSkalFlatedannes = features.flatMap {
                 val identifikator = featureIdToIdentifikator(it.id, gyldighetsdato)

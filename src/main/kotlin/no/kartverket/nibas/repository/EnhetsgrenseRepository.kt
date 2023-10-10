@@ -36,17 +36,17 @@ class EnhetsGrenseRepository(val namedParameterJdbcTemplate: NamedParameterJdbcT
                 grense = lineString,
                 gyldighet = Gyldighet(
                     gyldigFra = rs.getDate("gyldigfra").toLocalDate(),
-                    gyldigTil = rs.getDate("gyldigtil")?.toLocalDate()),
+                    gyldigTil = rs.getDate("gyldigtil")?.toLocalDate(),
+                    slettet = rs.getBoolean("slettet")),
                 flateIndeks = rs.getInt("flate_indeks"),
                 hullIndeks = hullIndeks,
-                slettet = rs.getBoolean("slettet"),
                 nesteVersjon = rs.getString("neste_versjon"))
         }
 
     fun hentGrenserMedRiktigRetning(enhetsnummer: String, tillatteGrensetyper: Set<Grensetype>, gyldighetsdato: LocalDate = LocalDate.now()): List<Grenserad> {
         val grensetyper = tillatteGrensetyper.map { it.value }
         val parameters = mapOf(
-            "enhetsnummer" to enhetsnummer.let { "$it%" },
+            "enhetsnummer" to "$enhetsnummer%",
             "grensetyper" to grensetyper
         )
 
@@ -67,22 +67,36 @@ class EnhetsGrenseRepository(val namedParameterJdbcTemplate: NamedParameterJdbcT
         val grenseRader = grunnkretsTilGrenseKoblinger
             .distinctBy { it.id }
             .map {
-                it.finnRelevantGrenseForDato(gyldighetsdato, this)
+                it.finnRelevantGrenseForDato(gyldighetsdato, this, enhetsnummer)
                     ?: throw RuntimeException("Fant ingen relevant grense for grenseid: $it.id og gyldighetsdato: $gyldighetsdato")
             }
+
+        // For hver grenseendring man gjør på en grense vil man få en ny versjon av denne grensa.
+        // Når man finner relevant grense for dato for de gamle grensene vil man få den nyeste grensa like mange ganger som man da har gamle grenser.
+        // Denne kommer derfor like mange ganger i lista som man har versjoner av grensa og vi må gjøre en ny distinctBy her.
         return grenseRader.distinctBy { it.id }
     }
 
-    fun fetchGrenseRow(grenseId: String): Grenserad {
+    fun fetchGrenseRow(grenseId: String, enhetsnummer: String): Grenserad {
         val grenseByIdQuery = """
             select g.objid as grense_id, g.lokalid as grense_lokalid, st_asgeojson(g.grense) as grense, gg.retning_med_klokken, gg.flate_indeks, gg.hull_indeks, g.gyldigfra, g.gyldigtil, 
             g.slettet, g.neste_versjon
-            from grense g 
-            left join grunnkrets_grense gg on g.objid = gg.grense_fk
+            from grunnkrets gk 
+            left join grunnkrets_grense gg on gk.objid = gg.grunnkrets_fk
+            left join grense g on gg.grense_fk = g.objid
             where g.objid = :grenseId
+            and gk.grunnkretsnummer like :enhetsnummer
         """.trimIndent()
-        return namedParameterJdbcTemplate.queryForObject(grenseByIdQuery, mapOf("grenseId" to grenseId), rowMapper)
-            ?: throw GrenseKobling.RelevantGrenseNotFoundEx("Fant ikke grense med id $grenseId")
+
+        val grenserader = namedParameterJdbcTemplate.query(grenseByIdQuery, mapOf("grenseId" to grenseId, "enhetsnummer" to "$enhetsnummer%"), rowMapper)
+
+        // Man får flere grenser når har endret en grense og det dannes flere versjoner av kretsen.
+        // Siden koblingen er mellom krets og grense vil man med spørringen her få ut like mange grenser som det er versjoner av kretsen.
+        val distinkteGrenser = grenserader.distinctBy { it.id }
+        if (distinkteGrenser.size > 1) {
+            throw GrenseKobling.RelevantGrenseNotFoundEx("Fant flere grenser for $grenseId")
+        }
+        return distinkteGrenser.first()
     }
 }
 
@@ -94,8 +108,8 @@ data class Grenserad(
     val flateIndeks: Int = 0,
     val hullIndeks: Int? = null,
     val slettet: Boolean = false,
-   val nesteVersjon: String? = null) {
-    fun finnRelevantGrenseForDato(gyldighetsdato: LocalDate = LocalDate.now(), enhetsGrenseRepository: EnhetsGrenseRepository): Grenserad? {
+    val nesteVersjon: String? = null) {
+    fun finnRelevantGrenseForDato(gyldighetsdato: LocalDate = LocalDate.now(), enhetsGrenseRepository: EnhetsGrenseRepository, enhetsnummer: String): Grenserad? {
         var grenseradToCheck: Grenserad? = this
         var result: Grenserad? = null
         while (result == null && grenseradToCheck != null) {
@@ -103,11 +117,7 @@ data class Grenserad(
                 result = grenseradToCheck
             }
             val nesteVersjon = grenseradToCheck.nesteVersjon
-            grenseradToCheck = if (nesteVersjon != null) {
-                enhetsGrenseRepository.fetchGrenseRow(nesteVersjon)
-            } else {
-                null
-            }
+            grenseradToCheck = nesteVersjon?.let { enhetsGrenseRepository.fetchGrenseRow(it, enhetsnummer) }
         }
         return result
     }

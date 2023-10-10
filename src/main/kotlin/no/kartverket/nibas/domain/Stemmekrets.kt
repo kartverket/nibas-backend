@@ -49,6 +49,7 @@ class Stemmekrets(
     var utledetFra: Stemmekrets? = null
 
     fun getGrenserAvTyper(grensetyper: Set<Grensetype>, gyldighetsdato: LocalDate = LocalDate.now()): List<GrenseKobling> {
+        //Denne kan returnere flere grensekoblinger som ender opp med å peke på samme grense (via neste versjon)
         return grenser
             .filter { it.grense.erRelevantGrenseForTyperOgDato(grensetyper, gyldighetsdato) }
     }
