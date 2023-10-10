@@ -55,7 +55,7 @@ class Grunnkrets(
      * Henter kretsen sin kommune på en gitt dato. Hvis man gir en dato hvor kommunen med gitt lokalid ikke er gyldig, returneres null
      */
     fun getKommune(gyldighetsdato: LocalDate = LocalDate.now()): Kommune? {
-        return kommuneLokalid.kommuner.filter { it.gyldigPaaDato(gyldighetsdato) }.firstOrNull()
+        return kommuneLokalid.kommuner.firstOrNull { it.gyldigPaaDato(gyldighetsdato) }
     }
 
     override fun oppdaterOmraadeOgPosisjon() {

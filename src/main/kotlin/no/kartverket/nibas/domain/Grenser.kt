@@ -126,6 +126,11 @@ class Grense(
 
     fun finnFlaterOppTilStemmekrets(gyldighetsdato: LocalDate = LocalDate.now()): Set<Flate> = stemmekretser(gyldighetsdato)
 
+    fun erAdministrativGrense (): Boolean {
+        val adminstrativeGrensetyper = listOf(Grensetype.Kommunegrense, Grensetype.Fylkesgrense, Grensetype.Riksgrense, Grensetype.AvtaltAvgrensningslinje, Grensetype.Territorialgrense)
+        return adminstrativeGrensetyper.contains(this.grensetype)
+    }
+
     override fun getInfo(): String? {
         return informasjonstekst
     }

@@ -67,7 +67,7 @@ class WebSecurityConfig @Autowired constructor(private val environment: Environm
                 .securityMatcher("/v1/ekstern/**")
                 .addFilterAfter(apiKeyFilter(), AbstractPreAuthenticatedProcessingFilter::class.java)
                 // Slår av CSRF
-                .csrf().disable()
+                .csrf { it.disable() }
                 // Ingen sesjon vil opprettes eller brukes av Spring Security
                 .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
                 // Krever bare at alle requester er authenticated (ingen rolle)

@@ -5,6 +5,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.repository.FlatedanningCustomSQLRepository
+import no.kartverket.nibas.service.deltgeometri.DeltGeometriService
 import no.kartverket.nibas.sosi.common.SosiKoder
 import no.kartverket.nibas.sosi.deserializer.NibasSosiDeserializer
 import no.kartverket.nibas.sosi.model.SosiFlate
@@ -38,7 +39,8 @@ class SosiImportService(
     private val stemmekretsImporter: StemmekretsImporter,
     private val environment: Environment,
     private val sosiImportFlateService: SosiImportFlateService,
-    private val flatedanningCustomSQLRepository: FlatedanningCustomSQLRepository
+    private val flatedanningCustomSQLRepository: FlatedanningCustomSQLRepository,
+    private val deltGeometriService: DeltGeometriService,
 ) {
 
     companion object {
@@ -71,7 +73,7 @@ class SosiImportService(
     private val dannFlaterForAdministrativeEnheter: Boolean = environment.getProperty("nibas.import.dannFlaterForAdministrativeEnheter")?.toBoolean() ?: true
 
     fun importNibas() {
-        logger.info("\nKonfigurasjon for sosi-import: \n\n"
+       logger.info("\nKonfigurasjon for sosi-import: \n\n"
             + "Profiler: ${environment.activeProfiles.joinToString(",")} \n"
             + "Datasource url: ${environment.getProperty("spring.datasource.url")?.trim()} \n"
             + "Adm.enhet-fil: $admenhetfil \n"
@@ -106,15 +108,18 @@ class SosiImportService(
         val resultsStemmekrets = stemmekretsRoot?.let { importerStemmekretser(stemmekretsRoot, admEnhetRoot!!) }
         val resultsGrunnkrets = grunnkretsRoot?.let { importerGrunnkretser(grunnkretsRoot, admEnhetRoot!!) }
 
+        flatedanningCustomSQLRepository.slettGrenserUtenUtstrekning()
+
+        // TODO: Skru på denne når alt i delt geometri er ferdig. Kommentert ut fordi det øker kjøretiden på import betraktelig
+        //deltGeometriService.dannDeltGeometriForAdministrativeGrenser()
+
         if (dannFlaterForAdministrativeEnheter) {
             logger.info("Skal danne flater for administrative enheter")
-            flatedanningCustomSQLRepository.slettGrenserUtenUtstrekning()
             val resultatFlatedanning = sosiImportFlateService.settFlaterPaaAlleAdministrativeEnheter()
             logResults("Flatedanning", resultatFlatedanning)
         }
         logResults("Grunnkrets import", resultsGrunnkrets)
         logResults("Stemmekrets import", resultsStemmekrets)
-
     }
 
     private fun fileAsInputStream(filepath: String): InputStream = DefaultResourceLoader().getResource(filepath).file.inputStream()
