@@ -94,7 +94,7 @@ class WebSecurityConfig @Autowired constructor(private val environment: Environm
                 // Skal tillate stiene under (anbefalt måte fra Spring Security 5.7 for å ignore)
                 .authorizeHttpRequests {
                     // Er åpne for alle
-                    it.requestMatchers("/actuator/health/**", "/actuator/info", "/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
+                    it.requestMatchers("/actuator/health/**", "/actuator/prometheus", "/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
 
                     // Krever administrator-rolle ROLE_NIBAS_ADMIN
                     it.requestMatchers("/v1/admin/**").hasRole("NIBAS_ADMIN")
