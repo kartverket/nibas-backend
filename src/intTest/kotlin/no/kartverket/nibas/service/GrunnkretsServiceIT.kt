@@ -168,7 +168,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
     }
 
     @Test
-    fun oppdaterGrunnkretsMedDagensDato() {
+    fun `oppdaterGrunnkrets skal lage ny grunnkrets og sette gyldigtil for gammel krets`() {
         val grunnkretsRequest = GrunnkretsRequestBuilder.DEFAULT_REQUEST
         val kommune = saveKommuneOgUnikLokalid(kommunenummer = "4227", gyldigFra = october1In2022)
 
@@ -210,6 +210,109 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
 
         val grenser = grenseRepository.findAllById(grenseObjIdsForOpprinneligGrunnkrets)
         assertThat(grenser).hasSize(3)
+        grenser.forEach { grense ->
+            assertThat(grense.grunnkretser.map { it.grunnkrets.id }).hasSize(2).containsExactlyInAnyOrder(opprinneligGrunnkrets.id, grunnkretsEtter.id)
+        }
+    }
+
+    @Test
+    fun `oppdaterGrunnkrets skal kaste exception ved ugyldig kommune for grunnkretsen`() {
+        val grunnkretsRequest = GrunnkretsRequestBuilder.DEFAULT_REQUEST
+
+        val identifikator = Identifikator(Lokalid(grunnkretsRequest.identifikasjon.lokalid), october1In2022)
+        val lagredeGrenserForKrets = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(october1In2022, Grensetype.Grunnkretsgrense))
+        grenseRepository.flush()
+
+        val grunnkrets = saveGrunnkrets(
+            id = "2",
+            lokalid = identifikator.lokalid,
+            gyldigFra = october1In2022,
+            grenser = lagredeGrenserForKrets
+        )
+
+        //Kommunen har gyldig fra etter grunnkretsens gyldig fra, og gyldig til før ønsket oppdateringsdato
+        saveKommuneOgUnikLokalid(kommunenummer = "4227", gyldigFra = november28In2022, gyldigTil = jan1In2023, grunnkretser = listOf(grunnkrets))
+        val now = LocalDate.now()
+
+        Assertions.assertThatThrownBy {
+            grunnkretsService.oppdaterGrunnkrets(
+                lokalId = identifikator.lokalid,
+                oppdatertGrunnkrets = grunnkretsRequest,
+                gyldigFra = now,
+                endringstype = Endringstype.RETTING
+            )
+        }.isInstanceOf(ResponseException.NotFoundException::class.java)
+            .hasMessageContaining("Fant ikke kommune for grunnkrets med id ${grunnkrets.id}")
+
+        Assertions.assertThatThrownBy {
+            grunnkretsService.createNyVersjonAvGrunnkrets(grunnkrets = grunnkrets, gyldigFra = now, endringstype = Endringstype.RETTING)
+        }.isInstanceOf(ResponseException.NotFoundException::class.java)
+            .hasMessageContaining("Fant ikke kommune for grunnkrets med id ${grunnkrets.id}")
+
+    }
+
+    @Test
+    fun `createNyVersjonAvGrunnkretsIAnnenKommune skal lage ny grunnkrets og sette gyldigtil for gammel krets`() {
+        val lagredeGrenserForKrets = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(october1In2022, Grensetype.Grunnkretsgrense))
+        grenseRepository.flush()
+
+        val identifikator = Identifikator(Lokalid("grunnkretsSomSkalFlyttesTilHaram"), october1In2022)
+        val grunnkrets = saveGrunnkrets(
+            id = "22",
+            lokalid = identifikator.lokalid,
+            grunnkretsnummer = "15071234",
+            gyldigFra = october1In2022,
+            grenser = lagredeGrenserForKrets
+        )
+
+        val gamleAalesund = saveKommuneOgUnikLokalid(id = "idGamleAalesund", lokalid = "1507Ålesund", kommunenummer = "afc65fde-8a62-497d-b35d-77345efddee3",
+            grunnkretser = listOf(grunnkrets))
+        val haram = saveKommuneOgUnikLokalid(id = "idHaram", lokalid = "1580Haram", kommunenummer = "687f3337-899f-42f8-849d-6f2d5b603dd3")
+        saveFylkeOgUnikLokalid(lokalid = "15MøreOgRomsdal", fylkesnummer = "c499a315-0cd5-4e99-8acf-bd6f4803799a", kommuner = listOf(gamleAalesund, haram))
+
+        val opprinneligGrunnkrets = grunnkretsService.hentGrunnkrets(identifikator)!!
+        assertThat(kommuneRepository.findById(gamleAalesund.id).get().kommuneLokalid.grunnkretser).hasSize(1).extracting("id").contains(grunnkrets.id)
+        assertThat(kommuneRepository.findById(haram.id).get().kommuneLokalid.grunnkretser).isEmpty()
+
+        val grunnkretsIHaram = grunnkretsService.createNyVersjonAvGrunnkretsIAnnenKommune(grunnkrets = grunnkrets, kommune = haram,
+            nyttKommunenummerIKlartekst = "1580", gyldigFra = jan1In2024, endringstype = Endringstype.IMPORT)
+
+        val opprinneligGrunnkretsEtter = grunnkretsService.hentGrunnkrets(identifikator)!!
+        val grunnkretsEtter = grunnkretsService.hentGrunnkrets(Identifikator(identifikator.lokalid, jan1In2024))!!
+
+        assertThat(grunnkretsIHaram.id).isNotEqualTo(grunnkrets.id).isEqualTo(grunnkretsEtter.id)
+        assertThat(grunnkretsIHaram.id).isEqualTo(grunnkretsEtter.id)
+        assertThat(grunnkretsIHaram.lokalid).isEqualTo(grunnkretsEtter.lokalid).isEqualTo(grunnkrets.lokalid)
+
+        assertThat(grunnkretsEtter.grunnkretsnummer).isNotEqualTo(grunnkrets.grunnkretsnummer)
+        assertThat(grunnkretsEtter.grunnkretsnummer!!.length).isEqualTo(grunnkrets.grunnkretsnummer!!.length).isEqualTo(8)
+        assertThat(grunnkretsEtter.grunnkretsnummer!!.takeLast(4)).isEqualTo(grunnkrets.grunnkretsnummer!!.takeLast(4)).isEqualTo("1234")
+        assertThat(grunnkrets.grunnkretsnummer!!.take(4)).isEqualTo("1507")
+        assertThat(grunnkretsEtter.grunnkretsnummer!!.take(4)).isEqualTo("1580")
+        assertThat(grunnkretsIHaram.grunnkretsnavn).isEqualTo(grunnkretsEtter.grunnkretsnavn).isEqualTo(grunnkrets.grunnkretsnavn)
+        assertThat(grunnkretsEtter.omraade).isEqualTo(grunnkrets.omraade)
+        assertThat(grunnkretsEtter.posisjon).isEqualTo(grunnkrets.posisjon)
+        assertThat(grunnkretsEtter.gyldighet.gyldigFra).isEqualTo(jan1In2024)
+
+        assertThat(opprinneligGrunnkretsEtter.gyldighet.gyldigFra).isEqualTo(october1In2022)
+        assertThat(opprinneligGrunnkretsEtter.gyldighet.gyldigTil).isEqualTo(jan1In2024)
+
+        val gamleAalesundEtter = kommuneRepository.findById(gamleAalesund.id).get()
+        val haramEtter = kommuneRepository.findById(haram.id).get()
+        assertThat(gamleAalesundEtter.kommuneLokalid.grunnkretser).hasSize(1).extracting("id").contains(grunnkrets.id)
+        assertThat(haramEtter.kommuneLokalid.grunnkretser).hasSize(1).extracting("id").contains(grunnkretsIHaram.id)
+
+        val grenseObjIdsForOpprinneligGrunnkrets = opprinneligGrunnkrets.grenser.map { it.grense.id }
+        val grenseObjIdsForOpprinneligGrunnkretsEtter = opprinneligGrunnkretsEtter.grenser.map { it.grense.id }
+        val grenseObjIdsForNyGrunnkrets = grunnkretsEtter.grenser.map { it.grense.id }
+
+        assertThat(grenseObjIdsForOpprinneligGrunnkrets).containsAll(grenseObjIdsForOpprinneligGrunnkretsEtter)
+        assertThat(grenseObjIdsForOpprinneligGrunnkrets).containsAll(grenseObjIdsForNyGrunnkrets)
+        assertThat(grenseObjIdsForNyGrunnkrets).containsAll(grenseObjIdsForOpprinneligGrunnkrets)
+        assertThat(grenseObjIdsForNyGrunnkrets).containsAll(grenseObjIdsForOpprinneligGrunnkretsEtter)
+
+        val grenser = grenseRepository.findAllById(grenseObjIdsForOpprinneligGrunnkrets)
+        assertThat(grenser).hasSize(4)
         grenser.forEach { grense ->
             assertThat(grense.grunnkretser.map { it.grunnkrets.id }).hasSize(2).containsExactlyInAnyOrder(opprinneligGrunnkrets.id, grunnkretsEtter.id)
         }

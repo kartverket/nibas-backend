@@ -131,8 +131,6 @@ class Grunnkrets(
 
     fun applyCascadingOperationsBasedOnExistingGrunnkrets(gammelGrunnkrets: Grunnkrets, gyldigFra: LocalDate = LocalDate.now()): Grunnkrets {
         return this.apply {
-            // Må legge til denne Grunnkrets på eksisterende Grunnkrets sin kommune
-            gammelGrunnkrets.getKommune(gyldigFra)!!.addGrunnkrets(this)
             // For eksisterende Grunnkrets sine informasjonselementer (1 i tallet), lag nye koblinger med denne Grunnkrets
             addInformasjonselementerFrom(gammelGrunnkrets.informasjonselementer)
 
@@ -144,7 +142,6 @@ class Grunnkrets(
 
     fun applyMappingFromExistingGrunnkrets(gammelGrunnkrets: Grunnkrets): Grunnkrets {
         return this.apply {
-            gammelGrunnkrets.gyldighet.gyldigTil?.let { setGyldigTil(it) }
             grunnkretsnummer = gammelGrunnkrets.grunnkretsnummer
             grunnkretsnavn = gammelGrunnkrets.grunnkretsnavn
             datafangstdato = gammelGrunnkrets.datafangstdato

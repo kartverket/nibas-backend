@@ -12,6 +12,7 @@ import no.kartverket.nibas.common.toNorskFormat
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Grunnkrets
+import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.OptimistiskLaasException
@@ -126,17 +127,39 @@ class GrunnkretsService(
     }
 
     fun createNyVersjonAvGrunnkrets(grunnkrets: Grunnkrets, gyldigFra: LocalDate, endringstype: Endringstype): Grunnkrets {
-        return grunnkretsRepository.save(
+        val nyGrunnkrets = kopierOgSaveGrunnkrets(grunnkrets, gyldigFra, endringstype)
+        // Må legge til denne Grunnkrets på eksisterende Grunnkrets sin kommune
+        val kommune = grunnkrets.getKommune(gyldigFra) ?: throw NotFoundException(title = "Kommune ikke funnet",
+            msg = "Fant ikke kommune for grunnkrets med id ${grunnkrets.id}, grunnkretsnummer ${grunnkrets.grunnkretsnummer} og gyldig fra $gyldigFra")
+        kommune.addGrunnkrets(nyGrunnkrets)
+        return nyGrunnkrets
+    }
+
+    fun createNyVersjonAvGrunnkretsIAnnenKommune(grunnkrets: Grunnkrets, kommune: Kommune, nyttKommunenummerIKlartekst: String,
+                                                 gyldigFra: LocalDate, endringstype: Endringstype): Grunnkrets {
+        //Antar at kommune stemmer med angitt kommunenummerIKlartekst, for å slippe å søke opp kommunen for hver grunnkrets som skal flyttes
+        val nyGrunnkrets = kopierOgSaveGrunnkrets(grunnkrets, gyldigFra, endringstype)
+        val grunnkretsnummerUtenKommunenummer = nyGrunnkrets.grunnkretsnummer!!.substring(4)
+        nyGrunnkrets.grunnkretsnummer = nyttKommunenummerIKlartekst + grunnkretsnummerUtenKommunenummer
+
+        kommune.addGrunnkrets(nyGrunnkrets)
+        return nyGrunnkrets
+    }
+
+    private fun kopierOgSaveGrunnkrets(grunnkrets: Grunnkrets, gyldigFra: LocalDate, endringstype: Endringstype): Grunnkrets {
+        val nyGrunnkrets = grunnkretsRepository.save(
             Grunnkrets(lokalid = grunnkrets.lokalid)
+                .applyMappingFromExistingGrunnkrets(grunnkrets)
                 .apply {
-                    applyMappingFromExistingGrunnkrets(grunnkrets)
                     setGyldigFra(gyldigFra)
+                    grunnkrets.gyldighet.gyldigTil?.let { setGyldigTil(it) }
                     version = nesteVersjonForGrunnkrets(Lokalid(grunnkrets.lokalid))
                     auditInfo.typeEndring = endringstype
                 }
         )
+        return nyGrunnkrets
             .applyCascadingOperationsBasedOnExistingGrunnkrets(grunnkrets, gyldigFra)
-            .also { grunnkrets.setGyldigTil(gyldigFra)  }
+            .also { grunnkrets.setGyldigTil(gyldigFra) }
     }
 
     private fun nesteVersjonForGrunnkrets(lokalId: Lokalid): Int =
