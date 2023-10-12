@@ -149,7 +149,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
     }
 
     @Test
-    fun `hentFramtidigeVersjonerForStemmekrets skal returnere en liste med kun deg gyldige elementet om det er ingen framtidige endringer`() {
+    fun `hentFramtidigeVersjonerForStemmekrets skal returnere en liste med kun det gyldige elementet om det er ingen framtidige endringer`() {
         saveStemmekrets(id = "301", lokalid = stemmekretsLokalid, gyldigFra = october1In2022, gyldigTil = december1In2022)
         saveStemmekrets(id = "302", lokalid = stemmekretsLokalid, gyldigFra = december1In2022, gyldigTil = jan1In2024)
 
@@ -196,6 +196,105 @@ class StemmekretsServiceIT : TestWithDbContainer() {
 
         assertThat(opprinneligStemmekretsEtter.gyldighet.gyldigFra).isEqualTo(october1In2022)
         assertThat(opprinneligStemmekretsEtter.gyldighet.gyldigTil).isEqualTo(now)
+
+        val grenseObjIdsForOpprinneligStemmekrets = opprinneligStemmekrets.grenser.map { it.grense.id }
+        val grenseObjIdsForOpprinneligStemmekretsEtter = opprinneligStemmekretsEtter.grenser.map { it.grense.id }
+        val grenseObjIdsForNyStemmekrets = stemmekretsEtter.grenser.map { it.grense.id }
+
+        assertThat(grenseObjIdsForOpprinneligStemmekrets).containsAll(grenseObjIdsForOpprinneligStemmekretsEtter)
+        assertThat(grenseObjIdsForOpprinneligStemmekrets).containsAll(grenseObjIdsForNyStemmekrets)
+        assertThat(grenseObjIdsForNyStemmekrets).containsAll(grenseObjIdsForOpprinneligStemmekrets)
+        assertThat(grenseObjIdsForNyStemmekrets).containsAll(grenseObjIdsForOpprinneligStemmekretsEtter)
+
+        val grenser = grenseRepository.findAllById(grenseObjIdsForOpprinneligStemmekrets)
+        assertThat(grenser).hasSize(4)
+        grenser.forEach { grense ->
+            assertThat(grense.stemmekretser.map { it.stemmekrets.id }).hasSize(2).containsExactlyInAnyOrder(opprinneligStemmekrets.id, stemmekretsEtter.id)
+        }
+    }
+    @Test
+    fun `oppdaterStemmekrets skal kaste exception ved ugyldig kommune for stemmekretsen`() {
+        val stemmekretsRequest = StemmekretsRequestBuilder.DEFAULT_REQUEST
+
+        val identifikator = Identifikator(Lokalid(stemmekretsRequest.identifikasjon.lokalid), october1In2022)
+        val lagredeGrenserForKrets = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(october1In2022, Grensetype.Stemmekretsgrense))
+        grenseRepository.flush()
+
+        val stemmekrets = saveStemmekrets(
+            id = "2",
+            lokalid = identifikator.lokalid,
+            gyldigFra = october1In2022,
+            grenser = lagredeGrenserForKrets
+        )
+
+        //Kommunen har gyldig fra etter stemmekretsens gyldig fra, og gyldig til før ønsket oppdateringsdato
+        saveKommuneOgUnikLokalid(kommunenummer = "4227", gyldigFra = november28In2022, gyldigTil = jan1In2023, stemmekretser = listOf(stemmekrets))
+        val now = LocalDate.now()
+
+        Assertions.assertThatThrownBy {
+            stemmekretsService.oppdaterStemmekrets(
+                lokalId = identifikator.lokalid,
+                oppdatertStemmekrets = stemmekretsRequest,
+                gyldigFra = now,
+                endringstype = Endringstype.RETTING
+            )
+        }.isInstanceOf(ResponseException.NotFoundException::class.java)
+            .hasMessageContaining("Fant ikke kommune for stemmekrets med id ${stemmekrets.id}")
+
+        Assertions.assertThatThrownBy {
+            stemmekretsService.createNyVersjonAvStemmekrets(stemmekrets = stemmekrets, gyldigFra = now, endringstype = Endringstype.RETTING)
+        }.isInstanceOf(ResponseException.NotFoundException::class.java)
+            .hasMessageContaining("Fant ikke kommune for stemmekrets med id ${stemmekrets.id}")
+
+        Assertions.assertThatThrownBy {
+            stemmekretsService.finnesAnnenStemmekretsMedSammeKommuneOgStemmekretsnummer(stemmekrets = stemmekrets)
+        }.isInstanceOf(ResponseException.NotFoundException::class.java)
+            .hasMessageContaining("Fant ikke kommune for stemmekrets med id ${stemmekrets.id}")
+    }
+
+    @Test
+    fun `createNyVersjonAvStemmekretsIAnnenKommune skal lage ny stemmekrets og sette gyldigtil for gammel krets`() {
+        val identifikator = Identifikator(Lokalid("stemmekretsSomSkalFlyttesTilHaram"), october1In2022)
+        val lagredeGrenserForKrets = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(october1In2022, Grensetype.Stemmekretsgrense))
+        grenseRepository.flush()
+
+        val stemmekrets = saveStemmekrets(
+            id = "2",
+            lokalid = identifikator.lokalid,
+            gyldigFra = october1In2022,
+            grenser = lagredeGrenserForKrets
+        )
+
+        val gamleAalesund = saveKommuneOgUnikLokalid(id = "idGamleAalesund", lokalid = "1507Ålesund", kommunenummer = "afc65fde-8a62-497d-b35d-77345efddee3",
+            stemmekretser = listOf(stemmekrets))
+        val haram = saveKommuneOgUnikLokalid(id = "idHaram", lokalid = "1580Haram", kommunenummer = "687f3337-899f-42f8-849d-6f2d5b603dd3")
+        saveFylkeOgUnikLokalid(lokalid = "15MøreOgRomsdal", fylkesnummer = "c499a315-0cd5-4e99-8acf-bd6f4803799a", kommuner = listOf(gamleAalesund, haram))
+        val opprinneligStemmekrets = stemmekretsService.hentStemmekrets(identifikator)!!
+
+        assertThat(gamleAalesund.kommuneLokalid.stemmekretser).hasSize(1).extracting("id").contains(stemmekrets.id)
+        assertThat(haram.kommuneLokalid.stemmekretser).isEmpty()
+
+        val stemmekretsIHaram = stemmekretsService.createNyVersjonAvStemmekretsIAnnenKommune(stemmekrets = stemmekrets, kommune = haram,
+            gyldigFra = jan1In2024, endringstype = Endringstype.IMPORT)
+
+        val opprinneligStemmekretsEtter = stemmekretsService.hentStemmekrets(identifikator)!!
+        val stemmekretsEtter = stemmekretsService.hentStemmekrets(Identifikator(identifikator.lokalid, jan1In2024))!!
+
+        assertThat(stemmekretsIHaram.id).isNotEqualTo(stemmekrets.id).isEqualTo(stemmekretsEtter.id)
+        assertThat(stemmekretsIHaram.lokalid).isEqualTo(stemmekretsEtter.lokalid).isEqualTo(stemmekrets.lokalid)
+        assertThat(stemmekretsIHaram.stemmekretsnummer).isEqualTo(stemmekretsEtter.stemmekretsnummer).isEqualTo(stemmekrets.stemmekretsnummer)
+        assertThat(stemmekretsIHaram.stemmekretsnavn).isEqualTo(stemmekretsEtter.stemmekretsnavn).isEqualTo(stemmekrets.stemmekretsnavn)
+        assertThat(stemmekretsEtter.omraade).isEqualTo(stemmekrets.omraade)
+        assertThat(stemmekretsEtter.posisjon).isEqualTo(stemmekrets.posisjon)
+        assertThat(stemmekretsEtter.gyldighet.gyldigFra).isEqualTo(jan1In2024)
+
+        assertThat(opprinneligStemmekretsEtter.gyldighet.gyldigFra).isEqualTo(october1In2022)
+        assertThat(opprinneligStemmekretsEtter.gyldighet.gyldigTil).isEqualTo(jan1In2024)
+
+        val gamleAalesundEtter = kommuneRepository.findById(gamleAalesund.id).get()
+        val haramEtter = kommuneRepository.findById(haram.id).get()
+        assertThat(gamleAalesundEtter.kommuneLokalid.stemmekretser).hasSize(1).extracting("id").contains(stemmekrets.id)
+        assertThat(haramEtter.kommuneLokalid.stemmekretser).hasSize(1).extracting("id").contains(stemmekretsIHaram.id)
 
         val grenseObjIdsForOpprinneligStemmekrets = opprinneligStemmekrets.grenser.map { it.grense.id }
         val grenseObjIdsForOpprinneligStemmekretsEtter = opprinneligStemmekretsEtter.grenser.map { it.grense.id }

@@ -125,7 +125,6 @@ class Stemmekrets(
 
     fun applyMappingFromExistingStemmekrets(gammelStemmekrets: Stemmekrets): Stemmekrets =
         this.apply {
-            gammelStemmekrets.gyldighet.gyldigTil?.let { setGyldigTil(it) }
             stemmekretsnummer = gammelStemmekrets.stemmekretsnummer
             stemmekretsnavn = gammelStemmekrets.stemmekretsnavn
             tellekretsnummer = gammelStemmekrets.tellekretsnummer
@@ -140,8 +139,6 @@ class Stemmekrets(
         }
 
     fun applyCascadingOperationsBasedOnExistingStemmekrets (gammelStemmekrets: Stemmekrets, gyldigFra: LocalDate = LocalDate.now()) : Stemmekrets {
-        gammelStemmekrets.getKommune(gyldigFra)!!.addStemmekrets(this)
-
         gammelStemmekrets.grenser.forEach { gammelGrenseKobling ->
             addGrensekobling(grense = gammelGrenseKobling.grense, grenseKoblingAttributter = gammelGrenseKobling.grenseKoblingAttributter)
         }

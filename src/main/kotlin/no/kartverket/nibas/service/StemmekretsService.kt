@@ -12,6 +12,7 @@ import no.kartverket.nibas.common.toNorskFormat
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
+import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.StemmekretsGrenseKobling
 import no.kartverket.nibas.domain.getGrenseJustertForRetning
@@ -51,7 +52,10 @@ class StemmekretsService(
     fun hentStemmekretserForIds(ids: Set<String>, gyldighetsdato: LocalDate): List<Stemmekrets> {
         return ids
             .map { createIdentifikator(it, gyldighetsdato) }
-            .map { hentStemmekrets(it) ?: throw ResponseException.NotFoundException(title = "Stemmekrets ikke funnet", msg = "Stemmekrets med med id ${it.lokalid} og gyldighetsdato ${gyldighetsdato.toNorskFormat()} ble ikke funnet.") }
+            .map {
+                hentStemmekrets(it) ?: throw ResponseException.NotFoundException(title = "Stemmekrets ikke funnet",
+                    msg = "Stemmekrets med med id ${it.lokalid} og gyldighetsdato ${gyldighetsdato.toNorskFormat()} ble ikke funnet.")
+            }
             .sortedBy { it.id }
     }
 
@@ -98,22 +102,27 @@ class StemmekretsService(
         sammenslaaingsDato: LocalDate,
         endringstype: Endringstype
     ): Pair<Stemmekrets, List<Stemmekrets>> {
-        val identifikatorViderefoerStemmekrets = Identifikator(lokalid = Lokalid(sammenslaaingsendringRequest.viderefoertStemmekrets.lokalId), gyldighetsdato = sammenslaaingsDato)
+        val identifikatorViderefoerStemmekrets =
+            Identifikator(lokalid = Lokalid(sammenslaaingsendringRequest.viderefoertStemmekrets.lokalId), gyldighetsdato = sammenslaaingsDato)
         val viderefortStemmekrets = hentStemmekrets(identifikatorViderefoerStemmekrets)
-            ?: throw ResponseException.NotFoundException(title="Stemmekrets ikke funnet", msg="Videreført stemmekrets med identifikator: $identifikatorViderefoerStemmekrets ble ikke funnet")
+            ?: throw ResponseException.NotFoundException(title = "Stemmekrets ikke funnet",
+                msg = "Videreført stemmekrets med identifikator: $identifikatorViderefoerStemmekrets ble ikke funnet")
 
         val stemmekretserSomUtgaar = sammenslaaingsendringRequest.stemmekretserTilSammenslaaing
-            .map { Identifikator(lokalid = Lokalid(it.lokalId), gyldighetsdato = sammenslaaingsDato)   }
-            .map { hentStemmekrets(it) ?: throw ResponseException.NotFoundException(title="Stemmekrets ikke funnet", msg="Stemmekrets til sammenslåing med identifikator: $it ble ikke funnet") }
+            .map { Identifikator(lokalid = Lokalid(it.lokalId), gyldighetsdato = sammenslaaingsDato) }
+            .map {
+                hentStemmekrets(it) ?: throw ResponseException.NotFoundException(title = "Stemmekrets ikke funnet",
+                    msg = "Stemmekrets til sammenslåing med identifikator: $it ble ikke funnet")
+            }
 
         val stemmekretserForSjekkeOptimistiskLaas = stemmekretserSomUtgaar.map { stemmekrets ->
-                Pair(stemmekrets, sammenslaaingsendringRequest.stemmekretserTilSammenslaaing.find { it.lokalId == stemmekrets.lokalid }?.version!!)
-            }.plus(Pair(viderefortStemmekrets, sammenslaaingsendringRequest.viderefoertStemmekrets.version))
+            Pair(stemmekrets, sammenslaaingsendringRequest.stemmekretserTilSammenslaaing.find { it.lokalId == stemmekrets.lokalid }?.version!!)
+        }.plus(Pair(viderefortStemmekrets, sammenslaaingsendringRequest.viderefoertStemmekrets.version))
 
         stemmekretserForSjekkeOptimistiskLaas
             .forEach { (stemmekrets, versjon) ->
                 verifiserOptimistiskLaas(versjon, stemmekrets)
-                    ?.let { throw OptimistiskLaasException(it)}
+                    ?.let { throw OptimistiskLaasException(it) }
             }
 
         stemmekretserSomUtgaar.forEach { it.setGyldigTil(sammenslaaingsDato) }
@@ -148,23 +157,40 @@ class StemmekretsService(
             throw createDuplikatStemmekretsnummerException(nyStemmekrets)
         }
 
-
         return Pair(nyStemmekrets, stemmekretserSomUtgaar)
     }
 
     fun createNyVersjonAvStemmekrets(stemmekrets: Stemmekrets, gyldigFra: LocalDate, endringstype: Endringstype): Stemmekrets {
+        val nyStemmekrets = kopierOgSaveStemmekrets(stemmekrets, gyldigFra, endringstype)
+
+        val kommune = stemmekrets.getKommune(gyldigFra) ?: throw ResponseException.NotFoundException(title = "Kommune ikke funnet",
+            msg = "Fant ikke kommune for stemmekrets med id ${stemmekrets.id} og gyldig fra $gyldigFra")
+        kommune.addStemmekrets(nyStemmekrets)
+        return nyStemmekrets
+    }
+
+    private fun kopierOgSaveStemmekrets(stemmekrets: Stemmekrets, gyldigFra: LocalDate, endringstype: Endringstype): Stemmekrets {
         val nyStemmekrets = stemmekretsRepository.save(
             Stemmekrets(lokalid = stemmekrets.lokalid)
+                .applyMappingFromExistingStemmekrets(stemmekrets)
                 .apply {
-                    applyMappingFromExistingStemmekrets(stemmekrets)
                     setGyldigFra(gyldigFra)
+                    stemmekrets.gyldighet.gyldigTil?.let { setGyldigTil(it) }
                     version = nesteVersjonForStemmekrets(Lokalid(stemmekrets.lokalid))
                     auditInfo.typeEndring = endringstype
                 }
         )
+
         return nyStemmekrets
             .applyCascadingOperationsBasedOnExistingStemmekrets(stemmekrets, gyldigFra)
-            .also { stemmekrets.setGyldigTil(gyldigFra)  }
+            .also { stemmekrets.setGyldigTil(gyldigFra) }
+    }
+
+    fun createNyVersjonAvStemmekretsIAnnenKommune(stemmekrets: Stemmekrets, kommune: Kommune, gyldigFra: LocalDate, endringstype: Endringstype): Stemmekrets {
+        val nyStemmekrets = kopierOgSaveStemmekrets(stemmekrets, gyldigFra, endringstype)
+
+        kommune.addStemmekrets(nyStemmekrets)
+        return nyStemmekrets
     }
 
     private fun createDuplikatStemmekretsnummerException(stemmekrets: Stemmekrets): ResponseException.BadRequestException {
@@ -234,7 +260,8 @@ class StemmekretsService(
         }
     }
 
-    private fun lagNyGrensekobling(grense: GrenseMedLokalid, stemmekrets: Stemmekrets, rekkefoelge: Int, flateIndex: Int, hullIndex: Int? = null, gamleGrensekoblinger: Collection<StemmekretsGrenseKobling>): StemmekretsGrenseKobling {
+    private fun lagNyGrensekobling(grense: GrenseMedLokalid, stemmekrets: Stemmekrets, rekkefoelge: Int, flateIndex: Int, hullIndex: Int? = null,
+                                   gamleGrensekoblinger: Collection<StemmekretsGrenseKobling>): StemmekretsGrenseKobling {
         val gammelGrenskobling = gamleGrensekoblinger.find { grense.lokalid.value == it.grense.lokalid }
             ?: throw RuntimeException("Klarte ikke finne gammel grensekobling for grense med id ${grense.lokalid.value}. Dette skal ikke skje og tyder på programmeringsfeil.")
 
@@ -264,7 +291,9 @@ class StemmekretsService(
         //Returnerer false hvis stemmekretsnummer ikke er gitt, isåfall vil det komme valideringsfeil fra et annet sted
         val muligeStemmekretsnumre = stemmekrets.stemmekretsnummer?.let { lagMuligeStemmekretsnumre(it) } ?: return false
 
-        val kommune = stemmekrets.getKommune(stemmekrets.gyldighet.gyldigFra)!!
+        val kommune = stemmekrets.getKommune(stemmekrets.gyldighet.gyldigFra)
+            ?: throw ResponseException.NotFoundException(title = "Kommune ikke funnet",
+                msg = "Fant ikke kommune for stemmekrets med id ${stemmekrets.id} og gyldig fra ${stemmekrets.gyldighet.gyldigFra}")
         val andreKretserMedSammeStemmekretsnummer = stemmekretsRepository.findAllByStemmekretsnummerInAndLokalidIsNotAndKommuneLokalid(
             muligeStemmekretsnumre, stemmekrets.lokalid, kommune.lokalid)
 
