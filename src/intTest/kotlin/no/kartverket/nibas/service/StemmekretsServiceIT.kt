@@ -1,5 +1,7 @@
 package no.kartverket.nibas.service
 
+import com.ninjasquad.springmockk.MockkBean
+import io.mockk.every
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.Feature
@@ -32,9 +34,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
-import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -51,7 +51,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
     @Autowired
     private lateinit var grenseService: GrenseService
 
-    @MockBean
+    @MockkBean
     private lateinit var kodelisteServiceMock: KodelisteService
 
     private val october1In2022 = LocalDate.of(2022, Month.OCTOBER, 1)
@@ -65,7 +65,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
 
     @BeforeEach
     fun beforeEach() {
-        Mockito.`when`(kodelisteServiceMock.getCodeValueByKommunenummerId(Mockito.anyString())).thenReturn("1234")
+        every { kodelisteServiceMock.getCodeValueByKommunenummerId(any()) } returns "1234"
     }
 
     @Test

@@ -1,5 +1,7 @@
 package no.kartverket.nibas.service
 
+import com.ninjasquad.springmockk.MockkBean
+import io.mockk.every
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.builders.*
 import no.kartverket.nibas.common.Identifikator
@@ -11,9 +13,7 @@ import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.tuple
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -23,7 +23,7 @@ import java.time.Month
 @Transactional
 class KommuneServiceIT : TestWithDbContainer() {
 
-    @MockBean
+    @MockkBean
     private lateinit var kodelisteServiceMock: KodelisteService
 
     @Autowired
@@ -453,8 +453,8 @@ class KommuneServiceIT : TestWithDbContainer() {
 
     @Test
     fun `sjekk createNyKommune i nytt fylke`() {
-        Mockito.`when`(kodelisteServiceMock.getKommunenummerIdByCodeValue("5622")).thenReturn("b0f1dfb4-2ba3-44a8-9b86-37bea79f6a60")
-        Mockito.`when`(kodelisteServiceMock.getFylkesnummerIdByCodeValue("56")).thenReturn("ee97a593-2f9d-49c7-b251-c0f0cfa8769b")
+        every { kodelisteServiceMock.getKommunenummerIdByCodeValue("5622") } returns "b0f1dfb4-2ba3-44a8-9b86-37bea79f6a60"
+        every { kodelisteServiceMock.getFylkesnummerIdByCodeValue("56") } returns "ee97a593-2f9d-49c7-b251-c0f0cfa8769b"
 
         val norskNavn = saveAdministrativenhetnavn(navn = "Porsanger", spraakid = "nor", rekkefoelge = 1)
         val samiskNavn = saveAdministrativenhetnavn(navn = "Porsáŋgu", spraakid = "sme", rekkefoelge = 2)
@@ -487,9 +487,9 @@ class KommuneServiceIT : TestWithDbContainer() {
 
     @Test
     fun `sjekk createNyKommune i gammelt fylke`() {
-        Mockito.`when`(kodelisteServiceMock.getKommunenummerIdByCodeValue("1508")).thenReturn("9720eabc-0bff-4c93-b05c-95bae39ef2ea")
-        Mockito.`when`(kodelisteServiceMock.getKommunenummerIdByCodeValue("1580")).thenReturn("687f3337-899f-42f8-849d-6f2d5b603dd3")
-        Mockito.`when`(kodelisteServiceMock.getFylkesnummerIdByCodeValue("15")).thenReturn("c499a315-0cd5-4e99-8acf-bd6f4803799a")
+        every { kodelisteServiceMock.getKommunenummerIdByCodeValue("1508") } returns "9720eabc-0bff-4c93-b05c-95bae39ef2ea"
+        every { kodelisteServiceMock.getKommunenummerIdByCodeValue("1580") } returns "687f3337-899f-42f8-849d-6f2d5b603dd3"
+        every { kodelisteServiceMock.getFylkesnummerIdByCodeValue("15") } returns "c499a315-0cd5-4e99-8acf-bd6f4803799a"
 
         val norskNavn = saveAdministrativenhetnavn(navn = "Ålesund", spraakid = "nor")
 

@@ -1,5 +1,7 @@
 package no.kartverket.nibas.utkast
 
+import com.ninjasquad.springmockk.MockkBean
+import io.mockk.every
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.request.ConflictResolved
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
@@ -23,9 +25,7 @@ import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import org.assertj.core.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.anyString
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -33,7 +33,6 @@ import java.time.LocalDateTime
 import java.time.Month
 import java.time.ZoneId
 import java.time.ZonedDateTime
-import org.mockito.Mockito.`when` as whenever
 
 /**
  * Vil at testene skal være transaksjonelle for å rulle tilbake.
@@ -44,13 +43,13 @@ import org.mockito.Mockito.`when` as whenever
 @Transactional
 class UtkastService_grunnkretsIT : TestWithDbContainer() {
 
-    @MockBean
+    @MockkBean
     private lateinit var userFacade: UserFacade
 
-    @MockBean
+    @MockkBean
     private lateinit var currentTime: CurrentTime
 
-    @MockBean
+    @MockkBean
     private lateinit var kodelisteServiceMock: KodelisteService
 
     @Autowired
@@ -80,9 +79,9 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
 
     @BeforeEach
     fun beforeEach() {
-        whenever(currentTime.asLocalDate()).thenReturn(LocalDate.of(2022, 6, 1))
-        whenever(userFacade.getAuthenticatedUser()).thenReturn("Testbruker 123")
-        whenever(kodelisteServiceMock.getCodeValueByKommunenummerId(anyString())).thenReturn("1234")
+        every { currentTime.asLocalDate() } returns LocalDate.of(2022, 6, 1)
+        every { userFacade.getAuthenticatedUser() } returns "Testbruker 123"
+        every { kodelisteServiceMock.getCodeValueByKommunenummerId(any()) } returns "1234"
     }
 
     /**

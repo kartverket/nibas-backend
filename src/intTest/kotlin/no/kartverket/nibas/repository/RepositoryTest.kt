@@ -1,5 +1,7 @@
 package no.kartverket.nibas.repository
 
+import com.ninjasquad.springmockk.MockkBean
+import io.mockk.every
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.request.KommuneRequest
 import no.kartverket.nibas.builders.GrenseBuilder
@@ -16,11 +18,9 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.Month
-import org.mockito.Mockito.`when` as whenever
 
 
 @Transactional
@@ -38,12 +38,12 @@ class RepositoryTest : TestWithDbContainer() {
     private val january1In2023 = LocalDate.of(2023, Month.JANUARY, 1)
     private val january1In2024 = LocalDate.of(2024, Month.JANUARY, 1)
 
-    @MockBean
+    @MockkBean
     private lateinit var userFacade: UserFacade
 
     @BeforeEach
     fun beforeEach() {
-        whenever(userFacade.getAuthenticatedUser()).thenReturn("Testbruker 123")
+        every { userFacade.getAuthenticatedUser() } returns "Testbruker 123"
     }
 
     @Test

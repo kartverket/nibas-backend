@@ -113,6 +113,7 @@ dependencies {
     intTestImplementation("org.springframework.boot:spring-boot-starter-test")
     intTestImplementation("org.testcontainers:postgresql:$testContainerVersion")
     intTestImplementation("org.testcontainers:junit-jupiter:$testContainerVersion")
+    intTestImplementation("com.ninja-squad:springmockk:$springmockkVersion")
 }
 
 allOpen {

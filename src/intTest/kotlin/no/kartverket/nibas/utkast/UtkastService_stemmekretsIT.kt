@@ -1,5 +1,7 @@
 package no.kartverket.nibas.utkast
 
+import com.ninjasquad.springmockk.MockkBean
+import io.mockk.every
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.request.ConflictResolved
 import no.kartverket.nibas.api.v1.request.StemmekretsRequest
@@ -24,9 +26,7 @@ import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -39,10 +39,10 @@ import java.time.ZonedDateTime
 @Transactional
 class UtkastService_stemmekretsIT : TestWithDbContainer() {
 
-    @MockBean
+    @MockkBean
     private lateinit var userFacade: UserFacade
 
-    @MockBean
+    @MockkBean
     private lateinit var currentTime: CurrentTime
 
     @Autowired
@@ -74,8 +74,8 @@ class UtkastService_stemmekretsIT : TestWithDbContainer() {
 
     @BeforeEach
     fun beforeEach() {
-        Mockito.`when`(currentTime.asLocalDate()).thenReturn(LocalDate.of(2022, 6, 1))
-        Mockito.`when`(userFacade.getAuthenticatedUser()).thenReturn("Testbruker 123")
+        every { currentTime.asLocalDate() } returns LocalDate.of(2022, 6, 1)
+        every { userFacade.getAuthenticatedUser() } returns "Testbruker 123"
     }
 
     @Test

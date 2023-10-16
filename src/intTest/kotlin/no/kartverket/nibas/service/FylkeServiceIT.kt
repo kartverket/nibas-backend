@@ -1,5 +1,7 @@
 package no.kartverket.nibas.service
 
+import com.ninjasquad.springmockk.MockkBean
+import io.mockk.every
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.builders.FylkeRequestBuilder
 import no.kartverket.nibas.common.Identifikator
@@ -10,9 +12,7 @@ import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -22,7 +22,7 @@ import java.time.Month
 @Transactional
 class FylkeServiceIT : TestWithDbContainer() {
 
-    @MockBean
+    @MockkBean
     private lateinit var kodelisteServiceMock: KodelisteService
 
     @Autowired
@@ -312,8 +312,8 @@ class FylkeServiceIT : TestWithDbContainer() {
 
     @Test
     fun `sjekk createNyttFylke`() {
-        Mockito.`when`(kodelisteServiceMock.getFylkesnummerIdByCodeValue("55")).thenReturn("d42b6763-0157-440a-a0eb-3dc24aa87c41")
-        Mockito.`when`(kodelisteServiceMock.getFylkesnummerIdByCodeValue("56")).thenReturn("ee97a593-2f9d-49c7-b251-c0f0cfa8769b")
+        every { kodelisteServiceMock.getFylkesnummerIdByCodeValue("55") }  returns "d42b6763-0157-440a-a0eb-3dc24aa87c41"
+        every { kodelisteServiceMock.getFylkesnummerIdByCodeValue("56") } returns "ee97a593-2f9d-49c7-b251-c0f0cfa8769b"
 
         val norskNavn = saveAdministrativenhetnavn(navn = "Troms og Finnmark", spraakid = "nor", rekkefoelge = 1)
         val samiskNavn = saveAdministrativenhetnavn(navn = "Romsa ja Finnmárku", spraakid = "sme", rekkefoelge = 2)
