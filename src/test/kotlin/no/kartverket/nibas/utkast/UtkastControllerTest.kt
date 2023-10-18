@@ -220,7 +220,7 @@ internal class UtkastControllerTest : NibasMvcTest() {
         post(
             url = publiserUrl,
             responseAsserts = MockResponseAsserts(
-                expectedResponseObject = ApiErrorResponse(errorCode = mockUuid.toString(), errorDescription = ErrorDescription(title = "404: Ikke funnet", description = msg)),
+                expectedResponseObject = ApiErrorResponse(errorCode = mockUuid.toString(), errorDescription = ErrorDescription(title = "400: Ukjent feil", description = msg)),
                 resultMatchers = listOf(status().isBadRequest)
             )
         )

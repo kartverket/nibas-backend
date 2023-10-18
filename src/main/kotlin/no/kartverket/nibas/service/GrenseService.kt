@@ -110,7 +110,7 @@ class GrenseService(
     private fun doLagreGrenser(features: List<Feature>, gyldighetsdato: LocalDate = LocalDate.now(), endringstype: Endringstype) : Set<Flate> {
         // Hvis det er innkommende features med id ikke satt kastes HTTP 400
         if (features.any { feature -> feature.id == null }) {
-            throw BadRequestException("Missing feature id.")
+            throw BadRequestException("En av de innsendte featurene med endring mangler ID.")
         }
         // Henter eksisterende grenser på identifikator. Sorterer på lokalid for testens skyld.
         val grenseIdentifikatorer = features.map { featureIdToIdentifikator(it.id, gyldighetsdato) }.sortedBy { it.lokalid.value }
@@ -120,7 +120,10 @@ class GrenseService(
         // Hvis det er innkommende features med id som ikke ligger i databasen kastes HTTP 400
         val identifikatorDiffs: List<Identifikator> = grenseIdentifikatorer - identifikatorToGrenseMap.keys
         if (identifikatorDiffs.isNotEmpty()) {
-            throw BadRequestException("Non-existing grenseidentifikatorer: [${identifikatorDiffs.joinToString(",")}])")
+            throw BadRequestException(
+                title = "Klarte ikke finne grenser",
+                msg = "En eller flere grenser du har endret på eksisterer ikke lengre. For å sørge for at du endrer på en gjeldende grense må du dessverre opprette et nytt utkast og gjennomføre endringene dine på nytt.",
+                additionalInfo = "Feilen gjelder følgende grenser: ${identifikatorDiffs.joinToString(",") { "(lokalid: ${it.lokalid.value}), gyldig fra: ${it.gyldighetsdato})" }}")
         }
 
         val konflikterIGrenser: List<KonfliktVersjon> = features.mapNotNull { feature ->

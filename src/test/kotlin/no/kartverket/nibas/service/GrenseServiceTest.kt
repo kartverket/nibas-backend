@@ -69,7 +69,7 @@ class GrenseServiceTest {
             )
         }
             .isInstanceOf(BadRequestException::class.java)
-            .hasMessageContaining("Missing feature id")
+            .hasMessageContaining("En av de innsendte featurene med endring mangler ID.")
     }
 
     @Test
@@ -97,7 +97,7 @@ class GrenseServiceTest {
             endringstype = Endringstype.FASTSETTING
         ) }
             .isInstanceOf(BadRequestException::class.java)
-            .hasMessageContaining("Non-existing grenseidentifikatorer: [Identifikator(lokalid=Lokalid(value=33), gyldighetsdato=2022-12-08)])")
+            .hasMessageContaining("En eller flere grenser du har endret på eksisterer ikke lengre. For å sørge for at du endrer på en gjeldende grense må du dessverre opprette et nytt utkast og gjennomføre endringene dine på nytt.")
     }
     @Test
     fun `lagreGrenser skal kaste optimistiskLaasException hvis grensa har ulik versjon enn requesten`() {
