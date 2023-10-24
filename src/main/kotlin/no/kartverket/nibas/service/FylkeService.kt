@@ -5,6 +5,8 @@ import no.kartverket.nibas.api.v1.request.FylkeRequest
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
+import no.kartverket.nibas.common.UgyldigTilstandException
+import no.kartverket.nibas.common.getInSpraak
 import no.kartverket.nibas.domain.Administrativenhetnavn
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Fylke
@@ -33,7 +35,7 @@ class FylkeService(
     private val nasjonRepository: NasjonRepository,
     private var unikLokalidRepository: UnikLokalidRepository,
     private val kodelisteService: KodelisteService,
-    private val administrativenhetnavnService: AdministrativenhetnavnService
+    private val administrativenhetnavnService: AdministrativenhetnavnService,
 ) {
 
     fun hentAlleFylker(gyldighetsdato: LocalDate = LocalDate.now()): List<Fylke> = fylkeRepository.findAllGyldigPaaDato(gyldighetsdato)
@@ -136,6 +138,21 @@ class FylkeService(
             .version + 1
 
     fun hentAntallGyldigeVersjonerFramITidFor(identifikator: Identifikator): Int = fylkeRepository.findAntallFramtidigeVersjonerForIdentifikator(identifikator)
+
+    @Transactional
+    fun settFylkeSomHistorisk(fylke: Fylke, settHistoriskFraDato: LocalDate){
+
+        val kommuner = fylke.getKommuner(settHistoriskFraDato).map {
+            it.getAdministrativenhetNavn(settHistoriskFraDato).getInSpraak("nor")
+        }
+
+        if (kommuner.isNotEmpty()) {
+            throw UgyldigTilstandException("Kan ikke sette fylket med lokalId: ${fylke.lokalid} til historisk da den har kommuner som er gyldige etter $settHistoriskFraDato. Gjelder kommuner: $kommuner")
+        }
+
+        fylke.getAdministrativenhetNavn().forEach{ it.setGyldigTil(settHistoriskFraDato) }
+        fylke.setGyldigTil(settHistoriskFraDato)
+    }
 }
 
 fun Fylke.applyChangesFromRequest(fylkeRequest: FylkeRequest): Fylke =
