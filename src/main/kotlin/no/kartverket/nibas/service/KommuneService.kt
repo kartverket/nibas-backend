@@ -9,6 +9,7 @@ import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
+import no.kartverket.nibas.common.UgyldigTilstandException
 import no.kartverket.nibas.domain.Administrativenhetnavn
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.GrenseKobling
@@ -174,6 +175,26 @@ class KommuneService(
     }
 
     fun hentAntallGyldigeVersjonerFramITidFor(identifikator: Identifikator): Int = kommuneRepository.findAntallFramtidigeVersjonerForIdentifikator(identifikator)
+
+    @Transactional
+    fun settKommuneSomHistorisk(kommune: Kommune, settHistoriskFraDato: LocalDate) {
+        val grunnkretser = kommune.getGrunnkretser(settHistoriskFraDato).map {
+            "$it.grunnkretsnummer: ${it.grunnkretsnavn}"
+        }
+        val stemmekretser = kommune.getStemmekretser(settHistoriskFraDato).map {
+            "${it.stemmekretsnummer}: ${it.stemmekretsnavn}"
+        }
+
+        if(grunnkretser.isNotEmpty() ){
+            throw UgyldigTilstandException("Kan ikke sette kommunen med lokalId: ${kommune.lokalid} til historisk da den har grunnkretser som er gyldige etter $settHistoriskFraDato. Gjelder grunnkretser: $grunnkretser")
+        }
+        if(stemmekretser.isNotEmpty() ){
+            throw UgyldigTilstandException("Kan ikke sette kommunen med lokalId: ${kommune.lokalid} til historisk da den har stemmekretser som er gyldige etter $settHistoriskFraDato. Gjelder stemmekretser: $stemmekretser")
+        }
+
+        kommune.getAdministrativenhetNavn().forEach { it.setGyldigTil(settHistoriskFraDato) }
+        kommune.setGyldigTil(settHistoriskFraDato)
+    }
 
     fun kommuneToKommuneRef(kommune: Kommune, datoToUse: LocalDate): KommuneRef {
         val identifikator = Identifikator(Lokalid(kommune.lokalid), datoToUse)

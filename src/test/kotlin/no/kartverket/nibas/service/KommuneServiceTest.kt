@@ -2,6 +2,7 @@ package no.kartverket.nibas.service
 
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
+import io.mockk.mockk
 import io.mockk.mockkStatic
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.builders.GrunnkretsBuilder
@@ -26,44 +27,29 @@ import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
 import java.time.LocalDate
 import java.time.Month
-import java.util.*
 import kotlin.test.assertEquals
 
-@SpringBootTest(classes = [KommuneService::class])
 class KommuneServiceTest {
+    val kommuneRepositoryMock = mockk<KommuneRepository>()
+    val fylkeRepositoryMock = mockk<FylkeRepository>()
+    val unikLokalidRepositoryMock = mockk<UnikLokalidRepository>()
+    val hrefProviderMock = mockk<HrefProvider>()
+    val administrativenhetnavnRepositoryMock = mockk<AdministrativenhetnavnRepository>()
+    val administrativenhetnavnServiceMock = mockk<AdministrativenhetnavnService>()
+    val kodelisteServiceMock = mockk<KodelisteService>()
 
-    @Autowired
-    lateinit var kommuneService: KommuneService
 
-    @MockkBean
-    private lateinit var kommuneRepositoryMock: KommuneRepository
-
-    @MockkBean
-    @Suppress("unused")
-    private lateinit var fylkeRepository: FylkeRepository
-
-    @MockkBean
-    @Suppress("unused")
-    private lateinit var unikLokalidRepository: UnikLokalidRepository
-
-    @MockkBean
-    @Suppress("unused")
-    private lateinit var hrefProvider: HrefProvider
-
-    @MockkBean
-    @Suppress("unused")
-    private lateinit var administrativenhetnavnRepository: AdministrativenhetnavnRepository
-
-    @MockkBean
-    @Suppress("unused")
-    private lateinit var administrativenhetnavnService: AdministrativenhetnavnService
-
-    @MockkBean
-    private lateinit var kodelisteServiceMock: KodelisteService
+    val kommuneService = KommuneService(
+        kommuneRepositoryMock,
+        fylkeRepositoryMock,
+        administrativenhetnavnRepositoryMock,
+        unikLokalidRepositoryMock,
+        kodelisteServiceMock,
+        administrativenhetnavnServiceMock,
+        hrefProviderMock
+    )
 
     @BeforeEach
     fun beforeEach() {

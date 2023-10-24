@@ -6,13 +6,14 @@ import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.builders.*
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.common.UgyldigTilstandException
 import no.kartverket.nibas.domain.*
 import no.kartverket.nibas.kodelister.KodelisteService
-import no.kartverket.nibas.repository.*
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.tuple
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
@@ -40,7 +41,7 @@ class KommuneServiceIT : TestWithDbContainer() {
     private val jan1In2024 = LocalDate.of(2024, Month.JANUARY, 1)
 
     private val grenseLokallid = Lokalid("888")
-    private val grunnkretsLokalid = Lokalid("1001")
+    private val kretsLokalid = Lokalid("1001")
     private val kommuneLokalid = Lokalid("750")
 
     @Test
@@ -144,9 +145,9 @@ class KommuneServiceIT : TestWithDbContainer() {
 
         // Alle grunnkretsene er koblet til grense 1 i koblingstabellen
         // Grunnkrets 2 er gyldig 1.1.23 og det er dennes kobling som vil brukes
-        val grunnkrets1 = saveGrunnkrets(id = "101", lokalid = grunnkretsLokalid, gyldigFra = october1In2022, gyldigTil = december1In2022, grenser = listOf(grense1))
-        val grunnkrets2 = saveGrunnkrets(id = "102", lokalid = grunnkretsLokalid, gyldigFra = december1In2022, gyldigTil = jan1In2024, grenser = listOf(grense1))
-        val grunnkrets3 = saveGrunnkrets(id = "103", lokalid = grunnkretsLokalid, gyldigFra = jan1In2024, grenser = listOf(grense1))
+        val grunnkrets1 = saveGrunnkrets(id = "101", lokalid = kretsLokalid, gyldigFra = october1In2022, gyldigTil = december1In2022, grenser = listOf(grense1))
+        val grunnkrets2 = saveGrunnkrets(id = "102", lokalid = kretsLokalid, gyldigFra = december1In2022, gyldigTil = jan1In2024, grenser = listOf(grense1))
+        val grunnkrets3 = saveGrunnkrets(id = "103", lokalid = kretsLokalid, gyldigFra = jan1In2024, grenser = listOf(grense1))
 
         val identifikatorFor1Jan23 = Identifikator(kommuneLokalid, jan1In2023)
         saveKommuneOgUnikLokalid(id = "123", lokalid = kommuneLokalid.value, gyldigFra = october1In2022, grunnkretser = listOf(grunnkrets1, grunnkrets2, grunnkrets3))
@@ -158,7 +159,7 @@ class KommuneServiceIT : TestWithDbContainer() {
             gyldighetsdato = identifikatorFor1Jan23.gyldighetsdato,
             grenseIGrensekoblingId = "2000",
             relevantGrenseId = "2001",
-            enhetKobletTilGrenseLokalid = grunnkretsLokalid
+            enhetKobletTilGrenseLokalid = kretsLokalid
         )
     }
 
@@ -542,5 +543,40 @@ class KommuneServiceIT : TestWithDbContainer() {
         assertThat(navn.gyldighet.gyldigFra).isEqualTo(jan1In2024)
         assertThat(navn.gyldighet.gyldigTil).isNull()
         assertThat(navn.auditInfo.typeEndring).isEqualTo(Endringstype.FASTSETTING)
+    }
+
+    @Test
+    fun `settKommuneSomHistorisk skal sette gyldigTil på kommunen`() {
+        val lagretKommune = saveKommuneOgUnikLokalid(lokalid = lokalidOfKommuneInDataSet)
+        kommuneService.settKommuneSomHistorisk(lagretKommune, jan1In2024)
+        assertThat(lagretKommune.gyldighet.gyldigTil).isEqualTo(jan1In2024)
+    }
+
+    @Test
+    fun `settKommuneSomHistorisk skal sette gyldigTil på alle administrative navn forkommunen`() {
+        val norskNavn = saveAdministrativenhetnavn(navn = "Ålesund", spraakid = "nor")
+        val lagretKommune = saveKommuneOgUnikLokalid(lokalid = lokalidOfKommuneInDataSet, administrativenhetnavn = listOf(norskNavn))
+        kommuneService.settKommuneSomHistorisk(lagretKommune, jan1In2024)
+        lagretKommune.getAdministrativenhetNavn().forEach { assertThat(it.gyldighet.gyldigTil).isEqualTo(jan1In2024) }
+    }
+
+    @Test
+    fun `settKommuneSomHistorisk skal sjekke at alle grunnkretser ikke har gyldigTil dato på eller etter den gitte settHistoriskFra datoen`(){
+        val grunnkrets = saveGrunnkrets(id = "8001", lokalid = kretsLokalid, gyldigFra = november28In2022)
+        val lagretKommune = saveKommuneOgUnikLokalid(lokalid = lokalidOfKommuneInDataSet, grunnkretser = listOf(grunnkrets))
+        val exception = assertThrows<UgyldigTilstandException> {
+            kommuneService.settKommuneSomHistorisk(lagretKommune, jan1In2024)
+        }
+        assertThat(exception.message).containsIgnoringCase("Kan ikke sette kommunen med lokalId: ${lokalidOfKommuneInDataSet} til historisk da den har grunnkretser")
+    }
+
+    @Test
+    fun `settKommuneSomHistorisk skal sjekke at alle stemmekretser ikke har gyldigTil dato på eller etter den gitte settHistoriskFra datoen`(){
+        val stemmekrets = saveStemmekrets(id = "8001", lokalid = kretsLokalid, gyldigFra = november28In2022)
+        val lagretKommune = saveKommuneOgUnikLokalid(lokalid = lokalidOfKommuneInDataSet, stemmekretser = listOf(stemmekrets))
+        val exception = assertThrows<UgyldigTilstandException> {
+            kommuneService.settKommuneSomHistorisk(lagretKommune, jan1In2024)
+        }
+        assertThat(exception.message).containsIgnoringCase("Kan ikke sette kommunen med lokalId: ${lokalidOfKommuneInDataSet} til historisk da den har stemmekretser")
     }
 }

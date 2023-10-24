@@ -11,6 +11,7 @@ import no.kartverket.nibas.common.createIdentifikator
 import no.kartverket.nibas.extensions.flate.toFylkeRef
 import no.kartverket.nibas.extensions.flate.toFylkeResponse
 import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.repository.FylkeRepository
 import no.kartverket.nibas.service.FylkeService
 import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDate
