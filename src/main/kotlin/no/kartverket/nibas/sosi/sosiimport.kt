@@ -57,7 +57,7 @@ class SosiImportService(
     @Value("\${nibas.import.admenhetfil:sosifiler/ADM_Enheter_Norge_20230214.sos}")
     lateinit var admenhetfil: String
 
-    @Value("\${nibas.import.stemmekretsfil:sosifiler/Stemmekretser_Norge_20230420.sos}")
+    @Value("\${nibas.import.stemmekretsfil:sosifiler/Stemmekretser_Norge_20231024.sos}")
     lateinit var stemmekretsfil: String
 
     private val importTargets: List<String> =

@@ -2,6 +2,7 @@ package no.kartverket.nibas.sosi.model
 
 import no.kartverket.nibas.domain.PosisjonskvalitetEmbeddable
 import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.sosi.common.ImportUtils
 import no.kartverket.nibas.sosi.common.SosiKoder
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import org.locationtech.jts.geom.Coordinate
@@ -39,7 +40,7 @@ open class SosiGeometri(type: String, niva: Int, verdier: MutableList<SosiVerdi>
         barn.filter { it is SosiNavn && it.type == SosiKoder.NASJONNAVN }.map { it as SosiNavn }
 
     fun getFastsettingstype(): String? = getVerdiAvBarn(SosiKoder.FASTSETTINGSTYPE)
-    fun getGyldigFra(): LocalDate = stringAsDate(getVerdiAvBarn(SosiKoder.GYLDIGFRA)) ?: LocalDate.now()
+    fun getGyldigFra(): LocalDate = stringAsDate(getVerdiAvBarn(SosiKoder.GYLDIGFRA)) ?: ImportUtils.importTime
     fun getGyldigTil(): LocalDate? = stringAsDate(getVerdiAvBarn(SosiKoder.GYLDIGTIL))
     fun getDatafangstDato(): ZonedDateTime? = stringAsZonedDateTime(getVerdiAvBarn(SosiKoder.DATAFANGSTDATO))
     fun getGrensestatus(): String? = getVerdiAvBarn(SosiKoder.GRENSESTATUS)

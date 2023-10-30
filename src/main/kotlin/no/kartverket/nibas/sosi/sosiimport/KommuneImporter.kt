@@ -13,12 +13,12 @@ import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.SpraakkodeRepository
 import no.kartverket.nibas.repository.UnikLokalidRepository
 import no.kartverket.nibas.repository.findGyldigFylkeForFylkesnummer
+import no.kartverket.nibas.sosi.common.ImportUtils
 import no.kartverket.nibas.sosi.model.SosiFlate
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
-import java.time.LocalDate
 import java.util.logging.Logger
 
 @Component
@@ -54,7 +54,7 @@ class KommuneImporter @Autowired constructor(
         // Fylkesnummer er de to første sifferne i kommunenummeret
         val fylkesnummerUuid = kodelisteService.getFylkesnummerIdByCodeValue(forsteFlate.getKommunenummer().substring(0, 2))
         //Henter fylket for dagens dato
-        val gyldighetsdato = LocalDate.now()
+        val gyldighetsdato = ImportUtils.importTime
         val fylke = fylkeRepository.findGyldigFylkeForFylkesnummer(fylkesnummerUuid, gyldighetsdato)
             ?: throw RuntimeException("Fant ikke fylke med fylkesnummerUuid $fylkesnummerUuid og gyldig fra $gyldighetsdato")
 

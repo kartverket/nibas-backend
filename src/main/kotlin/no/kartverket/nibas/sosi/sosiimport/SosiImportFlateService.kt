@@ -6,6 +6,7 @@ import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.NasjonRepository
 import no.kartverket.nibas.repository.findAllGyldigPaaDato
 import no.kartverket.nibas.service.FlateService
+import no.kartverket.nibas.sosi.common.ImportUtils
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -23,7 +24,7 @@ class SosiImportFlateService @Autowired constructor(
     private val logger = LoggerFactory.getLogger(this.javaClass.name)
 
     @Transactional
-    fun settFlaterPaaAlleAdministrativeEnheter(gyldighetsdato: LocalDate = LocalDate.now()): List<Result<Unit>> {
+    fun settFlaterPaaAlleAdministrativeEnheter(gyldighetsdato: LocalDate = ImportUtils.importTime): List<Result<Unit>> {
         val resultatForOppdateringAvKommuneflater = kommuneRepository.findAllGyldigPaaDato(gyldighetsdato).toList().map {
             wrapOppdateringIResult(it)
         }

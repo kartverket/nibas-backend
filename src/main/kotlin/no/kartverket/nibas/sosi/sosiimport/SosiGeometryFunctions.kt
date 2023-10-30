@@ -4,6 +4,7 @@ import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.getGrenseJustertForRetning
 import no.kartverket.nibas.repository.Grenserad
+import no.kartverket.nibas.sosi.common.ImportUtils
 import no.kartverket.nibas.sosi.model.SosiKoordinat
 import no.kartverket.nibas.sosi.model.SosiNordOest
 import org.locationtech.jts.geom.Coordinate
@@ -250,7 +251,7 @@ object SosiGeometryFunctions {
         return nesteGrense
     }
 
-    fun beregnFlate(grenseKoblinger: Set<GrenseKobling>, gyldighetsdato: LocalDate = LocalDate.now()): MultiPolygon {
+    fun beregnFlate(grenseKoblinger: Set<GrenseKobling>, gyldighetsdato: LocalDate = ImportUtils.importTime): MultiPolygon {
         val flater: List<Polygon> = grenseKoblinger
             .groupBy { it.grenseKoblingAttributter.flateIndeks }
             .map { entry ->
