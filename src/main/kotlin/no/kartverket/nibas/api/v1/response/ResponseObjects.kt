@@ -5,7 +5,6 @@ import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.common.Fylkesnummer
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
-import no.kartverket.nibas.api.v1.common.geojson.Point
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.sporing.Gyldighet
@@ -204,6 +203,9 @@ data class GrunnkretsResponse(
     @Schema(description = "Siste oppdateringstidspunkt for objektet")
     val oppdateringsdato: ZonedDateTime,
 
+    @Schema(description = "Datafangsdato for objektet")
+    val datafangstdato: ZonedDateTime,
+
     @Schema(description = "Kommunenummeret til grunnkretsen")
     val kommunenummer: Kommunenummer,
 
@@ -230,6 +232,9 @@ data class StemmekretsResponse(
 
     @Schema(description = "Siste oppdateringstidspunkt for objektet")
     val oppdateringsdato: ZonedDateTime,
+
+    @Schema(description = "Datafangsdato for objektet")
+    val datafangstdato: ZonedDateTime,
 
     @Schema(description = "Navnet på stemmekretsen")
     val stemmekretsnavn: String,

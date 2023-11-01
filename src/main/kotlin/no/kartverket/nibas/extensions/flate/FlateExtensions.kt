@@ -5,6 +5,7 @@ import no.kartverket.nibas.api.v1.common.Fylkesnummer
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.response.FylkeRef
 import no.kartverket.nibas.api.v1.response.FylkeResponse
+import no.kartverket.nibas.api.v1.response.GrunnkretsResponse
 import no.kartverket.nibas.api.v1.response.KommuneResponse
 import no.kartverket.nibas.api.v1.response.Kommunenummer
 import no.kartverket.nibas.api.v1.response.KretsResponse
@@ -34,6 +35,23 @@ fun Grunnkrets.toKretsResponse(kodelisteService: KodelisteService): KretsRespons
             flateToFeature(version)
         )
     )
+)
+
+fun Grunnkrets.toGrunnkretsResponse(identifikator: Identifikator, kodelisteService: KodelisteService): GrunnkretsResponse = GrunnkretsResponse(
+    id = identifikator.toObjektIdentifikator(),
+    navn = grunnkretsnavn!!,
+    grunnkretsnummer = grunnkretsnummer!!,
+    gyldighet = gyldighet.toGyldighetResponse(),
+    datafangstdato = datafangstdato!!,
+    kommunenummer = this.getKommune(gyldighet.gyldigFra)?.let { kodelisteService.createKommunenummerFromUUID(it.kommunenummer) }
+        ?: Kommunenummer(id = "Ukjent", kodeverdi = "Ukjent"),
+    endringstype = auditInfo.typeEndring.value,
+    oppdateringsdato = auditInfo.endretdato,
+    features = FeatureCollection(features = listOf(
+        posisjon.posisjonToFeature(version),
+        flateToFeature(version)
+    )),
+    version = version
 )
 
 fun Fylke.toFylkeRef(identifikator: Identifikator, antallFramtidigeVersjoner: Int = 0, hrefProvider: HrefProvider): FylkeRef = FylkeRef(
@@ -100,5 +118,6 @@ fun Stemmekrets.toStemmekretsResponse(identifikator: Identifikator, kodelisteSer
         posisjon.posisjonToFeature(version),
         flateToFeature(version)
     )),
+    datafangstdato = datafangstdato!!,
     version = version
 )

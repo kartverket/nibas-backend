@@ -71,16 +71,18 @@ internal class GrunnkretsControllerTest : NibasMvcTest() {
             gyldigFra = jan1In2023,
             gyldigTil = jan1In2024,
             kommune = kommune,
-            endretdato = oppdateringstidspunkt)
-            .build()
+            endretdato = oppdateringstidspunkt,
+            datafangstdato = oppdateringstidspunkt
+        ).build()
 
         val grunnkrets2 = GrunnkretsBuilder(
             id = "2",
             lokalId = lokalId,
             gyldigFra = jan1In2024,
             kommune = kommune,
-            endretdato = oppdateringstidspunkt)
-            .build()
+            endretdato = oppdateringstidspunkt,
+            datafangstdato = oppdateringstidspunkt
+        ).build()
 
         val expectedResponseList = listOf(
             GrunnkretsResponse(
@@ -96,6 +98,7 @@ internal class GrunnkretsControllerTest : NibasMvcTest() {
                 features = FeatureCollection(features = listOf(
                     grunnkrets1.posisjon.posisjonToFeature(1),
                     grunnkrets1.flateToFeature(1))),
+                datafangstdato = oppdateringstidspunkt,
                 version = 1),
             GrunnkretsResponse(
                 id = ObjektIdentifikator(lokalId, gyldighetsdato = jan1In2024),
@@ -110,6 +113,7 @@ internal class GrunnkretsControllerTest : NibasMvcTest() {
                 features = FeatureCollection(features = listOf(
                     grunnkrets2.posisjon.posisjonToFeature(1),
                     grunnkrets2.flateToFeature(1))),
+                datafangstdato = oppdateringstidspunkt,
                 version = 1)
         )
 
