@@ -117,11 +117,16 @@ class CustomRestExceptionHandler : ResponseEntityExceptionHandler() {
         val errorDescription = ErrorDescription(
             description = ex.message ?: "Ukjent server-feil"
         )
-        return handleException(ex, errorDescription, HttpHeaders(), httpStatus, request)
+        return handleException(ex, errorDescription, HttpHeaders(), httpStatus, request, logAsError = true)
     }
 
-    private fun handleException(ex: Exception, errorDescription: ErrorDescription, headers: HttpHeaders, statusCode: HttpStatusCode, request: WebRequest): ResponseEntity<Any>? {
-        this.logger.warn(ex)
+    private fun handleException(ex: Exception, errorDescription: ErrorDescription, headers: HttpHeaders, statusCode: HttpStatusCode, request: WebRequest, logAsError: Boolean = false): ResponseEntity<Any>? {
+        if (logAsError) {
+            this.logger.error(errorDescription.description, ex)
+        } else {
+            this.logger.warn(errorDescription.description, ex)
+        }
+
         val body = ApiErrorResponse(
             errorCode = MDC.get("requestId") ?: "UKJENT",
             errorDescription = errorDescription
