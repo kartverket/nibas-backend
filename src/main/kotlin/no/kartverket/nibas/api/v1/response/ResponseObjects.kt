@@ -204,7 +204,7 @@ data class GrunnkretsResponse(
     val oppdateringsdato: ZonedDateTime,
 
     @Schema(description = "Datafangsdato for objektet")
-    val datafangstdato: ZonedDateTime,
+    val datafangstdato: ZonedDateTime?,
 
     @Schema(description = "Kommunenummeret til grunnkretsen")
     val kommunenummer: Kommunenummer,
@@ -234,7 +234,7 @@ data class StemmekretsResponse(
     val oppdateringsdato: ZonedDateTime,
 
     @Schema(description = "Datafangsdato for objektet")
-    val datafangstdato: ZonedDateTime,
+    val datafangstdato: ZonedDateTime?,
 
     @Schema(description = "Navnet på stemmekretsen")
     val stemmekretsnavn: String,

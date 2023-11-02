@@ -42,7 +42,7 @@ fun Grunnkrets.toGrunnkretsResponse(identifikator: Identifikator, kodelisteServi
     navn = grunnkretsnavn!!,
     grunnkretsnummer = grunnkretsnummer!!,
     gyldighet = gyldighet.toGyldighetResponse(),
-    datafangstdato = datafangstdato!!,
+    datafangstdato = datafangstdato,
     kommunenummer = this.getKommune(gyldighet.gyldigFra)?.let { kodelisteService.createKommunenummerFromUUID(it.kommunenummer) }
         ?: Kommunenummer(id = "Ukjent", kodeverdi = "Ukjent"),
     endringstype = auditInfo.typeEndring.value,
@@ -118,6 +118,6 @@ fun Stemmekrets.toStemmekretsResponse(identifikator: Identifikator, kodelisteSer
         posisjon.posisjonToFeature(version),
         flateToFeature(version)
     )),
-    datafangstdato = datafangstdato!!,
+    datafangstdato = datafangstdato,
     version = version
 )
