@@ -140,7 +140,7 @@ class KommuneService(
         fylke.addKommune(nyKommune)
 
         administrativenhetnavnService.createNyeAdmEnhetNavnOgKnyttTilEnhet(
-            admenhetnavnList = if (admenhetnavnList.isNotEmpty()) admenhetnavnList else kopierFraKommune.getAdministrativenhetNavn(gyldigFra),
+            admenhetnavnList = admenhetnavnList.ifEmpty { kopierFraKommune.getAdministrativenhetNavn(gyldigFra) },
             gyldigFra = gyldigFra,
             endringstype = endringstype,
             admEnhet = nyKommune

@@ -242,7 +242,8 @@ class TestWithDbContainer {
         gyldigTil: LocalDate? = null,
         administrativenhetnavn: List<Administrativenhetnavn> = emptyList(),
         grunnkretser: List<Grunnkrets> = emptyList(),
-        stemmekretser: List<Stemmekrets> = emptyList()): Kommune {
+        stemmekretser: List<Stemmekrets> = emptyList()
+    ): Kommune {
 
         val unikLokalid = saveUnikLokalid(lokalid = lokalid, flatetype = Flatetype.KOMMUNE)
 

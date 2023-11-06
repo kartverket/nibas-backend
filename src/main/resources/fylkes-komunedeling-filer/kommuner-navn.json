@@ -1,0 +1,22 @@
+[
+  {
+    "kode": "1508",
+    "navn": [
+      {
+        "navn": "Ålesund",
+        "spraak": "nor",
+        "rekkefoelge": null
+      }
+    ]
+  },
+  {
+    "kode": "1580",
+    "navn": [
+      {
+        "navn": "Haram",
+        "spraak": "nor",
+        "rekkefoelge": null
+      }
+    ]
+  }
+]

@@ -275,7 +275,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         assertThat(kommuneRepository.findById(haram.id).get().kommuneLokalid.grunnkretser).isEmpty()
 
         val grunnkretsIHaram = grunnkretsService.createNyVersjonAvGrunnkretsIAnnenKommune(grunnkrets = grunnkrets, kommune = haram,
-            nyttKommunenummerIKlartekst = "1580", gyldigFra = jan1In2024, endringstype = Endringstype.IMPORT)
+            nyttGrunnkretsNummer = "15801234", gyldigFra = jan1In2024, endringstype = Endringstype.IMPORT)
 
         val opprinneligGrunnkretsEtter = grunnkretsService.hentGrunnkrets(identifikator)!!
         val grunnkretsEtter = grunnkretsService.hentGrunnkrets(Identifikator(identifikator.lokalid, jan1In2024))!!

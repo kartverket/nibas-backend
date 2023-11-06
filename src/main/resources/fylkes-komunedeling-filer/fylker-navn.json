@@ -1,0 +1,92 @@
+[
+  {
+    "kode": "31",
+    "navn": [
+      {
+        "navn": "Østfold",
+        "spraak": "nor",
+        "rekkefoelge": null
+      }
+    ]
+  },
+  {
+    "kode": "32",
+    "navn": [
+      {
+        "navn": "Aksershus",
+        "spraak": "nor",
+        "rekkefoelge": null
+      }
+    ]
+  },
+  {
+    "kode": "33",
+    "navn": [
+      {
+        "navn": "Buskerud",
+        "spraak": "nor",
+        "rekkefoelge": null
+      }
+    ]
+  },
+  {
+    "kode": "39",
+    "navn": [
+      {
+        "navn": "Vestfold",
+        "spraak": "nor",
+        "rekkefoelge": null
+      }
+    ]
+  },
+  {
+    "kode": "40",
+    "navn": [
+      {
+        "navn": "Telemark",
+        "spraak": "nor",
+        "rekkefoelge": null
+      }
+    ]
+  },
+  {
+    "kode": "55",
+    "navn": [
+      {
+        "navn": "Troms",
+        "spraak": "nor",
+        "rekkefoelge": 1
+      },
+      {
+        "navn": "Romsa",
+        "spraak": "sme",
+        "rekkefoelge": 2
+      },
+      {
+        "navn": "Tromssa",
+        "spraak": "fkv",
+        "rekkefoelge": 3
+      }
+    ]
+  },
+  {
+    "kode": "56",
+    "navn": [
+      {
+        "navn": "Finnmark",
+        "spraak": "nor",
+        "rekkefoelge": 1
+      },
+      {
+        "navn": "Finnmárku",
+        "spraak": "sme",
+        "rekkefoelge": 2
+      },
+      {
+        "navn": "Finmarkku",
+        "spraak": "fkv",
+        "rekkefoelge": 3
+      }
+    ]
+  }
+]

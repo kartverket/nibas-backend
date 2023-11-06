@@ -18,6 +18,7 @@ import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.repository.findAllByLokalidSortedByGyldigFra
 import no.kartverket.nibas.repository.findAllFramtidigeVersjonerByIdentifikator
+import no.kartverket.nibas.repository.findAllGyldigPaaDato
 import no.kartverket.nibas.repository.findAntallFramtidigeVersjonerForIdentifikator
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
@@ -31,6 +32,9 @@ class GrunnkretsService(
     private val grunnkretsRepository: GrunnkretsRepository,
     private val kodelisteService: KodelisteService
 ) {
+    @Transactional(readOnly = true)
+    fun hentAlleGrunnkretser(gyldighetsdato: LocalDate): List<Grunnkrets> =
+        grunnkretsRepository.findAllGyldigPaaDato(gyldighetsdato)
 
     @Transactional(readOnly = true)
     fun hentGrunnkrets(identifikator: Identifikator): Grunnkrets? = grunnkretsRepository.findGyldigObjektForIdentifikator(identifikator)
@@ -135,13 +139,11 @@ class GrunnkretsService(
         return nyGrunnkrets
     }
 
-    fun createNyVersjonAvGrunnkretsIAnnenKommune(grunnkrets: Grunnkrets, kommune: Kommune, nyttKommunenummerIKlartekst: String,
+    fun createNyVersjonAvGrunnkretsIAnnenKommune(grunnkrets: Grunnkrets, kommune: Kommune, nyttGrunnkretsNummer: String,
                                                  gyldigFra: LocalDate, endringstype: Endringstype): Grunnkrets {
         //Antar at kommune stemmer med angitt kommunenummerIKlartekst, for å slippe å søke opp kommunen for hver grunnkrets som skal flyttes
         val nyGrunnkrets = kopierOgSaveGrunnkrets(grunnkrets, gyldigFra, endringstype)
-        val grunnkretsnummerUtenKommunenummer = nyGrunnkrets.grunnkretsnummer!!.substring(4)
-        nyGrunnkrets.grunnkretsnummer = nyttKommunenummerIKlartekst + grunnkretsnummerUtenKommunenummer
-
+        nyGrunnkrets.grunnkretsnummer = nyttGrunnkretsNummer
         kommune.addGrunnkrets(nyGrunnkrets)
         return nyGrunnkrets
     }
