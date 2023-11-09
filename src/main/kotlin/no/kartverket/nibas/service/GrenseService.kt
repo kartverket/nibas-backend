@@ -19,6 +19,7 @@ import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.Fylke
 import no.kartverket.nibas.domain.Grense
+import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
@@ -155,7 +156,7 @@ class GrenseService(
             //todo Får bare inn én krets tilhørende grensa (TS-918). Må sjekke om grensa har flere kretser og oppdatere kretsen på den andre sida
             //Må jobbe på en kopi av lista, for ikke å få ConcurrentModificationException
             val gamleStemmekretsKoblinger = mutableSetOf<StemmekretsGrenseKobling>()
-            gamleStemmekretsKoblinger.addAll(gammelGrense.gyldigeStemmekretsGrenseKoblinger())
+            gamleStemmekretsKoblinger.addAll(gammelGrense.gyldigeStemmekretsGrenseKoblinger(gyldighetsdato))
 
             gamleStemmekretsKoblinger.forEach {
                 lagEvtNyVersjonAvStemmekretsOgLeggTilNyGrense(flaterSomHarFaattNyVersjon, Identifikator(Lokalid(it.stemmekrets.lokalid), gyldighetsdato),
@@ -170,7 +171,7 @@ class GrenseService(
             }
 
             val gamleGrunnkretsKoblinger = mutableSetOf<GrunnkretsGrenseKobling>()
-            gamleGrunnkretsKoblinger.addAll(gammelGrense.gyldigeGrunnkretsGrenseKoblinger())
+            gamleGrunnkretsKoblinger.addAll(gammelGrense.gyldigeGrunnkretsGrenseKoblinger(gyldighetsdato))
 
             gamleGrunnkretsKoblinger.forEach {
                 lagEvtNyVersjonAvGrunnkretsOgLeggTilNyGrense(flaterSomHarFaattNyVersjon, Identifikator(Lokalid(it.grunnkrets.lokalid), gyldighetsdato),
@@ -333,4 +334,116 @@ class GrenseService(
         }
         return grense
     }
+
+    fun endreGrensetypeForGrunnkretserOgFlatedannAdmEnheter(grunnkretser: List<Grunnkrets>, gyldigFra: LocalDate, endringstype: Endringstype) : Set<Flate> {
+        val grenserSomSkalHaNyVersjon: MutableMap<Grensetype, MutableSet<Grense>> = mutableMapOf()
+        val flaterSomHarFaattNyVersjon: MutableMap<Lokalid, Flate> = mutableMapOf()
+
+        for (grunnkrets: Grunnkrets in grunnkretser) {
+
+            for (grensekobling: GrenseKobling in grunnkrets.getGrenser(gyldigFra)) {
+                val grunnkretserForGrense = grensekobling.grense.grunnkretser(gyldigFra)
+                val kommunenumre = grunnkretserForGrense.map { it.grunnkretsnummer!!.take(4) }.toSet()
+                if (kommunenumre.size == 1) {
+                    //Skal ikke endres til kommune- eller fylkesgrense
+                    @Suppress("ControlFlowWithEmptyBody")
+                    if (Grensetype.Delomraadegrense != grensekobling.grense.grensetype && Grensetype.Grunnkretsgrense != grensekobling.grense.grensetype) {
+                        //Kunne evt validert at den er grunnkrets-/delområdegrense (det er ingen slike feil pr okt 23)
+                    }
+                    //Todo
+                    //Ved senere kommunereguleringer enn den til 1.1.2024, kan det tenkes at kommuner skal slås sammen,
+                    //da vil det finnes grenser som er kommunegrense og som skal endres til grunnkrets-/delområdegrense.
+                    //Og hvis grensa også hører til stemmekretser, må den dupliseres sånn at stemmekretsene får en egen grense av type Stemmekretsgrense.
+                } else {
+                    val nyGrensetype: Grensetype? = beregnNyGrensetype(kommunenumre, grensekobling)
+
+                    if (nyGrensetype != null) {
+                        grenserSomSkalHaNyVersjon.addToMap(nyGrensetype, grensekobling.grense)
+                        val kommune = grunnkrets.getKommune(gyldigFra) ?: throw UgyldigTilstandException("Fant ikke gyldig kommune for $grunnkrets")
+                        if (nyGrensetype == Grensetype.Fylkesgrense) {
+                            val fylke = kommune.getFylke(gyldigFra) ?: throw UgyldigTilstandException("Fant ikke gyldig fylke for $grunnkrets sin kommune")
+                            flaterSomHarFaattNyVersjon.putIfAbsent(Lokalid(fylke.lokalid), fylke)
+                        } else {
+                            flaterSomHarFaattNyVersjon.putIfAbsent(Lokalid(kommune.lokalid), kommune)
+                        }
+                    }
+                }
+            }
+        }
+
+        lagNyVersjonAvGrenseOgKnyttTilKretser(grenserSomSkalHaNyVersjon, gyldigFra, endringstype)
+
+        val flateSet = flaterSomHarFaattNyVersjon.values.toSet() // det vil teknisk sett ikke være nødvendig med set her da koden over bruker putIfAbsent
+        if (flateSet.isNotEmpty()) {
+            flateService.oppdaterFlaterFor(flateSet)
+        }
+        return flateSet
+    }
+
+    private fun beregnNyGrensetype(kommunenumre: Set<String>, grensekobling: GrenseKobling): Grensetype? {
+        var nyGrensetype: Grensetype? = null
+        val fylkesnumre = kommunenumre.map { it.take(2) }.toSet()
+        if (fylkesnumre.size > 1 && Grensetype.Fylkesgrense != grensekobling.grense.grensetype) {
+            //Har flere fylker, men er ikke fylkesgrense
+            nyGrensetype = Grensetype.Fylkesgrense
+        } else if (Grensetype.Kommunegrense != grensekobling.grense.grensetype) {
+            //Har flere kommuner, men er ikke kommunegrense
+            nyGrensetype = Grensetype.Kommunegrense
+        }
+        //Todo Etter at delt geometri er gjennomført, vil administrative grenser også høre til stemmekretser
+        //Ved endring fra en adm.grensetype til en annen, må den nye grensa også byttes ut for tilhørende stemmekretser
+        //Ved endring fra grunnkrets-/delområdegrense til adm.grense, skal den nye grensa også knyttes til stemmekretser (delt geometri-logikk)
+
+        return nyGrensetype
+    }
+
+    fun <G, E> MutableMap<G, MutableSet<E>>.addToMap(key: G, value: E) {
+        this.getOrPut(key) { mutableSetOf() }.add(value)
+    }
+
+    private fun lagNyVersjonAvGrenseOgKnyttTilKretser(
+        grenserSomSkalHaNyVersjon: MutableMap<Grensetype, MutableSet<Grense>>,
+        gyldigFra: LocalDate,
+        endringstype: Endringstype
+    ) {
+        grenserSomSkalHaNyVersjon.entries.forEach { mutableEntry ->
+            val nyGrensetype = mutableEntry.key
+            mutableEntry.value.forEach { gammelGrense ->
+                val nyGrense = createNyVersjonAvGrense(gammelGrense, gyldigFra, endringstype)
+                    .apply { grensetype = nyGrensetype }
+
+                val gamleGrunnkretsKoblinger = mutableSetOf<GrunnkretsGrenseKobling>()
+                gamleGrunnkretsKoblinger.addAll(gammelGrense.gyldigeGrunnkretsGrenseKoblinger(gyldigFra))
+
+                gamleGrunnkretsKoblinger.forEach {
+                    //Den nye grunnkretsen har fått kobling til alle grensene som den gamle har
+                    //Må bytte ut koblinga til den oppdaterte grensa
+                    it.grunnkrets.replaceGrensekobling(gammelGrense, nyGrense, GrenseKoblingAttributter(
+                        it.grenseKoblingAttributter.retningMedKlokken,
+                        it.grenseKoblingAttributter.rekkefoelge,
+                        it.grenseKoblingAttributter.flateIndeks,
+                        it.grenseKoblingAttributter.hullIndeks
+                    ))
+                }
+
+                val gamleStemmekretsKoblinger = mutableSetOf<StemmekretsGrenseKobling>()
+                gamleStemmekretsKoblinger.addAll(gammelGrense.gyldigeStemmekretsGrenseKoblinger(gyldigFra))
+
+                gamleStemmekretsKoblinger.forEach {
+                    //Den nye stemmekretsen har fått kobling til alle grensene som den gamle har
+                    //Må bytte ut koblinga til den oppdaterte grensa
+                    it.stemmekrets.replaceGrensekobling(gammelGrense, nyGrense, GrenseKoblingAttributter(
+                        it.grenseKoblingAttributter.retningMedKlokken,
+                        it.grenseKoblingAttributter.rekkefoelge,
+                        it.grenseKoblingAttributter.flateIndeks,
+                        it.grenseKoblingAttributter.hullIndeks
+                    ))
+                }
+
+            }
+        }
+
+        grenseRepository.flush()
+    }
+
 }

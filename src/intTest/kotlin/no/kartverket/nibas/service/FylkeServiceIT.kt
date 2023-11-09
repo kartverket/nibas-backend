@@ -27,12 +27,6 @@ class FylkeServiceIT : TestWithDbContainer() {
     @MockkBean
     private lateinit var kodelisteServiceMock: KodelisteService
 
-    @Autowired
-    private lateinit var fylkeService: FylkeService
-
-    @Autowired
-    private lateinit var administrativenhetnavnService: AdministrativenhetnavnService
-
     private val october1In2022 = LocalDate.of(2022, Month.OCTOBER, 1)
     private val november28In2022 = LocalDate.of(2022, Month.NOVEMBER, 28)
     private val jan1In2023 = LocalDate.of(2023, Month.JANUARY, 1)

@@ -8,7 +8,6 @@ import no.kartverket.nibas.repository.*
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -17,9 +16,6 @@ import java.time.Month
 @ActiveProfiles("security-off")
 @Transactional
 class NasjonServiceIT : TestWithDbContainer() {
-
-    @Autowired
-    private lateinit var nasjonService: NasjonService
 
     private val october1In2022 = LocalDate.of(2022, Month.OCTOBER, 1)
     private val november28In2022 = LocalDate.of(2022, Month.NOVEMBER, 28)

@@ -2,9 +2,11 @@ package no.kartverket.nibas.kommuneogfylkesdeling
 
 import no.kartverket.nibas.domain.Administrativenhetnavn
 import no.kartverket.nibas.domain.Endringstype
+import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.SpraakkodeRepository
+import no.kartverket.nibas.service.GrenseService
 import no.kartverket.nibas.service.GrunnkretsService
 import no.kartverket.nibas.service.KommuneService
 import no.kartverket.nibas.service.StemmekretsService
@@ -19,7 +21,8 @@ class KommuneDelingService(
     private val kodelisteService: KodelisteService,
     private val spraakkodeRepository: SpraakkodeRepository,
     private val grunnkretsService: GrunnkretsService,
-    private val stemmekretsService: StemmekretsService
+    private val stemmekretsService: StemmekretsService,
+    private val grenseService: GrenseService
 ) {
     fun delKommuner(kommunedelingManuser: List<KommunedelingManus>) {
         kommunedelingManuser.forEach { delKommune(it) }
@@ -32,12 +35,13 @@ class KommuneDelingService(
             ?: throw RuntimeException("Klarte ikke finne kommunen som skulle deles. Gjelder kommunenummer: ${kommuneDelingManus.gammeltKommuneNummer}")
 
         val nyeKommuner = opprettNyeKommunerForKommunedeling(kommuneDelingManus, kommuneSomSkalDeles)
+        var nyeGrunnkretser: List<Grunnkrets> = listOf()
 
         kommuneDelingManus.nyeKommuner.forEach { nyKommuneManus ->
             val kommunenummerId = kodelisteService.getKommunenummerIdByCodeValue(nyKommuneManus.kommunenummer)
             val nyKommune = nyeKommuner.find { it.kommunenummer == kommunenummerId }!!
 
-            flyttGrunnkretserTilNyKommune(
+            nyeGrunnkretser = flyttGrunnkretserTilNyKommune(
                 gyldighetsDato = kommuneDelingManus.fraDato,
                 grunnkretserSomFlyttesTilKommune = nyKommuneManus.grunnkretser,
                 gammelKommune = kommuneSomSkalDeles,
@@ -55,25 +59,30 @@ class KommuneDelingService(
         kommuneService.settKommuneSomHistorisk(kommuneSomSkalDeles, kommuneDelingManus.fraDato)
 
         // Oppdater grensetyper (få riktig kommunegrenser grunnet nye kretser) og flatedanne
-        // TODO: Dette kommer i en egen PR
+        grenseService.endreGrensetypeForGrunnkretserOgFlatedannAdmEnheter(nyeGrunnkretser, kommuneDelingManus.fraDato, Endringstype.VEDTATT_DELING)
+        // TODO: Skal også endre grensetype for stemmekretser
 
         // Sende events om endringene
         // TODO: Vi må huske å sende events!
     }
 
-    private fun flyttGrunnkretserTilNyKommune(gyldighetsDato: LocalDate, grunnkretserSomFlyttesTilKommune: List<GrunnkretsManus>, gammelKommune: Kommune, nyKommune: Kommune) {
+    private fun flyttGrunnkretserTilNyKommune(gyldighetsDato: LocalDate, grunnkretserSomFlyttesTilKommune: List<GrunnkretsManus>, gammelKommune: Kommune, nyKommune: Kommune)
+        : List<Grunnkrets> {
         val grunnkretser = gammelKommune.getGrunnkretser(gyldighetsDato)
             .associateBy { it.grunnkretsnummer }
 
-        grunnkretserSomFlyttesTilKommune.forEach { grunnkretsManus ->
-            grunnkretsService.createNyVersjonAvGrunnkretsIAnnenKommune(
-                grunnkrets = grunnkretser[grunnkretsManus.gammeltGrunnkretsNummer]!!,
-                kommune = nyKommune,
-                nyttGrunnkretsNummer = grunnkretsManus.nyttGrunnkretsNummer,
-                gyldigFra = gyldighetsDato,
-                endringstype = Endringstype.VEDTATT_DELING
-            )
-        }
+        val nyeGrunnkretser =
+            grunnkretserSomFlyttesTilKommune.map { grunnkretsManus ->
+                grunnkretsService.createNyVersjonAvGrunnkretsIAnnenKommune(
+                    grunnkrets = grunnkretser[grunnkretsManus.gammeltGrunnkretsNummer]!!,
+                    kommune = nyKommune,
+                    nyttGrunnkretsNummer = grunnkretsManus.nyttGrunnkretsNummer,
+                    gyldigFra = gyldighetsDato,
+                    endringstype = Endringstype.VEDTATT_DELING
+                )
+
+            }.toList()
+        return nyeGrunnkretser
     }
 
     private fun flyttStemmekretserTilNyKommune(gyldighetsDato: LocalDate, stemmekretserSomFlyttesTilKommune: List<StemmekretsManus>, gammelKommune: Kommune, nyKommune: Kommune) {

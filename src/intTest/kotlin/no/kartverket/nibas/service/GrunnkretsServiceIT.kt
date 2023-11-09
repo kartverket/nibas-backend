@@ -32,7 +32,6 @@ import org.junit.jupiter.api.Test
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
 import org.mockito.Mockito
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
@@ -43,24 +42,6 @@ import java.util.*
 @ActiveProfiles(profiles = ["security-off", "eventsDisabled"])
 @Transactional
 class GrunnkretsServiceIT : TestWithDbContainer() {
-
-    @Autowired
-    private lateinit var grunnkretsService: GrunnkretsService
-
-    @Autowired
-    private lateinit var kommuneService: KommuneService
-
-    @Autowired
-    private lateinit var fylkeService: FylkeService
-
-    @Autowired
-    private lateinit var nasjonService: NasjonService
-
-    @Autowired
-    private lateinit var flateService: FlateService
-
-    @Autowired
-    private lateinit var grenseService: GrenseService
 
     @MockBean
     private lateinit var kodelisteServiceMock: KodelisteService
@@ -864,6 +845,147 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
             vestreKretsEtterLagring, oestreKretsEtterLagring, opprinneligVestreKrets, opprinneligOestreKrets)
     }
 
+    @Test
+    fun `to grunnkretser i hver sin kommune i samme fylke som splittes til to fylker`() {
+        Mockito.`when`(kodelisteServiceMock.getFylkesnummerIdByCodeValue("39")).thenReturn("583a2846-e90c-4911-b8bb-b2537fd896a0")
+        Mockito.`when`(kodelisteServiceMock.getFylkesnummerIdByCodeValue("40")).thenReturn("f26cc714-7289-4026-a076-35f83f9f2332")
+        Mockito.`when`(kodelisteServiceMock.getCodeValueByFylkesnummerId("e79b7a63-13ff-4ba5-b4ef-0dfa4e6af1df")).thenReturn("38")
+        Mockito.`when`(kodelisteServiceMock.getCodeValueByFylkesnummerId("583a2846-e90c-4911-b8bb-b2537fd896a0")).thenReturn("39")
+        Mockito.`when`(kodelisteServiceMock.getCodeValueByFylkesnummerId("f26cc714-7289-4026-a076-35f83f9f2332")).thenReturn("40")
+        Mockito.`when`(kodelisteServiceMock.getCodeValueByKommunenummerId("3805")).thenReturn("3805")
+        Mockito.`when`(kodelisteServiceMock.getCodeValueByKommunenummerId("3812")).thenReturn("3812")
+        Mockito.`when`(kodelisteServiceMock.getKommunenummerIdByCodeValue("3909")).thenReturn("3909")
+        Mockito.`when`(kodelisteServiceMock.getKommunenummerIdByCodeValue("4010")).thenReturn("4010")
+
+        val opprinneligDato = october1In2022
+        val (vestreKrets, oestreKrets) = saveNaboGrunnkretserIHverSinKommune(gyldigFra = opprinneligDato, kommunenummer1 = "3812", kommunenummer2 = "3805")
+        vestreKrets.grenser.stream().forEach { if (it.grense.id != "grenseDelt") it.grense.grensetype = Grensetype.Fylkesgrense}
+        oestreKrets.grenser.stream().forEach { if (it.grense.id != "grenseDelt") it.grense.grensetype = Grensetype.Fylkesgrense}
+        val gamleSiljan = vestreKrets.getKommune(opprinneligDato)!!
+        val gamleLarvik = oestreKrets.getKommune(opprinneligDato)!!
+
+        val norskNavn = saveAdministrativenhetnavn(navn = "Vestfold og Telemark", spraakid = "nor")
+        val vestfoldOgTelemark = saveFylkeOgUnikLokalid(id = "fylke38", lokalid = "38VestfoldOgTelemark", fylkesnummer = "e79b7a63-13ff-4ba5-b4ef-0dfa4e6af1df",
+            administrativenhetnavn = listOf(norskNavn), gyldigFra = opprinneligDato, kommuner = listOf(gamleSiljan, gamleLarvik))
+        saveNasjonOgUnikLokalid(fylker = listOf(vestfoldOgTelemark))
+
+        grenseRepository.flush()
+        flateService.oppdaterFlaterFor(setOf(gamleSiljan, gamleLarvik, vestfoldOgTelemark))
+        gamleSiljan.posisjon = gamleSiljan.omraade?.interiorPoint
+        gamleLarvik.posisjon = gamleLarvik.omraade?.interiorPoint
+        vestfoldOgTelemark.posisjon = vestfoldOgTelemark.omraade?.interiorPoint
+        grenseRepository.flush()
+
+        val vestfoldNavn = administrativenhetnavnService.createNyttAdmEnhetNavn(oppgittNavn = "Vestfold", spraakForkortelse = "nor")
+        val telemarkNavn = administrativenhetnavnService.createNyttAdmEnhetNavn(oppgittNavn = "Telemark", spraakForkortelse = "nor")
+
+        val nyVestfold = fylkeService.createNyttFylkeMedNyUnikLokalid(
+            kopierFraFylke = vestfoldOgTelemark,
+            nyttFylkesnummerIKlartekst = "39",
+            admenhetnavnList = listOf(vestfoldNavn),
+            gyldigFra = jan1In2024,
+            endringstype = Endringstype.FASTSETTING
+        )
+        val nyTelemark = fylkeService.createNyttFylkeMedNyUnikLokalid(
+            kopierFraFylke = vestfoldOgTelemark,
+            nyttFylkesnummerIKlartekst = "40",
+            admenhetnavnList = listOf(telemarkNavn),
+            gyldigFra = jan1In2024,
+            endringstype = Endringstype.FASTSETTING
+        )
+        val nyLarvik = kommuneService.createNyKommuneMedNyUnikLokalid(
+            kopierFraKommune = gamleLarvik,
+            nyttKommunenummerIKlartekst = "3909",
+            gyldigFra = jan1In2024,
+            endringstype = Endringstype.FASTSETTING
+        )
+        val nySiljan = kommuneService.createNyKommuneMedNyUnikLokalid(
+            kopierFraKommune = gamleSiljan,
+            nyttKommunenummerIKlartekst = "4010",
+            gyldigFra = jan1In2024,
+            endringstype = Endringstype.FASTSETTING
+        )
+
+        val nyVestreKretsINySiljan = grunnkretsService.createNyVersjonAvGrunnkretsIAnnenKommune(vestreKrets, nySiljan, "40190120",
+            jan1In2024, Endringstype.FASTSETTING)
+        val nyOestreKretsINyLarvik = grunnkretsService.createNyVersjonAvGrunnkretsIAnnenKommune(oestreKrets, nyLarvik, "39090121",
+            jan1In2024, Endringstype.FASTSETTING)
+
+        val flateSet = grenseService.endreGrensetypeForGrunnkretserOgFlatedannAdmEnheter(listOf(nyVestreKretsINySiljan, nyOestreKretsINyLarvik),
+            jan1In2024, Endringstype.FASTSETTING)
+        assertThat(flateSet).hasSize(2).extracting("id").contains(nyVestfold.id, nyTelemark.id)
+        val hentNyVestfold = fylkeRepository.findById(nyVestfold.id).get()
+        val hentNyTelemark = fylkeRepository.findById(nyTelemark.id).get()
+
+        assertThat(vestfoldOgTelemark.omraade).isNotEqualTo(hentNyTelemark.omraade).isNotEqualTo(hentNyVestfold.omraade)
+    }
+
+    @Test
+    fun `to nabogrunnkretser i samme kommune som skal deles til hver sin kommune`() {
+        Mockito.`when`(kodelisteServiceMock.getFylkesnummerIdByCodeValue("03")).thenReturn("03")
+        Mockito.`when`(kodelisteServiceMock.getCodeValueByFylkesnummerId("03")).thenReturn("03")
+        Mockito.`when`(kodelisteServiceMock.getCodeValueByKommunenummerId("0301")).thenReturn("0301")
+        Mockito.`when`(kodelisteServiceMock.getCodeValueByKommunenummerId("0308")).thenReturn("0308")
+        Mockito.`when`(kodelisteServiceMock.getCodeValueByKommunenummerId("0380")).thenReturn("0380")
+        Mockito.`when`(kodelisteServiceMock.getKommunenummerIdByCodeValue("0308")).thenReturn("0308")
+        Mockito.`when`(kodelisteServiceMock.getKommunenummerIdByCodeValue("0380")).thenReturn("0380")
+
+        val opprinneligDato = LocalDate.parse("2022-01-01")
+        val deltGrenseLokalid = "grenseDeltLokalid"
+
+        val (vestreKrets, oestreKrets) = saveNaboGrunnkretser(gyldigFra = opprinneligDato)
+        vestreKrets.grenser.stream().forEach { if (it.grense.id != "grenseDelt") it.grense.grensetype = Grensetype.Kommunegrense}
+        oestreKrets.grenser.stream().forEach { if (it.grense.id != "grenseDelt") it.grense.grensetype = Grensetype.Kommunegrense}
+        grenseRepository.flush()
+
+        val gamleAalesund = vestreKrets.getKommune(opprinneligDato)!!
+        val moereOgRomsdal = saveFylkeOgUnikLokalid(id = "fylke03", lokalid = "03MoereOgRomsdal", fylkesnummer = "03",
+            gyldigFra = opprinneligDato, kommuner = listOf(gamleAalesund))
+        saveNasjonOgUnikLokalid(fylker = listOf(moereOgRomsdal))
+
+        grenseRepository.flush()
+        flateService.oppdaterFlaterFor(setOf(gamleAalesund))
+        gamleAalesund.posisjon = gamleAalesund.omraade?.interiorPoint
+        grenseRepository.flush()
+
+        val haram = kommuneService.createNyKommuneMedNyUnikLokalid(
+            kopierFraKommune = gamleAalesund,
+            nyttKommunenummerIKlartekst = "0380",
+            gyldigFra = jan1In2024,
+            endringstype = Endringstype.FASTSETTING
+        )
+        val nyAalesund = kommuneService.createNyKommuneMedNyUnikLokalid(
+            kopierFraKommune = gamleAalesund,
+            nyttKommunenummerIKlartekst = "0308",
+            gyldigFra = jan1In2024,
+            endringstype = Endringstype.FASTSETTING
+        )
+
+        val nyVestreKretsINyAalesund = grunnkretsService.createNyVersjonAvGrunnkretsIAnnenKommune(vestreKrets, nyAalesund, "03080120",
+            jan1In2024, Endringstype.FASTSETTING)
+        val nyOestreKretsIHaram = grunnkretsService.createNyVersjonAvGrunnkretsIAnnenKommune(oestreKrets, haram, "03800121",
+            jan1In2024, Endringstype.FASTSETTING)
+
+        val flateSet = grenseService.endreGrensetypeForGrunnkretserOgFlatedannAdmEnheter(listOf(nyVestreKretsINyAalesund, nyOestreKretsIHaram),
+            jan1In2024, Endringstype.FASTSETTING)
+
+        assertThat(flateSet).hasSize(2).extracting("id").contains(nyAalesund.id, haram.id)
+        val hentNyAalesund = kommuneRepository.findById(nyAalesund.id).get()
+        val hentHaram = kommuneRepository.findById(haram.id).get()
+
+        assertThat(gamleAalesund.omraade).isNotEqualTo(hentNyAalesund.omraade).isNotEqualTo(hentHaram.omraade)
+
+        val deltGrense = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), opprinneligDato))!!
+        assertThat(deltGrense.grunnkretser).hasSize(2)
+        assertThat(deltGrense.grunnkretser.map { it.grunnkrets.id }).containsExactlyInAnyOrder(vestreKrets.id, oestreKrets.id)
+        assertThat(deltGrense.grensetype).isEqualTo(Grensetype.Grunnkretsgrense)
+
+        val nyDeltGrense = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), jan1In2024))!!
+        assertThat(nyDeltGrense.grunnkretser).hasSize(2)
+        assertThat(nyDeltGrense.grunnkretser.map { it.grunnkrets.id }).containsExactlyInAnyOrder(nyVestreKretsINyAalesund.id, nyOestreKretsIHaram.id)
+        assertThat(nyDeltGrense.grensetype).isEqualTo(Grensetype.Kommunegrense)
+    }
+
     private fun utfoerMetadataoppdatering(kretsSomSkalOppdateres: Grunnkrets, datoForOppdatering: LocalDate): Grunnkrets? {
         val grunnkretsRequest = GrunnkretsRequestBuilder().withLokalId(kretsSomSkalOppdateres.lokalid)
             .withGrunnkretsnummer(kretsSomSkalOppdateres.grunnkretsnummer!!).build()
@@ -1017,7 +1139,8 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         return listOf(kretsVest, kretsOest)
     }
 
-    private fun saveNaboGrunnkretserIHverSinKommune(gyldigFra: LocalDate, medHull: Boolean = false): List<Grunnkrets> {
+    private fun saveNaboGrunnkretserIHverSinKommune(gyldigFra: LocalDate, medHull: Boolean = false,
+                                                    kommunenummer1: String? = "0301", kommunenummer2: String? = "0302"): List<Grunnkrets> {
         val grenserForVest = if (medHull) {
             GrenseHelper.getGrenserForVestligKrets(gyldigFra, Grensetype.Kommunegrense) +
                 GrenseHelper.getHullVestligKrets(gyldigFra, Grensetype.Kommunegrense)
@@ -1033,7 +1156,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         val kretsVest = saveGrunnkrets(
             id = "1",
             lokalid = Lokalid("123"),
-            grunnkretsnummer = "03010020",
+            grunnkretsnummer = kommunenummer1 + "0020",
             grunnkretsnavn = "Vestre krets",
             gyldigFra = gyldigFra,
             grenser = lagredeGrenserForVest
@@ -1042,14 +1165,14 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         val kretsOest = saveGrunnkrets(
             id = "2",
             lokalid = Lokalid("234"),
-            grunnkretsnummer = "03020021",
+            grunnkretsnummer = kommunenummer2 + "0021",
             grunnkretsnavn = "Østre krets",
             gyldigFra = gyldigFra,
             grenser = lagredeGrenserForOest
         )
 
-        saveKommuneOgUnikLokalid(id = "idKommuneVest", lokalid = "kommuneVest", grunnkretser = listOf(kretsVest), gyldigFra = gyldigFra)
-        saveKommuneOgUnikLokalid(id = "idKommuneOest", lokalid = "kommuneOest", grunnkretser = listOf(kretsOest), gyldigFra = gyldigFra, kommunenummer = "0302")
+        saveKommuneOgUnikLokalid(id = "idKommuneVest", lokalid = "kommuneVest", grunnkretser = listOf(kretsVest), gyldigFra = gyldigFra, kommunenummer = kommunenummer1!!)
+        saveKommuneOgUnikLokalid(id = "idKommuneOest", lokalid = "kommuneOest", grunnkretser = listOf(kretsOest), gyldigFra = gyldigFra, kommunenummer = kommunenummer2!!)
         grenseRepository.flush()
         return listOf(kretsVest, kretsOest)
     }

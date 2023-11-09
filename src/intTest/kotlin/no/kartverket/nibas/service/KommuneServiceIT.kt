@@ -27,12 +27,6 @@ class KommuneServiceIT : TestWithDbContainer() {
     @MockkBean
     private lateinit var kodelisteServiceMock: KodelisteService
 
-    @Autowired
-    private lateinit var kommuneService: KommuneService
-
-    @Autowired
-    private lateinit var administrativenhetnavnService: AdministrativenhetnavnService
-
     private val lokalidOfKommuneInDataSet = "ac7e05cd-fb07-4270-ad95-e3c32c1370d0"
     private val october1In2022 = LocalDate.of(2022, Month.OCTOBER, 1)
     private val november28In2022 = LocalDate.of(2022, Month.NOVEMBER, 28) // Dagens dato
@@ -464,7 +458,8 @@ class KommuneServiceIT : TestWithDbContainer() {
         val kommune = saveKommuneOgUnikLokalid(lokalid = "5436Porsanger", kommunenummer = "f2c438ec-4551-4245-b6a0-153d53a39dde",
             administrativenhetnavn = listOf(norskNavn, samiskNavn, kvenskNavn))
         saveFylkeOgUnikLokalid(lokalid = "54TromsOgFinnmark", fylkesnummer = "efe425f5-fc7f-4a29-a70d-31363ec6a306", kommuner = listOf(kommune))
-        val nyFinnmark = saveFylkeOgUnikLokalid(lokalid = "56Finnmark", fylkesnummer = "ee97a593-2f9d-49c7-b251-c0f0cfa8769b", gyldigFra = jan1In2024)
+        val nyFinnmark = saveFylkeOgUnikLokalid(id = "56Finnmark1", lokalid = "56Finnmark",
+            fylkesnummer = "ee97a593-2f9d-49c7-b251-c0f0cfa8769b", gyldigFra = jan1In2024)
 
         assertThat(kommune.utledetFra).isNull()
         val nyKommune = kommuneService.createNyKommuneMedNyUnikLokalid(
@@ -474,6 +469,7 @@ class KommuneServiceIT : TestWithDbContainer() {
             endringstype = Endringstype.FASTSETTING
         )
 
+        assertThat(nyKommune.id).isNotEqualTo(kommune.id)
         assertThat(nyKommune.lokalid).isNotEqualTo(kommune.lokalid)
         assertThat(nyKommune.kommunenummer).isEqualTo("b0f1dfb4-2ba3-44a8-9b86-37bea79f6a60")
         assertThat(nyKommune.utledetFra!!.id).isEqualTo(kommune.id)
@@ -493,7 +489,6 @@ class KommuneServiceIT : TestWithDbContainer() {
         every { kodelisteServiceMock.getFylkesnummerIdByCodeValue("15") } returns "c499a315-0cd5-4e99-8acf-bd6f4803799a"
 
         val norskNavn = saveAdministrativenhetnavn(navn = "Ålesund", spraakid = "nor")
-
         val gamleAalesund = saveKommuneOgUnikLokalid(lokalid = "1507Ålesund", kommunenummer = "afc65fde-8a62-497d-b35d-77345efddee3",
             administrativenhetnavn = listOf(norskNavn))
         val moereOgRomsdal = saveFylkeOgUnikLokalid(lokalid = "15MøreOgRomsdal", fylkesnummer = "c499a315-0cd5-4e99-8acf-bd6f4803799a",
@@ -507,6 +502,7 @@ class KommuneServiceIT : TestWithDbContainer() {
             endringstype = Endringstype.FASTSETTING
         )
 
+        assertThat(nyeAalesund.id).isNotEqualTo(gamleAalesund.id)
         assertThat(nyeAalesund.lokalid).isNotEqualTo(gamleAalesund.lokalid)
         assertThat(nyeAalesund.kommunenummer).isEqualTo("9720eabc-0bff-4c93-b05c-95bae39ef2ea")
         assertThat(nyeAalesund.utledetFra!!.id).isEqualTo(gamleAalesund.id)

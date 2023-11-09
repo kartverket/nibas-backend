@@ -34,7 +34,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -44,12 +43,6 @@ import java.util.*
 @ActiveProfiles("security-off")
 @Transactional
 class StemmekretsServiceIT : TestWithDbContainer() {
-
-    @Autowired
-    private lateinit var stemmekretsService: StemmekretsService
-
-    @Autowired
-    private lateinit var grenseService: GrenseService
 
     @MockkBean
     private lateinit var kodelisteServiceMock: KodelisteService

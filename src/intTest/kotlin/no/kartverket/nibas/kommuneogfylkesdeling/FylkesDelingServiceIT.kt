@@ -5,7 +5,6 @@ import io.mockk.every
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.kodelister.KodelisteService
-import no.kartverket.nibas.service.FylkeService
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -23,9 +22,6 @@ class FylkesDelingServiceIT: TestWithDbContainer() {
 
     @Autowired
     private lateinit var fylkesDelingService: FylkesDelingService
-
-    @Autowired
-    private lateinit var fylkeService: FylkeService
 
     val fylke1LokalId = "lokalIdFylke1"
 

@@ -26,6 +26,14 @@ import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.NasjonRepository
 import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.repository.UnikLokalidRepository
+import no.kartverket.nibas.service.AdministrativenhetnavnService
+import no.kartverket.nibas.service.FlateService
+import no.kartverket.nibas.service.FylkeService
+import no.kartverket.nibas.service.GrenseService
+import no.kartverket.nibas.service.GrunnkretsService
+import no.kartverket.nibas.service.KommuneService
+import no.kartverket.nibas.service.NasjonService
+import no.kartverket.nibas.service.StemmekretsService
 import no.kartverket.nibas.sporing.Gyldighet
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -64,6 +72,30 @@ class TestWithDbContainer {
 
     @Autowired
     lateinit var administrativenhetnavnRepository: AdministrativenhetnavnRepository
+
+    @Autowired
+    lateinit var grunnkretsService: GrunnkretsService
+
+    @Autowired
+    lateinit var stemmekretsService: StemmekretsService
+
+    @Autowired
+    lateinit var kommuneService: KommuneService
+
+    @Autowired
+    lateinit var fylkeService: FylkeService
+
+    @Autowired
+    lateinit var nasjonService: NasjonService
+
+    @Autowired
+    lateinit var flateService: FlateService
+
+    @Autowired
+    lateinit var grenseService: GrenseService
+
+    @Autowired
+    lateinit var administrativenhetnavnService: AdministrativenhetnavnService
 
     companion object dbContainer : PostgreSQLContainer<dbContainer>(
         DockerImageName.parse("postgis/postgis:14-3.2-alpine").asCompatibleSubstituteFor("postgres")
