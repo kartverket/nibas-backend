@@ -858,9 +858,9 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         Mockito.`when`(kodelisteServiceMock.getKommunenummerIdByCodeValue("4010")).thenReturn("4010")
 
         val opprinneligDato = october1In2022
-        val (vestreKrets, oestreKrets) = saveNaboGrunnkretserIHverSinKommune(gyldigFra = opprinneligDato, kommunenummer1 = "3812", kommunenummer2 = "3805")
-        vestreKrets.grenser.stream().forEach { if (it.grense.id != "grenseDelt") it.grense.grensetype = Grensetype.Fylkesgrense}
-        oestreKrets.grenser.stream().forEach { if (it.grense.id != "grenseDelt") it.grense.grensetype = Grensetype.Fylkesgrense}
+        val (vestreKrets, oestreKrets) = saveNaboGrunnkretserIHverSinKommune(gyldigFra = opprinneligDato,
+            kommunenummer1 = "3812", kommunenummer2 = "3805", medToDelteGrenser = true)
+        settGrensetypeForGrenserSomIkkeErDelt(vestreKrets, oestreKrets, Grensetype.Fylkesgrense)
         val gamleSiljan = vestreKrets.getKommune(opprinneligDato)!!
         val gamleLarvik = oestreKrets.getKommune(opprinneligDato)!!
 
@@ -918,6 +918,8 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         val hentNyTelemark = fylkeRepository.findById(nyTelemark.id).get()
 
         assertThat(vestfoldOgTelemark.omraade).isNotEqualTo(hentNyTelemark.omraade).isNotEqualTo(hentNyVestfold.omraade)
+        assertDelteGrenser(opprinneligDato, vestreKrets, oestreKrets, Grensetype.Kommunegrense,
+            jan1In2024, nyVestreKretsINySiljan, nyOestreKretsINyLarvik, Grensetype.Fylkesgrense)
     }
 
     @Test
@@ -931,11 +933,8 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         Mockito.`when`(kodelisteServiceMock.getKommunenummerIdByCodeValue("0380")).thenReturn("0380")
 
         val opprinneligDato = LocalDate.parse("2022-01-01")
-        val deltGrenseLokalid = "grenseDeltLokalid"
-
-        val (vestreKrets, oestreKrets) = saveNaboGrunnkretser(gyldigFra = opprinneligDato)
-        vestreKrets.grenser.stream().forEach { if (it.grense.id != "grenseDelt") it.grense.grensetype = Grensetype.Kommunegrense}
-        oestreKrets.grenser.stream().forEach { if (it.grense.id != "grenseDelt") it.grense.grensetype = Grensetype.Kommunegrense}
+        val (vestreKrets, oestreKrets) = saveNaboGrunnkretser(gyldigFra = opprinneligDato, medToDelteGrenser = true)
+        settGrensetypeForGrenserSomIkkeErDelt(vestreKrets, oestreKrets, Grensetype.Kommunegrense)
         grenseRepository.flush()
 
         val gamleAalesund = vestreKrets.getKommune(opprinneligDato)!!
@@ -974,16 +973,37 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         val hentHaram = kommuneRepository.findById(haram.id).get()
 
         assertThat(gamleAalesund.omraade).isNotEqualTo(hentNyAalesund.omraade).isNotEqualTo(hentHaram.omraade)
+        assertDelteGrenser(opprinneligDato, vestreKrets, oestreKrets, Grensetype.Grunnkretsgrense,
+            jan1In2024, nyVestreKretsINyAalesund, nyOestreKretsIHaram, Grensetype.Kommunegrense)
+    }
 
-        val deltGrense = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), opprinneligDato))!!
+    private fun assertDelteGrenser(oensketGammelDato: LocalDate, oensketGammelKrets1: Grunnkrets, oensketGammelKrets2: Grunnkrets,
+                                   oensketGammelGrensetype: Grensetype,
+                                   oensketNyDato: LocalDate, oensketNyKrets1: Grunnkrets, oensketNyKrets2: Grunnkrets, oensketNyGrensetype: Grensetype) {
+        val deltGrense = grenseService.hentGrense(Identifikator(Lokalid("grenseDeltLokalid"), oensketGammelDato))!!
         assertThat(deltGrense.grunnkretser).hasSize(2)
-        assertThat(deltGrense.grunnkretser.map { it.grunnkrets.id }).containsExactlyInAnyOrder(vestreKrets.id, oestreKrets.id)
-        assertThat(deltGrense.grensetype).isEqualTo(Grensetype.Grunnkretsgrense)
+        assertThat(deltGrense.grunnkretser.map { it.grunnkrets.id }).containsExactlyInAnyOrder(oensketGammelKrets1.id, oensketGammelKrets2.id)
+        assertThat(deltGrense.grensetype).isEqualTo(oensketGammelGrensetype)
 
-        val nyDeltGrense = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), jan1In2024))!!
+        val deltGrense2 = grenseService.hentGrense(Identifikator(Lokalid("grenseDelt2Lokalid"), oensketGammelDato))!!
+        assertThat(deltGrense2.grunnkretser).hasSize(2)
+        assertThat(deltGrense2.grunnkretser.map { it.grunnkrets.id }).containsExactlyInAnyOrder(oensketGammelKrets1.id, oensketGammelKrets2.id)
+        assertThat(deltGrense2.grensetype).isEqualTo(oensketGammelGrensetype)
+
+        val nyDeltGrense = grenseService.hentGrense(Identifikator(Lokalid("grenseDeltLokalid"), oensketNyDato))!!
         assertThat(nyDeltGrense.grunnkretser).hasSize(2)
-        assertThat(nyDeltGrense.grunnkretser.map { it.grunnkrets.id }).containsExactlyInAnyOrder(nyVestreKretsINyAalesund.id, nyOestreKretsIHaram.id)
-        assertThat(nyDeltGrense.grensetype).isEqualTo(Grensetype.Kommunegrense)
+        assertThat(nyDeltGrense.grunnkretser.map { it.grunnkrets.id }).containsExactlyInAnyOrder(oensketNyKrets1.id, oensketNyKrets2.id)
+        assertThat(nyDeltGrense.grensetype).isEqualTo(oensketNyGrensetype)
+
+        val nyDeltGrense2 = grenseService.hentGrense(Identifikator(Lokalid("grenseDelt2Lokalid"), oensketNyDato))!!
+        assertThat(nyDeltGrense2.grunnkretser).hasSize(2)
+        assertThat(nyDeltGrense2.grunnkretser.map { it.grunnkrets.id }).containsExactlyInAnyOrder(oensketNyKrets1.id, oensketNyKrets2.id)
+        assertThat(nyDeltGrense2.grensetype).isEqualTo(oensketNyGrensetype)
+    }
+
+    fun settGrensetypeForGrenserSomIkkeErDelt(vestreKrets: Grunnkrets, oestreKrets: Grunnkrets, grensetype: Grensetype) {
+        vestreKrets.grenser.stream().forEach { if (it.grense.id != "grenseDelt" && it.grense.id != "grenseDelt2") it.grense.grensetype = grensetype }
+        oestreKrets.grenser.stream().forEach { if (it.grense.id != "grenseDelt" && it.grense.id != "grenseDelt2") it.grense.grensetype = grensetype }
     }
 
     private fun utfoerMetadataoppdatering(kretsSomSkalOppdateres: Grunnkrets, datoForOppdatering: LocalDate): Grunnkrets? {
@@ -1103,17 +1123,17 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         saveKommuneOgUnikLokalid(grunnkretser = listOf(grunnkrets, grunnkretsFramtidigVersjon))
     }
 
-    private fun saveNaboGrunnkretser(gyldigFra: LocalDate, medHull: Boolean = false): List<Grunnkrets> {
+    private fun saveNaboGrunnkretser(gyldigFra: LocalDate, medHull: Boolean = false, medToDelteGrenser: Boolean = false): List<Grunnkrets> {
         val grenserForVest = if (medHull) {
-            GrenseHelper.getGrenserForVestligKrets(gyldigFra, Grensetype.Grunnkretsgrense) +
+            GrenseHelper.getGrenserForVestligKrets(gyldigFra, Grensetype.Grunnkretsgrense, medToDelteGrenser) +
                 GrenseHelper.getHullVestligKrets(gyldigFra, Grensetype.Grunnkretsgrense)
         } else {
-            GrenseHelper.getGrenserForVestligKrets(gyldigFra, Grensetype.Grunnkretsgrense)
+            GrenseHelper.getGrenserForVestligKrets(gyldigFra, Grensetype.Grunnkretsgrense, medToDelteGrenser)
         }
 
         //Lagrer grensene først, for å være sikker på at de er tilgjengelige for å knyttes til kretsene
         val lagredeGrenserForVest = grenseRepository.saveAll(grenserForVest)
-        val lagredeGrenserForOest = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(gyldigFra, Grensetype.Grunnkretsgrense))
+        val lagredeGrenserForOest = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(gyldigFra, Grensetype.Grunnkretsgrense, medToDelteGrenser))
         grenseRepository.flush()
 
         val kretsVest = saveGrunnkrets(
@@ -1139,18 +1159,18 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         return listOf(kretsVest, kretsOest)
     }
 
-    private fun saveNaboGrunnkretserIHverSinKommune(gyldigFra: LocalDate, medHull: Boolean = false,
+    private fun saveNaboGrunnkretserIHverSinKommune(gyldigFra: LocalDate, medHull: Boolean = false, medToDelteGrenser: Boolean = false,
                                                     kommunenummer1: String? = "0301", kommunenummer2: String? = "0302"): List<Grunnkrets> {
         val grenserForVest = if (medHull) {
-            GrenseHelper.getGrenserForVestligKrets(gyldigFra, Grensetype.Kommunegrense) +
+            GrenseHelper.getGrenserForVestligKrets(gyldigFra, Grensetype.Kommunegrense, medToDelteGrenser) +
                 GrenseHelper.getHullVestligKrets(gyldigFra, Grensetype.Kommunegrense)
         } else {
-            GrenseHelper.getGrenserForVestligKrets(gyldigFra, Grensetype.Kommunegrense)
+            GrenseHelper.getGrenserForVestligKrets(gyldigFra, Grensetype.Kommunegrense, medToDelteGrenser)
         }
 
         //Lagrer grensene først, for å være sikker på at de er tilgjengelige for å knyttes til kretsene
         val lagredeGrenserForVest = grenseRepository.saveAll(grenserForVest)
-        val lagredeGrenserForOest = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(gyldigFra, Grensetype.Kommunegrense))
+        val lagredeGrenserForOest = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(gyldigFra, Grensetype.Kommunegrense, medToDelteGrenser))
         grenseRepository.flush()
 
         val kretsVest = saveGrunnkrets(

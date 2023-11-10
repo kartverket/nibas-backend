@@ -27,6 +27,8 @@ import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.StemmekretsGrenseKobling
 import no.kartverket.nibas.extensions.geometry.toLineString
+import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.kodelister.createKommunenummerFromUUID
 import no.kartverket.nibas.repository.FylkeRepository
 import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.GrunnkretsRepository
@@ -58,7 +60,8 @@ class GrenseService(
     private val stemmekretsService: StemmekretsService,
     private val kommuneService: KommuneService,
     private val fylkeService: FylkeService,
-    private val nasjonService: NasjonService
+    private val nasjonService: NasjonService,
+    private val kodelisteService: KodelisteService
     ) {
     private val logger = LoggerFactory.getLogger(this::class.java)
 
@@ -336,8 +339,8 @@ class GrenseService(
     }
 
     fun endreGrensetypeForGrunnkretserOgFlatedannAdmEnheter(grunnkretser: List<Grunnkrets>, gyldigFra: LocalDate, endringstype: Endringstype) : Set<Flate> {
-        val grenserSomSkalHaNyVersjon: MutableMap<Grensetype, MutableSet<Grense>> = mutableMapOf()
-        val flaterSomHarFaattNyVersjon: MutableMap<Lokalid, Flate> = mutableMapOf()
+        val grenserSomSkalHaNyGrensetype: MutableMap<Grensetype, MutableSet<Grense>> = mutableMapOf()
+        val enheterSomSkalFaaReberegnetFlate: MutableMap<Lokalid, Flate> = mutableMapOf()
 
         for (grunnkrets: Grunnkrets in grunnkretser) {
 
@@ -355,29 +358,58 @@ class GrenseService(
                     //da vil det finnes grenser som er kommunegrense og som skal endres til grunnkrets-/delområdegrense.
                     //Og hvis grensa også hører til stemmekretser, må den dupliseres sånn at stemmekretsene får en egen grense av type Stemmekretsgrense.
                 } else {
-                    val nyGrensetype: Grensetype? = beregnNyGrensetype(kommunenumre, grensekobling)
-
-                    if (nyGrensetype != null) {
-                        grenserSomSkalHaNyVersjon.addToMap(nyGrensetype, grensekobling.grense)
-                        val kommune = grunnkrets.getKommune(gyldigFra) ?: throw UgyldigTilstandException("Fant ikke gyldig kommune for $grunnkrets")
-                        if (nyGrensetype == Grensetype.Fylkesgrense) {
-                            val fylke = kommune.getFylke(gyldigFra) ?: throw UgyldigTilstandException("Fant ikke gyldig fylke for $grunnkrets sin kommune")
-                            flaterSomHarFaattNyVersjon.putIfAbsent(Lokalid(fylke.lokalid), fylke)
-                        } else {
-                            flaterSomHarFaattNyVersjon.putIfAbsent(Lokalid(kommune.lokalid), kommune)
+                    beregnNyGrensetype(kommunenumre, grensekobling)
+                        ?.let {
+                            grenserSomSkalHaNyGrensetype.addToMap(it, grensekobling.grense)
+                            val kommune = grunnkrets.getKommune(gyldigFra) ?: throw UgyldigTilstandException("Fant ikke gyldig kommune for $grunnkrets")
+                            if (it == Grensetype.Fylkesgrense) {
+                                val fylke = kommune.getFylke(gyldigFra) ?: throw UgyldigTilstandException("Fant ikke gyldig fylke for $grunnkrets sin kommune")
+                                enheterSomSkalFaaReberegnetFlate.putIfAbsent(Lokalid(fylke.lokalid), fylke)
+                            } else {
+                                enheterSomSkalFaaReberegnetFlate.putIfAbsent(Lokalid(kommune.lokalid), kommune)
+                            }
                         }
-                    }
                 }
             }
         }
 
-        lagNyVersjonAvGrenseOgKnyttTilKretser(grenserSomSkalHaNyVersjon, gyldigFra, endringstype)
+        lagNyVersjonAvGrenseOgKnyttTilKretser(grenserSomSkalHaNyGrensetype, gyldigFra, endringstype)
 
-        val flateSet = flaterSomHarFaattNyVersjon.values.toSet() // det vil teknisk sett ikke være nødvendig med set her da koden over bruker putIfAbsent
+        val flateSet = enheterSomSkalFaaReberegnetFlate.values.toSet() // det vil teknisk sett ikke være nødvendig med set her da koden over bruker putIfAbsent
         if (flateSet.isNotEmpty()) {
             flateService.oppdaterFlaterFor(flateSet)
         }
         return flateSet
+    }
+
+    fun endreGrensetypeForStemmekretser(stemmekretser: List<Stemmekrets>, gyldigFra: LocalDate, endringstype: Endringstype) {
+        val grenserSomSkalHaNyGrensetype: MutableMap<Grensetype, MutableSet<Grense>> = mutableMapOf()
+
+        for (stemmekrets: Stemmekrets in stemmekretser) {
+
+            for (grensekobling: GrenseKobling in stemmekrets.getGrenser(gyldigFra)) {
+                val stemmekretserForGrense = grensekobling.grense.stemmekretser(gyldigFra)
+                val kommunenumre = stemmekretserForGrense.mapNotNull {
+                    it.getKommune(gyldigFra)?.let { kodelisteService.createKommunenummerFromUUID(it.kommunenummer) }?.kodeverdi
+                }.toSet()
+                if (kommunenumre.size == 1) {
+                    //Skal ikke endres til kommune- eller fylkesgrense
+                    @Suppress("ControlFlowWithEmptyBody")
+                    if (Grensetype.Stemmekretsgrense != grensekobling.grense.grensetype) {
+                        //Kunne evt validert at den er stemmekretsgrense (det er ingen slike feil pr okt 23)
+                    }
+                    //Todo
+                    //Ved senere kommunereguleringer enn den til 1.1.2024, kan det tenkes at kommuner skal slås sammen,
+                    //da vil det finnes grenser som er kommunegrense og som skal endres til stemmekretsgrense.
+                    //Og hvis grensa også hører til grunnkretser, må den dupliseres sånn at stemmekretsene får en egen grense av type Stemmekretsgrense.
+                } else {
+                    beregnNyGrensetype(kommunenumre, grensekobling)
+                        ?.let { grenserSomSkalHaNyGrensetype.addToMap(it, grensekobling.grense) }
+                }
+            }
+        }
+
+        lagNyVersjonAvGrenseOgKnyttTilKretser(grenserSomSkalHaNyGrensetype, gyldigFra, endringstype)
     }
 
     private fun beregnNyGrensetype(kommunenumre: Set<String>, grensekobling: GrenseKobling): Grensetype? {

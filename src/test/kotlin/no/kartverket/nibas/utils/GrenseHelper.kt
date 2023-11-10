@@ -9,8 +9,10 @@ import java.time.LocalDate
 object GrenseHelper {
     val geometryFactory = GeometryFactory()
 
-    fun getGrenserForVestligKrets(gyldighetsdato: LocalDate = LocalDate.now(), grensetype : Grensetype) : List<Grense> {
-        val grenseVest = Grense(id = "grenseVest", lokalid = "grenseVestLokalid", grensetype = grensetype)
+    fun getGrenserForVestligKrets(gyldighetsdato: LocalDate = LocalDate.now(), grensetype : Grensetype, medToDelteGrenser: Boolean = false) : List<Grense> {
+        val grenselist = mutableListOf<Grense>()
+
+        grenselist.add(Grense(id = "grenseVest", lokalid = "grenseVestLokalid", grensetype = grensetype)
             .apply {
                 setGyldigFra(gyldighetsdato)
                 grense = geometryFactory.createLineString(
@@ -21,8 +23,9 @@ object GrenseHelper {
                     )
                 )
             }
+        )
 
-        val grenseNordVest = Grense(id = "grenseNordVest", lokalid = "grenseNordVestLokalid", grensetype = grensetype)
+        grenselist.add(Grense(id = "grenseNordVest", lokalid = "grenseNordVestLokalid", grensetype = grensetype)
             .apply {
                 setGyldigFra(gyldighetsdato)
                 grense = geometryFactory.createLineString(
@@ -33,20 +36,43 @@ object GrenseHelper {
                     )
                 )
             }
+        )
 
-        val grenseDelt = Grense(id = "grenseDelt", lokalid = "grenseDeltLokalid", grensetype = grensetype)
+        grenselist.add(Grense(id = "grenseDelt", lokalid = "grenseDeltLokalid", grensetype = grensetype)
             .apply {
                 setGyldigFra(gyldighetsdato)
                 grense = geometryFactory.createLineString(
-                    arrayOf(
-                        Coordinate(10.0, 10.0),
-                        Coordinate(10.0, 5.0),
-                        Coordinate(10.0, 0.0)
-                    )
+                    if (medToDelteGrenser) {
+                        arrayOf(
+                            Coordinate(10.0, 10.0),
+                            Coordinate(10.0, 5.0)
+                        )
+                    } else {
+                        arrayOf(
+                            Coordinate(10.0, 10.0),
+                            Coordinate(10.0, 5.0),
+                            Coordinate(10.0, 0.0)
+                        )
+                    }
                 )
             }
+        )
 
-        val grenseSorVest = Grense(id = "grenseSørVest", lokalid = "grenseSørVestLokalid", grensetype = grensetype)
+        if (medToDelteGrenser) {
+            grenselist.add(Grense(id = "grenseDelt2", lokalid = "grenseDelt2Lokalid", grensetype = grensetype)
+                .apply {
+                    setGyldigFra(gyldighetsdato)
+                    grense = geometryFactory.createLineString(
+                        arrayOf(
+                            Coordinate(10.0, 0.0),
+                            Coordinate(10.0, 5.0)
+                        )
+                    )
+                }
+            )
+        }
+
+        grenselist.add(Grense(id = "grenseSørVest", lokalid = "grenseSørVestLokalid", grensetype = grensetype)
             .apply {
                 setGyldigFra(gyldighetsdato)
                 grense = geometryFactory.createLineString(
@@ -57,12 +83,15 @@ object GrenseHelper {
                     )
                 )
             }
+        )
 
-        return listOf(grenseVest, grenseNordVest, grenseDelt, grenseSorVest)
+        return grenselist.toList()
     }
 
-    fun getGrenserForOestligKrets(gyldighetsdato: LocalDate = LocalDate.now(), grensetype : Grensetype) : List<Grense> {
-        val grenseNordOest = Grense(id = "grenseNordØst", lokalid = "grenseNordØstLokalid", grensetype = grensetype)
+    fun getGrenserForOestligKrets(gyldighetsdato: LocalDate = LocalDate.now(), grensetype : Grensetype, medToDelteGrenser: Boolean = false) : List<Grense> {
+        val grenselist = mutableListOf<Grense>()
+
+        grenselist.add(Grense(id = "grenseNordØst", lokalid = "grenseNordØstLokalid", grensetype = grensetype)
             .apply {
                 setGyldigFra(gyldighetsdato)
                 grense = geometryFactory.createLineString(
@@ -73,8 +102,9 @@ object GrenseHelper {
                     )
                 )
             }
+        )
 
-        val grenseOest = Grense(id = "grenseØst", lokalid = "grenseØstLokalid", grensetype = grensetype)
+        grenselist.add(Grense(id = "grenseØst", lokalid = "grenseØstLokalid", grensetype = grensetype)
             .apply {
                 setGyldigFra(gyldighetsdato)
                 grense = geometryFactory.createLineString(
@@ -85,8 +115,9 @@ object GrenseHelper {
                     )
                 )
             }
+        )
 
-        val grenseSorOest = Grense(id = "grenseSørØst", lokalid = "grenseSørØstLokalid", grensetype = grensetype)
+        grenselist.add(Grense(id = "grenseSørØst", lokalid = "grenseSørØstLokalid", grensetype = grensetype)
             .apply {
                 setGyldigFra(gyldighetsdato)
                 grense = geometryFactory.createLineString(
@@ -97,20 +128,43 @@ object GrenseHelper {
                     )
                 )
             }
+        )
 
-        val grenseDelt = Grense(id = "grenseDelt", lokalid = "grenseDeltLokalid", grensetype = grensetype)
+        if (medToDelteGrenser) {
+            grenselist.add(Grense(id = "grenseDelt2", lokalid = "grenseDelt2Lokalid", grensetype = grensetype)
+                .apply {
+                    setGyldigFra(gyldighetsdato)
+                    grense = geometryFactory.createLineString(
+                        arrayOf(
+                            Coordinate(10.0, 0.0),
+                            Coordinate(10.0, 5.0)
+                        )
+                    )
+                }
+            )
+        }
+
+        grenselist.add(Grense(id = "grenseDelt", lokalid = "grenseDeltLokalid", grensetype = grensetype)
             .apply {
                 setGyldigFra(gyldighetsdato)
                 grense = geometryFactory.createLineString(
-                    arrayOf(
-                        Coordinate(10.0, 10.0),
-                        Coordinate(10.0, 5.0),
-                        Coordinate(10.0, 0.0)
-                    )
+                    if (medToDelteGrenser) {
+                        arrayOf(
+                            Coordinate(10.0, 10.0),
+                            Coordinate(10.0, 5.0)
+                        )
+                    } else {
+                        arrayOf(
+                            Coordinate(10.0, 10.0),
+                            Coordinate(10.0, 5.0),
+                            Coordinate(10.0, 0.0)
+                        )
+                    }
                 )
             }
+        )
 
-        return listOf(grenseNordOest, grenseOest, grenseSorOest, grenseDelt)
+        return grenselist.toList()
     }
 
     fun getHullVestligKrets(gyldighetsdato: LocalDate = LocalDate.now(), grensetype : Grensetype): List<Grense> {

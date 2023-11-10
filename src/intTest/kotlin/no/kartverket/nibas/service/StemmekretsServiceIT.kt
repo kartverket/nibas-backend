@@ -664,6 +664,137 @@ class StemmekretsServiceIT : TestWithDbContainer() {
             .hasMessageContaining("Kretsnummer 22 er brukt på flere stemmekretser innenfor kommunen")
     }
 
+    @Test
+    fun `to nabostemmekretser i hver sin kommune i samme fylke som splittes til to fylker`() {
+        every { kodelisteServiceMock.getFylkesnummerIdByCodeValue("39") } returns "583a2846-e90c-4911-b8bb-b2537fd896a0"
+        every { kodelisteServiceMock.getFylkesnummerIdByCodeValue("40") } returns "f26cc714-7289-4026-a076-35f83f9f2332"
+        every { kodelisteServiceMock.getCodeValueByFylkesnummerId("e79b7a63-13ff-4ba5-b4ef-0dfa4e6af1df") } returns "38"
+        every { kodelisteServiceMock.getCodeValueByFylkesnummerId("583a2846-e90c-4911-b8bb-b2537fd896a0") } returns "39"
+        every { kodelisteServiceMock.getCodeValueByFylkesnummerId("f26cc714-7289-4026-a076-35f83f9f2332") } returns "40"
+        every { kodelisteServiceMock.getCodeValueByKommunenummerId("3805") } returns "3805"
+        every { kodelisteServiceMock.getCodeValueByKommunenummerId("3812") } returns "3812"
+        every { kodelisteServiceMock.getCodeValueByKommunenummerId("3909") } returns "3909"
+        every { kodelisteServiceMock.getCodeValueByKommunenummerId("4010") } returns "4010"
+        every { kodelisteServiceMock.getKommunenummerIdByCodeValue("3909") } returns "3909"
+        every { kodelisteServiceMock.getKommunenummerIdByCodeValue("4010") } returns "4010"
+
+        val opprinneligDato = october1In2022
+        val (vestreKrets, oestreKrets) = saveNaboStemmekretserIHverSinKommune(gyldigFra = opprinneligDato,
+            kommunenummer1 = "3812", kommunenummer2 = "3805", medToDelteGrenser = true)
+        settGrensetypeForGrenserSomIkkeErDelt(vestreKrets, oestreKrets, Grensetype.Fylkesgrense)
+        val gamleSiljan = vestreKrets.getKommune(opprinneligDato)!!
+        val gamleLarvik = oestreKrets.getKommune(opprinneligDato)!!
+
+        val norskNavn = saveAdministrativenhetnavn(navn = "Vestfold og Telemark", spraakid = "nor")
+        val vestfoldOgTelemark = saveFylkeOgUnikLokalid(id = "fylke38", lokalid = "38VestfoldOgTelemark", fylkesnummer = "e79b7a63-13ff-4ba5-b4ef-0dfa4e6af1df",
+            administrativenhetnavn = listOf(norskNavn), gyldigFra = opprinneligDato, kommuner = listOf(gamleSiljan, gamleLarvik))
+        saveNasjonOgUnikLokalid(fylker = listOf(vestfoldOgTelemark))
+        grenseRepository.flush()
+
+        fylkeService.createNyttFylkeMedNyUnikLokalid(
+            kopierFraFylke = vestfoldOgTelemark,
+            nyttFylkesnummerIKlartekst = "39",
+            admenhetnavnList = emptyList(),
+            gyldigFra = jan1In2024,
+            endringstype = Endringstype.FASTSETTING
+        )
+        fylkeService.createNyttFylkeMedNyUnikLokalid(
+            kopierFraFylke = vestfoldOgTelemark,
+            nyttFylkesnummerIKlartekst = "40",
+            admenhetnavnList = emptyList(),
+            gyldigFra = jan1In2024,
+            endringstype = Endringstype.FASTSETTING
+        )
+        val nyLarvik = kommuneService.createNyKommuneMedNyUnikLokalid(
+            kopierFraKommune = gamleLarvik,
+            nyttKommunenummerIKlartekst = "3909",
+            gyldigFra = jan1In2024,
+            endringstype = Endringstype.FASTSETTING
+        )
+        val nySiljan = kommuneService.createNyKommuneMedNyUnikLokalid(
+            kopierFraKommune = gamleSiljan,
+            nyttKommunenummerIKlartekst = "4010",
+            gyldigFra = jan1In2024,
+            endringstype = Endringstype.FASTSETTING
+        )
+
+        val nyVestreKretsINySiljan = stemmekretsService.createNyVersjonAvStemmekretsIAnnenKommune(vestreKrets, nySiljan, jan1In2024, Endringstype.FASTSETTING)
+        val nyOestreKretsINyLarvik = stemmekretsService.createNyVersjonAvStemmekretsIAnnenKommune(oestreKrets, nyLarvik, jan1In2024, Endringstype.FASTSETTING)
+
+        grenseService.endreGrensetypeForStemmekretser(listOf(nyVestreKretsINySiljan, nyOestreKretsINyLarvik), jan1In2024, Endringstype.FASTSETTING)
+
+        assertDelteGrenser(opprinneligDato, vestreKrets, oestreKrets, Grensetype.Kommunegrense,
+            jan1In2024, nyVestreKretsINySiljan, nyOestreKretsINyLarvik, Grensetype.Fylkesgrense)
+    }
+
+    @Test
+    fun `to nabostemmekretser i samme kommune som skal deles til hver sin kommune`() {
+        every { kodelisteServiceMock.getFylkesnummerIdByCodeValue("03") } returns "03"
+        every { kodelisteServiceMock.getCodeValueByFylkesnummerId("03") } returns "03"
+        every { kodelisteServiceMock.getCodeValueByKommunenummerId("0301") } returns "0301"
+        every { kodelisteServiceMock.getCodeValueByKommunenummerId("0308") } returns "0308"
+        every { kodelisteServiceMock.getCodeValueByKommunenummerId("0380") } returns "0380"
+        every { kodelisteServiceMock.getKommunenummerIdByCodeValue("0308") } returns "0308"
+        every { kodelisteServiceMock.getKommunenummerIdByCodeValue("0380") } returns "0380"
+
+        val opprinneligDato = LocalDate.parse("2022-01-01")
+        val (vestreKrets, oestreKrets) = saveNaboStemmekretser(gyldigFra = opprinneligDato, medToDelteGrenser = true)
+        settGrensetypeForGrenserSomIkkeErDelt(vestreKrets, oestreKrets, Grensetype.Kommunegrense)
+        grenseRepository.flush()
+
+        val gamleAalesund = vestreKrets.getKommune(opprinneligDato)!!
+        val moereOgRomsdal = saveFylkeOgUnikLokalid(id = "fylke03", lokalid = "03MoereOgRomsdal", fylkesnummer = "03",
+            gyldigFra = opprinneligDato, kommuner = listOf(gamleAalesund))
+        saveNasjonOgUnikLokalid(fylker = listOf(moereOgRomsdal))
+        grenseRepository.flush()
+
+        val haram = kommuneService.createNyKommuneMedNyUnikLokalid(
+            kopierFraKommune = gamleAalesund,
+            nyttKommunenummerIKlartekst = "0380",
+            gyldigFra = jan1In2024,
+            endringstype = Endringstype.FASTSETTING
+        )
+        val nyAalesund = kommuneService.createNyKommuneMedNyUnikLokalid(
+            kopierFraKommune = gamleAalesund,
+            nyttKommunenummerIKlartekst = "0308",
+            gyldigFra = jan1In2024,
+            endringstype = Endringstype.FASTSETTING
+        )
+
+        val nyVestreKretsINyAalesund = stemmekretsService.createNyVersjonAvStemmekretsIAnnenKommune(vestreKrets, nyAalesund,
+            jan1In2024, Endringstype.FASTSETTING)
+        val nyOestreKretsIHaram = stemmekretsService.createNyVersjonAvStemmekretsIAnnenKommune(oestreKrets, haram, jan1In2024, Endringstype.FASTSETTING)
+
+        grenseService.endreGrensetypeForStemmekretser(listOf(nyVestreKretsINyAalesund, nyOestreKretsIHaram), jan1In2024, Endringstype.FASTSETTING)
+
+        assertDelteGrenser(opprinneligDato, vestreKrets, oestreKrets, Grensetype.Stemmekretsgrense,
+            jan1In2024, nyVestreKretsINyAalesund, nyOestreKretsIHaram, Grensetype.Kommunegrense)
+    }
+
+    private fun assertDelteGrenser(oensketGammelDato: LocalDate, oensketGammelKrets1: Stemmekrets, oensketGammelKrets2: Stemmekrets,
+                                   oensketGammelGrensetype: Grensetype,
+                                   oensketNyDato: LocalDate, oensketNyKrets1: Stemmekrets, oensketNyKrets2: Stemmekrets, oensketNyGrensetype: Grensetype) {
+        val deltGrense = grenseService.hentGrense(Identifikator(Lokalid("grenseDeltLokalid"), oensketGammelDato))!!
+        assertThat(deltGrense.stemmekretser).hasSize(2)
+        assertThat(deltGrense.stemmekretser.map { it.stemmekrets.id }).containsExactlyInAnyOrder(oensketGammelKrets1.id, oensketGammelKrets2.id)
+        assertThat(deltGrense.grensetype).isEqualTo(oensketGammelGrensetype)
+
+        val deltGrense2 = grenseService.hentGrense(Identifikator(Lokalid("grenseDelt2Lokalid"), oensketGammelDato))!!
+        assertThat(deltGrense2.stemmekretser).hasSize(2)
+        assertThat(deltGrense2.stemmekretser.map { it.stemmekrets.id }).containsExactlyInAnyOrder(oensketGammelKrets1.id, oensketGammelKrets2.id)
+        assertThat(deltGrense2.grensetype).isEqualTo(oensketGammelGrensetype)
+
+        val nyDeltGrense = grenseService.hentGrense(Identifikator(Lokalid("grenseDeltLokalid"), oensketNyDato))!!
+        assertThat(nyDeltGrense.stemmekretser).hasSize(2)
+        assertThat(nyDeltGrense.stemmekretser.map { it.stemmekrets.id }).containsExactlyInAnyOrder(oensketNyKrets1.id, oensketNyKrets2.id)
+        assertThat(nyDeltGrense.grensetype).isEqualTo(oensketNyGrensetype)
+
+        val nyDeltGrense2 = grenseService.hentGrense(Identifikator(Lokalid("grenseDelt2Lokalid"), oensketNyDato))!!
+        assertThat(nyDeltGrense2.stemmekretser).hasSize(2)
+        assertThat(nyDeltGrense2.stemmekretser.map { it.stemmekrets.id }).containsExactlyInAnyOrder(oensketNyKrets1.id, oensketNyKrets2.id)
+        assertThat(nyDeltGrense2.grensetype).isEqualTo(oensketNyGrensetype)
+    }
+
     private fun assertOmradeGyldighetVersjon(vestreKretsEtterLagring: Stemmekrets, oestreKretsEtterLagring: Stemmekrets,
                                              opprinneligVestreKrets: Stemmekrets, opprinneligOestreKrets: Stemmekrets) {
         assertThat(vestreKretsEtterLagring.gyldighet.gyldigTil).isNull()
@@ -785,17 +916,23 @@ class StemmekretsServiceIT : TestWithDbContainer() {
             .build()
     }
 
-    private fun saveNaboStemmekretser(gyldigFra: LocalDate, medHull: Boolean = false, medTredjeKrets: Boolean = false): List<Stemmekrets> {
+    fun settGrensetypeForGrenserSomIkkeErDelt(vestreKrets: Stemmekrets, oestreKrets: Stemmekrets, grensetype: Grensetype) {
+        vestreKrets.grenser.stream().forEach { if (it.grense.id != "grenseDelt" && it.grense.id != "grenseDelt2") it.grense.grensetype = grensetype }
+        oestreKrets.grenser.stream().forEach { if (it.grense.id != "grenseDelt" && it.grense.id != "grenseDelt2") it.grense.grensetype = grensetype }
+    }
+
+    private fun saveNaboStemmekretser(gyldigFra: LocalDate, medHull: Boolean = false, medTredjeKrets: Boolean = false, medToDelteGrenser: Boolean = false)
+    : List<Stemmekrets> {
         val grenserForVest = if (medHull) {
-            GrenseHelper.getGrenserForVestligKrets(gyldigFra, Grensetype.Stemmekretsgrense) +
+            GrenseHelper.getGrenserForVestligKrets(gyldigFra, Grensetype.Stemmekretsgrense, medToDelteGrenser) +
                 GrenseHelper.getHullVestligKrets(gyldigFra, Grensetype.Stemmekretsgrense)
         } else {
-            GrenseHelper.getGrenserForVestligKrets(gyldigFra, Grensetype.Stemmekretsgrense)
+            GrenseHelper.getGrenserForVestligKrets(gyldigFra, Grensetype.Stemmekretsgrense, medToDelteGrenser)
         }
 
         //Lagrer grensene først, for å være sikker på at de er tilgjengelige for å knyttes til kretsene
         val lagredeGrenserForVest = grenseRepository.saveAll(grenserForVest)
-        val lagredeGrenserForOest = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(gyldigFra, Grensetype.Stemmekretsgrense))
+        val lagredeGrenserForOest = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(gyldigFra, Grensetype.Stemmekretsgrense, medToDelteGrenser))
         grenseRepository.flush()
 
         val kretsVest = saveStemmekrets(
@@ -832,6 +969,45 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         saveKommuneOgUnikLokalid(stemmekretser = stemmekretser, gyldigFra = gyldigFra)
         grenseRepository.flush()
         return stemmekretser
+    }
+
+    private fun saveNaboStemmekretserIHverSinKommune(gyldigFra: LocalDate, medHull: Boolean = false, medToDelteGrenser: Boolean = false,
+                                                     kommunenummer1: String? = "0301", kommunenummer2: String? = "0302")
+    : List<Stemmekrets> {
+        val grenserForVest = if (medHull) {
+            GrenseHelper.getGrenserForVestligKrets(gyldigFra, Grensetype.Kommunegrense, medToDelteGrenser) +
+                GrenseHelper.getHullVestligKrets(gyldigFra, Grensetype.Kommunegrense)
+        } else {
+            GrenseHelper.getGrenserForVestligKrets(gyldigFra, Grensetype.Kommunegrense, medToDelteGrenser)
+        }
+
+        //Lagrer grensene først, for å være sikker på at de er tilgjengelige for å knyttes til kretsene
+        val lagredeGrenserForVest = grenseRepository.saveAll(grenserForVest)
+        val lagredeGrenserForOest = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(gyldigFra, Grensetype.Kommunegrense, medToDelteGrenser))
+        grenseRepository.flush()
+
+        val kretsVest = saveStemmekrets(
+            id = "1",
+            lokalid = Lokalid("123"),
+            stemmekretsnummer = "20",
+            stemmekretsnavn = "Vestre krets",
+            gyldigFra = gyldigFra,
+            grenser = lagredeGrenserForVest
+        )
+
+        val kretsOest = saveStemmekrets(
+            id = "2",
+            lokalid = Lokalid("234"),
+            stemmekretsnummer = "21",
+            stemmekretsnavn = "Østre krets",
+            gyldigFra = gyldigFra,
+            grenser = lagredeGrenserForOest
+        )
+
+        saveKommuneOgUnikLokalid(id = "idKommuneVest", lokalid = "kommuneVest", stemmekretser = listOf(kretsVest), gyldigFra = gyldigFra, kommunenummer = kommunenummer1!!)
+        saveKommuneOgUnikLokalid(id = "idKommuneOest", lokalid = "kommuneOest", stemmekretser = listOf(kretsOest), gyldigFra = gyldigFra, kommunenummer = kommunenummer2!!)
+        grenseRepository.flush()
+        return listOf(kretsVest, kretsOest)
     }
 
     private fun saveStemmekretsMed1FramtidigVersjon(stemmekretsLokalid: Lokalid) {
