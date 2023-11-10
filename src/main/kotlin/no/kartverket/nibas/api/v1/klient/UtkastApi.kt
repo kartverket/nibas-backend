@@ -8,11 +8,11 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
-import no.kartverket.nibas.api.v1.request.ConflictResolved
 import no.kartverket.nibas.api.v1.request.OppdaterUtkastRequest
 import no.kartverket.nibas.api.v1.request.OpprettUtkastRequest
+import no.kartverket.nibas.api.v1.request.PubliserUtkastRequest
 import no.kartverket.nibas.api.v1.response.ApiErrorResponse
-import no.kartverket.nibas.api.v1.response.ConflictResponseWrapper
+import no.kartverket.nibas.api.v1.response.OptimistiskLaarWrapper
 import no.kartverket.nibas.api.v1.response.UtkastOpprettetResponse
 import no.kartverket.nibas.api.v1.response.UtkastRef
 import no.kartverket.nibas.api.v1.response.UtkastResponse
@@ -78,7 +78,7 @@ interface UtkastApi {
     @Response404NotFound
     @Response409Conflict
     @PostMapping("/{id}/publiser", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun publiserUtkast(@Parameter(description = "ID-en til utkastet man vil publisere") @PathVariable id: String)
+    fun publiserUtkast(@Parameter(description = "ID-en til utkastet man vil publisere") @PathVariable id: String, @RequestBody body: PubliserUtkastRequest?)
 
     @Operation(summary = "Henter alle utkast i status Opprettet sortert på navn.", description = "Henter alle utkast i status Opprettet sortert på navn.")
     @ApiResponses(
@@ -93,17 +93,6 @@ interface UtkastApi {
     )
     @GetMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
     fun hentUtkastIStatusOpprettet(): List<UtkastRef>
-
-    @Operation(summary = "Publiserer utkastet for resolvet konflikt.", description = "Publiserer utkastet for resolvet konflikt.")
-    @Response200OK
-    @Response400BadRequest
-    @Response404NotFound
-    @Response409Conflict
-    @PostMapping("/{id}/resolved", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun resolveConflictForFramtidigeVersjoner(
-        @Parameter(description = "ID-en til utkastet man har resolvet konflikt for og vil publisere") @PathVariable id: String,
-        @RequestBody conflictResolved: ConflictResolved
-    )
 }
 
 @ApiResponse(responseCode = "200", description = "Successful operation")
@@ -144,7 +133,7 @@ annotation class Response404NotFound
     responseCode = "409", description = "Conflict",
     content = [Content(
         mediaType = "application/json",
-        schema = Schema(implementation = ConflictResponseWrapper::class)
+        schema = Schema(implementation = OptimistiskLaarWrapper::class)
     )]
 )
 annotation class Response409Conflict

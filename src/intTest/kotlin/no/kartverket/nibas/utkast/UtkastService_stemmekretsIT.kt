@@ -3,9 +3,7 @@ package no.kartverket.nibas.utkast
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
-import no.kartverket.nibas.api.v1.request.ConflictResolved
 import no.kartverket.nibas.api.v1.request.StemmekretsRequest
-import no.kartverket.nibas.api.v1.request.StemmekretsRequestResolved
 import no.kartverket.nibas.common.CurrentTime
 import no.kartverket.nibas.common.FeilVedOppdatering
 import no.kartverket.nibas.common.Identifikator
@@ -148,100 +146,6 @@ class UtkastService_stemmekretsIT : TestWithDbContainer() {
         Assertions.assertThat(oppdateringInfo.affectedIds.toSet()).isEqualTo(setOf(Identifikator(lokalid, january1In2024)))
 
         return ResultatFraForsoekPaaPublisering(utkastId)
-    }
-
-    @Test
-    fun publiserUtkast04ResolverKonfliktPaaAlleredePubliserteFramtidigeEndringer() {
-        assert1StemmekretsPresent()
-
-        // 1. Endrer stemmekretsnummer
-        nyttStemmekretsnummerJan23()
-
-        // 2. Endrer stemmekretsnavn
-        nyttStemmekretsnavnJan24()
-
-        // 3. Forsøker å endre stemmekretsnr til 4589 med gyldigFra 1.7.23 (selv om vi allerede har publisert endring som gjelder fra 1.1.24)
-        // (Bruker her version 2 fordi den vil være basert på tilstanden i databasen 1.7.23)
-        val resultatFraForsoekPaaPublisering = nyttStemmekretsNummerFraJuli23SkalGiFeil()
-        val utkastId = resultatFraForsoekPaaPublisering.idForUtkastSomBleOpprettet
-
-        // Utkastet som feilet publisering står som opprettet
-        assertUtkastIsOpprettet(utkastId)
-
-        // 4. Sender inn struktur som skal fikse konflikt som oppsto i 3.
-        // En rad gjelder fra 1.7.23
-        // En rad gjelder fra 1.1.24
-        utkastService.resolveConflictForFramtidigeVersjoner(
-            utkastId = utkastId,
-            conflictResolved = ConflictResolved(
-                lokalid = Lokalid(lokalidOfStemmekrets),
-                stemmekretsRequests = listOf(
-                    // Gjentar endring av stemmekretsnr til 4589 fra 1.7.23
-                    StemmekretsRequestResolved(
-                        gyldigFra = july1In2023,
-                        endringstype = Endringstype.KVALITETSHEVING.value,
-                        stemmekretsRequest = createStemmekretsRequest(moi, stemmekretsnr4567, 2)),
-                    // Gjentar endring av nytt navn Voi fra 1.1.24 (men her er også rett stemmekretsnr 4589 med)
-                    StemmekretsRequestResolved(
-                        gyldigFra = january1In2024,
-                        endringstype = Endringstype.KVALITETSHEVING.value,
-                        stemmekretsRequest = createStemmekretsRequest(voi, stemmekretsnr4567, 3)
-                    )
-                )))
-
-        // Nå skal utkastet være publisert
-        assertUtkastIsPublisert(utkastId)
-
-        val stemmekretsList = findAllStemmekretserSortedByVersion()
-        Assertions.assertThat(stemmekretsList.size).isEqualTo(5)
-        assertStemmekrets(stemmekretsList[0], opprinneligStemmekretsnr, moi, Gyldighet(gyldigFra = november25In2022, gyldigTil = january1In2023), 1)
-        assertStemmekrets(stemmekretsList[1], stemmekretsnr1234, moi, Gyldighet(gyldigFra = january1In2023, gyldigTil = july1In2023), 2)
-        assertStemmekrets(stemmekretsList[2], stemmekretsnr1234, voi, Gyldighet(gyldigFra = january1In2024, gyldigTil = null, slettet = true), 3)
-        assertStemmekrets(stemmekretsList[3], stemmekretsnr4567, moi, Gyldighet(gyldigFra = july1In2023, gyldigTil = january1In2024), 4)
-        assertStemmekrets(stemmekretsList[4], stemmekretsnr4567, voi, Gyldighet(gyldigFra = january1In2024), 5)
-    }
-
-    @Test
-    fun publiserUtkast05ResolverKonfliktMedFeilTidspunktSkalGiFeil() {
-        assert1StemmekretsPresent()
-
-        // 1. Endrer stemmekretsnummer
-        nyttStemmekretsnummerJan23()
-
-        // 2. Endrer stemmekretsnavn
-        nyttStemmekretsnavnJan24()
-
-        // 3. Forsøker å endre stemmekretsnummer til 4589 med gyldigFra 1.7.23 (selv om vi allerede har publisert endring som gjelder fra 1.1.24)
-        // (Bruker her version 2 fordi den vil være basert på tilstanden i databasen 1.7.23)
-        val resultatFraForsoekPaaPublisering = nyttStemmekretsNummerFraJuli23SkalGiFeil()
-        val utkastId = resultatFraForsoekPaaPublisering.idForUtkastSomBleOpprettet
-
-        // Utkastet som feilet publisering står som opprettet
-        assertUtkastIsOpprettet(utkastId)
-
-        // 4. Sender inn struktur som forsøker å fikse konflikt som oppsto i 3. Men sender inn feil gyldigFra på rad 2 her.
-        // En rad gjelder fra 1.7.23
-        // En rad gjelder fra 1.2.24 <--- Dato endret
-        Assertions.assertThatThrownBy {
-            utkastService.resolveConflictForFramtidigeVersjoner(
-                utkastId = utkastId,
-                conflictResolved = ConflictResolved(
-                    lokalid = Lokalid(lokalidOfStemmekrets),
-                    stemmekretsRequests = listOf(
-                        // Gjentar endring av stemmekretsnr til 4589 fra 1.7.23
-                        StemmekretsRequestResolved(
-                            gyldigFra = july1In2023,
-                            endringstype = Endringstype.KVALITETSHEVING.value,
-                            stemmekretsRequest = createStemmekretsRequest(moi, stemmekretsnr4567, 2)),
-                        // Gjentar endring av nytt navn Voi, men denne gangen gyldigFra 1.2.24 (her er rett stemmekretsnr 4589 med, men feil dato)
-                        StemmekretsRequestResolved(
-                            gyldigFra = february1In2024,
-                            endringstype = Endringstype.KVALITETSHEVING.value,
-                            stemmekretsRequest = createStemmekretsRequest(voi, stemmekretsnr4567, 3)
-                        )
-                    )))
-        }.isInstanceOf(ResponseException.BadRequestException::class.java)
-            .hasMessageContaining("Kan ikke publisere utkast med id: $utkastId. GyldigFra-feltet på en av endringene i utkastet er etter siste gyldig fra dato for kretsen.")
     }
 
     private fun nyttStemmekretsnavnJan24(): List<Stemmekrets> {

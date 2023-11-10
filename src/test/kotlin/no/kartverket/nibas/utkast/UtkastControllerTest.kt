@@ -4,25 +4,20 @@ import io.mockk.every
 import io.mockk.mockkStatic
 import no.kartverket.nibas.MockResponseAsserts
 import no.kartverket.nibas.NibasMvcTest
-import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
-import no.kartverket.nibas.api.v1.request.ConflictResolved
-import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
-import no.kartverket.nibas.api.v1.request.GrunnkretsRequestResolved
 import no.kartverket.nibas.api.v1.request.OppdaterUtkastRequest
 import no.kartverket.nibas.api.v1.request.OpprettUtkastRequest
 import no.kartverket.nibas.api.v1.response.ApiErrorResponse
 import no.kartverket.nibas.api.v1.response.AuditInfoResponse
-import no.kartverket.nibas.api.v1.response.ConflictResponse
-import no.kartverket.nibas.api.v1.response.ConflictResponseWrapper
+import no.kartverket.nibas.api.v1.response.OptimistiskLaarResponse
+import no.kartverket.nibas.api.v1.response.OptimistiskLaarWrapper
 import no.kartverket.nibas.api.v1.response.ErrorDescription
-import no.kartverket.nibas.api.v1.response.FramtidigVersjonConflict
-import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.response.UtkastOpprettetResponse
 import no.kartverket.nibas.api.v1.response.UtkastRef
 import no.kartverket.nibas.api.v1.response.UtkastResponse
 import no.kartverket.nibas.builders.FylkeBuilder
 import no.kartverket.nibas.builders.KommuneRequestBuilder
 import no.kartverket.nibas.builders.UtkastRequestBuilder
+import no.kartverket.nibas.common.CurrentTime
 import no.kartverket.nibas.common.FeilVedOppdatering
 import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
@@ -72,10 +67,14 @@ internal class UtkastControllerTest : NibasMvcTest() {
     @MockBean
     private lateinit var hrefProviderMock: HrefProvider
 
+    @MockBean
+    private lateinit var currentTime: CurrentTime
+
     @BeforeEach
     fun setup() {
         mockkStatic(UUID::class)
         every { UUID.randomUUID() } returns mockUuid
+        whenever(currentTime.asLocalDate()).thenReturn(LocalDate.of(2023, 1, 1))
     }
 
     @Test
@@ -241,9 +240,9 @@ internal class UtkastControllerTest : NibasMvcTest() {
         post(
             url = publiserUrl,
             responseAsserts = MockResponseAsserts(
-                expectedResponseObject = ConflictResponseWrapper(
+                expectedResponseObject = OptimistiskLaarWrapper(
                     optimisticLockExceptions = listOf(
-                        ConflictResponse(
+                        OptimistiskLaarResponse(
                             id = fylkeId,
                             type = "Fylke",
                             gjeldendeVersjon = 4,
@@ -371,7 +370,7 @@ internal class UtkastControllerTest : NibasMvcTest() {
     }
 
     @Test
-    fun publiserUtkastOppdateringAvFylkeGir409Conflict_PgaKonfliktMedFramtidigeVersjoner() {
+    fun publiserUtkastOppdateringAvFylkeGir400BadRquest_PgaKonfliktMedFramtidigeVersjoner() {
         // Lokalid+gyldigFra som blir truffet av utkastet
         val lokalid = Lokalid("abcd-38383")
         val foersteJanuar2024 = LocalDate.of(2024, Month.JANUARY, 1)
@@ -396,60 +395,9 @@ internal class UtkastControllerTest : NibasMvcTest() {
         post(
             url = publiserUrl,
             responseAsserts = MockResponseAsserts(
-                expectedResponseObject = ConflictResponseWrapper(
-                    framtidigVersjonConflict = FramtidigVersjonConflict(
-                        id = ObjektIdentifikator(lokalid, foersteJanuar2024),
-                        type = "GRUNNKRETS",
-                        affectedIds = listOf(
-                            ObjektIdentifikator(lokalid, foersteJanuar2025),
-                            ObjektIdentifikator(lokalid, foersteJanuar2026)
-                        ),
-                        melding = "Det er ikke mulig å oppdatere objekt med identifikator " +
-                            "Identifikator(lokalid=Lokalid(value=${lokalid.value}), gyldighetsdato=2024-01-01) " +
-                            "av type GRUNNKRETS. Dette berører følgende objekter med senere gyldigFra-tidspunkt: " +
-                            "[" +
-                            "Identifikator(lokalid=Lokalid(value=${lokalid.value}), gyldighetsdato=2025-01-01), " +
-                            "Identifikator(lokalid=Lokalid(value=${lokalid.value}), gyldighetsdato=2026-01-01)" +
-                            "]."
-                    )),
-                resultMatchers = listOf(status().isConflict)
+                resultMatchers = listOf(status().isBadRequest)
             )
         )
         verify(utkastServiceMock).publiserUtkast(anyString(), any(LocalDate::class.java))
     }
-
-    @Test
-    fun framtidigeVersjonerKonfliktResolvedGir200OK() {
-        val lokalid = Lokalid("abcd-38383")
-        val july1In2023 = LocalDate.of(2023, Month.JULY, 1)
-        val january1In2024 = LocalDate.of(2024, Month.JANUARY, 1)
-
-        post(
-            url = "/v1/utkast/123/resolved",
-            requestObject = ConflictResolved(
-                lokalid = lokalid,
-                grunnkretsRequests = listOf(
-                    GrunnkretsRequestResolved(
-                        gyldigFra = july1In2023,
-                        endringstype = Endringstype.KVALITETSHEVING.value,
-                        grunnkretsRequest = createGrunnkretsRequest("Moi", 2)),
-                    GrunnkretsRequestResolved(
-                        gyldigFra = january1In2024,
-                        endringstype = Endringstype.KVALITETSHEVING.value,
-                        grunnkretsRequest = createGrunnkretsRequest("Voi", 3)
-                    )
-                )
-            ),
-            expected = status().isOk
-        )
-        verify(utkastServiceMock).resolveConflictForFramtidigeVersjoner(anyString(), any(ConflictResolved::class.java))
-    }
-
-    private fun createGrunnkretsRequest(grkrNavn: String, version: Int): GrunnkretsRequest =
-        GrunnkretsRequest(
-            navn = grkrNavn,
-            grunnkretsnummer = "4589",
-            identifikasjon = Identifikasjon(lokalid = "abcd-38383"),
-            version = version,
-        )
 }

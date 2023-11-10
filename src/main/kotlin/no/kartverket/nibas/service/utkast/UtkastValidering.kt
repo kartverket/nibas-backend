@@ -41,16 +41,25 @@ class UtkastValidatorService(
 
     fun validateUtkastKlartForPublisering(utkast: Utkast): UtkastValidering {
         if (utkast.status != UtkastStatus.OPPRETTET) {
-            return UtkastValidering.UgyldigUtkast(utkast, ResponseException.BadRequestException("Kan ikke publisere et utkast i status ${utkast.status}."))
+            return UtkastValidering.UgyldigUtkast(utkast, ResponseException.BadRequestException(
+                title = "Kan ikke publisere utkastet",
+                msg = "Kan ikke publisere et utkast i status ${utkast.status}."
+            ))
         }
 
         if (utkast.gyldigFra.isBefore(currentTime.asLocalDate())) {
-            return UtkastValidering.UgyldigUtkast(utkast, ResponseException.BadRequestException("Kan ikke publisere et utkast som har gyldigFra-dato i fortiden. GyldigFra er satt til: ${utkast.gyldigFra}"))
+            return UtkastValidering.UgyldigUtkast(utkast, ResponseException.BadRequestException(
+                title = "Kan ikke publisere utkastet",
+                msg = "Kan ikke publisere et utkast som trer i kraft før dagens dato. Utkastet er satt til å tre i kraft ${utkast.gyldigFra}"
+            ))
         }
 
         val utkastIkkeHarEndringer = utkast.operasjoner?.harIkkeEndringer() ?: true
         if (utkastIkkeHarEndringer) {
-            return UtkastValidering.UgyldigUtkast(utkast, ResponseException.BadRequestException("Kan ikke publisere et utkast uten endringer."))
+            return UtkastValidering.UgyldigUtkast(utkast, ResponseException.BadRequestException(
+                title = "Kan ikke publisere utkastet",
+                msg = "Kan ikke publisere et utkast uten endringer."
+            ))
         }
 
         val operasjonerValideringResult = validateGyldigeOperasjoner(utkast.operasjoner!!)
@@ -69,18 +78,6 @@ class UtkastValidatorService(
         }
 
         return UtkastValidering.KlartForPublisering(utkast)
-    }
-
-    fun datoErEtterSisteGyldigFraDatoForGrunnkrets(lokalid: String, dato: LocalDate): Boolean {
-        val sisteGyldigeGrunnkrets = grunnkretsService.hentSisteGyldigeGrunnkrets(lokalid)
-            ?: throw ResponseException.NotFoundException("Fant ikke siste gyldige grunnkrets for lokalid: $lokalid")
-        return dato.isAfter(sisteGyldigeGrunnkrets.gyldighet.gyldigFra)
-    }
-
-    fun datoErEtterSisteGyldigFraDatoForStemmekrets(lokalid: String, dato: LocalDate): Boolean {
-        val sisteGyldigeStemmekrets = stemmekretsService.hentSisteGyldigeStemmekrets(lokalid)
-            ?: throw ResponseException.NotFoundException("Fant ikke siste gyldige stemmekrets for lokalid: $lokalid")
-        return dato.isAfter(sisteGyldigeStemmekrets.gyldighet.gyldigFra)
     }
 
     fun validerKretsinfoEndringer(

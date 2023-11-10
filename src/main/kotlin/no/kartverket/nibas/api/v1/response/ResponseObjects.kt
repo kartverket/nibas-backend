@@ -323,22 +323,14 @@ data class AuditInfoResponse(
     val oppdateringsdato: ZonedDateTime
 )
 
-/**
- * Samler
- * -optimiske låsefeil og
- * -feil ved forsøk på oppdatering av objekt med et nyere gyldigFra-tidspunkt tilstede i databasen
- * i samme type for å returnere 409 tilbake. Alternativt kunne en nok ha brukt en Swagger oneOf.
- */
-data class ConflictResponseWrapper(
+data class OptimistiskLaarWrapper(
     @Schema(description = "HttpStatus for responsen.")
     val httpStatus: HttpStatus = HttpStatus.CONFLICT,
     @Schema(description = "Feil som har oppstått pga optimistisk lås.")
-    val optimisticLockExceptions: List<ConflictResponse> = emptyList(),
-    @Schema(description = "Feil som har oppstått pga at det fantes rader med nyere gyldighet.")
-    val framtidigVersjonConflict: FramtidigVersjonConflict? = null
+    val optimisticLockExceptions: List<OptimistiskLaarResponse> = emptyList(),
 )
 
-data class ConflictResponse(
+data class OptimistiskLaarResponse(
     // TODO: Bruke ObjektIdentifikator også her
     @Schema(description = "Identifikatoren til objektet som er utdatert.")
     val id: String,
@@ -373,17 +365,6 @@ data class ApiErrorResponse(
 
     @Schema(description = "En forklaring av feilen som oppstod. Denne er ment til å kunne vises direkte til brukeren.")
     val errorDescription: ErrorDescription,
-)
-
-data class FramtidigVersjonConflict(
-    @Schema(description = "Identifikatoren til objektet som ble forsøkt oppdatert.")
-    val id: ObjektIdentifikator,
-    @Schema(description = "Typen til objektet som ble forsøkt oppdatert.")
-    val type: String,
-    @Schema(description = "Identifikator til objekt(et/ene) som har en nyere gyldigFra-dato og er i konflikt med endringen.")
-    val affectedIds: List<ObjektIdentifikator> = emptyList(),
-    @Schema(description = "Beskrivelse av hva som har gått galt.")
-    val melding: String?,
 )
 
 data class ObjektIdentifikator(val lokalid: Lokalid, val gyldighetsdato: LocalDate)

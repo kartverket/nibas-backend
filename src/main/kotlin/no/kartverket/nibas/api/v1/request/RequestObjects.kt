@@ -5,7 +5,6 @@ import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
-import no.kartverket.nibas.common.Lokalid
 import java.time.LocalDate
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
@@ -138,36 +137,6 @@ data class OppdaterUtkastRequest(
     val version: Int
 )
 
-@Schema(description = "Representasjon for resolved konflikt.")
-data class ConflictResolved(
-    @Schema(description = "Lokalid til objektet som det oppstod konflikt for.")
-    val lokalid: Lokalid,
-    @Schema(description = "Resolvede endringer på grunnkrets.")
-    val grunnkretsRequests: List<GrunnkretsRequestResolved> = emptyList(),
-    @Schema(description = "Resolvede endringer på stemmekrets.")
-    val stemmekretsRequests: List<StemmekretsRequestResolved> = emptyList()
-)
-
-@Schema(description = "Representasjon av en resolvet konflikt for en endring på Grunnkrets.")
-data class GrunnkretsRequestResolved(
-    @Schema(description = "Tidspunktet utkastet skal være gyldig fra.")
-    val gyldigFra: LocalDate,
-    @Schema(description = "Typen endring utkastet representerer.")
-    val endringstype: String,
-    @Schema(description = "Endring på en grunnkrets.")
-    val grunnkretsRequest: GrunnkretsRequest
-)
-
-@Schema(description = "Representasjon av en resolvet konflikt for en endring på Stemmekrets.")
-data class StemmekretsRequestResolved(
-    @Schema(description = "Tidspunktet utkastet skal være gyldig fra.")
-    val gyldigFra: LocalDate,
-    @Schema(description = "Typen endring utkastet representerer.")
-    val endringstype: String,
-    @Schema(description = "Endring på en stemmekrets.")
-    val stemmekretsRequest: StemmekretsRequest
-)
-
 @Schema(description = "Representasjon av sammenslåing av en stemmekrets med 1 eller flere andre stemmekretser i samme kommune")
 data class StemmekretsSammenslaaingsendringRequest (
     @Schema (description = "Identifikator til den stemmekretsen som skal videreføres")
@@ -178,4 +147,10 @@ data class StemmekretsSammenslaaingsendringRequest (
     val stemmekretsNavn: String,
     @Schema (description = "Stemmekretsnummeret til den sammenslåtte stemmekretsen")
     val stemmekretsNummer: String
+)
+
+@Schema(description = "Requestbody for publisering av utkast.")
+data class PubliserUtkastRequest (
+    @Schema (description = "Datoen utkastet skal publiseres fra. Settes default til dagens dato om ikke satt.")
+    val publiseringsdato: LocalDate = LocalDate.now(),
 )

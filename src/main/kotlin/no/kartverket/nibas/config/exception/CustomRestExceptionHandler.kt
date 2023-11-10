@@ -1,11 +1,9 @@
 package no.kartverket.nibas.config.exception
 
 import no.kartverket.nibas.api.v1.response.ApiErrorResponse
-import no.kartverket.nibas.api.v1.response.ConflictResponse
-import no.kartverket.nibas.api.v1.response.ConflictResponseWrapper
+import no.kartverket.nibas.api.v1.response.OptimistiskLaarResponse
+import no.kartverket.nibas.api.v1.response.OptimistiskLaarWrapper
 import no.kartverket.nibas.api.v1.response.ErrorDescription
-import no.kartverket.nibas.api.v1.response.FramtidigVersjonConflict
-import no.kartverket.nibas.api.v1.response.toObjektIdentifikator
 import no.kartverket.nibas.common.FeilVedOppdatering
 import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.kodelister.MissingKodelisteItemException
@@ -71,9 +69,9 @@ class CustomRestExceptionHandler : ResponseEntityExceptionHandler() {
     fun handleOptimisticLockException(ex: OptimistiskLaasException, request: WebRequest): ResponseEntity<Any>? {
         // For grenser kan det være flere optimistiske låsekonflikter
         logger.warn("Feil med optimistisk lås", ex)
-        return handleExceptionInternal(ex, ConflictResponseWrapper(
+        return handleExceptionInternal(ex, OptimistiskLaarWrapper(
             optimisticLockExceptions = ex.konflikter.map { conflict ->
-                ConflictResponse(
+                OptimistiskLaarResponse(
                     id = conflict.eksisterende.id,
                     type = conflict.eksisterende::class.java.simpleName,
                     gjeldendeVersjon = conflict.eksisterende.version,
@@ -86,15 +84,14 @@ class CustomRestExceptionHandler : ResponseEntityExceptionHandler() {
     @ExceptionHandler(value = [FeilVedOppdatering.OppdateringException::class])
     fun handleOppdateringException(ex: FeilVedOppdatering.OppdateringException, request: WebRequest): ResponseEntity<Any>? {
         logger.warn("Fremtidig versjons-konflikt", ex)
-        val oppdateringInfo = ex.oppdateringInfo
-        return handleExceptionInternal(ex, ConflictResponseWrapper(
-            framtidigVersjonConflict = FramtidigVersjonConflict(
-                id = oppdateringInfo.id.toObjektIdentifikator(),
-                type = oppdateringInfo.type.name,
-                affectedIds = oppdateringInfo.affectedIds.map { it.toObjektIdentifikator() },
-                melding = oppdateringInfo.getMessage()
-            )
-        ), HttpHeaders(), HttpStatus.CONFLICT, request)
+
+        // Dette er bare en veldig enkel feilmelding. Vi har en egen oppgave på en bedre MVP av konflikthåndtering.
+        // Så dette er bare en enkel feilmelding frem til vi får implementert oppgaven med bedre konflikt-håndtering.
+        val errorDescription = ErrorDescription(
+            title = "Konflikt med fremtidig versjon",
+            description = "En eller flere av endringene i utkastet er i konflikt en publisert fremtidig endring. Du kan ikke publisere endringer på en grense eller krets som har publiserte endringer på en senere dato."
+        )
+        return handleException(ex, errorDescription, HttpHeaders(), HttpStatus.BAD_REQUEST, request)
     }
 
     @ExceptionHandler(value = [ResponseException::class])
