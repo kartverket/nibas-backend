@@ -99,7 +99,7 @@ internal class UtkastServiceTest {
         MockitoAnnotations.openMocks(this)
 
         whenever(currentTime.asLocalDate()).thenReturn(LocalDate.of(2022, 6, 1))
-        val utkastValidatorService = UtkastValidatorService(grunnkretsServiceMock, stemmekretsServiceMock, kodelisteServiceMock, currentTime)
+        val utkastValidatorService = UtkastValidatorService(grunnkretsServiceMock, grenseServiceMock, stemmekretsServiceMock, kodelisteServiceMock, currentTime)
         utkastService = UtkastService(utkastRepositoryMock, nasjonServiceMock, fylkeServiceMock, kommuneServiceMock, grunnkretsServiceMock,
             stemmekretsServiceMock, grenseServiceMock, nibasEventPublisherMock, utkastValidatorService, currentTime)
     }

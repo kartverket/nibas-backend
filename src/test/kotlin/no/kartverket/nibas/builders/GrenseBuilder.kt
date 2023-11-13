@@ -70,6 +70,11 @@ class GrenseBuilder(private val id: String = "1",
         return this
     }
 
+    fun withGyldigFra(dato: LocalDate): GrenseBuilder {
+        this.gyldigFra = dato
+        return this
+    }
+
 }
 
 const val LOKALID = "lokalId1"
@@ -138,6 +143,6 @@ class FylkesgrenseBuilder(private val id: String = "1",
 
     fun informasjon(tekst: String): FylkesgrenseBuilder {
         this.informasjonstekst = tekst
-        return this;
+        return this
     }
 }

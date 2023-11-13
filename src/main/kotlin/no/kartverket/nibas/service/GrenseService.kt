@@ -67,6 +67,10 @@ class GrenseService(
 
     fun hentGrense(identifikator: Identifikator): Grense? = grenseRepository.findGyldigObjektForIdentifikator(identifikator)
 
+    fun hentAlleVersjonerMedGyldigFraEtterGittDato(lokalid: String, gyldigFra: LocalDate): List<Grense> =
+        grenseRepository.findAllByLokalid(lokalid)
+            .filter { it.gyldighet.gyldigFra.isAfter(gyldigFra) }
+
     @Transactional(readOnly = false)
     fun lagreGrenser(grenser: FeatureCollection, gyldighetsdato: LocalDate = LocalDate.now(), endringstype: Endringstype) : Set<Flate> {
         val oppdaterteKretser: MutableSet<Flate> = mutableSetOf()
@@ -202,6 +206,7 @@ class GrenseService(
                     auditInfo.typeEndring = endringstype
                 }
         )
+
         return nyGrense
             .applyCascadingOperationsBasedOnExistingGrense(grense)
             .also {

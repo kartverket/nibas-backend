@@ -14,6 +14,7 @@ import no.kartverket.nibas.common.CurrentTime
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
 import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.service.GrenseService
 import no.kartverket.nibas.service.GrunnkretsService
 import no.kartverket.nibas.service.StemmekretsService
 import no.kartverket.nibas.service.utkast.OperasjonerValidering
@@ -39,6 +40,9 @@ class UtkastValideringTest {
     private lateinit var kodelisteServiceMock: KodelisteService
 
     @MockK
+    private lateinit var grenseServiceMock: GrenseService
+
+    @MockK
     private lateinit var currentTime: CurrentTime
 
     private lateinit var utkastValidatorService: UtkastValidatorService
@@ -49,7 +53,7 @@ class UtkastValideringTest {
         every { currentTime.asLocalDate() }  returns LocalDate.of(2022, 6, 1)
         every { grunnkretsServiceMock.hentGrunnkrets(any()) }  returns GrunnkretsBuilder.DEFAULT_GRUNNKRETS
         every { kodelisteServiceMock.getCodeValueByKommunenummerId(any()) } returns "0301"
-        utkastValidatorService = UtkastValidatorService(grunnkretsServiceMock, stemmekretsServiceMock, kodelisteServiceMock, currentTime)
+        utkastValidatorService = UtkastValidatorService(grunnkretsServiceMock, grenseServiceMock, stemmekretsServiceMock, kodelisteServiceMock, currentTime)
     }
 
     @Test

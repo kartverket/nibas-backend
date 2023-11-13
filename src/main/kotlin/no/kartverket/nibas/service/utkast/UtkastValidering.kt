@@ -12,6 +12,7 @@ import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.domain.utkast.Utkast
 import no.kartverket.nibas.domain.utkast.UtkastStatus
 import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.service.GrenseService
 import no.kartverket.nibas.service.GrunnkretsService
 import no.kartverket.nibas.service.StemmekretsService
 import org.springframework.stereotype.Service
@@ -20,6 +21,7 @@ import java.time.LocalDate
 @Service
 class UtkastValidatorService(
     val grunnkretsService: GrunnkretsService,
+    val grenseService: GrenseService,
     val stemmekretsService: StemmekretsService,
     val kodelisteService: KodelisteService,
     val currentTime: CurrentTime
@@ -75,6 +77,11 @@ class UtkastValidatorService(
         val stemmekretsValideringsFeil = validerStemmekretsEndringerKonflikt(utkast)
         if (stemmekretsValideringsFeil != null) {
             return UtkastValidering.UgyldigUtkast(utkast, stemmekretsValideringsFeil)
+        }
+
+        val grenseeendringerValideringsFeil = validerGrenseEndringerKonflikt(utkast)
+        if (grenseeendringerValideringsFeil != null) {
+            return UtkastValidering.UgyldigUtkast(utkast, grenseeendringerValideringsFeil)
         }
 
         return UtkastValidering.KlartForPublisering(utkast)
@@ -135,6 +142,22 @@ class UtkastValidatorService(
             )
 
         return null
+    }
+
+    private fun validerGrenseEndringerKonflikt(utkast: Utkast): FeilVedOppdatering.OppdateringException? {
+        return utkast.operasjoner?.grenseendringer?.endredeFeatures?.keys?.firstNotNullOfOrNull { id ->
+            val senerePubliserteGrenser = grenseService.hentAlleVersjonerMedGyldigFraEtterGittDato(id, utkast.gyldigFra)
+
+            if (senerePubliserteGrenser.isNotEmpty()) {
+                FeilVedOppdatering.OppdateringException(FeilVedOppdatering.OppdateringInfo(
+                    id = Identifikator(Lokalid(id), utkast.gyldigFra),
+                    type = FeilVedOppdatering.Type.GRENSE,
+                    affectedIds = senerePubliserteGrenser.map { Identifikator(Lokalid(it.lokalid), it.gyldighet.gyldigFra) }
+                ))
+            } else {
+                null
+            }
+        }
     }
 
     private fun validerGrunnkretsEndringerKonflikt(utkast: Utkast): FeilVedOppdatering.OppdateringException? {
