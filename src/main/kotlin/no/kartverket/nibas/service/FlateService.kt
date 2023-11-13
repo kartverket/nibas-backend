@@ -58,23 +58,35 @@ class FlateService @Autowired constructor(
     }
 
     private fun oppdaterKommuneflate(kommune: Kommune) {
-        logger.info("Oppdaterer kommuneflate for ${finnNavn(kommune)}")
         val kommunenummerVerdi = kodelisteService.getCodeValueByKommunenummerId(kommune.kommunenummer)
+        logger.info("Oppdaterer kommuneflate for $kommunenummerVerdi - ${finnNavn(kommune)}")
+
         val kommunegrenser = enhetsGrenseRepository.hentGrenserMedRiktigRetning(kommunenummerVerdi, kommune.tillatteGrensetyper(), kommune.gyldighet.gyldigFra)
         kommune.omraade = SosiGeometryFunctions.dannFlaterMedHullBasertPaaGeometri(kommunegrenser.map{ GrenseMedLokalid(it.grense, it.lokalid) }, kommune.lokalid)
         if (kommune.omraade != null && (kommune.posisjon == null || !kommune.omraade!!.contains(kommune.posisjon))) {
             kommune.posisjon = kommune.omraade?.interiorPoint
         }
+
+        // Om posisjonen er Point Empty setter vi den til null så ting ikke tryner når man senere sammenligner med andre punkter
+        if(kommune.posisjon?.isEmpty == true) {
+            kommune.posisjon = null
+        }
+
         kommuneRepository.save(kommune)
     }
 
     private fun oppdaterFylkesflate(fylke: Fylke) {
-        logger.info("Oppdaterer fylkesflate for ${finnNavn(fylke)}")
+        logger.info("Oppdaterer fylkesflate for ${kodelisteService.getCodeValueByFylkesnummerId(fylke.fylkesnummer)} - ${finnNavn(fylke)}")
         val fylkesnummerVerdi = kodelisteService.getCodeValueByFylkesnummerId(fylke.fylkesnummer)!!
         val fylkesgrenser = enhetsGrenseRepository.hentGrenserMedRiktigRetning(fylkesnummerVerdi, fylke.tillatteGrensetyper(), fylke.gyldighet.gyldigFra)
         fylke.omraade = SosiGeometryFunctions.dannFlaterMedHullBasertPaaGeometri(fylkesgrenser.map{ GrenseMedLokalid(it.grense, it.lokalid) })
         if (fylke.omraade != null && (fylke.posisjon == null || !fylke.omraade!!.contains(fylke.posisjon))) {
             fylke.posisjon = fylke.omraade?.interiorPoint
+        }
+
+        // Om posisjonen er Point Empty setter vi den til null så ting ikke tryner når man senere sammenligner med andre punkter
+        if (fylke.posisjon?.isEmpty == true) {
+            fylke.posisjon = null
         }
         fylkeRepository.save(fylke)
     }

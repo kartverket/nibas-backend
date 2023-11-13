@@ -129,7 +129,9 @@ aut.host.url: https://aut-idporten.dev.skip.statkart.no
 spring:
   config:
     activate:
-      on-profile: import
+      on-profile:
+        - import
+        - deling
   autoconfigure:
     # For å kunne bruke siste versjon av springdoc-openapi også for importen (https://github.com/springdoc/springdoc-openapi/issues/2142)
     exclude: org.springdoc.core.configuration.SpringDocJacksonKotlinModuleConfiguration

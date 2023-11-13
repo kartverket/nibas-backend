@@ -37,7 +37,6 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.Month
-import java.util.*
 
 @ActiveProfiles(profiles = ["security-off", "eventsDisabled"])
 @Transactional
@@ -911,13 +910,25 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         val nyOestreKretsINyLarvik = grunnkretsService.createNyVersjonAvGrunnkretsIAnnenKommune(oestreKrets, nyLarvik, "39090121",
             jan1In2024, Endringstype.FASTSETTING)
 
-        val flateSet = grenseService.endreGrensetypeForGrunnkretserOgFlatedannAdmEnheter(listOf(nyVestreKretsINySiljan, nyOestreKretsINyLarvik),
+        grenseService.endreGrensetypeForGrunnkretser(listOf(nyVestreKretsINySiljan, nyOestreKretsINyLarvik),
             jan1In2024, Endringstype.FASTSETTING)
-        assertThat(flateSet).hasSize(2).extracting("id").contains(nyVestfold.id, nyTelemark.id)
+
+
+
         val hentNyVestfold = fylkeRepository.findById(nyVestfold.id).get()
         val hentNyTelemark = fylkeRepository.findById(nyTelemark.id).get()
 
-        assertThat(vestfoldOgTelemark.omraade).isNotEqualTo(hentNyTelemark.omraade).isNotEqualTo(hentNyVestfold.omraade)
+        // Oppdaterer flaten på fylket og ser at grensene danner riktige grenser
+        // Sjekker at område faktisk har endret seg (og danner gyldig polygon) + at unionen av fylkene er likt det gamle fylket
+        flateService.oppdaterFlaterFor(setOf(vestfoldOgTelemark, hentNyTelemark, hentNyVestfold))
+        assertThat(vestfoldOgTelemark.omraade)
+            .isNotEqualTo(hentNyTelemark.omraade)
+            .isNotEqualTo(hentNyVestfold.omraade)
+
+        val kombinertOmraadeVestfoldOgTelemark = hentNyVestfold.omraade?.union(hentNyTelemark.omraade)
+        val forskjellIGeometri = kombinertOmraadeVestfoldOgTelemark?.difference(vestfoldOgTelemark.omraade)
+        assertThat(forskjellIGeometri?.isEmpty).isTrue()
+
         assertDelteGrenser(opprinneligDato, vestreKrets, oestreKrets, Grensetype.Kommunegrense,
             jan1In2024, nyVestreKretsINySiljan, nyOestreKretsINyLarvik, Grensetype.Fylkesgrense)
     }
@@ -965,14 +976,23 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         val nyOestreKretsIHaram = grunnkretsService.createNyVersjonAvGrunnkretsIAnnenKommune(oestreKrets, haram, "03800121",
             jan1In2024, Endringstype.FASTSETTING)
 
-        val flateSet = grenseService.endreGrensetypeForGrunnkretserOgFlatedannAdmEnheter(listOf(nyVestreKretsINyAalesund, nyOestreKretsIHaram),
+        grenseService.endreGrensetypeForGrunnkretser(listOf(nyVestreKretsINyAalesund, nyOestreKretsIHaram),
             jan1In2024, Endringstype.FASTSETTING)
 
-        assertThat(flateSet).hasSize(2).extracting("id").contains(nyAalesund.id, haram.id)
         val hentNyAalesund = kommuneRepository.findById(nyAalesund.id).get()
         val hentHaram = kommuneRepository.findById(haram.id).get()
 
-        assertThat(gamleAalesund.omraade).isNotEqualTo(hentNyAalesund.omraade).isNotEqualTo(hentHaram.omraade)
+        // Oppdaterer flaten på kommunene og ser at grensene danner riktige polygoner
+        // Sjekker at område faktisk har endret seg (og danner gyldig polygon) + at unionen av kommunene er likt den gamle kommunen
+        flateService.oppdaterFlaterFor(setOf(hentHaram, hentNyAalesund, gamleAalesund))
+        assertThat(gamleAalesund.omraade)
+            .isNotEqualTo(hentNyAalesund.omraade)
+            .isNotEqualTo(hentHaram.omraade)
+
+        val kombinertOmraadeAalesundOgHaram = hentNyAalesund.omraade?.union(hentHaram.omraade)
+        val forskjellIGeometri = kombinertOmraadeAalesundOgHaram?.difference(gamleAalesund.omraade)
+        assertThat(forskjellIGeometri?.isEmpty).isTrue()
+
         assertDelteGrenser(opprinneligDato, vestreKrets, oestreKrets, Grensetype.Grunnkretsgrense,
             jan1In2024, nyVestreKretsINyAalesund, nyOestreKretsIHaram, Grensetype.Kommunegrense)
     }

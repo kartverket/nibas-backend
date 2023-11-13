@@ -28,7 +28,6 @@ import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.StemmekretsGrenseKobling
 import no.kartverket.nibas.extensions.geometry.toLineString
 import no.kartverket.nibas.kodelister.KodelisteService
-import no.kartverket.nibas.kodelister.createKommunenummerFromUUID
 import no.kartverket.nibas.repository.FylkeRepository
 import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.GrunnkretsRepository
@@ -343,73 +342,39 @@ class GrenseService(
         return grense
     }
 
-    fun endreGrensetypeForGrunnkretserOgFlatedannAdmEnheter(grunnkretser: List<Grunnkrets>, gyldigFra: LocalDate, endringstype: Endringstype) : Set<Flate> {
+    fun endreGrensetypeForGrunnkretser(grunnkretser: List<Grunnkrets>, gyldigFra: LocalDate, endringstype: Endringstype) {
         val grenserSomSkalHaNyGrensetype: MutableMap<Grensetype, MutableSet<Grense>> = mutableMapOf()
-        val enheterSomSkalFaaReberegnetFlate: MutableMap<Lokalid, Flate> = mutableMapOf()
 
         for (grunnkrets: Grunnkrets in grunnkretser) {
-
             for (grensekobling: GrenseKobling in grunnkrets.getGrenser(gyldigFra)) {
                 val grunnkretserForGrense = grensekobling.grense.grunnkretser(gyldigFra)
-                val kommunenumre = grunnkretserForGrense.map { it.grunnkretsnummer!!.take(4) }.toSet()
-                if (kommunenumre.size == 1) {
-                    //Skal ikke endres til kommune- eller fylkesgrense
-                    @Suppress("ControlFlowWithEmptyBody")
-                    if (Grensetype.Delomraadegrense != grensekobling.grense.grensetype && Grensetype.Grunnkretsgrense != grensekobling.grense.grensetype) {
-                        //Kunne evt validert at den er grunnkrets-/delområdegrense (det er ingen slike feil pr okt 23)
+                val kommunenumre = grunnkretserForGrense.map { it.grunnkretsnummer!!.take(4) }
+
+                beregnNyGrensetype(kommunenumre)?.let { nyGrensetype ->
+                    if (nyGrensetype != grensekobling.grense.grensetype) {
+                        grenserSomSkalHaNyGrensetype.addToMap(nyGrensetype, grensekobling.grense)
                     }
-                    //Todo
-                    //Ved senere kommunereguleringer enn den til 1.1.2024, kan det tenkes at kommuner skal slås sammen,
-                    //da vil det finnes grenser som er kommunegrense og som skal endres til grunnkrets-/delområdegrense.
-                    //Og hvis grensa også hører til stemmekretser, må den dupliseres sånn at stemmekretsene får en egen grense av type Stemmekretsgrense.
-                } else {
-                    beregnNyGrensetype(kommunenumre, grensekobling)
-                        ?.let {
-                            grenserSomSkalHaNyGrensetype.addToMap(it, grensekobling.grense)
-                            val kommune = grunnkrets.getKommune(gyldigFra) ?: throw UgyldigTilstandException("Fant ikke gyldig kommune for $grunnkrets")
-                            if (it == Grensetype.Fylkesgrense) {
-                                val fylke = kommune.getFylke(gyldigFra) ?: throw UgyldigTilstandException("Fant ikke gyldig fylke for $grunnkrets sin kommune")
-                                enheterSomSkalFaaReberegnetFlate.putIfAbsent(Lokalid(fylke.lokalid), fylke)
-                            } else {
-                                enheterSomSkalFaaReberegnetFlate.putIfAbsent(Lokalid(kommune.lokalid), kommune)
-                            }
-                        }
                 }
             }
         }
 
         lagNyVersjonAvGrenseOgKnyttTilKretser(grenserSomSkalHaNyGrensetype, gyldigFra, endringstype)
-
-        val flateSet = enheterSomSkalFaaReberegnetFlate.values.toSet() // det vil teknisk sett ikke være nødvendig med set her da koden over bruker putIfAbsent
-        if (flateSet.isNotEmpty()) {
-            flateService.oppdaterFlaterFor(flateSet)
-        }
-        return flateSet
     }
 
     fun endreGrensetypeForStemmekretser(stemmekretser: List<Stemmekrets>, gyldigFra: LocalDate, endringstype: Endringstype) {
         val grenserSomSkalHaNyGrensetype: MutableMap<Grensetype, MutableSet<Grense>> = mutableMapOf()
 
         for (stemmekrets: Stemmekrets in stemmekretser) {
-
             for (grensekobling: GrenseKobling in stemmekrets.getGrenser(gyldigFra)) {
                 val stemmekretserForGrense = grensekobling.grense.stemmekretser(gyldigFra)
-                val kommunenumre = stemmekretserForGrense.mapNotNull {
-                    it.getKommune(gyldigFra)?.let { kodelisteService.createKommunenummerFromUUID(it.kommunenummer) }?.kodeverdi
-                }.toSet()
-                if (kommunenumre.size == 1) {
-                    //Skal ikke endres til kommune- eller fylkesgrense
-                    @Suppress("ControlFlowWithEmptyBody")
-                    if (Grensetype.Stemmekretsgrense != grensekobling.grense.grensetype) {
-                        //Kunne evt validert at den er stemmekretsgrense (det er ingen slike feil pr okt 23)
+                val kommunenumre = stemmekretserForGrense.mapNotNull { s ->
+                    s.getKommune(gyldigFra)?.let { kodelisteService.getCodeValueByKommunenummerId(it.kommunenummer) }
+                }
+
+                beregnNyGrensetype(kommunenumre)?.let { nyGrensetype ->
+                    if (nyGrensetype != grensekobling.grense.grensetype) {
+                        grenserSomSkalHaNyGrensetype.addToMap(nyGrensetype, grensekobling.grense)
                     }
-                    //Todo
-                    //Ved senere kommunereguleringer enn den til 1.1.2024, kan det tenkes at kommuner skal slås sammen,
-                    //da vil det finnes grenser som er kommunegrense og som skal endres til stemmekretsgrense.
-                    //Og hvis grensa også hører til grunnkretser, må den dupliseres sånn at stemmekretsene får en egen grense av type Stemmekretsgrense.
-                } else {
-                    beregnNyGrensetype(kommunenumre, grensekobling)
-                        ?.let { grenserSomSkalHaNyGrensetype.addToMap(it, grensekobling.grense) }
                 }
             }
         }
@@ -417,21 +382,16 @@ class GrenseService(
         lagNyVersjonAvGrenseOgKnyttTilKretser(grenserSomSkalHaNyGrensetype, gyldigFra, endringstype)
     }
 
-    private fun beregnNyGrensetype(kommunenumre: Set<String>, grensekobling: GrenseKobling): Grensetype? {
-        var nyGrensetype: Grensetype? = null
-        val fylkesnumre = kommunenumre.map { it.take(2) }.toSet()
-        if (fylkesnumre.size > 1 && Grensetype.Fylkesgrense != grensekobling.grense.grensetype) {
-            //Har flere fylker, men er ikke fylkesgrense
-            nyGrensetype = Grensetype.Fylkesgrense
-        } else if (Grensetype.Kommunegrense != grensekobling.grense.grensetype) {
-            //Har flere kommuner, men er ikke kommunegrense
-            nyGrensetype = Grensetype.Kommunegrense
-        }
-        //Todo Etter at delt geometri er gjennomført, vil administrative grenser også høre til stemmekretser
-        //Ved endring fra en adm.grensetype til en annen, må den nye grensa også byttes ut for tilhørende stemmekretser
-        //Ved endring fra grunnkrets-/delområdegrense til adm.grense, skal den nye grensa også knyttes til stemmekretser (delt geometri-logikk)
+    private fun beregnNyGrensetype(kommunenumre: List<String>): Grensetype? {
+        val erFylkesgrense = kommunenumre.distinctBy { it.take(2) }.size > 1
+        val erKommuneGrense = kommunenumre.distinct().size > 1
 
-        return nyGrensetype
+        if (erFylkesgrense) {
+            return Grensetype.Fylkesgrense
+        } else if (erKommuneGrense) {
+            return Grensetype.Kommunegrense
+        }
+        return null
     }
 
     fun <G, E> MutableMap<G, MutableSet<E>>.addToMap(key: G, value: E) {

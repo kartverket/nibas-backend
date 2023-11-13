@@ -1,8 +1,10 @@
 package no.kartverket.nibas.kommuneogfylkesdeling
 
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import java.io.File
+import org.springframework.core.io.ClassPathResource
 import java.time.LocalDate
 
 object ManusReader {
@@ -13,6 +15,8 @@ object ManusReader {
     private val fylkerNavnFil = "fylkes-komunedeling-filer/fylker-navn.json"
     private val kommunerNavnFil = "fylkes-komunedeling-filer/kommuner-navn.json"
     private val objectMapper = jacksonObjectMapper()
+        .registerModule(JavaTimeModule())
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
     fun getFylkeEndringer(): List<AdministrativEnhetEndring> {
         return readAndParseFile(fylkefil).codeChanges
@@ -27,23 +31,27 @@ object ManusReader {
     }
 
     fun getStemmekretsEndringer(): List<StemmekretsEndring> {
-        val file = File(stemmekretsfil)
-        return objectMapper.readValue(file.readText())
+        val resource = ClassPathResource(stemmekretsfil)
+        val file = resource.inputStream.reader().readText()
+        return objectMapper.readValue(file)
     }
 
     fun getFylkesnavn(): List<AdmEnhetNavn> {
-        val file = File(fylkerNavnFil)
-        return objectMapper.readValue(file.readText())
+        val resource = ClassPathResource(fylkerNavnFil)
+        val file = resource.inputStream.reader().readText()
+        return objectMapper.readValue(file)
     }
 
     fun getKommunenavn(): List<AdmEnhetNavn> {
-        val file = File(kommunerNavnFil)
-        return objectMapper.readValue(file.readText())
+        val resource = ClassPathResource(kommunerNavnFil)
+        val file = resource.inputStream.reader().readText()
+        return objectMapper.readValue(file)
     }
 
     private fun readAndParseFile(fileName: String): AdministrativEnhetEndringWrapper {
-        val file = File(fileName)
-        return objectMapper.readValue(file.readText())
+        val resource = ClassPathResource(fileName)
+        val file = resource.inputStream.reader().readText()
+        return objectMapper.readValue(file)
     }
 }
 

@@ -3,13 +3,18 @@ package no.kartverket.nibas.kommuneogfylkesdeling
 import no.kartverket.nibas.domain.Administrativenhetnavn
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Fylke
+import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
+import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.SpraakkodeRepository
+import no.kartverket.nibas.service.FlateService
 import no.kartverket.nibas.service.FylkeService
+import no.kartverket.nibas.service.GrenseService
 import no.kartverket.nibas.service.GrunnkretsService
 import no.kartverket.nibas.service.KommuneService
 import no.kartverket.nibas.service.StemmekretsService
+import org.slf4j.LoggerFactory
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -22,8 +27,12 @@ class FylkesDelingService(
     private val kodelisteService: KodelisteService,
     private val spraakkodeRepository: SpraakkodeRepository,
     private val stemmekretsService: StemmekretsService,
-    private val grunnkretsService: GrunnkretsService
+    private val grunnkretsService: GrunnkretsService,
+    private val grenseService: GrenseService,
+    private val flateService: FlateService
 ) {
+    val logger = LoggerFactory.getLogger(javaClass)
+
     @Transactional
     fun delFylker(fylkesdelingManuser: List<FylkesdelingManus>) {
         fylkesdelingManuser.forEach { delFylke(it) }
@@ -31,6 +40,8 @@ class FylkesDelingService(
 
     @Transactional
     fun delFylke(fylkesdelingManus: FylkesdelingManus) {
+        logger.info("Deler fylke ${fylkesdelingManus.gammeltFylkesNummer} til ${fylkesdelingManus.nyeFylker.joinToString(", ") { it.fylkesNummer }}")
+
         val fylkesnummerUuid = kodelisteService.getFylkesnummerIdByCodeValue(fylkesdelingManus.gammeltFylkesNummer)
         val fylkeSomSkalDeles = fylkeService.hentAlleFylker(fylkesdelingManus.fraDato)
             .firstOrNull { it.fylkesnummer == fylkesnummerUuid }
@@ -44,8 +55,8 @@ class FylkesDelingService(
 
         fylkeService.settFylkeSomHistorisk(fylkeSomSkalDeles, fylkesdelingManus.fraDato)
 
-        // Oppdater grensetyper (endre mellom fylkes og kommunegrenser)
-        // TODO: Dette kommer i en egen PR
+        logger.info("Oppdaterer flaten for de nye fylkene")
+        flateService.oppdaterFlaterFor(nyeFylker.toSet())
 
         // 5. Sende events om endringene
         // TODO: Vi må huske å sende events!
@@ -55,9 +66,14 @@ class FylkesDelingService(
         val kommuner = gammeltFylke.getKommuner(gyldighetsDato)
             .associateBy { it.kommunenummer }
 
+        val nyeGrunnkretser = mutableListOf<Grunnkrets>()
+        val nyeStemmekretser = mutableListOf<Stemmekrets>()
+
         kommunerSomSkalFlyttesTilNyttFylke.forEach { fylkesDelingKommuneManus ->
             val gammeltKommunenummerId = kodelisteService.getKommunenummerIdByCodeValue(fylkesDelingKommuneManus.gammeltKommunenummer)
             val gammelKommune = kommuner[gammeltKommunenummerId]!!
+
+            logger.info("Flytter kommune ${fylkesDelingKommuneManus.gammeltKommunenummer} til nytt fylke: ${fylkesDelingKommuneManus.nyttKommuneNummer.take(2)}")
 
             val kommune = kommuneService.createNyKommuneMedNyUnikLokalid(
                 kopierFraKommune = gammelKommune,
@@ -66,14 +82,20 @@ class FylkesDelingService(
                 nyttKommunenummerIKlartekst = fylkesDelingKommuneManus.nyttKommuneNummer
             )
 
-            flyttGrunnkretserTilNyKommune(kommune, gammelKommune, gyldighetsDato, fylkesDelingKommuneManus.grunnkretser)
-            flyttStemmekretserTilNyKommune(kommune, gammelKommune, gyldighetsDato)
+            nyeGrunnkretser += flyttGrunnkretserTilNyKommune(kommune, gammelKommune, gyldighetsDato, fylkesDelingKommuneManus.grunnkretser)
+            nyeStemmekretser += flyttStemmekretserTilNyKommune(kommune, gammelKommune, gyldighetsDato)
+
             kommuneService.settKommuneSomHistorisk(gammelKommune, gyldighetsDato)
         }
+
+        logger.info("Endrer grensetyper for splittingen av ${kodelisteService.getCodeValueByFylkesnummerId(gammeltFylke.fylkesnummer)}")
+        grenseService.endreGrensetypeForGrunnkretser(nyeGrunnkretser, gyldighetsDato, Endringstype.VEDTATT_DELING)
+        grenseService.endreGrensetypeForStemmekretser(nyeStemmekretser, gyldighetsDato, Endringstype.VEDTATT_DELING)
+
     }
-    private fun flyttGrunnkretserTilNyKommune(nyKommune: Kommune, gammelKommune: Kommune, gyldighetsDato: LocalDate, grunnkretsManuser: List<GrunnkretsManus>) {
+    private fun flyttGrunnkretserTilNyKommune(nyKommune: Kommune, gammelKommune: Kommune, gyldighetsDato: LocalDate, grunnkretsManuser: List<GrunnkretsManus>): List<Grunnkrets> {
         val grunnkretser = gammelKommune.getGrunnkretser(gyldighetsDato)
-        grunnkretser.forEach { grunnkrets ->
+        return grunnkretser.map { grunnkrets ->
             val grunnkretsManus = grunnkretsManuser.firstOrNull { it.gammeltGrunnkretsNummer == grunnkrets.grunnkretsnummer }
                 ?: throw RuntimeException("Fant ikke manus for omnummerering av grunnkrets ${grunnkrets.grunnkretsnummer}")
 
@@ -81,9 +103,9 @@ class FylkesDelingService(
         }
     }
 
-    private fun flyttStemmekretserTilNyKommune(nyKommune: Kommune, gammelKommune: Kommune, gyldighetsDato: LocalDate) {
+    private fun flyttStemmekretserTilNyKommune(nyKommune: Kommune, gammelKommune: Kommune, gyldighetsDato: LocalDate): List<Stemmekrets> {
         val stemmekretser = gammelKommune.getStemmekretser(gyldighetsDato)
-        stemmekretser.forEach {
+        return stemmekretser.map {
             stemmekretsService.createNyVersjonAvStemmekretsIAnnenKommune(it, nyKommune, gyldighetsDato, Endringstype.VEDTATT_DELING)
         }
     }

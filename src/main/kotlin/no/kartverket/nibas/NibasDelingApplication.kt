@@ -1,6 +1,6 @@
 package no.kartverket.nibas
 
-import no.kartverket.nibas.sosi.SosiImportService
+import no.kartverket.nibas.kommuneogfylkesdeling.KommuneOgFylkesDelingJob
 import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
@@ -9,10 +9,10 @@ import kotlin.system.exitProcess
 
 @SpringBootApplication
 @Profile("deling")
-class NibasDelingApplication(val sosiImportService: SosiImportService) : CommandLineRunner {
+class NibasDelingApplication(val kommuneOgFylkesDelingJob: KommuneOgFylkesDelingJob) : CommandLineRunner {
 
     override fun run(vararg args: String?) {
-        sosiImportService.importNibas()
+        kommuneOgFylkesDelingJob.delFylkerOgKommuner()
         exitProcess(0)
     }
 
