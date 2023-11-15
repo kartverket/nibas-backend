@@ -7,7 +7,7 @@ import jakarta.transaction.Transactional
 @Service
 class KommuneOgFylkesDelingJob(
     val kommuneDelingService: KommuneDelingService,
-    val fylkesDelingService: FylkesDelingService,
+    val fylkesDelingService: FylkesDelingService
 ) {
     val logger = LoggerFactory.getLogger(javaClass)
 

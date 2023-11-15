@@ -2,8 +2,10 @@ package no.kartverket.nibas.kommuneogfylkesdeling
 
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
+import io.mockk.justRun
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.events.NibasEventPublisher
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import org.assertj.core.api.Assertions.assertThat
@@ -19,6 +21,9 @@ import java.time.LocalDate
 class KommuneDelingServiceIT: TestWithDbContainer() {
     @MockkBean
     private lateinit var kodelisteServiceMock: KodelisteService
+
+    @MockkBean
+    private lateinit var nibasEventPublisher: NibasEventPublisher
 
     @Autowired
     private lateinit var kommuneDelingService: KommuneDelingService
@@ -60,6 +65,8 @@ class KommuneDelingServiceIT: TestWithDbContainer() {
 
     @BeforeEach
     fun beforeEachSetup() {
+        justRun { nibasEventPublisher.publishNibasEvent(any(), any()) }
+
         every { kodelisteServiceMock.getCodeValueByKommunenummerId(kommuneNummer1id) } returns kommuneNummer1
         every { kodelisteServiceMock.getCodeValueByKommunenummerId(kommuneNummer2id) } returns kommuneNummer2
         every { kodelisteServiceMock.getCodeValueByKommunenummerId(kommuneNummer3id) } returns kommuneNummer3

@@ -70,6 +70,15 @@ Alternativt kan man også starte applikasjonen via terminalen:
 Default så vil applikasjonen forsøke å bruke vault fra dev-miljøet. Men om du ønsker å bruke lokalt vault (kjørt opp med docker-compose) kan du overstyre dette
 med å sette miljøvariabelen `VAULT_ADDR=http://localhost:8200`.
 
+Om dette er første gangen du kjører opp applikasjonen vil databasen være tom. Du kan da enten kjøre en import av data som beskrevet lengre ned
+i README-filen, eller så kan du bruke en av database-dumpene som ligger i [google-cloud-bucketen](https://storage.cloud.google.com/utvikler-filer).
+Om du ønsker å bruke en database-dumb må du huske å importere før du kjører opp appen for første gang, da den ved oppstart kjører gjennom noen migreringer
+som oppretter tabellene i databasen.
+
+For å importere en databasedump kan du bruke psql med kommandoen:
+```bash
+psql -f {DB_DUMP_FILENAME} -h localhost -U nibas -d nibas
+```
 
 ## Autentisering <a name="autentisering"></a>
 

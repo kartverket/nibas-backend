@@ -5,6 +5,8 @@ import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Stemmekrets
+import no.kartverket.nibas.events.EventType
+import no.kartverket.nibas.events.NibasEventPublisher
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.SpraakkodeRepository
 import no.kartverket.nibas.service.FlateService
@@ -26,12 +28,14 @@ class KommuneDelingService(
     private val grunnkretsService: GrunnkretsService,
     private val stemmekretsService: StemmekretsService,
     private val grenseService: GrenseService,
-    private val flateService: FlateService
+    private val flateService: FlateService,
+    private val nibasEventPublisher: NibasEventPublisher
 ) {
     val logger = LoggerFactory.getLogger(javaClass)
 
+    @Transactional
     fun delKommuner(kommunedelingManuser: List<KommunedelingManus>) {
-        kommunedelingManuser.forEach { delKommune(it) }
+        kommunedelingManuser.map { delKommune(it) }
     }
 
     @Transactional
@@ -44,7 +48,7 @@ class KommuneDelingService(
 
         val nyeKommuner = opprettNyeKommunerForKommunedeling(kommuneDelingManus, kommuneSomSkalDeles)
 
-        val nyeGrunnkretser = kommuneDelingManus.nyeKommuner.flatMap { nyKommuneManus ->
+        val nyeVersjonerAvGrunnkretser = kommuneDelingManus.nyeKommuner.flatMap { nyKommuneManus ->
             val kommunenummerId = kodelisteService.getKommunenummerIdByCodeValue(nyKommuneManus.kommunenummer)
             val nyKommune = nyeKommuner.find { it.kommunenummer == kommunenummerId }!!
 
@@ -56,7 +60,7 @@ class KommuneDelingService(
             )
         }
 
-        val nyeStemmekretser = kommuneDelingManus.nyeKommuner.flatMap { nyKommuneManus ->
+        val nyeVersjonerAvStemmekretser = kommuneDelingManus.nyeKommuner.flatMap { nyKommuneManus ->
             val kommunenummerId = kodelisteService.getKommunenummerIdByCodeValue(nyKommuneManus.kommunenummer)
             val nyKommune = nyeKommuner.find { it.kommunenummer == kommunenummerId }!!
 
@@ -70,14 +74,20 @@ class KommuneDelingService(
 
         logger.info("Endrer grensetyper for splittingen av ${kodelisteService.getCodeValueByKommunenummerId(kommuneSomSkalDeles.kommunenummer)}")
         kommuneService.settKommuneSomHistorisk(kommuneSomSkalDeles, kommuneDelingManus.fraDato)
-        grenseService.endreGrensetypeForGrunnkretser(nyeGrunnkretser, kommuneDelingManus.fraDato, Endringstype.VEDTATT_DELING)
-        grenseService.endreGrensetypeForStemmekretser(nyeStemmekretser, kommuneDelingManus.fraDato, Endringstype.VEDTATT_DELING)
+        grenseService.endreGrensetypeForGrunnkretser(nyeVersjonerAvGrunnkretser, kommuneDelingManus.fraDato, Endringstype.VEDTATT_DELING)
+        grenseService.endreGrensetypeForStemmekretser(nyeVersjonerAvStemmekretser, kommuneDelingManus.fraDato, Endringstype.VEDTATT_DELING)
 
         logger.info("Danner flater for de nye kommunene")
         flateService.oppdaterFlaterFor(nyeKommuner.toSet())
 
-        // Sende events om endringene
-        // TODO: Vi må huske å sende events!
+        val kommuneEventRader = nyeKommuner.map { it.toEventRad(EventType.ADDED) } + kommuneSomSkalDeles.toEventRad(EventType.EXPIRED)
+        val grunnkretsEventRader = nyeVersjonerAvGrunnkretser.map { it.toEventRad(EventType.MODIFIED) }
+        val stemmekretsEventRader = nyeVersjonerAvStemmekretser.map { it.toEventRad(EventType.MODIFIED) }
+
+        nibasEventPublisher.publishNibasEvent(
+            inntreffer = kommuneDelingManus.fraDato,
+            redigerteFlater = (kommuneEventRader + grunnkretsEventRader + stemmekretsEventRader).sortByType()
+        )
     }
 
     private fun flyttGrunnkretserTilNyKommune(gyldighetsDato: LocalDate, grunnkretserSomFlyttesTilKommune: List<GrunnkretsManus>, gammelKommune: Kommune, nyKommune: Kommune)
@@ -93,7 +103,6 @@ class KommuneDelingService(
                     gyldigFra = gyldighetsDato,
                     endringstype = Endringstype.VEDTATT_DELING
                 )
-
             }
     }
 

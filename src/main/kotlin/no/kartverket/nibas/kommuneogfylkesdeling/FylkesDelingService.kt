@@ -6,6 +6,9 @@ import no.kartverket.nibas.domain.Fylke
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Stemmekrets
+import no.kartverket.nibas.events.EventRad
+import no.kartverket.nibas.events.EventType
+import no.kartverket.nibas.events.NibasEventPublisher
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.SpraakkodeRepository
 import no.kartverket.nibas.service.FlateService
@@ -29,13 +32,14 @@ class FylkesDelingService(
     private val stemmekretsService: StemmekretsService,
     private val grunnkretsService: GrunnkretsService,
     private val grenseService: GrenseService,
-    private val flateService: FlateService
+    private val flateService: FlateService,
+    private val nibasEventPublisher: NibasEventPublisher
 ) {
     val logger = LoggerFactory.getLogger(javaClass)
 
     @Transactional
     fun delFylker(fylkesdelingManuser: List<FylkesdelingManus>) {
-        fylkesdelingManuser.forEach { delFylke(it) }
+        fylkesdelingManuser.map { delFylke(it) }
     }
 
     @Transactional
@@ -49,7 +53,7 @@ class FylkesDelingService(
 
         val nyeFylker = opprettNyeFylkerForFylkesdeling(fylkesdelingManus, fylkeSomSkalDeles)
 
-        fylkesdelingManus.nyeFylker.forEach {
+        val kommuneOgKretsEventRader = fylkesdelingManus.nyeFylker.flatMap {
             flyttKommunerTilNyttFylke(fylkesdelingManus.fraDato, it.kommuner, fylkeSomSkalDeles)
         }
 
@@ -58,16 +62,21 @@ class FylkesDelingService(
         logger.info("Oppdaterer flaten for de nye fylkene")
         flateService.oppdaterFlaterFor(nyeFylker.toSet())
 
-        // 5. Sende events om endringene
-        // TODO: Vi må huske å sende events!
+        val eventRaderForFylke = nyeFylker.map { it.toEventRad(EventType.ADDED) } + fylkeSomSkalDeles.toEventRad(EventType.EXPIRED)
+
+        nibasEventPublisher.publishNibasEvent(
+            inntreffer = fylkesdelingManus.fraDato,
+            redigerteFlater = (eventRaderForFylke + kommuneOgKretsEventRader).sortByType(),
+        )
     }
 
-    private fun flyttKommunerTilNyttFylke(gyldighetsDato: LocalDate, kommunerSomSkalFlyttesTilNyttFylke: List<FylkesDelingKommuneManus>, gammeltFylke: Fylke) {
+    private fun flyttKommunerTilNyttFylke(gyldighetsDato: LocalDate, kommunerSomSkalFlyttesTilNyttFylke: List<FylkesDelingKommuneManus>, gammeltFylke: Fylke): List<EventRad> {
         val kommuner = gammeltFylke.getKommuner(gyldighetsDato)
             .associateBy { it.kommunenummer }
 
-        val nyeGrunnkretser = mutableListOf<Grunnkrets>()
-        val nyeStemmekretser = mutableListOf<Stemmekrets>()
+        val nyeVersjonerAvGrunnkretser = mutableListOf<Grunnkrets>()
+        val nyeVersjonerAvStemmekretser = mutableListOf<Stemmekrets>()
+        val eventRader = mutableListOf<EventRad>()
 
         kommunerSomSkalFlyttesTilNyttFylke.forEach { fylkesDelingKommuneManus ->
             val gammeltKommunenummerId = kodelisteService.getKommunenummerIdByCodeValue(fylkesDelingKommuneManus.gammeltKommunenummer)
@@ -82,16 +91,24 @@ class FylkesDelingService(
                 nyttKommunenummerIKlartekst = fylkesDelingKommuneManus.nyttKommuneNummer
             )
 
-            nyeGrunnkretser += flyttGrunnkretserTilNyKommune(kommune, gammelKommune, gyldighetsDato, fylkesDelingKommuneManus.grunnkretser)
-            nyeStemmekretser += flyttStemmekretserTilNyKommune(kommune, gammelKommune, gyldighetsDato)
+            nyeVersjonerAvGrunnkretser += flyttGrunnkretserTilNyKommune(kommune, gammelKommune, gyldighetsDato, fylkesDelingKommuneManus.grunnkretser)
+            nyeVersjonerAvStemmekretser += flyttStemmekretserTilNyKommune(kommune, gammelKommune, gyldighetsDato)
 
             kommuneService.settKommuneSomHistorisk(gammelKommune, gyldighetsDato)
+
+            eventRader += listOf(
+                gammelKommune.toEventRad(EventType.EXPIRED),
+                kommune.toEventRad(EventType.ADDED)
+            )
+            eventRader += nyeVersjonerAvGrunnkretser.map { it.toEventRad(EventType.MODIFIED) }
+            eventRader += nyeVersjonerAvStemmekretser.map { it.toEventRad(EventType.MODIFIED) }
         }
 
         logger.info("Endrer grensetyper for splittingen av ${kodelisteService.getCodeValueByFylkesnummerId(gammeltFylke.fylkesnummer)}")
-        grenseService.endreGrensetypeForGrunnkretser(nyeGrunnkretser, gyldighetsDato, Endringstype.VEDTATT_DELING)
-        grenseService.endreGrensetypeForStemmekretser(nyeStemmekretser, gyldighetsDato, Endringstype.VEDTATT_DELING)
+        grenseService.endreGrensetypeForGrunnkretser(nyeVersjonerAvGrunnkretser, gyldighetsDato, Endringstype.VEDTATT_DELING)
+        grenseService.endreGrensetypeForStemmekretser(nyeVersjonerAvStemmekretser, gyldighetsDato, Endringstype.VEDTATT_DELING)
 
+        return eventRader
     }
     private fun flyttGrunnkretserTilNyKommune(nyKommune: Kommune, gammelKommune: Kommune, gyldighetsDato: LocalDate, grunnkretsManuser: List<GrunnkretsManus>): List<Grunnkrets> {
         val grunnkretser = gammelKommune.getGrunnkretser(gyldighetsDato)
