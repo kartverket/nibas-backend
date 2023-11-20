@@ -61,6 +61,7 @@ val logstashVersion = "7.4"
 val springmockkVersion = "4.0.2"
 val kotlinMockitoVersion = "4.1.0"
 val prometheusVersion = "1.11.2"
+val openTelemetryVersion = "1.32.0"
 
 dependencies {
     implementation("no.kartverket.aut:aut-lib:$autLibVersion")
@@ -92,8 +93,9 @@ dependencies {
     implementation("org.springframework.cloud:spring-cloud-starter")
     implementation("org.springframework.cloud:spring-cloud-starter-vault-config:$springCloudStarterVaultConfigVersion")
     implementation("io.micrometer:micrometer-registry-prometheus:$prometheusVersion")
-
     implementation("org.springframework.integration:spring-integration-core")
+    implementation(platform("io.opentelemetry:opentelemetry-bom:1.32.0"))
+    implementation("io.opentelemetry:opentelemetry-api")
 
     // This library provides Hibernate 5.5+ Json column support, which is not natively supported by Hibernate
     implementation("io.hypersistence:hypersistence-utils-hibernate-62:$hypersistenceUtilsHibernate62Version")
