@@ -19,6 +19,7 @@ import no.kartverket.nibas.domain.AdministrativEnhet
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.Grense
+import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.kodelister.KodelisteService
@@ -37,6 +38,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.Month
+import java.util.NoSuchElementException
 
 @ActiveProfiles(profiles = ["security-off", "eventsDisabled"])
 @Transactional
@@ -931,6 +933,120 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
 
         assertDelteGrenser(opprinneligDato, vestreKrets, oestreKrets, Grensetype.Kommunegrense,
             jan1In2024, nyVestreKretsINySiljan, nyOestreKretsINyLarvik, Grensetype.Fylkesgrense)
+    }
+
+    /**
+     * Testen beviser feil pga nesteversjon på grensa.
+     * Har to grunnkretser i hver sin kommune. Alle grensene er kommunegrenser.
+     * G1 i K1 har grensene A-B-C-D-E-A. G2 i K2 har C-F-G-E-D-C.
+     * Testen lager ny versjon av grensa D-E og endrer den til å gå mellom A og D.
+     * Pga rekkefølgeendringer må det lages ny versjon av grensa C-D,
+     * og ny versjon av grensa A-E siden den flyttes fra G1 til G2.
+     *
+     * Ved flatedanning av K1 søker den først fram alle grenser som hører til grunnkretser med K1 sitt kommunenummer.
+     * Siden det er to versjoner av G1 finner den grensene A-B og B-C to ganger (en gang for hver versjon av G1).
+     * Den finner også gammel og ny versjon av C-D, gammel versjon av D-E, gammel versjon av A-E og grensa A-D, tilsammen 9 grenser.
+     * Når den ser på den gamle versjonen av grensa A-E ser den at grensa ikke er gyldig, og den har ny versjon.
+     * Den prøver å hente ny versjon av grensa som er knyttet til K1, men finner ingen siden ny versjon av A-E hører til K2 - dermed feiler den.
+     *
+     *      B -------- C -------- F           B -------- C -------- F
+     *      |          |          |           |          |          |
+     *      | G1 i K1  D  G2 i K2 |    -->    | G1 i K1  D  G2 i K2 |
+     *      |          |          |           | ,-------'           |
+     *      A -------- E -------- G           A -------- E -------- G
+     */
+    @Test
+    fun `flytt grense til grunnkrets i annen kommune`() {
+        Mockito.`when`(kodelisteServiceMock.getCodeValueByKommunenummerId("3805")).thenReturn("3805")
+        Mockito.`when`(kodelisteServiceMock.getCodeValueByKommunenummerId("3812")).thenReturn("3812")
+
+        val opprinneligDato = october1In2022
+        val (vestreKrets, oestreKrets) = saveNaboGrunnkretserIHverSinKommune(gyldigFra = opprinneligDato,
+            kommunenummer1 = "3812", kommunenummer2 = "3805", medToDelteGrenser = true)
+        val gamleSiljan = vestreKrets.getKommune(opprinneligDato)!!
+        val gamleLarvik = oestreKrets.getKommune(opprinneligDato)!!
+
+        val vestfoldOgTelemark = saveFylkeOgUnikLokalid(id = "fylke38", lokalid = "38VestfoldOgTelemark", fylkesnummer = "e79b7a63-13ff-4ba5-b4ef-0dfa4e6af1df",
+            administrativenhetnavn = emptyList(), gyldigFra = opprinneligDato, kommuner = listOf(gamleSiljan, gamleLarvik))
+        saveNasjonOgUnikLokalid(fylker = listOf(vestfoldOgTelemark))
+
+        grenseRepository.flush()
+        flateService.oppdaterFlaterFor(setOf(gamleSiljan, gamleLarvik))
+        gamleSiljan.posisjon = gamleSiljan.omraade?.interiorPoint
+        gamleLarvik.posisjon = gamleLarvik.omraade?.interiorPoint
+        grenseRepository.flush()
+
+        val vestreKoblingGrenseDelt = vestreKrets.getGrenser(gyldighetsdato = opprinneligDato).first { it.grense.lokalid == "grenseDeltLokalid" }
+        val vestreKoblingGrenseDelt2 = vestreKrets.getGrenser(gyldighetsdato = opprinneligDato).first { it.grense.lokalid == "grenseDelt2Lokalid" }
+        val vestreKoblingGrenseSoerVest = vestreKrets.getGrenser(gyldighetsdato = opprinneligDato).first { it.grense.lokalid == "grenseSørVestLokalid" }
+        val oestreKoblingGrenseDelt = oestreKrets.getGrenser(gyldighetsdato = opprinneligDato).first { it.grense.lokalid == "grenseDeltLokalid" }
+        val oestreKoblingGrenseDelt2 = oestreKrets.getGrenser(gyldighetsdato = opprinneligDato).first { it.grense.lokalid == "grenseDelt2Lokalid" }
+
+        val gammelGrenseDelt2 = vestreKoblingGrenseDelt2.grense
+        val oppdatertGeometri = GeometryFactory().createLineString(arrayOf(
+            Coordinate(0.0, 0.0),
+            gammelGrenseDelt2.grense.getCoordinateN(1).copy()
+        ))
+        val nyGrenseDelt2 = grenseService.createNyVersjonAvGrense(gammelGrenseDelt2, november28In2022, Endringstype.KVALITETSHEVING)
+            .also {
+                it.grense = oppdatertGeometri
+            }
+
+        val gammelGrenseDelt = oestreKoblingGrenseDelt.grense
+        val nyGrenseDelt = grenseService.createNyVersjonAvGrense(gammelGrenseDelt, november28In2022, Endringstype.KVALITETSHEVING)
+
+        val gammelGrenseSoerVest = vestreKoblingGrenseSoerVest.grense
+        val nyGrenseSoerVest = grenseService.createNyVersjonAvGrense(gammelGrenseSoerVest, november28In2022, Endringstype.KVALITETSHEVING)
+
+        val nyVersjonAvOestreKrets = grunnkretsService.createNyVersjonAvGrunnkrets(oestreKrets, november28In2022, Endringstype.KVALITETSHEVING)
+        val nyVersjonAvVestreKrets = grunnkretsService.createNyVersjonAvGrunnkrets(vestreKrets, november28In2022, Endringstype.KVALITETSHEVING)
+
+        nyVersjonAvOestreKrets.replaceGrensekobling(gammelGrenseDelt2, nyGrenseDelt2, GrenseKoblingAttributter(
+            oestreKoblingGrenseDelt2.grenseKoblingAttributter.retningMedKlokken,
+            4,
+            oestreKoblingGrenseDelt2.grenseKoblingAttributter.flateIndeks,
+            oestreKoblingGrenseDelt2.grenseKoblingAttributter.hullIndeks
+        ))
+
+        nyVersjonAvOestreKrets.addGrensekobling(nyGrenseSoerVest, GrenseKoblingAttributter(rekkefoelge = 3))
+
+        nyVersjonAvOestreKrets.replaceGrensekobling(gammelGrenseDelt, nyGrenseDelt, GrenseKoblingAttributter(
+            oestreKoblingGrenseDelt.grenseKoblingAttributter.retningMedKlokken,
+            5,
+            oestreKoblingGrenseDelt.grenseKoblingAttributter.flateIndeks,
+            oestreKoblingGrenseDelt.grenseKoblingAttributter.hullIndeks
+        ))
+
+        nyVersjonAvVestreKrets.replaceGrensekobling(gammelGrenseDelt2, nyGrenseDelt2, GrenseKoblingAttributter(
+            vestreKoblingGrenseDelt2.grenseKoblingAttributter.retningMedKlokken,
+            vestreKoblingGrenseDelt2.grenseKoblingAttributter.rekkefoelge,
+            vestreKoblingGrenseDelt2.grenseKoblingAttributter.flateIndeks,
+            vestreKoblingGrenseDelt2.grenseKoblingAttributter.hullIndeks))
+
+        nyVersjonAvVestreKrets.replaceGrensekobling(gammelGrenseDelt, nyGrenseDelt, GrenseKoblingAttributter(
+            vestreKoblingGrenseDelt.grenseKoblingAttributter.retningMedKlokken,
+            vestreKoblingGrenseDelt.grenseKoblingAttributter.rekkefoelge,
+            vestreKoblingGrenseDelt.grenseKoblingAttributter.flateIndeks,
+            vestreKoblingGrenseDelt.grenseKoblingAttributter.hullIndeks))
+
+        if (nyVersjonAvVestreKrets.grenser.removeIf { it.grense.id == "grenseSørVest" }) {
+            //Grensa ble tatt vekk fra grunnkretsen. Fjerner grunnkretsen også fra grensa (koblingen fra den andre veien), ellers feiler tester
+            nyGrenseSoerVest.grunnkretser.removeIf { it.grunnkrets.id == nyVersjonAvVestreKrets.id }
+        }
+
+        grenseRepository.flush()
+
+        val nySiljan = kommuneService.createNyVersjonAvKommune(kommune = gamleSiljan, gyldigFra = november28In2022, endringstype = Endringstype.KVALITETSHEVING)
+        val nyLarvik = kommuneService.createNyVersjonAvKommune(kommune = gamleLarvik, gyldigFra = november28In2022, endringstype = Endringstype.KVALITETSHEVING)
+
+        nyVersjonAvVestreKrets.oppdaterOmraadeOgPosisjon()
+        nyVersjonAvOestreKrets.oppdaterOmraadeOgPosisjon()
+
+        Assertions.assertThatThrownBy {
+            flateService.oppdaterFlaterFor(setOf(nySiljan, nyLarvik))
+        }.isInstanceOf(NoSuchElementException::class.java)
+            .hasMessageContaining("List is empty")
+
     }
 
     @Test
