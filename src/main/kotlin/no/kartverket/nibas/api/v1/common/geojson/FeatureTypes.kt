@@ -113,7 +113,10 @@ data class FeatureProperties(
 
     @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
     @NotNull
-    val version: Int
+    val version: Int,
+
+    @Schema(description = "Egenskap som sier om en grense med en grenseendring er skal arkiveres")
+    val shouldArchive: Boolean = false
 )
 
 @Schema(description = "Egenskaper som beskriver konteksten som grensen sees i.")

@@ -38,18 +38,21 @@ class FeatureBuilder(private val id: String? = "1") {
     private var srid: Int = SosiGeometryFunctions.defaultSrid
     private var geometry: Geometry =
         GeometryFactory().createLineString(arrayOf(Coordinate(0.0, 0.0), Coordinate(1.0, 1.0)))
+    private var shouldArchive: Boolean = false
+
 
     fun build(): Feature {
         var properties = FeatureProperties(
             type = grenseType.value,
-            srid = this.srid,
+            srid = srid,
             version = grenseVersjon,
             kontekstEgenskaper = KontekstEgenskaper(
                 id = kontekstId,
                 type = kontekstType,
                 retningMedKlokken = retningMedKlokka,
                 rekkefoelge = rekkefoelge
-            )
+            ),
+            shouldArchive = shouldArchive
         )
 
         if (metadata == null) {
@@ -116,6 +119,11 @@ class FeatureBuilder(private val id: String? = "1") {
 
     fun withRekkefoelge(rekkefoelge: Int): FeatureBuilder {
         this.rekkefoelge = rekkefoelge
+        return this
+    }
+
+    fun withShouldArchive(shouldArchive: Boolean): FeatureBuilder {
+        this.shouldArchive = shouldArchive
         return this
     }
 }

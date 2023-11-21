@@ -107,14 +107,17 @@ class Stemmekrets(
         grense.stemmekretser.add(stemmekretsGrenseKobling)
     }
 
-    override fun replaceGrensekobling(gammelGrense: Grense, grense: Grense, grenseKoblingAttributter: GrenseKoblingAttributter) {
-        if (!tillatteGrensetyper().contains(grense.grensetype)) {
-            throw RuntimeException("Kan ikke oppdatere/legge til ${grense.grensetype.name} på enhet Stemmekrets")
+    override fun replaceGrensekobling(gammelGrense: Grense, grense: Grense?, grenseKoblingAttributter: GrenseKoblingAttributter) {
+        if (!tillatteGrensetyper().contains(grense?.grensetype) && grense != null) {
+            throw RuntimeException("Kan ikke oppdatere/legge til ${grense?.grensetype?.name} på enhet Stemmekrets")
         }
         if (grenser.removeIf { it.grense.id == gammelGrense.id }) {
             //Grensa ble tatt vekk fra stemmekretsen. Fjerner stemmekretsen også fra grensa (koblingen fra den andre veien), ellers feiler tester
             gammelGrense.stemmekretser.removeIf { it.stemmekrets.id == this.id }
-            addGrensekobling(grense, grenseKoblingAttributter)
+            //skal bare adde om det grense != null
+            if(grense != null) {
+                addGrensekobling(grense, grenseKoblingAttributter)
+            }
         }
     }
 

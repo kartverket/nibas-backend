@@ -14,6 +14,6 @@ interface KobletTilGrense {
 
     fun oppdaterEllerLeggTilGrenseKobling(grenseMedAttributter: GrenseMedAttributter)
     fun antallGrenser(): Int
-    fun replaceGrensekobling(gammelGrense: Grense, grense: Grense, grenseKoblingAttributter: GrenseKoblingAttributter)
+    fun replaceGrensekobling(gammelGrense: Grense, grense: Grense?, grenseKoblingAttributter: GrenseKoblingAttributter)
     fun oppdaterOmraadeOgPosisjon()
 }
