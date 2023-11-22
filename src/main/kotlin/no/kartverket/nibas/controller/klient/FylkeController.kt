@@ -28,7 +28,7 @@ class FylkeController(
         val datoToUse: LocalDate = gyldighetsdato ?: LocalDate.now()
         return fylkeService.hentAlleFylker(datoToUse).map {
             val identifikatorForFylke = Identifikator(Lokalid(it.lokalid), datoToUse)
-            it.toFylkeRef(identifikatorForFylke, fylkeService.hentAntallGyldigeVersjonerFramITidFor(identifikatorForFylke), hrefProvider)
+            it.toFylkeRef(identifikatorForFylke, fylkeService.hentAntallGyldigeVersjonerFramITidFor(identifikatorForFylke), hrefProvider, kodelisteService)
         }
     }
 

@@ -40,6 +40,9 @@ data class FylkeRef(
     @Schema(description = "URL til full representasjon av fylket")
     val href: String,
 
+    @Schema(description = "Fylkesnummeret til fylket")
+    val fylkesnummer: Fylkesnummer,
+
     @Schema(description = "Antall publiserte framtidige gyldige versjoner.")
     val antallFramtidigeVersjoner: Int = 0
 )

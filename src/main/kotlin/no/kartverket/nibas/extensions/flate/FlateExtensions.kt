@@ -54,11 +54,15 @@ fun Grunnkrets.toGrunnkretsResponse(identifikator: Identifikator, kodelisteServi
     version = version
 )
 
-fun Fylke.toFylkeRef(identifikator: Identifikator, antallFramtidigeVersjoner: Int = 0, hrefProvider: HrefProvider): FylkeRef = FylkeRef(
+fun Fylke.toFylkeRef(identifikator: Identifikator, antallFramtidigeVersjoner: Int = 0, hrefProvider: HrefProvider, kodelisteService: KodelisteService): FylkeRef = FylkeRef(
     id = identifikator.toObjektIdentifikator(),
     navn = getAdministrativenhetNavn(identifikator.gyldighetsdato)
         .map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version, it.rekkefoelge) },
     href = hrefProvider.getHref(identifikator),
+    fylkesnummer = Fylkesnummer(
+        id = fylkesnummer,
+        kodeverdi = kodelisteService.getCodeValueByFylkesnummerId(fylkesnummer)!!
+    ),
     antallFramtidigeVersjoner = antallFramtidigeVersjoner
 )
 
