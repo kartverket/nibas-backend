@@ -21,7 +21,6 @@ class NibasEventsConfig (
     }
 
     @Bean
-    @RequestScope
     fun getNibasEventsService(): NibasEventsService {
         return NibasEventsService(buildWebClient(), URI)
     }
