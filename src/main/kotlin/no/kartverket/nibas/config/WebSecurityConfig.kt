@@ -104,7 +104,9 @@ class WebSecurityConfig @Autowired constructor(private val environment: Environm
                 }
                 .addFilterAfter(jwtRequestFilter(), AbstractPreAuthenticatedProcessingFilter::class.java)
                 // Slår av CSRF
-                .csrf().disable()
+                .csrf {
+                    it.disable()
+                }
                 // Ingen sesjon vil opprettes eller brukes av Spring Security
                 .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
                 .build()
@@ -117,7 +119,9 @@ class WebSecurityConfig @Autowired constructor(private val environment: Environm
         } else { //Tillater det i andre miljøer
             LOGGER.warn("\n\n\n---------\nOBS!! Started app with SECURITY SWITCHED OFF!\n---------\n\n")
             return httpSecurity
-                .csrf().disable()
+                .csrf {
+                    it.disable()
+                }
                 .build()
         }
     }

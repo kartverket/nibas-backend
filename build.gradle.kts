@@ -4,8 +4,8 @@ import org.springframework.boot.gradle.tasks.bundling.BootJar
 plugins {
     val kotlinPluginVersion = "1.9.20"
 
-    id("org.springframework.boot") version "3.1.4"
-    id("io.spring.dependency-management") version "1.1.0"
+    id("org.springframework.boot") version "3.1.6"
+    id("io.spring.dependency-management") version "1.1.4"
     kotlin("jvm") version kotlinPluginVersion
     kotlin("plugin.spring") version kotlinPluginVersion
     kotlin("plugin.jpa") version kotlinPluginVersion
@@ -52,15 +52,15 @@ val springdocOpenapiVersion2 = "2.2.0"
 val jtsVersion = "1.19.0"
 val testContainerVersion = "1.18.3"
 val autLibVersion = "2.0.0"
-val flywayVersion = "9.21.1"
+val flywayVersion = "9.22.3"
 val hypersistenceUtilsHibernate62Version = "3.6.1"
 val springCloudStarterVaultConfigVersion = "4.0.1"
 val spatial4jVersion = "0.8"
 val kotlinxCoroutinesCoreVersion = "1.7.3"
 val logstashVersion = "7.4"
 val springmockkVersion = "4.0.2"
-val kotlinMockitoVersion = "4.1.0"
-val prometheusVersion = "1.11.2"
+val kotlinMockitoVersion = "5.1.0"
+val prometheusVersion = "1.12.0"
 val openTelemetryVersion = "1.32.0"
 
 dependencies {

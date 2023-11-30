@@ -59,7 +59,8 @@ class AuditComponent(private val jpaEntityManagerFactory: EntityManagerFactory,
         val eventListenerRegistry = jpaEntityManagerFactory
             .unwrap(SessionFactoryImpl::class.java)
             .serviceRegistry
-            .getService(EventListenerRegistry::class.java)
+            .getService(EventListenerRegistry::class.java) ?: throw RuntimeException("Fant ingen service av typen EventListenerRegistry.")
+
         eventListenerRegistry.getEventListenerGroup(EventType.PRE_INSERT).appendListener(auditPreInsertEventListener)
         eventListenerRegistry.getEventListenerGroup(EventType.PRE_UPDATE).appendListener(auditPreUpdateEventListener)
     }
