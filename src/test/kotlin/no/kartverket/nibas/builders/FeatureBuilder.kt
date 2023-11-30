@@ -46,12 +46,12 @@ class FeatureBuilder(private val id: String? = "1") {
             type = grenseType.value,
             srid = srid,
             version = grenseVersjon,
-            kontekstEgenskaper = KontekstEgenskaper(
+            kontekstEgenskaper = listOf(KontekstEgenskaper(
                 id = kontekstId,
                 type = kontekstType,
                 retningMedKlokken = retningMedKlokka,
                 rekkefoelge = rekkefoelge
-            ),
+            )),
             shouldArchive = shouldArchive
         )
 

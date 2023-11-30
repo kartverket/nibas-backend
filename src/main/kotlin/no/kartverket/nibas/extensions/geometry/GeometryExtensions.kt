@@ -136,7 +136,7 @@ fun GrenseKobling.grenseKoblingToFeature(
     val koblingAttributter = grenseKoblingAttributter
     return feature.copy(
         properties = feature.properties.copy(
-            kontekstEgenskaper = KontekstEgenskaper(
+            kontekstEgenskaper = listOf(KontekstEgenskaper(
                 id = ObjektIdentifikator(
                     lokalid = Lokalid(getEnhetKobletTilGrense().lokalid),
                     gyldighetsdato = gyldighetsdato
@@ -146,7 +146,7 @@ fun GrenseKobling.grenseKoblingToFeature(
                 rekkefoelge = koblingAttributter.rekkefoelge,
                 flateIndeks = koblingAttributter.flateIndeks,
                 hullIndeks = koblingAttributter.hullIndeks
-            )
+            ))
         )
     )
 }

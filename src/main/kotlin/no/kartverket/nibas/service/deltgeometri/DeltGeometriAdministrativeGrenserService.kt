@@ -112,7 +112,7 @@ class DeltGeometriAdministrativeGrenserService(
      * Den indre listen har grensene i sortert rekkefølge - slik at grensene kommer i sammenhengende rekkefølge. Med andre ord at sluttpunktet
      * på et grensestykke vil være startpoint for neste grensestykke i listen.
      */
-    private fun getGrenserIRiktigRekkefoelge(grenser: List<LineString>): List<List<LineString>> {
+    fun getGrenserIRiktigRekkefoelge(grenser: List<LineString>): List<List<LineString>> {
         val grenserSomGjenstaar = grenser.toMutableList()
         val nyeGrenseRinger = mutableListOf<List<LineString>>()
         val nyeGrenser = mutableListOf<LineString>()

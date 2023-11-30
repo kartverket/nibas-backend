@@ -109,7 +109,7 @@ data class FeatureProperties(
     val metadata: Metadata? = null,
 
     @Schema(description = "Egenskaper til konteksten til grensen.")
-    val kontekstEgenskaper: KontekstEgenskaper? = null,
+    val kontekstEgenskaper: List<KontekstEgenskaper>? = listOf(),
 
     @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
     @NotNull
