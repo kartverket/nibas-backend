@@ -135,33 +135,8 @@ class GrenseService(
                 additionalInfo = "Feilen gjelder følgende grenser: ${identifikatorDiffs.joinToString(",") { "(lokalid: ${it.lokalid.value}), gyldig fra: ${it.gyldighetsdato})" }}")
         }
 
-        val konflikterIGrenser: List<KonfliktVersjon> = features.mapNotNull { feature ->
-            val featureIdentifikator = featureIdToIdentifikator(feature.id, gyldighetsdato)
-            verifiserOptimistiskLaas(feature.properties.version, findGrenseForIdentifikator(eksisterendeGrenser, featureIdentifikator))
-        }
-        val konflikterIKretserForGrenser = features.flatMap { feature ->
-                feature.properties.kontekstEgenskaper
-                    ?.mapNotNull { kontekstEgenskaper ->
-                        if (kontekstEgenskaper.id == null){
-                            throw RuntimeException("KontekstEgenskaper for feature med id: ${feature.id} er null")
-                        }
-                        val identifikator = Identifikator(kontekstEgenskaper.id.lokalid, gyldighetsdato)
-                        verifiserOptimistiskLaas(
-                            kontekstEgenskaper.version,
-                            when (kontekstEgenskaper.type) {
-                                KontekstEnhetType.GRUNNKRETS -> grunnkretsRepository.findGyldigObjektForIdentifikator(identifikator)
-                                    ?: throw RuntimeException("Fant ikke Grunnkrets med lokalid: ${identifikator.lokalid}")
-                                KontekstEnhetType.STEMMEKRETS -> stemmekretsRepository.findGyldigObjektForIdentifikator(identifikator)
-                                    ?: throw RuntimeException("Fant ikke Stemmekrets med lokalid: ${identifikator.lokalid}")
-                                null -> throw RuntimeException("Ukjent KontekstEnhetType")
-                            }
-                        )
-                    } ?: emptyList()
-            }
-        val alleKonflikter = (konflikterIGrenser+konflikterIKretserForGrenser)
-        if (alleKonflikter.isNotEmpty()) {
-            throw OptimistiskLaasException(*alleKonflikter.toTypedArray())
-        }
+        sjekkForKonflikterForGrenserOgTilhorendeKretser(features, eksisterendeGrenser, gyldighetsdato)
+
         //Flere endrede grenser kan være knyttet til samme krets.
         //Ei endra grense kan ha flere knytninger til samme krets, dvs til ulike versjoner av samme krets
         //Må derfor ha oversikt over hvilke flater som har fått ny versjon
@@ -225,6 +200,36 @@ class GrenseService(
         }
         grenseRepository.flush()
         return flaterSomHarFaattNyVersjon.values.toSet()
+    }
+
+    private fun sjekkForKonflikterForGrenserOgTilhorendeKretser(features: List<Feature>, eksisterendeGrenser: List<Grense>, gyldighetsdato: LocalDate){
+        val konflikterIGrenser: List<KonfliktVersjon> = features.mapNotNull { feature ->
+            val featureIdentifikator = featureIdToIdentifikator(feature.id, gyldighetsdato)
+            verifiserOptimistiskLaas(feature.properties.version, findGrenseForIdentifikator(eksisterendeGrenser, featureIdentifikator))
+        }
+        val konflikterIKretserForGrenser = features.flatMap { feature ->
+            feature.properties.kontekstEgenskaper
+                ?.mapNotNull { kontekstEgenskaper ->
+                    if (kontekstEgenskaper.id == null){
+                        throw RuntimeException("KontekstEgenskaper for feature med id: ${feature.id} er null")
+                    }
+                    val identifikator = Identifikator(kontekstEgenskaper.id.lokalid, gyldighetsdato)
+                    verifiserOptimistiskLaas(
+                        kontekstEgenskaper.version,
+                        when (kontekstEgenskaper.type) {
+                            KontekstEnhetType.GRUNNKRETS -> grunnkretsRepository.findGyldigObjektForIdentifikator(identifikator)
+                                ?: throw RuntimeException("Fant ikke Grunnkrets med lokalid: ${identifikator.lokalid}")
+                            KontekstEnhetType.STEMMEKRETS -> stemmekretsRepository.findGyldigObjektForIdentifikator(identifikator)
+                                ?: throw RuntimeException("Fant ikke Stemmekrets med lokalid: ${identifikator.lokalid}")
+                            null -> throw RuntimeException("Ukjent KontekstEnhetType")
+                        }
+                    )
+                } ?: emptyList()
+        }
+        val alleKonflikter = (konflikterIGrenser+konflikterIKretserForGrenser)
+        if (alleKonflikter.isNotEmpty()) {
+            throw OptimistiskLaasException(*alleKonflikter.toTypedArray())
+        }
     }
 
     fun doEvtTilhorighetEndringer(
