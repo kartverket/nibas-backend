@@ -12,6 +12,7 @@ import no.kartverket.nibas.common.toNorskFormat
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Grunnkrets
+import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.GrunnkretsRepository
@@ -47,7 +48,7 @@ class GrunnkretsService(
 
 
     @Transactional(readOnly = true)
-    fun hentGrenserForGrunnkrets(identifikator: Identifikator): List<GrenseKobling> {
+    fun hentGrenserForGrunnkrets(identifikator: Identifikator): List<GrunnkretsGrenseKobling> {
         return hentGrunnkrets(identifikator)?.getGrenser(identifikator.gyldighetsdato) ?: emptyList()
     }
 

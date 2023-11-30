@@ -45,7 +45,7 @@ class StemmekretsService(
             .filter { !it.gyldighet.slettet }
             .maxBy { it.gyldighet.gyldigFra }
 
-    fun hentGrenserForStemmekrets(identifikator: Identifikator): List<GrenseKobling> {
+    fun hentGrenserForStemmekrets(identifikator: Identifikator): List<StemmekretsGrenseKobling> {
         return hentStemmekrets(identifikator)?.getGrenser(identifikator.gyldighetsdato) ?: emptyList()
     }
 

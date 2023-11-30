@@ -6,6 +6,7 @@ import no.kartverket.nibas.api.v1.ekstern.GrunnkretsApi
 import no.kartverket.nibas.api.v1.response.KretsResponse
 import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.common.createIdentifikator
+import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.extensions.flate.toKretsResponse
 import no.kartverket.nibas.extensions.geometry.grenseKoblingToFeature
 import no.kartverket.nibas.kodelister.KodelisteService
@@ -32,7 +33,7 @@ class GrunnkretsController(
         return FeatureCollection(
             features = grensekoblinger
                 .sortedBy { it.grenseKoblingAttributter.rekkefoelge }
-                .map { it.grenseKoblingToFeature(KontekstEnhetType.GRUNNKRETS, identifikator.gyldighetsdato) }
+                .map { it.grenseKoblingToFeature(KontekstEnhetType.GRUNNKRETS, it.grunnkrets.version, identifikator.gyldighetsdato) }
         )
     }
 }

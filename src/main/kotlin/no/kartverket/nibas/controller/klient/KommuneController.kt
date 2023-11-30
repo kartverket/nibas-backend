@@ -61,7 +61,7 @@ class KommuneController(
             throw NotFoundException("Fant ingen grenser for $identifikator")
         }
         return FeatureCollection(
-            features = grenseKoblinger.map { it.grenseKoblingToFeature(gyldighetsdato = identifikator.gyldighetsdato) }
+            features = grenseKoblinger.map { it.grenseKoblingToFeature(version = it.grunnkrets.version, gyldighetsdato = identifikator.gyldighetsdato) }
         )
     }
 

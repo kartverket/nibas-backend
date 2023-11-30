@@ -127,6 +127,10 @@ data class KontekstEgenskaper(
     @Schema(description = "Hvilken kontekst geometrien skal sees i")
     val type: KontekstEnhetType? = null,
 
+    @Schema(description = "Teknisk versjon til referert objekt for å støtte samhandling og redigering")
+    @NotNull
+    val version: Int,
+
     @Schema(description = "Angir om grensen skal leses med klokken for å danne flate.")
     val retningMedKlokken: Boolean = true,
 

@@ -33,6 +33,7 @@ class FeatureBuilder(private val id: String? = "1") {
     private var lokalid: String = "123"
     private var kontekstId: ObjektIdentifikator = ObjektIdentifikator(Lokalid("123"), gyldighetsdato = LocalDate.now())
     private var kontekstType: KontekstEnhetType = KontekstEnhetType.GRUNNKRETS
+    private var kontekstVersion: Int = 1
     private var retningMedKlokka: Boolean = true
     private var rekkefoelge: Int = 0
     private var srid: Int = SosiGeometryFunctions.defaultSrid
@@ -49,6 +50,7 @@ class FeatureBuilder(private val id: String? = "1") {
             kontekstEgenskaper = listOf(KontekstEgenskaper(
                 id = kontekstId,
                 type = kontekstType,
+                version = kontekstVersion,
                 retningMedKlokken = retningMedKlokka,
                 rekkefoelge = rekkefoelge
             )),

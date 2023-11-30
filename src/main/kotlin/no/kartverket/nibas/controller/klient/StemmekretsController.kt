@@ -36,7 +36,7 @@ class StemmekretsController(
         return FeatureCollection(
             features = grenser
                 .sortedBy { it.grenseKoblingAttributter.rekkefoelge }
-                .map { it.grenseKoblingToFeature(KontekstEnhetType.STEMMEKRETS, identifikator.gyldighetsdato) }
+                .map { it.grenseKoblingToFeature(KontekstEnhetType.STEMMEKRETS, it.stemmekrets.version, identifikator.gyldighetsdato) }
         )
     }
 

@@ -80,13 +80,13 @@ class Grunnkrets(
 
     override fun antallGrenser(): Int = grenser.size
 
-    fun getGrenserAvTyper(grensetyper: Set<Grensetype>, gyldighetsdato: LocalDate = LocalDate.now()): List<GrenseKobling> {
+    fun getGrenserAvTyper(grensetyper: Set<Grensetype>, gyldighetsdato: LocalDate = LocalDate.now()): List<GrunnkretsGrenseKobling> {
         //Denne kan returnere flere grensekoblinger som ender opp med å peke på samme grense (via neste versjon)
         return grenser
             .filter { it.grense.erRelevantGrenseForTyperOgDato(grensetyper, gyldighetsdato) }
     }
 
-    fun getGrenser(gyldighetsdato: LocalDate = LocalDate.now()): List<GrenseKobling> = getGrenserAvTyper(tillatteGrensetyper(), gyldighetsdato)
+    fun getGrenser(gyldighetsdato: LocalDate = LocalDate.now()): List<GrunnkretsGrenseKobling> = getGrenserAvTyper(tillatteGrensetyper(), gyldighetsdato)
 
     override fun toString(): String {
         return "Grunnkrets(id='$id', grunnkretsnummer=$grunnkretsnummer, grunnkretsnavn=$grunnkretsnavn, gyldighet: $gyldighet)"

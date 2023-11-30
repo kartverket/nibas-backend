@@ -6,6 +6,7 @@ import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.GrenseKobling
+import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.NasjonRepository
@@ -29,7 +30,7 @@ class NasjonService(
     fun hentAlleNasjoner(gyldighetsdato: LocalDate = LocalDate.now()): List<Nasjon> = nasjonRepository.findAllGyldigPaaDato(gyldighetsdato)
     fun hentNasjon(identifikator: Identifikator): Nasjon? = nasjonRepository.findGyldigObjektForIdentifikator(identifikator)
 
-    fun hentGrenserForNasjon(identifikator: Identifikator): Set<GrenseKobling> =
+    fun hentGrenserForNasjon(identifikator: Identifikator): Set<GrunnkretsGrenseKobling> =
         hentNasjon(identifikator)?.getGrenser(identifikator.gyldighetsdato) ?: emptySet()
 
     @Transactional(readOnly = false)

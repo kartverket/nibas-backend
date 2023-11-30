@@ -130,6 +130,7 @@ fun Flate.flateToFeature(version: Int): Feature {
  */
 fun GrenseKobling.grenseKoblingToFeature(
     kontekstType: KontekstEnhetType = KontekstEnhetType.GRUNNKRETS,
+    version: Int,
     gyldighetsdato: LocalDate = LocalDate.now()
 ): Feature {
     val feature = getRelevantGrense(gyldighetsdato).grenseToFeature()
@@ -142,6 +143,7 @@ fun GrenseKobling.grenseKoblingToFeature(
                     gyldighetsdato = gyldighetsdato
                 ),
                 type = kontekstType,
+                version = version,
                 retningMedKlokken = koblingAttributter.retningMedKlokken,
                 rekkefoelge = koblingAttributter.rekkefoelge,
                 flateIndeks = koblingAttributter.flateIndeks,

@@ -139,11 +139,29 @@ class GrenseService(
             val featureIdentifikator = featureIdToIdentifikator(feature.id, gyldighetsdato)
             verifiserOptimistiskLaas(feature.properties.version, findGrenseForIdentifikator(eksisterendeGrenser, featureIdentifikator))
         }
-        if (konflikterIGrenser.isNotEmpty()) {
-            throw OptimistiskLaasException(*konflikterIGrenser.toTypedArray())
+        val konflikterIKretserForGrenser = features.flatMap { feature ->
+                feature.properties.kontekstEgenskaper
+                    ?.mapNotNull { kontekstEgenskaper ->
+                        if (kontekstEgenskaper.id == null){
+                            throw RuntimeException("KontekstEgenskaper for feature med id: ${feature.id} er null")
+                        }
+                        val identifikator = Identifikator(kontekstEgenskaper.id.lokalid, gyldighetsdato)
+                        verifiserOptimistiskLaas(
+                            kontekstEgenskaper.version,
+                            when (kontekstEgenskaper.type) {
+                                KontekstEnhetType.GRUNNKRETS -> grunnkretsRepository.findGyldigObjektForIdentifikator(identifikator)
+                                    ?: throw RuntimeException("Fant ikke Grunnkrets med lokalid: ${identifikator.lokalid}")
+                                KontekstEnhetType.STEMMEKRETS -> stemmekretsRepository.findGyldigObjektForIdentifikator(identifikator)
+                                    ?: throw RuntimeException("Fant ikke Stemmekrets med lokalid: ${identifikator.lokalid}")
+                                null -> throw RuntimeException("Ukjent KontekstEnhetType")
+                            }
+                        )
+                    } ?: emptyList()
+            }
+        val alleKonflikter = (konflikterIGrenser+konflikterIKretserForGrenser)
+        if (alleKonflikter.isNotEmpty()) {
+            throw OptimistiskLaasException(*alleKonflikter.toTypedArray())
         }
-        //TODO Skulle også ha sjekket lås for grensenes kretser, men det sendes ikke inn versjon
-
         //Flere endrede grenser kan være knyttet til samme krets.
         //Ei endra grense kan ha flere knytninger til samme krets, dvs til ulike versjoner av samme krets
         //Må derfor ha oversikt over hvilke flater som har fått ny versjon

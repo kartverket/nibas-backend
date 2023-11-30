@@ -14,6 +14,7 @@ import no.kartverket.nibas.domain.Administrativenhetnavn
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Grunnkrets
+import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.UnikLokalid
@@ -57,7 +58,7 @@ class KommuneService(
     fun hentKommunerForFylke(fylkeIdentifikator: Identifikator): List<Kommune> =
         fylkeRepository.findGyldigObjektForIdentifikator(fylkeIdentifikator)?.getKommuner(fylkeIdentifikator.gyldighetsdato) ?: emptyList()
 
-    fun hentGrenserForKommune(identifikator: Identifikator): Set<GrenseKobling> {
+    fun hentGrenserForKommune(identifikator: Identifikator): Set<GrunnkretsGrenseKobling> {
         return hentKommune(identifikator)?.getGrenser(identifikator.gyldighetsdato) ?: emptySet()
     }
 
