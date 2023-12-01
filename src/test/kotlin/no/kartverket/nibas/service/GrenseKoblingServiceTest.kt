@@ -121,14 +121,14 @@ class GrenseKoblingServiceTest {
     }
 
     /**
-     * Genererer en liste over simulerte grenselinjer (Grense) som danner en multipolygon med eller uten hull.
+     * Genererer en liste med grenselinjer (Grense) som danner et multipolygon med eller uten hull.
      *
      * @param gyldigFra Gyldig fra-dato for de genererte grensene.
      * @param grensetype Typen grense (for eksempel Grensetype.Grunnkretsgrense).
-     * @param medHull Indikerer om en indre hullgrense skal inkluderes for å danne en multipolygon.
-     * @param medReversering Indikerer om en tilfeldig grense i multipolygonen skal reverseres.
+     * @param medHull Indikerer om en indre hullgrense skal inkluderes for å danne et multipolygon.
+     * @param medReversering Indikerer om en tilfeldig grense i multipolygonet skal reverseres.
      *
-     * @return En liste over Grense-objekter som representerer grensene i multipolygonen.
+     * @return En liste over Grense-objekter som representerer grensene i multipolygonet.
      *
      * @see Grense
      * @see Coordinate
