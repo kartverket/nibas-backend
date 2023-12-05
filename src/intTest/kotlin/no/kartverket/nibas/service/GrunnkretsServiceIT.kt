@@ -348,13 +348,13 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         ))
 
         val oppdatertGrensefeature = FeatureBuilder(id = "850")
-            .withKontekstType(KontekstEnhetType.GRUNNKRETS)
+
             .withGrenseversjon(grenseKobling.grense.version)
-            .withKontekstId(kontekstId = grunnkrets.lokalid, gyldighetsdato = november28In2022)
+
             .withGrensetype(Grensetype.Kommunegrense)
             .withGeometry(oppdatertGeometri)
-            .withRekkefoelge(grenseKobling.grenseKoblingAttributter.rekkefoelge)
-            .withRetning(grenseKobling.grenseKoblingAttributter.retningMedKlokken)
+
+            .withKontekstEgenskaper(listOf()) //TODO
             .build()
 
         val flaterSomErEndret = grenseService.lagreGrenser(
@@ -404,13 +404,11 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         ))
 
         val oppdatertGrensefeature = FeatureBuilder(id = "850")
-            .withKontekstType(KontekstEnhetType.GRUNNKRETS)
+
             .withGrenseversjon(grenseKobling.grense.version)
-            .withKontekstId(kontekstId = grunnkrets.lokalid, gyldighetsdato = november28In2022)
             .withGrensetype(Grensetype.Fylkesgrense)
             .withGeometry(oppdatertGeometri)
-            .withRekkefoelge(grenseKobling.grenseKoblingAttributter.rekkefoelge)
-            .withRetning(grenseKobling.grenseKoblingAttributter.retningMedKlokken)
+            .withKontekstEgenskaper(listOf()) //TODO
             .build()
 
         val flaterSomErEndret = grenseService.lagreGrenser(
@@ -464,13 +462,10 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         ))
 
         val oppdatertGrensefeature = FeatureBuilder(id = "850")
-            .withKontekstType(KontekstEnhetType.GRUNNKRETS)
+            .withKontekstEgenskaper(listOf()) //TODO
             .withGrenseversjon(grenseKobling.grense.version)
-            .withKontekstId(kontekstId = grunnkrets.lokalid, gyldighetsdato = november28In2022)
             .withGrensetype(Grensetype.Riksgrense)
             .withGeometry(oppdatertGeometri)
-            .withRekkefoelge(grenseKobling.grenseKoblingAttributter.rekkefoelge)
-            .withRetning(grenseKobling.grenseKoblingAttributter.retningMedKlokken)
             .build()
 
         val flaterSomErEndret = grenseService.lagreGrenser(
@@ -1173,13 +1168,10 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         ))
 
         val oppdatertGrensefeature = FeatureBuilder(id = "grenseDeltLokalid")
-            .withKontekstType(KontekstEnhetType.GRUNNKRETS)
             .withGrenseversjon(grenseKobling.grense.version)
-            .withKontekstId(kontekstId = kretsSomSkalHaGrenseendring.lokalid, gyldighetsdato = endringsdato)
             .withGrensetype(grensetype)
             .withGeometry(oppdatertGeometri)
-            .withRekkefoelge(grenseKobling.grenseKoblingAttributter.rekkefoelge)
-            .withRetning(grenseKobling.grenseKoblingAttributter.retningMedKlokken)
+            .withKontekstEgenskaper(listOf()) //TODO
             .build()
 
         val features = if (featureAnnenOppdatertGrense != null) listOf(oppdatertGrensefeature, featureAnnenOppdatertGrense) else listOf(oppdatertGrensefeature)
@@ -1202,13 +1194,10 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         ))
 
         return FeatureBuilder(id = lokalidGrenseSomSkalEndres)
-            .withKontekstType(KontekstEnhetType.GRUNNKRETS)
             .withGrenseversjon(grenseKobling.grense.version)
-            .withKontekstId(kontekstId = kretsSomSkalHaGrenseendring.lokalid, gyldighetsdato = endringsdato)
             .withGrensetype(Grensetype.Grunnkretsgrense)
             .withGeometry(oppdatertGeometri)
-            .withRekkefoelge(grenseKobling.grenseKoblingAttributter.rekkefoelge)
-            .withRetning(grenseKobling.grenseKoblingAttributter.retningMedKlokken)
+            .withKontekstEgenskaper(listOf()) //TODO
             .build()
     }
 

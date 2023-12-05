@@ -31,11 +31,7 @@ class FeatureBuilder(private val id: String? = "1") {
     private var grenseVersjon = 1
     private var metadata: Metadata? = null
     private var lokalid: String = "123"
-    private var kontekstId: ObjektIdentifikator = ObjektIdentifikator(Lokalid("123"), gyldighetsdato = LocalDate.now())
-    private var kontekstType: KontekstEnhetType = KontekstEnhetType.GRUNNKRETS
-    private var kontekstVersion: Int = 1
-    private var retningMedKlokka: Boolean = true
-    private var rekkefoelge: Int = 0
+    private var kontekstEgenskaper: List<KontekstEgenskaper> = listOf()
     private var srid: Int = SosiGeometryFunctions.defaultSrid
     private var geometry: Geometry =
         GeometryFactory().createLineString(arrayOf(Coordinate(0.0, 0.0), Coordinate(1.0, 1.0)))
@@ -47,13 +43,7 @@ class FeatureBuilder(private val id: String? = "1") {
             type = grenseType.value,
             srid = srid,
             version = grenseVersjon,
-            kontekstEgenskaper = listOf(KontekstEgenskaper(
-                id = kontekstId,
-                type = kontekstType,
-                version = kontekstVersion,
-                retningMedKlokken = retningMedKlokka,
-                rekkefoelge = rekkefoelge
-            )),
+            kontekstEgenskaper = kontekstEgenskaper,
             shouldArchive = shouldArchive
         )
 
@@ -89,18 +79,16 @@ class FeatureBuilder(private val id: String? = "1") {
         return this
     }
 
+    fun withKontekstEgenskaper(kontekstEgenskaper: List<KontekstEgenskaper>): FeatureBuilder{
+        if (!(kontekstEgenskaper.size == 2 || kontekstEgenskaper.size == 4)){
+            throw IllegalArgumentException("En feature kan kun ha to eller fire kontekster, ikke ${kontekstEgenskaper.size}")
+        }
+        this.kontekstEgenskaper = kontekstEgenskaper
+        return this
+    }
+
     fun withGrenseversjon(grenseversjon: Int): FeatureBuilder {
         this.grenseVersjon = grenseversjon
-        return this
-    }
-
-    fun withKontekstId(kontekstId: String, gyldighetsdato: LocalDate = LocalDate.now()): FeatureBuilder {
-        this.kontekstId = ObjektIdentifikator(Lokalid(kontekstId), gyldighetsdato)
-        return this
-    }
-
-    fun withKontekstType(kontekstType: KontekstEnhetType): FeatureBuilder {
-        this.kontekstType = kontekstType
         return this
     }
 
@@ -114,13 +102,8 @@ class FeatureBuilder(private val id: String? = "1") {
         return this
     }
 
-    fun withRetning(retningMedKlokka: Boolean): FeatureBuilder {
-        this.retningMedKlokka = retningMedKlokka
-        return this
-    }
-
-    fun withRekkefoelge(rekkefoelge: Int): FeatureBuilder {
-        this.rekkefoelge = rekkefoelge
+    fun withLokalid(lokalid: String): FeatureBuilder {
+        this.lokalid = lokalid
         return this
     }
 

@@ -57,9 +57,7 @@ class GrenseServiceTest {
     fun thatIncomingFeatureWithoutIdThrowsException() {
         // Innkommende feature uten id
         val nyDelomraadegrensefeatureForGrunnkrets = FeatureBuilder(null)
-            .withKontekstType(KontekstEnhetType.GRUNNKRETS)
-            .withKontekstId("1")
-            .withGrensetype(Grensetype.Delomraadegrense)
+            .withGrensetype(Grensetype.Delomraadegrense).withKontekstEgenskaper(listOf()) //TODO
             .build()
 
         assertThatThrownBy {
@@ -85,9 +83,7 @@ class GrenseServiceTest {
         every { grenseRepositoryKotlinMock.findAllGyldigeObjekterForIdentifikatorer(allAny()) } returns mapOf(grenseIdentifikator to grense)
 
         // Innkommende feature på ukjent grenseId
-        val featureWithUnknownId = FeatureBuilder("33")
-            .withKontekstType(KontekstEnhetType.GRUNNKRETS)
-            .withKontekstId("1")
+        val featureWithUnknownId = FeatureBuilder("33").withKontekstEgenskaper(listOf()) //TODO
             .withGrensetype(Grensetype.Grunnkretsgrense)
             .build()
 
@@ -114,10 +110,7 @@ class GrenseServiceTest {
         every { grenseRepositoryKotlinMock.findAllGyldigeObjekterForIdentifikatorer(allAny()) } returns mapOf(grenseIdentifikator to grense)
 
         val featureWithUnknownId = FeatureBuilder("34")
-            .withGrenseversjon(1)
-            .withKontekstType(KontekstEnhetType.GRUNNKRETS)
-            .withKontekstId("1")
-            .withGrensetype(Grensetype.Grunnkretsgrense)
+            .withGrenseversjon(1).withKontekstEgenskaper(listOf()) //TODO
             .build()
 
         assertThatThrownBy { grenseService.lagreGrenser(

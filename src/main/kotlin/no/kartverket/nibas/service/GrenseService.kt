@@ -135,7 +135,7 @@ class GrenseService(
                 additionalInfo = "Feilen gjelder følgende grenser: ${identifikatorDiffs.joinToString(",") { "(lokalid: ${it.lokalid.value}), gyldig fra: ${it.gyldighetsdato})" }}")
         }
 
-        sjekkForKonflikterForGrenserOgTilhorendeKretser(features, eksisterendeGrenser, gyldighetsdato)
+        //sjekkForKonflikterForGrenserOgTilhorendeKretser(features, eksisterendeGrenser, gyldighetsdato)
 
         //Flere endrede grenser kan være knyttet til samme krets.
         //Ei endra grense kan ha flere knytninger til samme krets, dvs til ulike versjoner av samme krets
@@ -203,7 +203,7 @@ class GrenseService(
     }
 
     private fun sjekkForKonflikterForGrenserOgTilhorendeKretser(features: List<Feature>, eksisterendeGrenser: List<Grense>, gyldighetsdato: LocalDate){
-        val konflikterIGrenser: List<KonfliktVersjon> = features.mapNotNull { feature ->
+        val konflikterIGrenser= features.mapNotNull { feature ->
             val featureIdentifikator = featureIdToIdentifikator(feature.id, gyldighetsdato)
             verifiserOptimistiskLaas(feature.properties.version, findGrenseForIdentifikator(eksisterendeGrenser, featureIdentifikator))
         }

@@ -37,9 +37,6 @@ class GrenseKoblingServiceIT : TestWithDbContainer() {
     @Autowired
     lateinit var grenseKoblingService: GrenseKoblingService
 
-    @Autowired
-    private lateinit var entityManager: EntityManager
-
     @Test
     fun `fjernGrenseFraKretser klarer å fjerne grense fra krets`(){
         // lager en grunnkrets

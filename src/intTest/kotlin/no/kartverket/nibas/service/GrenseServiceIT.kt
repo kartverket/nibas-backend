@@ -4,6 +4,8 @@ import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
+import no.kartverket.nibas.api.v1.common.geojson.KontekstEgenskaper
+import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
 import no.kartverket.nibas.builders.FeatureBuilder
 import no.kartverket.nibas.builders.GrunnkretsRequestBuilder
 import no.kartverket.nibas.builders.StemmekretsRequestBuilder
@@ -12,7 +14,9 @@ import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseKobling
+import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.Grunnkrets
+import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.sosi.sosiimport.IkkeSammenhengendePolygonException
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
@@ -57,13 +61,102 @@ class GrenseServiceIT : TestWithDbContainer() {
     }
 
     @Test
+    fun `lagreGrenser klarer å endre tilhørighet på grunnkretsgrense`() {
+        val gyldigFra = november28In2022
+        val gyldighetsdato = LocalDate.now()
+
+        val komplettPolygonUendret = mockTilhorighetPolygon("A", gyldigFra, Grensetype.Grunnkretsgrense, TilhorighetPolygons.UENDRET)
+        val komplettPolygonFrafallende = mockTilhorighetPolygon("B", gyldigFra, Grensetype.Grunnkretsgrense, TilhorighetPolygons.FRAFALLENDE)
+        val komplettPolygonNy = mockTilhorighetPolygon("C", gyldigFra, Grensetype.Grunnkretsgrense, TilhorighetPolygons.NY)
+        grenseRepository.saveAll(komplettPolygonNy+komplettPolygonUendret+komplettPolygonFrafallende)
+        grenseRepository.flush()
+
+        val A = saveGrunnkrets(id = "A", lokalid = Lokalid("A"), gyldigFra = gyldigFra, grenser = komplettPolygonUendret)
+        val B = saveGrunnkrets(id = "B", lokalid = Lokalid("B"), gyldigFra = gyldigFra, grenser = komplettPolygonFrafallende)
+        val C = saveGrunnkrets(id = "C", lokalid = Lokalid("C"), gyldigFra = gyldigFra, grenser = komplettPolygonNy)
+
+        leggTilEkstraGrenseForGrunnkretsB(B, A, gyldigFra)
+        fjernEkstraGrenseFraGrunnkretsC(C)
+        grenseRepository.flush()
+
+        saveKommuneOgUnikLokalid(grunnkretser = listOf(A), gyldigFra = gyldigFra)
+        saveKommuneOgUnikLokalid(grunnkretser = listOf(B), gyldigFra = gyldigFra)
+        saveKommuneOgUnikLokalid(grunnkretser = listOf(C), gyldigFra = gyldigFra)
+
+        val feature = utfoerGrenseTilhorighetEndring(B.grenser.map { it.grense }, "B1", gyldighetsdato)
+
+        val flateSet = grenseService.lagreGrenser(
+            grenser = FeatureCollection(features = listOf(feature)),
+            gyldighetsdato = gyldighetsdato,
+            endringstype = Endringstype.KVALITETSHEVING
+        )
+
+        assertThat(flateSet.size).isEqualTo(2)
+        assertThat(flateSet.map { it.lokalid }).containsAll(listOf("B", "C"))
+        assertThat(flateSet.map { (it as Grunnkrets).grenser.size }).isEqualTo(4)
+    }
+
+    private fun fjernEkstraGrenseFraGrunnkretsC(C: Grunnkrets) {
+        C.apply {
+            val grenseSomSkalFjernes = GrenseHelper.geometryFactory.createLineString(arrayOf(
+                Coordinate(5.0, 0.0),
+                Coordinate(5.0, 5.0)
+            ))
+            grenser = this.grenser.filter { gk -> !gk.grense.grense.equals(grenseSomSkalFjernes) }.toMutableSet()
+        }
+    }
+
+    private fun leggTilEkstraGrenseForGrunnkretsB(B: Grunnkrets, A: Grunnkrets, gyldigFra: LocalDate){
+        val ekstraGrense =  Grense(
+            "frafallendeGrense", "frafallendeGrense", Grensetype.Grunnkretsgrense,
+        ).apply {
+            setGyldigFra(gyldigFra)
+            grense = GrenseHelper.geometryFactory.createLineString(
+                arrayOf(
+                    Coordinate(5.0, 0.0),
+                    Coordinate(5.0, 5.0)
+                )
+            )
+        }
+        grenseRepository.save(ekstraGrense)
+
+        A.replaceGrensekobling(A.grenser.map { it.grense }.first{it.grense.equals(GrenseHelper.geometryFactory.createLineString(
+            arrayOf(Coordinate(5.0, 0.0), Coordinate(5.0, 5.0))))}, ekstraGrense, GrenseKoblingAttributter())
+        B.addGrensekobling(ekstraGrense, GrenseKoblingAttributter())
+    }
+
+    private fun utfoerGrenseTilhorighetEndring(grenser: List<Grense>, idForGrenseSomFaarTilhorighetEndring: String, gyldighetsdato: LocalDate): Feature {
+        val grenseSomFaarTilhorighetEndring = grenser.first{it.lokalid == idForGrenseSomFaarTilhorighetEndring}
+
+        val nyeTilhorigheter = listOf(KontekstEgenskaper(
+            id = ObjektIdentifikator(Lokalid("A"), gyldighetsdato),
+            type = KontekstEnhetType.GRUNNKRETS,
+            version = 1
+        ), KontekstEgenskaper(
+            id = ObjektIdentifikator(Lokalid("C"), gyldighetsdato),
+            type = KontekstEnhetType.GRUNNKRETS,
+            version = 1
+        ))
+
+        return FeatureBuilder(id = idForGrenseSomFaarTilhorighetEndring)
+            .withLokalid(idForGrenseSomFaarTilhorighetEndring)
+            .withGeometry(grenseSomFaarTilhorighetEndring.grense)
+            .withGrenseversjon(1)
+            .withGrensetype(grenseSomFaarTilhorighetEndring.grensetype)
+            .withKontekstEgenskaper(nyeTilhorigheter)
+            .build()
+    }
+
+    @Test
     fun arkiverStemmekretsgrenseUtenAaLukkeKrets() {
         val gyldigFra = november28In2022
         val gyldighetsdato = LocalDate.now()
 
         val stemmekretsRequest = StemmekretsRequestBuilder.DEFAULT_REQUEST
         val identifikator = Identifikator(Lokalid(stemmekretsRequest.identifikasjon.lokalid), gyldigFra)
-        val lagredeGrenser = grenseRepository.saveAll(getGrenserForEnkelKrets(gyldigFra, gyldighetsdato = gyldighetsdato, Grensetype.Stemmekretsgrense))
+        val lagredeGrenser = grenseRepository.saveAll(getGrenserForEnkelKrets(
+            gyldigFra, gyldighetsdato = gyldighetsdato, Grensetype.Stemmekretsgrense)
+        )
         grenseRepository.flush()
 
         val stemmekrets = saveStemmekrets(id = "1", lokalid = identifikator.lokalid, stemmekretsnummer = "20", gyldigFra = gyldigFra, grenser = lagredeGrenser)
@@ -195,12 +288,8 @@ class GrenseServiceIT : TestWithDbContainer() {
     private fun utfoerGrenseArkivering(opprinneligDato: LocalDate, grenseKobling: GrenseKobling, lokalid: String, kontekstEnhetType: KontekstEnhetType, grensetype: Grensetype): Feature {
 
         return FeatureBuilder(id = "grense1Lokalid")
-            .withKontekstType(kontekstEnhetType)
             .withGrenseversjon(grenseKobling.grense.version)
-            .withKontekstId(kontekstId = lokalid, gyldighetsdato = opprinneligDato)
             .withGrensetype(grensetype)
-            .withRekkefoelge(grenseKobling.grenseKoblingAttributter.rekkefoelge)
-            .withRetning(grenseKobling.grenseKoblingAttributter.retningMedKlokken)
             .withShouldArchive(true)
             .build()
     }
@@ -226,14 +315,60 @@ class GrenseServiceIT : TestWithDbContainer() {
         ))
 
         return FeatureBuilder(id = "grense2Lokalid")
-            .withKontekstType(kontekstEnhetType)
             .withGrenseversjon(grenseKobling.grense.version)
-            .withKontekstId(kontekstId = lokalid, gyldighetsdato = opprinneligDato)
             .withGrensetype(grensetype)
-            .withRekkefoelge(grenseKobling.grenseKoblingAttributter.rekkefoelge)
-            .withRetning(grenseKobling.grenseKoblingAttributter.retningMedKlokken)
             .withGeometry(oppdatertGeometri)
             .build()
+    }
+
+    private enum class TilhorighetPolygons{
+        NY,
+        UENDRET,
+        FRAFALLENDE
+    }
+    private fun mockTilhorighetPolygon(forKrets: String, gyldigFra: LocalDate, grensetype: Grensetype, tilhorighetPolygons: TilhorighetPolygons): List<Grense> {
+        var koordinater = listOf<Pair<Coordinate, Coordinate>>()
+        when(tilhorighetPolygons){
+            TilhorighetPolygons.NY -> koordinater = listOf(
+                Pair(Coordinate(0.0,0.0), Coordinate(0.0,5.0)),
+                Pair(Coordinate(0.0,5.0), Coordinate(5.0,5.0)),
+                Pair(Coordinate(5.0,5.0), Coordinate(5.0,0.0)),
+                Pair(Coordinate(5.0,0.0), Coordinate(0.0,0.0))
+            )
+            TilhorighetPolygons.UENDRET -> koordinater = listOf(
+                Pair(Coordinate(5.0,0.0), Coordinate(5.0,5.0)),
+                Pair(Coordinate(5.0,5.0), Coordinate(10.0,5.0)),
+                Pair(Coordinate(10.0,5.0), Coordinate(10.0,0.0)),
+                Pair(Coordinate(10.0,0.0), Coordinate(5.0,0.0))
+            )
+            TilhorighetPolygons.FRAFALLENDE -> koordinater = listOf(
+                Pair(Coordinate(5.0,5.0), Coordinate(5.0,10.0)),
+                Pair(Coordinate(5.0,10.0), Coordinate(10.0,10.0)),
+                Pair(Coordinate(10.0,10.0), Coordinate(10.0,5.0)),
+                Pair(Coordinate(10.0,5.0), Coordinate(5.0,5.0))
+            )
+        }
+        return mockPolygon(
+            forKrets,
+            koordinater,
+            gyldigFra,
+            grensetype
+        )
+    }
+
+    private fun mockPolygon(forKrets: String, coordinatePairs: List<Pair<Coordinate, Coordinate>>, gyldigFra: LocalDate, grensetype: Grensetype): List<Grense> {
+        return coordinatePairs.mapIndexed { index, pair ->
+            Grense(id = forKrets+index.toString(), lokalid = forKrets+index.toString(), grensetype = grensetype)
+                .apply {
+                    setGyldigFra(gyldigFra)
+                    grense = GrenseHelper.geometryFactory.createLineString(
+                        arrayOf(
+                            pair.first,
+                            pair.second
+                        )
+                    )
+                }
+        }
     }
 
     fun getGrenserForEnkelKrets(gyldigFra: LocalDate, gyldighetsdato: LocalDate, grensetype: Grensetype): List<Grense> {

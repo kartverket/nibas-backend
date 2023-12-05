@@ -875,13 +875,10 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         ))
 
         val oppdatertGrensefeature = FeatureBuilder(id = "grenseDeltLokalid")
-            .withKontekstType(KontekstEnhetType.STEMMEKRETS)
             .withGrenseversjon(grenseKobling.grense.version)
-            .withKontekstId(kontekstId = kretsSomSkalHaGrenseendring.lokalid, gyldighetsdato = endringsdato)
             .withGrensetype(Grensetype.Stemmekretsgrense)
             .withGeometry(oppdatertGeometri)
-            .withRekkefoelge(grenseKobling.grenseKoblingAttributter.rekkefoelge)
-            .withRetning(grenseKobling.grenseKoblingAttributter.retningMedKlokken)
+            .withKontekstEgenskaper(listOf()) //TODO
             .build()
 
         val features = if (featureAnnenOppdatertGrense != null)
@@ -906,13 +903,10 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         ))
 
         return FeatureBuilder(id = lokalidGrenseSomSkalEndres)
-            .withKontekstType(KontekstEnhetType.STEMMEKRETS)
             .withGrenseversjon(grenseKobling.grense.version)
-            .withKontekstId(kontekstId = kretsSomSkalHaGrenseendring.lokalid, gyldighetsdato = endringsdato)
             .withGrensetype(Grensetype.Stemmekretsgrense)
             .withGeometry(oppdatertGeometri)
-            .withRekkefoelge(grenseKobling.grenseKoblingAttributter.rekkefoelge)
-            .withRetning(grenseKobling.grenseKoblingAttributter.retningMedKlokken)
+            .withKontekstEgenskaper(listOf()) //TODO
             .build()
     }
 
