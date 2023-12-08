@@ -251,7 +251,7 @@ class GrenseKoblingService(
         }
 
         // Splitter listen inn i hull og skall for å kunne gå gjennom de separat
-        val (hull, skall) = polygonerP.partition { erFlateHullIPolygoner(it, polygonerP) }
+        val (hull, skall) = polygonerP.partition { erFlateHullIEtPolygon(it, polygonerP) }
 
         // Opprett nye GrenseKoblingAttributter ved å gå hierarkisk gjennom skall og hull
         val grenserMedAttributter =  skall.flatMapIndexed {flateIndeks, skallPolygonP ->
@@ -285,7 +285,7 @@ class GrenseKoblingService(
         return grenserMedAttributter
     }
 
-    private fun erFlateHullIPolygoner(flate: Geometry, flater: List<Geometry>): Boolean {
+    private fun erFlateHullIEtPolygon(flate: Geometry, flater: List<Geometry>): Boolean {
         return flater.any { currentFlate -> currentFlate != flate && flate.within(currentFlate) }
     }
 

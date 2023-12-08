@@ -134,7 +134,7 @@ class GrenseService(
                 additionalInfo = "Feilen gjelder følgende grenser: ${identifikatorDiffs.joinToString(",") { "(lokalid: ${it.lokalid.value}), gyldig fra: ${it.gyldighetsdato})" }}")
         }
 
-        //sjekkForKonflikterForGrenserOgTilhorendeKretser(features, eksisterendeGrenser, gyldighetsdato)
+        sjekkForKonflikterForGrenserOgTilhorendeKretser(features, eksisterendeGrenser, gyldighetsdato)
 
         //Flere endrede grenser kan være knyttet til samme krets.
         //Ei endra grense kan ha flere knytninger til samme krets, dvs til ulike versjoner av samme krets
@@ -206,6 +206,7 @@ class GrenseService(
             }
         }
 
+        //grenseRepository.flush()
         return Pair(flaterSomHarFaattNyVersjon.values.toSet(), grenserSomHarFaattNyVersjon.values.toSet())
     }
 
