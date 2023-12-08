@@ -100,11 +100,12 @@ class TestWithDbContainer {
     companion object dbContainer : PostgreSQLContainer<dbContainer>(
         DockerImageName.parse("postgis/postgis:14-3.2-alpine").asCompatibleSubstituteFor("postgres")
     ) {
+        private val randomContainerSuffix = Random().nextInt().toString()
         init {
             withDatabaseName("nibas")
             withUsername("nibas")
             withPassword("nibas")
-            withCreateContainerCmdModifier { cmd -> cmd.withName("nibas-test-container") }
+            withCreateContainerCmdModifier { cmd -> cmd.withName("nibas-test-container$randomContainerSuffix") }
             start()
         }
 

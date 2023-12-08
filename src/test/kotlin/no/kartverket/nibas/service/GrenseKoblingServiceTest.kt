@@ -89,16 +89,6 @@ class GrenseKoblingServiceTest {
         }
     }
 
-    @Test
-    fun `konverterPolygonTilLineStrings lager korrekte LineStrings fra Polygon`(){
-        val komplettPolygon = mockedMultiPolygon(LocalDate.now(), Grensetype.Grunnkretsgrense, false, false).subList(0,4)
-        val polygonLS = komplettPolygon.map { it.grense }
-        val polygonP = grenseKoblingService.konverterLineStringsTilPolygon(polygonLS)
-        val polygonLSKonvertertTilbake = grenseKoblingService.konverterPolygonTilLineStrings(polygonP)
-        assertThat(polygonLS).isEqualTo(polygonLSKonvertertTilbake)
-        // Trenger ikke test for andre veien da dette kun bruker JTS funksjoner, som skal være good.
-    }
-
     private fun mockPolygon(coordinatePairs: List<Pair<Coordinate, Coordinate>>, gyldigFra: LocalDate, grensetype: Grensetype, medReversering: Boolean): List<Grense> {
 
         val grenser = coordinatePairs.mapIndexed { index, pair ->

@@ -185,9 +185,13 @@ class GrenseKoblingService(
                                 ?: throw RuntimeException("Fant ikke grunnkrets med lokalid:${lokalidForGrunnkrets}"),
                             gyldighetsDato,
                             endringstype
-                        ).apply {
-                            grenser = grenser.filter { gk -> gk.grense.lokalid != grense.lokalid }.toMutableSet()
-                        }
+                        )
+                    val oppdatertGrenseListe = (nyVersjonAvGrunnkrets as Grunnkrets).grenser.filter { gk -> gk.grense.lokalid != grense.lokalid }.map { it.grense }
+                    val nyeGrenseKoblingAttributter = dannGrenseKoblingAttributterForGrenser(oppdatertGrenseListe)
+                    val nyeGrunnkretsGrenseKoblinger = nyeGrenseKoblingAttributter.map { GrunnkretsGrenseKobling(nyVersjonAvGrunnkrets, it.grense, it.attributter) }
+                    nyVersjonAvGrunnkrets.apply {
+                        grenser = nyeGrunnkretsGrenseKoblinger.toMutableSet()
+                    }
                     flaterSomHarFaattNyVersjon[lokalidForGrunnkrets] = nyVersjonAvGrunnkrets
                 }
                 is StemmekretsGrenseKobling -> {
@@ -198,9 +202,13 @@ class GrenseKoblingService(
                                 ?: throw RuntimeException("Fant ikke stemmekrets med lokalid:${lokalidForStemmekrets}"),
                             gyldighetsDato,
                             endringstype
-                        ).apply {
-                            grenser = grenser.filter { gk -> gk.grense.lokalid != grense.lokalid }.toMutableSet()
-                        }
+                        )
+                    val oppdatertGrenseListe = (nyVersjonAvStemmekrets as Stemmekrets).grenser.filter { gk -> gk.grense.lokalid != grense.lokalid }.map { it.grense }
+                    val nyeGrenseKoblingAttributter = dannGrenseKoblingAttributterForGrenser(oppdatertGrenseListe)
+                    val nyeStemmekretsGrenseKoblinger = nyeGrenseKoblingAttributter.map { StemmekretsGrenseKobling(nyVersjonAvStemmekrets, it.grense, it.attributter) }
+                    nyVersjonAvStemmekrets.apply {
+                        grenser = nyeStemmekretsGrenseKoblinger.toMutableSet()
+                    }
                     flaterSomHarFaattNyVersjon[lokalidForStemmekrets] = nyVersjonAvStemmekrets
                 }
                 else -> throw RuntimeException("Støtter kun grunnkretser eller stemmekretser")
@@ -209,13 +217,10 @@ class GrenseKoblingService(
     }
 
     fun getRetningMedKlokken(grense: LineString, forrigeGrense: LineString?): Boolean {
-        if (forrigeGrense == null) {
+        if (grense.startPoint == forrigeGrense?.startPoint || grense.startPoint == forrigeGrense?.endPoint) {
             return true
         }
-        if (grense.startPoint == forrigeGrense.startPoint || grense.startPoint == forrigeGrense.endPoint) {
-            return true
-        }
-        if (grense.endPoint == forrigeGrense.startPoint || grense.endPoint == forrigeGrense.endPoint) {
+        if (grense.endPoint == forrigeGrense?.startPoint || grense.endPoint == forrigeGrense?.endPoint) {
             return false
         }
         throw RuntimeException("Grensen rører hverken startpunkt eller endepunktet til forrige grense. Er rekkefølgen riktig?")
@@ -235,9 +240,14 @@ class GrenseKoblingService(
         // Får grensene delt inn i sammenhengende polygon(er)
         val polygonerLS = deltGeometriAdministrativeGrenserService.getGrenserIRiktigRekkefoelge(grenserLS)
 
+        // Holder oversikt over hvilket polygon som tilsvarer hvilke line strings
+        val polygonTilLineStringsMap = mutableMapOf<Polygon, List<LineString>>()
+
         // En liste for flatene transformert til JTS Polygon
         val polygonerP = polygonerLS.map { lineStrings ->
-            konverterLineStringsTilPolygon(lineStrings)
+            val polygon = konverterLineStringsTilPolygon(lineStrings)
+            polygonTilLineStringsMap[polygon] = lineStrings
+            polygon
         }
 
         // Splitter listen inn i hull og skall for å kunne gå gjennom de separat
@@ -247,25 +257,25 @@ class GrenseKoblingService(
         val grenserMedAttributter =  skall.flatMapIndexed {flateIndeks, skallPolygonP ->
 
             val hullISkall = hull.filter { it.within(skallPolygonP) }.flatMapIndexed {hullIndeks, hullPolygonP ->
-                val hullPolygonLS = konverterPolygonTilLineStrings(hullPolygonP)
+                val hullPolygonLS = polygonTilLineStringsMap[hullPolygonP] ?: throw RuntimeException("Fant ikke tilbake til linestrings for hullpolygon: $hullPolygonP")
                 hullPolygonLS.mapIndexed { index, lineString ->
+                    val hullGrenseForLineString = grenser.first { it.grense.equals(lineString) }.apply { grense = lineString }
                     mapLineStringTilGrenseMedAttributter(
-                        lineString,
-                        grenser,
+                        hullGrenseForLineString,
                         index,
-                        getRetningMedKlokken(lineString, if(index-1 < 0) null else hullPolygonLS[index-1]),
+                        getRetningMedKlokken(lineString, if(index-1 < 0) hullPolygonLS.last() else hullPolygonLS[index-1]),
                         flateIndeks,
                         hullIndeks
                     )
                 }
             }
-            val skallPolygonLS = konverterPolygonTilLineStrings(skallPolygonP)
+            val skallPolygonLS = polygonTilLineStringsMap[skallPolygonP] ?: throw RuntimeException("Fant ikke tilbake til linestrings for skallpolygon: $skallPolygonP")
             skallPolygonLS.mapIndexed { index, lineString ->
+                val skallGrenseForLineString = grenser.first { it.grense.equals(lineString) }.apply { grense = lineString }
                 mapLineStringTilGrenseMedAttributter(
-                    lineString,
-                    grenser,
+                    skallGrenseForLineString,
                     index,
-                    getRetningMedKlokken(lineString, if(index-1 < 0) null else skallPolygonLS[index-1]),
+                    getRetningMedKlokken(lineString, if(index-1 < 0) skallPolygonLS.last() else skallPolygonLS[index-1]),
                     flateIndeks,
                     null
                 )
@@ -280,7 +290,7 @@ class GrenseKoblingService(
     }
 
     private fun mapLineStringTilGrenseMedAttributter(
-        lineString: LineString, grenser: List<Grense>, rekkefolge: Int, retningMedKlokken: Boolean, flateIndeks: Int, hullIndeks: Int?
+       grense: Grense, rekkefolge: Int, retningMedKlokken: Boolean, flateIndeks: Int, hullIndeks: Int?
     ): GrenseMedAttributter{
         val grenseKoblingAttributter = GrenseKoblingAttributter(
             rekkefoelge = rekkefolge,
@@ -288,33 +298,11 @@ class GrenseKoblingService(
             flateIndeks = flateIndeks,
             hullIndeks = hullIndeks,
         )
-        // Må finne grense i lista som matches lineString slik det huskes hvilke instanser som hører til hverandre
-        val tilhorendeGrense = grenser.firstOrNull { grense -> grense.grense.equals(lineString) }
-            ?: throw RuntimeException("Fant ikke grense som tilsvarte linestring")
 
         return GrenseMedAttributter(
-            tilhorendeGrense,
+            grense,
             grenseKoblingAttributter
         )
-    }
-
-    fun konverterPolygonTilLineStrings(polygon: Polygon): List<LineString> {
-        val geometryFactory = polygon.factory
-        val exteriorRing = polygon.exteriorRing
-        val vertices = exteriorRing.coordinates
-
-        val lineStrings = mutableListOf<LineString>()
-
-        // starter viduet vi plukker kordinater fra kun på oddetall da partall er kun vertices
-        // f.eks: (1 5, 1 5). Vi vil kun ha edges: V x,y -> x != y.
-        for (i in 0 until vertices.size - 1 step 2) {
-            val start = vertices[i]
-            val end = vertices[i + 1]
-
-            val lineString = geometryFactory.createLineString(arrayOf(start, end))
-            lineStrings.add(lineString)
-        }
-        return lineStrings
     }
 
     fun konverterLineStringsTilPolygon(lineStrings: List<LineString>): Polygon {

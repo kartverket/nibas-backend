@@ -73,23 +73,22 @@ class GrenseService(
 
     @Transactional(readOnly = false)
     fun lagreGrenser(grenser: FeatureCollection, gyldighetsdato: LocalDate = LocalDate.now(), endringstype: Endringstype): Set<Flate> {
-        val oppdaterteKretser: MutableSet<Flate> = mutableSetOf()
         val enheterSomSkalFlatedannes: Set<Flate>
 
         val millis = measureTimeMillis {
             val features = grenser.features
-            oppdaterteKretser.addAll(doLagreGrenser(
+            val (oppdaterteKretser, oppdaterteGrenser) = doLagreGrenser(
                 features = features,
                 gyldighetsdato = gyldighetsdato,
                 endringstype = endringstype
-            ))
+            )
 
             enheterSomSkalFlatedannes = features.flatMap {
                 val identifikator = featureIdToIdentifikator(it.id, gyldighetsdato)
                 val grense = if (it.properties.shouldArchive) {
                     hentSisteVersjonAvGrense(identifikator) ?: throw ResponseException.NotFoundException("Grense $identifikator ble ikke funnet.")
                 } else {
-                    hentGrense(identifikator) ?: throw ResponseException.NotFoundException("Grense $identifikator ble ikke funnet.")
+                    oppdaterteGrenser.firstOrNull { grense -> grense.lokalid == identifikator.lokalid.value } ?: throw ResponseException.NotFoundException("Grense $identifikator ble ikke funnet.")
                 }
 
                 when (Grensetype.fromValue(it.properties.type)) {
@@ -116,7 +115,7 @@ class GrenseService(
     }
 
     // Feature.id vil være lokalid for grensa
-    private fun doLagreGrenser(features: List<Feature>, gyldighetsdato: LocalDate = LocalDate.now(), endringstype: Endringstype): Set<Flate> {
+    private fun doLagreGrenser(features: List<Feature>, gyldighetsdato: LocalDate = LocalDate.now(), endringstype: Endringstype): Pair<Set<Flate>, Set<Grense>> {
         // Hvis det er innkommende features med id ikke satt kastes HTTP 400
         if (features.any { feature -> feature.id == null }) {
             throw BadRequestException("En av de innsendte featurene med endring mangler ID.")
@@ -141,6 +140,7 @@ class GrenseService(
         //Ei endra grense kan ha flere knytninger til samme krets, dvs til ulike versjoner av samme krets
         //Må derfor ha oversikt over hvilke flater som har fått ny versjon
         val flaterSomHarFaattNyVersjon: MutableMap<Lokalid, Flate> = mutableMapOf()
+        val grenserSomHarFaattNyVersjon = mutableMapOf<Lokalid, Grense>()
 
         features.forEach { feature ->
             val gammelGrense: Grense = findGrenseForIdentifikator(eksisterendeGrenser, featureIdToIdentifikator(feature.id, gyldighetsdato))
@@ -158,6 +158,10 @@ class GrenseService(
             } else {
                 createNyVersjonAvGrense(gammelGrense, gyldighetsdato, endringstype)
                     .applyChangesFromRequest(feature)
+            }
+            if (nyGrense != null){
+                grenserSomHarFaattNyVersjon[Lokalid(nyGrense.lokalid)] = nyGrense
+
             }
 
             //Det må lages en ny forekomst for tilknyttede kretser, de får også oppdatert knytning til gjeldende grense.
@@ -190,16 +194,19 @@ class GrenseService(
                 )
             }
 
-            if(nyGrense != null){
-                doEvtTilhorighetEndringer(feature, nyGrense, gyldighetsdato, flaterSomHarFaattNyVersjon, endringstype)
-            }
-
             if (feature.properties.shouldArchive) {
                 gammelGrense.setGyldigTil(gyldighetsdato)
             }
         }
-        grenseRepository.flush()
-        return flaterSomHarFaattNyVersjon.values.toSet()
+        // Etter alle andre endringer sjekker vi om det er endringer i tilhørighet for noen grenser
+        features.forEach{ feature ->
+            val grense = grenserSomHarFaattNyVersjon[featureIdToIdentifikator(feature.id, gyldighetsdato).lokalid]
+            if(grense != null){
+                doEvtTilhorighetEndringer(feature, grense, gyldighetsdato, flaterSomHarFaattNyVersjon, endringstype)
+            }
+        }
+
+        return Pair(flaterSomHarFaattNyVersjon.values.toSet(), grenserSomHarFaattNyVersjon.values.toSet())
     }
 
     private fun sjekkForKonflikterForGrenserOgTilhorendeKretser(features: List<Feature>, eksisterendeGrenser: List<Grense>, gyldighetsdato: LocalDate){
