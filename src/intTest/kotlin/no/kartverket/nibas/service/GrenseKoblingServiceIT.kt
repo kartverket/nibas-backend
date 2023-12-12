@@ -61,9 +61,11 @@ class GrenseKoblingServiceIT : TestWithDbContainer() {
 
         val flaterSomHarFaattNyVersjon = mutableMapOf<Lokalid, Flate>()
 
+        val eksisterendeGrenser = mutableMapOf(Pair(Lokalid(grunnkrets.lokalid), grunnkrets.grenser.map { it.grense }))
+
         // fjern den frie kanten
         assertDoesNotThrow {
-            grenseKoblingService.fjernGrenseFraKretserViaGrenseKobling(kantGrense, listOf(grenseKoblingMellomKantOgGrunnkrets), LocalDate.now(), flaterSomHarFaattNyVersjon, Endringstype.VEDTATT_GRENSEJUSTERING)
+            grenseKoblingService.fjernGrenseFraKretserViaGrenseKobling(kantGrense, eksisterendeGrenser, listOf(grenseKoblingMellomKantOgGrunnkrets), LocalDate.now(), flaterSomHarFaattNyVersjon, Endringstype.VEDTATT_GRENSEJUSTERING)
         }
         // Hent grunnkretsen etter at metoden har kjørt og se om kantgrensen er fjernet
         val oppdatertGrunnkrets = flaterSomHarFaattNyVersjon[Lokalid("test")] as Grunnkrets
@@ -100,9 +102,11 @@ class GrenseKoblingServiceIT : TestWithDbContainer() {
         // Map som skal bli oppdatert med oppdatert grunnkrets
         val flaterSomHarFaattNyVersjon = mutableMapOf<Lokalid, Flate>()
 
+        val eksisterendeGrenser = mutableMapOf(Pair(Lokalid(savedGrunnkrets.lokalid), savedGrunnkrets.grenser.map { it.grense }))
+
         // Lager nye grunnkretsgrensekoblinger til kretsen for grensa
         val nyeGrunnkretsGrenseKoblinger = grenseKoblingService.lagGrunnkretsGrenseKoblingerForKretserViaKontekstEgenskaper(
-            listOf(kontekstEgenskaper), grense, november28In2022, flaterSomHarFaattNyVersjon, Endringstype.VEDTATT_GRENSEJUSTERING
+            listOf(kontekstEgenskaper), grense, eksisterendeGrenser, november28In2022, flaterSomHarFaattNyVersjon, Endringstype.VEDTATT_GRENSEJUSTERING
         )
 
         // henter siste versjon av grunnkretsen fra map
@@ -110,7 +114,6 @@ class GrenseKoblingServiceIT : TestWithDbContainer() {
 
         // Sjekker det har blitt laget en ny versjon, at det er én ny grensekobling, og at det er fire grensekoblinger på den oppdaterte grunnkretsen
         assertThat(oppdatertGrunnkrets.version).isEqualTo(savedGrunnkrets.version+1)
-        assertThat(nyeGrunnkretsGrenseKoblinger.size).isEqualTo(1)
         assertThat(oppdatertGrunnkrets.grenser.size).isEqualTo(4)
     }
 

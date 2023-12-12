@@ -82,49 +82,37 @@ class GrenseKoblingService(
     fun lagGrunnkretsGrenseKoblingerForKretserViaKontekstEgenskaper(
         nyeKontekster: List<KontekstEgenskaper>,
         grense: Grense,
+        eksisterendeGrenser: MutableMap<Lokalid, List<Grense>>,
         gyldighetsDato: LocalDate,
         flaterSomHarFaattNyVersjon: MutableMap<Lokalid, Flate>,
         endringstype: Endringstype
-    ): List<GrunnkretsGrenseKobling> {
-        return nyeKontekster.map { konteksEgenskaper ->
-            if(konteksEgenskaper.id == null){
+    ) {
+        nyeKontekster.map { konteksEgenskaper ->
+            if (konteksEgenskaper.id == null) {
                 throw RuntimeException("Kontekst peker ikke til en grunnkrets")
             }
 
             // Henter nyeste versjon av grunnkrets i dette utkastet hvis det finnes, ellers henter vi nyeste fra db og lager ny versjon med den.
-            val nyVersjonAvGrunnkrets = flaterSomHarFaattNyVersjon[konteksEgenskaper.id.lokalid] ?:
-            grunnkretsService.createNyVersjonAvGrunnkrets(
+            val nyVersjonAvGrunnkrets = (flaterSomHarFaattNyVersjon[konteksEgenskaper.id.lokalid] ?: grunnkretsService.createNyVersjonAvGrunnkrets(
                 grunnkretsRepository.findGyldigObjektForIdentifikator(Identifikator(konteksEgenskaper.id.lokalid, gyldighetsDato))
                     ?: throw RuntimeException("Fant ikke grunnkrets med lokalid:${konteksEgenskaper.id.lokalid}"),
                 gyldighetsDato,
                 endringstype
-            )
+            )) as Grunnkrets
 
+            val eksisterendeGrenserForGrunnkrets = eksisterendeGrenser[konteksEgenskaper.id.lokalid]
             // Lager set med grenser for den nye versjonen av grunnkretsen.
-            val grenserForNyVersjonAvGrunnkrets =
-                grunnkretsService.hentGrenserForGrunnkrets(Identifikator(Lokalid(nyVersjonAvGrunnkrets.lokalid), gyldighetsDato)).map { it.grense } + grense
+            val grenserForNyVersjonAvGrunnkrets = eksisterendeGrenserForGrunnkrets?.plus(grense)
+                ?: throw RuntimeException("Oppdatert grenseliste for grunnkrets er tom. Grunnkrets lokalid: ${nyVersjonAvGrunnkrets.lokalid}")
 
-            // Det å legge til en ny grense på kretsen krever at man må regne ut nye grensekoblingattributter for alle grensene
-            val nyeGrenseKoblingAttributter=
-                dannGrenseKoblingAttributterForGrenser(grenserForNyVersjonAvGrunnkrets.toList())
-
-            // Lager de nye GrunnkretsGrenseKoblingene
-            val nyeGrunnkretsGrenseKoblinger = nyeGrenseKoblingAttributter.map {
-                grenseOgAttributt ->
-                GrunnkretsGrenseKobling(
-                    nyVersjonAvGrunnkrets as Grunnkrets,
-                    grenserForNyVersjonAvGrunnkrets.find { grense -> grense.lokalid == grenseOgAttributt.grense.lokalid }!!,
-                    grenseOgAttributt.attributter
-                )
+            grenserForNyVersjonAvGrunnkrets.forEach {
+                val tilsvarendeGrenseIEksisterendeListe = eksisterendeGrenserForGrunnkrets.firstOrNull { g -> g.lokalid == it.lokalid }
+                if (tilsvarendeGrenseIEksisterendeListe == null) {
+                    nyVersjonAvGrunnkrets.addGrensekobling(it, GrenseKoblingAttributter())
+                } else {
+                    nyVersjonAvGrunnkrets.replaceGrensekobling(tilsvarendeGrenseIEksisterendeListe, it, GrenseKoblingAttributter())
+                }
             }
-
-            // oppdaterer oppdatertGrunnkrets med nye grensekoblinger
-            (nyVersjonAvGrunnkrets as Grunnkrets).grenser = nyeGrunnkretsGrenseKoblinger.toMutableSet()
-            flaterSomHarFaattNyVersjon[konteksEgenskaper.id.lokalid] = nyVersjonAvGrunnkrets
-
-            // returnerer den kun den spesifikke koblingen mellom grensen og grunnkretsen da det er dette som brukes senere
-            nyeGrunnkretsGrenseKoblinger.find { it.grense.lokalid == grense.lokalid }
-                ?: throw RuntimeException("Fant ikke ny GrunnkretsGrenseKobling for grensen")
         }
     }
 
@@ -139,11 +127,11 @@ class GrenseKoblingService(
                 throw RuntimeException("Kontekst peker ikke til en stemmekrets")
             }
             // Henter nyeste versjon av stemmekrets i dette utkastet hvis det finnes, ellers henter vi nyeste fra db og lager ny versjon med den.
-            val nyVersjonAvStemmekrets = flaterSomHarFaattNyVersjon[konteksEgenskaper.id.lokalid]
+            val nyVersjonAvStemmekrets = (flaterSomHarFaattNyVersjon[konteksEgenskaper.id.lokalid]
                 ?: stemmekretsService.createNyVersjonAvStemmekrets(stemmekretsRepository.findGyldigObjektForIdentifikator(
                     Identifikator(konteksEgenskaper.id.lokalid, gyldighetsDato))
                     ?: throw RuntimeException("Fant ikke stemmekrets med lokalid:${konteksEgenskaper.id.lokalid}"),
-                    gyldighetsDato, endringstype)
+                    gyldighetsDato, endringstype)) as Stemmekrets
 
             // Lager liste med grenser for den nye versjonen av stemmekretsen.
             val grenserForNyVersjonAvStemmekrets =
@@ -157,13 +145,13 @@ class GrenseKoblingService(
             val nyeStemmekretsGrenseKoblinger = nyeGrenseKoblingAttributterForGrenser.map {
                 grenseOgAttributt ->
                 StemmekretsGrenseKobling(
-                    nyVersjonAvStemmekrets as Stemmekrets,
+                    nyVersjonAvStemmekrets,
                     grenserForNyVersjonAvStemmekrets.find { grense -> grense.lokalid == grenseOgAttributt.grense.lokalid }!!,
                     grenseOgAttributt.attributter)
             }.toMutableSet()
 
             // oppdaterer stemmekrets med nye grensekoblinger
-            (nyVersjonAvStemmekrets as Stemmekrets).grenser = nyeStemmekretsGrenseKoblinger
+            nyVersjonAvStemmekrets.grenser = nyeStemmekretsGrenseKoblinger
             flaterSomHarFaattNyVersjon[konteksEgenskaper.id.lokalid] = nyVersjonAvStemmekrets
 
             // returnerer grensekoblingen for kretsen
@@ -173,37 +161,38 @@ class GrenseKoblingService(
     }
 
     fun <T: GrenseKobling>fjernGrenseFraKretserViaGrenseKobling(
-        grense: Grense, grenseKoblinger: List<T>, gyldighetsDato: LocalDate, flaterSomHarFaattNyVersjon: MutableMap<Lokalid, Flate>, endringstype: Endringstype
+        grense: Grense, eksisterendeGrenser: MutableMap<Lokalid, List<Grense>>, grenseKoblinger: List<T>, gyldighetsDato: LocalDate, flaterSomHarFaattNyVersjon: MutableMap<Lokalid, Flate>, endringstype: Endringstype
     ) {
         grenseKoblinger.forEach { grenseKobling ->
             when(grenseKobling){
                 is GrunnkretsGrenseKobling -> {
                     val lokalidForGrunnkrets = Lokalid(grenseKobling.grunnkrets.lokalid)
-                    val nyVersjonAvGrunnkrets = flaterSomHarFaattNyVersjon[lokalidForGrunnkrets]
+                    val nyVersjonAvGrunnkrets = (flaterSomHarFaattNyVersjon[lokalidForGrunnkrets]
                         ?: grunnkretsService.createNyVersjonAvGrunnkrets(
                             grunnkretsRepository.findGyldigObjektForIdentifikator(Identifikator(lokalidForGrunnkrets, gyldighetsDato))
                                 ?: throw RuntimeException("Fant ikke grunnkrets med lokalid:${lokalidForGrunnkrets}"),
                             gyldighetsDato,
                             endringstype
-                        )
-                    val oppdatertGrenseListe = (nyVersjonAvGrunnkrets as Grunnkrets).grenser.filter { gk -> gk.grense.lokalid != grense.lokalid }.map { it.grense }
-                    val nyeGrenseKoblingAttributter = dannGrenseKoblingAttributterForGrenser(oppdatertGrenseListe)
-                    val nyeGrunnkretsGrenseKoblinger = nyeGrenseKoblingAttributter.map { GrunnkretsGrenseKobling(nyVersjonAvGrunnkrets, it.grense, it.attributter) }
-                    nyVersjonAvGrunnkrets.apply {
-                        grenser = nyeGrunnkretsGrenseKoblinger.toMutableSet()
+                        )) as Grunnkrets
+                    val eksisterendeGrenserForGrunnkrets = eksisterendeGrenser[lokalidForGrunnkrets] ?: throw RuntimeException("Grenseliste tom for Grunnkrets med lokalid: $lokalidForGrunnkrets")
+                    val oppdatertGrenseListe = eksisterendeGrenserForGrunnkrets.filter { it.lokalid != grense.lokalid }
+
+                    eksisterendeGrenserForGrunnkrets.subtract(oppdatertGrenseListe.toSet()).forEach {
+                        nyVersjonAvGrunnkrets.replaceGrensekobling(it, null, GrenseKoblingAttributter())
                     }
+
                     flaterSomHarFaattNyVersjon[lokalidForGrunnkrets] = nyVersjonAvGrunnkrets
                 }
                 is StemmekretsGrenseKobling -> {
                     val lokalidForStemmekrets = Lokalid(grenseKobling.stemmekrets.lokalid)
-                    val nyVersjonAvStemmekrets = flaterSomHarFaattNyVersjon[lokalidForStemmekrets]
+                    val nyVersjonAvStemmekrets = (flaterSomHarFaattNyVersjon[lokalidForStemmekrets]
                         ?: stemmekretsService.createNyVersjonAvStemmekrets(
                             stemmekretsRepository.findGyldigObjektForIdentifikator(Identifikator(lokalidForStemmekrets, gyldighetsDato))
                                 ?: throw RuntimeException("Fant ikke stemmekrets med lokalid:${lokalidForStemmekrets}"),
                             gyldighetsDato,
                             endringstype
-                        )
-                    val oppdatertGrenseListe = (nyVersjonAvStemmekrets as Stemmekrets).grenser.filter { gk -> gk.grense.lokalid != grense.lokalid }.map { it.grense }
+                        )) as Stemmekrets
+                    val oppdatertGrenseListe = nyVersjonAvStemmekrets.grenser.filter { gk -> gk.grense.lokalid != grense.lokalid }.map { it.grense }
                     val nyeGrenseKoblingAttributter = dannGrenseKoblingAttributterForGrenser(oppdatertGrenseListe)
                     val nyeStemmekretsGrenseKoblinger = nyeGrenseKoblingAttributter.map { StemmekretsGrenseKobling(nyVersjonAvStemmekrets, it.grense, it.attributter) }
                     nyVersjonAvStemmekrets.apply {

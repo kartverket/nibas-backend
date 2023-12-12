@@ -198,6 +198,8 @@ class GrenseService(
                 gammelGrense.setGyldigTil(gyldighetsdato)
             }
         }
+        grenseRepository.flush()
+
         // Etter alle andre endringer sjekker vi om det er endringer i tilhørighet for noen grenser
         features.forEach{ feature ->
             val grense = grenserSomHarFaattNyVersjon[featureIdToIdentifikator(feature.id, gyldighetsdato).lokalid]
@@ -206,7 +208,6 @@ class GrenseService(
             }
         }
 
-        //grenseRepository.flush()
         return Pair(flaterSomHarFaattNyVersjon.values.toSet(), grenserSomHarFaattNyVersjon.values.toSet())
     }
 
@@ -253,11 +254,27 @@ class GrenseService(
             if (!innsendteTilhorigheter.map { it.id?.lokalid?.value }.containsAll(eksisterendeTilhorigheter.map { it.grunnkrets.lokalid })){
                 val tilhorighetEndringer =
                     grenseKoblingService.getTilhorighetEndringer(eksisterendeTilhorigheter, innsendteTilhorigheter, gyldighetsdato)
-                val nyeGrunnkretsGrenseKoblinger =
-                    grenseKoblingService.lagGrunnkretsGrenseKoblingerForKretserViaKontekstEgenskaper(tilhorighetEndringer.nye, grense, gyldighetsdato, flaterSomHarFaattNyVersjon, endringstype)
-                grenseKoblingService.fjernGrenseFraKretserViaGrenseKobling(grense, tilhorighetEndringer.frafallende, gyldighetsdato, flaterSomHarFaattNyVersjon, endringstype)
 
-                grense.grunnkretser = (tilhorighetEndringer.uendrede+nyeGrunnkretsGrenseKoblinger).toMutableSet()
+                val eksisterendeGrenser = mutableMapOf<Lokalid, List<Grense>>()
+                val lokalidForKretser = (innsendteTilhorigheter.map { it.id?.lokalid }+eksisterendeTilhorigheter.map { Lokalid(it.grunnkrets.lokalid) }).toSet()
+                lokalidForKretser.forEach {
+                    if(it == null){
+                        throw RuntimeException("Kontekst peker ikke til en grunnkrets")
+                    }
+                    val grenser = grunnkretsService.hentGrenserForGrunnkrets(Identifikator(it, gyldighetsdato)).map { gk -> gk.grense }
+                    eksisterendeGrenser[it] = grenser
+                }
+
+                grenseKoblingService.lagGrunnkretsGrenseKoblingerForKretserViaKontekstEgenskaper(tilhorighetEndringer.nye, grense, eksisterendeGrenser, gyldighetsdato, flaterSomHarFaattNyVersjon, endringstype)
+                grenseKoblingService.fjernGrenseFraKretserViaGrenseKobling(grense, eksisterendeGrenser, tilhorighetEndringer.frafallende, gyldighetsdato, flaterSomHarFaattNyVersjon, endringstype)
+
+                lokalidForKretser.forEach { lokalid ->
+                    val oppdatertGrenseKoblingListe = (flaterSomHarFaattNyVersjon[lokalid] as Grunnkrets).grenser
+                    val gma = grenseKoblingService.dannGrenseKoblingAttributterForGrenser(oppdatertGrenseKoblingListe.map { it.grense })
+                    oppdatertGrenseKoblingListe.forEach {
+                        it.oppdaterAttributter(gma.first { gma -> gma.grense.lokalid == it.grense.lokalid }.attributter)
+                    }
+                }
             }
         }
         else if (grense.grensetype == Grensetype.Stemmekretsgrense){
@@ -270,9 +287,19 @@ class GrenseService(
             if (!innsendteTilhorigheter.map { it.id?.lokalid?.value }.containsAll(eksisterendeTilhorigheter.map { it.stemmekrets.lokalid })){
                 val tilhorighetEndringer =
                     grenseKoblingService.getTilhorighetEndringer(eksisterendeTilhorigheter, innsendteTilhorigheter, gyldighetsdato)
+
+                val eksisterendeGrenser = mutableMapOf<Lokalid, List<Grense>>()
+                innsendteTilhorigheter.forEach {
+                    if(it.id == null){
+                        throw RuntimeException("Kontekst peker ikke til en stemmekrets")
+                    }
+                    val grenser = stemmekretsService.hentGrenserForStemmekrets(Identifikator(it.id.lokalid, gyldighetsdato)).map { gk -> gk.grense }
+                    eksisterendeGrenser[it.id.lokalid] = grenser
+                }
+
                 val nyeStemmekretsGrenseKoblinger =
                     grenseKoblingService.lagStemmekretsGrenseKoblingerForKretserViaKontekstEgenskaper(tilhorighetEndringer.nye, grense, gyldighetsdato, flaterSomHarFaattNyVersjon, endringstype)
-                grenseKoblingService.fjernGrenseFraKretserViaGrenseKobling(grense, tilhorighetEndringer.frafallende, gyldighetsdato, flaterSomHarFaattNyVersjon, endringstype)
+                grenseKoblingService.fjernGrenseFraKretserViaGrenseKobling(grense, eksisterendeGrenser, tilhorighetEndringer.frafallende, gyldighetsdato, flaterSomHarFaattNyVersjon, endringstype)
 
                 grense.stemmekretser = (tilhorighetEndringer.uendrede+nyeStemmekretsGrenseKoblinger).toMutableSet()
             }
