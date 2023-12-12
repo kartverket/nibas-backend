@@ -25,7 +25,6 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.Month
-import jakarta.persistence.EntityManager
 
 @ActiveProfiles(profiles = ["security-off", "eventsDisabled"])
 @Transactional
@@ -105,8 +104,8 @@ class GrenseKoblingServiceIT : TestWithDbContainer() {
         val eksisterendeGrenser = mutableMapOf(Pair(Lokalid(savedGrunnkrets.lokalid), savedGrunnkrets.grenser.map { it.grense }))
 
         // Lager nye grunnkretsgrensekoblinger til kretsen for grensa
-        val nyeGrunnkretsGrenseKoblinger = grenseKoblingService.lagGrunnkretsGrenseKoblingerForKretserViaKontekstEgenskaper(
-            listOf(kontekstEgenskaper), grense, eksisterendeGrenser, november28In2022, flaterSomHarFaattNyVersjon, Endringstype.VEDTATT_GRENSEJUSTERING
+        val nyeGrunnkretsGrenseKoblinger = grenseKoblingService.leggTilGrenserForKretserViaKontekstEgenskaper(
+            listOf(kontekstEgenskaper), grense, eksisterendeGrenser, november28In2022, flaterSomHarFaattNyVersjon, Endringstype.VEDTATT_GRENSEJUSTERING, Flatetype.GRUNNKRETS
         )
 
         // henter siste versjon av grunnkretsen fra map

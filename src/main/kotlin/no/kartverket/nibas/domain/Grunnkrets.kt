@@ -101,7 +101,7 @@ class Grunnkrets(
         Grensetype.Territorialgrense,
         Grensetype.Riksgrense)
 
-    fun addGrensekobling(grense: Grense, grenseKoblingAttributter: GrenseKoblingAttributter) {
+    override fun addGrensekobling(grense: Grense, grenseKoblingAttributter: GrenseKoblingAttributter) {
         val grunnkretsGrenseKobling = GrunnkretsGrenseKobling(
             grunnkrets = this,
             grense = grense,

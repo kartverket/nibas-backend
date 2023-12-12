@@ -1,5 +1,6 @@
 package no.kartverket.nibas.service
 
+import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.Feature
@@ -31,7 +32,6 @@ import no.kartverket.nibas.extensions.geometry.toLineString
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.GrunnkretsRepository
-import no.kartverket.nibas.repository.KonfliktVersjon
 import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.repository.findAllGyldigeObjekterForIdentifikatorer
@@ -198,6 +198,8 @@ class GrenseService(
                 gammelGrense.setGyldigTil(gyldighetsdato)
             }
         }
+
+        // VIKTIG! Denne flushen MÅ stå etter alle endringer har blitt gjort BORTSETT fra tilhørighetendringer
         grenseRepository.flush()
 
         // Etter alle andre endringer sjekker vi om det er endringer i tilhørighet for noen grenser
@@ -264,17 +266,9 @@ class GrenseService(
                     val grenser = grunnkretsService.hentGrenserForGrunnkrets(Identifikator(it, gyldighetsdato)).map { gk -> gk.grense }
                     eksisterendeGrenser[it] = grenser
                 }
-
-                grenseKoblingService.lagGrunnkretsGrenseKoblingerForKretserViaKontekstEgenskaper(tilhorighetEndringer.nye, grense, eksisterendeGrenser, gyldighetsdato, flaterSomHarFaattNyVersjon, endringstype)
+                grenseKoblingService.leggTilGrenserForKretserViaKontekstEgenskaper(tilhorighetEndringer.nye, grense, eksisterendeGrenser, gyldighetsdato, flaterSomHarFaattNyVersjon, endringstype, Flatetype.GRUNNKRETS)
                 grenseKoblingService.fjernGrenseFraKretserViaGrenseKobling(grense, eksisterendeGrenser, tilhorighetEndringer.frafallende, gyldighetsdato, flaterSomHarFaattNyVersjon, endringstype)
-
-                lokalidForKretser.forEach { lokalid ->
-                    val oppdatertGrenseKoblingListe = (flaterSomHarFaattNyVersjon[lokalid] as Grunnkrets).grenser
-                    val gma = grenseKoblingService.dannGrenseKoblingAttributterForGrenser(oppdatertGrenseKoblingListe.map { it.grense })
-                    oppdatertGrenseKoblingListe.forEach {
-                        it.oppdaterAttributter(gma.first { gma -> gma.grense.lokalid == it.grense.lokalid }.attributter)
-                    }
-                }
+                grenseKoblingService.oppdaterGrenseKoblingAttributter(lokalidForKretser, flaterSomHarFaattNyVersjon)
             }
         }
         else if (grense.grensetype == Grensetype.Stemmekretsgrense){
@@ -289,19 +283,17 @@ class GrenseService(
                     grenseKoblingService.getTilhorighetEndringer(eksisterendeTilhorigheter, innsendteTilhorigheter, gyldighetsdato)
 
                 val eksisterendeGrenser = mutableMapOf<Lokalid, List<Grense>>()
-                innsendteTilhorigheter.forEach {
-                    if(it.id == null){
+                val lokalidForKretser = (innsendteTilhorigheter.map { it.id?.lokalid }+eksisterendeTilhorigheter.map { Lokalid(it.stemmekrets.lokalid) }).toSet()
+                lokalidForKretser.forEach {
+                    if(it == null){
                         throw RuntimeException("Kontekst peker ikke til en stemmekrets")
                     }
-                    val grenser = stemmekretsService.hentGrenserForStemmekrets(Identifikator(it.id.lokalid, gyldighetsdato)).map { gk -> gk.grense }
-                    eksisterendeGrenser[it.id.lokalid] = grenser
+                    val grenser = stemmekretsService.hentGrenserForStemmekrets(Identifikator(it, gyldighetsdato)).map { gk -> gk.grense }
+                    eksisterendeGrenser[it] = grenser
                 }
-
-                val nyeStemmekretsGrenseKoblinger =
-                    grenseKoblingService.lagStemmekretsGrenseKoblingerForKretserViaKontekstEgenskaper(tilhorighetEndringer.nye, grense, gyldighetsdato, flaterSomHarFaattNyVersjon, endringstype)
+                grenseKoblingService.leggTilGrenserForKretserViaKontekstEgenskaper(tilhorighetEndringer.nye, grense, eksisterendeGrenser, gyldighetsdato, flaterSomHarFaattNyVersjon, endringstype, Flatetype.STEMMEKRETS)
                 grenseKoblingService.fjernGrenseFraKretserViaGrenseKobling(grense, eksisterendeGrenser, tilhorighetEndringer.frafallende, gyldighetsdato, flaterSomHarFaattNyVersjon, endringstype)
-
-                grense.stemmekretser = (tilhorighetEndringer.uendrede+nyeStemmekretsGrenseKoblinger).toMutableSet()
+                grenseKoblingService.oppdaterGrenseKoblingAttributter(lokalidForKretser, flaterSomHarFaattNyVersjon)
             }
         }
     }

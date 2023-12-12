@@ -96,7 +96,7 @@ class Stemmekrets(
         doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { StemmekretsInformasjon(this) }
     }
 
-    fun addGrensekobling(grense: Grense, grenseKoblingAttributter: GrenseKoblingAttributter) {
+    override fun addGrensekobling(grense: Grense, grenseKoblingAttributter: GrenseKoblingAttributter) {
         val stemmekretsGrenseKobling = StemmekretsGrenseKobling(
             stemmekrets = this,
             grense = grense,
