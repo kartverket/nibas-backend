@@ -29,7 +29,7 @@ springdoc:
   api-docs:
     path: /api-docs
 
-aut.host.url: http://aut-idporten.aut:8080
+aut.host.url: http://aut-idporten.aut-main:8080
 
 spring:
   profiles:
