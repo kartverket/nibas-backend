@@ -561,7 +561,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         assertThat(deltGrense.grunnkretser).hasSize(2)
         assertThat(deltGrense.grunnkretser.map { it.grunnkrets.id }).containsExactlyInAnyOrder(vestreKrets.id, oestreKrets.id)
 
-        val featureForAnnenGrense = lagFeatureEndreYkoordinat(vestreKrets, opprinneligDato, endringsdato, "grenseNordVestLokalid")
+        val featureForAnnenGrense = lagFeatureEndreYkoordinat(vestreKrets, opprinneligDato, "grenseNordVestLokalid")
         val flaterSomErEndret = utfoerGrenseendring(kretsSomSkalHaGrenseendring = vestreKrets, opprinneligDato = opprinneligDato,
             endringsdato = endringsdato, featureForAnnenGrense, versionOverride = 1)
 
@@ -598,7 +598,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         assertThat(deltGrense.grunnkretser).hasSize(2)
         assertThat(deltGrense.grunnkretser.map { it.grunnkrets.id }).containsExactlyInAnyOrder(vestreKrets.id, oestreKrets.id)
 
-        val featureForAnnenGrense = lagFeatureEndreYkoordinat(oestreKrets, opprinneligDato, endringsdato, "grenseNordØstLokalid")
+        val featureForAnnenGrense = lagFeatureEndreYkoordinat(oestreKrets, opprinneligDato, "grenseNordØstLokalid")
         val flaterSomErEndret = utfoerGrenseendring(kretsSomSkalHaGrenseendring = vestreKrets, opprinneligDato = opprinneligDato,
             endringsdato = endringsdato, featureForAnnenGrense, versionOverride = 1)
 
@@ -707,7 +707,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         val endringsdato = LocalDate.parse("2022-02-01")
         val (_, oestreKrets) = saveNaboGrunnkretser(gyldigFra = opprinneligDato)
 
-        val featureForAnnenGrense = lagFeatureEndreYkoordinat(oestreKrets, opprinneligDato, endringsdato, "grenseNordØstLokalid")
+        val featureForAnnenGrense = lagFeatureEndreYkoordinat(oestreKrets, opprinneligDato,"grenseNordØstLokalid")
         val statistiskgrenseMetadata = featureForAnnenGrense.properties.metadata as StatistiskgrenseMetadata
         statistiskgrenseMetadata.common.informasjon = "En eller annen informasjon"
         statistiskgrenseMetadata.commonGrense.posisjonskvalitet =
