@@ -14,6 +14,8 @@ import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.Grunnkrets
+import no.kartverket.nibas.domain.KobletTilGrense
+import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.sosi.sosiimport.IkkeSammenhengendePolygonException
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import no.kartverket.nibas.utils.GrenseHelper
@@ -287,10 +289,16 @@ class GrenseServiceIT : TestWithDbContainer() {
         val gyldighetsdato = LocalDate.parse("2022-01-01")
 
         // oppretter tre kretser som deler grenser der én grense har feil grensekoblinger grunnet at en annen grense har fått endret geometrien sin.
-        val (grenseSomSkalEndreTilhorighet, grenseSomEndreGeometrien) = setupTilhorighetTest(gyldighetsdato)
+        val (kretsG1, kretsG2, kretsG3) = setupTilhorighetTest(gyldighetsdato, Grensetype.Grunnkretsgrense, ::saveGrunnkrets)
 
-        val featureMedEndretTilhorighet = utfoerGrenseTilhorighetEndring(grenseSomSkalEndreTilhorighet, gyldighetsdato)
-        val featureMedEndretGeometri = utfoerGeometriEndring(grenseSomEndreGeometrien, grenseSomEndreGeometrien.grunnkretser.map { it.grunnkrets }, gyldighetsdato)
+        saveKommuneOgUnikLokalid(grunnkretser = listOf(kretsG1, kretsG2, kretsG3), gyldigFra = gyldighetsdato)
+
+        // Fra krets finner vi fram til de to grensene som har endringer i dette fiktive utkastet
+        val grenseSomSkalEndreTilhorighet = kretsG1.grenser.map { it.grense }.first { it.lokalid == "grenseSørVestLokalid"  }
+        val grenseSomEndreGeometrien = kretsG1.grenser.map { it.grense }.first { it.lokalid == "grenseDelt2Lokalid"  }
+
+        val featureMedEndretTilhorighet = utfoerGrenseTilhorighetEndring(grenseSomSkalEndreTilhorighet, gyldighetsdato, KontekstEnhetType.GRUNNKRETS)
+        val featureMedEndretGeometri = utfoerGeometriEndring(grenseSomEndreGeometrien, grenseSomEndreGeometrien.grunnkretser.map { it.grunnkrets }, gyldighetsdato, KontekstEnhetType.GRUNNKRETS)
 
         val flateSet = grenseService.lagreGrenser(
             grenser = FeatureCollection(features = listOf(featureMedEndretTilhorighet, featureMedEndretGeometri)),
@@ -316,7 +324,48 @@ class GrenseServiceIT : TestWithDbContainer() {
         }
     }
 
-    private fun utfoerGeometriEndring(grense: Grense, grunnkretser: List<Grunnkrets>, gyldighetsdato: LocalDate): Feature{
+
+    @Test
+    fun `lagreGrenser klarer å endre tilhørighet på stemmekretsgrense`() {
+        val gyldighetsdato = LocalDate.parse("2022-01-01")
+
+        // oppretter tre kretser som deler grenser der én grense har feil grensekoblinger grunnet at en annen grense har fått endret geometrien sin.
+        val (kretsG1, kretsG2, kretsG3) = setupTilhorighetTest(gyldighetsdato, Grensetype.Stemmekretsgrense, ::saveStemmekrets)
+
+        saveKommuneOgUnikLokalid(stemmekretser = listOf(kretsG1, kretsG2, kretsG3), gyldigFra = gyldighetsdato)
+
+        // Fra krets finner vi fram til de to grensene som har endringer i dette fiktive utkastet
+        val grenseSomSkalEndreTilhorighet = kretsG1.grenser.map { it.grense }.first { it.lokalid == "grenseSørVestLokalid"  }
+        val grenseSomEndreGeometrien = kretsG1.grenser.map { it.grense }.first { it.lokalid == "grenseDelt2Lokalid"  }
+
+        val featureMedEndretTilhorighet = utfoerGrenseTilhorighetEndring(grenseSomSkalEndreTilhorighet, gyldighetsdato, KontekstEnhetType.STEMMEKRETS)
+        val featureMedEndretGeometri = utfoerGeometriEndring(grenseSomEndreGeometrien, grenseSomEndreGeometrien.stemmekretser.map { it.stemmekrets }, gyldighetsdato, KontekstEnhetType.STEMMEKRETS)
+
+        val flateSet = grenseService.lagreGrenser(
+            grenser = FeatureCollection(features = listOf(featureMedEndretTilhorighet, featureMedEndretGeometri)),
+            gyldighetsdato = gyldighetsdato,
+            endringstype = Endringstype.KVALITETSHEVING
+        )
+
+        assertThat(flateSet.size).isEqualTo(3)
+        assertThat(flateSet.map { it.lokalid }).containsAll(listOf("G1", "G2", "G3"))
+        (flateSet.first { it.lokalid == "G1" } as Stemmekrets).run {
+            assertThat(this.grenser.size).isEqualTo(4)
+            assertThat(this.grenser.find { it.grense.lokalid == "grenseSørVestLokalid" }).isEqualTo(null)
+        }
+        (flateSet.first { it.lokalid == "G2" } as Stemmekrets).run {
+            assertThat(this.grenser.size).isEqualTo(6)
+            val grenseSomFikkEndretTilhorighet = this.grenser.find { it.grense.lokalid == "grenseSørVestLokalid" }!!.grense
+            assertThat(grenseSomFikkEndretTilhorighet).isNotNull
+            assertThat(grenseSomFikkEndretTilhorighet.stemmekretser.size).isEqualTo(2)
+            assertThat(grenseSomFikkEndretTilhorighet.stemmekretser.map { it.stemmekrets.lokalid }).containsAll(listOf("G2", "G3"))
+        }
+        (flateSet.first { it.lokalid == "G3" } as Stemmekrets).run {
+            assertThat(this.grenser.size).isEqualTo(4)
+        }
+    }
+
+    private fun <T: KobletTilGrense>utfoerGeometriEndring(grense: Grense, kretser: List<T>, gyldighetsdato: LocalDate, kontekstEnhetType: KontekstEnhetType): Feature{
         return FeatureBuilder(id = grense.lokalid)
             .withLokalid(grense.lokalid)
             .withGeometry(GrenseHelper.geometryFactory.createLineString(
@@ -329,14 +378,14 @@ class GrenseServiceIT : TestWithDbContainer() {
             .withKontekstEgenskaper(
                 listOf(
                     KontekstEgenskaper(
-                        ObjektIdentifikator(Lokalid(grunnkretser[0].lokalid), gyldighetsdato),
-                        KontekstEnhetType.GRUNNKRETS,
-                        grunnkretser[0].version
+                        ObjektIdentifikator(Lokalid(kretser[0].lokalid), gyldighetsdato),
+                        kontekstEnhetType,
+                        kretser[0].version
                     ),
                     KontekstEgenskaper(
-                        ObjektIdentifikator(Lokalid(grunnkretser[1].lokalid), gyldighetsdato),
-                        KontekstEnhetType.GRUNNKRETS,
-                        grunnkretser[1].version
+                        ObjektIdentifikator(Lokalid(kretser[1].lokalid), gyldighetsdato),
+                        kontekstEnhetType,
+                        kretser[1].version
                     )
                 )
             )
@@ -344,14 +393,14 @@ class GrenseServiceIT : TestWithDbContainer() {
             .build()
     }
 
-    private fun utfoerGrenseTilhorighetEndring(grense: Grense, gyldighetsdato: LocalDate): Feature {
+    private fun utfoerGrenseTilhorighetEndring(grense: Grense, gyldighetsdato: LocalDate, kontekstEnhetType: KontekstEnhetType): Feature {
         val nyeTilhorigheter = listOf(KontekstEgenskaper(
             id = ObjektIdentifikator(Lokalid("G2"), gyldighetsdato),
-            type = KontekstEnhetType.GRUNNKRETS,
+            type = kontekstEnhetType,
             version = 1
         ), KontekstEgenskaper(
             id = ObjektIdentifikator(Lokalid("G3"), gyldighetsdato),
-            type = KontekstEnhetType.GRUNNKRETS,
+            type = kontekstEnhetType,
             version = 1
         ))
 
@@ -382,13 +431,17 @@ class GrenseServiceIT : TestWithDbContainer() {
      *  G3 har samme antall grenser før og etter, skal egentlig ikke være noen endring pÂ G3.
      */
 
-    private fun setupTilhorighetTest(gyldigFra: LocalDate): List<Grense> {
+    private fun <T: KobletTilGrense>setupTilhorighetTest(
+        gyldigFra: LocalDate,
+        grenseType: Grensetype,
+        saveKrets: (String, Lokalid, String, String, LocalDate, LocalDate?, List<Grense>) -> T
+    ): List<T> {
         //Lagrer grensene først, for å være sikker på at de er tilgjengelige for å knyttes til kretsene
-        val lagredeGrenserForKretsG1 = grenseRepository.saveAll(GrenseHelper.getGrenserForVestligKrets(gyldigFra, Grensetype.Grunnkretsgrense, true))
-        val lagredeGrenserForKretsG2 = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(gyldigFra, Grensetype.Grunnkretsgrense, true))
+        val lagredeGrenserForKretsG1 = grenseRepository.saveAll(GrenseHelper.getGrenserForVestligKrets(gyldigFra, grenseType, true))
+        val lagredeGrenserForKretsG2 = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(gyldigFra, grenseType, true))
 
         val grenserForKretsG3 = mutableListOf<Grense>()
-        grenserForKretsG3.add(Grense(id = "grenseUnderNordVest", lokalid = "grenseUnderNordVestLokalid", grensetype = Grensetype.Grunnkretsgrense)
+        grenserForKretsG3.add(Grense(id = "grenseUnderNordVest", lokalid = "grenseUnderNordVestLokalid", grensetype = grenseType)
             .apply {
                 setGyldigFra(gyldigFra)
                 grense = GrenseHelper.geometryFactory.createLineString(
@@ -399,7 +452,7 @@ class GrenseServiceIT : TestWithDbContainer() {
                 )
             }
         )
-        grenserForKretsG3.add(Grense(id = "grenseUnderSoerVest", lokalid = "grenseUnderSoerVestLokalid", grensetype = Grensetype.Grunnkretsgrense)
+        grenserForKretsG3.add(Grense(id = "grenseUnderSoerVest", lokalid = "grenseUnderSoerVestLokalid", grensetype = grenseType)
             .apply {
                 setGyldigFra(gyldigFra)
                 grense = GrenseHelper.geometryFactory.createLineString(
@@ -410,7 +463,7 @@ class GrenseServiceIT : TestWithDbContainer() {
                 )
             }
         )
-        grenserForKretsG3.add(Grense(id = "grenseUnderDelt", lokalid = "grenseUnderDeltLokalid", grensetype = Grensetype.Grunnkretsgrense)
+        grenserForKretsG3.add(Grense(id = "grenseUnderDelt", lokalid = "grenseUnderDeltLokalid", grensetype = grenseType)
             .apply {
                 setGyldigFra(gyldigFra)
                 grense = GrenseHelper.geometryFactory.createLineString(
@@ -423,38 +476,36 @@ class GrenseServiceIT : TestWithDbContainer() {
         )
         val lagredeGrenserForKretsG3 = grenseRepository.saveAll(grenserForKretsG3)
         val grenseSoerVest = lagredeGrenserForKretsG1.first { it.lokalid == "grenseSørVestLokalid" }
-        val kretsG1 = saveGrunnkrets(
-            id = "G1",
-            lokalid = Lokalid("G1"),
-            grunnkretsnummer = "03010020",
-            grunnkretsnavn = "Vestre krets",
-            gyldigFra = gyldigFra,
-            grenser = lagredeGrenserForKretsG1
+
+        val kretsG1 = saveKrets(
+            "G1",
+            Lokalid("G1"),
+            "03010020",
+            "Vestre krets",
+            gyldigFra,
+            null,
+            lagredeGrenserForKretsG1
         )
 
-        val kretsG2 = saveGrunnkrets(
-            id = "G2",
-            lokalid = Lokalid("G2"),
-            grunnkretsnummer = "03010021",
-            grunnkretsnavn = "Østre krets",
-            gyldigFra = gyldigFra,
-            grenser = lagredeGrenserForKretsG2
+        val kretsG2 = saveKrets(
+            "G2",
+            Lokalid("G2"),
+            "03010021",
+            "Østre krets",
+            gyldigFra,
+            null,
+            lagredeGrenserForKretsG2
         )
-        val kretsG3 = saveGrunnkrets(
-            id = "G3",
-            lokalid = Lokalid("G3"),
-            grunnkretsnummer = "03010023",
-            grunnkretsnavn = "Krets under",
-            gyldigFra = gyldigFra,
-            grenser = lagredeGrenserForKretsG3+grenseSoerVest
+        val kretsG3 = saveKrets(
+            "G3",
+            Lokalid("G3"),
+            "03010023",
+            "Krets under",
+            gyldigFra,
+            null,
+            lagredeGrenserForKretsG3+grenseSoerVest
         )
 
-        saveKommuneOgUnikLokalid(grunnkretser = listOf(kretsG1, kretsG2, kretsG3), gyldigFra = gyldigFra)
-
-        // Fra krets finner vi fram til de to grensene som har endringer i dette fiktive utkastet
-        val grenseSomSkalEndreTilhorighet = kretsG1.grenser.map { it.grense }.first { it.lokalid == "grenseSørVestLokalid"  }
-        val grenseSomEndreGeometrien = kretsG1.grenser.map { it.grense }.first { it.lokalid == "grenseDelt2Lokalid"  }
-
-        return listOf(grenseSomSkalEndreTilhorighet, grenseSomEndreGeometrien)
+        return listOf(kretsG1, kretsG2, kretsG3)
     }
 }

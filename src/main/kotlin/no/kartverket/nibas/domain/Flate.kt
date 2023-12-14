@@ -11,6 +11,7 @@ interface Flate : CommonMetadataProperties {
 
 interface KobletTilGrense {
     val lokalid: String
+    val version: Int
 
     fun oppdaterEllerLeggTilGrenseKobling(grenseMedAttributter: GrenseMedAttributter)
     fun antallGrenser(): Int

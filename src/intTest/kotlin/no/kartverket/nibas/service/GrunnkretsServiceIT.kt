@@ -1225,7 +1225,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
 
         grenseRepository.flush()
 
-        val grunnkrets = saveGrunnkrets(lokalid = grunnkretsLokalid, kommune = kommune, grenser = listOf(grense1, grense2, grense3))
+        val grunnkrets = saveGrunnkrets(lokalid = grunnkretsLokalid, grenser = listOf(grense1, grense2, grense3))
         kommune.addGrunnkrets(grunnkrets)
         return grunnkrets
     }

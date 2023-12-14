@@ -268,7 +268,7 @@ class GrenseService(
                 }
                 grenseKoblingService.leggTilGrenserForKretserViaKontekstEgenskaper(tilhorighetEndringer.nye, grense, eksisterendeGrenser, gyldighetsdato, flaterSomHarFaattNyVersjon, endringstype, Flatetype.GRUNNKRETS)
                 grenseKoblingService.fjernGrenseFraKretserViaGrenseKobling(grense, eksisterendeGrenser, tilhorighetEndringer.frafallende, gyldighetsdato, flaterSomHarFaattNyVersjon, endringstype)
-                grenseKoblingService.oppdaterGrenseKoblingAttributter(lokalidForKretser, flaterSomHarFaattNyVersjon)
+                grenseKoblingService.oppdaterGrenseKoblingAttributter(lokalidForKretser, flaterSomHarFaattNyVersjon, Flatetype.GRUNNKRETS)
             }
         }
         else if (grense.grensetype == Grensetype.Stemmekretsgrense){
@@ -293,7 +293,7 @@ class GrenseService(
                 }
                 grenseKoblingService.leggTilGrenserForKretserViaKontekstEgenskaper(tilhorighetEndringer.nye, grense, eksisterendeGrenser, gyldighetsdato, flaterSomHarFaattNyVersjon, endringstype, Flatetype.STEMMEKRETS)
                 grenseKoblingService.fjernGrenseFraKretserViaGrenseKobling(grense, eksisterendeGrenser, tilhorighetEndringer.frafallende, gyldighetsdato, flaterSomHarFaattNyVersjon, endringstype)
-                grenseKoblingService.oppdaterGrenseKoblingAttributter(lokalidForKretser, flaterSomHarFaattNyVersjon)
+                grenseKoblingService.oppdaterGrenseKoblingAttributter(lokalidForKretser, flaterSomHarFaattNyVersjon, Flatetype.STEMMEKRETS)
             }
         }
     }

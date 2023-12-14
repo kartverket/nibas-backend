@@ -297,7 +297,6 @@ class TestWithDbContainer {
         lokalid: Lokalid = Lokalid("1001"),
         grunnkretsnummer: String = "42270304",
         grunnkretsnavn: String = "Dåsvatn",
-        kommune: Kommune = KommuneBuilder.DEFAULT_KOMMUNE,
         gyldigFra: LocalDate = LocalDate.of(2022, Month.OCTOBER, 1),
         gyldigTil: LocalDate? = null,
         grenser: List<Grense> = emptyList()
@@ -309,7 +308,7 @@ class TestWithDbContainer {
             gyldigTil = gyldigTil,
             grunnkretsnummer = grunnkretsnummer,
             grunnkretsnavn = grunnkretsnavn,
-            kommune = kommune,
+            kommune = null,
             grenser = grenser
         ).buildUtenKommune()
 

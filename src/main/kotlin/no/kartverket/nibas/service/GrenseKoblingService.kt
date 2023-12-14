@@ -161,12 +161,13 @@ class GrenseKoblingService(
                             gyldighetsDato,
                             endringstype
                         )) as Stemmekrets
-                    val oppdatertGrenseListe = nyVersjonAvStemmekrets.grenser.filter { gk -> gk.grense.lokalid != grense.lokalid }.map { it.grense }
-                    val nyeGrenseKoblingAttributter = dannGrenseKoblingAttributterForGrenser(oppdatertGrenseListe)
-                    val nyeStemmekretsGrenseKoblinger = nyeGrenseKoblingAttributter.map { StemmekretsGrenseKobling(nyVersjonAvStemmekrets, it.grense, it.attributter) }
-                    nyVersjonAvStemmekrets.apply {
-                        grenser = nyeStemmekretsGrenseKoblinger.toMutableSet()
+                    val eksisterendeGrenserForStemmekrets = eksisterendeGrenser[lokalidForStemmekrets] ?: throw RuntimeException("Grenseliste tom for Stemmekrets med lokalid: $lokalidForStemmekrets")
+                    val oppdatertGrenseListe = eksisterendeGrenserForStemmekrets.filter { it.lokalid != grense.lokalid }
+
+                    eksisterendeGrenserForStemmekrets.subtract(oppdatertGrenseListe.toSet()).forEach {
+                        nyVersjonAvStemmekrets.replaceGrensekobling(it, null, GrenseKoblingAttributter())
                     }
+
                     flaterSomHarFaattNyVersjon[lokalidForStemmekrets] = nyVersjonAvStemmekrets
                 }
                 else -> throw RuntimeException("Støtter kun grunnkretser eller stemmekretser")
@@ -184,9 +185,18 @@ class GrenseKoblingService(
         throw RuntimeException("Grensen rører hverken startpunkt eller endepunktet til forrige grense. Er rekkefølgen riktig?")
     }
 
-    fun oppdaterGrenseKoblingAttributter(lokalidForKretser: Set<Lokalid?>, flaterSomHarFaattNyVersjon: MutableMap<Lokalid, Flate>){
+    fun oppdaterGrenseKoblingAttributter(
+        lokalidForKretser: Set<Lokalid?>,
+        flaterSomHarFaattNyVersjon: MutableMap<Lokalid, Flate>,
+        flateType: Flatetype
+    ) {
         lokalidForKretser.forEach { lokalid ->
-            val oppdatertGrenseKoblingListe = (flaterSomHarFaattNyVersjon[lokalid] as Grunnkrets).grenser
+            val oppdatertGrenseKoblingListe = when (flateType) {
+                Flatetype.GRUNNKRETS -> (flaterSomHarFaattNyVersjon[lokalid] as? Grunnkrets)?.grenser
+                Flatetype.STEMMEKRETS -> (flaterSomHarFaattNyVersjon[lokalid] as? Stemmekrets)?.grenser
+                else -> throw RuntimeException("flateType kan kun bli satt til Grunnkrets eller Stemmekrets.")
+            } ?: throw RuntimeException("Casting til $flateType feilet. flateType kan kun bli satt til Grunnkrets eller Stemmekrets.")
+
             val gma = dannGrenseKoblingAttributterForGrenser(oppdatertGrenseKoblingListe.map { it.grense })
             oppdatertGrenseKoblingListe.forEach {
                 it.oppdaterAttributter(gma.first { gma -> gma.grense.lokalid == it.grense.lokalid }.attributter)
