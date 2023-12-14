@@ -1,7 +1,6 @@
 package no.kartverket.nibas.service
 
 import no.kartverket.nibas.api.v1.common.Grensetype
-import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.metadata.KodelisteEntry
@@ -353,8 +352,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
 
             .withGrensetype(Grensetype.Kommunegrense)
             .withGeometry(oppdatertGeometri)
-
-            .withKontekstEgenskaper(listOf()) //TODO
+            .withKontekstEgenskaperFromGrunnkretsGrenseKoblinger(grunnkrets.grenser)
             .build()
 
         val flaterSomErEndret = grenseService.lagreGrenser(
@@ -408,7 +406,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
             .withGrenseversjon(grenseKobling.grense.version)
             .withGrensetype(Grensetype.Fylkesgrense)
             .withGeometry(oppdatertGeometri)
-            .withKontekstEgenskaper(listOf()) //TODO
+            .withKontekstEgenskaperFromGrunnkretsGrenseKoblinger(grunnkrets.grenser)
             .build()
 
         val flaterSomErEndret = grenseService.lagreGrenser(
@@ -462,7 +460,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         ))
 
         val oppdatertGrensefeature = FeatureBuilder(id = "850")
-            .withKontekstEgenskaper(listOf()) //TODO
+            .withKontekstEgenskaperFromGrunnkretsGrenseKoblinger(grunnkrets.grenser)
             .withGrenseversjon(grenseKobling.grense.version)
             .withGrensetype(Grensetype.Riksgrense)
             .withGeometry(oppdatertGeometri)
@@ -532,7 +530,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         assertThat(deltGrense.grunnkretser).hasSize(2)
         assertThat(deltGrense.grunnkretser.map { it.grunnkrets.id }).containsExactlyInAnyOrder(vestreKrets.id, oestreKrets.id)
 
-        val flaterSomErEndret = utfoerGrenseendring(kretsSomSkalHaGrenseendring = vestreKrets, opprinneligDato = opprinneligDato, endringsdato = endringsdato)
+        val flaterSomErEndret = utfoerGrenseendring(kretsSomSkalHaGrenseendring = vestreKrets, opprinneligDato = opprinneligDato, endringsdato = endringsdato, versionOverride = 1)
         val opprinneligVestreKrets = grunnkretsService.hentGrunnkrets(Identifikator(Lokalid(vestreKrets.lokalid), opprinneligDato))!!
         val opprinneligOestreKrets = grunnkretsService.hentGrunnkrets(Identifikator(Lokalid(oestreKrets.lokalid), opprinneligDato))!!
         assertThat(opprinneligVestreKrets.gyldighet.gyldigTil).isEqualTo(endringsdato)
@@ -565,7 +563,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
 
         val featureForAnnenGrense = lagFeatureEndreYkoordinat(vestreKrets, opprinneligDato, endringsdato, "grenseNordVestLokalid")
         val flaterSomErEndret = utfoerGrenseendring(kretsSomSkalHaGrenseendring = vestreKrets, opprinneligDato = opprinneligDato,
-            endringsdato = endringsdato, featureForAnnenGrense)
+            endringsdato = endringsdato, featureForAnnenGrense, versionOverride = 1)
 
         val opprinneligVestreKrets = grunnkretsService.hentGrunnkrets(Identifikator(Lokalid(vestreKrets.lokalid), opprinneligDato))!!
         val opprinneligOestreKrets = grunnkretsService.hentGrunnkrets(Identifikator(Lokalid(oestreKrets.lokalid), opprinneligDato))!!
@@ -602,7 +600,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
 
         val featureForAnnenGrense = lagFeatureEndreYkoordinat(oestreKrets, opprinneligDato, endringsdato, "grenseNordØstLokalid")
         val flaterSomErEndret = utfoerGrenseendring(kretsSomSkalHaGrenseendring = vestreKrets, opprinneligDato = opprinneligDato,
-            endringsdato = endringsdato, featureForAnnenGrense)
+            endringsdato = endringsdato, featureForAnnenGrense, versionOverride = 1)
 
         val opprinneligVestreKrets = grunnkretsService.hentGrunnkrets(Identifikator(Lokalid(vestreKrets.lokalid), opprinneligDato))!!
         val opprinneligOestreKrets = grunnkretsService.hentGrunnkrets(Identifikator(Lokalid(oestreKrets.lokalid), opprinneligDato))!!
@@ -634,7 +632,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         val deltGrenseLokalid = "grenseDeltLokalid"
         val (vestreKrets, oestreKrets) = saveNaboGrunnkretser(gyldigFra = opprinneligDato)
 
-        val vestreGrunnkretsEtterOppdatering = utfoerMetadataoppdatering(kretsSomSkalOppdateres = vestreKrets, datoForOppdatering = datoForOppdatering)!!
+        val vestreGrunnkretsEtterOppdatering = utfoerMetadataoppdatering(kretsSomSkalOppdateres = vestreKrets, datoForOppdatering = datoForOppdatering)!!.apply { version = 1 }
         val deltGrense = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), datoForOppdatering))!!
         assertThat(deltGrense.grunnkretser).hasSize(3)
         assertThat(deltGrense.grunnkretser.map { it.grunnkrets.id })
@@ -672,7 +670,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         val deltGrenseLokalid = "grenseDeltLokalid"
         val (vestreKrets, oestreKrets) = saveNaboGrunnkretser(gyldigFra = opprinneligDato)
 
-        val oestreGrunnkretsEtterOppdatering = utfoerMetadataoppdatering(kretsSomSkalOppdateres = oestreKrets, datoForOppdatering = datoForOppdatering)!!
+        val oestreGrunnkretsEtterOppdatering = utfoerMetadataoppdatering(kretsSomSkalOppdateres = oestreKrets, datoForOppdatering = datoForOppdatering)!!.apply { version = 1 }
 
         val deltGrense = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), datoForOppdatering))!!
         assertThat(deltGrense.grunnkretser).hasSize(3)
@@ -804,7 +802,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         saveFylkeOgUnikLokalid(fylkesnummer = "03", gyldigFra = opprinneligDato, kommuner = listOf(vestreKommune, oestreKommune))
         grenseRepository.flush()
 
-        val oestreGrunnkretsEtterOppdatering = utfoerMetadataoppdatering(kretsSomSkalOppdateres = oestreKrets, datoForOppdatering = datoForOppdatering)!!
+        val oestreGrunnkretsEtterOppdatering = utfoerMetadataoppdatering(kretsSomSkalOppdateres = oestreKrets, datoForOppdatering = datoForOppdatering)!!.apply { version = 1 }
         grenseRepository.flush()
 
         val deltGrense = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), datoForOppdatering))!!
@@ -1156,7 +1154,8 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         opprinneligDato: LocalDate,
         endringsdato: LocalDate,
         featureAnnenOppdatertGrense: Feature? = null,
-        grensetype: Grensetype = Grensetype.Grunnkretsgrense
+        grensetype: Grensetype = Grensetype.Grunnkretsgrense,
+        versionOverride: Int? = null,
     ): Set<Flate> {
         val grenseKobling = kretsSomSkalHaGrenseendring.getGrenser(gyldighetsdato = opprinneligDato)
             .first { it.grense.lokalid == "grenseDeltLokalid" }
@@ -1171,7 +1170,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
             .withGrenseversjon(grenseKobling.grense.version)
             .withGrensetype(grensetype)
             .withGeometry(oppdatertGeometri)
-            .withKontekstEgenskaper(listOf()) //TODO
+            .withKontekstEgenskaperFromGrunnkretsGrenseKoblinger(grenseKobling.grense.grunnkretser, versionOverride)
             .build()
 
         val features = if (featureAnnenOppdatertGrense != null) listOf(oppdatertGrensefeature, featureAnnenOppdatertGrense) else listOf(oppdatertGrensefeature)
@@ -1182,8 +1181,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         )
     }
 
-    private fun lagFeatureEndreYkoordinat(kretsSomSkalHaGrenseendring: Grunnkrets, opprinneligDato: LocalDate, endringsdato: LocalDate,
-                                          lokalidGrenseSomSkalEndres: String): Feature {
+    private fun lagFeatureEndreYkoordinat(kretsSomSkalHaGrenseendring: Grunnkrets, opprinneligDato: LocalDate, lokalidGrenseSomSkalEndres: String): Feature {
         val grenseKobling = kretsSomSkalHaGrenseendring.getGrenser(gyldighetsdato = opprinneligDato)
             .first { it.grense.lokalid == lokalidGrenseSomSkalEndres }
         val grense = grenseKobling.grense.grense
@@ -1197,7 +1195,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
             .withGrenseversjon(grenseKobling.grense.version)
             .withGrensetype(Grensetype.Grunnkretsgrense)
             .withGeometry(oppdatertGeometri)
-            .withKontekstEgenskaper(listOf()) //TODO
+            .withKontekstEgenskaperFromGrunnkretsGrenseKoblinger(grenseKobling.grense.grunnkretser)
             .build()
     }
 

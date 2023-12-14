@@ -13,9 +13,7 @@ import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Grense
-import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Grunnkrets
-import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.sosi.sosiimport.IkkeSammenhengendePolygonException
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import no.kartverket.nibas.utils.GrenseHelper
@@ -75,7 +73,9 @@ class GrenseServiceIT : TestWithDbContainer() {
         saveKommuneOgUnikLokalid(stemmekretser = listOf(stemmekrets), gyldigFra = gyldigFra)
         grenseRepository.flush()
 
-        val arkivertFeature = utfoerStemmekretsgrenseArkivering(stemmekrets, gyldighetsdato)
+        val grenseSomSkalArkiveres = stemmekrets.grenser.first { it.grense.lokalid == "grense1Lokalid" }.grense
+
+        val arkivertFeature = utfoerStemmekretsgrenseArkivering(grenseSomSkalArkiveres)
 
         Assertions.assertThatThrownBy {
             grenseService.lagreGrenser(
@@ -93,30 +93,34 @@ class GrenseServiceIT : TestWithDbContainer() {
         val gyldigFra = november28In2022
         val gyldighetsdato = LocalDate.now()
 
-        val stemmekretsRequest = StemmekretsRequestBuilder.DEFAULT_REQUEST
-        val identifikator = Identifikator(Lokalid(stemmekretsRequest.identifikasjon.lokalid), gyldigFra)
+        val lokalid1 = Lokalid("1")
+        val lokalid2 = Lokalid("2")
 
         val lagredeGrenser = grenseRepository.saveAll(getGrenserForEnkelKrets(gyldigFra, gyldighetsdato = gyldighetsdato, Grensetype.Stemmekretsgrense))
         grenseRepository.flush()
 
-        val stemmekrets = saveStemmekrets(id = "1", lokalid = identifikator.lokalid, stemmekretsnummer = "20", gyldigFra = gyldigFra, grenser = lagredeGrenser)
+        val stemmekrets = saveStemmekrets(id = "1", lokalid = lokalid1, stemmekretsnummer = "20", gyldigFra = gyldigFra, grenser = lagredeGrenser)
+        val stemmekrets2 = saveStemmekrets(id = "2", lokalid = lokalid2, stemmekretsnummer = "21", gyldigFra = gyldigFra, grenser = lagredeGrenser)
 
-        saveKommuneOgUnikLokalid(stemmekretser = listOf(stemmekrets), gyldigFra = gyldigFra)
+        saveKommuneOgUnikLokalid(stemmekretser = listOf(stemmekrets, stemmekrets2), gyldigFra = gyldigFra)
         grenseRepository.flush()
 
-        val arkivertFeature = utfoerStemmekretsgrenseArkivering(stemmekrets, gyldighetsdato)
-        val featureMedEndretGeometri = utfoerStemmekretsgrensejusteringEtterArkivering(stemmekrets, gyldighetsdato)
+        val grenseSomSkalArkiveres = stemmekrets.grenser.first { it.grense.lokalid == "grense1Lokalid" }.grense
+        val grenseSomSkalJusteres = stemmekrets.grenser.first { it.grense.lokalid == "grense2Lokalid" }.grense
+
+        val arkivertFeature = utfoerStemmekretsgrenseArkivering(grenseSomSkalArkiveres)
+        val featureMedEndretGeometri = utfoerStemmekretsgrensejusteringEtterArkivering(grenseSomSkalJusteres)
 
         val flateSet = grenseService.lagreGrenser(
             grenser = FeatureCollection(features = listOf(arkivertFeature, featureMedEndretGeometri)),
             gyldighetsdato = gyldighetsdato,
             endringstype = Endringstype.VEDTATT_GRENSEJUSTERING
         )
-        assertThat(flateSet).hasSize(1)
-        val flate = flateSet.first()
-        assertThat(flate.lokalid).isEqualTo(stemmekretsRequest.identifikasjon.lokalid)
+        assertThat(flateSet).hasSize(2)
+        val flate = flateSet.firstOrNull { it.lokalid == lokalid1.value }
+        assertThat(flate).isNotNull
 
-        val stemmekretsEtterLagring = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(flate.lokalid), gyldighetsdato))
+        val stemmekretsEtterLagring = stemmekretsService.hentStemmekrets(Identifikator(Lokalid(flate!!.lokalid), gyldighetsdato))
         assertThat(stemmekretsEtterLagring?.grenser).hasSize(3).extracting("grense.lokalid")
             .doesNotContain("grense1Lokalid")
     }
@@ -136,7 +140,9 @@ class GrenseServiceIT : TestWithDbContainer() {
         saveKommuneOgUnikLokalid(grunnkretser = listOf(grunnkrets), gyldigFra = gyldigFra)
         grenseRepository.flush()
 
-        val arkivertFeature = utfoerGrunnkretsgrenseArkivering(grunnkrets, gyldighetsdato)
+        val grenseSomSkalArkiveres = grunnkrets.grenser.first { it.grense.lokalid == "grense1Lokalid" }.grense
+
+        val arkivertFeature = utfoerGrunnkretsgrenseArkivering(grenseSomSkalArkiveres)
 
         Assertions.assertThatThrownBy {
             grenseService.lagreGrenser(
@@ -153,82 +159,80 @@ class GrenseServiceIT : TestWithDbContainer() {
         val gyldigFra = november28In2022
         val gyldighetsdato = LocalDate.now()
 
-        val grunnkretsRequest = GrunnkretsRequestBuilder.DEFAULT_REQUEST
-        val identifikator = Identifikator(Lokalid(grunnkretsRequest.identifikasjon.lokalid), gyldigFra)
+        val lokalid1 = Lokalid("1")
+        val lokalid2 = Lokalid("2")
 
         val lagredeGrenser = grenseRepository.saveAll(getGrenserForEnkelKrets(gyldigFra, gyldighetsdato = gyldighetsdato, Grensetype.Grunnkretsgrense))
         grenseRepository.flush()
 
-        val grunnkrets = saveGrunnkrets(id = "1", lokalid = identifikator.lokalid, grunnkretsnummer = "20", gyldigFra = gyldigFra, grenser = lagredeGrenser)
+        val grunnkrets = saveGrunnkrets(id = "1", lokalid = lokalid1, grunnkretsnummer = "20", gyldigFra = gyldigFra, grenser = lagredeGrenser)
+        val grunnkrets2 = saveGrunnkrets(id = "2", lokalid = lokalid2, gyldigFra = gyldigFra, grenser = lagredeGrenser)
 
-        saveKommuneOgUnikLokalid(grunnkretser = listOf(grunnkrets), gyldigFra = gyldigFra)
+        saveKommuneOgUnikLokalid(grunnkretser = listOf(grunnkrets, grunnkrets2), gyldigFra = gyldigFra)
         grenseRepository.flush()
 
-        val arkivertFeature = utfoerGrunnkretsgrenseArkivering(grunnkrets, gyldighetsdato)
-        val featureMedEndretGeometri = utfoerGrunnkretsgrensejusteringEtterArkivering(grunnkrets, gyldighetsdato)
+        val grenseSomSkalArkiveres = grunnkrets.grenser.first { it.grense.lokalid == "grense1Lokalid" }.grense
+        val grenseSomSkalJusteres = grunnkrets.grenser.first { it.grense.lokalid == "grense2Lokalid" }.grense
+
+        val arkivertFeature = utfoerGrunnkretsgrenseArkivering(grenseSomSkalArkiveres)
+        val featureMedEndretGeometri = utfoerGrunnkretsgrensejusteringEtterArkivering(grenseSomSkalJusteres)
 
         val flateSet = grenseService.lagreGrenser(
             grenser = FeatureCollection(features = listOf(arkivertFeature, featureMedEndretGeometri)),
             gyldighetsdato = gyldighetsdato,
             endringstype = Endringstype.VEDTATT_GRENSEJUSTERING
         )
-        assertThat(flateSet).hasSize(1)
-        val flate = flateSet.first()
-        assertThat(flate.lokalid).isEqualTo(grunnkretsRequest.identifikasjon.lokalid)
 
-        val grunnkretsEtterLagring = grunnkretsService.hentGrunnkrets(Identifikator(Lokalid(flate.lokalid), gyldighetsdato))
+        assertThat(flateSet).hasSize(2)
+        val flate = flateSet.firstOrNull { it.lokalid == lokalid1.value }
+        assertThat(flate).isNotNull
+
+        val grunnkretsEtterLagring = grunnkretsService.hentGrunnkrets(Identifikator(Lokalid(flate!!.lokalid), gyldighetsdato))
         assertThat(grunnkretsEtterLagring?.grenser).hasSize(3).extracting("grense.lokalid")
             .doesNotContain("grense1Lokalid")
     }
 
-    private fun utfoerStemmekretsgrenseArkivering(kretsSomSkalHaGrenseendring: Stemmekrets, opprinneligDato: LocalDate): Feature {
-        val grenseKobling = kretsSomSkalHaGrenseendring.getGrenser(gyldighetsdato = opprinneligDato)
-            .first { it.grense.lokalid == "grense1Lokalid" }
-
-
-        return utfoerGrenseArkivering(opprinneligDato, grenseKobling, kretsSomSkalHaGrenseendring.lokalid, KontekstEnhetType.STEMMEKRETS, Grensetype.Stemmekretsgrense)
-    }
-
-    private fun utfoerGrunnkretsgrenseArkivering(kretsSomSkalHaGrenseendring: Grunnkrets, opprinneligDato: LocalDate): Feature {
-        val grenseKobling = kretsSomSkalHaGrenseendring.getGrenser(gyldighetsdato = opprinneligDato)
-            .first { it.grense.lokalid == "grense1Lokalid" }
-
-        return utfoerGrenseArkivering(opprinneligDato, grenseKobling, kretsSomSkalHaGrenseendring.lokalid, KontekstEnhetType.GRUNNKRETS, Grensetype.Grunnkretsgrense)
-    }
-
-    private fun utfoerGrenseArkivering(opprinneligDato: LocalDate, grenseKobling: GrenseKobling, lokalid: String, kontekstEnhetType: KontekstEnhetType, grensetype: Grensetype): Feature {
-
-        return FeatureBuilder(id = "grense1Lokalid")
-            .withGrenseversjon(grenseKobling.grense.version)
-            .withGrensetype(grensetype)
+    private fun utfoerStemmekretsgrenseArkivering(grenseSomSkalArkiveres: Grense): Feature {
+        return FeatureBuilder(id = grenseSomSkalArkiveres.lokalid)
+            .withGrenseversjon(grenseSomSkalArkiveres.version)
+            .withGrensetype(Grensetype.Stemmekretsgrense)
+            .withKontekstEgenskaperFromStemmekretsGrenseKoblinger(grenseSomSkalArkiveres.stemmekretser)
             .withShouldArchive(true)
             .build()
     }
 
-    private fun utfoerStemmekretsgrensejusteringEtterArkivering(kretsSomSkalHaGrenseendring: Stemmekrets, opprinneligDato: LocalDate): Feature {
-        val grenseKobling = kretsSomSkalHaGrenseendring.getGrenser(gyldighetsdato = opprinneligDato)
-            .first { it.grense.lokalid == "grense2Lokalid" }
-
-        return utfoerGrensejustering(grenseKobling, opprinneligDato, kretsSomSkalHaGrenseendring.lokalid, KontekstEnhetType.STEMMEKRETS, Grensetype.Stemmekretsgrense)
+    private fun utfoerGrunnkretsgrenseArkivering(grenseSomSkalArkiveres: Grense): Feature {
+        return FeatureBuilder(id = grenseSomSkalArkiveres.lokalid)
+            .withGrenseversjon(grenseSomSkalArkiveres.version)
+            .withKontekstEgenskaperFromGrunnkretsGrenseKoblinger(grenseSomSkalArkiveres.grunnkretser)
+            .withGrensetype(Grensetype.Grunnkretsgrense)
+            .withShouldArchive(true)
+            .build()
     }
 
-    private fun utfoerGrunnkretsgrensejusteringEtterArkivering(kretsSomSkalHaGrenseendring: Grunnkrets, opprinneligDato: LocalDate): Feature {
-        val grenseKobling = kretsSomSkalHaGrenseendring.getGrenser(gyldighetsdato = opprinneligDato)
-            .first { it.grense.lokalid == "grense2Lokalid" }
-
-        return utfoerGrensejustering(grenseKobling, opprinneligDato, kretsSomSkalHaGrenseendring.lokalid, KontekstEnhetType.GRUNNKRETS, Grensetype.Grunnkretsgrense)
-    }
-
-    private fun utfoerGrensejustering(grenseKobling: GrenseKobling, opprinneligDato: LocalDate, lokalid: String, kontekstEnhetType: KontekstEnhetType, grensetype: Grensetype): Feature {
+    private fun utfoerStemmekretsgrensejusteringEtterArkivering(grenseSomSkalJusteres: Grense): Feature {
         val oppdatertGeometri = GeometryFactory().createLineString(arrayOf(
             Coordinate(5.0, 5.0),
             Coordinate(0.0, 0.0),
         ))
-
-        return FeatureBuilder(id = "grense2Lokalid")
-            .withGrenseversjon(grenseKobling.grense.version)
-            .withGrensetype(grensetype)
+        return FeatureBuilder(id = grenseSomSkalJusteres.lokalid)
+            .withGrenseversjon(grenseSomSkalJusteres.version)
+            .withGrensetype(Grensetype.Stemmekretsgrense)
             .withGeometry(oppdatertGeometri)
+            .withKontekstEgenskaperFromStemmekretsGrenseKoblinger(grenseSomSkalJusteres.stemmekretser)
+            .build()
+    }
+
+    private fun utfoerGrunnkretsgrensejusteringEtterArkivering(grenseSomSkalJusteres: Grense): Feature {
+        val oppdatertGeometri = GeometryFactory().createLineString(arrayOf(
+            Coordinate(5.0, 5.0),
+            Coordinate(0.0, 0.0),
+        ))
+        return FeatureBuilder(id = grenseSomSkalJusteres.lokalid)
+            .withGrenseversjon(grenseSomSkalJusteres.version)
+            .withGrensetype(Grensetype.Grunnkretsgrense)
+            .withGeometry(oppdatertGeometri)
+            .withKontekstEgenskaperFromGrunnkretsGrenseKoblinger(grenseSomSkalJusteres.grunnkretser)
             .build()
     }
 

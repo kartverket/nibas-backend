@@ -3,7 +3,6 @@ package no.kartverket.nibas.service
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import no.kartverket.nibas.api.v1.common.Grensetype
-import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
@@ -38,7 +37,6 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.Month
-import java.util.*
 
 @ActiveProfiles("security-off")
 @Transactional
@@ -515,7 +513,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         val deltGrenseLokalid = "grenseDeltLokalid"
         val (vestreKrets, oestreKrets) = saveNaboStemmekretser(gyldigFra = opprinneligDato)
 
-        val vestreStemmekretsEtterOppdatering = utfoerMetadataoppdatering(kretsSomSkalOppdateres = vestreKrets, datoForOppdatering = datoForOppdatering)!!
+        val vestreStemmekretsEtterOppdatering = utfoerMetadataoppdatering(kretsSomSkalOppdateres = vestreKrets, datoForOppdatering = datoForOppdatering)!!.apply { version = 1 }
 
         val deltGrense = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), datoForOppdatering))!!
         assertThat(deltGrense.stemmekretser).hasSize(3)
@@ -554,7 +552,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         val deltGrenseLokalid = "grenseDeltLokalid"
         val (vestreKrets, oestreKrets) = saveNaboStemmekretser(gyldigFra = opprinneligDato)
 
-        val oestreStemmekretsEtterOppdatering = utfoerMetadataoppdatering(kretsSomSkalOppdateres = oestreKrets, datoForOppdatering = datoForOppdatering)!!
+        val oestreStemmekretsEtterOppdatering = utfoerMetadataoppdatering(kretsSomSkalOppdateres = oestreKrets, datoForOppdatering = datoForOppdatering)!!.apply { version = 1 }
 
         val deltGrense = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), datoForOppdatering))!!
         assertThat(deltGrense.stemmekretser).hasSize(3)
@@ -878,7 +876,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
             .withGrenseversjon(grenseKobling.grense.version)
             .withGrensetype(Grensetype.Stemmekretsgrense)
             .withGeometry(oppdatertGeometri)
-            .withKontekstEgenskaper(listOf()) //TODO
+            .withKontekstEgenskaperFromStemmekretsGrenseKoblinger(grenseKobling.grense.stemmekretser)
             .build()
 
         val features = if (featureAnnenOppdatertGrense != null)
@@ -906,7 +904,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
             .withGrenseversjon(grenseKobling.grense.version)
             .withGrensetype(Grensetype.Stemmekretsgrense)
             .withGeometry(oppdatertGeometri)
-            .withKontekstEgenskaper(listOf()) //TODO
+            .withKontekstEgenskaperFromStemmekretsGrenseKoblinger(kretsSomSkalHaGrenseendring.grenser)
             .build()
     }
 

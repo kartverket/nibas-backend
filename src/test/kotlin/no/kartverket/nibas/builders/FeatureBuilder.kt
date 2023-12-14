@@ -17,6 +17,8 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.StatistiskgrenseMetada
 import no.kartverket.nibas.api.v1.common.geojson.metadata.TerritorialgrenseMetadata
 import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
+import no.kartverket.nibas.domain.StemmekretsGrenseKobling
 import no.kartverket.nibas.extensions.geometry.geometryToDto
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import org.locationtech.jts.geom.Coordinate
@@ -31,7 +33,10 @@ class FeatureBuilder(private val id: String? = "1") {
     private var grenseVersjon = 1
     private var metadata: Metadata? = null
     private var lokalid: String = "123"
-    private var kontekstEgenskaper: List<KontekstEgenskaper> = listOf()
+    private var kontekstEgenskaper: List<KontekstEgenskaper> = listOf(
+        KontekstEgenskaper(ObjektIdentifikator(Lokalid("1"), LocalDate.now()), version = 1, type = KontekstEnhetType.GRUNNKRETS),
+        KontekstEgenskaper(ObjektIdentifikator(Lokalid("2"), LocalDate.now()), version = 1, type = KontekstEnhetType.GRUNNKRETS)
+    )
     private var srid: Int = SosiGeometryFunctions.defaultSrid
     private var geometry: Geometry =
         GeometryFactory().createLineString(arrayOf(Coordinate(0.0, 0.0), Coordinate(1.0, 1.0)))
@@ -80,9 +85,6 @@ class FeatureBuilder(private val id: String? = "1") {
     }
 
     fun withKontekstEgenskaper(kontekstEgenskaper: List<KontekstEgenskaper>): FeatureBuilder{
-        if (!(kontekstEgenskaper.size == 2 || kontekstEgenskaper.size == 4)){
-            throw IllegalArgumentException("En feature kan kun ha to eller fire kontekster, ikke ${kontekstEgenskaper.size}")
-        }
         this.kontekstEgenskaper = kontekstEgenskaper
         return this
     }
@@ -110,5 +112,27 @@ class FeatureBuilder(private val id: String? = "1") {
     fun withShouldArchive(shouldArchive: Boolean): FeatureBuilder {
         this.shouldArchive = shouldArchive
         return this
+    }
+
+    // Bruk disse metodene for å unngå feilmelding fra tilhørighet-koden.
+    // Ved å sette kontekst lik de eksisterende grensekoblingene til grensen vil det ikke blir forsøkt å utføre tilhørighetendring.
+    fun withKontekstEgenskaperFromGrunnkretsGrenseKoblinger(grenseKoblinger: MutableSet<GrunnkretsGrenseKobling>, versionOverride: Int? = null): FeatureBuilder{
+        return withKontekstEgenskaper(
+            grenseKoblinger.map {
+                KontekstEgenskaper(
+                    ObjektIdentifikator(Lokalid(it.grunnkrets.lokalid),
+                        it.grunnkrets.gyldighet.gyldigTil ?: LocalDate.now()),
+                    KontekstEnhetType.GRUNNKRETS, versionOverride ?: it.grunnkrets.version) }
+        )
+    }
+
+    fun withKontekstEgenskaperFromStemmekretsGrenseKoblinger(grenseKoblinger: MutableSet<StemmekretsGrenseKobling>, versionOverride: Int? = null): FeatureBuilder{
+        return withKontekstEgenskaper(
+            grenseKoblinger.map {
+                KontekstEgenskaper(
+                    ObjektIdentifikator(Lokalid(it.stemmekrets.lokalid),
+                        it.stemmekrets.gyldighet.gyldigTil ?: LocalDate.now()),
+                    KontekstEnhetType.STEMMEKRETS, versionOverride ?: it.stemmekrets.version) }
+        )
     }
 }
