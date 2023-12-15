@@ -116,22 +116,20 @@ class FeatureBuilder(private val id: String? = "1") {
 
     // Bruk disse metodene for å unngå feilmelding fra tilhørighet-koden.
     // Ved å sette kontekst lik de eksisterende grensekoblingene til grensen vil det ikke blir forsøkt å utføre tilhørighetendring.
-    fun withKontekstEgenskaperFromGrunnkretsGrenseKoblinger(grenseKoblinger: MutableSet<GrunnkretsGrenseKobling>, versionOverride: Int? = null): FeatureBuilder{
+    fun withKontekstEgenskaperFromGrunnkretsGrenseKoblinger(grenseKoblinger: MutableSet<GrunnkretsGrenseKobling>, versionOverride: Int? = null, gyldighetsdato: LocalDate = LocalDate.now()): FeatureBuilder{
         return withKontekstEgenskaper(
             grenseKoblinger.map {
                 KontekstEgenskaper(
-                    ObjektIdentifikator(Lokalid(it.grunnkrets.lokalid),
-                        it.grunnkrets.gyldighet.gyldigTil ?: LocalDate.now()),
+                    ObjektIdentifikator(Lokalid(it.grunnkrets.lokalid), gyldighetsdato),
                     KontekstEnhetType.GRUNNKRETS, versionOverride ?: it.grunnkrets.version) }
         )
     }
 
-    fun withKontekstEgenskaperFromStemmekretsGrenseKoblinger(grenseKoblinger: MutableSet<StemmekretsGrenseKobling>, versionOverride: Int? = null): FeatureBuilder{
+    fun withKontekstEgenskaperFromStemmekretsGrenseKoblinger(grenseKoblinger: MutableSet<StemmekretsGrenseKobling>, versionOverride: Int? = null, gyldighetsdato: LocalDate = LocalDate.now()): FeatureBuilder{
         return withKontekstEgenskaper(
             grenseKoblinger.map {
                 KontekstEgenskaper(
-                    ObjektIdentifikator(Lokalid(it.stemmekrets.lokalid),
-                        it.stemmekrets.gyldighet.gyldigTil ?: LocalDate.now()),
+                    ObjektIdentifikator(Lokalid(it.stemmekrets.lokalid), gyldighetsdato),
                     KontekstEnhetType.STEMMEKRETS, versionOverride ?: it.stemmekrets.version) }
         )
     }

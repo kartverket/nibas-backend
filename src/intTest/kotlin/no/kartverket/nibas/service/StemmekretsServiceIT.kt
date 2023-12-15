@@ -442,7 +442,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         assertThat(deltGrense.stemmekretser).hasSize(2)
         assertThat(deltGrense.stemmekretser.map { it.stemmekrets.id }).containsExactlyInAnyOrder(vestreKrets.id, oestreKrets.id)
 
-        val featureForAnnenGrense = lagFeatureEndreYkoordinat(vestreKrets, opprinneligDato, endringsdato, "grenseNordVestLokalid")
+        val featureForAnnenGrense = lagFeatureEndreYkoordinat(vestreKrets, opprinneligDato, "grenseNordVestLokalid")
         val flaterSomErEndret = utfoerGrenseendring(kretsSomSkalHaGrenseendring = vestreKrets, opprinneligDato = opprinneligDato,
             endringsdato = endringsdato, featureForAnnenGrense)
 
@@ -479,7 +479,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         assertThat(deltGrense.stemmekretser).hasSize(2)
         assertThat(deltGrense.stemmekretser.map { it.stemmekrets.id }).containsExactlyInAnyOrder(vestreKrets.id, oestreKrets.id)
 
-        val featureForAnnenGrense = lagFeatureEndreYkoordinat(oestreKrets, opprinneligDato, endringsdato, "grenseNordØstLokalid")
+        val featureForAnnenGrense = lagFeatureEndreYkoordinat(oestreKrets, opprinneligDato, "grenseNordØstLokalid")
         val flaterSomErEndret = utfoerGrenseendring(kretsSomSkalHaGrenseendring = vestreKrets, opprinneligDato = opprinneligDato,
             endringsdato = endringsdato, featureForAnnenGrense)
 
@@ -590,7 +590,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         val endringsdato = LocalDate.parse("2022-02-01")
         val (_, oestreKrets) = saveNaboStemmekretser(gyldigFra = opprinneligDato)
 
-        val featureForAnnenGrense = lagFeatureEndreYkoordinat(oestreKrets, opprinneligDato, endringsdato, "grenseNordØstLokalid")
+        val featureForAnnenGrense = lagFeatureEndreYkoordinat(oestreKrets, opprinneligDato, "grenseNordØstLokalid")
         val kommunalKretsgrenseMetadata = featureForAnnenGrense.properties.metadata as KommunalKretsgrenseMetadata
         kommunalKretsgrenseMetadata.common.informasjon = "En eller annen informasjon"
         kommunalKretsgrenseMetadata.commonGrense.posisjonskvalitet =
@@ -876,7 +876,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
             .withGrenseversjon(grenseKobling.grense.version)
             .withGrensetype(Grensetype.Stemmekretsgrense)
             .withGeometry(oppdatertGeometri)
-            .withKontekstEgenskaperFromStemmekretsGrenseKoblinger(grenseKobling.grense.stemmekretser)
+            .withKontekstEgenskaperFromStemmekretsGrenseKoblinger(grenseKobling.grense.stemmekretser, gyldighetsdato = opprinneligDato)
             .build()
 
         val features = if (featureAnnenOppdatertGrense != null)
@@ -889,8 +889,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         )
     }
 
-    private fun lagFeatureEndreYkoordinat(kretsSomSkalHaGrenseendring: Stemmekrets, opprinneligDato: LocalDate, endringsdato: LocalDate,
-                                          lokalidGrenseSomSkalEndres: String): Feature {
+    private fun lagFeatureEndreYkoordinat(kretsSomSkalHaGrenseendring: Stemmekrets, opprinneligDato: LocalDate, lokalidGrenseSomSkalEndres: String): Feature {
         val grenseKobling = kretsSomSkalHaGrenseendring.getGrenser(gyldighetsdato = opprinneligDato)
             .first { it.grense.lokalid == lokalidGrenseSomSkalEndres }
         val grense = grenseKobling.grense.grense
@@ -904,7 +903,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
             .withGrenseversjon(grenseKobling.grense.version)
             .withGrensetype(Grensetype.Stemmekretsgrense)
             .withGeometry(oppdatertGeometri)
-            .withKontekstEgenskaperFromStemmekretsGrenseKoblinger(kretsSomSkalHaGrenseendring.grenser)
+            .withKontekstEgenskaperFromStemmekretsGrenseKoblinger(kretsSomSkalHaGrenseendring.grenser, gyldighetsdato = opprinneligDato)
             .build()
     }
 

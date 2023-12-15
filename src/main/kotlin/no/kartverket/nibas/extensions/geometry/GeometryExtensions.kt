@@ -3,6 +3,7 @@ package no.kartverket.nibas.extensions.geometry
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.Feature
+import no.kartverket.nibas.api.v1.common.geojson.FeatureMapper
 import no.kartverket.nibas.api.v1.common.geojson.FeatureProperties
 import no.kartverket.nibas.api.v1.common.geojson.KontekstEgenskaper
 import no.kartverket.nibas.api.v1.common.geojson.metadata.MetadataMapper
@@ -84,16 +85,35 @@ fun Grense.grenseToFeature(): Feature {
     val grensetype = this.grensetype
     var featureProperties = FeatureProperties(type = grensetype.value, srid = this.grense.srid, version = this.version)
     val metadataMapper = MetadataMapper()
+    val featureMapper = FeatureMapper()
     featureProperties = when (grensetype) {
-        Grensetype.Fylkesgrense -> featureProperties.copy(metadata = metadataMapper.toMetadataForAdministrativGrense(this))
-        Grensetype.Kommunegrense -> featureProperties.copy(metadata = metadataMapper.toMetadataForAdministrativGrense(this))
-        Grensetype.Riksgrense -> featureProperties.copy(metadata = metadataMapper.toMetadataForRiksgrense(this))
-        Grensetype.AvtaltAvgrensningslinje -> featureProperties.copy(metadata = metadataMapper.toMetadataForAvtaltAvgrensningslinje(this))
-        Grensetype.Territorialgrense -> featureProperties.copy(metadata = metadataMapper.toMetadataForTerritorialgrense(this))
-        Grensetype.Grunnlinje -> featureProperties.copy(metadata = metadataMapper.toMetadataForGrunnlinje(this))
-        Grensetype.Delomraadegrense -> featureProperties.copy(metadata = metadataMapper.toMetadataForStatistiskGrense(this))
-        Grensetype.Grunnkretsgrense -> featureProperties.copy(metadata = metadataMapper.toMetadataForStatistiskGrense(this))
-        Grensetype.Stemmekretsgrense -> featureProperties.copy(metadata = metadataMapper.toMetadataForKommunalKretsgrense(this))
+        Grensetype.Fylkesgrense -> featureProperties.copy(
+            metadata = metadataMapper.toMetadataForAdministrativGrense(this),
+            kontekstEgenskaper = featureMapper.toKontekstEgenskaperForGrense(this))
+        Grensetype.Kommunegrense -> featureProperties.copy(
+            metadata = metadataMapper.toMetadataForAdministrativGrense(this),
+            kontekstEgenskaper = featureMapper.toKontekstEgenskaperForGrense(this))
+        Grensetype.Riksgrense -> featureProperties.copy(
+            metadata = metadataMapper.toMetadataForRiksgrense(this),
+            kontekstEgenskaper = featureMapper.toKontekstEgenskaperForGrense(this))
+        Grensetype.AvtaltAvgrensningslinje -> featureProperties.copy(
+            metadata = metadataMapper.toMetadataForAvtaltAvgrensningslinje(this),
+            kontekstEgenskaper = featureMapper.toKontekstEgenskaperForGrense(this))
+        Grensetype.Territorialgrense -> featureProperties.copy(
+            metadata = metadataMapper.toMetadataForTerritorialgrense(this),
+            kontekstEgenskaper = featureMapper.toKontekstEgenskaperForGrense(this))
+        Grensetype.Grunnlinje -> featureProperties.copy(
+            metadata = metadataMapper.toMetadataForGrunnlinje(this),
+            kontekstEgenskaper = featureMapper.toKontekstEgenskaperForGrense(this))
+        Grensetype.Delomraadegrense -> featureProperties.copy(
+            metadata = metadataMapper.toMetadataForStatistiskGrense(this),
+            kontekstEgenskaper = featureMapper.toKontekstEgenskaperForDelomraadeGrense(this))
+        Grensetype.Grunnkretsgrense -> featureProperties.copy(
+            metadata = metadataMapper.toMetadataForStatistiskGrense(this),
+            kontekstEgenskaper = featureMapper.toKontektsEgenskaperForGrunnkretsGrense(this))
+        Grensetype.Stemmekretsgrense -> featureProperties.copy(
+            metadata = metadataMapper.toMetadataForKommunalKretsgrense(this),
+            kontekstEgenskaper = featureMapper.toKontekstEgenskaperForStemmekretsGrense(this))
         else -> throw RuntimeException("Ikke støttet å mappe til metadata for grensetype: " + grensetype.name)
     }
     return Feature(
@@ -129,26 +149,24 @@ fun Flate.flateToFeature(version: Int): Feature {
  * Metoden tar inn gyldighetsdato, defaulter til dagens dato. Dette for å kunne velge rett versjon av Grense-objektet dersom det finnes framtidige versjoner.
  */
 fun GrenseKobling.grenseKoblingToFeature(
-    kontekstType: KontekstEnhetType = KontekstEnhetType.GRUNNKRETS,
-    version: Int,
     gyldighetsdato: LocalDate = LocalDate.now()
 ): Feature {
-    val feature = getRelevantGrense(gyldighetsdato).grenseToFeature()
-    val koblingAttributter = grenseKoblingAttributter
-    return feature.copy(
-        properties = feature.properties.copy(
-            kontekstEgenskaper = listOf(KontekstEgenskaper(
-                id = ObjektIdentifikator(
-                    lokalid = Lokalid(getEnhetKobletTilGrense().lokalid),
-                    gyldighetsdato = gyldighetsdato
-                ),
-                type = kontekstType,
-                version = version,
-                retningMedKlokken = koblingAttributter.retningMedKlokken,
-                rekkefoelge = koblingAttributter.rekkefoelge,
-                flateIndeks = koblingAttributter.flateIndeks,
-                hullIndeks = koblingAttributter.hullIndeks
-            ))
-        )
+   return getRelevantGrense(gyldighetsdato).grenseToFeature()
+}
+
+fun GrenseKobling.grenseKoblingToKontekstEgenskaper(
+    lokalid: Lokalid,
+    gyldighetsdato: LocalDate,
+    kontekstType: KontekstEnhetType,
+    version: Int,
+): KontekstEgenskaper {
+    return KontekstEgenskaper(
+        id = ObjektIdentifikator(lokalid, gyldighetsdato),
+        type = kontekstType,
+        version = version,
+        rekkefoelge = this.grenseKoblingAttributter.rekkefoelge,
+        retningMedKlokken = this.grenseKoblingAttributter.retningMedKlokken,
+        flateIndeks = this.grenseKoblingAttributter.flateIndeks,
+        hullIndeks = this.grenseKoblingAttributter.hullIndeks
     )
 }

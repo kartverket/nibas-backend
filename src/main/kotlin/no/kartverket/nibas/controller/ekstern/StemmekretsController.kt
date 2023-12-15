@@ -1,13 +1,11 @@
 package no.kartverket.nibas.controller.ekstern
 
-import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.ekstern.StemmekretsApi
 import no.kartverket.nibas.api.v1.response.KretsResponse
 import no.kartverket.nibas.api.v1.response.StemmekretsResponse
 import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.common.createIdentifikator
-import no.kartverket.nibas.domain.StemmekretsGrenseKobling
 import no.kartverket.nibas.extensions.flate.toKretsResponse
 import no.kartverket.nibas.extensions.flate.toStemmekretsResponse
 import no.kartverket.nibas.extensions.geometry.grenseKoblingToFeature
@@ -41,7 +39,7 @@ class StemmekretsController(
         return FeatureCollection(
             features = grenser
                 .sortedBy { it.grenseKoblingAttributter.rekkefoelge }
-                .map { it.grenseKoblingToFeature(KontekstEnhetType.STEMMEKRETS, it.stemmekrets.version, identifikator.gyldighetsdato) }
+                .map { it.grenseKoblingToFeature(identifikator.gyldighetsdato) }
         )
     }
 }

@@ -136,7 +136,7 @@ class GrenseServiceTest {
         val gyldighetsdato = LocalDate.now()
         val lokalid = "grenseVestLokalid"
 
-        val grenserForKrets = GrenseHelper.getGrenserForVestligKrets(LocalDate.now(), Grensetype.Stemmekretsgrense)
+        val grenserForKrets = GrenseHelper.getGrenserForVestligKrets(gyldighetsdato, Grensetype.Stemmekretsgrense)
 
         val gyldigStemmekrets = StemmekretsBuilder()
             .withGrenser(grenserForKrets)
@@ -169,7 +169,7 @@ class GrenseServiceTest {
 
         val feature = FeatureBuilder(lokalid)
             .withGrenseversjon(1)
-            .withKontekstEgenskaperFromStemmekretsGrenseKoblinger(grenseSomSkalOppdateres!!.stemmekretser)
+            .withKontekstEgenskaperFromStemmekretsGrenseKoblinger(grenseSomSkalOppdateres!!.stemmekretser, gyldighetsdato = gyldighetsdato)
             .withGrensetype(Grensetype.Stemmekretsgrense)
             .build()
 

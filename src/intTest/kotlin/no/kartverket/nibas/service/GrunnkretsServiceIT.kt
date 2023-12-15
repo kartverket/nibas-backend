@@ -352,7 +352,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
 
             .withGrensetype(Grensetype.Kommunegrense)
             .withGeometry(oppdatertGeometri)
-            .withKontekstEgenskaperFromGrunnkretsGrenseKoblinger(grunnkrets.grenser)
+            .withKontekstEgenskaperFromGrunnkretsGrenseKoblinger(grunnkrets.grenser, gyldighetsdato = october1In2022)
             .build()
 
         val flaterSomErEndret = grenseService.lagreGrenser(
@@ -406,7 +406,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
             .withGrenseversjon(grenseKobling.grense.version)
             .withGrensetype(Grensetype.Fylkesgrense)
             .withGeometry(oppdatertGeometri)
-            .withKontekstEgenskaperFromGrunnkretsGrenseKoblinger(grunnkrets.grenser)
+            .withKontekstEgenskaperFromGrunnkretsGrenseKoblinger(grunnkrets.grenser, gyldighetsdato = october1In2022)
             .build()
 
         val flaterSomErEndret = grenseService.lagreGrenser(
@@ -460,7 +460,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         ))
 
         val oppdatertGrensefeature = FeatureBuilder(id = "850")
-            .withKontekstEgenskaperFromGrunnkretsGrenseKoblinger(grunnkrets.grenser)
+            .withKontekstEgenskaperFromGrunnkretsGrenseKoblinger(grunnkrets.grenser, gyldighetsdato = october1In2022)
             .withGrenseversjon(grenseKobling.grense.version)
             .withGrensetype(Grensetype.Riksgrense)
             .withGeometry(oppdatertGeometri)
@@ -1170,7 +1170,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
             .withGrenseversjon(grenseKobling.grense.version)
             .withGrensetype(grensetype)
             .withGeometry(oppdatertGeometri)
-            .withKontekstEgenskaperFromGrunnkretsGrenseKoblinger(grenseKobling.grense.grunnkretser, versionOverride)
+            .withKontekstEgenskaperFromGrunnkretsGrenseKoblinger(grenseKobling.grense.grunnkretser, versionOverride, opprinneligDato)
             .build()
 
         val features = if (featureAnnenOppdatertGrense != null) listOf(oppdatertGrensefeature, featureAnnenOppdatertGrense) else listOf(oppdatertGrensefeature)
@@ -1195,7 +1195,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
             .withGrenseversjon(grenseKobling.grense.version)
             .withGrensetype(Grensetype.Grunnkretsgrense)
             .withGeometry(oppdatertGeometri)
-            .withKontekstEgenskaperFromGrunnkretsGrenseKoblinger(grenseKobling.grense.grunnkretser)
+            .withKontekstEgenskaperFromGrunnkretsGrenseKoblinger(grenseKobling.grense.grunnkretser, gyldighetsdato = opprinneligDato)
             .build()
     }
 

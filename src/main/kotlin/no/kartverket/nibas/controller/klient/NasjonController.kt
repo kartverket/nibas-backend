@@ -11,7 +11,6 @@ import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.common.createIdentifikator
-import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.service.NasjonService
 import no.kartverket.nibas.extensions.geometry.flateToFeature
@@ -48,7 +47,7 @@ class NasjonController(
             throw NotFoundException("Fant ingen grenser for $identifikator")
         }
         return FeatureCollection(
-            features = grensekoblinger.map { it.grenseKoblingToFeature(gyldighetsdato = identifikator.gyldighetsdato, version = it.grunnkrets.version) }
+            features = grensekoblinger.map { it.grenseKoblingToFeature(identifikator.gyldighetsdato) }
         )
     }
 }
