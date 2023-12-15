@@ -110,7 +110,7 @@ fun Grense.grenseToFeature(): Feature {
             kontekstEgenskaper = featureMapper.toKontekstEgenskaperForDelomraadeGrense(this))
         Grensetype.Grunnkretsgrense -> featureProperties.copy(
             metadata = metadataMapper.toMetadataForStatistiskGrense(this),
-            kontekstEgenskaper = featureMapper.toKontektsEgenskaperForGrunnkretsGrense(this))
+            kontekstEgenskaper = featureMapper.toKontekstEgenskaperForGrunnkretsGrense(this))
         Grensetype.Stemmekretsgrense -> featureProperties.copy(
             metadata = metadataMapper.toMetadataForKommunalKretsgrense(this),
             kontekstEgenskaper = featureMapper.toKontekstEgenskaperForStemmekretsGrense(this))

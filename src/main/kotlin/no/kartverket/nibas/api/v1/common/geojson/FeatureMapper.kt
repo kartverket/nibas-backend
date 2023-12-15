@@ -7,7 +7,7 @@ import no.kartverket.nibas.extensions.geometry.grenseKoblingToKontekstEgenskaper
 
 class FeatureMapper {
 
-    fun toKontektsEgenskaperForGrunnkretsGrense(grense: Grense): List<KontekstEgenskaper> {
+    fun toKontekstEgenskaperForGrunnkretsGrense(grense: Grense): List<KontekstEgenskaper> {
         return grense.grunnkretser.map {
             it.grenseKoblingToKontekstEgenskaper(Lokalid(it.grunnkrets.lokalid), it.grunnkrets.gyldighet.gyldigFra, KontekstEnhetType.GRUNNKRETS, it.grunnkrets.version)
         }
