@@ -1,6 +1,5 @@
 package no.kartverket.nibas.controller.ekstern
 
-import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.ekstern.GrunnkretsApi
 import no.kartverket.nibas.api.v1.response.KretsResponse
@@ -32,7 +31,7 @@ class GrunnkretsController(
         return FeatureCollection(
             features = grensekoblinger
                 .sortedBy { it.grenseKoblingAttributter.rekkefoelge }
-                .map { it.grenseKoblingToFeature(KontekstEnhetType.GRUNNKRETS, identifikator.gyldighetsdato) }
+                .map { it.grenseKoblingToFeature(identifikator.gyldighetsdato) }
         )
     }
 }

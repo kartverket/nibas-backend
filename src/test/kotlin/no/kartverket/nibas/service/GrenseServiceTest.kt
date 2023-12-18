@@ -6,7 +6,6 @@ import io.mockk.justRun
 import io.mockk.mockkStatic
 import io.mockk.verify
 import no.kartverket.nibas.api.v1.common.Grensetype
-import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.builders.FeatureBuilder
 import no.kartverket.nibas.builders.GrenseBuilder
@@ -57,9 +56,7 @@ class GrenseServiceTest {
     fun thatIncomingFeatureWithoutIdThrowsException() {
         // Innkommende feature uten id
         val nyDelomraadegrensefeatureForGrunnkrets = FeatureBuilder(null)
-            .withKontekstType(KontekstEnhetType.GRUNNKRETS)
-            .withKontekstId("1")
-            .withGrensetype(Grensetype.Delomraadegrense)
+            .withGrensetype(Grensetype.Delomraadegrense).withKontekstEgenskaper(listOf())
             .build()
 
         assertThatThrownBy {
@@ -85,9 +82,7 @@ class GrenseServiceTest {
         every { grenseRepositoryKotlinMock.findAllGyldigeObjekterForIdentifikatorer(allAny()) } returns mapOf(grenseIdentifikator to grense)
 
         // Innkommende feature på ukjent grenseId
-        val featureWithUnknownId = FeatureBuilder("33")
-            .withKontekstType(KontekstEnhetType.GRUNNKRETS)
-            .withKontekstId("1")
+        val featureWithUnknownId = FeatureBuilder("33").withKontekstEgenskaper(listOf())
             .withGrensetype(Grensetype.Grunnkretsgrense)
             .build()
 
@@ -115,9 +110,7 @@ class GrenseServiceTest {
 
         val featureWithUnknownId = FeatureBuilder("34")
             .withGrenseversjon(1)
-            .withKontekstType(KontekstEnhetType.GRUNNKRETS)
-            .withKontekstId("1")
-            .withGrensetype(Grensetype.Grunnkretsgrense)
+            .withKontekstEgenskaper(listOf())
             .build()
 
         assertThatThrownBy { grenseService.lagreGrenser(
@@ -143,12 +136,7 @@ class GrenseServiceTest {
         val gyldighetsdato = LocalDate.now()
         val lokalid = "grenseVestLokalid"
 
-        val feature = FeatureBuilder(lokalid)
-            .withGrenseversjon(1)
-            .withGrensetype(Grensetype.Stemmekretsgrense)
-            .build()
-
-        val grenserForKrets = GrenseHelper.getGrenserForVestligKrets(LocalDate.now(), Grensetype.Stemmekretsgrense)
+        val grenserForKrets = GrenseHelper.getGrenserForVestligKrets(gyldighetsdato, Grensetype.Stemmekretsgrense)
 
         val gyldigStemmekrets = StemmekretsBuilder()
             .withGrenser(grenserForKrets)
@@ -179,10 +167,16 @@ class GrenseServiceTest {
             grense.stemmekretser = koblinger
         }
 
+        val feature = FeatureBuilder(lokalid)
+            .withGrenseversjon(1)
+            .withKontekstEgenskaperFromStemmekretsGrenseKoblinger(grenseSomSkalOppdateres!!.stemmekretser, gyldighetsdato = gyldighetsdato)
+            .withGrensetype(Grensetype.Stemmekretsgrense)
+            .build()
+
         val nyGrense = Grense(id = "nyGrense", lokalid = lokalid, grensetype = Grensetype.Stemmekretsgrense)
 
         val grenseIdentifikator = Identifikator(Lokalid(lokalid), gyldighetsdato)
-        every { grenseRepositoryKotlinMock.findAllGyldigeObjekterForIdentifikatorer(allAny()) } returns mapOf(grenseIdentifikator to grenseSomSkalOppdateres!!)
+        every { grenseRepositoryKotlinMock.findAllGyldigeObjekterForIdentifikatorer(allAny()) } returns mapOf(grenseIdentifikator to grenseSomSkalOppdateres)
         every { grenseRepositoryKotlinMock.findAllByLokalid(lokalid) } returns listOf(grenseSomSkalOppdateres, nyGrense)
         every { grenseRepositoryKotlinMock.saveAndFlush(allAny()) } returns nyGrense
         every { stemmekretsRepositoryKotlinMock.findGyldigObjektForIdentifikator(any())} returns gyldigStemmekrets

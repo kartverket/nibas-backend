@@ -11,6 +11,7 @@ import no.kartverket.nibas.domain.Administrativenhetnavn
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Fylke
 import no.kartverket.nibas.domain.GrenseKobling
+import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.domain.UnikLokalid
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
@@ -42,7 +43,7 @@ class FylkeService(
 
     fun hentFylke(identifikator: Identifikator): Fylke? = fylkeRepository.findGyldigObjektForIdentifikator(identifikator)
 
-    fun hentGrenserForFylke(identifikator: Identifikator): Set<GrenseKobling> =
+    fun hentGrenserForFylke(identifikator: Identifikator): Set<GrunnkretsGrenseKobling> =
         hentFylke(identifikator)?.getGrenser(identifikator.gyldighetsdato) ?: emptySet()
 
     @Transactional(readOnly = false)

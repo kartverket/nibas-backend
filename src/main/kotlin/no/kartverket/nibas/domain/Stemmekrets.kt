@@ -48,13 +48,13 @@ class Stemmekrets(
     @JoinColumn(name = "utledetfra")
     var utledetFra: Stemmekrets? = null
 
-    fun getGrenserAvTyper(grensetyper: Set<Grensetype>, gyldighetsdato: LocalDate = LocalDate.now()): List<GrenseKobling> {
+    fun getGrenserAvTyper(grensetyper: Set<Grensetype>, gyldighetsdato: LocalDate = LocalDate.now()): List<StemmekretsGrenseKobling> {
         //Denne kan returnere flere grensekoblinger som ender opp med å peke på samme grense (via neste versjon)
         return grenser
             .filter { it.grense.erRelevantGrenseForTyperOgDato(grensetyper, gyldighetsdato) }
     }
 
-    fun getGrenser(gyldighetsdato: LocalDate = LocalDate.now()): List<GrenseKobling> = getGrenserAvTyper(tillatteGrensetyper(), gyldighetsdato)
+    fun getGrenser(gyldighetsdato: LocalDate = LocalDate.now()): List<StemmekretsGrenseKobling> = getGrenserAvTyper(tillatteGrensetyper(), gyldighetsdato)
 
     /**
      * Henter kretsen sin kommune på en gitt dato. Hvis man gir en dato hvor kommunen med gitt lokalid ikke er gyldig, returneres null
@@ -96,7 +96,7 @@ class Stemmekrets(
         doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { StemmekretsInformasjon(this) }
     }
 
-    fun addGrensekobling(grense: Grense, grenseKoblingAttributter: GrenseKoblingAttributter) {
+    override fun addGrensekobling(grense: Grense, grenseKoblingAttributter: GrenseKoblingAttributter) {
         val stemmekretsGrenseKobling = StemmekretsGrenseKobling(
             stemmekrets = this,
             grense = grense,

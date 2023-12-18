@@ -1,7 +1,6 @@
 package no.kartverket.nibas.controller.klient
 
 import no.kartverket.nibas.api.v1.klient.StemmekretsApi
-import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.response.StemmekretsResponse
 import no.kartverket.nibas.common.Identifikator
@@ -36,7 +35,7 @@ class StemmekretsController(
         return FeatureCollection(
             features = grenser
                 .sortedBy { it.grenseKoblingAttributter.rekkefoelge }
-                .map { it.grenseKoblingToFeature(KontekstEnhetType.STEMMEKRETS, identifikator.gyldighetsdato) }
+                .map { it.grenseKoblingToFeature(identifikator.gyldighetsdato) }
         )
     }
 

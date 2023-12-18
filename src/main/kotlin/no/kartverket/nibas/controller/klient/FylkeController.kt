@@ -45,7 +45,7 @@ class FylkeController(
             throw NotFoundException("Fant ingen grenser for $identifikator")
         }
         return FeatureCollection(
-            features = grenseKoblinger.map { it.grenseKoblingToFeature(gyldighetsdato = identifikator.gyldighetsdato) }
+            features = grenseKoblinger.map { it.grenseKoblingToFeature(identifikator.gyldighetsdato) }
         )
     }
 }

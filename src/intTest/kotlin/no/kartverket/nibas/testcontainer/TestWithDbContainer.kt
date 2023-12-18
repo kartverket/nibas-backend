@@ -292,15 +292,15 @@ class TestWithDbContainer {
         )
     }
 
-    fun saveGrunnkrets(id: String = "grunnkrets-9000",
-                       lokalid: Lokalid = Lokalid("1001"),
-                       grunnkretsnummer: String = "42270304",
-                       grunnkretsnavn: String = "Dåsvatn",
-                       kommune: Kommune = KommuneBuilder.DEFAULT_KOMMUNE,
-                       gyldigFra: LocalDate = LocalDate.of(2022, Month.OCTOBER, 1),
-                       gyldigTil: LocalDate? = null,
-                       grenser: List<Grense> = emptyList()): Grunnkrets {
-
+    fun saveGrunnkrets(
+        id: String = "grunnkrets-9000",
+        lokalid: Lokalid = Lokalid("1001"),
+        grunnkretsnummer: String = "42270304",
+        grunnkretsnavn: String = "Dåsvatn",
+        gyldigFra: LocalDate = LocalDate.of(2022, Month.OCTOBER, 1),
+        gyldigTil: LocalDate? = null,
+        grenser: List<Grense> = emptyList()
+    ): Grunnkrets {
         val grunnkrets = GrunnkretsBuilder(
             id = id,
             lokalId = lokalid,
@@ -308,9 +308,9 @@ class TestWithDbContainer {
             gyldigTil = gyldigTil,
             grunnkretsnummer = grunnkretsnummer,
             grunnkretsnavn = grunnkretsnavn,
-            kommune = kommune,
-            grenser = grenser)
-            .buildUtenKommune()
+            kommune = null,
+            grenser = grenser
+        ).buildUtenKommune()
 
         return grunnkretsRepository.save(grunnkrets)
     }

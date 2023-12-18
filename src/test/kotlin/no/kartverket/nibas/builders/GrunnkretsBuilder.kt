@@ -20,7 +20,7 @@ class GrunnkretsBuilder(
     private var grunnkretsnummer: String = "12",
     private var grunnkretsnavn: String = "Dåsvatn",
     private var grenser: List<Grense> = emptyList(),
-    private var kommune: Kommune = KommuneBuilder.DEFAULT_KOMMUNE,
+    private var kommune: Kommune? = KommuneBuilder.DEFAULT_KOMMUNE,
     private var endretdato: ZonedDateTime = ZonedDateTime.now(),
     private var datafangstdato: ZonedDateTime = ZonedDateTime.now(),
     private var gyldigFra: LocalDate = LocalDate.now(),
@@ -38,7 +38,7 @@ class GrunnkretsBuilder(
     fun build(): Grunnkrets {
         val grunnkrets = buildUtenKommune()
 
-        kommune.addGrunnkrets(grunnkrets)
+        kommune?.addGrunnkrets(grunnkrets)
 
         return grunnkrets
     }

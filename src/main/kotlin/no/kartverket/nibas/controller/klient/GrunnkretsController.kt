@@ -1,7 +1,6 @@
 package no.kartverket.nibas.controller.klient
 
 import no.kartverket.nibas.api.v1.klient.GrunnkretsApi
-import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.response.GrunnkretsResponse
 import no.kartverket.nibas.common.Identifikator
@@ -23,9 +22,7 @@ class GrunnkretsController(
 
     override fun hentGrunnkrets(lokalid: String, gyldighetsdato: LocalDate?): GrunnkretsResponse {
         val identifikator = createIdentifikator(lokalid, gyldighetsdato)
-        return grunnkretsService.hentGrunnkrets(identifikator)?.let {
-            it.toGrunnkretsResponse(identifikator, kodelisteService)
-        } ?: throw NotFoundException("Grunnkrets $identifikator ble ikke funnet.")
+        return grunnkretsService.hentGrunnkrets(identifikator)?.toGrunnkretsResponse(identifikator, kodelisteService) ?: throw NotFoundException("Grunnkrets $identifikator ble ikke funnet.")
     }
 
     override fun hentGrenserForGrunnkrets(lokalid: String, gyldighetsdato: LocalDate?): FeatureCollection {
@@ -37,7 +34,7 @@ class GrunnkretsController(
         return FeatureCollection(
             features = grensekoblinger
                 .sortedBy { it.grenseKoblingAttributter.rekkefoelge }
-                .map { it.grenseKoblingToFeature(KontekstEnhetType.GRUNNKRETS, identifikator.gyldighetsdato) }
+                .map { it.grenseKoblingToFeature(identifikator.gyldighetsdato) }
         )
     }
 
