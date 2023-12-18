@@ -30,6 +30,7 @@ class NibasBackendApplication {
     companion object {
         @JvmStatic
         fun main(args: Array<String>) {
+            println("NYESTE VERSJON")
             @Suppress("SpreadOperator")
             val configurableAppCtx = runApplication<NibasBackendApplication>(*args)
             asciiArt(configurableAppCtx)
