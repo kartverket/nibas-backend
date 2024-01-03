@@ -190,17 +190,21 @@ class GrenseKoblingService(
         flaterSomHarFaattNyVersjon: MutableMap<Lokalid, Flate>,
         flateType: Flatetype
     ) {
-        lokalidForKretser.forEach { lokalid ->
-            val oppdatertGrenseKoblingListe = when (flateType) {
-                Flatetype.GRUNNKRETS -> (flaterSomHarFaattNyVersjon[lokalid] as? Grunnkrets)?.grenser
-                Flatetype.STEMMEKRETS -> (flaterSomHarFaattNyVersjon[lokalid] as? Stemmekrets)?.grenser
-                else -> throw RuntimeException("flateType kan kun bli satt til Grunnkrets eller Stemmekrets.")
-            } ?: throw RuntimeException("Casting til $flateType feilet. flateType kan kun bli satt til Grunnkrets eller Stemmekrets.")
+        lokalidForKretser
+            // De vedvarende/uendrede kretsene, og kretser som ikke har noe med tilhørighetsoperasjonen, vil ikke ligge i lokalidForKretser.
+            // Det er ikke vits å regne ut koblingene for disse kretsene på nytt.
+            .filter { flaterSomHarFaattNyVersjon[it] != null }
+            .forEach { lokalid ->
+                val oppdatertGrenseKoblingListe = when (flateType) {
+                    Flatetype.GRUNNKRETS -> (flaterSomHarFaattNyVersjon[lokalid] as? Grunnkrets)?.grenser
+                    Flatetype.STEMMEKRETS -> (flaterSomHarFaattNyVersjon[lokalid] as? Stemmekrets)?.grenser
+                    else -> throw RuntimeException("flateType kan kun bli satt til Grunnkrets eller Stemmekrets.")
+                } ?: throw RuntimeException("Casting til $flateType feilet. flateType kan kun bli satt til Grunnkrets eller Stemmekrets.")
 
-            val gma = dannGrenseKoblingAttributterForGrenser(oppdatertGrenseKoblingListe.map { it.grense })
-            oppdatertGrenseKoblingListe.forEach {
-                it.oppdaterAttributter(gma.first { gma -> gma.grense.lokalid == it.grense.lokalid }.attributter)
-            }
+                val gma = dannGrenseKoblingAttributterForGrenser(oppdatertGrenseKoblingListe.map { it.grense })
+                oppdatertGrenseKoblingListe.forEach {
+                    it.oppdaterAttributter(gma.first { gma -> gma.grense.lokalid == it.grense.lokalid }.attributter)
+                }
         }
     }
 
