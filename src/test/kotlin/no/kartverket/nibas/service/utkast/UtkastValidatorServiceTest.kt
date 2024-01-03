@@ -81,14 +81,12 @@ class UtkastValidatorServiceTest {
             }
         }
 
-        every { kodelisteServiceMock.getCodeValueByKommunenummerId(any()) } returns "3245"
-
         val utkast = UtkastBuilder.builder("test")
             .withGyldigFra(datoSomVilGiFremtidEndringKonflikt)
             .withGrunnkretsRequests(mapOf(
                 "lokalId" to GrunnkretsRequest(
                     "navn",
-                    "32453456",
+                    "03013456",
                     Identifikasjon(lokalid = "lokalid"),
                     0)
             ))

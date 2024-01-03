@@ -62,10 +62,10 @@ class GrunnkretsImporter @Autowired constructor(
             grunnkrets.oppdaterOmraadeOgPosisjon()
             grunnkrets = grunnkretsRepository.save(grunnkrets)
 
-            val kommunenummerUuid = kodelisteService.getKommunenummerIdByCodeValue(flate.getKommunenummer())
+            val kommunenummer = flate.getKommunenummer()
             val gyldighetsdato = grunnkrets.gyldighet.gyldigFra
-            val kommune = kommuneRepository.findGyldigKommuneForKommunenummer(kommunenummerUuid, gyldighetsdato)
-                ?: throw RuntimeException("Fant ikke kommune med kommunenummerUuid $kommunenummerUuid og gyldig fra $gyldighetsdato")
+            val kommune = kommuneRepository.findGyldigKommuneForKommunenummer(kommunenummer, gyldighetsdato)
+                ?: throw RuntimeException("Fant ikke kommune med kommunenummer $kommunenummer og gyldig fra $gyldighetsdato")
 
             kommune.addGrunnkrets(grunnkrets)
         }

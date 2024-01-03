@@ -10,7 +10,6 @@ import no.kartverket.nibas.common.getInSpraak
 import no.kartverket.nibas.domain.Administrativenhetnavn
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Fylke
-import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.domain.UnikLokalid
 import no.kartverket.nibas.kodelister.KodelisteService
@@ -96,7 +95,7 @@ class FylkeService(
 
     fun createNyttFylkeMedNyUnikLokalid(
         kopierFraFylke: Fylke,
-        nyttFylkesnummerIKlartekst: String,
+        nyttFylkesnummer: String,
         admenhetnavnList: List<Administrativenhetnavn>,
         gyldigFra: LocalDate,
         endringstype: Endringstype
@@ -105,7 +104,8 @@ class FylkeService(
             .applyMappingFromExistingFylke(kopierFraFylke)
             .apply {
                 setGyldigFra(gyldigFra)
-                fylkesnummer = kodelisteService.getFylkesnummerIdByCodeValue(nyttFylkesnummerIKlartekst)
+                fylkesnummer = nyttFylkesnummer
+                fylkesnummerUuid = kodelisteService.getFylkesnummerIdByCodeValue(nyttFylkesnummer)
                 version = 1
                 auditInfo.typeEndring = endringstype
                 utledetFra = kopierFraFylke

@@ -58,7 +58,7 @@ class FlateService @Autowired constructor(
     }
 
     private fun oppdaterKommuneflate(kommune: Kommune) {
-        val kommunenummerVerdi = kodelisteService.getCodeValueByKommunenummerId(kommune.kommunenummer)
+        val kommunenummerVerdi = kommune.kommunenummer
         logger.info("Oppdaterer kommuneflate for $kommunenummerVerdi - ${finnNavn(kommune)}")
 
         val kommunegrenser = enhetsGrenseRepository.hentGrenserMedRiktigRetning(kommunenummerVerdi, kommune.tillatteGrensetyper(), kommune.gyldighet.gyldigFra)
@@ -76,9 +76,8 @@ class FlateService @Autowired constructor(
     }
 
     private fun oppdaterFylkesflate(fylke: Fylke) {
-        logger.info("Oppdaterer fylkesflate for ${kodelisteService.getCodeValueByFylkesnummerId(fylke.fylkesnummer)} - ${finnNavn(fylke)}")
-        val fylkesnummerVerdi = kodelisteService.getCodeValueByFylkesnummerId(fylke.fylkesnummer)!!
-        val fylkesgrenser = enhetsGrenseRepository.hentGrenserMedRiktigRetning(fylkesnummerVerdi, fylke.tillatteGrensetyper(), fylke.gyldighet.gyldigFra)
+        logger.info("Oppdaterer fylkesflate for ${fylke.fylkesnummer} - ${finnNavn(fylke)}")
+        val fylkesgrenser = enhetsGrenseRepository.hentGrenserMedRiktigRetning(fylke.fylkesnummer, fylke.tillatteGrensetyper(), fylke.gyldighet.gyldigFra)
         fylke.omraade = SosiGeometryFunctions.dannFlaterMedHullBasertPaaGeometri(fylkesgrenser.map{ GrenseMedLokalid(it.grense, it.lokalid) })
         if (fylke.omraade != null && (fylke.posisjon == null || !fylke.omraade!!.contains(fylke.posisjon))) {
             fylke.posisjon = fylke.omraade?.interiorPoint

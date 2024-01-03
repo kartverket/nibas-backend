@@ -194,6 +194,7 @@ class TestWithDbContainer {
 
     fun saveFylke(id: String = "fylke-9000",
                   unikLokalid: UnikLokalid = UnikLokalid("fylke-fb07-4277-ad95-63c32c1370d0", Flatetype.FYLKE),
+                  fylkesnummerUuid: String = "89",
                   fylkesnummer: String = "89",
                   gyldigFra: LocalDate = LocalDate.of(2022, Month.OCTOBER, 1),
                   gyldigTil: LocalDate? = null,
@@ -205,6 +206,7 @@ class TestWithDbContainer {
             unikLokalid = unikLokalid,
             gyldigFra = gyldigFra,
             gyldigTil = gyldigTil,
+            fylkesnummerUuid = fylkesnummerUuid,
             fylkesnummer = fylkesnummer)
             .buildUtenUnikLokalidOgTilknytninger()
 
@@ -219,6 +221,7 @@ class TestWithDbContainer {
 
     fun saveFylkeOgUnikLokalid(id: String = "fylke-9000",
                                lokalid: String = "fylke-fb07-4277-ad95-63c32c1370d0",
+                               fylkesnummerUuid: String = "89",
                                fylkesnummer: String = "89",
                                gyldigFra: LocalDate = LocalDate.of(2022, Month.OCTOBER, 1),
                                gyldigTil: LocalDate? = null,
@@ -230,6 +233,7 @@ class TestWithDbContainer {
         return saveFylke(
             id = id,
             unikLokalid = unikLokalid,
+            fylkesnummerUuid = fylkesnummerUuid,
             fylkesnummer = fylkesnummer,
             gyldigFra = gyldigFra,
             gyldigTil = gyldigTil,
@@ -242,6 +246,7 @@ class TestWithDbContainer {
     fun saveKommune(
         id: String = "kommune-9000",
         unikLokalid: UnikLokalid = UnikLokalid("abc-123", Flatetype.KOMMUNE),
+        kommunenummerUuid: String = "0301",
         kommunenummer: String = "0301",
         gyldigFra: LocalDate = LocalDate.of(2022, Month.OCTOBER, 1),
         gyldigTil: LocalDate? = null,
@@ -254,6 +259,7 @@ class TestWithDbContainer {
             unikLokalid = unikLokalid,
             gyldigFra = gyldigFra,
             gyldigTil = gyldigTil,
+            kommunenummerUuid = kommunenummerUuid,
             kommunenummer = kommunenummer
         ).buildUtenUnikLokalidOgTilkntninger()
 
@@ -270,6 +276,7 @@ class TestWithDbContainer {
     fun saveKommuneOgUnikLokalid(
         id: String = "kommune-9000",
         lokalid: String = "abc-123",
+        kommunenummerUuid: String = "0301",
         kommunenummer: String = "0301",
         gyldigFra: LocalDate = LocalDate.of(2022, Month.OCTOBER, 1),
         gyldigTil: LocalDate? = null,
@@ -283,6 +290,7 @@ class TestWithDbContainer {
         return saveKommune(
             id = id,
             unikLokalid = unikLokalid,
+            kommunenummerUuid = kommunenummerUuid,
             kommunenummer = kommunenummer,
             gyldigFra = gyldigFra,
             gyldigTil = gyldigTil,

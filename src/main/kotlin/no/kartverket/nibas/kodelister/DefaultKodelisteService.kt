@@ -144,6 +144,7 @@ open class KodelisteFetcher(private val webClient: WebClient) {
 class MissingKodelisteItemException(val kodelisteType: KodelisteType, val id: String)
     : RuntimeException("Kodeliste-innslag for: $id finnes ikke for Kodeliste: $kodelisteType")
 
+@Suppress("unused")
 fun KodelisteService.createKommunenummerFromUUID(uuid: String) = Kommunenummer(
     id = uuid,
     kodeverdi = this.getCodeValueByKommunenummerId(uuid)

@@ -13,8 +13,6 @@ import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -37,7 +35,6 @@ class FylkeServiceIT : TestWithDbContainer() {
     @Test
     fun hentEksisterendeFylkeMedDagensDato() {
         val kommune = saveKommuneOgUnikLokalid()
-
         saveFylkeOgUnikLokalid(lokalid = lokalIdOfFylke.value, kommuner = listOf(kommune))
 
         assertThat(fylkeRepository.findAllByLokalid(lokalIdOfFylke.value).size).isEqualTo(1)
@@ -51,7 +48,6 @@ class FylkeServiceIT : TestWithDbContainer() {
         val kommune = saveKommuneOgUnikLokalid()
 
         val fylkeUnikLokalid = saveUnikLokalid(lokalIdOfFylke.value, Flatetype.FYLKE)
-
         saveFylke(unikLokalid = fylkeUnikLokalid, kommuner = listOf(kommune))
 
         val lagretKommune = kommuneRepository.findLastByLokalid(kommune.lokalid)!!
@@ -120,11 +116,8 @@ class FylkeServiceIT : TestWithDbContainer() {
     @Test
     fun `sjekk pekere mellom fylke og navn`() {
         val kommune = saveKommuneOgUnikLokalid()
-
         val fylkeUnikLokalid = saveUnikLokalid(lokalIdOfFylke.value, Flatetype.FYLKE)
-
         val norskNavn = saveAdministrativenhetnavn(navn = "Troms", spraakid = "nor", rekkefoelge = 1)
-
         val fylke = saveFylke(unikLokalid = fylkeUnikLokalid, kommuner = listOf(kommune), administrativenhetnavn = listOf(norskNavn))
 
         var fylkeList = fylkeRepository.findAllByLokalid(lokalIdOfFylke.value)
@@ -222,7 +215,7 @@ class FylkeServiceIT : TestWithDbContainer() {
 
         val framtidigFylke = fylkeService.hentFylke(Identifikator(lokalIdOfFylke, jan1In2023))
         assertThat(framtidigFylke).isNotNull
-        assertThat(framtidigFylke!!.fylkesnummer).isEqualTo("53")
+        assertThat(framtidigFylke!!.fylkesnummerUuid).isEqualTo("53")
     }
 
     @Test
@@ -257,20 +250,19 @@ class FylkeServiceIT : TestWithDbContainer() {
 
         val kommune = saveKommuneOgUnikLokalid()
         saveFylke(id = "9000", unikLokalid = fylkeUnikLokalid, gyldigTil = jan1In2023, kommuner = listOf(kommune))
-        saveFylke(id = "9001", unikLokalid = fylkeUnikLokalid, fylkesnummer = "53", gyldigFra = jan1In2023, kommuner = listOf(kommune))
+        saveFylke(id = "9001", unikLokalid = fylkeUnikLokalid, fylkesnummerUuid = "53", gyldigFra = jan1In2023, kommuner = listOf(kommune))
     }
 
     @Test
     fun `oppdaterFylke skal lage nytt fylke og sette gyldigtil for gammelt fylke`() {
         val fylkeRequest = FylkeRequestBuilder().withVersion(2).withSamiskforvaltningsomraade(true).build()
-
         val identifikator = Identifikator(Lokalid(fylkeRequest.lokalid), october1In2022)
 
         val fylke = saveFylkeOgUnikLokalid(
             id = "2",
             lokalid = identifikator.lokalid.value,
             gyldigFra = october1In2022,
-            fylkesnummer = fylkeRequest.fylkesnummerId
+            fylkesnummerUuid = fylkeRequest.fylkesnummerId
         )
         saveNasjonOgUnikLokalid(fylker = listOf(fylke))
         val versjonFoerOppdatering = fylke.version
@@ -290,6 +282,7 @@ class FylkeServiceIT : TestWithDbContainer() {
 
         assertThat(fylkeEtter.samiskforvaltningsomraade).isNotEqualTo(fylke.samiskforvaltningsomraade)
             .isEqualTo(fylkeRequest.samiskforvaltningsomraade)
+        assertThat(fylkeEtter.fylkesnummerUuid).isEqualTo(fylke.fylkesnummerUuid)
         assertThat(fylkeEtter.fylkesnummer).isEqualTo(fylke.fylkesnummer)
         assertThat(fylkeEtter.omraade).isEqualTo(fylke.omraade)
         assertThat(fylkeEtter.posisjon).isEqualTo(fylke.posisjon)
@@ -315,8 +308,8 @@ class FylkeServiceIT : TestWithDbContainer() {
         val samiskNavn = saveAdministrativenhetnavn(navn = "Romsa ja Finnmárku", spraakid = "sme", rekkefoelge = 2)
         val kvenskNavn = saveAdministrativenhetnavn(navn = "Tromssa ja Finmarkku", spraakid = "fkv", rekkefoelge = 3)
 
-        val tromsOgFinnmark = saveFylkeOgUnikLokalid(lokalid = "54TromsOgFinnmark", fylkesnummer = "efe425f5-fc7f-4a29-a70d-31363ec6a306",
-            administrativenhetnavn = listOf(norskNavn, samiskNavn, kvenskNavn))
+        val tromsOgFinnmark = saveFylkeOgUnikLokalid(lokalid = "54TromsOgFinnmark", fylkesnummerUuid = "efe425f5-fc7f-4a29-a70d-31363ec6a306",
+            fylkesnummer = "54", administrativenhetnavn = listOf(norskNavn, samiskNavn, kvenskNavn))
         assertThat(tromsOgFinnmark.utledetFra).isNull()
 
         val nasjon = saveNasjonOgUnikLokalid(fylker = listOf(tromsOgFinnmark))
@@ -329,14 +322,15 @@ class FylkeServiceIT : TestWithDbContainer() {
 
         val nyTroms = fylkeService.createNyttFylkeMedNyUnikLokalid(
             kopierFraFylke = tromsOgFinnmark,
-            nyttFylkesnummerIKlartekst = "55",
+            nyttFylkesnummer = "55",
             admenhetnavnList = tromsNavnList,
             gyldigFra = jan1In2024,
             endringstype = Endringstype.FASTSETTING
         )
 
         assertThat(nyTroms.lokalid).isNotEqualTo(tromsOgFinnmark.lokalid)
-        assertThat(nyTroms.fylkesnummer).isEqualTo("d42b6763-0157-440a-a0eb-3dc24aa87c41")
+        assertThat(nyTroms.fylkesnummerUuid).isEqualTo("d42b6763-0157-440a-a0eb-3dc24aa87c41")
+        assertThat(nyTroms.fylkesnummer).isEqualTo("55")
         assertThat(nyTroms.utledetFra!!.id).isEqualTo(tromsOgFinnmark.id)
 
         assertThat(nyTroms.getNasjon(jan1In2024)!!.lokalid).isEqualTo(nasjon.lokalid)
@@ -354,14 +348,15 @@ class FylkeServiceIT : TestWithDbContainer() {
 
         val nyFinnmark = fylkeService.createNyttFylkeMedNyUnikLokalid(
             kopierFraFylke = tromsOgFinnmark,
-            nyttFylkesnummerIKlartekst = "56",
+            nyttFylkesnummer = "56",
             admenhetnavnList = finnmarkNavnList,
             gyldigFra = jan1In2024,
             endringstype = Endringstype.FASTSETTING
         )
 
         assertThat(nyFinnmark.lokalid).isNotEqualTo(tromsOgFinnmark.lokalid)
-        assertThat(nyFinnmark.fylkesnummer).isEqualTo("ee97a593-2f9d-49c7-b251-c0f0cfa8769b")
+        assertThat(nyFinnmark.fylkesnummerUuid).isEqualTo("ee97a593-2f9d-49c7-b251-c0f0cfa8769b")
+        assertThat(nyFinnmark.fylkesnummer).isEqualTo("56")
         assertThat(nyFinnmark.utledetFra!!.id).isEqualTo(tromsOgFinnmark.id)
 
         assertThat(nyFinnmark.getNasjon(jan1In2024)!!.lokalid).isEqualTo(nasjon.lokalid)
@@ -373,14 +368,14 @@ class FylkeServiceIT : TestWithDbContainer() {
     }
 
     @Test
-    fun `settFylkeSomHistorisk skal sette gyldigTil på fylket`() {
+    fun `settFylkeSomHistorisk skal sette gyldigTil paa fylket`() {
         val lagretFylke = saveFylkeOgUnikLokalid(lokalid = lokalIdOfFylke.value)
         fylkeService.settFylkeSomHistorisk(lagretFylke, jan1In2024)
         assertThat(lagretFylke.gyldighet.gyldigTil).isEqualTo(jan1In2024)
     }
 
     @Test
-    fun `settFylkeSomHistorisk skal sette gyldigTil på alle administrative navn for fylket`() {
+    fun `settFylkeSomHistorisk skal sette gyldigTil paa alle administrative navn for fylket`() {
         val norskNavn = saveAdministrativenhetnavn(navn = "Troms og Finnmark", spraakid = "nor", rekkefoelge = 1)
         val lagretFylke = saveFylkeOgUnikLokalid(lokalid = lokalIdOfFylke.value, administrativenhetnavn = listOf(norskNavn))
         fylkeService.settFylkeSomHistorisk(lagretFylke, jan1In2024)
@@ -388,12 +383,12 @@ class FylkeServiceIT : TestWithDbContainer() {
     }
 
     @Test
-    fun `settFylkeSomHistorisk skal sjekke at alle kommuner ikke har gyldigTil dato på eller etter den gitte settHistoriskFra datoen`() {
+    fun `settFylkeSomHistorisk skal sjekke at alle kommuner ikke har gyldigTil dato paa eller etter den gitte settHistoriskFra datoen`() {
         val kommune = saveKommuneOgUnikLokalid()
         val lagretFylke = saveFylkeOgUnikLokalid(lokalid = lokalIdOfFylke.value, kommuner = listOf(kommune))
-        val exception = assertThrows<UgyldigTilstandException> {
-            fylkeService.settFylkeSomHistorisk(lagretFylke, jan1In2024)
-        }
-        assertThat(exception.message).containsIgnoringCase("Kan ikke sette fylket med lokalId: ${lokalIdOfFylke.value} til historisk")
+
+        Assertions.assertThatThrownBy { fylkeService.settFylkeSomHistorisk(lagretFylke, jan1In2024) }
+            .isInstanceOf(UgyldigTilstandException::class.java)
+            .hasMessageContaining("Kan ikke sette fylket med lokalId: ${lokalIdOfFylke.value} til historisk da den har kommuner som er gyldige etter 2024-01-01")
     }
 }

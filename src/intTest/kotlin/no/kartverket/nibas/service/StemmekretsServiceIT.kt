@@ -27,7 +27,6 @@ import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import no.kartverket.nibas.utils.GrenseHelper
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -53,11 +52,6 @@ class StemmekretsServiceIT : TestWithDbContainer() {
 
     private val stemmekretsLokalid = Lokalid("ac7e05cd-fb07-4270-ad95-88c320137ba6")
     private val grenseLokallid = Lokalid("888")
-
-    @BeforeEach
-    fun beforeEach() {
-        every { kodelisteServiceMock.getCodeValueByKommunenummerId(any()) } returns "1234"
-    }
 
     @Test
     fun `hent eksisterende stemmekrets med dagens dato`() {
@@ -162,7 +156,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
             grenser = lagredeGrenserForKrets
         )
 
-        saveKommuneOgUnikLokalid(kommunenummer = "4227", stemmekretser = listOf(stemmekrets))
+        saveKommuneOgUnikLokalid(kommunenummerUuid = "4227", stemmekretser = listOf(stemmekrets))
 
         val now = LocalDate.now()
         val opprinneligStemmekrets = stemmekretsService.hentStemmekrets(identifikator)!!
@@ -219,7 +213,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         )
 
         //Kommunen har gyldig fra etter stemmekretsens gyldig fra, og gyldig til før ønsket oppdateringsdato
-        saveKommuneOgUnikLokalid(kommunenummer = "4227", gyldigFra = november28In2022, gyldigTil = jan1In2023, stemmekretser = listOf(stemmekrets))
+        saveKommuneOgUnikLokalid(kommunenummerUuid = "4227", gyldigFra = november28In2022, gyldigTil = jan1In2023, stemmekretser = listOf(stemmekrets))
         val now = LocalDate.now()
 
         Assertions.assertThatThrownBy {
@@ -256,10 +250,12 @@ class StemmekretsServiceIT : TestWithDbContainer() {
             grenser = lagredeGrenserForKrets
         )
 
-        val gamleAalesund = saveKommuneOgUnikLokalid(id = "idGamleAalesund", lokalid = "1507Ålesund", kommunenummer = "afc65fde-8a62-497d-b35d-77345efddee3",
-            stemmekretser = listOf(stemmekrets))
-        val haram = saveKommuneOgUnikLokalid(id = "idHaram", lokalid = "1580Haram", kommunenummer = "687f3337-899f-42f8-849d-6f2d5b603dd3")
-        saveFylkeOgUnikLokalid(lokalid = "15MøreOgRomsdal", fylkesnummer = "c499a315-0cd5-4e99-8acf-bd6f4803799a", kommuner = listOf(gamleAalesund, haram))
+        val gamleAalesund = saveKommuneOgUnikLokalid(id = "idGamleAalesund", lokalid = "1507Ålesund", kommunenummerUuid = "afc65fde-8a62-497d-b35d-77345efddee3",
+            kommunenummer = "1507", stemmekretser = listOf(stemmekrets))
+        val haram = saveKommuneOgUnikLokalid(id = "idHaram", lokalid = "1580Haram", kommunenummerUuid = "687f3337-899f-42f8-849d-6f2d5b603dd3",
+            kommunenummer = "1580")
+        saveFylkeOgUnikLokalid(lokalid = "15MøreOgRomsdal", fylkesnummerUuid = "c499a315-0cd5-4e99-8acf-bd6f4803799a",
+            fylkesnummer = "15", kommuner = listOf(gamleAalesund, haram))
         val opprinneligStemmekrets = stemmekretsService.hentStemmekrets(identifikator)!!
 
         assertThat(gamleAalesund.kommuneLokalid.stemmekretser).hasSize(1).extracting("id").contains(stemmekrets.id)
@@ -666,13 +662,6 @@ class StemmekretsServiceIT : TestWithDbContainer() {
     fun `to nabostemmekretser i hver sin kommune i samme fylke som splittes til to fylker`() {
         every { kodelisteServiceMock.getFylkesnummerIdByCodeValue("39") } returns "583a2846-e90c-4911-b8bb-b2537fd896a0"
         every { kodelisteServiceMock.getFylkesnummerIdByCodeValue("40") } returns "f26cc714-7289-4026-a076-35f83f9f2332"
-        every { kodelisteServiceMock.getCodeValueByFylkesnummerId("e79b7a63-13ff-4ba5-b4ef-0dfa4e6af1df") } returns "38"
-        every { kodelisteServiceMock.getCodeValueByFylkesnummerId("583a2846-e90c-4911-b8bb-b2537fd896a0") } returns "39"
-        every { kodelisteServiceMock.getCodeValueByFylkesnummerId("f26cc714-7289-4026-a076-35f83f9f2332") } returns "40"
-        every { kodelisteServiceMock.getCodeValueByKommunenummerId("3805") } returns "3805"
-        every { kodelisteServiceMock.getCodeValueByKommunenummerId("3812") } returns "3812"
-        every { kodelisteServiceMock.getCodeValueByKommunenummerId("3909") } returns "3909"
-        every { kodelisteServiceMock.getCodeValueByKommunenummerId("4010") } returns "4010"
         every { kodelisteServiceMock.getKommunenummerIdByCodeValue("3909") } returns "3909"
         every { kodelisteServiceMock.getKommunenummerIdByCodeValue("4010") } returns "4010"
 
@@ -684,34 +673,34 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         val gamleLarvik = oestreKrets.getKommune(opprinneligDato)!!
 
         val norskNavn = saveAdministrativenhetnavn(navn = "Vestfold og Telemark", spraakid = "nor")
-        val vestfoldOgTelemark = saveFylkeOgUnikLokalid(id = "fylke38", lokalid = "38VestfoldOgTelemark", fylkesnummer = "e79b7a63-13ff-4ba5-b4ef-0dfa4e6af1df",
-            administrativenhetnavn = listOf(norskNavn), gyldigFra = opprinneligDato, kommuner = listOf(gamleSiljan, gamleLarvik))
+        val vestfoldOgTelemark = saveFylkeOgUnikLokalid(id = "fylke38", lokalid = "38VestfoldOgTelemark", fylkesnummerUuid = "e79b7a63-13ff-4ba5-b4ef-0dfa4e6af1df",
+            fylkesnummer = "38", administrativenhetnavn = listOf(norskNavn), gyldigFra = opprinneligDato, kommuner = listOf(gamleSiljan, gamleLarvik))
         saveNasjonOgUnikLokalid(fylker = listOf(vestfoldOgTelemark))
         grenseRepository.flush()
 
         fylkeService.createNyttFylkeMedNyUnikLokalid(
             kopierFraFylke = vestfoldOgTelemark,
-            nyttFylkesnummerIKlartekst = "39",
+            nyttFylkesnummer = "39",
             admenhetnavnList = emptyList(),
             gyldigFra = jan1In2024,
             endringstype = Endringstype.FASTSETTING
         )
         fylkeService.createNyttFylkeMedNyUnikLokalid(
             kopierFraFylke = vestfoldOgTelemark,
-            nyttFylkesnummerIKlartekst = "40",
+            nyttFylkesnummer = "40",
             admenhetnavnList = emptyList(),
             gyldigFra = jan1In2024,
             endringstype = Endringstype.FASTSETTING
         )
         val nyLarvik = kommuneService.createNyKommuneMedNyUnikLokalid(
             kopierFraKommune = gamleLarvik,
-            nyttKommunenummerIKlartekst = "3909",
+            nyttKommunenummer = "3909",
             gyldigFra = jan1In2024,
             endringstype = Endringstype.FASTSETTING
         )
         val nySiljan = kommuneService.createNyKommuneMedNyUnikLokalid(
             kopierFraKommune = gamleSiljan,
-            nyttKommunenummerIKlartekst = "4010",
+            nyttKommunenummer = "4010",
             gyldigFra = jan1In2024,
             endringstype = Endringstype.FASTSETTING
         )
@@ -727,11 +716,6 @@ class StemmekretsServiceIT : TestWithDbContainer() {
 
     @Test
     fun `to nabostemmekretser i samme kommune som skal deles til hver sin kommune`() {
-        every { kodelisteServiceMock.getFylkesnummerIdByCodeValue("03") } returns "03"
-        every { kodelisteServiceMock.getCodeValueByFylkesnummerId("03") } returns "03"
-        every { kodelisteServiceMock.getCodeValueByKommunenummerId("0301") } returns "0301"
-        every { kodelisteServiceMock.getCodeValueByKommunenummerId("0308") } returns "0308"
-        every { kodelisteServiceMock.getCodeValueByKommunenummerId("0380") } returns "0380"
         every { kodelisteServiceMock.getKommunenummerIdByCodeValue("0308") } returns "0308"
         every { kodelisteServiceMock.getKommunenummerIdByCodeValue("0380") } returns "0380"
 
@@ -741,20 +725,20 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         grenseRepository.flush()
 
         val gamleAalesund = vestreKrets.getKommune(opprinneligDato)!!
-        val moereOgRomsdal = saveFylkeOgUnikLokalid(id = "fylke03", lokalid = "03MoereOgRomsdal", fylkesnummer = "03",
+        val moereOgRomsdal = saveFylkeOgUnikLokalid(id = "fylke03", lokalid = "03MoereOgRomsdal", fylkesnummerUuid = "03", fylkesnummer = "03",
             gyldigFra = opprinneligDato, kommuner = listOf(gamleAalesund))
         saveNasjonOgUnikLokalid(fylker = listOf(moereOgRomsdal))
         grenseRepository.flush()
 
         val haram = kommuneService.createNyKommuneMedNyUnikLokalid(
             kopierFraKommune = gamleAalesund,
-            nyttKommunenummerIKlartekst = "0380",
+            nyttKommunenummer = "0380",
             gyldigFra = jan1In2024,
             endringstype = Endringstype.FASTSETTING
         )
         val nyAalesund = kommuneService.createNyKommuneMedNyUnikLokalid(
             kopierFraKommune = gamleAalesund,
-            nyttKommunenummerIKlartekst = "0308",
+            nyttKommunenummer = "0308",
             gyldigFra = jan1In2024,
             endringstype = Endringstype.FASTSETTING
         )
@@ -995,8 +979,8 @@ class StemmekretsServiceIT : TestWithDbContainer() {
             grenser = lagredeGrenserForOest
         )
 
-        saveKommuneOgUnikLokalid(id = "idKommuneVest", lokalid = "kommuneVest", stemmekretser = listOf(kretsVest), gyldigFra = gyldigFra, kommunenummer = kommunenummer1!!)
-        saveKommuneOgUnikLokalid(id = "idKommuneOest", lokalid = "kommuneOest", stemmekretser = listOf(kretsOest), gyldigFra = gyldigFra, kommunenummer = kommunenummer2!!)
+        saveKommuneOgUnikLokalid(id = "idKommuneVest", lokalid = "kommuneVest", stemmekretser = listOf(kretsVest), gyldigFra = gyldigFra, kommunenummerUuid = kommunenummer1!!)
+        saveKommuneOgUnikLokalid(id = "idKommuneOest", lokalid = "kommuneOest", stemmekretser = listOf(kretsOest), gyldigFra = gyldigFra, kommunenummerUuid = kommunenummer2!!)
         grenseRepository.flush()
         return listOf(kretsVest, kretsOest)
     }

@@ -52,7 +52,6 @@ class UtkastValideringTest {
         MockKAnnotations.init(this)
         every { currentTime.asLocalDate() }  returns LocalDate.of(2022, 6, 1)
         every { grunnkretsServiceMock.hentGrunnkrets(any()) }  returns GrunnkretsBuilder.DEFAULT_GRUNNKRETS
-        every { kodelisteServiceMock.getCodeValueByKommunenummerId(any()) } returns "0301"
         utkastValidatorService = UtkastValidatorService(grunnkretsServiceMock, grenseServiceMock, stemmekretsServiceMock, kodelisteServiceMock, currentTime)
     }
 

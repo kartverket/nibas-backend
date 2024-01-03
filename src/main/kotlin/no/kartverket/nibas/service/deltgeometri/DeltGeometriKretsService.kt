@@ -48,16 +48,15 @@ class DeltGeometriKretsService(
             .map { it.toStemmekretsGrenseKobling(stemmekrets) }
     }
 
-    private fun lagNyeGrenserForKrets(kommunenr: String, gyldighetsDato: LocalDate, gamleGrenser: Collection<GrenseKobling>, nyeAdministrativeGrenser: List<Grense> ): Collection<DeltGeometriGrense> {
+    private fun lagNyeGrenserForKrets(kommunenr: String, gyldighetsDato: LocalDate, gamleGrenser: Collection<GrenseKobling>, nyeAdministrativeGrenser: List<Grense>): Collection<DeltGeometriGrense> {
         val grenserPerFlate = gamleGrenser.groupBy { it.grenseKoblingAttributter.flateIndeks }
-        return grenserPerFlate.entries.flatMap { (flateIndex, gamleGrenserForFlate ) ->
+        return grenserPerFlate.entries.flatMap { (flateIndex, gamleGrenserForFlate) ->
             gamleGrenserForFlate.groupBy { it.grenseKoblingAttributter.hullIndeks }
                 .flatMap { (hullIndex, gamleGrenserForHull) ->
                     lagKomplettPolygonAvGrenserForHullOgFlate(flateIndex, hullIndex, kommunenr, gyldighetsDato, gamleGrenserForHull, nyeAdministrativeGrenser)
                 }
         }
     }
-
 
     /**
      * Denne funksjonen lager et nytt polygon for en gitt krets. Den vil sørge for å bevare samme geometri og kun bytte ut de administrative grensene
@@ -113,8 +112,8 @@ class DeltGeometriKretsService(
 
     private fun erAdministrativGrenseForKommune(grense: Grense, kommunenr: String, gyldighetsDato: LocalDate): Boolean =
         grense.erAdministrativGrense() && grense.stemmekretser.any {
-                kodelisteService.getKommunenummerIdByCodeValue(kommunenr) == it.stemmekrets.getKommune(gyldighetsDato)?.kommunenummer
-            }
+            kommunenr == it.stemmekrets.getKommune(gyldighetsDato)?.kommunenummer
+        }
 }
 
 data class DeltGeometriGrense(

@@ -42,7 +42,8 @@ class KommuneImporter @Autowired constructor(
         val forsteFlate = flater.first()
 
         var kommune = administrativEnhetImporter.importer(forsteFlate) as Kommune
-        kommune.kommunenummer = kodelisteService.getKommunenummerIdByCodeValue(forsteFlate.getKommunenummer())
+        kommune.kommunenummer = forsteFlate.getKommunenummer()
+        kommune.kommunenummerUuid = kodelisteService.getKommunenummerIdByCodeValue(forsteFlate.getKommunenummer())
         kommune.samiskforvaltningsomraade = forsteFlate.isSamiskForvaltningsomrade()
 
         var unikLokalid = UnikLokalid(kommune.lokalid, Flatetype.KOMMUNE)
@@ -52,11 +53,11 @@ class KommuneImporter @Autowired constructor(
         kommune.addKommuneTilUnikLokalid(unikLokalid)
 
         // Fylkesnummer er de to første sifferne i kommunenummeret
-        val fylkesnummerUuid = kodelisteService.getFylkesnummerIdByCodeValue(forsteFlate.getKommunenummer().substring(0, 2))
+        val fylkesnummer = forsteFlate.getKommunenummer().substring(0, 2)
         //Henter fylket for dagens dato
         val gyldighetsdato = ImportUtils.importTime
-        val fylke = fylkeRepository.findGyldigFylkeForFylkesnummer(fylkesnummerUuid, gyldighetsdato)
-            ?: throw RuntimeException("Fant ikke fylke med fylkesnummerUuid $fylkesnummerUuid og gyldig fra $gyldighetsdato")
+        val fylke = fylkeRepository.findGyldigFylkeForFylkesnummer(fylkesnummer, gyldighetsdato)
+            ?: throw RuntimeException("Fant ikke fylke med fylkesnummer $fylkesnummer og gyldig fra $gyldighetsdato")
 
         fylke.addKommune(kommune)
 

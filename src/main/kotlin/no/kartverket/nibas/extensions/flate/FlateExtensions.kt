@@ -18,16 +18,14 @@ import no.kartverket.nibas.domain.Fylke
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Stemmekrets
-import no.kartverket.nibas.kodelister.KodelisteService
-import no.kartverket.nibas.kodelister.createKommunenummerFromUUID
 import no.kartverket.nibas.extensions.geometry.flateToFeature
 import no.kartverket.nibas.extensions.geometry.posisjonToFeature
 
-fun Grunnkrets.toKretsResponse(kodelisteService: KodelisteService): KretsResponse = KretsResponse(
+fun Grunnkrets.toKretsResponse(): KretsResponse = KretsResponse(
     id = lokalid,
     navn = grunnkretsnavn!!,
     nummer = grunnkretsnummer!!,
-    kommunenummer = this.getKommune(gyldighet.gyldigFra)?.let { kodelisteService.createKommunenummerFromUUID(it.kommunenummer) }
+    kommunenummer = this.getKommune(gyldighet.gyldigFra)?.let { Kommunenummer(it.kommunenummerUuid, it.kommunenummer) }
         ?: Kommunenummer(id = "Ukjent", kodeverdi = "Ukjent"),
     features = FeatureCollection(
         features = listOf(
@@ -37,13 +35,13 @@ fun Grunnkrets.toKretsResponse(kodelisteService: KodelisteService): KretsRespons
     )
 )
 
-fun Grunnkrets.toGrunnkretsResponse(identifikator: Identifikator, kodelisteService: KodelisteService): GrunnkretsResponse = GrunnkretsResponse(
+fun Grunnkrets.toGrunnkretsResponse(identifikator: Identifikator): GrunnkretsResponse = GrunnkretsResponse(
     id = identifikator.toObjektIdentifikator(),
     navn = grunnkretsnavn!!,
     grunnkretsnummer = grunnkretsnummer!!,
     gyldighet = gyldighet.toGyldighetResponse(),
     datafangstdato = datafangstdato,
-    kommunenummer = this.getKommune(gyldighet.gyldigFra)?.let { kodelisteService.createKommunenummerFromUUID(it.kommunenummer) }
+    kommunenummer = this.getKommune(gyldighet.gyldigFra)?.let { Kommunenummer(it.kommunenummerUuid, it.kommunenummer) }
         ?: Kommunenummer(id = "Ukjent", kodeverdi = "Ukjent"),
     endringstype = auditInfo.typeEndring.value,
     oppdateringsdato = auditInfo.endretdato,
@@ -54,26 +52,26 @@ fun Grunnkrets.toGrunnkretsResponse(identifikator: Identifikator, kodelisteServi
     version = version
 )
 
-fun Fylke.toFylkeRef(identifikator: Identifikator, antallFramtidigeVersjoner: Int = 0, hrefProvider: HrefProvider, kodelisteService: KodelisteService): FylkeRef = FylkeRef(
+fun Fylke.toFylkeRef(identifikator: Identifikator, antallFramtidigeVersjoner: Int = 0, hrefProvider: HrefProvider): FylkeRef = FylkeRef(
     id = identifikator.toObjektIdentifikator(),
     navn = getAdministrativenhetNavn(identifikator.gyldighetsdato)
         .map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version, it.rekkefoelge) },
     href = hrefProvider.getHref(identifikator),
     fylkesnummer = Fylkesnummer(
-        id = fylkesnummer,
-        kodeverdi = kodelisteService.getCodeValueByFylkesnummerId(fylkesnummer)!!
+        id = fylkesnummerUuid,
+        kodeverdi = fylkesnummer
     ),
     antallFramtidigeVersjoner = antallFramtidigeVersjoner
 )
 
 
-fun Fylke.toFylkeResponse(identifikator: Identifikator, kodelisteService: KodelisteService): FylkeResponse = FylkeResponse(
+fun Fylke.toFylkeResponse(identifikator: Identifikator): FylkeResponse = FylkeResponse(
     id = identifikator.toObjektIdentifikator(),
     administrativenhetnavn = getAdministrativenhetNavn(identifikator.gyldighetsdato)
         .map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version, it.rekkefoelge) },
     fylkesnummer = Fylkesnummer(
-        id = fylkesnummer,
-        kodeverdi = kodelisteService.getCodeValueByFylkesnummerId(fylkesnummer)!!
+        id = fylkesnummerUuid,
+        kodeverdi = fylkesnummer
     ),
     samiskforvaltningsomraade = samiskforvaltningsomraade!!,
     oppdateringsdato = auditInfo.endretdato,
@@ -92,11 +90,11 @@ fun Kommune.toKommuneResponse(identifikator: Identifikator, kommunenummer: Kommu
     version = version
 )
 
-fun Stemmekrets.toKretsResponse(kodelisteService: KodelisteService): KretsResponse = KretsResponse(
+fun Stemmekrets.toKretsResponse(): KretsResponse = KretsResponse(
     id = lokalid,
     navn = stemmekretsnavn!!,
     nummer = stemmekretsnummer!!,
-    kommunenummer = this.getKommune(gyldighet.gyldigFra)?.let { kodelisteService.createKommunenummerFromUUID(it.kommunenummer) }
+    kommunenummer = this.getKommune(gyldighet.gyldigFra)?.let { Kommunenummer(id = it.kommunenummerUuid, kodeverdi = it.kommunenummer) }
         ?: Kommunenummer(id = "Ukjent", kodeverdi = "Ukjent"),
     features = FeatureCollection(
         features = listOf(
@@ -106,11 +104,11 @@ fun Stemmekrets.toKretsResponse(kodelisteService: KodelisteService): KretsRespon
     )
 )
 
-fun Stemmekrets.toStemmekretsResponse(identifikator: Identifikator, kodelisteService: KodelisteService): StemmekretsResponse = StemmekretsResponse(
+fun Stemmekrets.toStemmekretsResponse(identifikator: Identifikator): StemmekretsResponse = StemmekretsResponse(
     id = identifikator.toObjektIdentifikator(),
     stemmekretsnavn = stemmekretsnavn!!,
     stemmekretsnummer = stemmekretsnummer!!,
-    kommunenummer = this.getKommune(gyldighet.gyldigFra)?.let { kodelisteService.createKommunenummerFromUUID(it.kommunenummer) }
+    kommunenummer = this.getKommune(gyldighet.gyldigFra)?.let { Kommunenummer(it.kommunenummerUuid, it.kommunenummer) }
         ?: Kommunenummer(id = "Ukjent", kodeverdi = "Ukjent"),
     valgdistriktsnummer = valgdistriktsnummer,
     tellekretsnavn = tellekretsnavn,

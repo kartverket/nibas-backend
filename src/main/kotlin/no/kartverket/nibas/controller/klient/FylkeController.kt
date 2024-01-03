@@ -28,13 +28,13 @@ class FylkeController(
         val datoToUse: LocalDate = gyldighetsdato ?: LocalDate.now()
         return fylkeService.hentAlleFylker(datoToUse).map {
             val identifikatorForFylke = Identifikator(Lokalid(it.lokalid), datoToUse)
-            it.toFylkeRef(identifikatorForFylke, fylkeService.hentAntallGyldigeVersjonerFramITidFor(identifikatorForFylke), hrefProvider, kodelisteService)
+            it.toFylkeRef(identifikatorForFylke, fylkeService.hentAntallGyldigeVersjonerFramITidFor(identifikatorForFylke), hrefProvider)
         }
     }
 
     override fun hentFylke(lokalid: String, gyldighetsdato: LocalDate?): FylkeResponse {
         val identifikator = createIdentifikator(lokalid, gyldighetsdato)
-        return fylkeService.hentFylke(identifikator)?.toFylkeResponse(identifikator, kodelisteService)
+        return fylkeService.hentFylke(identifikator)?.toFylkeResponse(identifikator)
             ?: throw NotFoundException("Fylke $identifikator ble ikke funnet.")
     }
 

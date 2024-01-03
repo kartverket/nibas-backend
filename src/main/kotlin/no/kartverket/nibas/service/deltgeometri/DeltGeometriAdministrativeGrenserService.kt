@@ -28,8 +28,7 @@ class DeltGeometriAdministrativeGrenserService(
      * vil være lik som før.
      */
     fun getAdministrativeGrenserMedDeltGeometriForKommune(kommune: Kommune, gyldighetsDato: LocalDate): List<Grense> {
-        val kommuneNr = kodelisteService.getCodeValueByKommunenummerId(kommune.kommunenummer)
-        val stemmekretserForKommune = kommuneService.hentAlleStemmekretserForKommune(kommuneNr, gyldighetsDato)
+        val stemmekretserForKommune = kommune.getStemmekretser(gyldighetsDato)
 
         val administrativeGrenserForKommune = kommune.getGrenser(gyldighetsDato).map {
             if (it.grenseKoblingAttributter.retningMedKlokken) it.grense.grense else it.grense.grense.reverse()

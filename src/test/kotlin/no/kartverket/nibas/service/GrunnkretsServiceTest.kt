@@ -31,6 +31,7 @@ class GrunnkretsServiceTest {
     @MockkBean
     private lateinit var grunnkretsRepositoryMock: GrunnkretsRepository
 
+    @Suppress("unused")
     @MockkBean
     private lateinit var kodelisteServiceMock: KodelisteService
 

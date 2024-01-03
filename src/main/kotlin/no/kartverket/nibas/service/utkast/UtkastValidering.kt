@@ -228,10 +228,9 @@ class UtkastValidatorService(
 
         val grunnkrets = grunnkretsService.hentGrunnkrets(Identifikator(lokalid = Lokalid(lokalid), gyldighetsdato = LocalDate.now()))
 
-        val kommunenummerUUID = grunnkrets?.getKommune(grunnkrets.gyldighet.gyldigFra)?.kommunenummer
-        if (kommunenummerUUID.isNullOrBlank()) return true
+        val kommunenummer = grunnkrets?.getKommune(grunnkrets.gyldighet.gyldigFra)?.kommunenummer
+        if (kommunenummer.isNullOrBlank()) return true
 
-        val kommunenummer = kodelisteService.getCodeValueByKommunenummerId(kommunenummerUUID)
         return nummer.take(4) != kommunenummer
     }
 

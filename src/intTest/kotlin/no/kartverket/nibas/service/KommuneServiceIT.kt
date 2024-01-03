@@ -10,11 +10,10 @@ import no.kartverket.nibas.common.UgyldigTilstandException
 import no.kartverket.nibas.domain.*
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
+import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.tuple
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -52,7 +51,7 @@ class KommuneServiceIT : TestWithDbContainer() {
 
         val framtidigKommune = kommuneService.hentKommune(Identifikator((kommuneLokalid), jan1In2023))
         assertThat(framtidigKommune).isNotNull
-        assertThat(framtidigKommune!!.kommunenummer).isEqualTo("0302")
+        assertThat(framtidigKommune!!.kommunenummerUuid).isEqualTo("0302")
     }
 
     @Test
@@ -160,7 +159,7 @@ class KommuneServiceIT : TestWithDbContainer() {
     private fun saveKommuneMed1FramtidigVersjon(kommuneLokalid: Lokalid) {
         val unikLokalid = saveUnikLokalid(kommuneLokalid.value, Flatetype.KOMMUNE)
         saveKommune(unikLokalid = unikLokalid, gyldigFra = october1In2022, gyldigTil = jan1In2023)
-        saveKommune(id = "9001", unikLokalid = unikLokalid, kommunenummer = "0302", gyldigFra = jan1In2023)
+        saveKommune(id = "9001", unikLokalid = unikLokalid, kommunenummerUuid = "0302", gyldigFra = jan1In2023)
     }
 
     @Test
@@ -403,14 +402,13 @@ class KommuneServiceIT : TestWithDbContainer() {
     @Test
     fun `oppdaterKommune skal lage ny kommune og sette gyldigtil for gammel kommune`() {
         val kommuneRequest = KommuneRequestBuilder().withVersion(2).withSamiskforvaltningsomraade(true).build()
-
         val identifikator = Identifikator(Lokalid(kommuneRequest.lokalid), october1In2022)
 
         val kommune = saveKommuneOgUnikLokalid(
             id = "2",
             lokalid = identifikator.lokalid.value,
             gyldigFra = october1In2022,
-            kommunenummer = kommuneRequest.kommunenummerId
+            kommunenummerUuid = kommuneRequest.kommunenummerId
         )
         saveFylkeOgUnikLokalid(kommuner = listOf(kommune))
         val versjonFoerOppdatering = kommune.version
@@ -430,6 +428,7 @@ class KommuneServiceIT : TestWithDbContainer() {
 
         assertThat(kommuneEtter.samiskforvaltningsomraade).isNotEqualTo(kommune.samiskforvaltningsomraade)
             .isEqualTo(kommuneRequest.samiskforvaltningsomraade)
+        assertThat(kommuneEtter.kommunenummerUuid).isEqualTo(kommune.kommunenummerUuid)
         assertThat(kommuneEtter.kommunenummer).isEqualTo(kommune.kommunenummer)
         assertThat(kommuneEtter.omraade).isEqualTo(kommune.omraade)
         assertThat(kommuneEtter.posisjon).isEqualTo(kommune.posisjon)
@@ -449,29 +448,31 @@ class KommuneServiceIT : TestWithDbContainer() {
     @Test
     fun `sjekk createNyKommune i nytt fylke`() {
         every { kodelisteServiceMock.getKommunenummerIdByCodeValue("5622") } returns "b0f1dfb4-2ba3-44a8-9b86-37bea79f6a60"
-        every { kodelisteServiceMock.getFylkesnummerIdByCodeValue("56") } returns "ee97a593-2f9d-49c7-b251-c0f0cfa8769b"
 
         val norskNavn = saveAdministrativenhetnavn(navn = "Porsanger", spraakid = "nor", rekkefoelge = 1)
         val samiskNavn = saveAdministrativenhetnavn(navn = "Porsáŋgu", spraakid = "sme", rekkefoelge = 2)
         val kvenskNavn = saveAdministrativenhetnavn(navn = "Porsanki", spraakid = "fkv", rekkefoelge = 3)
 
-        val kommune = saveKommuneOgUnikLokalid(lokalid = "5436Porsanger", kommunenummer = "f2c438ec-4551-4245-b6a0-153d53a39dde",
-            administrativenhetnavn = listOf(norskNavn, samiskNavn, kvenskNavn))
-        saveFylkeOgUnikLokalid(lokalid = "54TromsOgFinnmark", fylkesnummer = "efe425f5-fc7f-4a29-a70d-31363ec6a306", kommuner = listOf(kommune))
+        val kommune = saveKommuneOgUnikLokalid(lokalid = "5436Porsanger", kommunenummerUuid = "f2c438ec-4551-4245-b6a0-153d53a39dde",
+            kommunenummer = "5436", administrativenhetnavn = listOf(norskNavn, samiskNavn, kvenskNavn))
+        saveFylkeOgUnikLokalid(lokalid = "54TromsOgFinnmark", fylkesnummerUuid = "efe425f5-fc7f-4a29-a70d-31363ec6a306",
+            fylkesnummer = "54", kommuner = listOf(kommune))
+
         val nyFinnmark = saveFylkeOgUnikLokalid(id = "56Finnmark1", lokalid = "56Finnmark",
-            fylkesnummer = "ee97a593-2f9d-49c7-b251-c0f0cfa8769b", gyldigFra = jan1In2024)
+            fylkesnummerUuid = "ee97a593-2f9d-49c7-b251-c0f0cfa8769b", fylkesnummer = "56", gyldigFra = jan1In2024)
 
         assertThat(kommune.utledetFra).isNull()
         val nyKommune = kommuneService.createNyKommuneMedNyUnikLokalid(
             kopierFraKommune = kommune,
-            nyttKommunenummerIKlartekst = "5622",
+            nyttKommunenummer = "5622",
             gyldigFra = jan1In2024,
             endringstype = Endringstype.FASTSETTING
         )
 
         assertThat(nyKommune.id).isNotEqualTo(kommune.id)
         assertThat(nyKommune.lokalid).isNotEqualTo(kommune.lokalid)
-        assertThat(nyKommune.kommunenummer).isEqualTo("b0f1dfb4-2ba3-44a8-9b86-37bea79f6a60")
+        assertThat(nyKommune.kommunenummerUuid).isEqualTo("b0f1dfb4-2ba3-44a8-9b86-37bea79f6a60")
+        assertThat(nyKommune.kommunenummer).isEqualTo("5622")
         assertThat(nyKommune.utledetFra!!.id).isEqualTo(kommune.id)
 
         assertThat(nyKommune.getFylke(jan1In2024)!!.lokalid).isEqualTo(nyFinnmark.lokalid)
@@ -486,25 +487,25 @@ class KommuneServiceIT : TestWithDbContainer() {
     fun `sjekk createNyKommune i gammelt fylke`() {
         every { kodelisteServiceMock.getKommunenummerIdByCodeValue("1508") } returns "9720eabc-0bff-4c93-b05c-95bae39ef2ea"
         every { kodelisteServiceMock.getKommunenummerIdByCodeValue("1580") } returns "687f3337-899f-42f8-849d-6f2d5b603dd3"
-        every { kodelisteServiceMock.getFylkesnummerIdByCodeValue("15") } returns "c499a315-0cd5-4e99-8acf-bd6f4803799a"
 
         val norskNavn = saveAdministrativenhetnavn(navn = "Ålesund", spraakid = "nor")
-        val gamleAalesund = saveKommuneOgUnikLokalid(lokalid = "1507Ålesund", kommunenummer = "afc65fde-8a62-497d-b35d-77345efddee3",
-            administrativenhetnavn = listOf(norskNavn))
-        val moereOgRomsdal = saveFylkeOgUnikLokalid(lokalid = "15MøreOgRomsdal", fylkesnummer = "c499a315-0cd5-4e99-8acf-bd6f4803799a",
-            kommuner = listOf(gamleAalesund))
+        val gamleAalesund = saveKommuneOgUnikLokalid(lokalid = "1507Ålesund", kommunenummerUuid = "afc65fde-8a62-497d-b35d-77345efddee3",
+            kommunenummer = "1507", administrativenhetnavn = listOf(norskNavn))
+        val moereOgRomsdal = saveFylkeOgUnikLokalid(lokalid = "15MøreOgRomsdal", fylkesnummerUuid = "c499a315-0cd5-4e99-8acf-bd6f4803799a",
+            fylkesnummer = "15", kommuner = listOf(gamleAalesund))
 
         assertThat(gamleAalesund.utledetFra).isNull()
         val nyeAalesund = kommuneService.createNyKommuneMedNyUnikLokalid(
             kopierFraKommune = gamleAalesund,
-            nyttKommunenummerIKlartekst = "1508",
+            nyttKommunenummer = "1508",
             gyldigFra = jan1In2024,
             endringstype = Endringstype.FASTSETTING
         )
 
         assertThat(nyeAalesund.id).isNotEqualTo(gamleAalesund.id)
         assertThat(nyeAalesund.lokalid).isNotEqualTo(gamleAalesund.lokalid)
-        assertThat(nyeAalesund.kommunenummer).isEqualTo("9720eabc-0bff-4c93-b05c-95bae39ef2ea")
+        assertThat(nyeAalesund.kommunenummerUuid).isEqualTo("9720eabc-0bff-4c93-b05c-95bae39ef2ea")
+        assertThat(nyeAalesund.kommunenummer).isEqualTo("1508")
         assertThat(nyeAalesund.utledetFra!!.id).isEqualTo(gamleAalesund.id)
 
         assertThat(nyeAalesund.getFylke(jan1In2024)!!.lokalid).isEqualTo(moereOgRomsdal.lokalid)
@@ -517,14 +518,15 @@ class KommuneServiceIT : TestWithDbContainer() {
         val haramNavn = administrativenhetnavnService.createNyttAdmEnhetNavn(oppgittNavn = "Haram", spraakForkortelse = "nor")
         val haram = kommuneService.createNyKommuneMedNyUnikLokalid(
             kopierFraKommune = gamleAalesund,
-            nyttKommunenummerIKlartekst = "1580",
+            nyttKommunenummer = "1580",
             admenhetnavnList = listOf(haramNavn),
             gyldigFra = jan1In2024,
             endringstype = Endringstype.FASTSETTING
         )
 
         assertThat(haram.lokalid).isNotEqualTo(gamleAalesund.lokalid)
-        assertThat(haram.kommunenummer).isEqualTo("687f3337-899f-42f8-849d-6f2d5b603dd3")
+        assertThat(haram.kommunenummerUuid).isEqualTo("687f3337-899f-42f8-849d-6f2d5b603dd3")
+        assertThat(haram.kommunenummer).isEqualTo("1580")
         assertThat(haram.utledetFra!!.id).isEqualTo(gamleAalesund.id)
 
         assertThat(haram.getFylke(jan1In2024)!!.lokalid).isEqualTo(moereOgRomsdal.lokalid)
@@ -542,14 +544,14 @@ class KommuneServiceIT : TestWithDbContainer() {
     }
 
     @Test
-    fun `settKommuneSomHistorisk skal sette gyldigTil på kommunen`() {
+    fun `settKommuneSomHistorisk skal sette gyldigTil paa kommunen`() {
         val lagretKommune = saveKommuneOgUnikLokalid(lokalid = lokalidOfKommuneInDataSet)
         kommuneService.settKommuneSomHistorisk(lagretKommune, jan1In2024)
         assertThat(lagretKommune.gyldighet.gyldigTil).isEqualTo(jan1In2024)
     }
 
     @Test
-    fun `settKommuneSomHistorisk skal sette gyldigTil på alle administrative navn forkommunen`() {
+    fun `settKommuneSomHistorisk skal sette gyldigTil paa alle administrative navn forkommunen`() {
         val norskNavn = saveAdministrativenhetnavn(navn = "Ålesund", spraakid = "nor")
         val lagretKommune = saveKommuneOgUnikLokalid(lokalid = lokalidOfKommuneInDataSet, administrativenhetnavn = listOf(norskNavn))
         kommuneService.settKommuneSomHistorisk(lagretKommune, jan1In2024)
@@ -557,22 +559,22 @@ class KommuneServiceIT : TestWithDbContainer() {
     }
 
     @Test
-    fun `settKommuneSomHistorisk skal sjekke at alle grunnkretser ikke har gyldigTil dato på eller etter den gitte settHistoriskFra datoen`(){
+    fun `settKommuneSomHistorisk skal sjekke at alle grunnkretser ikke har gyldigTil dato paa eller etter den gitte settHistoriskFra datoen`() {
         val grunnkrets = saveGrunnkrets(id = "8001", lokalid = kretsLokalid, gyldigFra = november28In2022)
         val lagretKommune = saveKommuneOgUnikLokalid(lokalid = lokalidOfKommuneInDataSet, grunnkretser = listOf(grunnkrets))
-        val exception = assertThrows<UgyldigTilstandException> {
-            kommuneService.settKommuneSomHistorisk(lagretKommune, jan1In2024)
-        }
-        assertThat(exception.message).containsIgnoringCase("Kan ikke sette kommunen med lokalId: ${lokalidOfKommuneInDataSet} til historisk da den har grunnkretser")
+
+        Assertions.assertThatThrownBy { kommuneService.settKommuneSomHistorisk(lagretKommune, jan1In2024) }
+            .isInstanceOf(UgyldigTilstandException::class.java)
+            .hasMessageContaining("Kan ikke sette kommunen med lokalId: ${lokalidOfKommuneInDataSet} til historisk da den har grunnkretser som er gyldige etter 2024-01-01")
     }
 
     @Test
-    fun `settKommuneSomHistorisk skal sjekke at alle stemmekretser ikke har gyldigTil dato på eller etter den gitte settHistoriskFra datoen`(){
+    fun `settKommuneSomHistorisk skal sjekke at alle stemmekretser ikke har gyldigTil dato paa eller etter den gitte settHistoriskFra datoen`(){
         val stemmekrets = saveStemmekrets(id = "8001", lokalid = kretsLokalid, gyldigFra = november28In2022)
         val lagretKommune = saveKommuneOgUnikLokalid(lokalid = lokalidOfKommuneInDataSet, stemmekretser = listOf(stemmekrets))
-        val exception = assertThrows<UgyldigTilstandException> {
-            kommuneService.settKommuneSomHistorisk(lagretKommune, jan1In2024)
-        }
-        assertThat(exception.message).containsIgnoringCase("Kan ikke sette kommunen med lokalId: ${lokalidOfKommuneInDataSet} til historisk da den har stemmekretser")
+
+        Assertions.assertThatThrownBy { kommuneService.settKommuneSomHistorisk(lagretKommune, jan1In2024) }
+            .isInstanceOf(UgyldigTilstandException::class.java)
+            .hasMessageContaining("Kan ikke sette kommunen med lokalId: ${lokalidOfKommuneInDataSet} til historisk da den har stemmekretser som er gyldige etter 2024-01-01")
     }
 }

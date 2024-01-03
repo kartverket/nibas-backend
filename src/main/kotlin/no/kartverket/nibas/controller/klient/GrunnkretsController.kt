@@ -22,7 +22,8 @@ class GrunnkretsController(
 
     override fun hentGrunnkrets(lokalid: String, gyldighetsdato: LocalDate?): GrunnkretsResponse {
         val identifikator = createIdentifikator(lokalid, gyldighetsdato)
-        return grunnkretsService.hentGrunnkrets(identifikator)?.toGrunnkretsResponse(identifikator, kodelisteService) ?: throw NotFoundException("Grunnkrets $identifikator ble ikke funnet.")
+        return grunnkretsService.hentGrunnkrets(identifikator)?.toGrunnkretsResponse(identifikator)
+            ?: throw NotFoundException("Grunnkrets $identifikator ble ikke funnet.")
     }
 
     override fun hentGrenserForGrunnkrets(lokalid: String, gyldighetsdato: LocalDate?): FeatureCollection {
@@ -45,8 +46,7 @@ class GrunnkretsController(
                 it.toGrunnkretsResponse(
                     Identifikator(
                         lokalid = Lokalid(it.lokalid),
-                        gyldighetsdato = it.gyldighet.gyldigFra),
-                    kodelisteService
+                        gyldighetsdato = it.gyldighet.gyldigFra)
                 )
             }
     }

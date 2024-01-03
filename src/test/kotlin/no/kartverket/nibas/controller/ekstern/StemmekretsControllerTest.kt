@@ -10,10 +10,8 @@ import no.kartverket.nibas.config.WebSecurityConfig
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.service.StemmekretsService
 import org.assertj.core.api.Assertions
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anySet
-import org.mockito.ArgumentMatchers.anyString
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
@@ -36,11 +34,6 @@ internal class StemmekretsControllerTest : NibasMvcTest() {
 
     @Autowired
     private lateinit var objectMapper: ObjectMapper
-
-    @BeforeEach
-    fun beforeEach() {
-        whenever(kodelisteServiceMock.getCodeValueByKommunenummerId(anyString())).thenReturn("0301")
-    }
 
     @Test
     fun hentStemmekretsReturns200_OK() {

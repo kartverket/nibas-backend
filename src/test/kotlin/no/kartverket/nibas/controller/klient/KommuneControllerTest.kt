@@ -19,12 +19,10 @@ import no.kartverket.nibas.service.GrunnkretsService
 import no.kartverket.nibas.service.KommuneService
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.anyString
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.time.LocalDate
-import java.time.Month
 import java.time.format.DateTimeFormatter
 import org.mockito.Mockito.`when` as whenever
 
@@ -47,7 +45,6 @@ class KommuneControllerTest : NibasMvcTest() {
 
     @BeforeEach
     fun mockKodelisteService() {
-        whenever(kodelisteServiceMock.getCodeValueByKommunenummerId(anyString())).thenReturn("0301")
         whenever(hrefProviderMock.getHref(any(Identifikator::class.java))).thenReturn(href)
     }
 

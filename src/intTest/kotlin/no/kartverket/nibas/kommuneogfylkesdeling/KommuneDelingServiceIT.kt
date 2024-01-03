@@ -67,29 +67,16 @@ class KommuneDelingServiceIT: TestWithDbContainer() {
     fun beforeEachSetup() {
         justRun { nibasEventPublisher.publishNibasEvent(any(), any()) }
 
-        every { kodelisteServiceMock.getCodeValueByKommunenummerId(kommuneNummer1id) } returns kommuneNummer1
-        every { kodelisteServiceMock.getCodeValueByKommunenummerId(kommuneNummer2id) } returns kommuneNummer2
-        every { kodelisteServiceMock.getCodeValueByKommunenummerId(kommuneNummer3id) } returns kommuneNummer3
-
-        every { kodelisteServiceMock.getKommunenummerIdByCodeValue(kommuneNummer1) } returns kommuneNummer1id
         every { kodelisteServiceMock.getKommunenummerIdByCodeValue(kommuneNummer2) } returns kommuneNummer2id
         every { kodelisteServiceMock.getKommunenummerIdByCodeValue(kommuneNummer3) } returns kommuneNummer3id
 
-        every { kodelisteServiceMock.getCodeValueByKommunenummerId(nyttKommuneNummer1id) } returns nyttKommuneNummer1
-        every { kodelisteServiceMock.getCodeValueByKommunenummerId(nyttKommuneNummer2id) } returns nyttKommuneNummer2
-        every { kodelisteServiceMock.getCodeValueByKommunenummerId(nyttKommuneNummer3id) } returns nyttKommuneNummer3
+//        every { kodelisteServiceMock.getKommunenummerIdByCodeValue(nyttKommuneNummer1) } returns nyttKommuneNummer1id
+//        every { kodelisteServiceMock.getKommunenummerIdByCodeValue(nyttKommuneNummer2) } returns nyttKommuneNummer2id
+//        every { kodelisteServiceMock.getKommunenummerIdByCodeValue(nyttKommuneNummer3) } returns nyttKommuneNummer3id
 
-        every { kodelisteServiceMock.getKommunenummerIdByCodeValue(nyttKommuneNummer1) } returns nyttKommuneNummer1id
-        every { kodelisteServiceMock.getKommunenummerIdByCodeValue(nyttKommuneNummer2) } returns nyttKommuneNummer2id
-        every { kodelisteServiceMock.getKommunenummerIdByCodeValue(nyttKommuneNummer3) } returns nyttKommuneNummer3id
-
-        every { kodelisteServiceMock.getCodeValueByFylkesnummerId(fylkesnummerFylke1id) } returns fylkesnummerFylke1
-        every { kodelisteServiceMock.getCodeValueByFylkesnummerId(fylkesnummerFylke2id) } returns fylkesnummerFylke2
-        every { kodelisteServiceMock.getCodeValueByFylkesnummerId(fylkesnummerFylke3id) } returns fylkesnummerFylke3
-
-        every { kodelisteServiceMock.getFylkesnummerIdByCodeValue(fylkesnummerFylke1) } returns fylkesnummerFylke1id
-        every { kodelisteServiceMock.getFylkesnummerIdByCodeValue(fylkesnummerFylke2) } returns fylkesnummerFylke2id
-        every { kodelisteServiceMock.getFylkesnummerIdByCodeValue(fylkesnummerFylke3) } returns fylkesnummerFylke3id
+//        every { kodelisteServiceMock.getFylkesnummerIdByCodeValue(fylkesnummerFylke1) } returns fylkesnummerFylke1id
+//        every { kodelisteServiceMock.getFylkesnummerIdByCodeValue(fylkesnummerFylke2) } returns fylkesnummerFylke2id
+//        every { kodelisteServiceMock.getFylkesnummerIdByCodeValue(fylkesnummerFylke3) } returns fylkesnummerFylke3id
     }
 
     @Test
@@ -103,11 +90,11 @@ class KommuneDelingServiceIT: TestWithDbContainer() {
 
         // De nye kommunene skal være gyldige
         val alleGyldigeKommuner = kommuneService.hentAlleKommuner(gyldighetsdato)
-        assertThat(alleGyldigeKommuner.map { it.kommunenummer }).containsAll(listOf(kommuneNummer2id, kommuneNummer3id))
+        assertThat(alleGyldigeKommuner.map { it.kommunenummerUuid }).containsAll(listOf(kommuneNummer2id, kommuneNummer3id))
 
         // Kommunene skal ha rett navn
-        val nyKommune1 = alleGyldigeKommuner.first { it.kommunenummer == kommuneNummer2id }
-        val nyKommune2 = alleGyldigeKommuner.first { it.kommunenummer == kommuneNummer3id }
+        val nyKommune1 = alleGyldigeKommuner.first { it.kommunenummerUuid == kommuneNummer2id }
+        val nyKommune2 = alleGyldigeKommuner.first { it.kommunenummerUuid == kommuneNummer3id }
 
         val nyKommune1Navn = nyKommune1.getAdministrativenhetNavn(gyldighetsdato).sortedBy { it.rekkefoelge }
         val nyKommune2Navn = nyKommune2.getAdministrativenhetNavn(gyldighetsdato).sortedBy { it.rekkefoelge }
@@ -136,7 +123,8 @@ class KommuneDelingServiceIT: TestWithDbContainer() {
         val kommune1 = saveKommuneOgUnikLokalid(
             id = "fylkesdeling-kommune-1",
             lokalid = kommune1LokalId,
-            kommunenummer = kommuneNummer1id,
+            kommunenummerUuid = kommuneNummer1id,
+            kommunenummer = kommuneNummer1,
             grunnkretser = listOf(
                 saveGrunnkrets(
                     id = "fylkesdeling-grunnkrets-id-1",
@@ -166,7 +154,8 @@ class KommuneDelingServiceIT: TestWithDbContainer() {
         val fylke = saveFylkeOgUnikLokalid(
             id = "fylkesdeling-fylke-1",
             lokalid = fylke1LokalId,
-            fylkesnummer = fylkesnummerFylke1id,
+            fylkesnummerUuid = fylkesnummerFylke1id,
+            fylkesnummer = fylkesnummerFylke1,
             kommuner = listOf(kommune1)
         )
 

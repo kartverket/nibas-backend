@@ -24,7 +24,8 @@ internal class DeltGeometriKretsServiceTest {
     val deltGeometriKretsService = DeltGeometriKretsService(kommuneServiceMock, kodelisteServiceMock)
 
     val nyKommune = Kommune().apply {
-        kommunenummer = KOMMUNENNR_ID
+        kommunenummerUuid = KOMMUNENNR_ID
+        kommunenummer = KOMMUNENR
         kommuneLokalid = UnikLokalid(flatetype = Flatetype.KOMMUNE)
     }
 
@@ -117,8 +118,6 @@ internal class DeltGeometriKretsServiceTest {
     fun setupMocks() {
         every { kommuneServiceMock.hentAlleGrunnkretserForKommune(any(), any()) } returns listOf(grunnkretsikommunen)
         every { kommuneServiceMock.hentAlleStemmekretserForKommune(any(), any()) } returns listOf(stemmekretsikommunen)
-        every { kodelisteServiceMock.getCodeValueByKommunenummerId(nyKommune.kommunenummer) } returns KOMMUNENR
-        every { kodelisteServiceMock.getKommunenummerIdByCodeValue(KOMMUNENR) } returns KOMMUNENNR_ID
     }
 
     @Test

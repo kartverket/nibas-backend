@@ -22,12 +22,12 @@ class StemmekretsController(
 
     override fun hentStemmekrets(lokalid: String, gyldighetsdato: LocalDate?): StemmekretsResponse {
         val identifikator = createIdentifikator(lokalid, gyldighetsdato)
-        return stemmekretsService.hentStemmekrets(identifikator)?.toStemmekretsResponse(identifikator, kodelisteService)
+        return stemmekretsService.hentStemmekrets(identifikator)?.toStemmekretsResponse(identifikator)
             ?: throw NotFoundException("Stemmekrets $identifikator ble ikke funnet.")
     }
 
     override fun hentStemmekretserForIds(ids: Set<String>, gyldighetsdato: LocalDate?): List<KretsResponse> {
-        return stemmekretsService.hentStemmekretserForIds(ids, gyldighetsdato ?: LocalDate.now()).map { it.toKretsResponse(kodelisteService) }
+        return stemmekretsService.hentStemmekretserForIds(ids, gyldighetsdato ?: LocalDate.now()).map { it.toKretsResponse() }
     }
 
     override fun hentGrenserForStemmekrets(lokalid: String, gyldighetsdato: LocalDate?): FeatureCollection {

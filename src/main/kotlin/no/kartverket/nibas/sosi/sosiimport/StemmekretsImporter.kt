@@ -57,11 +57,10 @@ class StemmekretsImporter @Autowired constructor(private val kommunalKretsImport
             stemmekrets.oppdaterOmraadeOgPosisjon()
             stemmekrets = stemmekretsRepository.save(stemmekrets)
 
-            // Setter kommunenummerId fra GeoNorge samt kobling til kommune
-            val kommunenummerUuid = kodelisteService.getKommunenummerIdByCodeValue(forsteFlate.getKommunenummer())
+            val kommunenummer = forsteFlate.getKommunenummer()
             val gyldighetsdato = stemmekrets.gyldighet.gyldigFra
-            val kommune = kommuneRepository.findGyldigKommuneForKommunenummer(kommunenummerUuid, gyldighetsdato)
-                ?: throw RuntimeException("Fant ikke kommune med kommunenummerUuid $kommunenummerUuid og gyldig fra $gyldighetsdato")
+            val kommune = kommuneRepository.findGyldigKommuneForKommunenummer(kommunenummer, gyldighetsdato)
+                ?: throw RuntimeException("Fant ikke kommune med kommunenummer $kommunenummer og gyldig fra $gyldighetsdato")
 
             kommune.addStemmekrets(stemmekrets)
         }

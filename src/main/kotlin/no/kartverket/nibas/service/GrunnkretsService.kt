@@ -10,7 +10,6 @@ import no.kartverket.nibas.common.createIdentifikator
 import no.kartverket.nibas.common.getInSpraak
 import no.kartverket.nibas.common.toNorskFormat
 import no.kartverket.nibas.domain.Endringstype
-import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.domain.Kommune
@@ -119,7 +118,7 @@ class GrunnkretsService(
     private fun createDuplikatGrunnkretsnummerException(grunnkrets: Grunnkrets): ResponseException.BadRequestException {
         val kommune = grunnkrets.getKommune(grunnkrets.gyldighet.gyldigFra)
         val kommunenavn = kommune?.getAdministrativenhetNavn(grunnkrets.gyldighet.gyldigFra)?.getInSpraak("nor") ?: "UKJENT KOMMUNE"
-        val kommunenummer = kommune?.let { kodelisteService.getCodeValueByKommunenummerId(it.kommunenummer) }
+        val kommunenummer = kommune?.kommunenummer
         val gyldigFraTekst = grunnkrets.gyldighet.gyldigFra.toNorskFormat()
         val gyldigTilTekst = grunnkrets.gyldighet.gyldigTil?.let { "til ${it.toNorskFormat()}" } ?: "og fremover"
 
@@ -142,7 +141,7 @@ class GrunnkretsService(
 
     fun createNyVersjonAvGrunnkretsIAnnenKommune(grunnkrets: Grunnkrets, kommune: Kommune, nyttGrunnkretsNummer: String,
                                                  gyldigFra: LocalDate, endringstype: Endringstype): Grunnkrets {
-        //Antar at kommune stemmer med angitt kommunenummerIKlartekst, for å slippe å søke opp kommunen for hver grunnkrets som skal flyttes
+        //Antar at kommune sitt kommunenummer stemmer med angitt nytt grunnkretsnummer, for å slippe å søke opp kommunen for hver grunnkrets som skal flyttes
         val nyGrunnkrets = kopierOgSaveGrunnkrets(grunnkrets, gyldigFra, endringstype)
         nyGrunnkrets.grunnkretsnummer = nyttGrunnkretsNummer
         kommune.addGrunnkrets(nyGrunnkrets)

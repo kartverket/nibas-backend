@@ -22,7 +22,7 @@ class StemmekretsController(
 
     override fun hentStemmekrets(lokalid: String, gyldighetsdato: LocalDate?): StemmekretsResponse {
         val identifikator = createIdentifikator(lokalid, gyldighetsdato)
-        return stemmekretsService.hentStemmekrets(identifikator)?.toStemmekretsResponse(identifikator, kodelisteService)
+        return stemmekretsService.hentStemmekrets(identifikator)?.toStemmekretsResponse(identifikator)
             ?: throw NotFoundException("Stemmekrets $identifikator ble ikke funnet.")
     }
 
@@ -41,6 +41,6 @@ class StemmekretsController(
 
     override fun hentFramtidigeVersjonerForStemmekrets(lokalid: String, gyldighetsdato: LocalDate?): List<StemmekretsResponse> =
         stemmekretsService.hentFramtidigeVersjonerForStemmekrets(Lokalid(lokalid), gyldighetsdato)
-            .map { it.toStemmekretsResponse(Identifikator(Lokalid(it.lokalid), it.gyldighet.gyldigFra), kodelisteService) }
+            .map { it.toStemmekretsResponse(Identifikator(Lokalid(it.lokalid), it.gyldighet.gyldigFra)) }
 
 }

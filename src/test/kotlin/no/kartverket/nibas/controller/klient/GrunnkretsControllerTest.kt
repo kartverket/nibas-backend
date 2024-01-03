@@ -16,9 +16,7 @@ import no.kartverket.nibas.extensions.geometry.flateToFeature
 import no.kartverket.nibas.extensions.geometry.posisjonToFeature
 import no.kartverket.nibas.kodelister.KodelisteType
 import no.kartverket.nibas.kodelister.MissingKodelisteItemException
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.anyString
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -31,11 +29,6 @@ internal class GrunnkretsControllerTest : NibasMvcTest() {
 
     @MockBean
     private lateinit var grunnkretsService: GrunnkretsService
-
-    @BeforeEach
-    fun beforeEach() {
-        whenever(kodelisteServiceMock.getCodeValueByKommunenummerId(anyString())).thenReturn("0301")
-    }
 
     @Test
     fun hentGrunnkretsReturns200_OK() {

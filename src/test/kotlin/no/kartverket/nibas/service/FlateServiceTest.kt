@@ -17,8 +17,8 @@ import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.sosi.sosiimport.GrenseMedLokalid
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import no.kartverket.nibas.sporing.Gyldighet
+import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
 import org.locationtech.jts.geom.LineString
@@ -42,18 +42,23 @@ class FlateServiceTest {
     @MockBean
     lateinit var fylkeRepository: FylkeRepository
 
+    @Suppress("unused")
     @MockBean
     lateinit var nasjonRepository: NasjonRepository
 
+    @Suppress("unused")
     @MockBean
     lateinit var grunnkretsRepository: GrunnkretsRepository
 
+    @Suppress("unused")
     @MockBean
     lateinit var stemmekretsRepository: StemmekretsRepository
 
+    @Suppress("unused")
     @MockBean
     lateinit var grenseRepository: GrenseRepository
 
+    @Suppress("unused")
     @MockBean
     lateinit var kodelisteService: KodelisteService
 
@@ -79,13 +84,10 @@ class FlateServiceTest {
         )))
 
         val grunnkrets = GrunnkretsBuilder().build()
-        val kommune = KommuneBuilder().build()
-        val fylke = FylkeBuilder().build()
+        val kommune = KommuneBuilder().withKommunenummer("123").build()
+        val fylke = FylkeBuilder().withFylkesnummer("234").build()
 
-        whenever(kodelisteService.getCodeValueByKommunenummerId(kommune.kommunenummer)).thenReturn("123")
         whenever(enhetsGrenseRepository.hentGrenserMedRiktigRetning("123", kommune.tillatteGrensetyper())).thenReturn(kommunegrenser)
-
-        whenever(kodelisteService.getCodeValueByFylkesnummerId(fylke.fylkesnummer)).thenReturn("234")
         whenever(enhetsGrenseRepository.hentGrenserMedRiktigRetning("234", fylke.tillatteGrensetyper())).thenReturn(fylkesgrenser)
 
         val kommuneflate = SosiGeometryFunctions.dannFlaterMedHullBasertPaaGeometri(kommunegrenser.map{ GrenseMedLokalid(it.grense, it.lokalid) })
@@ -109,11 +111,12 @@ class FlateServiceTest {
             ))
         ))
 
-        val kommune = KommuneBuilder().build()
-
-        whenever(kodelisteService.getCodeValueByKommunenummerId(kommune.kommunenummer)).thenReturn("123")
+        val kommune = KommuneBuilder().withKommunenummer("123").build()
         whenever(enhetsGrenseRepository.hentGrenserMedRiktigRetning("123", kommune.tillatteGrensetyper())).thenReturn(kommunegrenser)
-        assertThrows<RuntimeException> { flateService.oppdaterFlaterFor(setOf(kommune)) }
+
+        Assertions.assertThatThrownBy { flateService.oppdaterFlaterFor(setOf(kommune)) }
+            .isInstanceOf(RuntimeException::class.java)
+            .hasMessageContaining("Klarte ikke å danne flate grunnet ukomplette flater, antall som feiler: 1")
     }
 
     @Test
@@ -131,11 +134,12 @@ class FlateServiceTest {
             )))
         )
 
-        val fylke = FylkeBuilder().build()
-
-        whenever(kodelisteService.getCodeValueByFylkesnummerId(fylke.fylkesnummer)).thenReturn("123")
+        val fylke = FylkeBuilder().withFylkesnummer("123").build()
         whenever(enhetsGrenseRepository.hentGrenserMedRiktigRetning("123", fylke.tillatteGrensetyper())).thenReturn(fylkesflater)
-        assertThrows<RuntimeException> { flateService.oppdaterFlaterFor(setOf(fylke)) }
+
+        Assertions.assertThatThrownBy { flateService.oppdaterFlaterFor(setOf(fylke)) }
+            .isInstanceOf(RuntimeException::class.java)
+            .hasMessageContaining("Klarte ikke å danne flate grunnet ukomplette flater, antall som feiler: 2")
     }
 
     @Test
@@ -154,9 +158,11 @@ class FlateServiceTest {
         )
 
         val nasjon = NasjonBuilder().build()
-
         whenever(enhetsGrenseRepository.hentGrenserMedRiktigRetning("", nasjon.tillatteGrensetyper())).thenReturn(nasjonsflate)
-        assertThrows<RuntimeException> { flateService.oppdaterFlaterFor(setOf(nasjon)) }
+
+        Assertions.assertThatThrownBy { flateService.oppdaterFlaterFor(setOf(nasjon)) }
+            .isInstanceOf(RuntimeException::class.java)
+            .hasMessageContaining("Klarte ikke å danne flate grunnet ukomplette flater, antall som feiler: 2")
     }
 
     private fun createGrenserad(grense: LineString): Grenserad {

@@ -46,9 +46,8 @@ class FylkesDelingService(
     fun delFylke(fylkesdelingManus: FylkesdelingManus) {
         logger.info("Deler fylke ${fylkesdelingManus.gammeltFylkesNummer} til ${fylkesdelingManus.nyeFylker.joinToString(", ") { it.fylkesNummer }}")
 
-        val fylkesnummerUuid = kodelisteService.getFylkesnummerIdByCodeValue(fylkesdelingManus.gammeltFylkesNummer)
         val fylkeSomSkalDeles = fylkeService.hentAlleFylker(fylkesdelingManus.fraDato)
-            .firstOrNull { it.fylkesnummer == fylkesnummerUuid }
+            .firstOrNull { it.fylkesnummer == fylkesdelingManus.gammeltFylkesNummer }
             ?: throw RuntimeException("Klarte ikke finne fylket som skulle deles. Gjelder fylkesnummer: ${fylkesdelingManus.gammeltFylkesNummer}")
 
         val nyeFylker = opprettNyeFylkerForFylkesdeling(fylkesdelingManus, fylkeSomSkalDeles)
@@ -72,7 +71,7 @@ class FylkesDelingService(
 
     private fun flyttKommunerTilNyttFylke(gyldighetsDato: LocalDate, kommunerSomSkalFlyttesTilNyttFylke: List<FylkesDelingKommuneManus>, gammeltFylke: Fylke): List<EventRad> {
         val kommuner = gammeltFylke.getKommuner(gyldighetsDato)
-            .associateBy { it.kommunenummer }
+            .associateBy { it.kommunenummerUuid }
 
         val nyeVersjonerAvGrunnkretser = mutableListOf<Grunnkrets>()
         val nyeVersjonerAvStemmekretser = mutableListOf<Stemmekrets>()
@@ -88,7 +87,7 @@ class FylkesDelingService(
                 kopierFraKommune = gammelKommune,
                 gyldigFra = gyldighetsDato,
                 endringstype = Endringstype.VEDTATT_DELING,
-                nyttKommunenummerIKlartekst = fylkesDelingKommuneManus.nyttKommuneNummer
+                nyttKommunenummer = fylkesDelingKommuneManus.nyttKommuneNummer
             )
 
             nyeVersjonerAvGrunnkretser += flyttGrunnkretserTilNyKommune(kommune, gammelKommune, gyldighetsDato, fylkesDelingKommuneManus.grunnkretser)
@@ -104,7 +103,7 @@ class FylkesDelingService(
             eventRader += nyeVersjonerAvStemmekretser.map { it.toEventRad(EventType.MODIFIED) }
         }
 
-        logger.info("Endrer grensetyper for splittingen av ${kodelisteService.getCodeValueByFylkesnummerId(gammeltFylke.fylkesnummer)}")
+        logger.info("Endrer grensetyper for splittingen av ${gammeltFylke.fylkesnummer}")
         grenseService.endreGrensetypeForGrunnkretser(nyeVersjonerAvGrunnkretser, gyldighetsDato, Endringstype.VEDTATT_DELING)
         grenseService.endreGrensetypeForStemmekretser(nyeVersjonerAvStemmekretser, gyldighetsDato, Endringstype.VEDTATT_DELING)
 
@@ -131,7 +130,7 @@ class FylkesDelingService(
         return fylkesdelingManus.nyeFylker.map { fylke ->
             fylkeService.createNyttFylkeMedNyUnikLokalid(
                 kopierFraFylke = originaltFylke,
-                nyttFylkesnummerIKlartekst = fylke.fylkesNummer,
+                nyttFylkesnummer = fylke.fylkesNummer,
                 gyldigFra = fylkesdelingManus.fraDato,
                 endringstype = Endringstype.VEDTATT_DELING,
                 admenhetnavnList = fylke.navn.map {

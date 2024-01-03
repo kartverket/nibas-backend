@@ -39,7 +39,6 @@ class KommuneControllerTest : NibasMvcTest() {
 
     @BeforeEach
     fun mockKodelisteService() {
-        whenever(kodelisteServiceMock.getCodeValueByKommunenummerId(anyString())).thenReturn("0301")
         whenever(hrefProviderMock.getHref(any(Identifikator::class.java))).thenReturn(href)
     }
 

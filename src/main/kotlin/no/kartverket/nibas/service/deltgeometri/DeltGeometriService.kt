@@ -63,7 +63,7 @@ class DeltGeometriService(
     }
 
     fun dannDeltGeometriForKommune(kommune: Kommune, gyldighetsDato: LocalDate = LocalDate.now()) {
-        val kommuneNr = kodelisteService.getCodeValueByKommunenummerId(kommune.kommunenummer)
+        val kommuneNr = kommune.kommunenummer
         val nyeAdministrativeGrenser = deltGeometriAdministrativeGrenserService.getAdministrativeGrenserMedDeltGeometriForKommune(kommune, gyldighetsDato)
 
         val grunnkretserSomSkalOppdateres = deltGeometriKretsService.getGrunnkretserSomGrenserTilKommunegrense(kommuneNr, gyldighetsDato)

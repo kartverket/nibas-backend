@@ -21,7 +21,6 @@ import no.kartverket.nibas.service.GrunnkretsService
 import no.kartverket.nibas.service.KommuneService
 import no.kartverket.nibas.extensions.geometry.grenseKoblingToFeature
 import no.kartverket.nibas.kodelister.KodelisteService
-import no.kartverket.nibas.kodelister.createKommunenummerFromUUID
 import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDate
 
@@ -50,7 +49,7 @@ class KommuneController(
     override fun hentKommune(lokalid: String, gyldighetsdato: LocalDate?): KommuneResponse {
         val identifikator = createIdentifikator(lokalid, gyldighetsdato)
         return kommuneService.hentKommune(identifikator)?.let {
-            it.toKommuneResponse(identifikator, kodelisteService.createKommunenummerFromUUID(it.kommunenummer))
+            it.toKommuneResponse(identifikator, Kommunenummer(it.kommunenummerUuid, it.kommunenummer))
         } ?: throw NotFoundException("Kommune $identifikator ble ikke funnet.")
     }
 
@@ -69,7 +68,7 @@ class KommuneController(
         val kommuneIdentifikator = createIdentifikator(lokalid, gyldighetsdato)
         return kommuneService.hentKommunesGrunnkretser(kommuneIdentifikator).map {
             val identifikatorForGrunnkrets = Identifikator(lokalid = Lokalid(it.lokalid), gyldighetsdato = kommuneIdentifikator.gyldighetsdato)
-            it.toGrunnkretsRef(identifikatorForGrunnkrets, grunnkretsService.hentAntallGyldigeVersjonerFramITidFor(identifikatorForGrunnkrets), hrefProvider, kodelisteService)
+            it.toGrunnkretsRef(identifikatorForGrunnkrets, grunnkretsService.hentAntallGyldigeVersjonerFramITidFor(identifikatorForGrunnkrets), hrefProvider)
         }
     }
 
@@ -77,27 +76,27 @@ class KommuneController(
         val kommuneIdentifikator = createIdentifikator(lokalid, gyldighetsdato)
         return kommuneService.hentKommunesStemmekretser(kommuneIdentifikator).map {
             val identifikatorForStemmekrets = Identifikator(lokalid = Lokalid(it.lokalid), gyldighetsdato = kommuneIdentifikator.gyldighetsdato)
-            it.toStemmekretsRef(identifikatorForStemmekrets, stemmekretsService.hentAntallGyldigeVersjonerFramITidFor(identifikatorForStemmekrets), hrefProvider, kodelisteService)
+            it.toStemmekretsRef(identifikatorForStemmekrets, stemmekretsService.hentAntallGyldigeVersjonerFramITidFor(identifikatorForStemmekrets), hrefProvider)
         }
     }
 }
 
-private fun Grunnkrets.toGrunnkretsRef(identifikator: Identifikator, antallFramtidigeVersjoner: Int = 0, hrefProvider: HrefProvider, kodelisteService: KodelisteService): GrunnkretsRef = GrunnkretsRef(
+private fun Grunnkrets.toGrunnkretsRef(identifikator: Identifikator, antallFramtidigeVersjoner: Int = 0, hrefProvider: HrefProvider): GrunnkretsRef = GrunnkretsRef(
     id = identifikator.toObjektIdentifikator(),
     navn = this.grunnkretsnavn!!,
     grunnkretsnummer = this.grunnkretsnummer!!,
     href = hrefProvider.getHref(identifikator),
-    kommunenummer = this.getKommune(identifikator.gyldighetsdato)?.let { kodelisteService.createKommunenummerFromUUID(it.kommunenummer) }
+    kommunenummer = this.getKommune(identifikator.gyldighetsdato)?.let { Kommunenummer(it.kommunenummerUuid, it.kommunenummer) }
         ?: Kommunenummer(id = "Ukjent", kodeverdi = "Ukjent"),
     antallFramtidigeVersjoner = antallFramtidigeVersjoner
 )
 
-fun Stemmekrets.toStemmekretsRef(identifikator: Identifikator, antallFramtidigeVersjoner: Int = 0, hrefProvider: HrefProvider, kodelisteService: KodelisteService): StemmekretsRef = StemmekretsRef(
+fun Stemmekrets.toStemmekretsRef(identifikator: Identifikator, antallFramtidigeVersjoner: Int = 0, hrefProvider: HrefProvider): StemmekretsRef = StemmekretsRef(
     id = identifikator.toObjektIdentifikator(),
     navn = this.stemmekretsnavn!!,
     nummer = this.stemmekretsnummer!!,
     href = hrefProvider.getHref(identifikator),
-    kommunenummer = this.getKommune(identifikator.gyldighetsdato)?.let { kodelisteService.createKommunenummerFromUUID(it.kommunenummer) }
+    kommunenummer = this.getKommune(identifikator.gyldighetsdato)?.let { Kommunenummer(it.kommunenummerUuid, it.kommunenummer) }
         ?: Kommunenummer(id = "Ukjent", kodeverdi = "Ukjent"),
     antallFramtidigeVersjoner = antallFramtidigeVersjoner,
     version = this.version,

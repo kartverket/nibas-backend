@@ -41,9 +41,11 @@ class FylkeImporter @Autowired constructor(
             null -> {
                 var fylke = administrativEnhetImporter.importer(flate) as Fylke
 
-                fylke.fylkesnummer = kodelisteService.getFylkesnummerIdByCodeValue(flate.getFylkesnummer()
-                            ?: throw RuntimeException("Fylkesnummer ikke satt i modellen for fylke med flate-id $lokalid")
-                    )
+                val flateSittFylkesnummer = flate.getFylkesnummer()
+                    ?: throw RuntimeException("Fylkesnummer ikke satt i modellen for fylke med flate-id $lokalid")
+                fylke.fylkesnummerUuid = kodelisteService.getFylkesnummerIdByCodeValue(flateSittFylkesnummer)
+                fylke.fylkesnummer = flateSittFylkesnummer
+
                 fylke.samiskforvaltningsomraade = flate.isSamiskForvaltningsomrade()
                 var unikLokalid = UnikLokalid(fylke.lokalid, Flatetype.FYLKE)
                 unikLokalid = unikLokalidRepository.save(unikLokalid)

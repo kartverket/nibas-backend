@@ -11,7 +11,6 @@ import no.kartverket.nibas.common.createIdentifikator
 import no.kartverket.nibas.extensions.flate.toFylkeRef
 import no.kartverket.nibas.extensions.flate.toFylkeResponse
 import no.kartverket.nibas.kodelister.KodelisteService
-import no.kartverket.nibas.repository.FylkeRepository
 import no.kartverket.nibas.service.FylkeService
 import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDate
@@ -25,14 +24,14 @@ class FylkeController(
 
     override fun hentFylke(lokalid: String, gyldighetsdato: LocalDate?): FylkeResponse {
         val identifikator = createIdentifikator(lokalid, gyldighetsdato)
-        return fylkeService.hentFylke(identifikator)?.toFylkeResponse(identifikator, kodelisteService)
+        return fylkeService.hentFylke(identifikator)?.toFylkeResponse(identifikator)
             ?: throw NotFoundException("Fylke $identifikator ble ikke funnet.")
     }
     override fun hentFylker(gyldighetsdato: LocalDate?): List<FylkeRef> {
         val datoToUse: LocalDate = gyldighetsdato ?: LocalDate.now()
         return fylkeService.hentAlleFylker(datoToUse).map {
             val identifikatorForFylke = Identifikator(Lokalid(it.lokalid), datoToUse)
-            it.toFylkeRef(identifikatorForFylke, fylkeService.hentAntallGyldigeVersjonerFramITidFor(identifikatorForFylke), hrefProvider, kodelisteService)
+            it.toFylkeRef(identifikatorForFylke, fylkeService.hentAntallGyldigeVersjonerFramITidFor(identifikatorForFylke), hrefProvider)
         }
     }
 }

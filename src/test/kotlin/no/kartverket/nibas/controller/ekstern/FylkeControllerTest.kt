@@ -7,7 +7,6 @@ import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.service.FylkeService
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.ArgumentMatchers.anyString
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -36,7 +35,6 @@ class FylkeControllerTest : NibasMvcTest() {
             .build()
 
         whenever(fylkeService.hentAlleFylker()).thenReturn(listOf(fylke))
-        whenever(kodelisteServiceMock.getCodeValueByFylkesnummerId(anyString())).thenReturn("1")
         get("/v1/ekstern/fylker", status().isOk)
     }
 
@@ -45,11 +43,10 @@ class FylkeControllerTest : NibasMvcTest() {
         whenever(fylkeService.hentFylke(any(Identifikator::class.java))).thenReturn(
             FylkeBuilder()
                 .withNavn("Vestland")
-                .withFylkesnummer("UUID-123")
+                .withFylkesnummerUuid("UUID-123")
                 .build()
         )
 
-        whenever(kodelisteServiceMock.getCodeValueByFylkesnummerId(anyString())).thenReturn("1")
         get("/v1/ekstern/fylker/1", status().isOk)
     }
 

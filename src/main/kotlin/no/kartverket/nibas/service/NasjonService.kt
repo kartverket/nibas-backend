@@ -5,7 +5,6 @@ import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.domain.Endringstype
-import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository

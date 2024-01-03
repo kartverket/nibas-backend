@@ -1,6 +1,5 @@
 package no.kartverket.nibas.service.deltgeometri
 
-import io.mockk.every
 import io.mockk.mockk
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.domain.Grunnkrets
@@ -10,7 +9,6 @@ import no.kartverket.nibas.domain.UnikLokalid
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.service.KommuneService
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.locationtech.jts.geom.Coordinate
 import java.time.LocalDate
@@ -117,16 +115,12 @@ internal class DeltGeometriAdministrativeGrenserServiceTest {
     val kodelisteServiceMock = mockk<KodelisteService>()
     val kommune = Kommune().apply {
         kommuneLokalid = UnikLokalid(flatetype = Flatetype.KOMMUNE)
+        kommunenummer = "123"
         alleGrunnkretser.forEach { this.addGrunnkrets(it) }
+        alleStemmekretser.forEach { this.addStemmekrets(it) }
     }
 
     val deltGeometriAdministrativeGrenserService = DeltGeometriAdministrativeGrenserService(kommuneServiceMock, kodelisteServiceMock)
-
-    @BeforeEach
-    fun setup() {
-        every { kodelisteServiceMock.getCodeValueByKommunenummerId(any()) } returns "123"
-        every { kommuneServiceMock.hentAlleStemmekretserForKommune(any(), any()) } returns alleStemmekretser
-    }
 
     @Test
     fun `skal ikke gi feil når den danner delt geometri for kommunen`() {
@@ -136,7 +130,7 @@ internal class DeltGeometriAdministrativeGrenserServiceTest {
     }
 
     @Test
-    fun `grensene skal splittes på stemmekretsknutepunkter som ikke er en del av grunnkretgrensene (punkt B og H)`() {
+    fun `grensene skal splittes på stemmekretsknutepunkter som ikke er en del av grunnkretsgrensene (punkt B og H)`() {
         val nyeGrenser = deltGeometriAdministrativeGrenserService.getAdministrativeGrenserMedDeltGeometriForKommune(kommune, LocalDate.now())
 
         assertThat(nyeGrenser).hasSize(4)

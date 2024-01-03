@@ -50,7 +50,7 @@ interface NasjonRepository : CrudRepositoryWithLokalIdFinder<Nasjon, String>
 interface FylkeInformasjonRepository : CrudRepository<FylkeInformasjon, String>
 interface FylkeRepository : CrudRepositoryWithLokalIdFinder<Fylke, String> {
 
-    fun findAllByFylkesnummer(fylkesnummerUuid: String): List<Fylke>
+    fun findAllByFylkesnummer(fylkesnummer: String): List<Fylke>
 }
 
 interface KommuneInformasjonRepository : CrudRepository<KommuneInformasjon, String>
@@ -90,6 +90,6 @@ data class KonfliktVersjon(val nyVersjon: Int, val eksisterende: Laasbar) {
 class OptimistiskLaasException(vararg val konflikter: KonfliktVersjon)
     : RuntimeException("Det er ikke samsvar med versjon")
 
-fun FylkeRepository.findGyldigFylkeForFylkesnummer(fylkesnummerUuid: String, gyldighetsdato: LocalDate = LocalDate.now()): Fylke? {
-    return findGyldigObjektPaaGyldighetsdato(findAllByFylkesnummer(fylkesnummerUuid), gyldighetsdato)
+fun FylkeRepository.findGyldigFylkeForFylkesnummer(fylkesnummer: String, gyldighetsdato: LocalDate = LocalDate.now()): Fylke? {
+    return findGyldigObjektPaaGyldighetsdato(findAllByFylkesnummer(fylkesnummer), gyldighetsdato)
 }

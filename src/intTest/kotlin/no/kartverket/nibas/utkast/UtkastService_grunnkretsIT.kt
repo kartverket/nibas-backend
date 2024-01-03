@@ -8,12 +8,9 @@ import no.kartverket.nibas.common.CurrentTime
 import no.kartverket.nibas.common.FeilVedOppdatering
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
-import no.kartverket.nibas.common.ResponseException
-import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
-import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.UtkastRepository
 import no.kartverket.nibas.service.utkast.UtkastService
 import no.kartverket.nibas.sporing.AuditInfo
@@ -47,9 +44,6 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
     @MockkBean
     private lateinit var currentTime: CurrentTime
 
-    @MockkBean
-    private lateinit var kodelisteServiceMock: KodelisteService
-
     @Autowired
     private lateinit var utkastService: UtkastService
     @Autowired
@@ -64,8 +58,8 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
     private val voi = "Voi"
 
     private val opprinneligGrunnkretsnr = "42190204"
-    private val grunnkretsnr6789 = "12345678"
-    private val grunnkretsnr0123 = "12340123"
+    private val grunnkretsnr6789 = "42195678"
+    private val grunnkretsnr0123 = "42190123"
 
     private val october23In2022 = ZonedDateTime.of(LocalDateTime.of(2022, Month.OCTOBER, 23, 12, 0), ZoneId.systemDefault())
     private val october24In2022 = ZonedDateTime.of(LocalDateTime.of(2022, Month.OCTOBER, 24, 12, 0), ZoneId.systemDefault())
@@ -79,7 +73,6 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
     fun beforeEach() {
         every { currentTime.asLocalDate() } returns LocalDate.of(2022, 6, 1)
         every { userFacade.getAuthenticatedUser() } returns "Testbruker 123"
-        every { kodelisteServiceMock.getCodeValueByKommunenummerId(any()) } returns "1234"
     }
 
     /**

@@ -12,7 +12,6 @@ import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.service.FylkeService
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.ArgumentMatchers.anyString
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -38,10 +37,10 @@ class FylkeControllerTest : NibasMvcTest() {
     fun thatHentAlleReturns200_OK() {
         val fylke = FylkeBuilder()
             .withNavn("Vestland")
+            .withFylkesnummer("1")
             .build()
 
         whenever(fylkeService.hentAlleFylker()).thenReturn(listOf(fylke))
-        whenever(kodelisteServiceMock.getCodeValueByFylkesnummerId(anyString())).thenReturn("1")
         get("/v1/fylker", status().isOk)
     }
 
@@ -50,11 +49,11 @@ class FylkeControllerTest : NibasMvcTest() {
         whenever(fylkeService.hentFylke(any(Identifikator::class.java))).thenReturn(
             FylkeBuilder()
                 .withNavn("Vestland")
-                .withFylkesnummer("UUID-123")
+                .withFylkesnummerUuid("UUID-123")
+                .withFylkesnummer("1")
                 .build()
         )
 
-        whenever(kodelisteServiceMock.getCodeValueByFylkesnummerId(anyString())).thenReturn("1")
         get("/v1/fylker/1", status().isOk)
     }
 

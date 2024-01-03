@@ -42,15 +42,13 @@ class KommuneDelingService(
     fun delKommune(kommuneDelingManus: KommunedelingManus) {
         logger.info("Deler kommune ${kommuneDelingManus.gammeltKommuneNummer} til ${kommuneDelingManus.nyeKommuner.joinToString(", ") { it.kommunenummer }}")
 
-        val kommuennummerUuid = kodelisteService.getKommunenummerIdByCodeValue(kommuneDelingManus.gammeltKommuneNummer)
-        val kommuneSomSkalDeles = kommuneService.hentKommuneByKommunenummer(kommuennummerUuid, kommuneDelingManus.fraDato)
+        val kommuneSomSkalDeles = kommuneService.hentKommuneByKommunenummer(kommuneDelingManus.gammeltKommuneNummer, kommuneDelingManus.fraDato)
             ?: throw RuntimeException("Klarte ikke finne kommunen som skulle deles. Gjelder kommunenummer: ${kommuneDelingManus.gammeltKommuneNummer}")
 
         val nyeKommuner = opprettNyeKommunerForKommunedeling(kommuneDelingManus, kommuneSomSkalDeles)
 
         val nyeVersjonerAvGrunnkretser = kommuneDelingManus.nyeKommuner.flatMap { nyKommuneManus ->
-            val kommunenummerId = kodelisteService.getKommunenummerIdByCodeValue(nyKommuneManus.kommunenummer)
-            val nyKommune = nyeKommuner.find { it.kommunenummer == kommunenummerId }!!
+            val nyKommune = nyeKommuner.find { it.kommunenummer == nyKommuneManus.kommunenummer }!!
 
             flyttGrunnkretserTilNyKommune(
                 gyldighetsDato = kommuneDelingManus.fraDato,
@@ -61,8 +59,7 @@ class KommuneDelingService(
         }
 
         val nyeVersjonerAvStemmekretser = kommuneDelingManus.nyeKommuner.flatMap { nyKommuneManus ->
-            val kommunenummerId = kodelisteService.getKommunenummerIdByCodeValue(nyKommuneManus.kommunenummer)
-            val nyKommune = nyeKommuner.find { it.kommunenummer == kommunenummerId }!!
+            val nyKommune = nyeKommuner.find { it.kommunenummer == nyKommuneManus.kommunenummer }!!
 
             flyttStemmekretserTilNyKommune(
                 gyldighetsDato = kommuneDelingManus.fraDato,
@@ -72,7 +69,7 @@ class KommuneDelingService(
             )
         }
 
-        logger.info("Endrer grensetyper for splittingen av ${kodelisteService.getCodeValueByKommunenummerId(kommuneSomSkalDeles.kommunenummer)}")
+        logger.info("Endrer grensetyper for splittingen av ${kommuneSomSkalDeles.kommunenummer}")
         kommuneService.settKommuneSomHistorisk(kommuneSomSkalDeles, kommuneDelingManus.fraDato)
         grenseService.endreGrensetypeForGrunnkretser(nyeVersjonerAvGrunnkretser, kommuneDelingManus.fraDato, Endringstype.VEDTATT_DELING)
         grenseService.endreGrensetypeForStemmekretser(nyeVersjonerAvStemmekretser, kommuneDelingManus.fraDato, Endringstype.VEDTATT_DELING)
@@ -124,7 +121,7 @@ class KommuneDelingService(
         kommunedelingManus.nyeKommuner.map { kommune ->
             kommuneService.createNyKommuneMedNyUnikLokalid(
                 kopierFraKommune = originalKommune,
-                nyttKommunenummerIKlartekst = kommune.kommunenummer,
+                nyttKommunenummer = kommune.kommunenummer,
                 gyldigFra =  kommunedelingManus.fraDato,
                 endringstype = Endringstype.VEDTATT_DELING,
                 admenhetnavnList = kommune.navn.map {

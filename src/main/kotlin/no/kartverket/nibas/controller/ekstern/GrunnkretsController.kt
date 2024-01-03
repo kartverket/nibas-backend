@@ -19,7 +19,7 @@ class GrunnkretsController(
 ) : GrunnkretsApi {
 
     override fun hentGrunnkretserForIds(ids: Set<String>, gyldighetsdato: LocalDate?): List<KretsResponse> {
-        return grunnkretsService.hentGrunnkretserForIds(ids, gyldighetsdato ?: LocalDate.now()).map { it.toKretsResponse(kodelisteService) }
+        return grunnkretsService.hentGrunnkretserForIds(ids, gyldighetsdato ?: LocalDate.now()).map { it.toKretsResponse() }
     }
 
     override fun hentGrenserForGrunnkrets(lokalid: String, gyldighetsdato: LocalDate?): FeatureCollection {

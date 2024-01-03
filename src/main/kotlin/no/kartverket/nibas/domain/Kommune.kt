@@ -25,6 +25,9 @@ class Kommune(
     override val lokalid: String = UUID.randomUUID().toString()
 ) : AdministrativEnhet(Flatetype.KOMMUNE) {
 
+    @Column(name = "kommunenummeruuid", nullable = false)
+    var kommunenummerUuid: String = ""
+
     @Column(name = "kommunenummer", nullable = false)
     var kommunenummer: String = ""
 
@@ -111,6 +114,7 @@ class Kommune(
 
     fun applyMappingFromExistingKommune(gammelKommune: Kommune): Kommune {
         return this.apply {
+            kommunenummerUuid = gammelKommune.kommunenummerUuid
             kommunenummer = gammelKommune.kommunenummer
             samiskforvaltningsomraade = gammelKommune.samiskforvaltningsomraade
             datafangstdato = gammelKommune.datafangstdato

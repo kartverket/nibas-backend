@@ -8,8 +8,6 @@ import no.kartverket.nibas.common.CurrentTime
 import no.kartverket.nibas.common.FeilVedOppdatering
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
-import no.kartverket.nibas.common.ResponseException
-import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
@@ -195,7 +193,7 @@ class UtkastService_stemmekretsIT : TestWithDbContainer() {
             .extracting("id").contains("e24e9dcf-4ae9-475c-afc2-1a5c49f166e4", "ny-e24e9dcf-4ae9-475c-afc2-1a5c49f166e4")
         Assertions.assertThat(kommune.fylkeLokalid.fylker).hasSize(2)
             .extracting("id").contains("f2e85556-471b-4807-a1bf-6da7478e7cda", "ny-47f4ef26-f1c1-4bbf-9f1b-8e37e70cc6a1")
-        Assertions.assertThat(kommune.fylkeLokalid.kommunerForFylke).hasSize(52)
+        Assertions.assertThat(kommune.fylkeLokalid.kommunerForFylke).hasSize(2)
     }
 
     private fun saveAndPubliserStemmekretsUtkast(navn: String, stemmekretsNr: String, stemmekretsNavn: String,

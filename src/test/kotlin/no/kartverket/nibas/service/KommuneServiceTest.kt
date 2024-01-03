@@ -1,6 +1,5 @@
 package no.kartverket.nibas.service
 
-import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -168,7 +167,6 @@ class KommuneServiceTest {
                 .build()
         val gyldighetsdato: LocalDate = LocalDate.of(2023, Month.JANUARY, 1)
         val kommunenummer = "0301"
-        val kommunenummerUUID = "23b34165-bd8b-4eae-9356-4237ca68f287"
         val kommune =
             KommuneBuilder()
                 .withNavn("Oslo")
@@ -177,11 +175,9 @@ class KommuneServiceTest {
                 .withStemmekrets(stemmekrets3)
                 .build()
 
-        every { kodelisteServiceMock.getKommunenummerIdByCodeValue(eq(kommunenummer)) } returns
-            kommunenummerUUID
         every {
             kommuneRepositoryMock.findGyldigKommuneForKommunenummer(
-                eq(kommunenummerUUID),
+                eq(kommunenummer),
                 eq(gyldighetsdato)
             )
         } returns kommune
@@ -207,7 +203,6 @@ class KommuneServiceTest {
                 .build()
         val gyldighetsdato: LocalDate = LocalDate.of(2023, Month.JANUARY, 1)
         val kommunenummer = "0301"
-        val kommunenummerUUID = "23b34165-bd8b-4eae-9356-4237ca68f287"
         val kommune =
             KommuneBuilder()
                 .withNavn("Oslo")
@@ -216,11 +211,9 @@ class KommuneServiceTest {
                 .withGrunnkrets(gk3)
                 .build()
 
-        every { kodelisteServiceMock.getKommunenummerIdByCodeValue(eq(kommunenummer)) } returns
-            kommunenummerUUID
         every {
             kommuneRepositoryMock.findGyldigKommuneForKommunenummer(
-                eq(kommunenummerUUID),
+                eq(kommunenummer),
                 eq(gyldighetsdato)
             )
         } returns kommune

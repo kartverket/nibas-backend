@@ -4,6 +4,7 @@ import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.request.KommuneRequest
 import no.kartverket.nibas.api.v1.response.KommuneRef
+import no.kartverket.nibas.api.v1.response.Kommunenummer
 import no.kartverket.nibas.api.v1.response.toObjektIdentifikator
 import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
@@ -12,14 +13,12 @@ import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.common.UgyldigTilstandException
 import no.kartverket.nibas.domain.Administrativenhetnavn
 import no.kartverket.nibas.domain.Endringstype
-import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.UnikLokalid
 import no.kartverket.nibas.kodelister.KodelisteService
-import no.kartverket.nibas.kodelister.createKommunenummerFromUUID
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.FylkeRepository
 import no.kartverket.nibas.repository.KommuneRepository
@@ -51,8 +50,8 @@ class KommuneService(
     fun hentAlleKommuner(gyldighetsdato: LocalDate = LocalDate.now()): List<Kommune> = kommuneRepository.findAllGyldigPaaDato(gyldighetsdato)
     fun hentKommune(identifikator: Identifikator): Kommune? = kommuneRepository.findGyldigObjektForIdentifikator(identifikator)
 
-    fun hentKommuneByKommunenummer(kommunenummerUuid: String, gyldighetsdato: LocalDate): Kommune? {
-        return kommuneRepository.findGyldigKommuneForKommunenummer(kommunenummerUuid, gyldighetsdato)
+    fun hentKommuneByKommunenummer(kommunenummer: String, gyldighetsdato: LocalDate): Kommune? {
+        return kommuneRepository.findGyldigKommuneForKommunenummer(kommunenummer, gyldighetsdato)
     }
 
     fun hentKommunerForFylke(fylkeIdentifikator: Identifikator): List<Kommune> =
@@ -112,7 +111,7 @@ class KommuneService(
 
     fun createNyKommuneMedNyUnikLokalid(
         kopierFraKommune: Kommune,
-        nyttKommunenummerIKlartekst: String,
+        nyttKommunenummer: String,
         admenhetnavnList: List<Administrativenhetnavn> = emptyList(),
         gyldigFra: LocalDate,
         endringstype: Endringstype
@@ -121,7 +120,8 @@ class KommuneService(
             .applyMappingFromExistingKommune(kopierFraKommune)
             .apply {
                 setGyldigFra(gyldigFra)
-                kommunenummer = kodelisteService.getKommunenummerIdByCodeValue(nyttKommunenummerIKlartekst)
+                kommunenummer = nyttKommunenummer
+                kommunenummerUuid = kodelisteService.getKommunenummerIdByCodeValue(nyttKommunenummer)
                 version = 1
                 auditInfo.typeEndring = endringstype
                 utledetFra = kopierFraKommune
@@ -134,9 +134,9 @@ class KommuneService(
         nyKommune.addKommuneTilUnikLokalid(unikLokalid)
 
         // Fylkesnummer er de to første sifrene i kommunenummeret
-        val fylkesnummerUuid = kodelisteService.getFylkesnummerIdByCodeValue(nyttKommunenummerIKlartekst.substring(0, 2))
-        val fylke = fylkeRepository.findGyldigFylkeForFylkesnummer(fylkesnummerUuid, gyldigFra)
-            ?: throw RuntimeException("Fant ikke fylke med fylkesnummerUuid $fylkesnummerUuid og gyldig fra $gyldigFra")
+        val fylkesnummer = nyttKommunenummer.substring(0, 2)
+        val fylke = fylkeRepository.findGyldigFylkeForFylkesnummer(fylkesnummer, gyldigFra)
+            ?: throw RuntimeException("Fant ikke fylke med fylkesnummer $fylkesnummer og gyldig fra $gyldigFra")
 
         fylke.addKommune(nyKommune)
 
@@ -206,19 +206,14 @@ class KommuneService(
             navn = kommune.getAdministrativenhetNavn(identifikator.gyldighetsdato)
                 .map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version, it.rekkefoelge) },
             href = hrefProvider.getHref(identifikator),
-            kommunenummer = kodelisteService.createKommunenummerFromUUID(kommune.kommunenummer),
+            kommunenummer = Kommunenummer(kommune.kommunenummerUuid, kommune.kommunenummer),
             antallFramtidigeVersjoner = antallFramtidigeVersjoner
         )
     }
 
     private fun hentKommuneFraNumeriskNummer(numeriskKommunenummer: String, gyldighetsdato: LocalDate): Kommune {
-        try {
-            val kommunenummerUUID = kodelisteService.getKommunenummerIdByCodeValue(numeriskKommunenummer)
-            return hentKommuneByKommunenummer(kommunenummerUUID, gyldighetsdato)
-                ?: throw ResponseException.NotFoundException("Fant ikke kommune med nummer: $numeriskKommunenummer")
-        } catch (ex: NoSuchElementException) {
-            throw ResponseException.NotFoundException("Fant ikke kommunenummer-id for $numeriskKommunenummer")
-        }
+        return hentKommuneByKommunenummer(numeriskKommunenummer, gyldighetsdato)
+            ?: throw ResponseException.NotFoundException("Fant ikke kommune med nummer: $numeriskKommunenummer")
     }
 }
 

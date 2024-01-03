@@ -475,7 +475,7 @@ class GrenseService(
             for (grensekobling: GrenseKobling in stemmekrets.getGrenser(gyldigFra)) {
                 val stemmekretserForGrense = grensekobling.grense.stemmekretser(gyldigFra)
                 val kommunenumre = stemmekretserForGrense.mapNotNull { s ->
-                    s.getKommune(gyldigFra)?.let { kodelisteService.getCodeValueByKommunenummerId(it.kommunenummer) }
+                    s.getKommune(gyldigFra)?.kommunenummer
                 }
 
                 beregnNyGrensetype(kommunenumre)?.let { nyGrensetype ->

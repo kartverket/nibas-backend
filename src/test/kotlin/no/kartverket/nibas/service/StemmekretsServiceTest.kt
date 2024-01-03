@@ -28,6 +28,7 @@ class StemmekretsServiceTest {
     @MockkBean
     private lateinit var stemmekretsRepositoryMock: StemmekretsRepository
 
+    @Suppress("unused")
     @MockkBean
     private lateinit var kodelisteServiceMock: KodelisteService
 

@@ -15,7 +15,8 @@ import java.time.ZonedDateTime
 class FylkeBuilder(
     private val id: String = "1",
     private var objtype: String = "Fylke",
-    private var fylkesnummer: String = "UUID-2",
+    private var fylkesnummerUuid: String = "UUID-2",
+    private var fylkesnummer: String = "89",
     private var unikLokalid: UnikLokalid = UnikLokalid("fylke123", Flatetype.FYLKE),
     private var navn: String? = null,
     private var spraak: String = "NOR",
@@ -35,6 +36,11 @@ class FylkeBuilder(
     fun withNavn(navn: String, spraak: String = "NOR"): FylkeBuilder {
         this.navn = navn
         this.spraak = spraak
+        return this
+    }
+
+    fun withFylkesnummer(fylkesnummer: String): FylkeBuilder {
+        this.fylkesnummer = fylkesnummer
         return this
     }
 
@@ -63,6 +69,7 @@ class FylkeBuilder(
         }
 
         fylke.objtype = objtype
+        fylke.fylkesnummerUuid = fylkesnummerUuid
         fylke.fylkesnummer = fylkesnummer
         fylke.samiskforvaltningsomraade = samiskforvaltningsomraade
         fylke.auditInfo.endretdato = endretdato
@@ -74,8 +81,8 @@ class FylkeBuilder(
         return fylke
     }
 
-    fun withFylkesnummer(fylkesnummer: String): FylkeBuilder {
-        this.fylkesnummer = fylkesnummer
+    fun withFylkesnummerUuid(fylkesnummerUuid: String): FylkeBuilder {
+        this.fylkesnummerUuid = fylkesnummerUuid
         return this
     }
 

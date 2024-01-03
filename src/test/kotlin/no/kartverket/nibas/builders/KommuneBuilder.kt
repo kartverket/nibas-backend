@@ -15,7 +15,8 @@ import java.time.ZonedDateTime
 
 class KommuneBuilder(
     private val id: String = "a7dabf8d-4597-4735-b3cd-db462c61c39e",
-    private var kommunenummer: String = "UUID-1",
+    private var kommunenummerUuid: String = "UUID-1",
+    private var kommunenummer: String = "0301",
     private var unikLokalid: UnikLokalid = UnikLokalid("fe328f8d-fbde-4c21-ab28-cbc583be401f", Flatetype.KOMMUNE),
     private var navn: String? = null,
     private var spraak: String = "NOR",
@@ -36,6 +37,11 @@ class KommuneBuilder(
     fun withNavn(navn: String, spraak: String = "NOR"): KommuneBuilder {
         this.navn = navn
         this.spraak = spraak
+        return this
+    }
+
+    fun withKommunenummer(kommunenummer: String): KommuneBuilder {
+        this.kommunenummer = kommunenummer
         return this
     }
 
@@ -65,6 +71,7 @@ class KommuneBuilder(
             administrativenhetnavn = listOf(admNavn)
         }
 
+        kommune.kommunenummerUuid = kommunenummerUuid
         kommune.kommunenummer = kommunenummer
         kommune.samiskforvaltningsomraade = samiskforvaltningsomraade
         kommune.auditInfo.endretdato = endretdato

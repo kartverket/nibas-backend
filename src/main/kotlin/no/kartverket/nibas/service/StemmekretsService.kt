@@ -10,7 +10,6 @@ import no.kartverket.nibas.common.createIdentifikator
 import no.kartverket.nibas.common.getInSpraak
 import no.kartverket.nibas.common.toNorskFormat
 import no.kartverket.nibas.domain.Endringstype
-import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Stemmekrets
@@ -196,7 +195,7 @@ class StemmekretsService(
     private fun createDuplikatStemmekretsnummerException(stemmekrets: Stemmekrets): ResponseException.BadRequestException {
         val kommune = stemmekrets.getKommune(stemmekrets.gyldighet.gyldigFra)
         val kommunenavn = kommune?.getAdministrativenhetNavn(stemmekrets.gyldighet.gyldigFra)?.getInSpraak("nor") ?: "UKJENT KOMMUNE"
-        val kommunenummer = kommune?.let { kodelisteService.getCodeValueByKommunenummerId(it.kommunenummer) }
+        val kommunenummer = kommune?.kommunenummer
         val gyldigFraTekst = stemmekrets.gyldighet.gyldigFra.toNorskFormat()
         val gyldigTilTekst = stemmekrets.gyldighet.gyldigTil?.let { "til ${it.toNorskFormat()}" } ?: "og fremover"
 

@@ -25,6 +25,9 @@ class Fylke(
     override val lokalid: String = UUID.randomUUID().toString()
 ) : AdministrativEnhet(Flatetype.FYLKE) {
 
+    @Column(name = "fylkesnummeruuid", nullable = false)
+    var fylkesnummerUuid: String = ""
+
     @Column(name = "fylkesnummer", nullable = false)
     var fylkesnummer: String = ""
 
@@ -102,6 +105,7 @@ class Fylke(
 
     fun applyMappingFromExistingFylke(gammeltFylke: Fylke): Fylke {
         return this.apply {
+            fylkesnummerUuid = gammeltFylke.fylkesnummerUuid
             fylkesnummer = gammeltFylke.fylkesnummer
             samiskforvaltningsomraade = gammeltFylke.samiskforvaltningsomraade
             datafangstdato = gammeltFylke.datafangstdato
