@@ -125,6 +125,13 @@ class Grunnkrets(
         }
     }
 
+    override fun removeGrensekobling(gammelGrense: Grense) {
+        if (grenser.removeIf { it.grense.id == gammelGrense.id }) {
+            //Grensa ble tatt vekk fra grunnkretsen. Fjerner grunnkretsen også fra grensa (koblingen fra den andre veien), ellers feiler tester
+            gammelGrense.grunnkretser.removeIf { it.grunnkrets.id == this.id }
+        }
+    }
+
     fun addInformasjonselementerFrom(informasjonselementer: Set<GrunnkretsInformasjon>) {
         informasjonselementer.forEach { grunnkretsInformasjon ->
             setInfo(grunnkretsInformasjon.informasjon)

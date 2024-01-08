@@ -121,6 +121,13 @@ class Stemmekrets(
         }
     }
 
+    override fun removeGrensekobling(gammelGrense: Grense) {
+        if (grenser.removeIf { it.grense.id == gammelGrense.id }) {
+            //Grensa ble tatt vekk fra stemmekretsen. Fjerner stemmekretsen også fra grensa (koblingen fra den andre veien), ellers feiler tester
+            gammelGrense.stemmekretser.removeIf { it.stemmekrets.id == this.id }
+        }
+    }
+
     override fun toString(): String {
         return "Stemmekrets(id='$id', stemmekretsnummer=$stemmekretsnummer, stemmekretsnavn=$stemmekretsnavn, tellekretsnummer=$tellekretsnummer, " +
             "tellekretsnavn=$tellekretsnavn, valgdistriktsnummer=$valgdistriktsnummer)"
