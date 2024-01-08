@@ -5,6 +5,7 @@ import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.request.FylkeRequest
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
 import no.kartverket.nibas.api.v1.request.KommuneRequest
+import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.api.v1.request.NasjonRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
@@ -114,6 +115,8 @@ data class Operasjoner(
     val grenseendringer: Grenseendringer = Grenseendringer(),
     @Schema(description = "Sammenslåing av stemmekretser i samme kommune.")
     val stemmekretsSammenslaaingsendring: StemmekretsSammenslaaingsendringRequest? = null,
+    @Schema(description = "Deling av en stemmekrets eller grunnkrets")
+    val kretsDelingEnding: KretsDelingEndringRequest? = null,
 )
 
 @Schema(description = "Representasjon av endringer på metadata.")
