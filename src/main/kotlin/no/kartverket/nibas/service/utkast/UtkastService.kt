@@ -229,11 +229,6 @@ class UtkastService(
                 lagFlateEndring(modifiedStemmekrets, EventType.MODIFIED)
         } ?: emptyList()
 
-    data class DelingResult(
-        val viderefoert: Flate,
-        val ny: Flate
-    )
-
     private fun publiserKretsDelingEndring(
         kretsDelingEndringRequest: KretsDelingEndringRequest?,
         utkast: Utkast
