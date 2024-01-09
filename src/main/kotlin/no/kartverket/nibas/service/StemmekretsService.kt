@@ -166,7 +166,6 @@ class StemmekretsService(
         kretsDelingEndringRequest: KretsDelingEndringRequest, delingsDato: LocalDate, endringstype: Endringstype
     ): UtkastService.DelingResult {
         return UtkastService.DelingResult(
-            utgaatt = Stemmekrets(),
             viderefoert = Stemmekrets(),
             ny = Stemmekrets()
         )

@@ -230,7 +230,6 @@ class UtkastService(
         } ?: emptyList()
 
     data class DelingResult(
-        val utgaatt: Flate,
         val viderefoert: Flate,
         val ny: Flate
     )
@@ -253,7 +252,6 @@ class UtkastService(
             else -> throw RuntimeException("Støtter kun deling av grunnkrets eller stemmekrets")
         }
         listOf(
-            lagFlateEndring(delingResult.utgaatt, EventType.EXPIRED),
             lagFlateEndring(delingResult.viderefoert, EventType.MODIFIED),
             lagFlateEndring(delingResult.ny, EventType.ADDED)
         )

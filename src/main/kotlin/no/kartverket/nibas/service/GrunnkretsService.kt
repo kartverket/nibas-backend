@@ -146,7 +146,6 @@ class GrunnkretsService(
         kretsDelingEndringRequest: KretsDelingEndringRequest, delingsDato: LocalDate, endringstype: Endringstype
     ): UtkastService.DelingResult {
         return UtkastService.DelingResult(
-            utgaatt = Grunnkrets(),
             viderefoert = Grunnkrets(),
             ny = Grunnkrets()
         )
