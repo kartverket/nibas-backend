@@ -20,6 +20,7 @@ import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.extensions.geometry.flateToFeature
 import no.kartverket.nibas.extensions.geometry.posisjonToFeature
+import no.kartverket.nibas.service.FylkeService
 
 fun Grunnkrets.toKretsResponse(): KretsResponse = KretsResponse(
     id = lokalid,
@@ -52,17 +53,25 @@ fun Grunnkrets.toGrunnkretsResponse(identifikator: Identifikator): GrunnkretsRes
     version = version
 )
 
-fun Fylke.toFylkeRef(identifikator: Identifikator, antallFramtidigeVersjoner: Int = 0, hrefProvider: HrefProvider): FylkeRef = FylkeRef(
-    id = identifikator.toObjektIdentifikator(),
-    navn = getAdministrativenhetNavn(identifikator.gyldighetsdato)
-        .map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version, it.rekkefoelge) },
-    href = hrefProvider.getHref(identifikator),
-    fylkesnummer = Fylkesnummer(
-        id = fylkesnummerUuid,
-        kodeverdi = fylkesnummer
-    ),
-    antallFramtidigeVersjoner = antallFramtidigeVersjoner
-)
+fun Fylke.toFylkeRef(identifikator: Identifikator, fylkeService: FylkeService, hrefProvider: HrefProvider): FylkeRef {
+    val antallFramtidigeVersjoner = if (this.gyldighet.gyldigTil == null) {
+        0
+    } else {
+        fylkeService.hentAntallGyldigeVersjonerFramITidFor(identifikator)
+    }
+
+    return FylkeRef(
+        id = identifikator.toObjektIdentifikator(),
+        navn = getAdministrativenhetNavn(identifikator.gyldighetsdato)
+            .map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version, it.rekkefoelge) },
+        href = hrefProvider.getHref(identifikator),
+        fylkesnummer = Fylkesnummer(
+            id = fylkesnummerUuid,
+            kodeverdi = fylkesnummer
+        ),
+        antallFramtidigeVersjoner = antallFramtidigeVersjoner
+    )
+}
 
 
 fun Fylke.toFylkeResponse(identifikator: Identifikator): FylkeResponse = FylkeResponse(

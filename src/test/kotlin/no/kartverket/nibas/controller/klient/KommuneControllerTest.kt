@@ -105,6 +105,33 @@ class KommuneControllerTest : NibasMvcTest() {
                         navn = "Voi",
                         grunnkretsnummer = "8989",
                         href = href,
+                        antallFramtidigeVersjoner = 0,
+                        kommunenummer = Kommunenummer("UUID-1", "0301"),
+                    )),
+                resultMatchers = listOf(status().isOk)
+            ))
+    }
+
+    @Test
+    fun hentGrunnkretserForKommuneMedFremtidigeVersjonerGir200_OK() {
+        val grunnkrets = GrunnkretsBuilder(
+            lokalId = Lokalid("123"),
+            grunnkretsnavn = "Voi",
+            grunnkretsnummer = "8989",
+            gyldigFra = LocalDate.of(2022, 1,1),
+            gyldigTil = LocalDate.of(2024, 1, 1)
+        ).build()
+        whenever(kommuneService.hentKommunesGrunnkretser(any(Identifikator::class.java))).thenReturn(listOf(grunnkrets))
+        whenever(grunnkretsService.hentAntallGyldigeVersjonerFramITidFor(any(Identifikator::class.java))).thenReturn(1)
+
+        get("/v1/kommuner/1/grunnkretser?gyldighetsdato=${formattedDateString(LocalDate.now())}",
+            responseAsserts = MockResponseAsserts(
+                expectedResponseObject = listOf(
+                    GrunnkretsRef(
+                        id = ObjektIdentifikator(lokalid = Lokalid("123"), gyldighetsdato = LocalDate.now()),
+                        navn = "Voi",
+                        grunnkretsnummer = "8989",
+                        href = href,
                         antallFramtidigeVersjoner = 1,
                         kommunenummer = Kommunenummer("UUID-1", "0301"),
                     )),
