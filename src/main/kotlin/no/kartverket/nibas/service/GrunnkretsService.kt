@@ -1,6 +1,7 @@
 package no.kartverket.nibas.service
 
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
+import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
@@ -22,6 +23,7 @@ import no.kartverket.nibas.repository.findAllGyldigPaaDato
 import no.kartverket.nibas.repository.findAntallFramtidigeVersjonerForIdentifikator
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
+import no.kartverket.nibas.service.utkast.UtkastService
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -137,6 +139,17 @@ class GrunnkretsService(
             msg = "Fant ikke kommune for grunnkrets med id ${grunnkrets.id}, grunnkretsnummer ${grunnkrets.grunnkretsnummer} og gyldig fra $gyldigFra")
         kommune.addGrunnkrets(nyGrunnkrets)
         return nyGrunnkrets
+    }
+
+    // TODO
+    fun delGrunnkrets(
+        kretsDelingEndringRequest: KretsDelingEndringRequest, delingsDato: LocalDate, endringstype: Endringstype
+    ): UtkastService.DelingResult {
+        return UtkastService.DelingResult(
+            utgaatt = Grunnkrets(),
+            viderefoert = Grunnkrets(),
+            ny = Grunnkrets()
+        )
     }
 
     fun createNyVersjonAvGrunnkretsIAnnenKommune(grunnkrets: Grunnkrets, kommune: Kommune, nyttGrunnkretsNummer: String,

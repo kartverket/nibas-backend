@@ -1,5 +1,6 @@
 package no.kartverket.nibas.service
 
+import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
 import no.kartverket.nibas.common.Identifikator
@@ -22,6 +23,7 @@ import no.kartverket.nibas.repository.findAllByLokalidSortedByGyldigFra
 import no.kartverket.nibas.repository.findAntallFramtidigeVersjonerForIdentifikator
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
+import no.kartverket.nibas.service.utkast.UtkastService
 import no.kartverket.nibas.sosi.sosiimport.GrenseMedLokalid
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions.lagFlate
@@ -157,6 +159,17 @@ class StemmekretsService(
         }
 
         return Pair(nyStemmekrets, stemmekretserSomUtgaar)
+    }
+
+    // TODO
+    fun delStemmekrets(
+        kretsDelingEndringRequest: KretsDelingEndringRequest, delingsDato: LocalDate, endringstype: Endringstype
+    ): UtkastService.DelingResult {
+        return UtkastService.DelingResult(
+            utgaatt = Stemmekrets(),
+            viderefoert = Stemmekrets(),
+            ny = Stemmekrets()
+        )
     }
 
     fun createNyVersjonAvStemmekrets(stemmekrets: Stemmekrets, gyldigFra: LocalDate, endringstype: Endringstype): Stemmekrets {
