@@ -141,14 +141,21 @@ class GrunnkretsService(
         return nyGrunnkrets
     }
 
-    // TODO
     fun delGrunnkrets(
         kretsDelingEndringRequest: KretsDelingEndringRequest, delingsDato: LocalDate, endringstype: Endringstype
-    ): UtkastService.DelingResult {
-        return UtkastService.DelingResult(
-            viderefoert = Grunnkrets(),
-            ny = Grunnkrets()
-        )
+    ): Grunnkrets {
+        val identifikator = Identifikator(Lokalid(kretsDelingEndringRequest.opprinneligKrets.lokalId), delingsDato)
+        val grunnkrets = hentGrunnkrets(identifikator)
+            ?: throw RuntimeException("Fant ikke grunnkrets med lokalid: ${kretsDelingEndringRequest.opprinneligKrets.lokalId} gylidg på $delingsDato")
+
+        val nyGrunnkrets = Grunnkrets().apply {
+            grunnkretsnavn = kretsDelingEndringRequest.kretsNavn
+            grunnkretsnummer = kretsDelingEndringRequest.kretsNummer
+            utledetFra = grunnkrets
+            setGyldigFra(delingsDato)
+        }
+
+        return nyGrunnkrets
     }
 
     fun createNyVersjonAvGrunnkretsIAnnenKommune(grunnkrets: Grunnkrets, kommune: Kommune, nyttGrunnkretsNummer: String,

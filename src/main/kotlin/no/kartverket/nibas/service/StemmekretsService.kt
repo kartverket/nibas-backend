@@ -161,14 +161,21 @@ class StemmekretsService(
         return Pair(nyStemmekrets, stemmekretserSomUtgaar)
     }
 
-    // TODO
     fun delStemmekrets(
         kretsDelingEndringRequest: KretsDelingEndringRequest, delingsDato: LocalDate, endringstype: Endringstype
-    ): UtkastService.DelingResult {
-        return UtkastService.DelingResult(
-            viderefoert = Stemmekrets(),
-            ny = Stemmekrets()
-        )
+    ): Stemmekrets {
+        val identifikator = Identifikator(Lokalid(kretsDelingEndringRequest.opprinneligKrets.lokalId), delingsDato)
+        val stemmekrets = hentStemmekrets(identifikator)
+            ?: throw RuntimeException("Fant ikke stemmekrets med lokalid: ${kretsDelingEndringRequest.opprinneligKrets.lokalId} gylidg på $delingsDato")
+
+        val nyStemmekrets = Stemmekrets().apply {
+            stemmekretsnavn = kretsDelingEndringRequest.kretsNavn
+            stemmekretsnummer = kretsDelingEndringRequest.kretsNummer
+            utledetFra = stemmekrets
+            setGyldigFra(delingsDato)
+        }
+
+        return nyStemmekrets
     }
 
     fun createNyVersjonAvStemmekrets(stemmekrets: Stemmekrets, gyldigFra: LocalDate, endringstype: Endringstype): Stemmekrets {

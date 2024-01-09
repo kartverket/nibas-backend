@@ -238,7 +238,7 @@ class UtkastService(
         kretsDelingEndringRequest: KretsDelingEndringRequest?,
         utkast: Utkast
     ): List<EventRad> = kretsDelingEndringRequest?.let { kretsDelingEndring ->
-        val delingResult = when(kretsDelingEndring.flatetype) {
+        val nyKrets = when(kretsDelingEndring.flatetype) {
             Flatetype.STEMMEKRETS -> stemmekretsService.delStemmekrets(
                 kretsDelingEndring,
                 utkast.gyldigFra,
@@ -252,8 +252,7 @@ class UtkastService(
             else -> throw RuntimeException("Støtter kun deling av grunnkrets eller stemmekrets")
         }
         listOf(
-            lagFlateEndring(delingResult.viderefoert, EventType.MODIFIED),
-            lagFlateEndring(delingResult.ny, EventType.ADDED)
+            lagFlateEndring(nyKrets, EventType.ADDED)
         )
     } ?: emptyList()
 
