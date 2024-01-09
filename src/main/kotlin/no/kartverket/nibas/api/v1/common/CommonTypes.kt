@@ -116,7 +116,7 @@ data class Operasjoner(
     @Schema(description = "Sammenslåing av stemmekretser i samme kommune.")
     val stemmekretsSammenslaaingsendring: StemmekretsSammenslaaingsendringRequest? = null,
     @Schema(description = "Deling av en stemmekrets eller grunnkrets")
-    val kretsDelingEnding: KretsDelingEndringRequest? = null,
+    val kretsDelingEndring: KretsDelingEndringRequest? = null,
 )
 
 @Schema(description = "Representasjon av endringer på metadata.")
