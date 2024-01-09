@@ -30,7 +30,7 @@ class NasjonController(
         val datoToUse: LocalDate = gyldighetsdato?: LocalDate.now()
         return nasjonService.hentAlleNasjoner(datoToUse).map {
             val identifikatorForNasjon = Identifikator(Lokalid(it.lokalid), datoToUse)
-            it.toNasjonRef(identifikatorForNasjon, nasjonService.hentAntallGyldigeVersjonerFramITidFor(identifikatorForNasjon), hrefProvider)
+            it.toNasjonRef(identifikatorForNasjon, nasjonService, hrefProvider)
         }
     }
 
@@ -52,14 +52,21 @@ class NasjonController(
     }
 }
 
-fun Nasjon.toNasjonRef(identifikator: Identifikator, antallFramtidigeVersjoner: Int = 0, hrefProvider: HrefProvider): NasjonRefResponse =
-    NasjonRef(
+fun Nasjon.toNasjonRef(identifikator: Identifikator, nasjonService: NasjonService, hrefProvider: HrefProvider): NasjonRefResponse {
+    val antallFramtidigeVersjoner = if (this.gyldighet.gyldigTil == null) {
+        0
+    } else {
+        nasjonService.hentAntallGyldigeVersjonerFramITidFor(identifikator)
+    }
+
+    return NasjonRef(
         id = identifikator.toObjektIdentifikator(),
         navn = getAdministrativenhetNavn(identifikator.gyldighetsdato)
             .map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version, it.rekkefoelge) },
         href = hrefProvider.getHref(identifikator),
         antallFramtidigeVersjoner = antallFramtidigeVersjoner
     )
+}
 
 
 fun Nasjon.toNasjonResponse(identifikator: Identifikator): NasjonResponse =

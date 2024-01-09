@@ -114,7 +114,7 @@ class Grunnkrets(
 
     override fun replaceGrensekobling(gammelGrense: Grense, grense: Grense?, grenseKoblingAttributter: GrenseKoblingAttributter) {
         if (!tillatteGrensetyper().contains(grense?.grensetype) && grense != null) {
-            throw RuntimeException("Kan ikke oppdatere/legge til ${grense?.grensetype?.name} på enhet Grunnkrets")
+            throw RuntimeException("Kan ikke oppdatere/legge til ${grense.grensetype.name} på enhet Grunnkrets")
         }
         if (grenser.removeIf { it.grense.id == gammelGrense.id }) {
             //Grensa ble tatt vekk fra grunnkretsen. Fjerner grunnkretsen også fra grensa (koblingen fra den andre veien), ellers feiler tester
@@ -122,6 +122,13 @@ class Grunnkrets(
             if(grense != null) {
                 addGrensekobling(grense, grenseKoblingAttributter)
             }
+        }
+    }
+
+    override fun removeGrensekobling(gammelGrense: Grense) {
+        if (grenser.removeIf { it.grense.id == gammelGrense.id }) {
+            //Grensa ble tatt vekk fra grunnkretsen. Fjerner grunnkretsen også fra grensa (koblingen fra den andre veien), ellers feiler tester
+            gammelGrense.grunnkretser.removeIf { it.grunnkrets.id == this.id }
         }
     }
 

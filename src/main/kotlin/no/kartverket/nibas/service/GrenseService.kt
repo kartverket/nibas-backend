@@ -14,7 +14,6 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.StatistiskgrenseMetada
 import no.kartverket.nibas.api.v1.common.geojson.metadata.TerritorialgrenseMetadata
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
-import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.common.ResponseException.BadRequestException
 import no.kartverket.nibas.common.UgyldigTilstandException
 import no.kartverket.nibas.domain.Endringstype
@@ -41,7 +40,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
-import kotlin.system.measureTimeMillis
 
 @Transactional(readOnly = true)
 @Service
@@ -62,10 +60,6 @@ class GrenseService(
 
     fun hentGrense(identifikator: Identifikator): Grense? = grenseRepository.findGyldigObjektForIdentifikator(identifikator)
 
-    fun hentSisteVersjonAvGrense(identifikator: Identifikator): Grense? {
-        return grenseRepository.findAllByLokalid(identifikator.lokalid.value).maxBy { it.version }
-    }
-
     fun hentAlleVersjonerMedGyldigFraEtterGittDato(lokalid: String, gyldigFra: LocalDate): List<Grense> =
         grenseRepository.findAllByLokalid(lokalid)
             .filter { it.gyldighet.gyldigFra.isAfter(gyldigFra) }
@@ -73,49 +67,20 @@ class GrenseService(
 
     @Transactional(readOnly = false)
     fun lagreGrenser(grenser: FeatureCollection, gyldighetsdato: LocalDate = LocalDate.now(), endringstype: Endringstype): Set<Flate> {
-        val enheterSomSkalFlatedannes: Set<Flate>
 
-        val millis = measureTimeMillis {
-            val features = grenser.features
-            val (oppdaterteKretser, oppdaterteGrenser) = doLagreGrenser(
-                features = features,
-                gyldighetsdato = gyldighetsdato,
-                endringstype = endringstype
-            )
+        val enheterSomSkalFlatedannes = doLagreGrenser(
+            features = grenser.features,
+            gyldighetsdato = gyldighetsdato,
+            endringstype = endringstype
+        )
+        //Her er det bare å oppdatere, kretsene/adm.enhetene fikk ny versjon ved lagring av grenser og grensekoblinger
+        flateService.oppdaterFlaterFor(enheterSomSkalFlatedannes)
 
-            enheterSomSkalFlatedannes = features.flatMap {
-                val identifikator = featureIdToIdentifikator(it.id, gyldighetsdato)
-                val grense = if (it.properties.shouldArchive) {
-                    hentSisteVersjonAvGrense(identifikator) ?: throw ResponseException.NotFoundException("Grense $identifikator ble ikke funnet.")
-                } else {
-                    oppdaterteGrenser.firstOrNull { grense -> grense.lokalid == identifikator.lokalid.value } ?: throw ResponseException.NotFoundException("Grense $identifikator ble ikke funnet.")
-                }
-
-                when (Grensetype.fromValue(it.properties.type)) {
-                    //TODO: Når vi slår sammen administrative grenser for stemme- og grunnkrets må vi huske å oppdatere stemmekretsene også når vi oppdatererer en administrativ grense. Pr nå tas ikke disse flatene med utenfor "stemmekrets-sfæren"
-                    Grensetype.Kommunegrense -> grense.finnFlaterOppTilKommune(gyldighetsdato)
-                    Grensetype.Fylkesgrense -> grense.finnFlaterOppTilFylke(gyldighetsdato)
-                    Grensetype.Riksgrense -> grense.finnFlaterOppTilNasjon(gyldighetsdato)
-                    Grensetype.AvtaltAvgrensningslinje -> grense.finnFlaterOppTilNasjon(gyldighetsdato)
-                    Grensetype.Territorialgrense -> grense.finnFlaterOppTilNasjon(gyldighetsdato)
-                    Grensetype.Grunnkretsgrense -> grense.finnFlaterOppTilGrunnkrets(gyldighetsdato)
-                    Grensetype.Delomraadegrense -> grense.finnFlaterOppTilGrunnkrets(gyldighetsdato)
-                    Grensetype.Stemmekretsgrense -> grense.finnFlaterOppTilStemmekrets(gyldighetsdato)
-                    else -> throw RuntimeException("Not yet implemented for grensetype: ${it.properties.type}")
-                }
-            }.plus(oppdaterteKretser)
-                .toSet()
-
-            //Her er det bare å oppdatere, kretsene/adm.enhetene fikk ny versjon ved lagring av grenser og grensekoblinger
-            flateService.oppdaterFlaterFor(enheterSomSkalFlatedannes)
-        }
-
-        logger.debug("Tid brukt på å lagre grenser og oppdatere flater: $millis")
         return enheterSomSkalFlatedannes
     }
 
     // Feature.id vil være lokalid for grensa
-    private fun doLagreGrenser(features: List<Feature>, gyldighetsdato: LocalDate = LocalDate.now(), endringstype: Endringstype): Pair<Set<Flate>, Set<Grense>> {
+    private fun doLagreGrenser(features: List<Feature>, gyldighetsdato: LocalDate = LocalDate.now(), endringstype: Endringstype): Set<Flate> {
         // Hvis det er innkommende features med id ikke satt kastes HTTP 400
         if (features.any { feature -> feature.id == null }) {
             throw BadRequestException("En av de innsendte featurene med endring mangler ID.")
@@ -145,11 +110,6 @@ class GrenseService(
         features.forEach { feature ->
             val gammelGrense: Grense = findGrenseForIdentifikator(eksisterendeGrenser, featureIdToIdentifikator(feature.id, gyldighetsdato))
 
-            //todo Får bare inn én krets tilhørende grensa (TS-918). Må sjekke om grensa har flere kretser og oppdatere kretsen på den andre sida
-            //Må jobbe på en kopi av lista, for ikke å få ConcurrentModificationException
-            val gamleStemmekretsKoblinger = mutableSetOf<StemmekretsGrenseKobling>()
-            gamleStemmekretsKoblinger.addAll(gammelGrense.gyldigeStemmekretsGrenseKoblinger(gyldighetsdato))
-
             // Uansett om gyldigFra er identisk med grensens gyldigFra eller fram i tid: Lage ny rad (ny uuid, samme lokalid).
             logger.info("Lagrer grense: [${gammelGrense.grensetype.name} - id ${feature.id}]")
 
@@ -161,13 +121,13 @@ class GrenseService(
             }
             if (nyGrense != null){
                 grenserSomHarFaattNyVersjon[Lokalid(nyGrense.lokalid)] = nyGrense
-
             }
 
-            //Det må lages en ny forekomst for tilknyttede kretser, de får også oppdatert knytning til gjeldende grense.
+            //Det må lages en ny forekomst for grensa sine gamle tilknyttede kretser, de får samtidig oppdatert knytning til gjeldende grense.
             //De får oppdatert område etter at alle grensene er behandlet
 
-            gamleStemmekretsKoblinger.forEach {
+            //Må jobbe på en kopi av lista, for ikke å få ConcurrentModificationException
+            gammelGrense.gyldigeStemmekretsGrenseKoblinger(gyldighetsdato).forEach {
                 lagEvtNyVersjonAvStemmekretsOgEvtLeggTilNyGrense(flaterSomHarFaattNyVersjon, Identifikator(Lokalid(it.stemmekrets.lokalid), gyldighetsdato),
                     endringstype, gammelGrense, nyGrense,
                     GrenseKoblingAttributter(
@@ -179,10 +139,7 @@ class GrenseService(
                 )
             }
 
-            val gamleGrunnkretsKoblinger = mutableSetOf<GrunnkretsGrenseKobling>()
-            gamleGrunnkretsKoblinger.addAll(gammelGrense.gyldigeGrunnkretsGrenseKoblinger(gyldighetsdato))
-
-            gamleGrunnkretsKoblinger.forEach {
+            gammelGrense.gyldigeGrunnkretsGrenseKoblinger(gyldighetsdato).forEach {
                 lagEvtNyVersjonAvGrunnkretsOgLeggEvtTilNyGrense(flaterSomHarFaattNyVersjon, Identifikator(Lokalid(it.grunnkrets.lokalid), gyldighetsdato),
                     endringstype, gammelGrense, nyGrense,
                     GrenseKoblingAttributter(
@@ -199,18 +156,16 @@ class GrenseService(
             }
         }
 
-        // VIKTIG! Denne flushen MÅ stå etter alle endringer har blitt gjort BORTSETT fra tilhørighetendringer
-        grenseRepository.flush()
-
         // Etter alle andre endringer sjekker vi om det er endringer i tilhørighet for noen grenser
         features.forEach{ feature ->
             val grense = grenserSomHarFaattNyVersjon[featureIdToIdentifikator(feature.id, gyldighetsdato).lokalid]
-            if(grense != null){
+            if (grense != null) {
                 doEvtTilhorighetEndringer(feature, grense, gyldighetsdato, flaterSomHarFaattNyVersjon, endringstype)
             }
         }
+        grenseRepository.flush()
 
-        return Pair(flaterSomHarFaattNyVersjon.values.toSet(), grenserSomHarFaattNyVersjon.values.toSet())
+        return flaterSomHarFaattNyVersjon.values.toSet()
     }
 
     private fun sjekkForKonflikterForGrenserOgTilhorendeKretser(features: List<Feature>, eksisterendeGrenser: List<Grense>, gyldighetsdato: LocalDate){
@@ -245,7 +200,7 @@ class GrenseService(
 
     fun doEvtTilhorighetEndringer(
         innsendtFeature: Feature, grense: Grense, gyldighetsdato: LocalDate, flaterSomHarFaattNyVersjon: MutableMap<Lokalid, Flate>, endringstype: Endringstype
-    ){
+    ) {
         if (grense.grensetype == Grensetype.Grunnkretsgrense || grense.grensetype == Grensetype.Delomraadegrense){
             val innsendteTilhorigheter = innsendtFeature.properties.kontekstEgenskaper?.filter { it.type == KontekstEnhetType.GRUNNKRETS }
                 ?: throw RuntimeException("Ingen kontekstegenskaper for grense med id: ${grense.lokalid}")
@@ -257,17 +212,16 @@ class GrenseService(
                 val tilhorighetEndringer =
                     grenseKoblingService.getTilhorighetEndringer(eksisterendeTilhorigheter, innsendteTilhorigheter, gyldighetsdato)
 
-                val eksisterendeGrenser = mutableMapOf<Lokalid, List<Grense>>()
                 val lokalidForKretser = (innsendteTilhorigheter.map { it.id?.lokalid }+eksisterendeTilhorigheter.map { Lokalid(it.grunnkrets.lokalid) }).toSet()
                 lokalidForKretser.forEach {
                     if(it == null){
                         throw RuntimeException("Kontekst peker ikke til en grunnkrets")
                     }
-                    val grenser = grunnkretsService.hentGrenserForGrunnkrets(Identifikator(it, gyldighetsdato)).map { gk -> gk.grense }
-                    eksisterendeGrenser[it] = grenser
                 }
-                grenseKoblingService.leggTilGrenserForKretserViaKontekstEgenskaper(tilhorighetEndringer.nye, grense, eksisterendeGrenser, gyldighetsdato, flaterSomHarFaattNyVersjon, endringstype, Flatetype.GRUNNKRETS)
-                grenseKoblingService.fjernGrenseFraKretserViaGrenseKobling(grense, eksisterendeGrenser, tilhorighetEndringer.frafallende, gyldighetsdato, flaterSomHarFaattNyVersjon, endringstype)
+                grenseKoblingService.leggTilGrenserForKretserViaKontekstEgenskaper(tilhorighetEndringer.nye, grense, gyldighetsdato, flaterSomHarFaattNyVersjon,
+                    endringstype, Flatetype.GRUNNKRETS)
+                grenseKoblingService.fjernGrenseFraKretserViaGrenseKobling(grense, tilhorighetEndringer.frafallende, gyldighetsdato,
+                    flaterSomHarFaattNyVersjon, endringstype)
                 grenseKoblingService.oppdaterGrenseKoblingAttributter(lokalidForKretser, flaterSomHarFaattNyVersjon, Flatetype.GRUNNKRETS)
             }
         }
@@ -282,17 +236,16 @@ class GrenseService(
                 val tilhorighetEndringer =
                     grenseKoblingService.getTilhorighetEndringer(eksisterendeTilhorigheter, innsendteTilhorigheter, gyldighetsdato)
 
-                val eksisterendeGrenser = mutableMapOf<Lokalid, List<Grense>>()
                 val lokalidForKretser = (innsendteTilhorigheter.map { it.id?.lokalid }+eksisterendeTilhorigheter.map { Lokalid(it.stemmekrets.lokalid) }).toSet()
                 lokalidForKretser.forEach {
                     if(it == null){
                         throw RuntimeException("Kontekst peker ikke til en stemmekrets")
                     }
-                    val grenser = stemmekretsService.hentGrenserForStemmekrets(Identifikator(it, gyldighetsdato)).map { gk -> gk.grense }
-                    eksisterendeGrenser[it] = grenser
                 }
-                grenseKoblingService.leggTilGrenserForKretserViaKontekstEgenskaper(tilhorighetEndringer.nye, grense, eksisterendeGrenser, gyldighetsdato, flaterSomHarFaattNyVersjon, endringstype, Flatetype.STEMMEKRETS)
-                grenseKoblingService.fjernGrenseFraKretserViaGrenseKobling(grense, eksisterendeGrenser, tilhorighetEndringer.frafallende, gyldighetsdato, flaterSomHarFaattNyVersjon, endringstype)
+                grenseKoblingService.leggTilGrenserForKretserViaKontekstEgenskaper(tilhorighetEndringer.nye, grense, gyldighetsdato, flaterSomHarFaattNyVersjon,
+                    endringstype, Flatetype.STEMMEKRETS)
+                grenseKoblingService.fjernGrenseFraKretserViaGrenseKobling(grense, tilhorighetEndringer.frafallende, gyldighetsdato,
+                    flaterSomHarFaattNyVersjon, endringstype)
                 grenseKoblingService.oppdaterGrenseKoblingAttributter(lokalidForKretser, flaterSomHarFaattNyVersjon, Flatetype.STEMMEKRETS)
             }
         }
@@ -367,13 +320,10 @@ class GrenseService(
         //Må bytte ut koblinga til den oppdaterte grensa
         (grunnkrets as Grunnkrets).replaceGrensekobling(gammelGrense, nyGrense, grenseKoblingAttributter)
 
-        //En arkivert grense kan ikke være av typen nasjon/fylke/kommune, derfor returneres det her.
-        if (nyGrense == null) return
+        val grensetype = nyGrense?.grensetype ?: gammelGrense.grensetype
 
         //Hvis grensa er grense for kommune, fylke eller nasjon, skal det lages nye versjoner av dem
-        if (Grensetype.erNasjonsgrense(nyGrense.grensetype) ||
-            Grensetype.Fylkesgrense == nyGrense.grensetype ||
-            Grensetype.Kommunegrense == nyGrense.grensetype) {
+        if (Grensetype.erNasjonsgrense(grensetype) || Grensetype.Fylkesgrense == grensetype || Grensetype.Kommunegrense == grensetype) {
 
             //Skal lage ny versjon av kommune, hvis det ikke allerede er gjort
             val gammelKommune = grunnkrets.getKommune(gyldighetsdato = gyldigFra)
@@ -385,7 +335,7 @@ class GrenseService(
                 flaterSomHarFaattNyVersjon[kommuneLokalid] = kommune
             }
 
-            if (Grensetype.erNasjonsgrense(nyGrense.grensetype) || Grensetype.Fylkesgrense == nyGrense.grensetype) {
+            if (Grensetype.erNasjonsgrense(grensetype) || Grensetype.Fylkesgrense == grensetype) {
                 //Skal lage ny versjon av fylke, hvis det ikke allerede er gjort
                 val gammeltFylke = (kommune as Kommune).getFylke(gyldigFra)
                     ?: throw UgyldigTilstandException("Fant ikke gyldig fylke for $kommune")
@@ -396,7 +346,7 @@ class GrenseService(
                     flaterSomHarFaattNyVersjon[fylkeLokalid] = fylke
                 }
 
-                if (Grensetype.erNasjonsgrense(nyGrense.grensetype)) {
+                if (Grensetype.erNasjonsgrense(grensetype)) {
                     //Skal lage ny versjon av nasjon, hvis det ikke allerede er gjort
                     val gammelNasjon = (fylke as Fylke).getNasjon(gyldigFra)
                         ?: throw UgyldigTilstandException("Fant ikke gyldig nasjon for $fylke")

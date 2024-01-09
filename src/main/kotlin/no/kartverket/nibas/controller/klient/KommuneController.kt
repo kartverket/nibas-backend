@@ -68,7 +68,7 @@ class KommuneController(
         val kommuneIdentifikator = createIdentifikator(lokalid, gyldighetsdato)
         return kommuneService.hentKommunesGrunnkretser(kommuneIdentifikator).map {
             val identifikatorForGrunnkrets = Identifikator(lokalid = Lokalid(it.lokalid), gyldighetsdato = kommuneIdentifikator.gyldighetsdato)
-            it.toGrunnkretsRef(identifikatorForGrunnkrets, grunnkretsService.hentAntallGyldigeVersjonerFramITidFor(identifikatorForGrunnkrets), hrefProvider)
+            it.toGrunnkretsRef(identifikatorForGrunnkrets, grunnkretsService, hrefProvider)
         }
     }
 
@@ -76,28 +76,44 @@ class KommuneController(
         val kommuneIdentifikator = createIdentifikator(lokalid, gyldighetsdato)
         return kommuneService.hentKommunesStemmekretser(kommuneIdentifikator).map {
             val identifikatorForStemmekrets = Identifikator(lokalid = Lokalid(it.lokalid), gyldighetsdato = kommuneIdentifikator.gyldighetsdato)
-            it.toStemmekretsRef(identifikatorForStemmekrets, stemmekretsService.hentAntallGyldigeVersjonerFramITidFor(identifikatorForStemmekrets), hrefProvider)
+            it.toStemmekretsRef(identifikatorForStemmekrets, stemmekretsService, hrefProvider)
         }
     }
 }
 
-private fun Grunnkrets.toGrunnkretsRef(identifikator: Identifikator, antallFramtidigeVersjoner: Int = 0, hrefProvider: HrefProvider): GrunnkretsRef = GrunnkretsRef(
-    id = identifikator.toObjektIdentifikator(),
-    navn = this.grunnkretsnavn!!,
-    grunnkretsnummer = this.grunnkretsnummer!!,
-    href = hrefProvider.getHref(identifikator),
-    kommunenummer = this.getKommune(identifikator.gyldighetsdato)?.let { Kommunenummer(it.kommunenummerUuid, it.kommunenummer) }
-        ?: Kommunenummer(id = "Ukjent", kodeverdi = "Ukjent"),
-    antallFramtidigeVersjoner = antallFramtidigeVersjoner
-)
+private fun Grunnkrets.toGrunnkretsRef(identifikator: Identifikator, grunnkretsService: GrunnkretsService, hrefProvider: HrefProvider): GrunnkretsRef {
+    val antallFramtidigeVersjoner = if (this.gyldighet.gyldigTil == null) {
+        0
+    } else {
+        grunnkretsService.hentAntallGyldigeVersjonerFramITidFor(identifikator)
+    }
 
-fun Stemmekrets.toStemmekretsRef(identifikator: Identifikator, antallFramtidigeVersjoner: Int = 0, hrefProvider: HrefProvider): StemmekretsRef = StemmekretsRef(
-    id = identifikator.toObjektIdentifikator(),
-    navn = this.stemmekretsnavn!!,
-    nummer = this.stemmekretsnummer!!,
-    href = hrefProvider.getHref(identifikator),
-    kommunenummer = this.getKommune(identifikator.gyldighetsdato)?.let { Kommunenummer(it.kommunenummerUuid, it.kommunenummer) }
-        ?: Kommunenummer(id = "Ukjent", kodeverdi = "Ukjent"),
-    antallFramtidigeVersjoner = antallFramtidigeVersjoner,
-    version = this.version,
-)
+    return GrunnkretsRef(
+        id = identifikator.toObjektIdentifikator(),
+        navn = this.grunnkretsnavn!!,
+        grunnkretsnummer = this.grunnkretsnummer!!,
+        href = hrefProvider.getHref(identifikator),
+        kommunenummer = this.getKommune(identifikator.gyldighetsdato)?.let { Kommunenummer(it.kommunenummerUuid, it.kommunenummer) }
+            ?: Kommunenummer(id = "Ukjent", kodeverdi = "Ukjent"),
+        antallFramtidigeVersjoner = antallFramtidigeVersjoner
+    )
+}
+
+fun Stemmekrets.toStemmekretsRef(identifikator: Identifikator, stemmekretsService: StemmekretsService, hrefProvider: HrefProvider): StemmekretsRef {
+    val antallFramtidigeVersjoner = if (this.gyldighet.gyldigTil == null) {
+        0
+    } else {
+        stemmekretsService.hentAntallGyldigeVersjonerFramITidFor(identifikator)
+    }
+
+    return StemmekretsRef(
+        id = identifikator.toObjektIdentifikator(),
+        navn = this.stemmekretsnavn!!,
+        nummer = this.stemmekretsnummer!!,
+        href = hrefProvider.getHref(identifikator),
+        kommunenummer = this.getKommune(identifikator.gyldighetsdato)?.let { Kommunenummer(it.kommunenummerUuid, it.kommunenummer) }
+            ?: Kommunenummer(id = "Ukjent", kodeverdi = "Ukjent"),
+        antallFramtidigeVersjoner = antallFramtidigeVersjoner,
+        version = this.version,
+    )
+}
