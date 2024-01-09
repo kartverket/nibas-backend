@@ -146,11 +146,7 @@ class UtkastValidatorService(
         ))
         val harUgyldigMetadataendringPaaKretsDeling = if (operasjoner.kretsDelingEndring != null) {
             isMetadataendringUgyldig(
-                when(operasjoner.kretsDelingEndring.segmenteringFeature.properties.type){
-                    "Grunnkretsgrense" -> Flatetype.GRUNNKRETS
-                    "Stemmekretsgrense" -> Flatetype.STEMMEKRETS
-                    else -> throw ugyldigDelingException.feil
-                                                                                        },
+                operasjoner.kretsDelingEndring.flatetype,
                 operasjoner.kretsDelingEndring.kretsNavn,
                 operasjoner.kretsDelingEndring.kretsNummer,
                 operasjoner.kretsDelingEndring.opprinneligKrets.lokalId
