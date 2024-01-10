@@ -3,12 +3,16 @@ package no.kartverket.nibas.repository
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
+import no.kartverket.nibas.api.v1.common.Flatetype
+import no.kartverket.nibas.api.v1.common.geojson.MultiPolygon
 import no.kartverket.nibas.api.v1.request.KommuneRequest
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Spraakkode
+import no.kartverket.nibas.domain.Stemmekrets
+import no.kartverket.nibas.domain.UnikLokalid
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
 import no.kartverket.nibas.sporing.Gyldighet
@@ -17,6 +21,12 @@ import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.locationtech.jts.geom.Coordinate
+import org.locationtech.jts.geom.CoordinateSequence
+import org.locationtech.jts.geom.GeometryFactory
+import org.locationtech.jts.geom.Point
+import org.locationtech.jts.geom.Polygon
+import org.locationtech.jts.geom.impl.CoordinateArraySequence
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -80,6 +90,34 @@ class RepositoryTest : TestWithDbContainer() {
         val expectedGrunnkretsIds = setOf(grunnkrets1.id, grunnkrets2MedSammeLokalid.id)
         assertThat(grunnkretsIdsFunnet).isEqualTo(expectedGrunnkretsIds)
     }
+
+    @Test
+    fun findAllGrunnkretserByGrunnkretsnummer(){
+        val nummer = "01"
+        val grunnkrets1 = saveGrunnkrets("123", Lokalid("123"), grunnkretsnummer = nummer)
+        val grunnkrets2 = saveGrunnkrets("123", Lokalid("123"), grunnkretsnummer = nummer)
+        val grunnkrets3Ulik = saveGrunnkrets("123", Lokalid("123")).apply { grunnkretsnummer = "04" }
+        grunnkretsRepository.saveAll(listOf(grunnkrets1, grunnkrets2, grunnkrets3Ulik))
+
+        val res = grunnkretsRepository.findAllByGrunnkretsnummer("01")
+        assertThat(res.containsAll(listOf(grunnkrets1, grunnkrets2)))
+        assertThat(res).doesNotContain(grunnkrets3Ulik)
+    }
+
+    @Test
+    fun findAllByStemmekretsnummerAndKommuneLokalid(){
+        val kommuneUnikLokalid = UnikLokalid("1", Flatetype.KOMMUNE)
+        val nummer = "01"
+        val stemmekrets1 = saveStemmekrets("123", Lokalid("123"), stemmekretsnummer = nummer).apply { kommuneLokalid = kommuneUnikLokalid }
+        val stemmekrets2 = saveStemmekrets("123", Lokalid("123"), stemmekretsnummer = nummer).apply { kommuneLokalid = kommuneUnikLokalid }
+        val stemmekrets1IAnnenKommune = saveStemmekrets("123", Lokalid("123"), stemmekretsnummer = nummer).apply { kommuneLokalid = UnikLokalid("2", Flatetype.KOMMUNE) }
+        stemmekretsRepository.saveAll(listOf(stemmekrets1, stemmekrets2, stemmekrets1IAnnenKommune))
+
+        val stemmekretserFunnet = stemmekretsRepository.findAllByStemmekretsnummerAndKommuneLokalid("123", kommuneUnikLokalid)
+        assertThat(stemmekretserFunnet.containsAll(listOf(stemmekrets1, stemmekrets2)))
+        assertThat(stemmekretserFunnet).doesNotContain(stemmekrets1IAnnenKommune)
+    }
+
 
     @Test
     fun findAllGrunnkretserByLokalidFramITid() {
@@ -153,6 +191,24 @@ class RepositoryTest : TestWithDbContainer() {
                 grunnkretsnummer = "1234"
                 grunnkretsnavn = "Basvatn"
                 gyldighet = Gyldighet(gyldigFra = gyldigFra, gyldigTil = gyldigTil)
+            }
+    }
+
+    private fun createStemmekrets(lokalid: Lokalid,
+                                  gyldigFra: LocalDate = LocalDate.of(2023, Month.JANUARY, 1),
+                                  gyldigTil: LocalDate? = null): Stemmekrets {
+        val coordinatesArray = arrayOf(
+            Coordinate(1.0, 2.0),
+            Coordinate(3.0, 4.0)
+        )
+        val coordinates = CoordinateArraySequence(coordinatesArray)
+        return Stemmekrets(lokalid = lokalid.value)
+            .apply {
+                stemmekretsnummer = "1234"
+                stemmekretsnavn = "Basvatn"
+                gyldighet = Gyldighet(gyldigFra = gyldigFra, gyldigTil = gyldigTil)
+                omraade = org.locationtech.jts.geom.MultiPolygon(arrayOf<Polygon>(), GeometryFactory())
+                posisjon = Point(coordinates, GeometryFactory())
             }
     }
 

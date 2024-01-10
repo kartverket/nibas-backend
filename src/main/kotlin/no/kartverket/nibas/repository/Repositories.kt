@@ -61,6 +61,8 @@ interface GrunnkretsRepository : CrudRepositoryWithLokalIdFinder<Grunnkrets, Str
      * Trenger ikke ha med lokalid for kommune, siden grunnkretsnummer inneholder kommunenummer
      */
     fun findAllByGrunnkretsnummerAndLokalidIsNot(grunnkretsnummer: String, lokalid: String): List<Grunnkrets>
+
+    fun findAllByGrunnkretsnummer(grunnkretsnummer: String): List<Grunnkrets>
 }
 
 interface StemmekretsRepository : CrudRepositoryWithLokalIdFinder<Stemmekrets, String> {
@@ -71,6 +73,8 @@ interface StemmekretsRepository : CrudRepositoryWithLokalIdFinder<Stemmekrets, S
      */
     @Query(value = "SELECT * from stemmekrets s where s.stemmekretsnummer in (:stemmekretsnummer) and s.lokalid != (:lokalid) and s.kommunelokalid = (:kommune_lokalid) ", nativeQuery = true)
     fun findAllByStemmekretsnummerInAndLokalidIsNotAndKommuneLokalid(stemmekretsnummer: Set<String>, lokalid: String, kommune_lokalid: String): List<Stemmekrets>
+
+    fun findAllByStemmekretsnummerAndKommuneLokalid(stemmekretsnummer: String, kommuneLokalid: UnikLokalid): List<Stemmekrets>
 }
 
 interface GrenseRepository : JpaRepositoryWithLokalIdFinder<Grense, String>

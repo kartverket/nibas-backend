@@ -22,8 +22,8 @@ import no.kartverket.nibas.repository.findAllFramtidigeVersjonerByIdentifikator
 import no.kartverket.nibas.repository.findAllGyldigPaaDato
 import no.kartverket.nibas.repository.findAntallFramtidigeVersjonerForIdentifikator
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
+import no.kartverket.nibas.repository.findGyldigObjektPaaGyldighetsdato
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
-import no.kartverket.nibas.service.utkast.UtkastService
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -43,8 +43,7 @@ class GrunnkretsService(
 
     @Transactional(readOnly = true)
     fun hentGrunnkretsForGrunnkretsNummer(grunnkretsNummer: String, gyldighetsdato: LocalDate): Grunnkrets? {
-        // TODO
-        return Grunnkrets()
+        return findGyldigObjektPaaGyldighetsdato(grunnkretsRepository.findAllByGrunnkretsnummer(grunnkretsNummer))
     }
 
     @Transactional(readOnly = true)
