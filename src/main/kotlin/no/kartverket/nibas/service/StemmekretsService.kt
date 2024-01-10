@@ -3,6 +3,7 @@ package no.kartverket.nibas.service
 import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
+import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
@@ -23,7 +24,6 @@ import no.kartverket.nibas.repository.findAllByLokalidSortedByGyldigFra
 import no.kartverket.nibas.repository.findAntallFramtidigeVersjonerForIdentifikator
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
-import no.kartverket.nibas.service.utkast.UtkastService
 import no.kartverket.nibas.sosi.sosiimport.GrenseMedLokalid
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions.lagFlate
@@ -40,6 +40,12 @@ class StemmekretsService(
 ) {
 
     fun hentStemmekrets(identifikator: Identifikator): Stemmekrets? = stemmekretsRepository.findGyldigObjektForIdentifikator(identifikator)
+
+    @Transactional(readOnly = true)
+    fun hentStemmekretsForStemmekretsNummerIKommune(kommuneIdentifikator: ObjektIdentifikator, stemmekretsnummer: String, gyldighetsdato: LocalDate): Stemmekrets? {
+        // TODO
+        return Stemmekrets()
+    }
 
     fun hentSisteGyldigeStemmekrets(lokalid: String): Stemmekrets? =
         stemmekretsRepository.findAllByLokalid(lokalid = lokalid)

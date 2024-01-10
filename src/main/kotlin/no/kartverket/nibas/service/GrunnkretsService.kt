@@ -42,6 +42,12 @@ class GrunnkretsService(
     fun hentGrunnkrets(identifikator: Identifikator): Grunnkrets? = grunnkretsRepository.findGyldigObjektForIdentifikator(identifikator)
 
     @Transactional(readOnly = true)
+    fun hentGrunnkretsForGrunnkretsNummer(grunnkretsNummer: String, gyldighetsdato: LocalDate): Grunnkrets? {
+        // TODO
+        return Grunnkrets()
+    }
+
+    @Transactional(readOnly = true)
     fun hentSisteGyldigeGrunnkrets(lokalid: String): Grunnkrets? =
         grunnkretsRepository.findAllByLokalid(lokalid = lokalid)
             .filter { !it.gyldighet.slettet }

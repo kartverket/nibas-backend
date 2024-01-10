@@ -5,6 +5,7 @@ import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
+import no.kartverket.nibas.api.v1.common.geojson.KontekstEgenskaper
 import no.kartverket.nibas.api.v1.common.geojson.metadata.AdministrativGrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.AvtaltAvgrensningslinjeMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.KommunalKretsgrenseMetadata
@@ -198,6 +199,12 @@ class GrenseService(
         }
     }
 
+    // Hjelpeklasse for å holde oversikt over hvilke strategi en skal bruke for å hente frem krets i kontekstEgenskap
+    data class IdentifikatorHelper(
+        val brukLokalid: List<KontekstEgenskaper>,
+        val brukKretsNummer: List<KontekstEgenskaper>,
+    )
+
     fun doEvtTilhorighetEndringer(
         innsendtFeature: Feature, grense: Grense, gyldighetsdato: LocalDate, flaterSomHarFaattNyVersjon: MutableMap<Lokalid, Flate>, endringstype: Endringstype
     ) {
@@ -212,14 +219,17 @@ class GrenseService(
                 val tilhorighetEndringer =
                     grenseKoblingService.getTilhorighetEndringer(eksisterendeTilhorigheter, innsendteTilhorigheter, gyldighetsdato)
 
-                val lokalidForKretser = (innsendteTilhorigheter.map { it.id?.lokalid }+eksisterendeTilhorigheter.map { Lokalid(it.grunnkrets.lokalid) }).toSet()
-                lokalidForKretser.forEach {
-                    if(it == null){
-                        throw RuntimeException("Kontekst peker ikke til en grunnkrets")
-                    }
-                }
-                grenseKoblingService.leggTilGrenserForKretserViaKontekstEgenskaper(tilhorighetEndringer.nye, grense, gyldighetsdato, flaterSomHarFaattNyVersjon,
-                    endringstype, Flatetype.GRUNNKRETS)
+                // Kun innsendte kontekster kan ha objektidentifikator lik null, som betyr at vi må finne krets via grunnkretsnummer
+                val kontekster = tilhorighetEndringer.nye.partition { kontekstEgenskaper -> kontekstEgenskaper.id != null }
+                val nyeKontekster = IdentifikatorHelper(brukLokalid = kontekster.first, brukKretsNummer = kontekster.second)
+
+                val nyeLokaliderForKretser = grenseKoblingService.leggTilGrenserForKretserViaKontekstEgenskaper(
+                    nyeKontekster, grense, gyldighetsdato, flaterSomHarFaattNyVersjon, endringstype, Flatetype.GRUNNKRETS
+                )
+                val eksisterendeLokaliderForKretser = eksisterendeTilhorigheter.map { Lokalid(it.grunnkrets.lokalid) }.toSet()
+                val lokalidForKretser =
+                    (nyeLokaliderForKretser+eksisterendeLokaliderForKretser).toSet()
+
                 grenseKoblingService.fjernGrenseFraKretserViaGrenseKobling(grense, tilhorighetEndringer.frafallende, gyldighetsdato,
                     flaterSomHarFaattNyVersjon, endringstype)
                 grenseKoblingService.oppdaterGrenseKoblingAttributter(lokalidForKretser, flaterSomHarFaattNyVersjon, Flatetype.GRUNNKRETS)
@@ -236,14 +246,17 @@ class GrenseService(
                 val tilhorighetEndringer =
                     grenseKoblingService.getTilhorighetEndringer(eksisterendeTilhorigheter, innsendteTilhorigheter, gyldighetsdato)
 
-                val lokalidForKretser = (innsendteTilhorigheter.map { it.id?.lokalid }+eksisterendeTilhorigheter.map { Lokalid(it.stemmekrets.lokalid) }).toSet()
-                lokalidForKretser.forEach {
-                    if(it == null){
-                        throw RuntimeException("Kontekst peker ikke til en stemmekrets")
-                    }
-                }
-                grenseKoblingService.leggTilGrenserForKretserViaKontekstEgenskaper(tilhorighetEndringer.nye, grense, gyldighetsdato, flaterSomHarFaattNyVersjon,
-                    endringstype, Flatetype.STEMMEKRETS)
+                // Kun innsendte kontekster kan ha objektidentifikator lik null, som betyr at vi må finne krets via stemmekretsnummer og kommune
+                val kontekster = tilhorighetEndringer.nye.partition { kontekstEgenskaper -> kontekstEgenskaper.id != null }
+                val nyeKontekster = IdentifikatorHelper(brukLokalid = kontekster.first, brukKretsNummer = kontekster.second)
+
+                val nyeLokaliderForKretser = grenseKoblingService.leggTilGrenserForKretserViaKontekstEgenskaper(
+                    nyeKontekster, grense, gyldighetsdato, flaterSomHarFaattNyVersjon, endringstype, Flatetype.STEMMEKRETS
+                )
+                val eksisterendeLokaliderForKretser = eksisterendeTilhorigheter.map { Lokalid(it.stemmekrets.lokalid) }.toSet()
+                val lokalidForKretser =
+                    (nyeLokaliderForKretser+eksisterendeLokaliderForKretser).toSet()
+
                 grenseKoblingService.fjernGrenseFraKretserViaGrenseKobling(grense, tilhorighetEndringer.frafallende, gyldighetsdato,
                     flaterSomHarFaattNyVersjon, endringstype)
                 grenseKoblingService.oppdaterGrenseKoblingAttributter(lokalidForKretser, flaterSomHarFaattNyVersjon, Flatetype.STEMMEKRETS)

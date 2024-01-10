@@ -82,15 +82,15 @@ class GrenseKoblingService(
     }
 
     fun leggTilGrenserForKretserViaKontekstEgenskaper(
-        nyeKontekster: List<KontekstEgenskaper>,
+        nyeKontekster: GrenseService.IdentifikatorHelper,
         grense: Grense,
         gyldighetsDato: LocalDate,
         flaterSomHarFaattNyVersjon: MutableMap<Lokalid, Flate>,
         endringstype: Endringstype,
         kretsType: Flatetype
-    ) {
-        nyeKontekster.map { kontekstEgenskaper ->
-            if (kontekstEgenskaper.id == null) {
+    ): List<Lokalid> {
+        val lokalidForNyeEksiststerendeKretser = nyeKontekster.brukLokalid.map { kontekstEgenskaper ->
+            if (kontekstEgenskaper.id == null) { // må sjekkes da kotlin ikke klarer å se at identifikatorHelper har filtrerte kontkestet
                 throw RuntimeException("Kontekst peker ikke til en krets")
             }
 
@@ -114,7 +114,36 @@ class GrenseKoblingService(
             //Trenger ikke å gjøre noe med de eksisterende grensekoblingene for kretsen
             //Det er bare den nye koblingen som må legges til
             (nyVersjonAvKrets as KobletTilGrense).addGrensekobling(grense, GrenseKoblingAttributter())
+            return@map Lokalid(nyVersjonAvKrets.lokalid)
         }
+        val lokalidForNyeNyopprettedeKretser = nyeKontekster.brukKretsNummer.map { kontekstEgenskaper ->
+            if (kontekstEgenskaper.kretsNummer == null){
+                throw RuntimeException("Kontekst peker ikke til den nyopprettede kretsen")
+            }
+            // ikke vits å lete etter krets i utkast når kretsen er nyopprettet
+            val nyVersjonAvKrets = when(kretsType){
+                Flatetype.GRUNNKRETS -> grunnkretsService.createNyVersjonAvGrunnkrets(
+                    grunnkretsService.hentGrunnkretsForGrunnkretsNummer(kontekstEgenskaper.kretsNummer, gyldighetsDato)
+                        ?: throw RuntimeException("Fant ikke den nyopprettede grunnkretsen med grunnkretsnummer: ${kontekstEgenskaper.kretsNummer}"),
+                    gyldighetsDato,
+                    endringstype
+                )
+                Flatetype.STEMMEKRETS -> stemmekretsService.createNyVersjonAvStemmekrets(
+                    stemmekretsService.hentStemmekretsForStemmekretsNummerIKommune(kontekstEgenskaper.kommuneId
+                        ?: throw RuntimeException("Identifikator for kommune manglet for å finne stemmekrets med stemmekretsNummer: ${kontekstEgenskaper.kretsNummer}"), kontekstEgenskaper.kretsNummer, gyldighetsDato)
+                        ?: throw RuntimeException("Fant ikke den nyopprettede stemmekretsen med stemmekretsnummer: ${kontekstEgenskaper.kretsNummer} i kommune med identifikator: ${kontekstEgenskaper.kommuneId}"),
+                    gyldighetsDato,
+                    endringstype
+                )
+                else -> throw RuntimeException("Støtter kun Grunnkretser og Stemmekretser")
+            }
+
+            //Trenger ikke å gjøre noe med de eksisterende grensekoblingene for kretsen
+            //Det er bare den nye koblingen som må legges til
+            (nyVersjonAvKrets as KobletTilGrense).addGrensekobling(grense, GrenseKoblingAttributter())
+            return@map Lokalid(nyVersjonAvKrets.lokalid)
+        }
+        return lokalidForNyeEksiststerendeKretser+lokalidForNyeNyopprettedeKretser
     }
 
     fun <T : GrenseKobling> fjernGrenseFraKretserViaGrenseKobling(
