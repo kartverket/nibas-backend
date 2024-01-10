@@ -17,8 +17,6 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.StatistiskgrenseMetada
 import no.kartverket.nibas.api.v1.common.geojson.metadata.TerritorialgrenseMetadata
 import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
 import no.kartverket.nibas.common.Lokalid
-import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
-import no.kartverket.nibas.domain.StemmekretsGrenseKobling
 import no.kartverket.nibas.extensions.geometry.geometryToDto
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import org.locationtech.jts.geom.Coordinate
@@ -114,23 +112,4 @@ class FeatureBuilder(private val id: String? = "1") {
         return this
     }
 
-    // Bruk disse metodene for å unngå feilmelding fra tilhørighet-koden.
-    // Ved å sette kontekst lik de eksisterende grensekoblingene til grensen vil det ikke blir forsøkt å utføre tilhørighetendring.
-    fun withKontekstEgenskaperFromGrunnkretsGrenseKoblinger(grenseKoblinger: MutableSet<GrunnkretsGrenseKobling>, versionOverride: Int? = null, gyldighetsdato: LocalDate = LocalDate.now()): FeatureBuilder{
-        return withKontekstEgenskaper(
-            grenseKoblinger.map {
-                KontekstEgenskaper(
-                    ObjektIdentifikator(Lokalid(it.grunnkrets.lokalid), gyldighetsdato),
-                    KontekstEnhetType.GRUNNKRETS, versionOverride ?: it.grunnkrets.version) }
-        )
-    }
-
-    fun withKontekstEgenskaperFromStemmekretsGrenseKoblinger(grenseKoblinger: MutableSet<StemmekretsGrenseKobling>, versionOverride: Int? = null, gyldighetsdato: LocalDate = LocalDate.now()): FeatureBuilder{
-        return withKontekstEgenskaper(
-            grenseKoblinger.map {
-                KontekstEgenskaper(
-                    ObjektIdentifikator(Lokalid(it.stemmekrets.lokalid), gyldighetsdato),
-                    KontekstEnhetType.STEMMEKRETS, versionOverride ?: it.stemmekrets.version) }
-        )
-    }
 }

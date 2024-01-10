@@ -16,7 +16,7 @@ class GrenseController(
 
     override fun hentGrense(lokalid: String, gyldighetsdato: LocalDate?): Feature {
         val identifikatorForGrense = createIdentifikator(lokalid, gyldighetsdato)
-        return grenseService.hentGrense(identifikatorForGrense)?.grenseToFeature()
+        return grenseService.hentGrense(identifikatorForGrense)?.grenseToFeature(identifikatorForGrense.gyldighetsdato)
             ?: throw NotFoundException("Grense $identifikatorForGrense ble ikke funnet.")
     }
 

@@ -111,8 +111,8 @@ class DeltGeometriKretsService(
     }
 
     private fun erAdministrativGrenseForKommune(grense: Grense, kommunenr: String, gyldighetsDato: LocalDate): Boolean =
-        grense.erAdministrativGrense() && grense.stemmekretser.any {
-            kommunenr == it.stemmekrets.getKommune(gyldighetsDato)?.kommunenummer
+        grense.erAdministrativGrense() && grense.stemmekretser(gyldighetsDato).any {
+            kommunenr == it.getKommune(gyldighetsDato)?.kommunenummer
         }
 }
 

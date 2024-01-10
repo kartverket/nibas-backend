@@ -10,7 +10,6 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.KodelisteEntry
 import no.kartverket.nibas.api.v1.common.geojson.metadata.KommunalKretsgrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Posisjonskvalitet
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
-import no.kartverket.nibas.builders.FeatureBuilder
 import no.kartverket.nibas.builders.MaalemetodeKodeEnum
 import no.kartverket.nibas.builders.StemmekretsRequestBuilder
 import no.kartverket.nibas.common.Identifikator
@@ -21,6 +20,8 @@ import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Stemmekrets
+import no.kartverket.nibas.extensions.geometry.geometryToDto
+import no.kartverket.nibas.extensions.geometry.grenseToFeature
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
@@ -509,7 +510,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         val deltGrenseLokalid = "grenseDeltLokalid"
         val (vestreKrets, oestreKrets) = saveNaboStemmekretser(gyldigFra = opprinneligDato)
 
-        val vestreStemmekretsEtterOppdatering = utfoerMetadataoppdatering(kretsSomSkalOppdateres = vestreKrets, datoForOppdatering = datoForOppdatering)!!.apply { version = 1 }
+        val vestreStemmekretsEtterOppdatering = utfoerMetadataoppdatering(kretsSomSkalOppdateres = vestreKrets, datoForOppdatering = datoForOppdatering)!!
 
         val deltGrense = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), datoForOppdatering))!!
         assertThat(deltGrense.stemmekretser).hasSize(3)
@@ -548,7 +549,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         val deltGrenseLokalid = "grenseDeltLokalid"
         val (vestreKrets, oestreKrets) = saveNaboStemmekretser(gyldigFra = opprinneligDato)
 
-        val oestreStemmekretsEtterOppdatering = utfoerMetadataoppdatering(kretsSomSkalOppdateres = oestreKrets, datoForOppdatering = datoForOppdatering)!!.apply { version = 1 }
+        val oestreStemmekretsEtterOppdatering = utfoerMetadataoppdatering(kretsSomSkalOppdateres = oestreKrets, datoForOppdatering = datoForOppdatering)!!
 
         val deltGrense = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), datoForOppdatering))!!
         assertThat(deltGrense.stemmekretser).hasSize(3)
@@ -856,12 +857,8 @@ class StemmekretsServiceIT : TestWithDbContainer() {
             Coordinate(10.0, 0.0)
         ))
 
-        val oppdatertGrensefeature = FeatureBuilder(id = "grenseDeltLokalid")
-            .withGrenseversjon(grenseKobling.grense.version)
-            .withGrensetype(Grensetype.Stemmekretsgrense)
-            .withGeometry(oppdatertGeometri)
-            .withKontekstEgenskaperFromStemmekretsGrenseKoblinger(grenseKobling.grense.stemmekretser, gyldighetsdato = opprinneligDato)
-            .build()
+        val oppdatertGrensefeature = grenseKobling.grense.grenseToFeature(opprinneligDato)
+        oppdatertGeometri.geometryToDto().also { oppdatertGrensefeature.geometry = it }
 
         val features = if (featureAnnenOppdatertGrense != null)
             listOf(oppdatertGrensefeature, featureAnnenOppdatertGrense) else listOf(oppdatertGrensefeature)
@@ -883,12 +880,9 @@ class StemmekretsServiceIT : TestWithDbContainer() {
             grense.getCoordinateN(2).copy()
         ))
 
-        return FeatureBuilder(id = lokalidGrenseSomSkalEndres)
-            .withGrenseversjon(grenseKobling.grense.version)
-            .withGrensetype(Grensetype.Stemmekretsgrense)
-            .withGeometry(oppdatertGeometri)
-            .withKontekstEgenskaperFromStemmekretsGrenseKoblinger(kretsSomSkalHaGrenseendring.grenser, gyldighetsdato = opprinneligDato)
-            .build()
+        val oppdatertGrensefeature = grenseKobling.grense.grenseToFeature(opprinneligDato)
+        oppdatertGeometri.geometryToDto().also { oppdatertGrensefeature.geometry = it }
+        return oppdatertGrensefeature
     }
 
     fun settGrensetypeForGrenserSomIkkeErDelt(vestreKrets: Stemmekrets, oestreKrets: Stemmekrets, grensetype: Grensetype) {

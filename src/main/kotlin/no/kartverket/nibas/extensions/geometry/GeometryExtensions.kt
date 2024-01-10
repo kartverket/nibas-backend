@@ -81,39 +81,39 @@ private fun Polygon.getRings(): List<LinearRing> {
     return rings
 }
 
-fun Grense.grenseToFeature(): Feature {
+fun Grense.grenseToFeature(gyldighetsdato: LocalDate = LocalDate.now(), shouldArchive: Boolean = false): Feature {
     val grensetype = this.grensetype
-    var featureProperties = FeatureProperties(type = grensetype.value, srid = this.grense.srid, version = this.version)
+    var featureProperties = FeatureProperties(type = grensetype.value, srid = this.grense.srid, version = this.version, shouldArchive = shouldArchive)
     val metadataMapper = MetadataMapper()
     val featureMapper = FeatureMapper()
     featureProperties = when (grensetype) {
         Grensetype.Fylkesgrense -> featureProperties.copy(
             metadata = metadataMapper.toMetadataForAdministrativGrense(this),
-            kontekstEgenskaper = featureMapper.toKontekstEgenskaperForGrense(this))
+            kontekstEgenskaper = featureMapper.toKontekstEgenskaperForGrense(grense = this, gyldighetsdato = gyldighetsdato))
         Grensetype.Kommunegrense -> featureProperties.copy(
             metadata = metadataMapper.toMetadataForAdministrativGrense(this),
-            kontekstEgenskaper = featureMapper.toKontekstEgenskaperForGrense(this))
+            kontekstEgenskaper = featureMapper.toKontekstEgenskaperForGrense(grense = this, gyldighetsdato = gyldighetsdato))
         Grensetype.Riksgrense -> featureProperties.copy(
             metadata = metadataMapper.toMetadataForRiksgrense(this),
-            kontekstEgenskaper = featureMapper.toKontekstEgenskaperForGrense(this))
+            kontekstEgenskaper = featureMapper.toKontekstEgenskaperForGrense(grense = this, gyldighetsdato = gyldighetsdato))
         Grensetype.AvtaltAvgrensningslinje -> featureProperties.copy(
             metadata = metadataMapper.toMetadataForAvtaltAvgrensningslinje(this),
-            kontekstEgenskaper = featureMapper.toKontekstEgenskaperForGrense(this))
+            kontekstEgenskaper = featureMapper.toKontekstEgenskaperForGrense(grense = this, gyldighetsdato = gyldighetsdato))
         Grensetype.Territorialgrense -> featureProperties.copy(
             metadata = metadataMapper.toMetadataForTerritorialgrense(this),
-            kontekstEgenskaper = featureMapper.toKontekstEgenskaperForGrense(this))
+            kontekstEgenskaper = featureMapper.toKontekstEgenskaperForGrense(grense = this, gyldighetsdato = gyldighetsdato))
         Grensetype.Grunnlinje -> featureProperties.copy(
             metadata = metadataMapper.toMetadataForGrunnlinje(this),
-            kontekstEgenskaper = featureMapper.toKontekstEgenskaperForGrense(this))
+            kontekstEgenskaper = featureMapper.toKontekstEgenskaperForGrense(grense = this, gyldighetsdato = gyldighetsdato))
         Grensetype.Delomraadegrense -> featureProperties.copy(
             metadata = metadataMapper.toMetadataForStatistiskGrense(this),
-            kontekstEgenskaper = featureMapper.toKontekstEgenskaperForDelomraadeGrense(this))
+            kontekstEgenskaper = featureMapper.toKontekstEgenskaperForDelomraadeGrense(grense = this, gyldighetsdato = gyldighetsdato))
         Grensetype.Grunnkretsgrense -> featureProperties.copy(
             metadata = metadataMapper.toMetadataForStatistiskGrense(this),
-            kontekstEgenskaper = featureMapper.toKontekstEgenskaperForGrunnkretsGrense(this))
+            kontekstEgenskaper = featureMapper.toKontekstEgenskaperForGrunnkretsGrense(grense = this, gyldighetsdato = gyldighetsdato))
         Grensetype.Stemmekretsgrense -> featureProperties.copy(
             metadata = metadataMapper.toMetadataForKommunalKretsgrense(this),
-            kontekstEgenskaper = featureMapper.toKontekstEgenskaperForStemmekretsGrense(this))
+            kontekstEgenskaper = featureMapper.toKontekstEgenskaperForStemmekretsGrense(grense = this, gyldighetsdato = gyldighetsdato))
         else -> throw RuntimeException("Ikke støttet å mappe til metadata for grensetype: " + grensetype.name)
     }
     return Feature(
@@ -151,7 +151,7 @@ fun Flate.flateToFeature(version: Int): Feature {
 fun GrenseKobling.grenseKoblingToFeature(
     gyldighetsdato: LocalDate = LocalDate.now()
 ): Feature {
-   return getRelevantGrense(gyldighetsdato).grenseToFeature()
+   return getRelevantGrense(gyldighetsdato).grenseToFeature(gyldighetsdato)
 }
 
 fun GrenseKobling.grenseKoblingToKontekstEgenskaper(

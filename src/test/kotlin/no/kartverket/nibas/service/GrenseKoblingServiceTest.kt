@@ -38,9 +38,8 @@ class GrenseKoblingServiceTest {
     val grunnkrets1 = Grunnkrets(lokalid = "A").apply { grunnkretsnavn = "A"; grunnkretsnummer = "1" }
     val grunnkrets2 = Grunnkrets(lokalid = "B").apply { grunnkretsnavn = "B"; grunnkretsnummer = "2" }
 
-    val kontekstEgenskaper1 = KontekstEgenskaper(ObjektIdentifikator(Lokalid("A"), gyldighetsdato), KontekstEnhetType.GRUNNKRETS, 0)
-    val kontekstEgenskaper2 = KontekstEgenskaper(ObjektIdentifikator(Lokalid("C"), gyldighetsdato), KontekstEnhetType.GRUNNKRETS, 0)
-
+    val kontekstEgenskaper1 = KontekstEgenskaper(ObjektIdentifikator(Lokalid("A"), gyldighetsdato), null, null,  KontekstEnhetType.GRUNNKRETS, 0)
+    val kontekstEgenskaper2 = KontekstEgenskaper(ObjektIdentifikator(Lokalid("C"), gyldighetsdato), null, null, KontekstEnhetType.GRUNNKRETS, 0)
 
     val stemmekrets = Stemmekrets(lokalid = "A").apply { stemmekretsnavn = "A"; stemmekretsnummer = "1" }
 

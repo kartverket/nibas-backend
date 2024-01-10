@@ -17,6 +17,7 @@ import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.StemmekretsGrenseKobling
+import no.kartverket.nibas.extensions.geometry.grenseToFeature
 import no.kartverket.nibas.repository.*
 import no.kartverket.nibas.utils.GrenseHelper
 import org.assertj.core.api.Assertions.assertThat
@@ -167,11 +168,7 @@ class GrenseServiceTest {
             grense.stemmekretser = koblinger
         }
 
-        val feature = FeatureBuilder(lokalid)
-            .withGrenseversjon(1)
-            .withKontekstEgenskaperFromStemmekretsGrenseKoblinger(grenseSomSkalOppdateres!!.stemmekretser, gyldighetsdato = gyldighetsdato)
-            .withGrensetype(Grensetype.Stemmekretsgrense)
-            .build()
+        val feature = grenseSomSkalOppdateres!!.grenseToFeature(gyldighetsdato)
 
         val nyGrense = Grense(id = "nyGrense", lokalid = lokalid, grensetype = Grensetype.Stemmekretsgrense)
 
