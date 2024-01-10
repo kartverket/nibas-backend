@@ -199,7 +199,7 @@ class GrenseService(
         }
     }
 
-    // Hjelpeklasse for å holde oversikt over hvilke strategi en skal bruke for å hente frem krets i kontekstEgenskap
+    // Hjelpeklasse for å holde oversikt over hvilke strategi en skal brukes for å hente frem krets i kontekstEgenskap
     data class IdentifikatorHelper(
         val brukLokalid: List<KontekstEgenskaper>,
         val brukKretsNummer: List<KontekstEgenskaper>,
@@ -219,10 +219,11 @@ class GrenseService(
                 val tilhorighetEndringer =
                     grenseKoblingService.getTilhorighetEndringer(eksisterendeTilhorigheter, innsendteTilhorigheter, gyldighetsdato)
 
-                // Kun innsendte kontekster kan ha objektidentifikator lik null, som betyr at vi må finne krets via grunnkretsnummer
+                // Kun innsendte kontekster kan ha objektidentifikator lik null, som betyr at vi må finne krets via grunnkretsnummer i tilfellet der nyopprettede kretser blir laget i utkastet
                 val kontekster = tilhorighetEndringer.nye.partition { kontekstEgenskaper -> kontekstEgenskaper.id != null }
                 val nyeKontekster = IdentifikatorHelper(brukLokalid = kontekster.first, brukKretsNummer = kontekster.second)
 
+                // får lokalid til nyopprettet krets
                 val nyeLokaliderForKretser = grenseKoblingService.leggTilGrenserForKretserViaKontekstEgenskaper(
                     nyeKontekster, grense, gyldighetsdato, flaterSomHarFaattNyVersjon, endringstype, Flatetype.GRUNNKRETS
                 )
@@ -246,7 +247,6 @@ class GrenseService(
                 val tilhorighetEndringer =
                     grenseKoblingService.getTilhorighetEndringer(eksisterendeTilhorigheter, innsendteTilhorigheter, gyldighetsdato)
 
-                // Kun innsendte kontekster kan ha objektidentifikator lik null, som betyr at vi må finne krets via stemmekretsnummer og kommune
                 val kontekster = tilhorighetEndringer.nye.partition { kontekstEgenskaper -> kontekstEgenskaper.id != null }
                 val nyeKontekster = IdentifikatorHelper(brukLokalid = kontekster.first, brukKretsNummer = kontekster.second)
 
