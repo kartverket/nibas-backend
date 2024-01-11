@@ -183,6 +183,10 @@ class StemmekretsService(
             setGyldigFra(delingsDato)
         }
 
+        if (finnesAnnenStemmekretsMedSammeKommuneOgStemmekretsnummer(nyStemmekrets)) {
+            throw createDuplikatStemmekretsnummerException(nyStemmekrets)
+        }
+
         return nyStemmekrets
     }
 

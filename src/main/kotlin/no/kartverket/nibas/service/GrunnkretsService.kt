@@ -160,6 +160,10 @@ class GrunnkretsService(
             setGyldigFra(delingsDato)
         }
 
+        if (finnesAnnenGrunnkretsMedSammeGrunnkretsnummer(nyGrunnkrets)) {
+            throw createDuplikatGrunnkretsnummerException(nyGrunnkrets)
+        }
+
         return nyGrunnkrets
     }
 

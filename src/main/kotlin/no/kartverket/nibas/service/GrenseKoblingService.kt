@@ -93,7 +93,6 @@ class GrenseKoblingService(
             if (kontekstEgenskaper.id == null) { // må sjekkes da kotlin ikke klarer å se at identifikatorHelper har filtrerte kontkestet
                 throw RuntimeException("Kontekst peker ikke til en krets")
             }
-
             // Henter nyeste versjon av grunnkrets i dette utkastet hvis det finnes, ellers henter vi nyeste fra db og lager ny versjon med den.
             val nyVersjonAvKrets = flaterSomHarFaattNyVersjon[kontekstEgenskaper.id.lokalid] ?: when(kretsType){
                 Flatetype.GRUNNKRETS -> grunnkretsService.createNyVersjonAvGrunnkrets(
