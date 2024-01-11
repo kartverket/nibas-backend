@@ -154,6 +154,8 @@ data class StemmekretsSammenslaaingsendringRequest (
 data class KretsDelingEndringRequest(
     @Schema(description = "Identifikator til den kretsen som skal deles")
     val opprinneligKrets: IdentifikatorMedVersjon,
+    @Schema(description = "Versjon til opprinneligKrets")
+    val version: Int,
     @Schema(description = "Flatetypen som skal deles")
     val flatetype: Flatetype,
     @Schema(description = "Navnet til den nye kretsen")

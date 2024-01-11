@@ -177,10 +177,10 @@ class GrenseService(
         val konflikterIKretserForGrenser = features.flatMap { feature ->
             feature.properties.kontekstEgenskaper
                 ?.mapNotNull { kontekstEgenskaper ->
-                    if (kontekstEgenskaper.id == null){
-                        throw RuntimeException("KontekstEgenskaper for feature med id: ${feature.id} er null")
+                    if (kontekstEgenskaper.id == null && kontekstEgenskaper.kretsNummer == null) {
+                        throw RuntimeException("KontekstEgenskaper for feature med id: ${feature.id} er null, og kretsen er ikke nyopprettet i dette utkastet")
                     }
-                    val identifikator = Identifikator(kontekstEgenskaper.id.lokalid, gyldighetsdato)
+                    val identifikator = Identifikator(kontekstEgenskaper.id!!.lokalid, gyldighetsdato) // kotlin klarer ikke se at id ikke er null her pga. "&&" i if-testen
                     verifiserOptimistiskLaas(
                         kontekstEgenskaper.version,
                         when (kontekstEgenskaper.type) {

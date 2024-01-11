@@ -153,6 +153,8 @@ class GrunnkretsService(
         val grunnkrets = hentGrunnkrets(identifikator)
             ?: throw RuntimeException("Fant ikke grunnkrets med lokalid: ${kretsDelingEndringRequest.opprinneligKrets.lokalId} gylidg på $delingsDato")
 
+        verifiserOptimistiskLaas(kretsDelingEndringRequest.version, grunnkrets)
+
         val nyGrunnkrets = Grunnkrets().apply {
             grunnkretsnavn = kretsDelingEndringRequest.kretsNavn
             grunnkretsnummer = kretsDelingEndringRequest.kretsNummer

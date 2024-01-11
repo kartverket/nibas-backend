@@ -303,6 +303,10 @@ class GrenseServiceIT : TestWithDbContainer() {
         }
     }
 
+    @Test
+    fun `lagreGrenser klarer å endre tilhørighet på grunnkretsgrense til nyopprettet grunnkrets`(){
+        // TODO
+    }
 
     @Test
     fun `lagreGrenser klarer å endre tilhørighet på stemmekretsgrense`() {
@@ -342,6 +346,11 @@ class GrenseServiceIT : TestWithDbContainer() {
         (flateSet.first { it.lokalid == "G3" } as Stemmekrets).run {
             assertThat(this.grenser.size).isEqualTo(4)
         }
+    }
+
+    @Test
+    fun `lagreGrenser klarer å endre tilhørighet på stemmekretsgrense til nyopprettet stemmekrets`(){
+        // TODO
     }
 
     private fun <T: KobletTilGrense>utfoerGeometriEndring(grense: Grense, kretser: List<T>, gyldighetsdato: LocalDate, kontekstEnhetType: KontekstEnhetType): Feature{

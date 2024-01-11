@@ -176,6 +176,8 @@ class StemmekretsService(
         val stemmekrets = hentStemmekrets(identifikator)
             ?: throw RuntimeException("Fant ikke stemmekrets med lokalid: ${kretsDelingEndringRequest.opprinneligKrets.lokalId} gylidg på $delingsDato")
 
+        verifiserOptimistiskLaas(kretsDelingEndringRequest.version, stemmekrets)
+
         val nyStemmekrets = Stemmekrets().apply {
             stemmekretsnavn = kretsDelingEndringRequest.kretsNavn
             stemmekretsnummer = kretsDelingEndringRequest.kretsNummer
