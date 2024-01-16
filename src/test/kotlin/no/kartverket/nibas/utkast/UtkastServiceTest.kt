@@ -127,7 +127,7 @@ internal class UtkastServiceTest {
 
         assertThatThrownBy {utkastService.opprettUtkast(opprettUtkastRequest)}
             .isInstanceOf(BadRequestException::class.java)
-            .hasMessageContaining("Utkast inneholder 5 ikke-redigerbare grenser")
+            .hasMessageContaining("Utkast inneholder 3 ikke-redigerbare grenser")
     }
 
     @Test
@@ -176,7 +176,7 @@ internal class UtkastServiceTest {
             .build()
         assertThatThrownBy {utkastService.oppdaterUtkast("123", utkast)}
             .isInstanceOf(BadRequestException::class.java)
-            .hasMessageContaining("Utkast inneholder 5 ikke-redigerbare grenser")
+            .hasMessageContaining("Utkast inneholder 3 ikke-redigerbare grenser")
     }
 
     @Test
