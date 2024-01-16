@@ -29,8 +29,8 @@ class NasjonService(
     fun hentAlleNasjoner(gyldighetsdato: LocalDate = LocalDate.now()): List<Nasjon> = nasjonRepository.findAllGyldigPaaDato(gyldighetsdato)
     fun hentNasjon(identifikator: Identifikator): Nasjon? = nasjonRepository.findGyldigObjektForIdentifikator(identifikator)
 
-    fun hentGrenserForNasjon(identifikator: Identifikator): Set<GrunnkretsGrenseKobling> =
-        hentNasjon(identifikator)?.getGrenser(identifikator.gyldighetsdato) ?: emptySet()
+    fun hentGrensekoblingerForNasjon(identifikator: Identifikator): Set<GrunnkretsGrenseKobling> =
+        hentNasjon(identifikator)?.getGrensekoblinger(identifikator.gyldighetsdato) ?: emptySet()
 
     @Transactional(readOnly = false)
     fun oppdaterNasjon(

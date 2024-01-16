@@ -23,7 +23,7 @@ class DeltGeometriKretsService(
         val grunnkretserForKommune = kommuneService.hentAlleGrunnkretserForKommune(kommunenr, gyldighetsDato)
 
         return grunnkretserForKommune
-            .flatMap { it.getGrenser(gyldighetsDato) }
+            .flatMap { it.getGrensekoblinger(gyldighetsDato) }
             .filter { it.grense.erAdministrativGrense() }
             .flatMap { it.grense.grunnkretser(gyldighetsDato) }
             .distinctBy { it.lokalid }
@@ -32,7 +32,7 @@ class DeltGeometriKretsService(
     fun getStemmekretserSomGrenserTilKommunegrense(kommunenr: String, gyldighetsDato: LocalDate): List<Stemmekrets> {
         val stemmekretserForKommune = kommuneService.hentAlleStemmekretserForKommune(kommunenr, gyldighetsDato)
         return stemmekretserForKommune
-            .flatMap { it.getGrenser(gyldighetsDato) }
+            .flatMap { it.getGrensekoblinger(gyldighetsDato) }
             .filter { it.grense.erAdministrativGrense() }
             .flatMap { it.grense.stemmekretser(gyldighetsDato) }
             .distinctBy { it.lokalid }

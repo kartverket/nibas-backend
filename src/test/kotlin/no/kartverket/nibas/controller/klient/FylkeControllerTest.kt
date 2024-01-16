@@ -66,7 +66,7 @@ class FylkeControllerTest : NibasMvcTest() {
     @Test
     fun thatHentGrenserReturns200_Ok() {
         whenever(
-            fylkeService.hentGrenserForFylke(any(Identifikator::class.java))
+            fylkeService.hentGrensekoblingerForFylke(any(Identifikator::class.java))
         ).thenReturn(
             setOf(GrunnkretsGrenseKobling(grunnkrets = GrunnkretsBuilder().build(),
                 grense = GrenseBuilder().withGrensetype(Grensetype.Fylkesgrense).build(), GrenseKoblingAttributter()))
@@ -76,7 +76,7 @@ class FylkeControllerTest : NibasMvcTest() {
 
     @Test
     fun thatHentGrenserReturns404_NotFound() {
-        whenever(fylkeService.hentGrenserForFylke(any(Identifikator::class.java))).thenReturn(emptySet())
+        whenever(fylkeService.hentGrensekoblingerForFylke(any(Identifikator::class.java))).thenReturn(emptySet())
         get("/v1/fylker/1/grenser", status().isNotFound)
     }
 

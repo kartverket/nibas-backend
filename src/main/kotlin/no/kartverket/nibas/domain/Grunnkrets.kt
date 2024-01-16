@@ -59,7 +59,7 @@ class Grunnkrets(
     }
 
     override fun oppdaterOmraadeOgPosisjon() {
-        omraade = SosiGeometryFunctions.beregnFlate(getGrenser(gyldighetsdato = gyldighet.gyldigFra).toSet(), gyldighet.gyldigFra)
+        omraade = SosiGeometryFunctions.beregnFlate(getGrensekoblinger(gyldighetsdato = gyldighet.gyldigFra).toSet())
         if (omraade != null && (posisjon == null || !omraade!!.contains(posisjon))) {
             posisjon = omraade?.interiorPoint
         }
@@ -80,13 +80,15 @@ class Grunnkrets(
 
     override fun antallGrenser(): Int = grenser.size
 
-    fun getGrenserAvTyper(grensetyper: Set<Grensetype>, gyldighetsdato: LocalDate = LocalDate.now()): List<GrunnkretsGrenseKobling> {
-        //Denne kan returnere flere grensekoblinger som ender opp med å peke på samme grense (via neste versjon)
+    fun getGrensekoblingerAvTyper(grensetyper: Set<Grensetype>, gyldighetsdato: LocalDate = LocalDate.now()): List<GrunnkretsGrenseKobling> {
         return grenser
-            .filter { it.grense.erRelevantGrenseForTyperOgDato(grensetyper, gyldighetsdato) }
+            .filter { it.grense.harGrenseTypeContainedInSet(grensetyper) }
+            .filter { it.grense.gyldigPaaDato(gyldighetsdato) }
     }
 
-    fun getGrenser(gyldighetsdato: LocalDate = LocalDate.now()): List<GrunnkretsGrenseKobling> = getGrenserAvTyper(tillatteGrensetyper(), gyldighetsdato)
+    fun getGrensekoblinger(gyldighetsdato: LocalDate = LocalDate.now()): List<GrunnkretsGrenseKobling> {
+        return grenser.filter { it.grense.gyldigPaaDato(gyldighetsdato) }
+    }
 
     override fun toString(): String {
         return "Grunnkrets(id='$id', grunnkretsnummer=$grunnkretsnummer, grunnkretsnavn=$grunnkretsnavn, gyldighet: $gyldighet)"

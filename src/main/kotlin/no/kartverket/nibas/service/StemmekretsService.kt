@@ -39,13 +39,8 @@ class StemmekretsService(
 
     fun hentStemmekrets(identifikator: Identifikator): Stemmekrets? = stemmekretsRepository.findGyldigObjektForIdentifikator(identifikator)
 
-    fun hentSisteGyldigeStemmekrets(lokalid: String): Stemmekrets? =
-        stemmekretsRepository.findAllByLokalid(lokalid = lokalid)
-            .filter { !it.gyldighet.slettet }
-            .maxBy { it.gyldighet.gyldigFra }
-
-    fun hentGrenserForStemmekrets(identifikator: Identifikator): List<StemmekretsGrenseKobling> {
-        return hentStemmekrets(identifikator)?.getGrenser(identifikator.gyldighetsdato) ?: emptyList()
+    fun hentGrensekoblingerForStemmekrets(identifikator: Identifikator): List<StemmekretsGrenseKobling> {
+        return hentStemmekrets(identifikator)?.getGrensekoblinger(identifikator.gyldighetsdato) ?: emptyList()
     }
 
     fun hentStemmekretserForIds(ids: Set<String>, gyldighetsdato: LocalDate): List<Stemmekrets> {
@@ -220,7 +215,7 @@ class StemmekretsService(
     ): List<StemmekretsGrenseKobling> {
 
         val alleFlaterOgHull = SosiGeometryFunctions.finnFlaterForGrenser(
-            grensekoblinger.map { GrenseMedLokalid(it.getGrenseJustertForRetning(stemmekrets.gyldighet.gyldigFra), Lokalid(it.grense.lokalid)) }
+            grensekoblinger.map { GrenseMedLokalid(it.getGrenseJustertForRetning(), Lokalid(it.grense.lokalid)) }
         )
 
         val flaterSomPolygon = alleFlaterOgHull.map { grense -> lagFlate(grense.map { it.grense }, emptyList()) }

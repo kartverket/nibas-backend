@@ -106,22 +106,20 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         val identifikatorFor1Jan23 = Identifikator(stemmekretsLokalid, jan1In2023)
 
         val grense3 = saveGrenseAvTypeKommunegrense(id = "4002", lokalid = grenseLokallid, gyldigFra = jan1In2024)
-        val grense2 = saveGrenseAvTypeKommunegrense(id = "4001", lokalid = grenseLokallid, nesteVersjon = grense3, gyldigFra = jan1In2023, gyldigTil = jan1In2024)
-        val grense1 = saveGrenseAvTypeKommunegrense(id = "4000", lokalid = grenseLokallid, nesteVersjon = grense2, gyldigFra = october1In2022, gyldigTil = jan1In2023)
+        val grense2 = saveGrenseAvTypeKommunegrense(id = "4001", lokalid = grenseLokallid, gyldigFra = jan1In2023, gyldigTil = jan1In2024)
+        val grense1 = saveGrenseAvTypeKommunegrense(id = "4000", lokalid = grenseLokallid, gyldigFra = october1In2022, gyldigTil = jan1In2023)
 
         val stemmekrets1 = saveStemmekrets(id = "301", lokalid = stemmekretsLokalid, gyldigFra = october1In2022, gyldigTil = december1In2022, grenser = listOf(grense1))
-        val stemmekrets2 = saveStemmekrets(id = "302", lokalid = stemmekretsLokalid, gyldigFra = december1In2022, gyldigTil = jan1In2024, grenser = listOf(grense1))
-        val stemmekrets3 = saveStemmekrets(id = "303", lokalid = stemmekretsLokalid, gyldigFra = jan1In2024, grenser = listOf(grense1))
+        val stemmekrets2 = saveStemmekrets(id = "302", lokalid = stemmekretsLokalid, gyldigFra = december1In2022, gyldigTil = jan1In2024, grenser = listOf(grense1, grense2))
+        val stemmekrets3 = saveStemmekrets(id = "303", lokalid = stemmekretsLokalid, gyldigFra = jan1In2024, grenser = listOf(grense3))
 
         saveKommuneOgUnikLokalid(stemmekretser = listOf(stemmekrets1, stemmekrets2, stemmekrets3))
 
-        val grensekoblinger = stemmekretsService.hentGrenserForStemmekrets(identifikatorFor1Jan23)
+        val grensekoblinger = stemmekretsService.hentGrensekoblingerForStemmekrets(identifikatorFor1Jan23)
 
         assertGrenser(
             grensekoblinger,
-            gyldighetsdato = identifikatorFor1Jan23.gyldighetsdato,
-            grenseIGrensekoblingId = "4000",
-            relevantGrenseId = "4001",
+            grenseIGrensekoblingId = "4001",
             enhetKobletTilGrenseLokalid = stemmekretsLokalid)
     }
 
@@ -848,7 +846,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
 
     private fun utfoerGrenseendring(kretsSomSkalHaGrenseendring: Stemmekrets, opprinneligDato: LocalDate, endringsdato: LocalDate,
                                     featureAnnenOppdatertGrense: Feature? = null): Set<Flate> {
-        val grenseKobling = kretsSomSkalHaGrenseendring.getGrenser(gyldighetsdato = opprinneligDato)
+        val grenseKobling = kretsSomSkalHaGrenseendring.getGrensekoblinger(gyldighetsdato = opprinneligDato)
             .first { it.grense.lokalid == "grenseDeltLokalid" }
 
         val oppdatertGeometri = GeometryFactory().createLineString(arrayOf(
@@ -871,7 +869,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
     }
 
     private fun lagFeatureEndreYkoordinat(kretsSomSkalHaGrenseendring: Stemmekrets, opprinneligDato: LocalDate, lokalidGrenseSomSkalEndres: String): Feature {
-        val grenseKobling = kretsSomSkalHaGrenseendring.getGrenser(gyldighetsdato = opprinneligDato)
+        val grenseKobling = kretsSomSkalHaGrenseendring.getGrensekoblinger(gyldighetsdato = opprinneligDato)
             .first { it.grense.lokalid == lokalidGrenseSomSkalEndres }
         val grense = grenseKobling.grense.grense
         val oppdatertGeometri = GeometryFactory().createLineString(arrayOf(
@@ -989,15 +987,11 @@ class StemmekretsServiceIT : TestWithDbContainer() {
 }
 
 fun assertGrenser(grensekoblinger: List<GrenseKobling>,
-                  gyldighetsdato: LocalDate,
                   grenseIGrensekoblingId: String,
-                  relevantGrenseId: String,
                   enhetKobletTilGrenseLokalid: Lokalid) {
     assertThat(grensekoblinger).hasSize(1)
     val grensekobling = grensekoblinger[0]
     val grenseIGrensekobling = grensekobling.grense
-    val relevantGrense = grensekobling.getRelevantGrense(gyldighetsdato)
     assertThat(grenseIGrensekobling.id).isEqualTo(grenseIGrensekoblingId)
-    assertThat(relevantGrense.id).isEqualTo(relevantGrenseId)
     assertThat(grensekobling.getEnhetKobletTilGrense().lokalid).isEqualTo(enhetKobletTilGrenseLokalid.value)
 }

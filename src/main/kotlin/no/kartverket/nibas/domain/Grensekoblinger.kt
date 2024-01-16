@@ -1,9 +1,6 @@
 package no.kartverket.nibas.domain
 
-import no.kartverket.nibas.api.v1.common.KontekstEnhetType
-import no.kartverket.nibas.common.Identifikator
 import org.locationtech.jts.geom.LineString
-import java.time.LocalDate
 import jakarta.persistence.Column
 import jakarta.persistence.Embeddable
 
@@ -14,16 +11,10 @@ interface GrenseKobling {
     fun oppdaterAttributter(nyeAttributter: GrenseKoblingAttributter)
     fun getEnhetKobletTilGrense(): KobletTilGrense
 
-    fun getRelevantGrense(gyldighetsdato: LocalDate = LocalDate.now()): Grense {
-        return grense.finnRelevantGrenseForDato(gyldighetsdato)
-            ?: throw RelevantGrenseNotFoundEx("Fant ikke relevant grense for gyldighetsdato $gyldighetsdato og basert på grense i grensekobling med lokalid ${grense.lokalid}")
-    }
-
-    class RelevantGrenseNotFoundEx(msg: String) : RuntimeException(msg)
 }
 
-fun GrenseKobling.getGrenseJustertForRetning(gyldighetsdato: LocalDate = LocalDate.now()): LineString {
-    val lineString = this.getRelevantGrense(gyldighetsdato).grense
+fun GrenseKobling.getGrenseJustertForRetning(): LineString {
+    val lineString = this.grense.grense
 
     return when (this.grenseKoblingAttributter.retningMedKlokken) {
         true -> lineString
@@ -58,9 +49,4 @@ data class GrenseKoblingAttributter(
 
 class GrenseMedAttributter(val grense: Grense, val attributter: GrenseKoblingAttributter)
 
-data class GrenseMedRetningOgKontekst(
-    val grenseMedAttributter: GrenseMedAttributter,
-    val kontekstType: KontekstEnhetType,
-    val kontekstId: Identifikator
-)
 

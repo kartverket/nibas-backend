@@ -266,7 +266,6 @@ class GrenseService(
             .applyCascadingOperationsBasedOnExistingGrense(grense)
             .also {
                 grense.setGyldigTil(gyldigFra)
-                grense.nesteVersjon = nyGrense
             }
     }
 
@@ -403,7 +402,7 @@ class GrenseService(
         val grenserSomSkalHaNyGrensetype: MutableMap<Grensetype, MutableSet<Grense>> = mutableMapOf()
 
         for (grunnkrets: Grunnkrets in grunnkretser) {
-            for (grensekobling: GrenseKobling in grunnkrets.getGrenser(gyldigFra)) {
+            for (grensekobling: GrenseKobling in grunnkrets.getGrensekoblinger(gyldigFra)) {
                 val grunnkretserForGrense = grensekobling.grense.grunnkretser(gyldigFra)
                 val kommunenumre = grunnkretserForGrense.map { it.grunnkretsnummer!!.take(4) }
 
@@ -422,7 +421,7 @@ class GrenseService(
         val grenserSomSkalHaNyGrensetype: MutableMap<Grensetype, MutableSet<Grense>> = mutableMapOf()
 
         for (stemmekrets: Stemmekrets in stemmekretser) {
-            for (grensekobling: GrenseKobling in stemmekrets.getGrenser(gyldigFra)) {
+            for (grensekobling: GrenseKobling in stemmekrets.getGrensekoblinger(gyldigFra)) {
                 val stemmekretserForGrense = grensekobling.grense.stemmekretser(gyldigFra)
                 val kommunenumre = stemmekretserForGrense.mapNotNull { s ->
                     s.getKommune(gyldigFra)?.kommunenummer

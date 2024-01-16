@@ -119,13 +119,7 @@ interface Gyldig {
     // Inklusiv gyldigFra, eksklusiv gyldigTil
     var gyldighet: Gyldighet
     fun gyldigPaaDato(dato: LocalDate): Boolean {
-        return if (!gyldighet.slettet) {
-            val dagenEtterDato = dato.plusDays(1)
-            val gyldigTil = gyldighet.gyldigTil
-            gyldighet.gyldigFra.isBefore(dagenEtterDato) && (gyldigTil == null || gyldigTil.isAfter(dato))
-        } else {
-            false
-        }
+        return gyldighet.gyldigPaaDato(dato)
     }
 
     fun setGyldigTil(gyldigTil: LocalDate) {
@@ -182,6 +176,14 @@ data class Gyldighet(
         return this.copy(
             gyldigTil = gyldigTil
         ).apply { validerIntervall() }
+    }
+
+    fun gyldigPaaDato(dato: LocalDate): Boolean {
+        return if (!slettet) {
+            (dato == gyldigFra || dato.isAfter(gyldigFra)) && (gyldigTil == null || (dato.isBefore(gyldigTil)))
+        } else {
+            false
+        }
     }
 
     private fun validerIntervall() {

@@ -31,16 +31,15 @@ import java.time.Month
 import kotlin.test.assertEquals
 
 class KommuneServiceTest {
-    val kommuneRepositoryMock = mockk<KommuneRepository>()
-    val fylkeRepositoryMock = mockk<FylkeRepository>()
-    val unikLokalidRepositoryMock = mockk<UnikLokalidRepository>()
-    val hrefProviderMock = mockk<HrefProvider>()
-    val administrativenhetnavnRepositoryMock = mockk<AdministrativenhetnavnRepository>()
-    val administrativenhetnavnServiceMock = mockk<AdministrativenhetnavnService>()
+    private val kommuneRepositoryMock = mockk<KommuneRepository>()
+    private val fylkeRepositoryMock = mockk<FylkeRepository>()
+    private val unikLokalidRepositoryMock = mockk<UnikLokalidRepository>()
+    private val hrefProviderMock = mockk<HrefProvider>()
+    private val administrativenhetnavnRepositoryMock = mockk<AdministrativenhetnavnRepository>()
+    private val administrativenhetnavnServiceMock = mockk<AdministrativenhetnavnService>()
     val kodelisteServiceMock = mockk<KodelisteService>()
 
-
-    val kommuneService = KommuneService(
+    private val kommuneService = KommuneService(
         kommuneRepositoryMock,
         fylkeRepositoryMock,
         administrativenhetnavnRepositoryMock,
@@ -60,7 +59,7 @@ class KommuneServiceTest {
     @Test
     fun hentGrenserForKommuneReturnsNullWhenKommuneNotFound() {
         every { kommuneRepositoryMock.findAllByLokalid(any()) } returns emptyList()
-        assertThat(kommuneService.hentGrenserForKommune(Identifikator(Lokalid("1")))).isEmpty()
+        assertThat(kommuneService.hentGrensekoblingerForKommune(Identifikator(Lokalid("1")))).isEmpty()
     }
 
     @Test
@@ -80,14 +79,14 @@ class KommuneServiceTest {
             .build()
         every { kommuneRepositoryMock.findGyldigObjektForIdentifikator(kommuneIdentifikator) } returns kommune
 
-        val grenserForKommune = kommuneService.hentGrenserForKommune(kommuneIdentifikator)
-        assertEquals(15, grenserForKommune.size, "Expected 15 borders")
+        val grensekoblingerForKommune = kommuneService.hentGrensekoblingerForKommune(kommuneIdentifikator)
+        assertEquals(15, grensekoblingerForKommune.size, "Expected 15 borders")
 
-        assertGrensekoblinger(grenserForKommune, Grensetype.AvtaltAvgrensningslinje, 1, "Expected 1 AvtaltAvgrensningslinje")
-        assertGrensekoblinger(grenserForKommune, Grensetype.Territorialgrense, 2, "Expected 2 Territorialgrense")
-        assertGrensekoblinger(grenserForKommune, Grensetype.Riksgrense, 3, "Expected 3 Riksgrense")
-        assertGrensekoblinger(grenserForKommune, Grensetype.Fylkesgrense, 4, "Expected 4 Fylkesgrense")
-        assertGrensekoblinger(grenserForKommune, Grensetype.Kommunegrense, 5, "5 Kommunegrense")
+        assertGrensekoblinger(grensekoblingerForKommune, Grensetype.AvtaltAvgrensningslinje, 1, "Expected 1 AvtaltAvgrensningslinje")
+        assertGrensekoblinger(grensekoblingerForKommune, Grensetype.Territorialgrense, 2, "Expected 2 Territorialgrense")
+        assertGrensekoblinger(grensekoblingerForKommune, Grensetype.Riksgrense, 3, "Expected 3 Riksgrense")
+        assertGrensekoblinger(grensekoblingerForKommune, Grensetype.Fylkesgrense, 4, "Expected 4 Fylkesgrense")
+        assertGrensekoblinger(grensekoblingerForKommune, Grensetype.Kommunegrense, 5, "5 Kommunegrense")
     }
 
     @Test

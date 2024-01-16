@@ -74,7 +74,7 @@ class FylkeServiceTest {
         val fylkeIdentifikator = Identifikator(lokalid = Lokalid("1"))
         every { fylkeRepositoryMock.findAllByLokalid(any()) } returns emptyList()
 
-        assertThat(fylkeService.hentGrenserForFylke(fylkeIdentifikator)).isEmpty()
+        assertThat(fylkeService.hentGrensekoblingerForFylke(fylkeIdentifikator)).isEmpty()
     }
 
     @Test
@@ -93,13 +93,13 @@ class FylkeServiceTest {
             .build()
         every { fylkeRepositoryMock.findGyldigObjektForIdentifikator(fylkeIdentifikator) } returns fylke
 
-        val grenserForFylke = fylkeService.hentGrenserForFylke(fylkeIdentifikator)
-        assertEquals(10, grenserForFylke.size, "Expected ten borders")
+        val grensekoblingerForFylke = fylkeService.hentGrensekoblingerForFylke(fylkeIdentifikator)
+        assertEquals(10, grensekoblingerForFylke.size, "Expected ten borders")
 
-        assertGrensekoblinger(grenserForFylke, Grensetype.AvtaltAvgrensningslinje, 1, "Expected 1 AvtaltAvgrensningslinje")
-        assertGrensekoblinger(grenserForFylke, Grensetype.Territorialgrense, 2, "Expected 2 Territorialgrense")
-        assertGrensekoblinger(grenserForFylke, Grensetype.Riksgrense, 3, "Expected 3 Riksgrense")
-        assertGrensekoblinger(grenserForFylke, Grensetype.Fylkesgrense, 4, "Expected 4 Fylkesgrense")
+        assertGrensekoblinger(grensekoblingerForFylke, Grensetype.AvtaltAvgrensningslinje, 1, "Expected 1 AvtaltAvgrensningslinje")
+        assertGrensekoblinger(grensekoblingerForFylke, Grensetype.Territorialgrense, 2, "Expected 2 Territorialgrense")
+        assertGrensekoblinger(grensekoblingerForFylke, Grensetype.Riksgrense, 3, "Expected 3 Riksgrense")
+        assertGrensekoblinger(grensekoblingerForFylke, Grensetype.Fylkesgrense, 4, "Expected 4 Fylkesgrense")
     }
 
     @Test

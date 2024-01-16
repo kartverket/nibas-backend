@@ -57,9 +57,9 @@ class Kommune(
         doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { KommuneInformasjon(this) }
     }
 
-    fun getGrenser(gyldighetsdato: LocalDate = LocalDate.now()): Set<GrunnkretsGrenseKobling> {
+    fun getGrensekoblinger(gyldighetsdato: LocalDate = LocalDate.now()): Set<GrunnkretsGrenseKobling> {
         return getGrunnkretser(gyldighetsdato)
-            .flatMap { it.getGrenserAvTyper(tillatteGrensetyper(), gyldighetsdato) }
+            .flatMap { it.getGrensekoblingerAvTyper(tillatteGrensetyper(), gyldighetsdato) }
             .toSet()
     }
 
@@ -85,7 +85,7 @@ class Kommune(
      * Henter kommunen sitt fylke på en gitt dato. Hvis man gir en dato hvor fylket med gitt lokalid ikke er gyldig, returneres null
      */
     fun getFylke(gyldighetsdato: LocalDate = LocalDate.now()): Fylke? {
-        return fylkeLokalid.fylker.filter { it.gyldigPaaDato(gyldighetsdato) }.firstOrNull()
+        return fylkeLokalid.fylker.firstOrNull { it.gyldigPaaDato(gyldighetsdato) }
     }
 
     override fun addAdministrativenhetNavn(navn: Administrativenhetnavn) {

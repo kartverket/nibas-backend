@@ -54,7 +54,7 @@ class NasjonControllerTest : NibasMvcTest() {
     @Test
     fun thatHentGrenserReturns200_Ok() {
         whenever(
-            nasjonService.hentGrenserForNasjon(any(Identifikator::class.java))
+            nasjonService.hentGrensekoblingerForNasjon(any(Identifikator::class.java))
         ).thenReturn(
             setOf(GrunnkretsGrenseKobling(grunnkrets = GrunnkretsBuilder().build(),
                 grense = GrenseBuilder().withGrensetype(Grensetype.Riksgrense).build(), GrenseKoblingAttributter()))
@@ -64,7 +64,7 @@ class NasjonControllerTest : NibasMvcTest() {
 
     @Test
     fun thatHentGrenserReturns404_NotFound() {
-        whenever(nasjonService.hentGrenserForNasjon(any(Identifikator::class.java))).thenReturn(emptySet())
+        whenever(nasjonService.hentGrensekoblingerForNasjon(any(Identifikator::class.java))).thenReturn(emptySet())
         get("/v1/nasjoner/1/grenser", status().isNotFound)
     }
 

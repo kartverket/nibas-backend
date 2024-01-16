@@ -30,13 +30,13 @@ class DeltGeometriAdministrativeGrenserService(
     fun getAdministrativeGrenserMedDeltGeometriForKommune(kommune: Kommune, gyldighetsDato: LocalDate): List<Grense> {
         val stemmekretserForKommune = kommune.getStemmekretser(gyldighetsDato)
 
-        val administrativeGrenserForKommune = kommune.getGrenser(gyldighetsDato).map {
+        val administrativeGrenserForKommune = kommune.getGrensekoblinger(gyldighetsDato).map {
             if (it.grenseKoblingAttributter.retningMedKlokken) it.grense.grense else it.grense.grense.reverse()
         }
 
         val grensepunkterForGrunnkretser = getGrensepunkterIRiktigRekkefoelge(administrativeGrenserForKommune)
         val administrativeGrenserForStemmekretserIKommunen = stemmekretserForKommune
-            .flatMap { it.getGrenser(gyldighetsDato) }
+            .flatMap { it.getGrensekoblinger(gyldighetsDato) }
             .filter { it.grense.erAdministrativGrense() }
 
         val knutepunktStemmekrets = administrativeGrenserForStemmekretserIKommunen
@@ -48,7 +48,7 @@ class DeltGeometriAdministrativeGrenserService(
         val grensepunkterPerPolygon = leggTilManglendeKnutepunktFraStemmekrets(grensepunkterForGrunnkretser, knutepunktStemmekrets)
         return grensepunkterPerPolygon
             .flatMap { grensepunkterTilLineStrings(it, knutepunktGrunnkrets + knutepunktStemmekrets) }
-            .map { lineStringTilGrense(it, kommune.getGrenser(gyldighetsDato) + administrativeGrenserForStemmekretserIKommunen)}
+            .map { lineStringTilGrense(it, kommune.getGrensekoblinger(gyldighetsDato) + administrativeGrenserForStemmekretserIKommunen)}
     }
 
     private fun leggTilManglendeKnutepunktFraStemmekrets(grensepunkterForGrunnkrets: List<List<Coordinate>>, knutepunktStemmekrets: List<Coordinate>): List<List<Coordinate>> {

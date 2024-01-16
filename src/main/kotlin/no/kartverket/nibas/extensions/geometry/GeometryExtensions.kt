@@ -151,7 +151,7 @@ fun Flate.flateToFeature(version: Int): Feature {
 fun GrenseKobling.grenseKoblingToFeature(
     gyldighetsdato: LocalDate = LocalDate.now()
 ): Feature {
-   return getRelevantGrense(gyldighetsdato).grenseToFeature(gyldighetsdato)
+   return grense.grenseToFeature(gyldighetsdato)
 }
 
 fun GrenseKobling.grenseKoblingToKontekstEgenskaper(

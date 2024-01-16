@@ -62,7 +62,7 @@ class NasjonServiceTest {
     @Test
     fun hentGrenserForNasjonReturnsNullWhenNasjonNotFound() {
         val nasjonIdentifikator = returnNullForLokalid1()
-        assertThat(nasjonService.hentGrenserForNasjon(nasjonIdentifikator)).isEmpty()
+        assertThat(nasjonService.hentGrensekoblingerForNasjon(nasjonIdentifikator)).isEmpty()
     }
 
     @Test
@@ -87,11 +87,11 @@ class NasjonServiceTest {
             .build()
         every { nasjonRepositoryKotlinMock.findGyldigObjektForIdentifikator(nasjonIdentifikator) } returns nasjon
 
-        val grenserForNasjon = nasjonService.hentGrenserForNasjon(nasjonIdentifikator)
-        assertEquals(6, grenserForNasjon.size, "Expected six borders")
-        assertGrensekoblinger(grenserForNasjon, Grensetype.AvtaltAvgrensningslinje, 1, "Expected 1 AvtaltAvgrensningslinje")
-        assertGrensekoblinger(grenserForNasjon, Grensetype.Territorialgrense, 2, "Expected 2 Territorialgrense")
-        assertGrensekoblinger(grenserForNasjon, Grensetype.Riksgrense, 3, "Expected 3 Riksgrense")
+        val grensekoblingerForNasjon = nasjonService.hentGrensekoblingerForNasjon(nasjonIdentifikator)
+        assertEquals(6, grensekoblingerForNasjon.size, "Expected six borders")
+        assertGrensekoblinger(grensekoblingerForNasjon, Grensetype.AvtaltAvgrensningslinje, 1, "Expected 1 AvtaltAvgrensningslinje")
+        assertGrensekoblinger(grensekoblingerForNasjon, Grensetype.Territorialgrense, 2, "Expected 2 Territorialgrense")
+        assertGrensekoblinger(grensekoblingerForNasjon, Grensetype.Riksgrense, 3, "Expected 3 Riksgrense")
     }
 
     @Test
