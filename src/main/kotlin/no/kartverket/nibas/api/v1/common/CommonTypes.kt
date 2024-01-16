@@ -30,9 +30,9 @@ enum class KontekstEnhetType {
  * Introduserte en value-attributt for å kunne ha norske tegn i verdi (ut i klienten), men ikke i enum-konstant-navn.
  * NB: dbKey brukes som konstant i database-tabellen for grenser (disse må da endres med omhu).
  */
-enum class Grensetype(val value: String, val dbKey: String, val editerbar: Boolean) {
-    Kommunegrense("Kommunegrense", "Kommunegrense", false),
-    Fylkesgrense("Fylkesgrense", "Fylkesgrense", false),
+enum class Grensetype(val value: String, val dbKey: String, val redigerbar: Boolean) {
+    Kommunegrense("Kommunegrense", "Kommunegrense", true),
+    Fylkesgrense("Fylkesgrense", "Fylkesgrense", true),
     Riksgrense("Riksgrense", "Riksgrense", false),
     AvtaltAvgrensningslinje("AvtaltAvgrensningslinje", "AvtaltAvgrensningslinje", false),
     Territorialgrense("Territorialgrense", "Territorialgrense", false),

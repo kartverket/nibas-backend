@@ -30,9 +30,9 @@ class UtkastValidatorService(
     fun validateGyldigeOperasjoner(operasjoner: Operasjoner): OperasjonerValidering {
         val endredeFeatures: Map<String, Feature> = operasjoner.grenseendringer.endredeFeatures
 
-        val featuresSomIkkeErEditerbare = endredeFeatures.filterNot { Grensetype.fromValue(it.value.properties.type).editerbar }
-        if (featuresSomIkkeErEditerbare.isNotEmpty()) {
-            return OperasjonerValidering.UgyldigeOperasjoner(operasjoner, ResponseException.BadRequestException("Utkast inneholder ${featuresSomIkkeErEditerbare.size} ikke-redigerbare grenser"))
+        val featuresSomIkkeErRedigerbare = endredeFeatures.filterNot { Grensetype.fromValue(it.value.properties.type).redigerbar }
+        if (featuresSomIkkeErRedigerbare.isNotEmpty()) {
+            return OperasjonerValidering.UgyldigeOperasjoner(operasjoner, ResponseException.BadRequestException("Utkast inneholder ${featuresSomIkkeErRedigerbare.size} ikke-redigerbare grenser"))
         }
 
         val kretsinfoValideringsfeil = validerKretsinfoEndringer(operasjoner)

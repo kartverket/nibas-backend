@@ -20,8 +20,8 @@ import no.kartverket.nibas.service.StemmekretsService
 import no.kartverket.nibas.service.utkast.OperasjonerValidering
 import no.kartverket.nibas.service.utkast.UtkastValidatorService
 import no.kartverket.nibas.service.utkast.UtkastValidering
-import no.kartverket.nibas.utkast.UtkastServiceTest.Companion.operasjonerMedIkkeEditerbareGrenser
-import no.kartverket.nibas.utkast.UtkastServiceTest.Companion.operasjonerMedKunEditerbareGrenser
+import no.kartverket.nibas.utkast.UtkastServiceTest.Companion.operasjonerMedIkkeRedigerbareGrenser
+import no.kartverket.nibas.utkast.UtkastServiceTest.Companion.operasjonerMedKunRedigerbareGrenser
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -85,8 +85,8 @@ class UtkastValideringTest {
     }
 
     @Test
-    fun `valider operasjoner med ikke-editerbare grenser gir ugyldige operasjoner`() {
-        val operasjoner = operasjonerMedIkkeEditerbareGrenser()
+    fun `valider operasjoner med ikke-redigerbare grenser gir ugyldige operasjoner`() {
+        val operasjoner = operasjonerMedIkkeRedigerbareGrenser()
 
         val validateGyldigeOperasjoner = utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
         assertThat(validateGyldigeOperasjoner).isInstanceOf(OperasjonerValidering.UgyldigeOperasjoner::class.java)
@@ -324,7 +324,7 @@ class UtkastValideringTest {
                     stemmekretsNavn = "gyldigNavn",
                     stemmekretsNummer = "4"
                 ),
-                grenseendringer = operasjonerMedKunEditerbareGrenser().grenseendringer
+                grenseendringer = operasjonerMedKunRedigerbareGrenser().grenseendringer
             )
 
         val validateGyldigeOperasjoner =

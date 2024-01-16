@@ -119,10 +119,10 @@ internal class UtkastServiceTest {
     }
 
     @Test
-    fun opprettUtkastMedIkkeEditerbareGrenserGirBadRequest() {
+    fun opprettUtkastMedIkkeRedigerbareGrenserGirBadRequest() {
         val opprettUtkastRequest = OpprettUtkastRequestBuilder()
-            .withNavn("Utkast med ikke-editerbare grenser")
-            .withOperasjoner(operasjonerMedIkkeEditerbareGrenser())
+            .withNavn("Utkast med ikke-redigerbare grenser")
+            .withOperasjoner(operasjonerMedIkkeRedigerbareGrenser())
             .build()
 
         assertThatThrownBy {utkastService.opprettUtkast(opprettUtkastRequest)}
@@ -170,9 +170,9 @@ internal class UtkastServiceTest {
     }
 
     @Test
-    fun oppdaterUtkastMedIkkeEditerbareGrenserGirBadRequest() {
+    fun oppdaterUtkastMedIkkeRedigerbareGrenserGirBadRequest() {
         val utkast = UtkastRequestBuilder()
-            .withOperasjoner(operasjonerMedIkkeEditerbareGrenser())
+            .withOperasjoner(operasjonerMedIkkeRedigerbareGrenser())
             .build()
         assertThatThrownBy {utkastService.oppdaterUtkast("123", utkast)}
             .isInstanceOf(BadRequestException::class.java)
@@ -411,27 +411,27 @@ internal class UtkastServiceTest {
         )
 
     companion object {
-        fun operasjonerMedIkkeEditerbareGrenser() = Operasjoner(
+        fun operasjonerMedIkkeRedigerbareGrenser() = Operasjoner(
             grenseendringer = Grenseendringer(
                 endredeFeatures = mapOf(
-                    "1" to FeatureBuilder("1").withGrensetype(Grensetype.Fylkesgrense).build(),
-                    "2" to FeatureBuilder("2").withGrensetype(Grensetype.Kommunegrense).build(),
-                    "3" to FeatureBuilder("3").withGrensetype(Grensetype.AvtaltAvgrensningslinje).build(),
-                    "4" to FeatureBuilder("4").withGrensetype(Grensetype.Riksgrense).build(),
-                    "5" to FeatureBuilder("5").withGrensetype(Grensetype.Territorialgrense).build(),
-                    "6" to FeatureBuilder("6").withGrensetype(Grensetype.Grunnkretsgrense).build(),
-                    "7" to FeatureBuilder("7").withGrensetype(Grensetype.Delomraadegrense).build(),
-                    "8" to FeatureBuilder("8").withGrensetype(Grensetype.Stemmekretsgrense).build()
+                    "1" to FeatureBuilder("1").withGrensetype(Grensetype.AvtaltAvgrensningslinje).build(),
+                    "2" to FeatureBuilder("2").withGrensetype(Grensetype.Riksgrense).build(),
+                    "3" to FeatureBuilder("3").withGrensetype(Grensetype.Territorialgrense).build(),
+                    "4" to FeatureBuilder("4").withGrensetype(Grensetype.Grunnkretsgrense).build(),
+                    "5" to FeatureBuilder("5").withGrensetype(Grensetype.Delomraadegrense).build(),
+                    "6" to FeatureBuilder("6").withGrensetype(Grensetype.Stemmekretsgrense).build()
                 )
             )
         )
 
-        fun operasjonerMedKunEditerbareGrenser() = Operasjoner(
+        fun operasjonerMedKunRedigerbareGrenser() = Operasjoner(
             grenseendringer = Grenseendringer(
                 endredeFeatures = mapOf(
                     "1" to FeatureBuilder("1").withGrensetype(Grensetype.Grunnkretsgrense).build(),
                     "2" to FeatureBuilder("2").withGrensetype(Grensetype.Delomraadegrense).build(),
-                    "3" to FeatureBuilder("3").withGrensetype(Grensetype.Stemmekretsgrense).build()
+                    "3" to FeatureBuilder("3").withGrensetype(Grensetype.Stemmekretsgrense).build(),
+                    "4" to FeatureBuilder("4").withGrensetype(Grensetype.Kommunegrense).build(),
+                    "5" to FeatureBuilder("5").withGrensetype(Grensetype.Fylkesgrense).build()
                 )
             )
         )
