@@ -18,6 +18,7 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.TerritorialgrenseMetad
 import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.extensions.geometry.geometryToDto
+import no.kartverket.nibas.extensions.geometry.toLineString
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.Geometry
@@ -77,6 +78,22 @@ class FeatureBuilder(private val id: String? = "1") {
         )
     }
 
+    // Kan brukes for å legge til nye ting på en eksisterende Feature man har.
+    // Så slipper man å gjøre alt i en transformasjon, og kan ha mer generelle funksjoner i testkoden.
+    fun copy(feature: Feature): FeatureBuilder {
+        this.grenseType = when(feature.properties.type){
+            "Stemmekretsgrense" -> Grensetype.Stemmekretsgrense
+            "Grunnkretsgrense" -> Grensetype.Grunnkretsgrense
+            else -> throw RuntimeException("Mangler støtte for ${feature.properties.type}, legg til dette i testkoden")
+        }
+        this.kontekstEgenskaper = feature.properties.kontekstEgenskaper ?: throw RuntimeException("Mangler kontekstEgenskaper for feature")
+        this.grenseVersjon = feature.properties.version
+        this.metadata = feature.properties.metadata
+        this.lokalid = feature.id ?: throw RuntimeException("Mangler lokalid")
+        this.geometry = feature.geometry.toLineString(this.srid)
+        return this
+    }
+
     fun withGrensetype(grenseType: Grensetype): FeatureBuilder {
         this.grenseType = grenseType
         return this
@@ -106,10 +123,4 @@ class FeatureBuilder(private val id: String? = "1") {
         this.lokalid = lokalid
         return this
     }
-
-    fun withShouldArchive(shouldArchive: Boolean): FeatureBuilder {
-        this.shouldArchive = shouldArchive
-        return this
-    }
-
 }

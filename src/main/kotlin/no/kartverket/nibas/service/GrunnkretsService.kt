@@ -155,12 +155,12 @@ class GrunnkretsService(
 
         verifiserOptimistiskLaas(kretsDelingEndringRequest.version, grunnkrets)
 
-        val nyGrunnkrets = Grunnkrets().apply {
+        val nyGrunnkrets = grunnkretsRepository.save(Grunnkrets().apply {
             grunnkretsnavn = kretsDelingEndringRequest.kretsNavn
             grunnkretsnummer = kretsDelingEndringRequest.kretsNummer
             utledetFra = grunnkrets
             setGyldigFra(delingsDato)
-        }
+        })
 
         if (finnesAnnenGrunnkretsMedSammeGrunnkretsnummer(nyGrunnkrets)) {
             throw createDuplikatGrunnkretsnummerException(nyGrunnkrets)

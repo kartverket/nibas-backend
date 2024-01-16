@@ -178,12 +178,12 @@ class StemmekretsService(
 
         verifiserOptimistiskLaas(kretsDelingEndringRequest.version, stemmekrets)
 
-        val nyStemmekrets = Stemmekrets().apply {
+        val nyStemmekrets = stemmekretsRepository.save(Stemmekrets().apply {
             stemmekretsnavn = kretsDelingEndringRequest.kretsNavn
             stemmekretsnummer = kretsDelingEndringRequest.kretsNummer
             utledetFra = stemmekrets
             setGyldigFra(delingsDato)
-        }
+        })
 
         if (finnesAnnenStemmekretsMedSammeKommuneOgStemmekretsnummer(nyStemmekrets)) {
             throw createDuplikatStemmekretsnummerException(nyStemmekrets)
