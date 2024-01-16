@@ -72,9 +72,7 @@ class UtkastService(
             is OperasjonerValidering.UgyldigeOperasjoner -> throw operasjonerValideringResult.feil
             is OperasjonerValidering.GyldigeOperasjoner -> {
                 return hentUtkast(id)?.let { eksisterendeUtkast ->
-                    verifiserOptimistiskLaas(request.version, eksisterendeUtkast)?.let {
-                        throw OptimistiskLaasException(it)
-                    }
+                    verifiserOptimistiskLaas(request.version, eksisterendeUtkast)?.throwException()
 
                     eksisterendeUtkast.navn = request.navn
                     eksisterendeUtkast.auditInfo.typeEndring = Endringstype.fromValue(request.endringstype)

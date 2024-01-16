@@ -73,9 +73,7 @@ class KommuneService(
         val gammelKommune = hentKommune(identifikator)
             ?: throw ResponseException.NotFoundException("Kommune med $identifikator ble ikke funnet.")
 
-        verifiserOptimistiskLaas(oppdatertKommune.version, gammelKommune)?.let {
-            throw OptimistiskLaasException(it)
-        }
+        verifiserOptimistiskLaas(oppdatertKommune.version, gammelKommune)?.throwException()
 
         val nyKommune = createNyVersjonAvKommune(kommune = gammelKommune, gyldigFra = gyldigFra, endringstype = endringstype)
             .applyChangesFromRequest(oppdatertKommune)

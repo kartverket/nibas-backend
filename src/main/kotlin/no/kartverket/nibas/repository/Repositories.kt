@@ -83,6 +83,7 @@ fun verifiserOptimistiskLaas(nyVersion: Int, eksisterende: Laasbar): KonfliktVer
     if (nyVersion == eksisterende.version) null else KonfliktVersjon(nyVersion, eksisterende)
 
 data class KonfliktVersjon(val nyVersjon: Int, val eksisterende: Laasbar) {
+    fun throwException() : Unit = throw OptimistiskLaasException(this)
     fun getMessage(): String =
         "Det er ikke samsvar med versjon. Ønsket versjon = ${nyVersjon}, eksisterende versjon = ${eksisterende.version} for objekt med id = ${eksisterende.id}"
 }

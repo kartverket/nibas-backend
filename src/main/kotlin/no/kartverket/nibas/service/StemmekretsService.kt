@@ -65,9 +65,7 @@ class StemmekretsService(
         val gammelStemmekrets = hentStemmekrets(identifikator)
             ?: throw ResponseException.NotFoundException(title = "Stemmekrets ikke funnet", msg = "Stemmekrets med $identifikator ble ikke funnet.")
 
-        verifiserOptimistiskLaas(oppdatertStemmekrets.version, gammelStemmekrets)?.let {
-            throw OptimistiskLaasException(it)
-        }
+        verifiserOptimistiskLaas(oppdatertStemmekrets.version, gammelStemmekrets)?.throwException()
 
         val nyStemmekrets = createNyVersjonAvStemmekrets(gammelStemmekrets, gyldigFra, endringstype)
             .applyChangesFromRequest(oppdatertStemmekrets)
@@ -116,7 +114,7 @@ class StemmekretsService(
         stemmekretserForSjekkeOptimistiskLaas
             .forEach { (stemmekrets, versjon) ->
                 verifiserOptimistiskLaas(versjon, stemmekrets)
-                    ?.let { throw OptimistiskLaasException(it) }
+                    ?.throwException()
             }
 
         stemmekretserSomUtgaar.forEach { it.setGyldigTil(sammenslaaingsDato) }

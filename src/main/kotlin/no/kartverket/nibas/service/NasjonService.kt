@@ -44,9 +44,7 @@ class NasjonService(
         val gammelNasjon = hentNasjon(identifikator)
             ?: throw ResponseException.NotFoundException("Nasjon med $identifikator ble ikke funnet.")
 
-        verifiserOptimistiskLaas(oppdatertNasjon.version, gammelNasjon)?.let {
-            throw OptimistiskLaasException(it)
-        }
+        verifiserOptimistiskLaas(oppdatertNasjon.version, gammelNasjon)?.throwException()
 
         val nyNasjon = createNyVersjonAvNasjon(nasjon = gammelNasjon, gyldigFra = gyldigFra, endringstype = endringstype)
         return nyNasjon

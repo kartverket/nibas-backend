@@ -57,9 +57,7 @@ class FylkeService(
         val gammeltFylke = hentFylke(Identifikator(lokalid))
             ?: throw ResponseException.NotFoundException("Fylke med $identifikator ble ikke funnet.")
 
-        verifiserOptimistiskLaas(oppdatertFylke.version, gammeltFylke)?.let {
-            throw OptimistiskLaasException(it)
-        }
+        verifiserOptimistiskLaas(oppdatertFylke.version, gammeltFylke)?.throwException()
 
         val nyttFylke = createNyVersjonAvFylke(fylke = gammeltFylke, gyldigFra = gyldigFra, endringstype = endringstype)
             .applyChangesFromRequest(oppdatertFylke)
