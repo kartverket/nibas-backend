@@ -57,8 +57,8 @@ class KommuneService(
     fun hentKommunerForFylke(fylkeIdentifikator: Identifikator): List<Kommune> =
         fylkeRepository.findGyldigObjektForIdentifikator(fylkeIdentifikator)?.getKommuner(fylkeIdentifikator.gyldighetsdato) ?: emptyList()
 
-    fun hentGrenserForKommune(identifikator: Identifikator): Set<GrunnkretsGrenseKobling> {
-        return hentKommune(identifikator)?.getGrenser(identifikator.gyldighetsdato) ?: emptySet()
+    fun hentGrensekoblingerForKommune(identifikator: Identifikator): Set<GrunnkretsGrenseKobling> {
+        return hentKommune(identifikator)?.getGrensekoblinger(identifikator.gyldighetsdato) ?: emptySet()
     }
 
     @Transactional(readOnly = false)
@@ -73,9 +73,7 @@ class KommuneService(
         val gammelKommune = hentKommune(identifikator)
             ?: throw ResponseException.NotFoundException("Kommune med $identifikator ble ikke funnet.")
 
-        verifiserOptimistiskLaas(oppdatertKommune.version, gammelKommune)?.let {
-            throw OptimistiskLaasException(it)
-        }
+        verifiserOptimistiskLaas(oppdatertKommune.version, gammelKommune)?.throwException()
 
         val nyKommune = createNyVersjonAvKommune(kommune = gammelKommune, gyldigFra = gyldigFra, endringstype = endringstype)
             .applyChangesFromRequest(oppdatertKommune)

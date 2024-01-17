@@ -270,12 +270,12 @@ class NasjonServiceIT : TestWithDbContainer() {
 
         val grense4 = saveGrenseAvTypeRiksgrense(id = "2003", lokalid = grenseLokallid2, gyldigFra = october1In2022, gyldigTil = jan1In2023)
         val grense3 = saveGrenseAvTypeRiksgrense(id = "2002", lokalid = grenseLokallid, gyldigFra = jan1In2024)
-        val grense2 = saveGrenseAvTypeRiksgrense(id = "2001", lokalid = grenseLokallid, nesteVersjon = grense3, gyldigFra = jan1In2023, gyldigTil = jan1In2024)
-        val grense1 = saveGrenseAvTypeRiksgrense(id = "2000", lokalid = grenseLokallid, nesteVersjon = grense2, gyldigFra = october1In2022, gyldigTil = jan1In2023)
+        val grense2 = saveGrenseAvTypeRiksgrense(id = "2001", lokalid = grenseLokallid, gyldigFra = jan1In2023, gyldigTil = jan1In2024)
+        val grense1 = saveGrenseAvTypeRiksgrense(id = "2000", lokalid = grenseLokallid, gyldigFra = october1In2022, gyldigTil = jan1In2023)
 
         val grunnkrets1 = saveGrunnkrets(id = "101", lokalid = grunnkretsLokalid, gyldigFra = october1In2022, gyldigTil = december1In2022, grenser = listOf(grense1))
-        val grunnkrets2 = saveGrunnkrets(id = "102", lokalid = grunnkretsLokalid, gyldigFra = december1In2022, gyldigTil = jan1In2024, grenser = listOf(grense1))
-        val grunnkrets3 = saveGrunnkrets(id = "103", lokalid = grunnkretsLokalid, gyldigFra = jan1In2024, grenser = listOf(grense1))
+        val grunnkrets2 = saveGrunnkrets(id = "102", lokalid = grunnkretsLokalid, gyldigFra = december1In2022, gyldigTil = jan1In2024, grenser = listOf(grense1, grense2))
+        val grunnkrets3 = saveGrunnkrets(id = "103", lokalid = grunnkretsLokalid, gyldigFra = jan1In2024, grenser = listOf(grense3))
         val grunnkrets4 = saveGrunnkrets(id = "104", lokalid = grunnkretsLokalid2, gyldigFra = october1In2022, grenser = listOf(grense4))
 
         val kommuneGyldigTilJan23 = saveKommune(id = "123", unikLokalid = kommuneUnikLokalid, gyldigFra = october1In2022, gyldigTil = jan1In2023, grunnkretser = listOf(grunnkrets4))
@@ -288,13 +288,11 @@ class NasjonServiceIT : TestWithDbContainer() {
         saveNasjon(id = "9000", unikLokalid = nasjonUnikLokalid, gyldigFra = october1In2022, fylker = listOf(fylke1GyldigTilJan23, fylke1GyldigFraJan23, fylke2))
 
         val nasjonIdentifikatorFor1Jan23 = Identifikator(nasjonLokalid, jan1In2023)
-        val grensekoblinger = nasjonService.hentGrenserForNasjon(nasjonIdentifikatorFor1Jan23)
+        val grensekoblinger = nasjonService.hentGrensekoblingerForNasjon(nasjonIdentifikatorFor1Jan23)
 
         assertGrenser(
             grensekoblinger.toList(),
-            gyldighetsdato = nasjonIdentifikatorFor1Jan23.gyldighetsdato,
-            grenseIGrensekoblingId = "2000",
-            relevantGrenseId = "2001",
+            grenseIGrensekoblingId = "2001",
             enhetKobletTilGrenseLokalid = grunnkretsLokalid
         )
     }

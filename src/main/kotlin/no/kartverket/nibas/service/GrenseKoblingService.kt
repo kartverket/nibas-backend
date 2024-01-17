@@ -184,11 +184,11 @@ class GrenseKoblingService(
         flater
             .forEach { flate ->
                 val oppdatertGrenseKoblingListe = when (flate.type) {
-                    Flatetype.GRUNNKRETS -> (flate as Grunnkrets).getGrenser(gyldighetsDato)
-                    Flatetype.STEMMEKRETS -> (flate as Stemmekrets).getGrenser(gyldighetsDato)
-                    Flatetype.FYLKE -> (flate as Fylke).getGrenser(gyldighetsDato)
-                    Flatetype.KOMMUNE -> (flate as Kommune).getGrenser(gyldighetsDato)
-                    Flatetype.NASJON -> (flate as Nasjon).getGrenser(gyldighetsDato)
+                    Flatetype.GRUNNKRETS -> (flate as Grunnkrets).getGrensekoblinger(gyldighetsDato)
+                    Flatetype.STEMMEKRETS -> (flate as Stemmekrets).getGrensekoblinger(gyldighetsDato)
+                    Flatetype.FYLKE -> (flate as Fylke).getGrensekoblinger(gyldighetsDato)
+                    Flatetype.KOMMUNE -> (flate as Kommune).getGrensekoblinger(gyldighetsDato)
+                    Flatetype.NASJON -> (flate as Nasjon).getGrensekoblinger(gyldighetsDato)
                     Flatetype.SKOLEKRETS -> throw RuntimeException("Støtter ikke oppdatering av grensekoblinger for skolekretser")
                 }
 

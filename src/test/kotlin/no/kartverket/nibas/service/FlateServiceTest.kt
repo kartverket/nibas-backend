@@ -170,7 +170,8 @@ class FlateServiceTest {
             id = "123",
             lokalid = Lokalid("L123"),
             grense = grense,
-            gyldighet = Gyldighet(LocalDate.now(), LocalDate.now().plusDays(2))
+            grenseGyldighet = Gyldighet(LocalDate.now(), LocalDate.now().plusDays(2)),
+            grunnkretsGyldighet = Gyldighet(LocalDate.now(), LocalDate.now().plusDays(2))
         )
     }
 

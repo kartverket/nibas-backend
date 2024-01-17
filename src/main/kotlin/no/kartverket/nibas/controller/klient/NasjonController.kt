@@ -42,7 +42,7 @@ class NasjonController(
 
     override fun hentGrenserForNasjon(lokalid: String, gyldighetsdato: LocalDate?): FeatureCollection {
         val identifikator = createIdentifikator(lokalid, gyldighetsdato)
-        val grensekoblinger = nasjonService.hentGrenserForNasjon(identifikator)
+        val grensekoblinger = nasjonService.hentGrensekoblingerForNasjon(identifikator)
         if (grensekoblinger.isEmpty()) {
             throw NotFoundException("Fant ingen grenser for $identifikator")
         }

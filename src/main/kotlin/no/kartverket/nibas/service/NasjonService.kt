@@ -29,8 +29,8 @@ class NasjonService(
     fun hentAlleNasjoner(gyldighetsdato: LocalDate = LocalDate.now()): List<Nasjon> = nasjonRepository.findAllGyldigPaaDato(gyldighetsdato)
     fun hentNasjon(identifikator: Identifikator): Nasjon? = nasjonRepository.findGyldigObjektForIdentifikator(identifikator)
 
-    fun hentGrenserForNasjon(identifikator: Identifikator): Set<GrunnkretsGrenseKobling> =
-        hentNasjon(identifikator)?.getGrenser(identifikator.gyldighetsdato) ?: emptySet()
+    fun hentGrensekoblingerForNasjon(identifikator: Identifikator): Set<GrunnkretsGrenseKobling> =
+        hentNasjon(identifikator)?.getGrensekoblinger(identifikator.gyldighetsdato) ?: emptySet()
 
     @Transactional(readOnly = false)
     fun oppdaterNasjon(
@@ -44,9 +44,7 @@ class NasjonService(
         val gammelNasjon = hentNasjon(identifikator)
             ?: throw ResponseException.NotFoundException("Nasjon med $identifikator ble ikke funnet.")
 
-        verifiserOptimistiskLaas(oppdatertNasjon.version, gammelNasjon)?.let {
-            throw OptimistiskLaasException(it)
-        }
+        verifiserOptimistiskLaas(oppdatertNasjon.version, gammelNasjon)?.throwException()
 
         val nyNasjon = createNyVersjonAvNasjon(nasjon = gammelNasjon, gyldigFra = gyldigFra, endringstype = endringstype)
         return nyNasjon

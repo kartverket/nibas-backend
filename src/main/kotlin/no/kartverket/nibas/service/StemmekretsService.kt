@@ -44,18 +44,12 @@ class StemmekretsService(
 
     fun hentStemmekrets(identifikator: Identifikator): Stemmekrets? = stemmekretsRepository.findGyldigObjektForIdentifikator(identifikator)
 
+    fun hentGrensekoblingerForStemmekrets(identifikator: Identifikator): List<StemmekretsGrenseKobling> {
+        return hentStemmekrets(identifikator)?.getGrensekoblinger(identifikator.gyldighetsdato) ?: emptyList()
+    }
     @Transactional(readOnly = true)
     fun hentStemmekretsForStemmekretsNummerIKommune(kommuneIdentifikator: ObjektIdentifikator, stemmekretsnummer: String, gyldighetsdato: LocalDate): Stemmekrets? {
         return findGyldigObjektPaaGyldighetsdato(stemmekretsRepository.findAllByStemmekretsnummerAndKommuneLokalid(stemmekretsnummer, UnikLokalid(kommuneIdentifikator.lokalid.value, Flatetype.KOMMUNE)))
-    }
-
-    fun hentSisteGyldigeStemmekrets(lokalid: String): Stemmekrets? =
-        stemmekretsRepository.findAllByLokalid(lokalid = lokalid)
-            .filter { !it.gyldighet.slettet }
-            .maxBy { it.gyldighet.gyldigFra }
-
-    fun hentGrenserForStemmekrets(identifikator: Identifikator): List<StemmekretsGrenseKobling> {
-        return hentStemmekrets(identifikator)?.getGrenser(identifikator.gyldighetsdato) ?: emptyList()
     }
 
     fun hentStemmekretserForIds(ids: Set<String>, gyldighetsdato: LocalDate): List<Stemmekrets> {
@@ -80,9 +74,7 @@ class StemmekretsService(
         val gammelStemmekrets = hentStemmekrets(identifikator)
             ?: throw ResponseException.NotFoundException(title = "Stemmekrets ikke funnet", msg = "Stemmekrets med $identifikator ble ikke funnet.")
 
-        verifiserOptimistiskLaas(oppdatertStemmekrets.version, gammelStemmekrets)?.let {
-            throw OptimistiskLaasException(it)
-        }
+        verifiserOptimistiskLaas(oppdatertStemmekrets.version, gammelStemmekrets)?.throwException()
 
         val nyStemmekrets = createNyVersjonAvStemmekrets(gammelStemmekrets, gyldigFra, endringstype)
             .applyChangesFromRequest(oppdatertStemmekrets)
@@ -131,7 +123,7 @@ class StemmekretsService(
         stemmekretserForSjekkeOptimistiskLaas
             .forEach { (stemmekrets, versjon) ->
                 verifiserOptimistiskLaas(versjon, stemmekrets)
-                    ?.let { throw OptimistiskLaasException(it) }
+                    ?.throwException()
             }
 
         stemmekretserSomUtgaar.forEach { it.setGyldigTil(sammenslaaingsDato) }
@@ -253,7 +245,7 @@ class StemmekretsService(
     ): List<StemmekretsGrenseKobling> {
 
         val alleFlaterOgHull = SosiGeometryFunctions.finnFlaterForGrenser(
-            grensekoblinger.map { GrenseMedLokalid(it.getGrenseJustertForRetning(stemmekrets.gyldighet.gyldigFra), Lokalid(it.grense.lokalid)) }
+            grensekoblinger.map { GrenseMedLokalid(it.getGrenseJustertForRetning(), Lokalid(it.grense.lokalid)) }
         )
 
         val flaterSomPolygon = alleFlaterOgHull.map { grense -> lagFlate(grense.map { it.grense }, emptyList()) }

@@ -48,13 +48,9 @@ class Stemmekrets(
     @JoinColumn(name = "utledetfra")
     var utledetFra: Stemmekrets? = null
 
-    fun getGrenserAvTyper(grensetyper: Set<Grensetype>, gyldighetsdato: LocalDate = LocalDate.now()): List<StemmekretsGrenseKobling> {
-        //Denne kan returnere flere grensekoblinger som ender opp med å peke på samme grense (via neste versjon)
-        return grenser
-            .filter { it.grense.erRelevantGrenseForTyperOgDato(grensetyper, gyldighetsdato) }
+    fun getGrensekoblinger(gyldighetsdato: LocalDate = LocalDate.now()): List<StemmekretsGrenseKobling> {
+        return grenser.filter { it.grense.gyldigPaaDato(gyldighetsdato) }
     }
-
-    fun getGrenser(gyldighetsdato: LocalDate = LocalDate.now()): List<StemmekretsGrenseKobling> = getGrenserAvTyper(tillatteGrensetyper(), gyldighetsdato)
 
     /**
      * Henter kretsen sin kommune på en gitt dato. Hvis man gir en dato hvor kommunen med gitt lokalid ikke er gyldig, returneres null
@@ -64,7 +60,7 @@ class Stemmekrets(
     }
 
     override fun oppdaterOmraadeOgPosisjon() {
-        omraade = SosiGeometryFunctions.beregnFlate(getGrenser(gyldighetsdato = gyldighet.gyldigFra).toSet(), gyldighet.gyldigFra)
+        omraade = SosiGeometryFunctions.beregnFlate(getGrensekoblinger(gyldighetsdato = gyldighet.gyldigFra).toSet())
         if (omraade != null && (posisjon == null || !omraade!!.contains(posisjon))) {
             posisjon = omraade?.interiorPoint
         }

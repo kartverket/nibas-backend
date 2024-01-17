@@ -28,7 +28,7 @@ class GrunnkretsController(
 
     override fun hentGrenserForGrunnkrets(lokalid: String, gyldighetsdato: LocalDate?): FeatureCollection {
         val identifikator = createIdentifikator(lokalid, gyldighetsdato)
-        val grensekoblinger = grunnkretsService.hentGrenserForGrunnkrets(identifikator)
+        val grensekoblinger = grunnkretsService.hentGrensekoblingerForGrunnkrets(identifikator)
         if (grensekoblinger.isEmpty()) {
             throw NotFoundException("Fant ingen grenser for $identifikator")
         }

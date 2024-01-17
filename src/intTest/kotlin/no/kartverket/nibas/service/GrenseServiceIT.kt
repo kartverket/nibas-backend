@@ -88,8 +88,8 @@ class GrenseServiceIT : TestWithDbContainer() {
                 endringstype = Endringstype.VEDTATT_GRENSEJUSTERING
             )
 
-        }.isInstanceOf(IkkeSammenhengendePolygonException::class.java)
-            .hasMessageContaining("Polygon som skal dannes har ikke-sammenhengende punkter, sluttpunkt: (0.0, 0.0, NaN), startPunkt: (0.0, 5.0, NaN). Validation-feil: Interior is disconnected.")
+        }.isInstanceOf(RuntimeException::class.java)
+            .hasMessageContaining("Finner ikke neste LineString i grensen. Dette skal ikke skje og tyder på feil i implementasjonen eller dataene.")
     }
 
     @Test
@@ -154,8 +154,8 @@ class GrenseServiceIT : TestWithDbContainer() {
                 gyldighetsdato = gyldighetsdato,
                 endringstype = Endringstype.VEDTATT_GRENSEJUSTERING
             )
-        }.isInstanceOf(IkkeSammenhengendePolygonException::class.java)
-            .hasMessageContaining("Polygon som skal dannes har ikke-sammenhengende punkter, sluttpunkt: (0.0, 0.0, NaN), startPunkt: (0.0, 5.0, NaN). Validation-feil: Interior is disconnected.")
+        }.isInstanceOf(RuntimeException::class.java)
+            .hasMessageContaining("Finner ikke neste LineString i grensen. Dette skal ikke skje og tyder på feil i implementasjonen eller dataene.")
     }
 
     @Test
@@ -312,7 +312,7 @@ class GrenseServiceIT : TestWithDbContainer() {
         }
     }
 
-
+    @Test
     fun `lagreGrenser klarer å endre tilhørighet på grunnkretsgrense til nyopprettet grunnkrets`(){
 
     }

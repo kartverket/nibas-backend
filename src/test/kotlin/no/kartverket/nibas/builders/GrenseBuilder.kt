@@ -34,8 +34,7 @@ class GrenseBuilder(private val id: String = "1",
                     private var gyldigTil: LocalDate? = null,
                     private var opphav: String = "Eidsvoll",
                     private var versjon: Int = 1,
-                    private var grensetype: Grensetype = Grensetype.Grunnkretsgrense,
-                    private var nesteVersjon: Grense? = null) {
+                    private var grensetype: Grensetype = Grensetype.Grunnkretsgrense) {
 
     fun build(): Grense {
         val grense = Grense(id, lokalId.value, grensetype)
@@ -43,9 +42,6 @@ class GrenseBuilder(private val id: String = "1",
         grense.gyldighet = Gyldighet(gyldigFra, gyldigTil)
         grense.opphav = opphav
         grense.version = versjon
-        if (nesteVersjon != null) {
-            grense.nesteVersjon = nesteVersjon
-        }
 
         return grense
     }
@@ -103,8 +99,7 @@ class FylkesgrenseBuilder(private val id: String = "1",
                           ),
                           private var opphav: String = OPPHAV,
                           private var informasjonstekst: String = INFORMASJONTEKST,
-                          private var grenseGeometri: LineString = GeometryFactory().createLineString(),
-                          private var nesteVersjon: Grense? = null) {
+                          private var grenseGeometri: LineString = GeometryFactory().createLineString()) {
 
     fun build(): Grense {
         val fylkesgrense = Grense(id = this.id, lokalid = lokalid.value, Grensetype.Fylkesgrense)
@@ -117,7 +112,6 @@ class FylkesgrenseBuilder(private val id: String = "1",
         fylkesgrense.grense = grenseGeometri
 
         fylkesgrense.dokumentasjonsreferanser.addAll(dokumentasjonsreferanser)
-        fylkesgrense.nesteVersjon = nesteVersjon
         return fylkesgrense
     }
 

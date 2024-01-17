@@ -129,29 +129,27 @@ class KommuneServiceIT : TestWithDbContainer() {
 
     @Test
     fun hentGrenserForKommuneFramITid() {
-        // Grense 1 er gyldig til 1.1.23, peker til grense 2
-        // Grense 2 er gyldig 1.1.23-1.1.24, peker til grense 3
+        // Grense 1 er gyldig til 1.1.23
+        // Grense 2 er gyldig 1.1.23-1.1.24
         // Grense 3 er gyldig fra 1.1.24
         val grense3 = saveGrenseAvTypeKommunegrense(id = "2002", lokalid = grenseLokallid, gyldigFra = jan1In2024)
-        val grense2 = saveGrenseAvTypeKommunegrense(id = "2001", lokalid = grenseLokallid, nesteVersjon = grense3, gyldigFra = jan1In2023, gyldigTil = jan1In2024)
-        val grense1 = saveGrenseAvTypeKommunegrense(id = "2000", lokalid = grenseLokallid, nesteVersjon = grense2, gyldigFra = october1In2022, gyldigTil = jan1In2023)
+        val grense2 = saveGrenseAvTypeKommunegrense(id = "2001", lokalid = grenseLokallid, gyldigFra = jan1In2023, gyldigTil = jan1In2024)
+        val grense1 = saveGrenseAvTypeKommunegrense(id = "2000", lokalid = grenseLokallid, gyldigFra = october1In2022, gyldigTil = jan1In2023)
 
         // Alle grunnkretsene er koblet til grense 1 i koblingstabellen
         // Grunnkrets 2 er gyldig 1.1.23 og det er dennes kobling som vil brukes
         val grunnkrets1 = saveGrunnkrets(id = "101", lokalid = kretsLokalid, gyldigFra = october1In2022, gyldigTil = december1In2022, grenser = listOf(grense1))
-        val grunnkrets2 = saveGrunnkrets(id = "102", lokalid = kretsLokalid, gyldigFra = december1In2022, gyldigTil = jan1In2024, grenser = listOf(grense1))
-        val grunnkrets3 = saveGrunnkrets(id = "103", lokalid = kretsLokalid, gyldigFra = jan1In2024, grenser = listOf(grense1))
+        val grunnkrets2 = saveGrunnkrets(id = "102", lokalid = kretsLokalid, gyldigFra = december1In2022, gyldigTil = jan1In2024, grenser = listOf(grense1, grense2))
+        val grunnkrets3 = saveGrunnkrets(id = "103", lokalid = kretsLokalid, gyldigFra = jan1In2024, grenser = listOf(grense3))
 
         val identifikatorFor1Jan23 = Identifikator(kommuneLokalid, jan1In2023)
         saveKommuneOgUnikLokalid(id = "123", lokalid = kommuneLokalid.value, gyldigFra = october1In2022, grunnkretser = listOf(grunnkrets1, grunnkrets2, grunnkrets3))
 
-        val grensekoblinger = kommuneService.hentGrenserForKommune(identifikatorFor1Jan23)
+        val grensekoblinger = kommuneService.hentGrensekoblingerForKommune(identifikatorFor1Jan23)
 
         assertGrenser(
             grensekoblinger.toList(),
-            gyldighetsdato = identifikatorFor1Jan23.gyldighetsdato,
-            grenseIGrensekoblingId = "2000",
-            relevantGrenseId = "2001",
+            grenseIGrensekoblingId = "2001",
             enhetKobletTilGrenseLokalid = kretsLokalid
         )
     }

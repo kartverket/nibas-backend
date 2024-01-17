@@ -40,7 +40,7 @@ class FylkeController(
 
     override fun hentGrenserForFylke(lokalid: String, gyldighetsdato: LocalDate?): FeatureCollection {
         val identifikator = createIdentifikator(lokalid, gyldighetsdato)
-        val grenseKoblinger = fylkeService.hentGrenserForFylke(identifikator)
+        val grenseKoblinger = fylkeService.hentGrensekoblingerForFylke(identifikator)
         if (grenseKoblinger.isEmpty()) {
             throw NotFoundException("Fant ingen grenser for $identifikator")
         }

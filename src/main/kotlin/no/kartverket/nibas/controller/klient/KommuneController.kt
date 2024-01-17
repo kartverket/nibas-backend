@@ -55,7 +55,7 @@ class KommuneController(
 
     override fun hentGrenserForKommune(lokalid: String, gyldighetsdato: LocalDate?): FeatureCollection {
         val identifikator = createIdentifikator(lokalid, gyldighetsdato)
-        val grenseKoblinger = kommuneService.hentGrenserForKommune(identifikator)
+        val grenseKoblinger = kommuneService.hentGrensekoblingerForKommune(identifikator)
         if (grenseKoblinger.isEmpty()) {
             throw NotFoundException("Fant ingen grenser for $identifikator")
         }

@@ -35,6 +35,8 @@ import no.kartverket.nibas.service.KommuneService
 import no.kartverket.nibas.service.NasjonService
 import no.kartverket.nibas.service.StemmekretsService
 import no.kartverket.nibas.sporing.Gyldighet
+import org.assertj.core.api.Assertions.assertThat
+import org.locationtech.jts.geom.MultiPolygon
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment
@@ -351,15 +353,13 @@ class TestWithDbContainer {
                                       lokalid: Lokalid = Lokalid("kommunegrense-fb07-4277-ad95-63c32c1370d0"),
                                       gyldigFra: LocalDate = LocalDate.of(2022, Month.OCTOBER, 1),
                                       gyldigTil: LocalDate? = null,
-                                      opphav: String = "Eidsvoll",
-                                      nesteVersjon: Grense? = null): Grense {
+                                      opphav: String = "Eidsvoll"): Grense {
         return grenseRepository.save(GrenseBuilder(
             id = id,
             lokalId = lokalid,
             gyldigFra = gyldigFra,
             gyldigTil = gyldigTil,
-            opphav = opphav,
-            nesteVersjon = nesteVersjon
+            opphav = opphav
         ).withGrensetype(Grensetype.Kommunegrense).build())
     }
 
@@ -367,16 +367,24 @@ class TestWithDbContainer {
                                    lokalid: Lokalid = Lokalid("riksgrense-fb07-4277-ad95-63c32c1370d0"),
                                    gyldigFra: LocalDate = LocalDate.of(2022, Month.OCTOBER, 1),
                                    gyldigTil: LocalDate? = null,
-                                   opphav: String = "Eidsvoll",
-                                   nesteVersjon: Grense? = null): Grense {
+                                   opphav: String = "Eidsvoll"): Grense {
         return grenseRepository.save(GrenseBuilder(
             id = id,
             lokalId = lokalid,
             gyldigFra = gyldigFra,
             gyldigTil = gyldigTil,
-            opphav = opphav,
-            nesteVersjon = nesteVersjon
+            opphav = opphav
         ).withGrensetype(Grensetype.Riksgrense).build())
+    }
+
+    /**
+     * Sjekker at topologien til to flater er topologisk like, dvs ikke nødvendigvis samme start/slutt eller samme retning.
+     * Ikke det samme som isEqualTo
+     */
+    fun assertTopologi(flate1: MultiPolygon?, flate2: MultiPolygon?, lik: Boolean = true) {
+        assertThat(flate1).isNotNull()
+        assertThat(flate2).isNotNull()
+        assertThat(flate1?.equals(flate2)).`as`("Flate1: " + flate1 + " Flate2: " + flate2).isEqualTo(lik)
     }
 
 }

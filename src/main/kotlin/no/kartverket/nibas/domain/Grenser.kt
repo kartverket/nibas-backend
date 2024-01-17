@@ -20,7 +20,6 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.JoinTable
 import jakarta.persistence.ManyToMany
 import jakarta.persistence.OneToMany
-import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import jakarta.persistence.Version
 
@@ -91,10 +90,6 @@ class Grense(
     @OneToMany(mappedBy = "grense")
     var stemmekretser: MutableSet<StemmekretsGrenseKobling> = mutableSetOf()
 
-    @OneToOne
-    @JoinColumn(name = "neste_versjon")
-    var nesteVersjon: Grense? = null
-
     fun grunnkretser(gyldighetsdato: LocalDate = LocalDate.now()): Set<Grunnkrets> =
         grunnkretser.map { it.grunnkrets }.filter { it.gyldigPaaDato(gyldighetsdato) }.toSet()
     fun gyldigeGrunnkretsGrenseKoblinger(gyldighetsdato: LocalDate = LocalDate.now()): Set<GrunnkretsGrenseKobling> =
@@ -106,26 +101,22 @@ class Grense(
         stemmekretser.filter { it.stemmekrets.gyldigPaaDato(gyldighetsdato) }.toSet()
 
     fun kommuner(gyldighetsdato: LocalDate = LocalDate.now()): Set<Kommune> =
-        grunnkretser(gyldighetsdato).map { it.getKommune(gyldighetsdato) }.filterNotNull().toSet()
+        grunnkretser(gyldighetsdato).mapNotNull { it.getKommune(gyldighetsdato) }.toSet()
 
     fun fylker(gyldighetsdato: LocalDate = LocalDate.now()): Set<Fylke> =
-        kommuner(gyldighetsdato).map { it.getFylke(gyldighetsdato) }.filterNotNull().toSet()
+        kommuner(gyldighetsdato).mapNotNull { it.getFylke(gyldighetsdato) }.toSet()
 
     fun nasjoner(gyldighetsdato: LocalDate = LocalDate.now()): Set<Nasjon> =
-        fylker(gyldighetsdato).map { it.getNasjon(gyldighetsdato) }.filterNotNull().toSet()
-
-    fun finnFlaterOppTilGrunnkrets(gyldighetsdato: LocalDate = LocalDate.now()): Set<Flate> = grunnkretser(gyldighetsdato)
+        fylker(gyldighetsdato).mapNotNull { it.getNasjon(gyldighetsdato) }.toSet()
 
     fun finnFlaterOppTilKommune(gyldighetsdato: LocalDate = LocalDate.now()): Set<Flate> =
-        HashSet(finnFlaterOppTilGrunnkrets(gyldighetsdato) + kommuner(gyldighetsdato))
+        HashSet(grunnkretser(gyldighetsdato) + kommuner(gyldighetsdato))
 
     fun finnFlaterOppTilFylke(gyldighetsdato: LocalDate = LocalDate.now()): Set<Flate> =
         HashSet(finnFlaterOppTilKommune(gyldighetsdato) + fylker(gyldighetsdato))
 
     fun finnFlaterOppTilNasjon(gyldighetsdato: LocalDate = LocalDate.now()): Set<Flate> =
         HashSet(finnFlaterOppTilFylke(gyldighetsdato) + nasjoner(gyldighetsdato))
-
-    fun finnFlaterOppTilStemmekrets(gyldighetsdato: LocalDate = LocalDate.now()): Set<Flate> = stemmekretser(gyldighetsdato)
 
     fun erAdministrativGrense (): Boolean {
         val adminstrativeGrensetyper = listOf(Grensetype.Kommunegrense, Grensetype.Fylkesgrense, Grensetype.Riksgrense, Grensetype.AvtaltAvgrensningslinje, Grensetype.Territorialgrense)
@@ -191,34 +182,6 @@ class Grense(
             }
         }
     }
-
-    /**
-     * Sjekker om enten seg selv eller en av Grensene som den peker til er gyldig på dato og matcher grensetyper.
-     */
-    fun finnRelevantGrenseForTyperOgDato(grensetyper: Set<Grensetype>, gyldighetsdato: LocalDate = LocalDate.now()): Grense? {
-        var grenseInstansToCheck: Grense? = this
-        var result: Grense? = null
-        while (result == null && grenseInstansToCheck != null) {
-            if (grenseInstansToCheck.gyldigPaaDato(gyldighetsdato)) {
-                if (grensetyper.isNotEmpty()) { // Hvis grensetyper er angitt må også sjekke for match på det
-                    if (grenseInstansToCheck.harGrenseTypeContainedInSet(grensetyper)) {
-                        result = grenseInstansToCheck
-                    }
-                } else {
-                    result = grenseInstansToCheck
-                }
-            }
-            grenseInstansToCheck = grenseInstansToCheck.nesteVersjon
-        }
-        return result
-    }
-
-    fun finnRelevantGrenseForDato(gyldighetsdato: LocalDate = LocalDate.now()): Grense? {
-        return finnRelevantGrenseForTyperOgDato(emptySet(), gyldighetsdato)
-    }
-
-    fun erRelevantGrenseForTyperOgDato(grensetyper: Set<Grensetype>, gyldighetsdato: LocalDate = LocalDate.now()): Boolean =
-        finnRelevantGrenseForTyperOgDato(grensetyper, gyldighetsdato) != null
 
     fun harGrenseTypeContainedInSet(grensetyper: Set<Grensetype>): Boolean = grensetyper.contains(this.grensetype)
 

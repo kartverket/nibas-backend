@@ -32,12 +32,12 @@ class StemmekretsController(
 
     override fun hentGrenserForStemmekrets(lokalid: String, gyldighetsdato: LocalDate?): FeatureCollection {
         val identifikator = createIdentifikator(lokalid, gyldighetsdato)
-        val grenser = stemmekretsService.hentGrenserForStemmekrets(identifikator)
-        if (grenser.isEmpty()) {
+        val grensekoblinger = stemmekretsService.hentGrensekoblingerForStemmekrets(identifikator)
+        if (grensekoblinger.isEmpty()) {
             throw NotFoundException("Fant ingen grenser for $identifikator")
         }
         return FeatureCollection(
-            features = grenser
+            features = grensekoblinger
                 .sortedBy { it.grenseKoblingAttributter.rekkefoelge }
                 .map { it.grenseKoblingToFeature(identifikator.gyldighetsdato) }
         )

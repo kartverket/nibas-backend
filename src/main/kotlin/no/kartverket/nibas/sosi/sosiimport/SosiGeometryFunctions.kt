@@ -4,7 +4,6 @@ import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.getGrenseJustertForRetning
 import no.kartverket.nibas.repository.Grenserad
-import no.kartverket.nibas.sosi.common.ImportUtils
 import no.kartverket.nibas.sosi.model.SosiKoordinat
 import no.kartverket.nibas.sosi.model.SosiNordOest
 import org.locationtech.jts.geom.Coordinate
@@ -20,7 +19,6 @@ import org.locationtech.jts.geom.PrecisionModel
 import org.locationtech.jts.operation.buffer.BufferParameters
 import org.locationtech.jts.operation.valid.IsValidOp
 import org.locationtech.jts.operation.valid.TopologyValidationError
-import java.time.LocalDate
 
 object SosiGeometryFunctions {
     const val defaultSrid = 25833
@@ -251,7 +249,7 @@ object SosiGeometryFunctions {
         return nesteGrense
     }
 
-    fun beregnFlate(grenseKoblinger: Set<GrenseKobling>, gyldighetsdato: LocalDate = ImportUtils.importTime): MultiPolygon {
+    fun beregnFlate(grenseKoblinger: Set<GrenseKobling>): MultiPolygon {
         val flater: List<Polygon> = grenseKoblinger
             .groupBy { it.grenseKoblingAttributter.flateIndeks }
             .map { entry ->
@@ -261,19 +259,14 @@ object SosiGeometryFunctions {
                 val hullKoblinger: Map<Int, List<GrenseKobling>> = (koblingerForFlate - skallKoblinger)
                     .groupBy { it.grenseKoblingAttributter.hullIndeks!! }
 
-                // Etter hvert som vi får flere versjoner av grensene vil hver versjon peke på den nåværende versjonen som gyldig grense for denne koblingen.
-                // Vi må derfor hente ut kun de distinkte grensene for å sikre at flatedanningen fungerer
-
                 val skall: List<LineString> = skallKoblinger
                     .sortedBy { it.grenseKoblingAttributter.rekkefoelge }
-                    .map { it.getGrenseJustertForRetning(gyldighetsdato) }
-                    .distinct()
+                    .map { it.getGrenseJustertForRetning() }
 
                 val hull: List<List<LineString>> = hullKoblinger.map { hullkobling ->
                     hullkobling.value
                         .sortedBy { it.grenseKoblingAttributter.rekkefoelge }
-                        .map { it.getGrenseJustertForRetning(gyldighetsdato) }
-                        .distinct()
+                        .map { it.getGrenseJustertForRetning() }
                 }
 
                 val flate: Polygon = lagFlate(skall, hull)
@@ -373,7 +366,7 @@ class UgyldigGeometriException(val geometry: Geometry,
     : RuntimeException("Geometri-objekt er ikke gyldig: $geometry. Validation-feil: ${topologyValidationError.message}. Feil-lokasjon: ${topologyValidationError.coordinate}")
 
 class IkkeSammenhengendePolygonException(sluttPunkt: Point,
-                                         val startPunkt: Point,
+                                         startPunkt: Point,
                                          topologyValidationError: TopologyValidationError)
     : RuntimeException("Polygon som skal dannes har ikke-sammenhengende punkter, sluttpunkt: ${sluttPunkt.coordinate}, startPunkt: ${startPunkt.coordinate}. Validation-feil: ${topologyValidationError.message}.")
 

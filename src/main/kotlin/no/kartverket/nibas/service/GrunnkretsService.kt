@@ -19,7 +19,6 @@ import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.repository.findAllByLokalidSortedByGyldigFra
 import no.kartverket.nibas.repository.findAllFramtidigeVersjonerByIdentifikator
-import no.kartverket.nibas.repository.findAllGyldigPaaDato
 import no.kartverket.nibas.repository.findAntallFramtidigeVersjonerForIdentifikator
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import no.kartverket.nibas.repository.findGyldigObjektPaaGyldighetsdato
@@ -34,28 +33,18 @@ class GrunnkretsService(
     private val grunnkretsRepository: GrunnkretsRepository,
     private val kodelisteService: KodelisteService
 ) {
-    @Transactional(readOnly = true)
-    fun hentAlleGrunnkretser(gyldighetsdato: LocalDate): List<Grunnkrets> =
-        grunnkretsRepository.findAllGyldigPaaDato(gyldighetsdato)
 
     @Transactional(readOnly = true)
     fun hentGrunnkrets(identifikator: Identifikator): Grunnkrets? = grunnkretsRepository.findGyldigObjektForIdentifikator(identifikator)
 
     @Transactional(readOnly = true)
-    fun hentGrunnkretsForGrunnkretsNummer(grunnkretsNummer: String, gyldighetsdato: LocalDate): Grunnkrets? {
-        return findGyldigObjektPaaGyldighetsdato(grunnkretsRepository.findAllByGrunnkretsnummer(grunnkretsNummer))
+    fun hentGrensekoblingerForGrunnkrets(identifikator: Identifikator): List<GrunnkretsGrenseKobling> {
+        return hentGrunnkrets(identifikator)?.getGrensekoblinger(identifikator.gyldighetsdato) ?: emptyList()
     }
 
     @Transactional(readOnly = true)
-    fun hentSisteGyldigeGrunnkrets(lokalid: String): Grunnkrets? =
-        grunnkretsRepository.findAllByLokalid(lokalid = lokalid)
-            .filter { !it.gyldighet.slettet }
-            .maxBy { it.gyldighet.gyldigFra }
-
-
-    @Transactional(readOnly = true)
-    fun hentGrenserForGrunnkrets(identifikator: Identifikator): List<GrunnkretsGrenseKobling> {
-        return hentGrunnkrets(identifikator)?.getGrenser(identifikator.gyldighetsdato) ?: emptyList()
+    fun hentGrunnkretsForGrunnkretsNummer(grunnkretsNummer: String, gyldighetsdato: LocalDate): Grunnkrets? {
+        return findGyldigObjektPaaGyldighetsdato(grunnkretsRepository.findAllByGrunnkretsnummer(grunnkretsNummer))
     }
 
     @Transactional(readOnly = true)
@@ -94,9 +83,7 @@ class GrunnkretsService(
         val gammelGrunnkrets = hentGrunnkrets(identifikator)
             ?: throw NotFoundException("Grunnkrets med $identifikator ble ikke funnet.")
 
-        verifiserOptimistiskLaas(oppdatertGrunnkrets.version, gammelGrunnkrets)?.let {
-            throw OptimistiskLaasException(it)
-        }
+        verifiserOptimistiskLaas(oppdatertGrunnkrets.version, gammelGrunnkrets)?.throwException()
 
         //Lar dette med GrunnkretsHelper ligge, det har noe å gjøre med evt flere fremtidige endringer på grunnkrets
         val grunnkretsHelper = GrunnkretsHelper(grunnkretsRepository.findAllByLokalidSortedByGyldigFra(lokalId))
