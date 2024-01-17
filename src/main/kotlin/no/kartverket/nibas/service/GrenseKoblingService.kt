@@ -6,12 +6,15 @@ import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Flate
+import no.kartverket.nibas.domain.Fylke
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.domain.KobletTilGrense
+import no.kartverket.nibas.domain.Kommune
+import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.StemmekretsGrenseKobling
 import no.kartverket.nibas.repository.GrunnkretsRepository
@@ -177,13 +180,16 @@ class GrenseKoblingService(
         throw RuntimeException("Grensen rører hverken startpunkt eller endepunktet til forrige grense. Er rekkefølgen riktig?")
     }
 
-    fun oppdaterGrenseKoblingAttributterForFlater(flater: Set<Flate>){
+    fun oppdaterGrenseKoblingAttributterForFlater(flater: Set<Flate>, gyldighetsDato: LocalDate){
         flater
             .forEach { flate ->
                 val oppdatertGrenseKoblingListe = when (flate.type) {
-                    Flatetype.GRUNNKRETS -> (flate as Grunnkrets).grenser
-                    Flatetype.STEMMEKRETS -> (flate as Stemmekrets).grenser
-                    else -> throw RuntimeException("Støtter kun Grunnkrets og Stemmekrets")
+                    Flatetype.GRUNNKRETS -> (flate as Grunnkrets).getGrenser(gyldighetsDato)
+                    Flatetype.STEMMEKRETS -> (flate as Stemmekrets).getGrenser(gyldighetsDato)
+                    Flatetype.FYLKE -> (flate as Fylke).getGrenser(gyldighetsDato)
+                    Flatetype.KOMMUNE -> (flate as Kommune).getGrenser(gyldighetsDato)
+                    Flatetype.NASJON -> (flate as Nasjon).getGrenser(gyldighetsDato)
+                    Flatetype.SKOLEKRETS -> throw RuntimeException("Støtter ikke oppdatering av grensekoblinger for skolekretser")
                 }
 
                 val gma = dannGrenseKoblingAttributterForGrenser(oppdatertGrenseKoblingListe.map { it.grense })

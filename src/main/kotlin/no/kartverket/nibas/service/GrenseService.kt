@@ -75,7 +75,7 @@ class GrenseService(
             endringstype = endringstype
         )
         //Her er det bare å oppdatere, kretsene/adm.enhetene fikk ny versjon ved lagring av grenser og grensekoblinger
-        grenseKoblingService.oppdaterGrenseKoblingAttributterForFlater(enheterSomSkalFlatedannes)
+        grenseKoblingService.oppdaterGrenseKoblingAttributterForFlater(enheterSomSkalFlatedannes, gyldighetsdato)
         flateService.oppdaterFlaterFor(enheterSomSkalFlatedannes)
 
         return enheterSomSkalFlatedannes
@@ -101,7 +101,7 @@ class GrenseService(
                 additionalInfo = "Feilen gjelder følgende grenser: ${identifikatorDiffs.joinToString(",") { "(lokalid: ${it.lokalid.value}), gyldig fra: ${it.gyldighetsdato})" }}")
         }
 
-        //sjekkForKonflikterForGrenserOgTilhorendeKretser(features, eksisterendeGrenser, gyldighetsdato)
+        sjekkForKonflikterForGrenserOgTilhorendeKretser(features, eksisterendeGrenser, gyldighetsdato)
 
         //Flere endrede grenser kan være knyttet til samme krets.
         //Ei endra grense kan ha flere knytninger til samme krets, dvs til ulike versjoner av samme krets
