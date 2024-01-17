@@ -101,7 +101,8 @@ class GrenseService(
                 additionalInfo = "Feilen gjelder følgende grenser: ${identifikatorDiffs.joinToString(",") { "(lokalid: ${it.lokalid.value}), gyldig fra: ${it.gyldighetsdato})" }}")
         }
 
-        sjekkForKonflikterForGrenserOgTilhorendeKretser(features, eksisterendeGrenser, gyldighetsdato)
+        sjekkForKonflikterForGrenser(features, eksisterendeGrenser, gyldighetsdato)
+        sjekkKonflikterITilhoriendeKretser(features, gyldighetsdato)
 
         //Flere endrede grenser kan være knyttet til samme krets.
         //Ei endra grense kan ha flere knytninger til samme krets, dvs til ulike versjoner av samme krets
@@ -170,11 +171,17 @@ class GrenseService(
         return flaterSomHarFaattNyVersjon.values.toSet()
     }
 
-    private fun sjekkForKonflikterForGrenserOgTilhorendeKretser(features: List<Feature>, eksisterendeGrenser: List<Grense>, gyldighetsdato: LocalDate){
+    private fun sjekkForKonflikterForGrenser(features: List<Feature>, eksisterendeGrenser: List<Grense>, gyldighetsdato: LocalDate){
         val konflikterIGrenser= features.mapNotNull { feature ->
             val featureIdentifikator = featureIdToIdentifikator(feature.id, gyldighetsdato)
             verifiserOptimistiskLaas(feature.properties.version, findGrenseForIdentifikator(eksisterendeGrenser, featureIdentifikator))
         }
+        if (konflikterIGrenser.isNotEmpty()) {
+            throw OptimistiskLaasException(*konflikterIGrenser.toTypedArray())
+        }
+    }
+
+    private fun sjekkKonflikterITilhoriendeKretser(features: List<Feature>, gyldighetsdato: LocalDate){
         val konflikterIKretserForGrenser = features.flatMap { feature ->
             feature.properties.kontekstEgenskaper
                 ?.filter { kontekst -> !(kontekst.id == null && kontekst.kretsNummer != null) } // vi skal ikke trenge å sjekke versjon på nyopprettet krets
@@ -195,9 +202,8 @@ class GrenseService(
                     )
                 } ?: emptyList()
         }
-        val alleKonflikter = (konflikterIGrenser+konflikterIKretserForGrenser)
-        if (alleKonflikter.isNotEmpty()) {
-            throw OptimistiskLaasException(*alleKonflikter.toTypedArray())
+        if (konflikterIKretserForGrenser.isNotEmpty()) {
+            throw OptimistiskLaasException(*konflikterIKretserForGrenser.toTypedArray())
         }
     }
 
