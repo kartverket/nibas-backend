@@ -123,4 +123,9 @@ class FeatureBuilder(private val id: String? = "1") {
         this.lokalid = lokalid
         return this
     }
+
+    fun withVersion(version: Int): FeatureBuilder {
+        this.grenseVersjon = version
+        return this
+    }
 }
