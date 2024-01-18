@@ -28,7 +28,6 @@ import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import no.kartverket.nibas.utils.GrenseHelper
-import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Disabled
@@ -765,7 +764,6 @@ class StemmekretsServiceIT : TestWithDbContainer() {
 
         val delingEndringRequest = KretsDelingEndringRequest(
             IdentifikatorMedVersjon(opprinneligStemmekrets.lokalid, opprinneligStemmekrets.version),
-            1,
             Flatetype.STEMMEKRETS,
             "nyStemmekrets",
             "1"
@@ -774,6 +772,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         val nyStemmekrets = stemmekretsService.delStemmekrets(delingEndringRequest, gyldighetsdato, Endringstype.VEDTATT_DELING)
 
         assertThat(nyStemmekrets).isNotNull
+        assertThat(nyStemmekrets.utledetFra?.lokalid).isEqualTo(opprinneligStemmekrets.lokalid)
         assertThat(nyStemmekrets.grenser.size).isEqualTo(0)
         assertThat(nyStemmekrets.stemmekretsnummer).isEqualTo(delingEndringRequest.kretsNummer)
         assertThat(nyStemmekrets.stemmekretsnavn).isEqualTo(delingEndringRequest.kretsNavn)
@@ -786,7 +785,6 @@ class StemmekretsServiceIT : TestWithDbContainer() {
 
         val delingEndringRequest = KretsDelingEndringRequest(
             IdentifikatorMedVersjon(opprinneligStemmekrets.lokalid, opprinneligStemmekrets.version),
-            1,
             Flatetype.GRUNNKRETS,
             "nyStemmekrets",
             "1"
@@ -807,7 +805,6 @@ class StemmekretsServiceIT : TestWithDbContainer() {
 
         val delingEndringRequest = KretsDelingEndringRequest(
             IdentifikatorMedVersjon(opprinneligStemmekrets.lokalid, opprinneligStemmekrets.version),
-            1,
             Flatetype.STEMMEKRETS,
             "nyStemmekrets",
             "1"
@@ -821,6 +818,28 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         }
             .isInstanceOf(ResponseException.BadRequestException::class.java)
             .hasMessageContaining("Kretsnummer 1 er brukt på flere stemmekretser innenfor kommunen (0301 UKJENT KOMMUNE) med gyldighet som overlapper med 01.01.2023 og fremover. Vennligst gi stemmekretsene unike kretsnumre før du fortsetter.")
+    }
+
+    @Test
+    fun `delStemmekrets kaster OptimistiksLaasException ved versjonsfeil på den opprinnelige kretsen`(){
+        val opprinneligStemmekrets = saveStemmekrets("opprinneligKrets", Lokalid("opprinneligKrets"))
+
+        saveKommune(stemmekretser = listOf(opprinneligStemmekrets), gyldigFra = jan1In2023)
+
+        stemmekretsService.createNyVersjonAvStemmekrets(opprinneligStemmekrets, gyldigFra = jan1In2023, Endringstype.RETTING)
+
+        val delingEndringRequest = KretsDelingEndringRequest(
+            IdentifikatorMedVersjon(opprinneligStemmekrets.lokalid, opprinneligStemmekrets.version),
+            Flatetype.STEMMEKRETS,
+            "nyStemmekrets",
+            "1"
+        )
+
+        assertThatThrownBy {
+            stemmekretsService.delStemmekrets(delingEndringRequest, jan1In2023, Endringstype.VEDTATT_DELING)
+        }
+            .isInstanceOf(OptimistiskLaasException::class.java)
+            .hasMessageContaining("Det er ikke samsvar med versjon")
     }
 
     private fun assertDelteGrenser(oensketGammelDato: LocalDate, oensketGammelKrets1: Stemmekrets, oensketGammelKrets2: Stemmekrets,

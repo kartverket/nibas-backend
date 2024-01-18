@@ -19,7 +19,6 @@ import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.StemmekretsGrenseKobling
 import no.kartverket.nibas.domain.UnikLokalid
 import no.kartverket.nibas.domain.getGrenseJustertForRetning
-import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.repository.findAllByLokalidSortedByGyldigFra
 import no.kartverket.nibas.repository.findAntallFramtidigeVersjonerForIdentifikator
@@ -169,7 +168,7 @@ class StemmekretsService(
         val stemmekrets = hentStemmekrets(identifikator)
             ?: throw RuntimeException("Fant ikke stemmekrets med lokalid: ${kretsDelingEndringRequest.opprinneligKrets.lokalId} gylidg på $delingsDato")
 
-        verifiserOptimistiskLaas(kretsDelingEndringRequest.version, stemmekrets)
+        verifiserOptimistiskLaas(kretsDelingEndringRequest.opprinneligKrets.version, stemmekrets)?.throwException()
 
         val nyStemmekrets = Stemmekrets().apply {
             stemmekretsnavn = kretsDelingEndringRequest.kretsNavn

@@ -15,7 +15,6 @@ import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.domain.Kommune
-import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.findAllByLokalidSortedByGyldigFra
 import no.kartverket.nibas.repository.findAllFramtidigeVersjonerByIdentifikator
@@ -142,7 +141,7 @@ class GrunnkretsService(
         val grunnkrets = hentGrunnkrets(identifikator)
             ?: throw RuntimeException("Fant ikke grunnkrets med lokalid: ${kretsDelingEndringRequest.opprinneligKrets.lokalId} gylidg på $delingsDato")
 
-        verifiserOptimistiskLaas(kretsDelingEndringRequest.version, grunnkrets)
+        verifiserOptimistiskLaas(kretsDelingEndringRequest.opprinneligKrets.version, grunnkrets)?.throwException()
 
         val nyGrunnkrets = Grunnkrets().apply {
             grunnkretsnavn = kretsDelingEndringRequest.kretsNavn
