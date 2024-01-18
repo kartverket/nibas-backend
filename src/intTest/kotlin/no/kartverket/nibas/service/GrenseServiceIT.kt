@@ -22,6 +22,7 @@ import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import no.kartverket.nibas.utils.GrenseHelper
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
@@ -80,7 +81,7 @@ class GrenseServiceIT : TestWithDbContainer() {
 
         val arkivertFeature = grenseSomSkalArkiveres.grenseToFeature(gyldighetsdato, true)
 
-        Assertions.assertThatThrownBy {
+        assertThatThrownBy {
             grenseService.lagreGrenser(
                 grenser = FeatureCollection(features = listOf(arkivertFeature)),
                 gyldighetsdato = gyldighetsdato,
@@ -147,7 +148,7 @@ class GrenseServiceIT : TestWithDbContainer() {
 
         val arkivertFeature = grenseSomSkalArkiveres.grenseToFeature(gyldighetsdato, true)
 
-        Assertions.assertThatThrownBy {
+        assertThatThrownBy {
             grenseService.lagreGrenser(
                 grenser = FeatureCollection(features = listOf(arkivertFeature)),
                 gyldighetsdato = gyldighetsdato,
@@ -328,7 +329,7 @@ class GrenseServiceIT : TestWithDbContainer() {
         val grense2SomSkalEndreTilhorighet = kretsOpprinnelig.grenser.find { it.grense.lokalid == "grense2Lokalid" }!!.grense
         val grense1_2SomSkalEndreTilhorighet = kretsOpprinnelig.grenser.find { it.grense.lokalid == "grense1_2Lokalid" }!!.grense
 
-        val tilhorighetTilKretsNordVestOgNyStemmekrets = listOf(
+        val tilhorighetTilKretsNordVestOgNyGrunnkrets = listOf(
             KontekstEgenskaper(
                 id = null,
                 kommuneId = null,
@@ -344,7 +345,7 @@ class GrenseServiceIT : TestWithDbContainer() {
                 version = kretsNordVest.version
             )
         )
-        val tilhorighetTilKretsOestOgNyStemmekrets = listOf(
+        val tilhorighetTilKretsOestOgNyGrunnkrets = listOf(
             KontekstEgenskaper(
                 id = ObjektIdentifikator(Lokalid(kretsOest.lokalid), gyldighetsdato),
                 kommuneId = null,
@@ -378,17 +379,17 @@ class GrenseServiceIT : TestWithDbContainer() {
                     Coordinate(0.0, 2.5)
                 )
             ))
-            .withKontekstEgenskaper(tilhorighetTilKretsOestOgNyStemmekrets)
+            .withKontekstEgenskaper(tilhorighetTilKretsOestOgNyGrunnkrets)
             .withVersion(2)
             .build()
 
         val grense2MedEndretTilhorighet = FeatureBuilder(id = grense2SomSkalEndreTilhorighet.lokalid).copy(grense2SomSkalEndreTilhorighet.grenseToFeature())
-            .withKontekstEgenskaper(tilhorighetTilKretsNordVestOgNyStemmekrets)
+            .withKontekstEgenskaper(tilhorighetTilKretsNordVestOgNyGrunnkrets)
             .withVersion(2)
             .build()
 
         val grense1_2MedEndretTilhorighet = FeatureBuilder(id = grense1_2SomSkalEndreTilhorighet.lokalid).copy(grense1_2SomSkalEndreTilhorighet.grenseToFeature())
-            .withKontekstEgenskaper(tilhorighetTilKretsNordVestOgNyStemmekrets)
+            .withKontekstEgenskaper(tilhorighetTilKretsNordVestOgNyGrunnkrets)
             .withVersion(2)
             .build()
 
@@ -423,6 +424,49 @@ class GrenseServiceIT : TestWithDbContainer() {
             assertThat(this.grenser.size).isEqualTo(4)
             assertThat(this.grenser.map { it.grense.lokalid }).containsAll(kretsNordVest.grenser.map { it.grense.lokalid })
         }
+    }
+
+    @Test
+    fun `lagreGrenser skal kaste exception hvis det ikke går ann å identifisere nyopprettet grunnkrets`(){
+        val gyldighetsdato = LocalDate.parse("2022-01-01")
+
+        val (kretsOpprinnelig, kretsOest, kretsNordVest) =
+            getTilhorigetTilNyopprettetKretsTestSetup(Grensetype.Grunnkretsgrense, gyldighetsdato, ::saveGrunnkrets)
+
+        val grense2SomSkalEndreTilhorighet = kretsOpprinnelig.grenser.find { it.grense.lokalid == "grense2Lokalid" }!!.grense
+        val nyGrunnkrets = saveGrunnkrets("nyGrunnkrets", Lokalid("nyGrunnkrets"), grunnkretsnummer = "420")
+
+        val tilhorighetTilKretsNordVestOgNyGrunnkretsFEIL = listOf(
+                KontekstEgenskaper(
+                    id = null,
+                    kommuneId = null,
+                    kretsNummer = null,
+                    type = KontekstEnhetType.GRUNNKRETS,
+                    version = nyGrunnkrets.version
+                ),
+                KontekstEgenskaper(
+                    id = ObjektIdentifikator(Lokalid(kretsNordVest.lokalid), gyldighetsdato),
+                    kommuneId = null,
+                    kretsNummer = null,
+                    type = KontekstEnhetType.GRUNNKRETS,
+                    version = kretsNordVest.version
+                )
+            )
+
+            val grense2MedEndretTilhorighet = FeatureBuilder(id = grense2SomSkalEndreTilhorighet.lokalid).copy(grense2SomSkalEndreTilhorighet.grenseToFeature())
+                .withKontekstEgenskaper(tilhorighetTilKretsNordVestOgNyGrunnkretsFEIL)
+                .withVersion(2)
+                .build()
+
+            Assertions.assertThatThrownBy{ grenseService.lagreGrenser(
+                grenser = FeatureCollection(features =
+                listOf(
+                    grense2MedEndretTilhorighet,
+                )
+                ),
+                gyldighetsdato = gyldighetsdato,
+                endringstype = Endringstype.VEDTATT_GRENSEJUSTERING
+            ) }.isInstanceOf(RuntimeException::class.java).hasMessageContaining("KontekstEgenskaper for feature med id: ${grense2MedEndretTilhorighet.id} er null")
     }
 
     @Test
@@ -587,6 +631,103 @@ class GrenseServiceIT : TestWithDbContainer() {
             assertThat(this.grenser.size).isEqualTo(4)
             assertThat(this.grenser.map { it.grense.lokalid }).containsAll(kretsNordVest.grenser.map { it.grense.lokalid })
         }
+    }
+
+    @Test
+    fun `lagreGrenser skal kaste exception hvis kontektst mangler kommuneidentifikator for nyopprettet stemmekrets`(){
+        val gyldighetsdato = LocalDate.parse("2022-01-01")
+
+        val (kretsOpprinnelig, kretsOest, kretsNordVest) =
+            getTilhorigetTilNyopprettetKretsTestSetup(Grensetype.Stemmekretsgrense, gyldighetsdato, ::saveStemmekrets)
+
+        // når kretsen er ny vil den ligget i databasen på det tidspunktet lagreGrenser blir kjørt.
+        val nyStemmekrets = saveStemmekrets("nyStemmekrets", Lokalid("nyStemmekrets"), stemmekretsnummer = "420", stemmekretsnavn = "nyStemmekrets")
+
+        val kommune = saveKommuneOgUnikLokalid(stemmekretser = listOf(kretsOpprinnelig, kretsOest, kretsNordVest, nyStemmekrets), gyldigFra = gyldighetsdato)
+
+        val grense3_2SomSkalEndreGeometri = kretsOpprinnelig.grenser.find { it.grense.lokalid == "grense3_2Lokalid" }!!.grense
+        val grense3_1SomSkalEndreGeometriOgTilhorighet = kretsOpprinnelig.grenser.find { it.grense.lokalid == "grense3_1Lokalid" }!!.grense
+        val grense2SomSkalEndreTilhorighet = kretsOpprinnelig.grenser.find { it.grense.lokalid == "grense2Lokalid" }!!.grense
+        val grense1_2SomSkalEndreTilhorighet = kretsOpprinnelig.grenser.find { it.grense.lokalid == "grense1_2Lokalid" }!!.grense
+
+        val tilhorighetTilKretsNordVestOgNyStemmekretsFEIL = listOf(
+            KontekstEgenskaper(
+                id = null,
+                kommuneId = null,
+                kretsNummer = nyStemmekrets.stemmekretsnummer,
+                type = KontekstEnhetType.STEMMEKRETS,
+                version = nyStemmekrets.version
+            ),
+            KontekstEgenskaper(
+                id = ObjektIdentifikator(Lokalid(kretsNordVest.lokalid), gyldighetsdato),
+                kommuneId = null,
+                kretsNummer = null,
+                type = KontekstEnhetType.STEMMEKRETS,
+                version = kretsNordVest.version
+            )
+        )
+        val tilhorighetTilKretsOestOgNyStemmekrets = listOf(
+            KontekstEgenskaper(
+                id = ObjektIdentifikator(Lokalid(kretsOest.lokalid), gyldighetsdato),
+                kommuneId = null,
+                kretsNummer = null,
+                type = KontekstEnhetType.STEMMEKRETS,
+                version = kretsOest.version
+            ),
+            KontekstEgenskaper(
+                id = null,
+                kommuneId = ObjektIdentifikator(Lokalid(kommune.lokalid), gyldighetsdato),
+                kretsNummer = nyStemmekrets.stemmekretsnummer,
+                type = KontekstEnhetType.STEMMEKRETS,
+                version = nyStemmekrets.version
+            )
+        )
+
+        val grense3_2MedEndretGeometri = FeatureBuilder(id = grense3_2SomSkalEndreGeometri.lokalid).copy(grense3_2SomSkalEndreGeometri.grenseToFeature())
+            .withGeometry(GrenseHelper.geometryFactory.createLineString(
+                arrayOf(
+                    Coordinate(5.0, 0.0),
+                    Coordinate(0.0, 2.5)
+                )
+            ))
+            .withVersion(2)
+            .build()
+
+        val grense3_1MedEndretGeometriOgTilhorighet = FeatureBuilder(id = grense3_1SomSkalEndreGeometriOgTilhorighet.lokalid).copy(grense3_1SomSkalEndreGeometriOgTilhorighet.grenseToFeature())
+            .withGeometry(GrenseHelper.geometryFactory.createLineString(
+                arrayOf(
+                    Coordinate(5.0, 5.0),
+                    Coordinate(0.0, 2.5)
+                )
+            ))
+            .withKontekstEgenskaper(tilhorighetTilKretsOestOgNyStemmekrets)
+            .withVersion(2)
+            .build()
+
+        val grense2MedEndretTilhorighet = FeatureBuilder(id = grense2SomSkalEndreTilhorighet.lokalid).copy(grense2SomSkalEndreTilhorighet.grenseToFeature())
+            .withKontekstEgenskaper(tilhorighetTilKretsNordVestOgNyStemmekretsFEIL)
+            .withVersion(2)
+            .build()
+
+        val grense1_2MedEndretTilhorighet = FeatureBuilder(id = grense1_2SomSkalEndreTilhorighet.lokalid).copy(grense1_2SomSkalEndreTilhorighet.grenseToFeature())
+            .withKontekstEgenskaper(tilhorighetTilKretsNordVestOgNyStemmekretsFEIL)
+            .withVersion(2)
+            .build()
+
+        assertThatThrownBy { grenseService.lagreGrenser(
+            grenser = FeatureCollection(features =
+            listOf(
+                grense3_2MedEndretGeometri,
+                grense3_1MedEndretGeometriOgTilhorighet,
+                grense2MedEndretTilhorighet,
+                grense1_2MedEndretTilhorighet
+            )
+            ),
+            gyldighetsdato = gyldighetsdato,
+            endringstype = Endringstype.VEDTATT_GRENSEJUSTERING
+        ) }
+            .isInstanceOf(RuntimeException::class.java)
+            .hasMessageContaining("Identifikator for kommune manglet for å finne stemmekrets med stemmekretsNummer: ${tilhorighetTilKretsNordVestOgNyStemmekretsFEIL.first().kretsNummer}")
     }
 
     private fun <T: KobletTilGrense>utfoerGeometriEndring(grense: Grense, kretser: List<T>, gyldighetsdato: LocalDate, kontekstEnhetType: KontekstEnhetType): Feature{

@@ -125,7 +125,7 @@ class GrenseKoblingService(
             val nyesteVersjonAvNyopprettetKrets = flaterSomHarFaattNyVersjon.values.find { when(it.type){
                 Flatetype.STEMMEKRETS -> (it as Stemmekrets).stemmekretsnummer == kontekstEgenskaper.kretsNummer && it.kommuneLokalid.lokalid == kontekstEgenskaper.kommuneId?.lokalid?.value
                 Flatetype.GRUNNKRETS -> (it as Grunnkrets).grunnkretsnummer == kontekstEgenskaper.kretsNummer
-                else -> throw RuntimeException("test")
+                else -> throw RuntimeException("Støtter kun Grunnkretser og Stemmekretser")
             } } ?: when(kretsType){
                 Flatetype.GRUNNKRETS -> grunnkretsService.hentGrunnkretsForGrunnkretsNummer(kontekstEgenskaper.kretsNummer, gyldighetsDato)
                     ?: throw RuntimeException("Fant ikke den nyopprettede grunnkretsen med grunnkretsnummer: ${kontekstEgenskaper.kretsNummer}")

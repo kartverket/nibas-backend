@@ -29,7 +29,6 @@ import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.StemmekretsGrenseKobling
 import no.kartverket.nibas.extensions.geometry.toLineString
-import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.OptimistiskLaasException
@@ -54,7 +53,6 @@ class GrenseService(
     private val kommuneService: KommuneService,
     private val fylkeService: FylkeService,
     private val nasjonService: NasjonService,
-    private val kodelisteService: KodelisteService,
     private val grenseKoblingService: GrenseKoblingService
 ) {
     private val logger = LoggerFactory.getLogger(this::class.java)
@@ -187,7 +185,7 @@ class GrenseService(
                 ?.filter { kontekst -> !(kontekst.id == null && kontekst.kretsNummer != null) } // vi skal ikke trenge å sjekke versjon på nyopprettet krets
                 ?.mapNotNull { kontekstEgenskaper ->
                     if (kontekstEgenskaper.id == null){
-                        throw RuntimeException("KontekstEgenskaper for feature med id: ${feature.id} er null, og kretsen er ikke nyopprettet")
+                        throw RuntimeException("KontekstEgenskaper for feature med id: ${feature.id} er null")
                     }
                     val identifikator = Identifikator(kontekstEgenskaper.id.lokalid, gyldighetsdato)
                     verifiserOptimistiskLaas(
