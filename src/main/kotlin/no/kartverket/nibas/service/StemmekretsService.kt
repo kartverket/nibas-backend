@@ -20,7 +20,6 @@ import no.kartverket.nibas.domain.StemmekretsGrenseKobling
 import no.kartverket.nibas.domain.UnikLokalid
 import no.kartverket.nibas.domain.getGrenseJustertForRetning
 import no.kartverket.nibas.kodelister.KodelisteService
-import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.repository.findAllByLokalidSortedByGyldigFra
 import no.kartverket.nibas.repository.findAntallFramtidigeVersjonerForIdentifikator
@@ -39,7 +38,6 @@ import java.time.LocalDate
 @Service
 class StemmekretsService(
     private val stemmekretsRepository: StemmekretsRepository,
-    private val kodelisteService: KodelisteService
 ) {
 
     fun hentStemmekrets(identifikator: Identifikator): Stemmekrets? = stemmekretsRepository.findGyldigObjektForIdentifikator(identifikator)
@@ -164,24 +162,28 @@ class StemmekretsService(
     fun delStemmekrets(
         kretsDelingEndringRequest: KretsDelingEndringRequest, delingsDato: LocalDate, endringstype: Endringstype
     ): Stemmekrets {
+        if (kretsDelingEndringRequest.flatetype != Flatetype.STEMMEKRETS ){
+            throw IllegalArgumentException("Kan ikke dele og opprette en ny ${kretsDelingEndringRequest.flatetype} fra en stemmekrets")
+        }
         val identifikator = Identifikator(Lokalid(kretsDelingEndringRequest.opprinneligKrets.lokalId), delingsDato)
         val stemmekrets = hentStemmekrets(identifikator)
             ?: throw RuntimeException("Fant ikke stemmekrets med lokalid: ${kretsDelingEndringRequest.opprinneligKrets.lokalId} gylidg på $delingsDato")
 
         verifiserOptimistiskLaas(kretsDelingEndringRequest.version, stemmekrets)
 
-        val nyStemmekrets = stemmekretsRepository.save(Stemmekrets().apply {
+        val nyStemmekrets = Stemmekrets().apply {
             stemmekretsnavn = kretsDelingEndringRequest.kretsNavn
             stemmekretsnummer = kretsDelingEndringRequest.kretsNummer
+            kommuneLokalid = stemmekrets.kommuneLokalid
             utledetFra = stemmekrets
             setGyldigFra(delingsDato)
-        })
+        }
 
         if (finnesAnnenStemmekretsMedSammeKommuneOgStemmekretsnummer(nyStemmekrets)) {
             throw createDuplikatStemmekretsnummerException(nyStemmekrets)
+        } else {
+            return stemmekretsRepository.save(nyStemmekrets)
         }
-
-        return nyStemmekrets
     }
 
     fun createNyVersjonAvStemmekrets(stemmekrets: Stemmekrets, gyldigFra: LocalDate, endringstype: Endringstype): Stemmekrets {

@@ -1,5 +1,6 @@
 package no.kartverket.nibas.service
 
+import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
 import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.common.Identifikator
@@ -16,7 +17,6 @@ import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.GrunnkretsRepository
-import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.repository.findAllByLokalidSortedByGyldigFra
 import no.kartverket.nibas.repository.findAllFramtidigeVersjonerByIdentifikator
 import no.kartverket.nibas.repository.findAntallFramtidigeVersjonerForIdentifikator
@@ -31,7 +31,6 @@ import java.time.LocalDate
 @Service
 class GrunnkretsService(
     private val grunnkretsRepository: GrunnkretsRepository,
-    private val kodelisteService: KodelisteService
 ) {
 
     @Transactional(readOnly = true)
@@ -136,24 +135,28 @@ class GrunnkretsService(
     fun delGrunnkrets(
         kretsDelingEndringRequest: KretsDelingEndringRequest, delingsDato: LocalDate, endringstype: Endringstype
     ): Grunnkrets {
+        if (kretsDelingEndringRequest.flatetype != Flatetype.GRUNNKRETS ){
+            throw IllegalArgumentException("Kan ikke dele og opprette en ny ${kretsDelingEndringRequest.flatetype} fra en grunnkrets")
+        }
         val identifikator = Identifikator(Lokalid(kretsDelingEndringRequest.opprinneligKrets.lokalId), delingsDato)
         val grunnkrets = hentGrunnkrets(identifikator)
             ?: throw RuntimeException("Fant ikke grunnkrets med lokalid: ${kretsDelingEndringRequest.opprinneligKrets.lokalId} gylidg på $delingsDato")
 
         verifiserOptimistiskLaas(kretsDelingEndringRequest.version, grunnkrets)
 
-        val nyGrunnkrets = grunnkretsRepository.save(Grunnkrets().apply {
+        val nyGrunnkrets = Grunnkrets().apply {
             grunnkretsnavn = kretsDelingEndringRequest.kretsNavn
             grunnkretsnummer = kretsDelingEndringRequest.kretsNummer
+            kommuneLokalid = grunnkrets.kommuneLokalid
             utledetFra = grunnkrets
             setGyldigFra(delingsDato)
-        })
+        }
 
         if (finnesAnnenGrunnkretsMedSammeGrunnkretsnummer(nyGrunnkrets)) {
             throw createDuplikatGrunnkretsnummerException(nyGrunnkrets)
+        } else {
+            return grunnkretsRepository.save(nyGrunnkrets)
         }
-
-        return nyGrunnkrets
     }
 
     fun createNyVersjonAvGrunnkretsIAnnenKommune(grunnkrets: Grunnkrets, kommune: Kommune, nyttGrunnkretsNummer: String,

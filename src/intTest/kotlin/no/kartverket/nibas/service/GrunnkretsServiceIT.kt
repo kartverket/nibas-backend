@@ -1,11 +1,14 @@
 package no.kartverket.nibas.service
 
+import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
+import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.KodelisteEntry
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Posisjonskvalitet
 import no.kartverket.nibas.api.v1.common.geojson.metadata.StatistiskgrenseMetadata
+import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.GrunnkretsRequestBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
@@ -1062,6 +1065,74 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
 
         assertDelteGrenser(opprinneligDato, vestreKrets, oestreKrets, Grensetype.Grunnkretsgrense,
             jan1In2024, nyVestreKretsINyAalesund, nyOestreKretsIHaram, Grensetype.Kommunegrense)
+    }
+
+    @Test
+    fun `delGrunnkrets klarer å opprette en ny grunnkrets`(){
+        val gyldighetsdato = jan1In2023
+
+        val opprinneligGrunnkrets = saveGrunnkrets("opprinneligKrets", Lokalid("opprinneligKrets"))
+
+        saveKommune(grunnkretser = listOf(opprinneligGrunnkrets), gyldigFra = gyldighetsdato)
+
+        val delingEndringRequest = KretsDelingEndringRequest(
+            IdentifikatorMedVersjon(opprinneligGrunnkrets.lokalid, opprinneligGrunnkrets.version),
+            1,
+            Flatetype.GRUNNKRETS,
+            "nyGrunnkrets",
+            "1"
+        )
+
+        val nyGrunnkrets = grunnkretsService.delGrunnkrets(delingEndringRequest, gyldighetsdato, Endringstype.VEDTATT_DELING)
+
+        assertThat(nyGrunnkrets).isNotNull
+        assertThat(nyGrunnkrets.grenser.size).isEqualTo(0)
+        assertThat(nyGrunnkrets.grunnkretsnummer).isEqualTo(delingEndringRequest.kretsNummer)
+        assertThat(nyGrunnkrets.grunnkretsnavn).isEqualTo(delingEndringRequest.kretsNavn)
+        assertThat(nyGrunnkrets.version).isEqualTo(1)
+    }
+
+    @Test
+    fun `delGrunnkrets kaster hvis feil flatetype er satt i request`(){
+        val opprinneligGrunnkrets = saveGrunnkrets("opprinneligKrets", Lokalid("opprinneligKrets"))
+
+        val delingEndringRequest = KretsDelingEndringRequest(
+            IdentifikatorMedVersjon(opprinneligGrunnkrets.lokalid, opprinneligGrunnkrets.version),
+            1,
+            Flatetype.STEMMEKRETS,
+            "nyGrunnkrets",
+            "1"
+        )
+
+        Assertions.assertThatThrownBy {
+            grunnkretsService.delGrunnkrets(delingEndringRequest, jan1In2023, Endringstype.VEDTATT_DELING)
+        }
+            .isInstanceOf(IllegalArgumentException::class.java)
+            .hasMessageContaining("Kan ikke dele og opprette en ny ${delingEndringRequest.flatetype} fra en grunnkrets")
+    }
+
+    @Test
+    fun `delGrunnkrets kaster exception hvis ny grunnkrets skaper duplikat`(){
+        val gyldighetsdato = jan1In2023
+
+        val opprinneligGrunnkrets = saveGrunnkrets("opprinneligKrets", Lokalid("opprinneligKrets"))
+
+        val delingEndringRequest = KretsDelingEndringRequest(
+            IdentifikatorMedVersjon(opprinneligGrunnkrets.lokalid, opprinneligGrunnkrets.version),
+            1,
+            Flatetype.GRUNNKRETS,
+            "nyStemmekrets",
+            "1"
+        )
+        val eksiterendeGrunnkretsSomTriggerDuplikat = saveGrunnkrets("eksisterende", Lokalid("eksisterende"), grunnkretsnummer = delingEndringRequest.kretsNummer)
+
+        saveKommune(grunnkretser = listOf(opprinneligGrunnkrets, eksiterendeGrunnkretsSomTriggerDuplikat), gyldigFra = gyldighetsdato)
+
+        Assertions.assertThatThrownBy {
+            grunnkretsService.delGrunnkrets(delingEndringRequest, gyldighetsdato, Endringstype.VEDTATT_DELING)
+        }
+            .isInstanceOf(ResponseException.BadRequestException::class.java)
+            .hasMessageContaining("Kretsnummer 1 er brukt på flere grunnkretser innenfor kommunen (0301 UKJENT KOMMUNE) med gyldighet som overlapper med 01.01.2023 og fremover. Vennligst gi grunnkretsene unike kretsnumre før du fortsetter.")
     }
 
     private fun assertDelteGrenser(oensketGammelDato: LocalDate, oensketGammelKrets1: Grunnkrets, oensketGammelKrets2: Grunnkrets,
