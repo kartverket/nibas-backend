@@ -2,8 +2,8 @@ package no.kartverket.nibas.service
 
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.geojson.KontekstEgenskaper
-import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.common.getGrenserIRiktigRekkefoelge
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.Grense
@@ -11,13 +11,8 @@ import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
-import no.kartverket.nibas.domain.KobletTilGrense
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.StemmekretsGrenseKobling
-import no.kartverket.nibas.repository.GrunnkretsRepository
-import no.kartverket.nibas.repository.StemmekretsRepository
-import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
-import no.kartverket.nibas.service.deltgeometri.DeltGeometriAdministrativeGrenserService
 import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.GeometryFactory
 import org.locationtech.jts.geom.LineString
@@ -26,13 +21,7 @@ import org.springframework.stereotype.Service
 import java.time.LocalDate
 
 @Service
-class GrenseKoblingService(
-    private val grunnkretsService: GrunnkretsService,
-    private val stemmekretsService: StemmekretsService,
-    private val deltGeometriAdministrativeGrenserService: DeltGeometriAdministrativeGrenserService,
-    private val grunnkretsRepository: GrunnkretsRepository,
-    private val stemmekretsRepository: StemmekretsRepository,
-) {
+class GrenseKoblingService {
 
     data class TilhorighetEndringer<T: GrenseKobling>(
         val nye: List<KontekstEgenskaper>,
@@ -79,42 +68,6 @@ class GrenseKoblingService(
             uendrede,
             frafallende
         )
-    }
-
-    fun leggTilGrenserForKretserViaKontekstEgenskaper(
-        nyeKontekster: List<KontekstEgenskaper>,
-        grense: Grense,
-        gyldighetsDato: LocalDate,
-        flaterSomHarFaattNyVersjon: MutableMap<Lokalid, Flate>,
-        endringstype: Endringstype,
-        kretsType: Flatetype
-    ) {
-        nyeKontekster.map { kontekstEgenskaper ->
-            if (kontekstEgenskaper.id == null) {
-                throw RuntimeException("Kontekst peker ikke til en krets")
-            }
-
-            // Henter nyeste versjon av grunnkrets i dette utkastet hvis det finnes, ellers henter vi nyeste fra db og lager ny versjon med den.
-            val nyVersjonAvKrets = flaterSomHarFaattNyVersjon[kontekstEgenskaper.id.lokalid] ?: when(kretsType){
-                Flatetype.GRUNNKRETS -> grunnkretsService.createNyVersjonAvGrunnkrets(
-                    grunnkretsRepository.findGyldigObjektForIdentifikator(Identifikator(kontekstEgenskaper.id.lokalid, gyldighetsDato))
-                        ?: throw RuntimeException("Fant ikke grunnkrets med lokalid: ${kontekstEgenskaper.id.lokalid}"),
-                    gyldighetsDato,
-                    endringstype
-                )
-                Flatetype.STEMMEKRETS -> stemmekretsService.createNyVersjonAvStemmekrets(
-                    stemmekretsRepository.findGyldigObjektForIdentifikator(Identifikator(kontekstEgenskaper.id.lokalid, gyldighetsDato))
-                        ?: throw RuntimeException("Fant ikke stemmekrets med lokalid: ${kontekstEgenskaper.id.lokalid}"),
-                    gyldighetsDato,
-                    endringstype
-                )
-                else -> throw RuntimeException("Støtter kun Grunnkretser og Stemmekretser")
-            }
-
-            //Trenger ikke å gjøre noe med de eksisterende grensekoblingene for kretsen
-            //Det er bare den nye koblingen som må legges til
-            (nyVersjonAvKrets as KobletTilGrense).addGrensekobling(grense, GrenseKoblingAttributter())
-        }
     }
 
     fun <T : GrenseKobling> fjernGrenseFraKretserViaGrenseKobling(
@@ -191,7 +144,7 @@ class GrenseKoblingService(
         val grenserLS = grenser.map { grense ->  grense.grense }
 
         // Får grensene delt inn i sammenhengende polygon(er)
-        val polygonerLS = deltGeometriAdministrativeGrenserService.getGrenserIRiktigRekkefoelge(grenserLS)
+        val polygonerLS = getGrenserIRiktigRekkefoelge(grenserLS)
 
         // Holder oversikt over hvilket polygon som tilsvarer hvilke line strings
         val polygonTilLineStringsMap = mutableMapOf<Polygon, List<LineString>>()

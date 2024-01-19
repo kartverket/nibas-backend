@@ -1,6 +1,5 @@
 package no.kartverket.nibas.service
 
-import io.mockk.mockk
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.KontekstEgenskaper
@@ -11,10 +10,6 @@ import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.domain.Stemmekrets
-import no.kartverket.nibas.kodelister.KodelisteService
-import no.kartverket.nibas.repository.GrunnkretsRepository
-import no.kartverket.nibas.repository.StemmekretsRepository
-import no.kartverket.nibas.service.deltgeometri.DeltGeometriAdministrativeGrenserService
 import no.kartverket.nibas.utils.GrenseHelper
 import org.junit.jupiter.api.Test
 import org.assertj.core.api.Assertions.assertThat
@@ -23,14 +18,6 @@ import java.time.LocalDate
 import java.util.Random
 
 class GrenseKoblingServiceTest {
-
-    val grunnkretsServiceMock = mockk<GrunnkretsService>()
-    val stemmekretsServiceMock = mockk<StemmekretsService>()
-    val kommuneService = mockk<KommuneService>()
-    val kodelisteService = mockk<KodelisteService>()
-    val grunnkretsRepository = mockk<GrunnkretsRepository>()
-    val stemmekretsRepository = mockk<StemmekretsRepository>()
-
     val gyldighetsdato = LocalDate.now()
 
     val grense1 = Grense("1", grensetype = Grensetype.Grunnkretsgrense)
@@ -47,10 +34,7 @@ class GrenseKoblingServiceTest {
     val grunnkretsGrenseKobling1 = GrunnkretsGrenseKobling(grunnkrets1, grense1, GrenseKoblingAttributter())
     val grunnkretsGrenseKobling2 = GrunnkretsGrenseKobling(grunnkrets2, grense1, GrenseKoblingAttributter())
 
-    val deltGeometriAdministrativeGrenserService = DeltGeometriAdministrativeGrenserService(kommuneService, kodelisteService)
-
-    val grenseKoblingService = GrenseKoblingService(
-        grunnkretsServiceMock, stemmekretsServiceMock, deltGeometriAdministrativeGrenserService, grunnkretsRepository, stemmekretsRepository)
+    val grenseKoblingService = GrenseKoblingService()
 
     @Test
     fun `getTilhorighetEndringerForGrense gir korrekte partisjoner`(){

@@ -10,8 +10,10 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.KodelisteEntry
 import no.kartverket.nibas.api.v1.common.geojson.metadata.KommunalKretsgrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Posisjonskvalitet
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
+import no.kartverket.nibas.builders.GrenseMedHullIndex
 import no.kartverket.nibas.builders.MaalemetodeKodeEnum
 import no.kartverket.nibas.builders.StemmekretsRequestBuilder
+import no.kartverket.nibas.builders.toGrenseMedHullIndex
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
@@ -28,7 +30,6 @@ import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import no.kartverket.nibas.utils.GrenseHelper
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.locationtech.jts.geom.Coordinate
@@ -361,7 +362,6 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         }
     }
 
-    @Disabled("Trenger litt smartere metode for å danne grenser for test-kretser")
     @Test
     fun `slaaSammenStemmekretser skal beholde hull i stemmekretsen`() {
         val (vestreKrets, oestreKrets) = saveNaboStemmekretser(gyldigFra = LocalDate.parse("2022-01-01"), medHull = true)
@@ -891,24 +891,35 @@ class StemmekretsServiceIT : TestWithDbContainer() {
     private fun saveNaboStemmekretser(gyldigFra: LocalDate, medHull: Boolean = false, medTredjeKrets: Boolean = false, medToDelteGrenser: Boolean = false)
     : List<Stemmekrets> {
         val grenserForVest = if (medHull) {
-            GrenseHelper.getGrenserForVestligKrets(gyldigFra, Grensetype.Stemmekretsgrense, medToDelteGrenser) +
+            GrenseHelper.getGrenserForVestligKrets(gyldigFra, Grensetype.Stemmekretsgrense, medToDelteGrenser)
+                .map { it.toGrenseMedHullIndex() } +
                 GrenseHelper.getHullVestligKrets(gyldigFra, Grensetype.Stemmekretsgrense)
+                    .map { it.toGrenseMedHullIndex(1) }
         } else {
             GrenseHelper.getGrenserForVestligKrets(gyldigFra, Grensetype.Stemmekretsgrense, medToDelteGrenser)
+                .map { it.toGrenseMedHullIndex() }
         }
 
         //Lagrer grensene først, for å være sikker på at de er tilgjengelige for å knyttes til kretsene
-        val lagredeGrenserForVest = grenseRepository.saveAll(grenserForVest)
+        val lagredeGrenserForVest = grenseRepository.saveAll(grenserForVest.map { it.grense })
         val lagredeGrenserForOest = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(gyldigFra, Grensetype.Stemmekretsgrense, medToDelteGrenser))
         grenseRepository.flush()
 
-        val kretsVest = saveStemmekrets(
+        val grenserForVestMedAttributter =
+            grenserForVest.map {
+                GrenseMedHullIndex(
+                    lagredeGrenserForVest.first { grense -> grense.lokalid == it.grense.lokalid },
+                    it.hullIndex
+                )
+            }
+
+        val kretsVest = saveStemmekretsMedHull(
             id = "1",
             lokalid = Lokalid("123"),
             stemmekretsnummer = "20",
             stemmekretsnavn = "Vestre krets",
             gyldigFra = gyldigFra,
-            grenser = lagredeGrenserForVest
+            grenser = grenserForVestMedAttributter
         )
 
         val kretsOest = saveStemmekrets(
