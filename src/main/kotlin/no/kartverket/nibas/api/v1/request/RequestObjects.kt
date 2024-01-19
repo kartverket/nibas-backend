@@ -2,6 +2,7 @@ package no.kartverket.nibas.api.v1.request
 
 import io.swagger.v3.oas.annotations.media.Schema
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
+import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
@@ -147,6 +148,18 @@ data class StemmekretsSammenslaaingsendringRequest (
     val stemmekretsNavn: String,
     @Schema (description = "Stemmekretsnummeret til den sammenslåtte stemmekretsen")
     val stemmekretsNummer: String
+)
+
+@Schema(description = "Representasjon av deling av en krets som ender i to kretser der én er videreført og én er ny")
+data class KretsDelingEndringRequest(
+    @Schema(description = "Identifikator til den kretsen som skal deles")
+    val opprinneligKrets: IdentifikatorMedVersjon,
+    @Schema(description = "Flatetypen som skal deles")
+    val flatetype: Flatetype,
+    @Schema(description = "Navnet til den nye kretsen")
+    val kretsNavn: String,
+    @Schema(description = "Grunnkrets/stemmekrets-nummmeret til den nye kretsen")
+    val kretsNummer: String
 )
 
 @Schema(description = "Requestbody for publisering av utkast.")

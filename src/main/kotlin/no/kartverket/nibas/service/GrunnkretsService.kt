@@ -1,6 +1,8 @@
 package no.kartverket.nibas.service
 
+import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
+import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
@@ -13,13 +15,12 @@ import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.domain.Kommune
-import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.GrunnkretsRepository
-import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.repository.findAllByLokalidSortedByGyldigFra
 import no.kartverket.nibas.repository.findAllFramtidigeVersjonerByIdentifikator
 import no.kartverket.nibas.repository.findAntallFramtidigeVersjonerForIdentifikator
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
+import no.kartverket.nibas.repository.findGyldigObjektPaaGyldighetsdato
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -29,7 +30,6 @@ import java.time.LocalDate
 @Service
 class GrunnkretsService(
     private val grunnkretsRepository: GrunnkretsRepository,
-    private val kodelisteService: KodelisteService
 ) {
 
     @Transactional(readOnly = true)
@@ -38,6 +38,11 @@ class GrunnkretsService(
     @Transactional(readOnly = true)
     fun hentGrensekoblingerForGrunnkrets(identifikator: Identifikator): List<GrunnkretsGrenseKobling> {
         return hentGrunnkrets(identifikator)?.getGrensekoblinger(identifikator.gyldighetsdato) ?: emptyList()
+    }
+
+    @Transactional(readOnly = true)
+    fun hentGrunnkretsForGrunnkretsNummer(grunnkretsNummer: String, gyldighetsdato: LocalDate): Grunnkrets? {
+        return findGyldigObjektPaaGyldighetsdato(grunnkretsRepository.findAllByGrunnkretsnummer(grunnkretsNummer))
     }
 
     @Transactional(readOnly = true)
@@ -124,6 +129,33 @@ class GrunnkretsService(
             msg = "Fant ikke kommune for grunnkrets med id ${grunnkrets.id}, grunnkretsnummer ${grunnkrets.grunnkretsnummer} og gyldig fra $gyldigFra")
         kommune.addGrunnkrets(nyGrunnkrets)
         return nyGrunnkrets
+    }
+
+    fun delGrunnkrets(
+        kretsDelingEndringRequest: KretsDelingEndringRequest, delingsDato: LocalDate, endringstype: Endringstype
+    ): Grunnkrets {
+        if (kretsDelingEndringRequest.flatetype != Flatetype.GRUNNKRETS ){
+            throw ResponseException.BadRequestException("Kan ikke dele og opprette en ny ${kretsDelingEndringRequest.flatetype} fra en grunnkrets")
+        }
+        val identifikator = Identifikator(Lokalid(kretsDelingEndringRequest.opprinneligKrets.lokalId), delingsDato)
+        val grunnkrets = hentGrunnkrets(identifikator)
+            ?: throw NotFoundException("Fant ikke grunnkrets med lokalid: ${kretsDelingEndringRequest.opprinneligKrets.lokalId} gylidg på $delingsDato")
+
+        verifiserOptimistiskLaas(kretsDelingEndringRequest.opprinneligKrets.version, grunnkrets)?.throwException()
+
+        val nyGrunnkrets = Grunnkrets().apply {
+            grunnkretsnavn = kretsDelingEndringRequest.kretsNavn
+            grunnkretsnummer = kretsDelingEndringRequest.kretsNummer
+            kommuneLokalid = grunnkrets.kommuneLokalid
+            utledetFra = grunnkrets
+            setGyldigFra(delingsDato)
+        }
+
+        if (finnesAnnenGrunnkretsMedSammeGrunnkretsnummer(nyGrunnkrets)) {
+            throw createDuplikatGrunnkretsnummerException(nyGrunnkrets)
+        } else {
+            return grunnkretsRepository.save(nyGrunnkrets)
+        }
     }
 
     fun createNyVersjonAvGrunnkretsIAnnenKommune(grunnkrets: Grunnkrets, kommune: Kommune, nyttGrunnkretsNummer: String,

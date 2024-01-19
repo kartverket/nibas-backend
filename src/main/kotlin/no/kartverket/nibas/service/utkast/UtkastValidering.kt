@@ -141,6 +141,22 @@ class UtkastValidatorService(
                 )
             )
 
+        val harUgyldigMetadataendringPaaKretsDeling = if (operasjoner.kretsDelingEndring != null) {
+            isMetadataendringUgyldig(
+                operasjoner.kretsDelingEndring.flatetype,
+                operasjoner.kretsDelingEndring.kretsNavn,
+                operasjoner.kretsDelingEndring.kretsNummer,
+                operasjoner.kretsDelingEndring.opprinneligKrets.lokalId
+            )
+        } else false
+        if (harUgyldigMetadataendringPaaKretsDeling){
+            return OperasjonerValidering.UgyldigeOperasjoner(
+                operasjoner,
+                ResponseException.BadRequestException(
+                    "Utkast inneholder ugyldig metadataendringer på deling"
+            ))
+        }
+
         return null
     }
 
@@ -237,7 +253,6 @@ class UtkastValidatorService(
     private fun isUgyldigStemmekretsnummer(nummer: String): Boolean {
         return nummer.length > 4
     }
-
 }
 
 private fun Operasjoner.harEndringer(): Boolean {
@@ -248,7 +263,8 @@ private fun Operasjoner.harEndringer(): Boolean {
         metadata.grunnkretsendringer.isNotEmpty() ||
         metadata.stemmekretsendringer.isNotEmpty() ||
         this.grenseendringer.endredeFeatures.isNotEmpty() ||
-        this.stemmekretsSammenslaaingsendring != null
+        this.stemmekretsSammenslaaingsendring != null ||
+        this.kretsDelingEndring != null
 }
 
 private fun Operasjoner.harIkkeEndringer(): Boolean = !this.harEndringer()

@@ -3,14 +3,18 @@ package no.kartverket.nibas.service
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.geojson.KontekstEgenskaper
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.common.getGrenserIRiktigRekkefoelge
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Flate
+import no.kartverket.nibas.domain.Fylke
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
+import no.kartverket.nibas.domain.Kommune
+import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.StemmekretsGrenseKobling
 import org.locationtech.jts.geom.Geometry
@@ -38,7 +42,7 @@ class GrenseKoblingService {
                 when(grenseKobling){
                     is GrunnkretsGrenseKobling -> grenseKobling.grunnkrets.lokalid == kontekts.id?.lokalid?.value
                     is StemmekretsGrenseKobling -> grenseKobling.stemmekrets.lokalid == kontekts.id?.lokalid?.value
-                    else -> throw RuntimeException("Støtter ikke noe annet enn grunnkretsgrensekobling eller stemmekretsgrensekobling")
+                    else -> throw ResponseException.BadRequestException("Støtter ikke noe annet enn grunnkretsgrensekobling eller stemmekretsgrensekobling")
                 }
             }
         }
@@ -48,7 +52,7 @@ class GrenseKoblingService {
                 when (gammelKobling) {
                     is GrunnkretsGrenseKobling -> kontekst.id?.lokalid?.value == gammelKobling.grunnkrets.lokalid
                     is StemmekretsGrenseKobling -> kontekst.id?.lokalid?.value == gammelKobling.stemmekrets.lokalid
-                    else -> throw RuntimeException("Støtter ikke noe annet enn grunnkretsgrensekobling eller stemmekretsgrensekobling")
+                    else -> throw ResponseException.BadRequestException("Støtter ikke noe annet enn grunnkretsgrensekobling eller stemmekretsgrensekobling")
                 }
             }
         }
@@ -58,7 +62,7 @@ class GrenseKoblingService {
                 when(it){
                     is GrunnkretsGrenseKobling ->  kontekst.id?.lokalid?.value == it.grunnkrets.lokalid
                     is StemmekretsGrenseKobling -> kontekst.id?.lokalid?.value == it.stemmekrets.lokalid
-                    else -> throw RuntimeException("Støtter ikke noe annet enn grunnkretsgrensekobling eller stemmekretsgrensekobling")
+                    else -> throw ResponseException.BadRequestException("Støtter ikke noe annet enn grunnkretsgrensekobling eller stemmekretsgrensekobling")
                 }
             }
         }
@@ -83,18 +87,18 @@ class GrenseKoblingService {
                 is GrunnkretsGrenseKobling -> {
                     val lokalidForGrunnkrets = Lokalid(grenseKobling.grunnkrets.lokalid)
                     val nyVersjonAvGrunnkrets = (flaterSomHarFaattNyVersjon[lokalidForGrunnkrets]
-                        ?: throw RuntimeException("Fant ikke grunnkrets med lokalid: $lokalidForGrunnkrets")) as Grunnkrets
+                        ?: throw ResponseException.NotFoundException("Fant ikke grunnkrets med lokalid: $lokalidForGrunnkrets")) as Grunnkrets
 
                     nyVersjonAvGrunnkrets.removeGrensekobling(grense)
                 }
                 is StemmekretsGrenseKobling -> {
                     val lokalidForStemmekrets = Lokalid(grenseKobling.stemmekrets.lokalid)
                     val nyVersjonAvStemmekrets = (flaterSomHarFaattNyVersjon[lokalidForStemmekrets]
-                        ?: throw RuntimeException("Fant ikke stemmekrets med lokalid: $lokalidForStemmekrets")) as Stemmekrets
+                        ?: throw ResponseException.NotFoundException("Fant ikke stemmekrets med lokalid: $lokalidForStemmekrets")) as Stemmekrets
 
                     nyVersjonAvStemmekrets.removeGrensekobling(grense)
                 }
-                else -> throw RuntimeException("Støtter kun grunnkretser eller stemmekretser")
+                else -> throw ResponseException.BadRequestException("Kan kun setter endre tilhørighet på grunnkretsgrenser eller stemmekretsgrenser")
             }
         }
     }
@@ -109,21 +113,17 @@ class GrenseKoblingService {
         throw RuntimeException("Grensen rører hverken startpunkt eller endepunktet til forrige grense. Er rekkefølgen riktig?")
     }
 
-    fun oppdaterGrenseKoblingAttributter(
-        lokalidForKretser: Set<Lokalid?>,
-        flaterSomHarFaattNyVersjon: MutableMap<Lokalid, Flate>,
-        flateType: Flatetype
-    ) {
-        lokalidForKretser
-            // De vedvarende/uendrede kretsene, og kretser som ikke har noe med tilhørighetsoperasjonen, vil ikke ligge i lokalidForKretser.
-            // Det er ikke vits å regne ut koblingene for disse kretsene på nytt.
-            .filter { flaterSomHarFaattNyVersjon[it] != null }
-            .forEach { lokalid ->
-                val oppdatertGrenseKoblingListe = when (flateType) {
-                    Flatetype.GRUNNKRETS -> (flaterSomHarFaattNyVersjon[lokalid] as? Grunnkrets)?.grenser
-                    Flatetype.STEMMEKRETS -> (flaterSomHarFaattNyVersjon[lokalid] as? Stemmekrets)?.grenser
-                    else -> throw RuntimeException("FlateType kan kun bli satt til Grunnkrets eller Stemmekrets.")
-                } ?: throw RuntimeException("Casting til $flateType feilet. FlateType kan kun bli satt til Grunnkrets eller Stemmekrets.")
+    fun oppdaterGrenseKoblingAttributterForFlater(flater: Set<Flate>, gyldighetsDato: LocalDate){
+        flater
+            .forEach { flate ->
+                val oppdatertGrenseKoblingListe = when (flate.type) {
+                    Flatetype.GRUNNKRETS -> (flate as Grunnkrets).getGrensekoblinger(gyldighetsDato)
+                    Flatetype.STEMMEKRETS -> (flate as Stemmekrets).getGrensekoblinger(gyldighetsDato)
+                    Flatetype.FYLKE -> (flate as Fylke).getGrensekoblinger(gyldighetsDato)
+                    Flatetype.KOMMUNE -> (flate as Kommune).getGrensekoblinger(gyldighetsDato)
+                    Flatetype.NASJON -> (flate as Nasjon).getGrensekoblinger(gyldighetsDato)
+                    Flatetype.SKOLEKRETS -> throw ResponseException.BadRequestException("Støtter ikke oppdatering av grensekoblinger for skolekretser")
+                }
 
                 val gma = dannGrenseKoblingAttributterForGrenser(oppdatertGrenseKoblingListe.map { it.grense })
                 oppdatertGrenseKoblingListe.forEach {
@@ -131,7 +131,6 @@ class GrenseKoblingService {
                 }
         }
     }
-
 
     // Hjelpeklasse for å håndtere grenser og koblinger grensen har til grunn- og stemmekretser.
     data class GrenseMedAttributter(
@@ -163,7 +162,8 @@ class GrenseKoblingService {
         val grenserMedAttributter =  skall.flatMapIndexed {flateIndeks, skallPolygonP ->
 
             val hullISkall = hull.filter { it.within(skallPolygonP) }.flatMapIndexed {hullIndeks, hullPolygonP ->
-                val hullPolygonLS = polygonTilLineStringsMap[hullPolygonP] ?: throw RuntimeException("Fant ikke tilbake til linestrings for hullpolygon: $hullPolygonP")
+                val hullPolygonLS = polygonTilLineStringsMap[hullPolygonP]
+                    ?: throw RuntimeException("Fant ikke tilbake til linestrings for hullpolygon: $hullPolygonP under danning av nye grensekoblingattributter")
                 hullPolygonLS.mapIndexed { index, lineString ->
                     val hullGrenseForLineString = grenser.first { it.grense.equals(lineString) }.apply { grense = lineString }
                     mapLineStringTilGrenseMedAttributter(
@@ -175,7 +175,8 @@ class GrenseKoblingService {
                     )
                 }
             }
-            val skallPolygonLS = polygonTilLineStringsMap[skallPolygonP] ?: throw RuntimeException("Fant ikke tilbake til linestrings for skallpolygon: $skallPolygonP")
+            val skallPolygonLS = polygonTilLineStringsMap[skallPolygonP]
+                ?: throw RuntimeException("Fant ikke tilbake til linestrings for skallpolygon: $skallPolygonP under danning av nye grensekoblingattributter")
             skallPolygonLS.mapIndexed { index, lineString ->
                 val skallGrenseForLineString = grenser.first { it.grense.equals(lineString) }.apply { grense = lineString }
                 mapLineStringTilGrenseMedAttributter(

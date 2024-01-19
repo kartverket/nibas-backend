@@ -1,9 +1,11 @@
 package no.kartverket.nibas.service.utkast
 
+import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grenseendringer
 import no.kartverket.nibas.api.v1.common.Metadataendringer
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
+import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.api.v1.request.OppdaterUtkastRequest
 import no.kartverket.nibas.api.v1.request.OpprettUtkastRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
@@ -116,6 +118,8 @@ class UtkastService(
     }
 
     internal fun publiserEndringer(operasjoner: Operasjoner, utkast: Utkast): List<EventRad> {
+        val kretsDelingEndringer = publiserKretsDelingEndring(operasjoner.kretsDelingEndring, utkast)
+
         val sammenslaaingsendringer =
             publiserSammenslaaingsendringer(operasjoner.stemmekretsSammenslaaingsendring, utkast)
 
@@ -127,7 +131,7 @@ class UtkastService(
 
         val grenseendringer = publiserGrenseendringer(operasjoner.grenseendringer, utkast)
 
-        return metadataendringer + sammenslaaingsendringer + grenseendringer
+        return metadataendringer + sammenslaaingsendringer + grenseendringer + kretsDelingEndringer
     }
 
     private fun publiserMetadataEndringer(
@@ -222,6 +226,28 @@ class UtkastService(
             expiredStemmekretser.map { lagFlateEndring(it, EventType.EXPIRED) } +
                 lagFlateEndring(modifiedStemmekrets, EventType.MODIFIED)
         } ?: emptyList()
+
+    private fun publiserKretsDelingEndring(
+        kretsDelingEndringRequest: KretsDelingEndringRequest?,
+        utkast: Utkast
+    ): List<EventRad> = kretsDelingEndringRequest?.let { kretsDelingEndring ->
+        val nyKrets = when(kretsDelingEndring.flatetype) {
+            Flatetype.STEMMEKRETS -> stemmekretsService.delStemmekrets(
+                kretsDelingEndring,
+                utkast.gyldigFra,
+                utkast.auditInfo.typeEndring
+            )
+            Flatetype.GRUNNKRETS -> grunnkretsService.delGrunnkrets(
+                kretsDelingEndring,
+                utkast.gyldigFra,
+                utkast.auditInfo.typeEndring
+            )
+            else -> throw ResponseException.BadRequestException("Støtter kun deling av grunnkrets eller stemmekrets, ikke ${kretsDelingEndring.flatetype}")
+        }
+        listOf(
+            lagFlateEndring(nyKrets, EventType.ADDED)
+        )
+    } ?: emptyList()
 
     private fun lagFlateEndring(flate: Flate, eventType: EventType): EventRad {
         return EventRad(

@@ -121,8 +121,14 @@ data class FeatureProperties(
 
 @Schema(description = "Egenskaper som beskriver konteksten som grensen sees i.")
 data class KontekstEgenskaper(
-    @Schema(description = "Id til objekt som det vises til i kontekst")
+    @Schema(description = "Id til objekt som det vises til i kontekst, er null hvis feature skal knyttes til en ny krets")
     val id: ObjektIdentifikator? = null,
+
+    @Schema(description = "Id til kommunen som konteksten ligger i")
+    val kommuneId: ObjektIdentifikator? = null,
+
+    @Schema(description = "kretsnummeret til konteksten")
+    val kretsNummer: String? = null,
 
     @Schema(description = "Hvilken kontekst geometrien skal sees i")
     val type: KontekstEnhetType? = null,

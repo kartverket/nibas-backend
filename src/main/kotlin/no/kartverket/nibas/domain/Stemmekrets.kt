@@ -105,7 +105,7 @@ class Stemmekrets(
 
     override fun replaceGrensekobling(gammelGrense: Grense, grense: Grense?, grenseKoblingAttributter: GrenseKoblingAttributter) {
         if (!tillatteGrensetyper().contains(grense?.grensetype) && grense != null) {
-            throw RuntimeException("Kan ikke oppdatere/legge til ${grense?.grensetype?.name} på enhet Stemmekrets")
+            throw RuntimeException("Kan ikke oppdatere/legge til ${grense.grensetype.name} på enhet Stemmekrets")
         }
         if (grenser.removeIf { it.grense.id == gammelGrense.id }) {
             //Grensa ble tatt vekk fra stemmekretsen. Fjerner stemmekretsen også fra grensa (koblingen fra den andre veien), ellers feiler tester

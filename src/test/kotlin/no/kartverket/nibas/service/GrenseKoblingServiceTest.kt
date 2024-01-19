@@ -11,13 +11,14 @@ import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.utils.GrenseHelper
-import org.junit.jupiter.api.Test
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 import org.locationtech.jts.geom.Coordinate
 import java.time.LocalDate
-import java.util.Random
+import java.util.*
 
 class GrenseKoblingServiceTest {
+
     val gyldighetsdato = LocalDate.now()
 
     val grense1 = Grense("1", grensetype = Grensetype.Grunnkretsgrense)
@@ -25,9 +26,8 @@ class GrenseKoblingServiceTest {
     val grunnkrets1 = Grunnkrets(lokalid = "A").apply { grunnkretsnavn = "A"; grunnkretsnummer = "1" }
     val grunnkrets2 = Grunnkrets(lokalid = "B").apply { grunnkretsnavn = "B"; grunnkretsnummer = "2" }
 
-    val kontekstEgenskaper1 = KontekstEgenskaper(ObjektIdentifikator(Lokalid("A"), gyldighetsdato), KontekstEnhetType.GRUNNKRETS, 0)
-    val kontekstEgenskaper2 = KontekstEgenskaper(ObjektIdentifikator(Lokalid("C"), gyldighetsdato), KontekstEnhetType.GRUNNKRETS, 0)
-
+    val kontekstEgenskaper1 = KontekstEgenskaper(ObjektIdentifikator(Lokalid("A"), gyldighetsdato), type =  KontekstEnhetType.GRUNNKRETS, version = 0)
+    val kontekstEgenskaper2 = KontekstEgenskaper(ObjektIdentifikator(Lokalid("C"), gyldighetsdato), type = KontekstEnhetType.GRUNNKRETS, version = 0)
 
     val stemmekrets = Stemmekrets(lokalid = "A").apply { stemmekretsnavn = "A"; stemmekretsnummer = "1" }
 
