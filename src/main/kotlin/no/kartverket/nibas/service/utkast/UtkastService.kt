@@ -116,6 +116,11 @@ class UtkastService(
             }
         }
     }
+    
+    data class EventRadMedFlate(
+        val eventRad: EventRad,
+        val flate: Flate
+    )
 
     internal fun publiserEndringer(operasjoner: Operasjoner, utkast: Utkast): List<EventRad> {
         val kretsDelingEndringer = publiserKretsDelingEndring(operasjoner.kretsDelingEndring, utkast)
@@ -133,19 +138,19 @@ class UtkastService(
 
         val alleEventsMedFlate = metadataendringer + sammenslaaingsendringer + grenseendringer + kretsDelingEndringer
         val alleOppdaterteOgNyeFlater = alleEventsMedFlate
-            .filter { it.first.eventType != EventType.EXPIRED }
-            .map { it.second }
+            .filter { it.eventRad.eventType != EventType.EXPIRED }
+            .map { it.flate }
             .toSet()
 
         flateService.oppdaterFlaterFor(alleOppdaterteOgNyeFlater)
 
-        return alleEventsMedFlate.map { it.first }
+        return alleEventsMedFlate.map { it.eventRad }
     }
 
     private fun publiserMetadataEndringer(
         metadata: Metadataendringer,
         utkast: Utkast,
-    ): List<Pair<EventRad, Flate>> {
+    ): List<EventRadMedFlate> {
         val endredeNasjoner =
             metadata.nasjonsendringer.mapNotNull { nasjonEndring ->
                 nasjonService.oppdaterNasjon(
@@ -202,12 +207,12 @@ class UtkastService(
                 endredeKommuner +
                 endredeGrunnkretser +
                 endredeStemmekretser
-        return alleEndringer.map { Pair(eventForFlate(it, EventType.MODIFIED), it) }
+        return alleEndringer.map { EventRadMedFlate(eventForFlate(it, EventType.MODIFIED), it) }
     }
 
-    private fun publiserGrenseendringer(grenseendringer: Grenseendringer, utkast: Utkast) : List<Pair<EventRad, Flate>> {
+    private fun publiserGrenseendringer(grenseendringer: Grenseendringer, utkast: Utkast) : List<EventRadMedFlate> {
         val endredeFeatures = grenseendringer.endredeFeatures
-        var eventer: List<Pair<EventRad, Flate>> = emptyList()
+        var eventer: List<EventRadMedFlate> = emptyList()
 
         if (endredeFeatures.isNotEmpty()) {
             val flaterMedGrenseendring = grenseService.lagreGrenser(
@@ -215,7 +220,7 @@ class UtkastService(
                 gyldighetsdato = utkast.gyldigFra,
                 endringstype = utkast.auditInfo.typeEndring
             )
-            eventer = flaterMedGrenseendring.map { Pair(eventForFlate(it, EventType.MODIFIED), it) }
+            eventer = flaterMedGrenseendring.map { EventRadMedFlate(eventForFlate(it, EventType.MODIFIED), it) }
         }
         return eventer
     }
@@ -224,21 +229,21 @@ class UtkastService(
     private fun publiserSammenslaaingsendringer(
         stemmekretsSammenslaaingsendring: StemmekretsSammenslaaingsendringRequest?,
         utkast: Utkast,
-    ): List<Pair<EventRad, Flate>> =
+    ): List<EventRadMedFlate> =
         stemmekretsSammenslaaingsendring?.let { stemmekretsendring ->
             val (modifiedStemmekrets, expiredStemmekretser) = stemmekretsService.slaaSammenStemmekretser(
                 sammenslaaingsendringRequest = stemmekretsendring,
                 sammenslaaingsDato = utkast.gyldigFra,
                 endringstype = utkast.auditInfo.typeEndring
             )
-            expiredStemmekretser.map { Pair(eventForFlate(it, EventType.EXPIRED), it) } +
-                Pair(eventForFlate(modifiedStemmekrets, EventType.MODIFIED), modifiedStemmekrets)
+            expiredStemmekretser.map { EventRadMedFlate(eventForFlate(it, EventType.EXPIRED), it) } +
+                EventRadMedFlate(eventForFlate(modifiedStemmekrets, EventType.MODIFIED), modifiedStemmekrets)
         } ?: emptyList()
 
     private fun publiserKretsDelingEndring(
         kretsDelingEndringRequest: KretsDelingEndringRequest?,
         utkast: Utkast
-    ): List<Pair<EventRad, Flate>> = kretsDelingEndringRequest?.let { kretsDelingEndring ->
+    ): List<EventRadMedFlate> = kretsDelingEndringRequest?.let { kretsDelingEndring ->
         val nyKrets = when(kretsDelingEndring.flatetype) {
             Flatetype.STEMMEKRETS -> stemmekretsService.delStemmekrets(
                 kretsDelingEndring,
@@ -253,7 +258,7 @@ class UtkastService(
             else -> throw ResponseException.BadRequestException("Støtter kun deling av grunnkrets eller stemmekrets, ikke ${kretsDelingEndring.flatetype}")
         }
         listOf(
-            Pair(eventForFlate(nyKrets, EventType.ADDED), nyKrets)
+            EventRadMedFlate(eventForFlate(nyKrets, EventType.ADDED), nyKrets)
         )
     } ?: emptyList()
 
