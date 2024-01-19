@@ -1,36 +1,28 @@
 package no.kartverket.nibas.service
 
-import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
+import io.mockk.mockk
 import io.mockk.mockkStatic
 import no.kartverket.nibas.builders.StemmekretsBuilder
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
-import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.REPOSITORY_EXTENSIONS_FILEPATH
 import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
 import java.time.LocalDate
 import java.time.Month
 import kotlin.test.assertEquals
 import org.assertj.core.api.Assertions.assertThat
 
-@SpringBootTest(classes = [StemmekretsService::class])
-class StemmekretsServiceTest {
+internal class StemmekretsServiceTest {
+    private val stemmekretsRepositoryMock = mockk<StemmekretsRepository>()
+    private val grenseKoblingService = GrenseKoblingService()
 
-    @Autowired
-    lateinit var stemmekretsService: StemmekretsService
-
-    @MockkBean
-    private lateinit var stemmekretsRepositoryMock: StemmekretsRepository
-
-    @Suppress("unused")
-    @MockkBean
-    private lateinit var kodelisteServiceMock: KodelisteService
+    private val stemmekretsService = StemmekretsService(
+        stemmekretsRepositoryMock, grenseKoblingService
+    )
 
     @BeforeEach
     fun beforeEach() {

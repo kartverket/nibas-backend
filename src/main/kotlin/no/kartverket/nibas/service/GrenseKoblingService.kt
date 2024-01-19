@@ -3,6 +3,7 @@ package no.kartverket.nibas.service
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.geojson.KontekstEgenskaper
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.common.getGrenserIRiktigRekkefoelge
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.Fylke
@@ -15,7 +16,6 @@ import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.StemmekretsGrenseKobling
-import no.kartverket.nibas.service.deltgeometri.DeltGeometriAdministrativeGrenserService
 import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.GeometryFactory
 import org.locationtech.jts.geom.LineString
@@ -24,9 +24,7 @@ import org.springframework.stereotype.Service
 import java.time.LocalDate
 
 @Service
-class GrenseKoblingService(
-    private val deltGeometriAdministrativeGrenserService: DeltGeometriAdministrativeGrenserService,
-) {
+class GrenseKoblingService {
 
     data class TilhorighetEndringer<T: GrenseKobling>(
         val nye: List<KontekstEgenskaper>,
@@ -144,7 +142,7 @@ class GrenseKoblingService(
         val grenserLS = grenser.map { grense ->  grense.grense }
 
         // Får grensene delt inn i sammenhengende polygon(er)
-        val polygonerLS = deltGeometriAdministrativeGrenserService.getGrenserIRiktigRekkefoelge(grenserLS)
+        val polygonerLS = getGrenserIRiktigRekkefoelge(grenserLS)
 
         // Holder oversikt over hvilket polygon som tilsvarer hvilke line strings
         val polygonTilLineStringsMap = mutableMapOf<Polygon, List<LineString>>()

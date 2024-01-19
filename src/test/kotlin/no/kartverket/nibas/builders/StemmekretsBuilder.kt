@@ -14,7 +14,7 @@ import java.time.ZonedDateTime
 
 class StemmekretsBuilder(
     private val id: String = "1",
-    private var grenser: List<Grense> = emptyList(),
+    private var grenser: List<GrenseMedHullIndex> = emptyList(),
     private var kommune: Kommune? = KommuneBuilder.DEFAULT_KOMMUNE,
     private var lokalId: Lokalid = Lokalid(LOKALID),
     private var stemmekretsnavn: String = "Nordre Follo",
@@ -52,13 +52,16 @@ class StemmekretsBuilder(
         stemmekrets.setInfo(informasjonstekst)
         stemmekrets.opphav = opphav
 
-        var forrigeGrense = grenser.lastOrNull()
-        grenser.forEachIndexed { index, grense ->
-            stemmekrets.addGrensekobling(grense, GrenseKoblingAttributter(
-                rekkefoelge = index,
-                retningMedKlokken = GrenseHelper.getRetningMedKlokken(grense, forrigeGrense)
-            ))
-            forrigeGrense = grense
+        grenser.groupBy { it.hullIndex }.map { (_, grenserMedData) ->
+            var forrigeGrense = grenserMedData.lastOrNull()?.grense
+            grenserMedData.forEachIndexed { index, grenseMedData ->
+                stemmekrets.addGrensekobling(grenseMedData.grense, GrenseKoblingAttributter(
+                    rekkefoelge = index,
+                    hullIndeks = grenseMedData.hullIndex,
+                    retningMedKlokken = GrenseHelper.getRetningMedKlokken(grenseMedData.grense, forrigeGrense)
+                ))
+                forrigeGrense = grenseMedData.grense
+            }
         }
         stemmekrets.posisjon = GeometryFactory().createPoint(Coordinate(1.0, 1.0))
         if (grenser.isNotEmpty()) {
@@ -94,8 +97,15 @@ class StemmekretsBuilder(
     }
 
     fun withGrenser(grenser: List<Grense>): StemmekretsBuilder {
-        this.grenser = this.grenser.plus(grenser)
+        this.grenser = this.grenser.plus(grenser.map { it.toGrenseMedHullIndex() })
         return this
     }
-
 }
+
+data class GrenseMedHullIndex(
+    val grense: Grense,
+    val hullIndex: Int? = null,
+)
+
+fun Grense.toGrenseMedHullIndex(hullIndex: Int? = null) =
+    GrenseMedHullIndex(this, hullIndex)
