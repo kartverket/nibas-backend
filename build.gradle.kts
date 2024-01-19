@@ -2,9 +2,9 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.springframework.boot.gradle.tasks.bundling.BootJar
 
 plugins {
-    val kotlinPluginVersion = "1.9.20"
+    val kotlinPluginVersion = "1.9.22"
 
-    id("org.springframework.boot") version "3.1.6"
+    id("org.springframework.boot") version "3.2.1"
     id("io.spring.dependency-management") version "1.1.4"
     kotlin("jvm") version kotlinPluginVersion
     kotlin("plugin.spring") version kotlinPluginVersion
@@ -16,6 +16,12 @@ plugins {
 group = "no.kartverket.nibas"
 version = "0.0.1-SNAPSHOT"
 java.sourceCompatibility = JavaVersion.VERSION_17
+
+dependencyManagement {
+    imports {
+        mavenBom("org.springframework.cloud:spring-cloud-dependencies:2023.0.0")
+    }
+}
 
 repositories {
     mavenLocal()
@@ -50,9 +56,9 @@ configurations["intTestRuntimeOnly"].extendsFrom(configurations.runtimeOnly.get(
 // Definerer versjoner for avhengigheter som ikke dekkes av BOM
 val springdocOpenapiVersion2 = "2.2.0"
 val jtsVersion = "1.19.0"
-val testContainerVersion = "1.18.3"
+val testContainerVersion = "1.19.3"
 val autLibVersion = "2.0.0"
-val flywayVersion = "9.22.3"
+val flywayVersion = "10.6.0"
 val hypersistenceUtilsHibernate62Version = "3.6.1"
 val springCloudStarterVaultConfigVersion = "4.0.1"
 val spatial4jVersion = "0.8"
@@ -91,7 +97,7 @@ dependencies {
     implementation("org.hibernate.orm:hibernate-core")
     implementation("net.logstash.logback:logstash-logback-encoder:$logstashVersion")
     implementation("org.springframework.cloud:spring-cloud-starter")
-    implementation("org.springframework.cloud:spring-cloud-starter-vault-config:$springCloudStarterVaultConfigVersion")
+    implementation("org.springframework.cloud:spring-cloud-starter-vault-config")
     implementation("io.micrometer:micrometer-registry-prometheus:$prometheusVersion")
     implementation("org.springframework.integration:spring-integration-core")
     implementation(platform("io.opentelemetry:opentelemetry-bom:1.32.0"))
@@ -101,6 +107,7 @@ dependencies {
     implementation("io.hypersistence:hypersistence-utils-hibernate-62:$hypersistenceUtilsHibernate62Version")
 
     runtimeOnly("org.flywaydb:flyway-core:$flywayVersion")
+    runtimeOnly("org.flywaydb:flyway-database-postgresql:$flywayVersion")
     runtimeOnly("org.postgresql:postgresql")
 
     testImplementation("org.jetbrains.kotlin:kotlin-test")

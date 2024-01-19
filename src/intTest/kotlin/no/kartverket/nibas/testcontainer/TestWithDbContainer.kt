@@ -102,7 +102,7 @@ class TestWithDbContainer {
     lateinit var administrativenhetnavnService: AdministrativenhetnavnService
 
     companion object dbContainer : PostgreSQLContainer<dbContainer>(
-        DockerImageName.parse("postgis/postgis:14-3.2-alpine").asCompatibleSubstituteFor("postgres")
+        DockerImageName.parse("postgis/postgis:14-3.4-alpine").asCompatibleSubstituteFor("postgres")
     ) {
         private val randomContainerSuffix = Random().nextInt().toString()
         init {
