@@ -49,7 +49,6 @@ class GrenseService(
     private val grenseRepository: GrenseRepository,
     private val grunnkretsRepository: GrunnkretsRepository,
     private val stemmekretsRepository: StemmekretsRepository,
-    private val flateService: FlateService,
     private val grunnkretsService: GrunnkretsService,
     private val stemmekretsService: StemmekretsService,
     private val kommuneService: KommuneService,
@@ -76,7 +75,6 @@ class GrenseService(
         )
         //Her er det bare å oppdatere, kretsene/adm.enhetene fikk ny versjon ved lagring av grenser og grensekoblinger
         grenseKoblingService.oppdaterGrenseKoblingAttributterForFlater(enheterSomSkalFlatedannes, gyldighetsdato)
-        flateService.oppdaterFlaterFor(enheterSomSkalFlatedannes)
 
         return enheterSomSkalFlatedannes
     }

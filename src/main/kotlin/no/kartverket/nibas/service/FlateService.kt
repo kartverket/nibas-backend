@@ -8,7 +8,6 @@ import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.domain.Stemmekrets
-import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.EnhetsGrenseRepository
 import no.kartverket.nibas.repository.FylkeRepository
 import no.kartverket.nibas.repository.GrunnkretsRepository
@@ -28,7 +27,6 @@ class FlateService @Autowired constructor(
     private val nasjonRepository: NasjonRepository,
     private val grunnkretsRepository: GrunnkretsRepository,
     private val stemmekretsRepository: StemmekretsRepository,
-    private val kodelisteService: KodelisteService,
     private val enhetsGrenseRepository: EnhetsGrenseRepository
 ) {
     private val logger = LoggerFactory.getLogger(this.javaClass.name)

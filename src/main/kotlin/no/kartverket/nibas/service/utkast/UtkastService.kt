@@ -9,7 +9,6 @@ import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.api.v1.request.OppdaterUtkastRequest
 import no.kartverket.nibas.api.v1.request.OpprettUtkastRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
-import no.kartverket.nibas.common.CurrentTime
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.domain.Endringstype
@@ -20,9 +19,9 @@ import no.kartverket.nibas.domain.utkast.UtkastStatus
 import no.kartverket.nibas.events.EventRad
 import no.kartverket.nibas.events.EventType
 import no.kartverket.nibas.events.NibasEventPublisher
-import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.repository.UtkastRepository
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
+import no.kartverket.nibas.service.FlateService
 import no.kartverket.nibas.service.FylkeService
 import no.kartverket.nibas.service.GrenseService
 import no.kartverket.nibas.service.GrunnkretsService
@@ -49,7 +48,7 @@ class UtkastService(
     private val grenseService: GrenseService,
     private val nibasEventPublisher: NibasEventPublisher,
     private val utkastValidatorService: UtkastValidatorService,
-    private val currentTime: CurrentTime
+    private val flateService: FlateService
 ) {
 
     private val logger: Logger = LoggerFactory.getLogger(UtkastService::class.java)
@@ -110,6 +109,7 @@ class UtkastService(
 
                 utkast.operasjoner?.let { operasjoner ->
                     val flateEndringer = publiserEndringer(operasjoner, utkast)
+
                     nibasEventPublisher.publishNibasEvent(flateEndringer, utkast.gyldigFra)
                 }
                 utkast.settPublisert()
@@ -131,13 +131,21 @@ class UtkastService(
 
         val grenseendringer = publiserGrenseendringer(operasjoner.grenseendringer, utkast)
 
-        return metadataendringer + sammenslaaingsendringer + grenseendringer + kretsDelingEndringer
+        val alleEventsMedFlate = metadataendringer + sammenslaaingsendringer + grenseendringer + kretsDelingEndringer
+        val alleOppdaterteOgNyeFlater = alleEventsMedFlate
+            .filter { it.first.eventType != EventType.EXPIRED }
+            .map { it.second }
+            .toSet()
+
+        flateService.oppdaterFlaterFor(alleOppdaterteOgNyeFlater)
+
+        return alleEventsMedFlate.map { it.first }
     }
 
     private fun publiserMetadataEndringer(
         metadata: Metadataendringer,
         utkast: Utkast,
-    ): List<EventRad> {
+    ): List<Pair<EventRad, Flate>> {
         val endredeNasjoner =
             metadata.nasjonsendringer.mapNotNull { nasjonEndring ->
                 nasjonService.oppdaterNasjon(
@@ -194,12 +202,12 @@ class UtkastService(
                 endredeKommuner +
                 endredeGrunnkretser +
                 endredeStemmekretser
-        return alleEndringer.map { lagFlateEndring(it, EventType.MODIFIED) }
+        return alleEndringer.map { Pair(eventForFlate(it, EventType.MODIFIED), it) }
     }
 
-    private fun publiserGrenseendringer(grenseendringer: Grenseendringer, utkast: Utkast) : List<EventRad> {
+    private fun publiserGrenseendringer(grenseendringer: Grenseendringer, utkast: Utkast) : List<Pair<EventRad, Flate>> {
         val endredeFeatures = grenseendringer.endredeFeatures
-        var eventer: List<EventRad> = emptyList()
+        var eventer: List<Pair<EventRad, Flate>> = emptyList()
 
         if (endredeFeatures.isNotEmpty()) {
             val flaterMedGrenseendring = grenseService.lagreGrenser(
@@ -207,7 +215,7 @@ class UtkastService(
                 gyldighetsdato = utkast.gyldigFra,
                 endringstype = utkast.auditInfo.typeEndring
             )
-            eventer = flaterMedGrenseendring.map { lagFlateEndring(it, EventType.MODIFIED) }
+            eventer = flaterMedGrenseendring.map { Pair(eventForFlate(it, EventType.MODIFIED), it) }
         }
         return eventer
     }
@@ -216,21 +224,21 @@ class UtkastService(
     private fun publiserSammenslaaingsendringer(
         stemmekretsSammenslaaingsendring: StemmekretsSammenslaaingsendringRequest?,
         utkast: Utkast,
-    ): List<EventRad> =
+    ): List<Pair<EventRad, Flate>> =
         stemmekretsSammenslaaingsendring?.let { stemmekretsendring ->
             val (modifiedStemmekrets, expiredStemmekretser) = stemmekretsService.slaaSammenStemmekretser(
                 sammenslaaingsendringRequest = stemmekretsendring,
                 sammenslaaingsDato = utkast.gyldigFra,
                 endringstype = utkast.auditInfo.typeEndring
             )
-            expiredStemmekretser.map { lagFlateEndring(it, EventType.EXPIRED) } +
-                lagFlateEndring(modifiedStemmekrets, EventType.MODIFIED)
+            expiredStemmekretser.map { Pair(eventForFlate(it, EventType.EXPIRED), it) } +
+                Pair(eventForFlate(modifiedStemmekrets, EventType.MODIFIED), modifiedStemmekrets)
         } ?: emptyList()
 
     private fun publiserKretsDelingEndring(
         kretsDelingEndringRequest: KretsDelingEndringRequest?,
         utkast: Utkast
-    ): List<EventRad> = kretsDelingEndringRequest?.let { kretsDelingEndring ->
+    ): List<Pair<EventRad, Flate>> = kretsDelingEndringRequest?.let { kretsDelingEndring ->
         val nyKrets = when(kretsDelingEndring.flatetype) {
             Flatetype.STEMMEKRETS -> stemmekretsService.delStemmekrets(
                 kretsDelingEndring,
@@ -245,11 +253,11 @@ class UtkastService(
             else -> throw ResponseException.BadRequestException("Støtter kun deling av grunnkrets eller stemmekrets, ikke ${kretsDelingEndring.flatetype}")
         }
         listOf(
-            lagFlateEndring(nyKrets, EventType.ADDED)
+            Pair(eventForFlate(nyKrets, EventType.ADDED), nyKrets)
         )
     } ?: emptyList()
 
-    private fun lagFlateEndring(flate: Flate, eventType: EventType): EventRad {
+    private fun eventForFlate(flate: Flate, eventType: EventType): EventRad {
         return EventRad(
             uuid = flate.id,
             eventType = eventType,

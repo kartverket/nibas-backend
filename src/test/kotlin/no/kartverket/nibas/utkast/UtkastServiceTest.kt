@@ -35,6 +35,7 @@ import no.kartverket.nibas.domain.utkast.UtkastStatus
 import no.kartverket.nibas.events.NibasEventPublisher
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.UtkastRepository
+import no.kartverket.nibas.service.FlateService
 import no.kartverket.nibas.service.FylkeService
 import no.kartverket.nibas.service.GrenseService
 import no.kartverket.nibas.service.GrunnkretsService
@@ -91,7 +92,11 @@ internal class UtkastServiceTest {
     @Mock
     private lateinit var nibasEventPublisherMock: NibasEventPublisher
 
+    @Mock
     private lateinit var utkastService: UtkastService
+
+    @Mock
+    private lateinit var flateService: FlateService
 
     @BeforeEach
     fun beforeEach() {
@@ -100,7 +105,7 @@ internal class UtkastServiceTest {
         whenever(currentTime.asLocalDate()).thenReturn(LocalDate.of(2022, 6, 1))
         val utkastValidatorService = UtkastValidatorService(grunnkretsServiceMock, grenseServiceMock, stemmekretsServiceMock, kodelisteServiceMock, currentTime)
         utkastService = UtkastService(utkastRepositoryMock, nasjonServiceMock, fylkeServiceMock, kommuneServiceMock, grunnkretsServiceMock,
-            stemmekretsServiceMock, grenseServiceMock, nibasEventPublisherMock, utkastValidatorService, currentTime)
+            stemmekretsServiceMock, grenseServiceMock, nibasEventPublisherMock, utkastValidatorService, flateService)
     }
 
     @Test
