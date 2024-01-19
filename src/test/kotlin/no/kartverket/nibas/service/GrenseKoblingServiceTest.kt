@@ -12,24 +12,18 @@ import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.kodelister.KodelisteService
-import no.kartverket.nibas.repository.GrunnkretsRepository
-import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.service.deltgeometri.DeltGeometriAdministrativeGrenserService
 import no.kartverket.nibas.utils.GrenseHelper
-import org.junit.jupiter.api.Test
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 import org.locationtech.jts.geom.Coordinate
 import java.time.LocalDate
-import java.util.Random
+import java.util.*
 
 class GrenseKoblingServiceTest {
 
-    val grunnkretsServiceMock = mockk<GrunnkretsService>()
-    val stemmekretsServiceMock = mockk<StemmekretsService>()
     val kommuneService = mockk<KommuneService>()
     val kodelisteService = mockk<KodelisteService>()
-    val grunnkretsRepository = mockk<GrunnkretsRepository>()
-    val stemmekretsRepository = mockk<StemmekretsRepository>()
 
     val gyldighetsdato = LocalDate.now()
 
@@ -48,8 +42,7 @@ class GrenseKoblingServiceTest {
 
     val deltGeometriAdministrativeGrenserService = DeltGeometriAdministrativeGrenserService(kommuneService, kodelisteService)
 
-    val grenseKoblingService = GrenseKoblingService(
-        grunnkretsServiceMock, stemmekretsServiceMock, deltGeometriAdministrativeGrenserService, grunnkretsRepository, stemmekretsRepository)
+    val grenseKoblingService = GrenseKoblingService(deltGeometriAdministrativeGrenserService)
 
     @Test
     fun `getTilhorighetEndringerForGrense gir korrekte partisjoner`(){

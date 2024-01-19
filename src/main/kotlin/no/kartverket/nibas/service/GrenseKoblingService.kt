@@ -2,7 +2,6 @@ package no.kartverket.nibas.service
 
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.geojson.KontekstEgenskaper
-import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Flate
@@ -12,14 +11,10 @@ import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
-import no.kartverket.nibas.domain.KobletTilGrense
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.StemmekretsGrenseKobling
-import no.kartverket.nibas.repository.GrunnkretsRepository
-import no.kartverket.nibas.repository.StemmekretsRepository
-import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import no.kartverket.nibas.service.deltgeometri.DeltGeometriAdministrativeGrenserService
 import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.GeometryFactory
@@ -30,11 +25,7 @@ import java.time.LocalDate
 
 @Service
 class GrenseKoblingService(
-    private val grunnkretsService: GrunnkretsService,
-    private val stemmekretsService: StemmekretsService,
     private val deltGeometriAdministrativeGrenserService: DeltGeometriAdministrativeGrenserService,
-    private val grunnkretsRepository: GrunnkretsRepository,
-    private val stemmekretsRepository: StemmekretsRepository,
 ) {
 
     data class TilhorighetEndringer<T: GrenseKobling>(
@@ -82,63 +73,6 @@ class GrenseKoblingService(
             uendrede,
             frafallende
         )
-    }
-
-    fun leggTilGrenserForKretserViaKontekstEgenskaper(
-        nyeKontekster: GrenseService.IdentifikatorHelper,
-        grense: Grense,
-        gyldighetsDato: LocalDate,
-        flaterSomHarFaattNyVersjon: MutableMap<Lokalid, Flate>,
-        endringstype: Endringstype,
-        kretsType: Flatetype
-    ) {
-        nyeKontekster.brukLokalid.map { kontekstEgenskaper ->
-            if (kontekstEgenskaper.id == null) { // må sjekkes da kotlin ikke klarer å se at identifikatorHelper har filtrerte kontkestet
-                throw RuntimeException("Kontekst peker ikke til en krets")
-            }
-            // Henter nyeste versjon av grunnkrets i dette utkastet hvis det finnes, ellers henter vi nyeste fra db og lager ny versjon med den.
-            val nyVersjonAvKrets = flaterSomHarFaattNyVersjon[kontekstEgenskaper.id.lokalid] ?: when(kretsType){
-                Flatetype.GRUNNKRETS -> grunnkretsService.createNyVersjonAvGrunnkrets(
-                    grunnkretsRepository.findGyldigObjektForIdentifikator(Identifikator(kontekstEgenskaper.id.lokalid, gyldighetsDato))
-                        ?: throw RuntimeException("Fant ikke grunnkrets med lokalid: ${kontekstEgenskaper.id.lokalid}"),
-                    gyldighetsDato,
-                    endringstype
-                )
-                Flatetype.STEMMEKRETS -> stemmekretsService.createNyVersjonAvStemmekrets(
-                    stemmekretsRepository.findGyldigObjektForIdentifikator(Identifikator(kontekstEgenskaper.id.lokalid, gyldighetsDato))
-                        ?: throw RuntimeException("Fant ikke stemmekrets med lokalid: ${kontekstEgenskaper.id.lokalid}"),
-                    gyldighetsDato,
-                    endringstype
-                )
-                else -> throw RuntimeException("Støtter kun Grunnkretser og Stemmekretser")
-            }
-
-            (nyVersjonAvKrets as KobletTilGrense).addGrensekobling(grense, GrenseKoblingAttributter())
-
-            flaterSomHarFaattNyVersjon[Lokalid(nyVersjonAvKrets.lokalid)] = nyVersjonAvKrets
-        }
-        nyeKontekster.brukKretsNummer.map { kontekstEgenskaper ->
-            if (kontekstEgenskaper.kretsNummer == null){
-                throw RuntimeException("Kontekst peker ikke til den nyopprettede kretsen")
-            }
-
-            val nyesteVersjonAvNyopprettetKrets = flaterSomHarFaattNyVersjon.values.find { when(it.type){
-                Flatetype.STEMMEKRETS -> (it as Stemmekrets).stemmekretsnummer == kontekstEgenskaper.kretsNummer && it.kommuneLokalid.lokalid == kontekstEgenskaper.kommuneId?.lokalid?.value
-                Flatetype.GRUNNKRETS -> (it as Grunnkrets).grunnkretsnummer == kontekstEgenskaper.kretsNummer
-                else -> throw RuntimeException("Støtter kun Grunnkretser og Stemmekretser")
-            } } ?: when(kretsType){
-                Flatetype.GRUNNKRETS -> grunnkretsService.hentGrunnkretsForGrunnkretsNummer(kontekstEgenskaper.kretsNummer, gyldighetsDato)
-                    ?: throw RuntimeException("Fant ikke den nyopprettede grunnkretsen med grunnkretsnummer: ${kontekstEgenskaper.kretsNummer}")
-                Flatetype.STEMMEKRETS -> stemmekretsService.hentStemmekretsForStemmekretsNummerIKommune(kontekstEgenskaper.kommuneId
-                    ?: throw RuntimeException("Identifikator for kommune manglet for å finne stemmekrets med stemmekretsNummer: ${kontekstEgenskaper.kretsNummer}"), kontekstEgenskaper.kretsNummer, gyldighetsDato)
-                    ?: throw RuntimeException("Fant ikke den nyopprettede stemmekretsen med stemmekretsnummer: ${kontekstEgenskaper.kretsNummer} i kommune med identifikator: ${kontekstEgenskaper.kommuneId}")
-                else -> throw RuntimeException("Støtter kun Grunnkretser og Stemmekretser")
-            }
-
-            (nyesteVersjonAvNyopprettetKrets as KobletTilGrense).addGrensekobling(grense, GrenseKoblingAttributter())
-
-            flaterSomHarFaattNyVersjon[Lokalid(nyesteVersjonAvNyopprettetKrets.lokalid)] = nyesteVersjonAvNyopprettetKrets
-        }
     }
 
     fun <T : GrenseKobling> fjernGrenseFraKretserViaGrenseKobling(

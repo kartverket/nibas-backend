@@ -20,7 +20,6 @@ import no.kartverket.nibas.extensions.geometry.geometryToDto
 import no.kartverket.nibas.extensions.geometry.grenseToFeature
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import no.kartverket.nibas.utils.GrenseHelper
-import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -427,11 +426,14 @@ class GrenseServiceIT : TestWithDbContainer() {
     }
 
     @Test
-    fun `lagreGrenser skal kaste exception hvis det ikke går ann å identifisere nyopprettet grunnkrets`(){
+    fun `lagreGrenser skal kaste exception hvis det ikke går å identifisere nyopprettet grunnkrets`(){
         val gyldighetsdato = LocalDate.parse("2022-01-01")
 
-        val (kretsOpprinnelig, kretsOest, kretsNordVest) =
+        val kretser =
             getTilhorigetTilNyopprettetKretsTestSetup(Grensetype.Grunnkretsgrense, gyldighetsdato, ::saveGrunnkrets)
+
+        val kretsOpprinnelig = kretser[0]
+        val kretsNordVest = kretser[2]
 
         val grense2SomSkalEndreTilhorighet = kretsOpprinnelig.grenser.find { it.grense.lokalid == "grense2Lokalid" }!!.grense
         val nyGrunnkrets = saveGrunnkrets("nyGrunnkrets", Lokalid("nyGrunnkrets"), grunnkretsnummer = "420")
@@ -458,7 +460,7 @@ class GrenseServiceIT : TestWithDbContainer() {
                 .withVersion(2)
                 .build()
 
-            Assertions.assertThatThrownBy{ grenseService.lagreGrenser(
+            assertThatThrownBy{ grenseService.lagreGrenser(
                 grenser = FeatureCollection(features =
                 listOf(
                     grense2MedEndretTilhorighet,
