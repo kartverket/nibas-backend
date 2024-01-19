@@ -158,11 +158,11 @@ class StemmekretsService(
         kretsDelingEndringRequest: KretsDelingEndringRequest, delingsDato: LocalDate, endringstype: Endringstype
     ): Stemmekrets {
         if (kretsDelingEndringRequest.flatetype != Flatetype.STEMMEKRETS ){
-            throw IllegalArgumentException("Kan ikke dele og opprette en ny ${kretsDelingEndringRequest.flatetype} fra en stemmekrets")
+            throw ResponseException.BadRequestException("Kan ikke dele og opprette en ny ${kretsDelingEndringRequest.flatetype} fra en stemmekrets")
         }
         val identifikator = Identifikator(Lokalid(kretsDelingEndringRequest.opprinneligKrets.lokalId), delingsDato)
         val stemmekrets = hentStemmekrets(identifikator)
-            ?: throw RuntimeException("Fant ikke stemmekrets med lokalid: ${kretsDelingEndringRequest.opprinneligKrets.lokalId} gylidg på $delingsDato")
+            ?: throw ResponseException.NotFoundException("Fant ikke stemmekrets med lokalid: ${kretsDelingEndringRequest.opprinneligKrets.lokalId} gylidg på $delingsDato")
 
         verifiserOptimistiskLaas(kretsDelingEndringRequest.opprinneligKrets.version, stemmekrets)?.throwException()
 

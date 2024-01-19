@@ -135,11 +135,11 @@ class GrunnkretsService(
         kretsDelingEndringRequest: KretsDelingEndringRequest, delingsDato: LocalDate, endringstype: Endringstype
     ): Grunnkrets {
         if (kretsDelingEndringRequest.flatetype != Flatetype.GRUNNKRETS ){
-            throw IllegalArgumentException("Kan ikke dele og opprette en ny ${kretsDelingEndringRequest.flatetype} fra en grunnkrets")
+            throw ResponseException.BadRequestException("Kan ikke dele og opprette en ny ${kretsDelingEndringRequest.flatetype} fra en grunnkrets")
         }
         val identifikator = Identifikator(Lokalid(kretsDelingEndringRequest.opprinneligKrets.lokalId), delingsDato)
         val grunnkrets = hentGrunnkrets(identifikator)
-            ?: throw RuntimeException("Fant ikke grunnkrets med lokalid: ${kretsDelingEndringRequest.opprinneligKrets.lokalId} gylidg på $delingsDato")
+            ?: throw NotFoundException("Fant ikke grunnkrets med lokalid: ${kretsDelingEndringRequest.opprinneligKrets.lokalId} gylidg på $delingsDato")
 
         verifiserOptimistiskLaas(kretsDelingEndringRequest.opprinneligKrets.version, grunnkrets)?.throwException()
 

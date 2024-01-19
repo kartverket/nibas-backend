@@ -1107,7 +1107,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         Assertions.assertThatThrownBy {
             grunnkretsService.delGrunnkrets(delingEndringRequest, jan1In2023, Endringstype.VEDTATT_DELING)
         }
-            .isInstanceOf(IllegalArgumentException::class.java)
+            .isInstanceOf(ResponseException.BadRequestException::class.java)
             .hasMessageContaining("Kan ikke dele og opprette en ny ${delingEndringRequest.flatetype} fra en grunnkrets")
     }
 

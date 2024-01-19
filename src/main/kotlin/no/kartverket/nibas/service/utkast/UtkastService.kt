@@ -242,7 +242,7 @@ class UtkastService(
                 utkast.gyldigFra,
                 utkast.auditInfo.typeEndring
             )
-            else -> throw RuntimeException("Støtter kun deling av grunnkrets eller stemmekrets")
+            else -> throw ResponseException.BadRequestException("Støtter kun deling av grunnkrets eller stemmekrets, ikke ${kretsDelingEndring.flatetype}")
         }
         listOf(
             lagFlateEndring(nyKrets, EventType.ADDED)

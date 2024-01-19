@@ -141,9 +141,6 @@ class UtkastValidatorService(
                 )
             )
 
-        val ugyldigDelingException = OperasjonerValidering.UgyldigeOperasjoner(operasjoner, ResponseException.BadRequestException(
-            "Utkast inneholder ugyldig metadataendringer på deling"
-        ))
         val harUgyldigMetadataendringPaaKretsDeling = if (operasjoner.kretsDelingEndring != null) {
             isMetadataendringUgyldig(
                 operasjoner.kretsDelingEndring.flatetype,
@@ -153,7 +150,11 @@ class UtkastValidatorService(
             )
         } else false
         if (harUgyldigMetadataendringPaaKretsDeling){
-            return ugyldigDelingException
+            return OperasjonerValidering.UgyldigeOperasjoner(
+                operasjoner,
+                ResponseException.BadRequestException(
+                    "Utkast inneholder ugyldig metadataendringer på deling"
+            ))
         }
 
         return null
