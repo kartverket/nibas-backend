@@ -109,7 +109,7 @@ data class FeatureProperties(
     val metadata: Metadata? = null,
 
     @Schema(description = "Egenskaper til konteksten til grensen.")
-    val kontekstEgenskaper: List<KontekstEgenskaper>? = listOf(),
+    val kontekstEgenskaper: List<KontekstEgenskaper> = listOf(),
 
     @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
     @NotNull
@@ -131,7 +131,7 @@ data class KontekstEgenskaper(
     val kretsNummer: String? = null,
 
     @Schema(description = "Hvilken kontekst geometrien skal sees i")
-    val type: KontekstEnhetType? = null,
+    val type: KontekstEnhetType,
 
     @Schema(description = "Teknisk versjon til referert objekt for å støtte samhandling og redigering")
     @NotNull

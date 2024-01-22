@@ -207,6 +207,10 @@ class GrunnkretsGrenseKobling(
     override fun getEnhetKobletTilGrense(): KobletTilGrense {
         return grunnkrets
     }
+
+    override fun getLokalIdForKrets(): String {
+        return grunnkrets.lokalid
+    }
 }
 
 data class GrunnkretsGrenseId(val grunnkrets: String = "", val grense: String = "") : Serializable

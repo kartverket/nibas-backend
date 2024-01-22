@@ -33,7 +33,7 @@ class GrenseKoblingService {
         val frafallende: List<T>
     )
 
-    fun <T: GrenseKobling>getTilhorighetEndringer(gamleGrenseKoblinger: List<T>, nyeKontekster: List<KontekstEgenskaper>, gyldighetsdato: LocalDate): TilhorighetEndringer<T> {
+    fun <T: GrenseKobling>getTilhorighetEndringer(gamleGrenseKoblinger: Set<T>, nyeKontekster: List<KontekstEgenskaper>, gyldighetsdato: LocalDate): TilhorighetEndringer<T> {
         // (setGamle + setNye) - (setGamle intersect setNye) er alle grunnkretsene som skal endres.
         // (setGamle intersect setNye) er alle uendrede
 
@@ -114,21 +114,20 @@ class GrenseKoblingService {
     }
 
     fun oppdaterGrenseKoblingAttributterForFlater(flater: Set<Flate>, gyldighetsDato: LocalDate){
-        flater
-            .forEach { flate ->
-                val oppdatertGrenseKoblingListe = when (flate.type) {
-                    Flatetype.GRUNNKRETS -> (flate as Grunnkrets).getGrensekoblinger(gyldighetsDato)
-                    Flatetype.STEMMEKRETS -> (flate as Stemmekrets).getGrensekoblinger(gyldighetsDato)
-                    Flatetype.FYLKE -> (flate as Fylke).getGrensekoblinger(gyldighetsDato)
-                    Flatetype.KOMMUNE -> (flate as Kommune).getGrensekoblinger(gyldighetsDato)
-                    Flatetype.NASJON -> (flate as Nasjon).getGrensekoblinger(gyldighetsDato)
-                    Flatetype.SKOLEKRETS -> throw ResponseException.BadRequestException("Støtter ikke oppdatering av grensekoblinger for skolekretser")
-                }
+        flater.forEach { flate ->
+            val oppdatertGrenseKoblingListe = when (flate.type) {
+                Flatetype.GRUNNKRETS -> (flate as Grunnkrets).getGrensekoblinger(gyldighetsDato)
+                Flatetype.STEMMEKRETS -> (flate as Stemmekrets).getGrensekoblinger(gyldighetsDato)
+                Flatetype.FYLKE -> (flate as Fylke).getGrensekoblinger(gyldighetsDato)
+                Flatetype.KOMMUNE -> (flate as Kommune).getGrensekoblinger(gyldighetsDato)
+                Flatetype.NASJON -> (flate as Nasjon).getGrensekoblinger(gyldighetsDato)
+                Flatetype.SKOLEKRETS -> throw ResponseException.BadRequestException("Støtter ikke oppdatering av grensekoblinger for skolekretser")
+            }
 
-                val gma = dannGrenseKoblingAttributterForGrenser(oppdatertGrenseKoblingListe.map { it.grense })
-                oppdatertGrenseKoblingListe.forEach {
-                    it.oppdaterAttributter(gma.first { gma -> gma.grense.lokalid == it.grense.lokalid }.attributter)
-                }
+            val gma = dannGrenseKoblingAttributterForGrenser(oppdatertGrenseKoblingListe.map { it.grense })
+            oppdatertGrenseKoblingListe.forEach {
+                it.oppdaterAttributter(gma.first { gma -> gma.grense.lokalid == it.grense.lokalid }.attributter)
+            }
         }
     }
 

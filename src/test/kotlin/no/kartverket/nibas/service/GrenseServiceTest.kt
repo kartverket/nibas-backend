@@ -54,23 +54,6 @@ class GrenseServiceTest {
     }
 
     @Test
-    fun thatIncomingFeatureWithoutIdThrowsException() {
-        // Innkommende feature uten id
-        val nyDelomraadegrensefeatureForGrunnkrets = FeatureBuilder(null)
-            .withGrensetype(Grensetype.Delomraadegrense).withKontekstEgenskaper(listOf())
-            .build()
-
-        assertThatThrownBy {
-            grenseService.lagreGrenser(
-                FeatureCollection(features = listOf(nyDelomraadegrensefeatureForGrunnkrets)),
-                endringstype = Endringstype.RETTING
-            )
-        }
-            .isInstanceOf(BadRequestException::class.java)
-            .hasMessageContaining("En av de innsendte featurene med endring mangler ID.")
-    }
-
-    @Test
     fun thatIncomingFeatureWithUnknownIdThrowsException() {
         val gyldighetsdato = LocalDate.of(2022, Month.DECEMBER, 8)
 

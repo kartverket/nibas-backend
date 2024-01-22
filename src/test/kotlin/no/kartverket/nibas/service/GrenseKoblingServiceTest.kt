@@ -38,7 +38,7 @@ class GrenseKoblingServiceTest {
 
     @Test
     fun `getTilhorighetEndringerForGrense gir korrekte partisjoner`(){
-        val eksisterendeTilhorigheter = listOf(grunnkretsGrenseKobling1, grunnkretsGrenseKobling2)
+        val eksisterendeTilhorigheter = setOf(grunnkretsGrenseKobling1, grunnkretsGrenseKobling2)
         val innsendteKontekstEgenskaper = listOf(kontekstEgenskaper1, kontekstEgenskaper2)
 
         val tilhorighetEndringer =

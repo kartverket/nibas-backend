@@ -81,7 +81,7 @@ private fun Polygon.getRings(): List<LinearRing> {
     return rings
 }
 
-fun Grense.grenseToFeature(gyldighetsdato: LocalDate = LocalDate.now(), shouldArchive: Boolean = false): Feature {
+fun Grense.grenseToFeature(gyldighetsdato: LocalDate = LocalDate.now(), shouldArchive: Boolean = false, nyGrense: Boolean = false): Feature {
     val grensetype = this.grensetype
     var featureProperties = FeatureProperties(type = grensetype.value, srid = this.grense.srid, version = this.version, shouldArchive = shouldArchive)
     val metadataMapper = MetadataMapper()
@@ -117,8 +117,8 @@ fun Grense.grenseToFeature(gyldighetsdato: LocalDate = LocalDate.now(), shouldAr
         else -> throw RuntimeException("Ikke støttet å mappe til metadata for grensetype: " + grensetype.name)
     }
     return Feature(
-        // Feature må ha en id, men denne må være objektets lokalid
-        id = this.lokalid,
+        // Dersom feature har en id (nye grenser har ingen id før de opprettes i databasen) må denne være objektets lokalid
+        id = if (nyGrense) null else this.lokalid,
         properties = featureProperties,
         geometry = this.grense.lineStringToDto()
     )

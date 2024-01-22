@@ -192,6 +192,10 @@ class StemmekretsGrenseKobling(
     override fun getEnhetKobletTilGrense(): KobletTilGrense {
         return stemmekrets
     }
+
+    override fun getLokalIdForKrets(): String {
+        return stemmekrets.lokalid
+    }
 }
 
 @Table(name = "stemmekrets_informasjon")

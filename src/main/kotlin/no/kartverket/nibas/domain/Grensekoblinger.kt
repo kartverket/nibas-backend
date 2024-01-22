@@ -10,6 +10,7 @@ interface GrenseKobling {
     var grense: Grense
     fun oppdaterAttributter(nyeAttributter: GrenseKoblingAttributter)
     fun getEnhetKobletTilGrense(): KobletTilGrense
+    fun getLokalIdForKrets(): String
 
 }
 
