@@ -6,6 +6,7 @@ import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
+import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
 import java.time.LocalDate
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
@@ -154,6 +155,8 @@ data class StemmekretsSammenslaaingsendringRequest (
 data class KretsDelingEndringRequest(
     @Schema(description = "Identifikator til den kretsen som skal deles")
     val opprinneligKrets: IdentifikatorMedVersjon,
+    @Schema(description = "Lokalid til kommune som deling foregår i")
+    val kommuneId: ObjektIdentifikator,
     @Schema(description = "Flatetypen som skal deles")
     val flatetype: Flatetype,
     @Schema(description = "Navnet til den nye kretsen")

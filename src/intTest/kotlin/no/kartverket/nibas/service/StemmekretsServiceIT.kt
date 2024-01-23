@@ -12,6 +12,7 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.KommunalKretsgrenseMet
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Posisjonskvalitet
 import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
+import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
 import no.kartverket.nibas.builders.GrenseMedHullIndex
 import no.kartverket.nibas.builders.MaalemetodeKodeEnum
 import no.kartverket.nibas.builders.StemmekretsRequestBuilder
@@ -760,10 +761,11 @@ class StemmekretsServiceIT : TestWithDbContainer() {
 
         val opprinneligStemmekrets = saveStemmekrets("opprinneligKrets", Lokalid("opprinneligKrets"))
 
-        saveKommune(stemmekretser = listOf(opprinneligStemmekrets), gyldigFra = gyldighetsdato)
+        val kommune = saveKommune(stemmekretser = listOf(opprinneligStemmekrets), gyldigFra = gyldighetsdato)
 
         val delingEndringRequest = KretsDelingEndringRequest(
             IdentifikatorMedVersjon(opprinneligStemmekrets.lokalid, opprinneligStemmekrets.version),
+            ObjektIdentifikator(Lokalid(kommune.lokalid), gyldighetsdato),
             Flatetype.STEMMEKRETS,
             "nyStemmekrets",
             "1"
@@ -783,8 +785,11 @@ class StemmekretsServiceIT : TestWithDbContainer() {
     fun `delStemmekrets kaster hvis feil flatetype er satt i request`(){
         val opprinneligStemmekrets = saveStemmekrets("opprinneligKrets", Lokalid("opprinneligKrets"))
 
+        val kommune = saveKommune(stemmekretser = listOf(opprinneligStemmekrets), gyldigFra = jan1In2023)
+
         val delingEndringRequest = KretsDelingEndringRequest(
             IdentifikatorMedVersjon(opprinneligStemmekrets.lokalid, opprinneligStemmekrets.version),
+            ObjektIdentifikator(Lokalid(kommune.lokalid), jan1In2023),
             Flatetype.GRUNNKRETS,
             "nyStemmekrets",
             "1"
@@ -803,8 +808,11 @@ class StemmekretsServiceIT : TestWithDbContainer() {
 
         val opprinneligStemmekrets = saveStemmekrets("opprinneligKrets", Lokalid("opprinneligKrets"))
 
+        val kommune = saveKommune(stemmekretser = listOf(opprinneligStemmekrets), gyldigFra = gyldighetsdato)
+
         val delingEndringRequest = KretsDelingEndringRequest(
             IdentifikatorMedVersjon(opprinneligStemmekrets.lokalid, opprinneligStemmekrets.version),
+            ObjektIdentifikator(Lokalid(kommune.lokalid), gyldighetsdato),
             Flatetype.STEMMEKRETS,
             "nyStemmekrets",
             "1"
@@ -824,12 +832,13 @@ class StemmekretsServiceIT : TestWithDbContainer() {
     fun `delStemmekrets kaster OptimistiksLaasException ved versjonsfeil på den opprinnelige kretsen`(){
         val opprinneligStemmekrets = saveStemmekrets("opprinneligKrets", Lokalid("opprinneligKrets"))
 
-        saveKommune(stemmekretser = listOf(opprinneligStemmekrets), gyldigFra = jan1In2023)
+        val kommune = saveKommune(stemmekretser = listOf(opprinneligStemmekrets), gyldigFra = jan1In2023)
 
         stemmekretsService.createNyVersjonAvStemmekrets(opprinneligStemmekrets, gyldigFra = jan1In2023, Endringstype.RETTING)
 
         val delingEndringRequest = KretsDelingEndringRequest(
             IdentifikatorMedVersjon(opprinneligStemmekrets.lokalid, opprinneligStemmekrets.version),
+            ObjektIdentifikator(Lokalid(kommune.lokalid), jan1In2023),
             Flatetype.STEMMEKRETS,
             "nyStemmekrets",
             "1"

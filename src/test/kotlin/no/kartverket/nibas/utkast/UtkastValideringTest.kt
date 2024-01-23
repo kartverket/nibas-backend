@@ -3,14 +3,24 @@ package no.kartverket.nibas.utkast
 import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
+import no.kartverket.nibas.api.v1.common.Flatetype
+import no.kartverket.nibas.api.v1.common.Grenseendringer
+import no.kartverket.nibas.api.v1.common.Grensetype
+import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.Metadataendringer
 import no.kartverket.nibas.api.v1.common.Operasjoner
+import no.kartverket.nibas.api.v1.common.geojson.KontekstEgenskaper
 import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
+import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
+import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
+import no.kartverket.nibas.builders.FeatureBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.GrunnkretsRequestBuilder
 import no.kartverket.nibas.builders.StemmekretsRequestBuilder
 import no.kartverket.nibas.common.CurrentTime
+import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.domain.utkast.Utkast
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
 import no.kartverket.nibas.kodelister.KodelisteService
@@ -332,4 +342,133 @@ class UtkastValideringTest {
         assertThat(validateGyldigeOperasjoner)
             .isInstanceOf(OperasjonerValidering.GyldigeOperasjoner::class.java)
     }
+
+    private fun testValiderKretsDelingIUtkast(gyldighetsdato: LocalDate, kretsnummer: String, flatetype: Flatetype, grenseendringer: Grenseendringer ): Pair<Utkast, UtkastValidering> {
+        val utkast = Utkast(navn = "test", operasjoner = Operasjoner(
+            // disse featurene har kontekst til to grunnkretser som IKKE har kretsnummer 25
+            grenseendringer = grenseendringer,
+            // deling av krets 2 som lager ny krets med kretsnummer 25
+            kretsDelingEndring = KretsDelingEndringRequest(
+                IdentifikatorMedVersjon("2", 1),
+                ObjektIdentifikator(Lokalid("1"), gyldighetsdato),
+                flatetype = flatetype,
+                kretsNavn = "nyGrunnkrets",
+                kretsNummer = kretsnummer
+            )
+        ))
+
+        return Pair(utkast, utkastValidatorService.validateUtkastKlartForPublisering(utkast))
+    }
+
+
+    @Test
+    fun `utkast er ugyldig med deling uten grenseendringer som refererer til ny krets skal feile`(){
+        val gyldighetsdato = LocalDate.now()
+        val kretsnummer = "25"
+
+        val (utkast, utkastValidering) = testValiderKretsDelingIUtkast(gyldighetsdato, kretsnummer, Flatetype.GRUNNKRETS, operasjonerMedKunEditerbareGrenser().grenseendringer)
+
+        assertThat(utkastValidering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
+        assertThat((utkastValidering as UtkastValidering.UgyldigUtkast).feil.message).isEqualTo("" +
+            "Nyopprettet krets med navn: ${utkast.operasjoner?.kretsDelingEndring?.kretsNavn} har ikke fått noen grenser tildelt. " +
+            "Dette er en feil, og den kan rettes opp ved å sette tilhørighet på de relevante grensene til ${utkast.operasjoner?.kretsDelingEndring?.kretsNavn}")
+    }
+
+    @Test
+    fun `utkast er ugyldig med deling uten grenseendringer skal feile`(){
+        val gyldighetsdato = LocalDate.now()
+        val kretsnummer = "SPILLER INGEN ROLLE HER FORDI VI HAR IKKE GRENSEENDRINGER"
+
+        val (utkast, utkastValidering) = testValiderKretsDelingIUtkast(gyldighetsdato, kretsnummer, Flatetype.GRUNNKRETS, Grenseendringer())
+
+        assertThat(utkastValidering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
+        assertThat((utkastValidering as UtkastValidering.UgyldigUtkast).feil.message).isEqualTo("" +
+            "Nyopprettet krets med navn: ${utkast.operasjoner?.kretsDelingEndring?.kretsNavn} har ikke fått noen grenser tildelt. " +
+            "Dette er en feil, og den kan rettes opp ved å sette tilhørighet på de relevante grensene til ${utkast.operasjoner?.kretsDelingEndring?.kretsNavn}")
+    }
+
+    @Test
+    fun `utkast er gyldig med deling og grensejusteringer som refererer til stemmekrets`() {
+        val gyldighetsdato = LocalDate.now()
+
+        val kretsnummer = "50"
+        val kommuneLokalid = Lokalid("1")
+
+        val featureSomPekerTilStemmekretsMedKretsnummer = FeatureBuilder()
+            .withGrensetype(Grensetype.Stemmekretsgrense)
+            .withKontekstEgenskaper(
+                listOf(KontekstEgenskaper(
+                    id = ObjektIdentifikator(Lokalid("G2"), gyldighetsdato),
+                    kommuneId = ObjektIdentifikator(kommuneLokalid, gyldighetsdato),
+                    type = KontekstEnhetType.STEMMEKRETS,
+                    version = 1,
+                    kretsNummer = kretsnummer
+                ), KontekstEgenskaper(
+                    id = ObjektIdentifikator(Lokalid("G3"), gyldighetsdato),
+                    type = KontekstEnhetType.STEMMEKRETS,
+                    version = 1
+                )
+            ))
+            .build()
+
+        val grenseendringer = Grenseendringer(endredeFeatures = mapOf(Pair(featureSomPekerTilStemmekretsMedKretsnummer.id!!, featureSomPekerTilStemmekretsMedKretsnummer)))
+
+        every { grenseServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns listOf()
+
+        val res = testValiderKretsDelingIUtkast(gyldighetsdato, kretsnummer, Flatetype.STEMMEKRETS, grenseendringer)
+
+        assertThat(res.second).isInstanceOf(UtkastValidering.KlartForPublisering::class.java)
+    }
+    @Test
+    fun `utkast er gyldig med deling og grensejusteringer som refererer til grunnkrets`(){
+        val gyldighetsdato = LocalDate.now()
+
+        val kretsnummer = "03012354"
+        val kommuneLokalid = Lokalid("1")
+
+        val featureSomPekerTilStemmekretsMedKretsnummer = FeatureBuilder()
+            .withGrensetype(Grensetype.Grunnkretsgrense)
+            .withKontekstEgenskaper(
+                listOf(KontekstEgenskaper(
+                    id = ObjektIdentifikator(Lokalid("G2"), gyldighetsdato),
+                    kommuneId = ObjektIdentifikator(kommuneLokalid, gyldighetsdato),
+                    type = KontekstEnhetType.GRUNNKRETS,
+                    version = 1,
+                    kretsNummer = kretsnummer
+                ), KontekstEgenskaper(
+                    id = ObjektIdentifikator(Lokalid("G3"), gyldighetsdato),
+                    type = KontekstEnhetType.GRUNNKRETS,
+                    version = 1
+                )
+                ))
+            .build()
+
+        val grenseendringer = Grenseendringer(endredeFeatures = mapOf(Pair(featureSomPekerTilStemmekretsMedKretsnummer.id!!, featureSomPekerTilStemmekretsMedKretsnummer)))
+
+        every { grenseServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns listOf()
+
+        val res = testValiderKretsDelingIUtkast(gyldighetsdato, kretsnummer, Flatetype.GRUNNKRETS, grenseendringer)
+
+        assertThat(res.second).isInstanceOf(UtkastValidering.KlartForPublisering::class.java)
+    }
+
+    @Test
+    fun `utkast er gyldig uten grenseendringer hvis det ikke er en deling i utkastet`(){
+        val utkast = Utkast(navn = "test", operasjoner = Operasjoner(metadataendringer =
+        Metadataendringer(
+            grunnkretsendringer =
+            mapOf(
+                "1" to GrunnkretsRequestBuilder.DEFAULT_REQUEST,
+                "2" to GrunnkretsRequestBuilder(lokalId = "2").build(),
+            )
+        ),
+        ))
+
+        every { grunnkretsServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns listOf()
+
+        val utkastValidering = utkastValidatorService.validateUtkastKlartForPublisering(utkast)
+        assertThat(utkastValidering).isInstanceOf(UtkastValidering.KlartForPublisering::class.java)
+    }
+
+
 }

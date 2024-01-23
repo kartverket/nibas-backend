@@ -9,6 +9,7 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.KodelisteEntry
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Posisjonskvalitet
 import no.kartverket.nibas.api.v1.common.geojson.metadata.StatistiskgrenseMetadata
 import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
+import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.GrunnkretsRequestBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
@@ -1074,10 +1075,11 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
 
         val opprinneligGrunnkrets = saveGrunnkrets("opprinneligKrets", Lokalid("opprinneligKrets"))
 
-        saveKommune(grunnkretser = listOf(opprinneligGrunnkrets), gyldigFra = gyldighetsdato)
+        val kommune = saveKommune(grunnkretser = listOf(opprinneligGrunnkrets), gyldigFra = gyldighetsdato)
 
         val delingEndringRequest = KretsDelingEndringRequest(
             IdentifikatorMedVersjon(opprinneligGrunnkrets.lokalid, opprinneligGrunnkrets.version),
+            ObjektIdentifikator(Lokalid(kommune.lokalid), gyldighetsdato),
             Flatetype.GRUNNKRETS,
             "nyGrunnkrets",
             "1"
@@ -1097,8 +1099,11 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
     fun `delGrunnkrets kaster hvis feil flatetype er satt i request`(){
         val opprinneligGrunnkrets = saveGrunnkrets("opprinneligKrets", Lokalid("opprinneligKrets"))
 
+        val kommune = saveKommune(grunnkretser = listOf(opprinneligGrunnkrets), gyldigFra = jan1In2023)
+
         val delingEndringRequest = KretsDelingEndringRequest(
             IdentifikatorMedVersjon(opprinneligGrunnkrets.lokalid, opprinneligGrunnkrets.version),
+            ObjektIdentifikator(Lokalid(kommune.lokalid), jan1In2023),
             Flatetype.STEMMEKRETS,
             "nyGrunnkrets",
             "1"
@@ -1117,8 +1122,11 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
 
         val opprinneligGrunnkrets = saveGrunnkrets("opprinneligKrets", Lokalid("opprinneligKrets"))
 
+        val kommune = saveKommune(grunnkretser = listOf(opprinneligGrunnkrets), gyldigFra = jan1In2023)
+
         val delingEndringRequest = KretsDelingEndringRequest(
             IdentifikatorMedVersjon(opprinneligGrunnkrets.lokalid, opprinneligGrunnkrets.version),
+            ObjektIdentifikator(Lokalid(kommune.lokalid), gyldighetsdato),
             Flatetype.GRUNNKRETS,
             "nyStemmekrets",
             "1"
@@ -1138,12 +1146,13 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
     fun `delGrunnkrets kaster OptimistiksLaasException ved versjonsfeil på den opprinnelige kretsen`(){
         val opprinneligGrunnkrets = saveGrunnkrets("opprinneligKrets", Lokalid("opprinneligKrets"))
 
-        saveKommune(grunnkretser = listOf(opprinneligGrunnkrets), gyldigFra = jan1In2023)
+        val kommune = saveKommune(grunnkretser = listOf(opprinneligGrunnkrets), gyldigFra = jan1In2023)
 
         grunnkretsService.createNyVersjonAvGrunnkrets(opprinneligGrunnkrets, gyldigFra = jan1In2023, Endringstype.RETTING)
 
         val delingEndringRequest = KretsDelingEndringRequest(
             IdentifikatorMedVersjon(opprinneligGrunnkrets.lokalid, opprinneligGrunnkrets.version),
+            ObjektIdentifikator(Lokalid(kommune.lokalid), jan1In2023),
             Flatetype.GRUNNKRETS,
             "nyGrunnkrets",
             "1"

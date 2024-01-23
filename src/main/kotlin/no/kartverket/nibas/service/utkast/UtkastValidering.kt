@@ -2,8 +2,10 @@ package no.kartverket.nibas.service.utkast
 
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grensetype
+import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.Feature
+import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.common.CurrentTime
 import no.kartverket.nibas.common.FeilVedOppdatering
 import no.kartverket.nibas.common.Identifikator
@@ -61,6 +63,15 @@ class UtkastValidatorService(
             return UtkastValidering.UgyldigUtkast(utkast, ResponseException.BadRequestException(
                 title = "Kan ikke publisere utkastet",
                 msg = "Kan ikke publisere et utkast uten endringer."
+            ))
+        }
+
+        val utkastHarGrenseendringerForNyopprettetKrets = validerNyKretsVilBliForsoektFlatedannet(utkast, utkast.operasjoner?.kretsDelingEndring)
+        if (!utkastHarGrenseendringerForNyopprettetKrets){
+            return UtkastValidering.UgyldigUtkast(utkast, ResponseException.BadRequestException(
+                title = "Kan ikke publisere utkastet",
+                msg = "Nyopprettet krets med navn: ${utkast.operasjoner?.kretsDelingEndring?.kretsNavn} har ikke fått noen grenser tildelt. " +
+                    "Dette er en feil, og den kan rettes opp ved å sette tilhørighet på de relevante grensene til ${utkast.operasjoner?.kretsDelingEndring?.kretsNavn}"
             ))
         }
 
@@ -208,10 +219,37 @@ class UtkastValidatorService(
         }
     }
 
+    /** Validerer om vi kan gå videre med å forsøke å publisere en kretsdeling ved å se på grensejusteringene i utkastet.
+     * Hvis det ikke er noen grensejusteringer som peker på den nyopprettede kretsen vil nyopprettet krets få null grenser, som skal kaste feil.
+     **/
+
+    private fun validerNyKretsVilBliForsoektFlatedannet(utkast: Utkast, kretsDelingEndringRequest: KretsDelingEndringRequest?): Boolean {
+        if(kretsDelingEndringRequest == null){
+            return true
+        }
+        val endredeFeatures = utkast.operasjoner?.grenseendringer?.endredeFeatures?.map { it.value }
+        if (endredeFeatures != null){
+            val kontekstEgenskaper = endredeFeatures.flatMap {
+                it.properties.kontekstEgenskaper
+            }
+
+            val finnesGrenseendringerForNyopprettetKrets = kontekstEgenskaper.any {
+                when(it.type){
+                    KontekstEnhetType.GRUNNKRETS ->
+                        it.kretsNummer == kretsDelingEndringRequest.kretsNummer
+                    KontekstEnhetType.STEMMEKRETS ->
+                        it.kretsNummer == kretsDelingEndringRequest.kretsNummer
+                            && it.kommuneId?.lokalid?.value == kretsDelingEndringRequest.kommuneId.lokalid.value
+                }
+            }
+            return finnesGrenseendringerForNyopprettetKrets
+        } else return false
+    }
+
 
     /** Tenkt som generisk metadataendring-sjekker,
      * men fungerer foreløpig kun for grunnkretser og stemmekretser **/
-    internal fun isMetadataendringUgyldig(flatetype: Flatetype, navn: String?, kretsnummer: String?, lokalid: String): Boolean {
+    fun isMetadataendringUgyldig(flatetype: Flatetype, navn: String?, kretsnummer: String?, lokalid: String): Boolean {
         if (navn == null || kretsnummer == null) {
             return true
         }

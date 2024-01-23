@@ -86,7 +86,7 @@ class FeatureBuilder(private val id: String? = "1") {
             "Grunnkretsgrense" -> Grensetype.Grunnkretsgrense
             else -> throw RuntimeException("Mangler støtte for ${feature.properties.type}, legg til dette i testkoden")
         }
-        this.kontekstEgenskaper = feature.properties.kontekstEgenskaper ?: throw RuntimeException("Mangler kontekstEgenskaper for feature")
+        this.kontekstEgenskaper = feature.properties.kontekstEgenskaper
         this.grenseVersjon = feature.properties.version
         this.metadata = feature.properties.metadata
         this.lokalid = feature.id ?: throw RuntimeException("Mangler lokalid")
