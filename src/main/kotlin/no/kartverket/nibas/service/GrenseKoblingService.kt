@@ -7,14 +7,11 @@ import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.common.getGrenserIRiktigRekkefoelge
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Flate
-import no.kartverket.nibas.domain.Fylke
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
-import no.kartverket.nibas.domain.Kommune
-import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.StemmekretsGrenseKobling
 import org.locationtech.jts.geom.Geometry
@@ -114,14 +111,13 @@ class GrenseKoblingService {
     }
 
     fun oppdaterGrenseKoblingAttributterForFlater(flater: Set<Flate>, gyldighetsDato: LocalDate){
-        flater.forEach { flate ->
+        flater
+            .filter { ( it.type == Flatetype.GRUNNKRETS || it.type == Flatetype.STEMMEKRETS) }
+            .forEach { flate ->
             val oppdatertGrenseKoblingListe = when (flate.type) {
                 Flatetype.GRUNNKRETS -> (flate as Grunnkrets).getGrensekoblinger(gyldighetsDato)
                 Flatetype.STEMMEKRETS -> (flate as Stemmekrets).getGrensekoblinger(gyldighetsDato)
-                Flatetype.FYLKE -> (flate as Fylke).getGrensekoblinger(gyldighetsDato)
-                Flatetype.KOMMUNE -> (flate as Kommune).getGrensekoblinger(gyldighetsDato)
-                Flatetype.NASJON -> (flate as Nasjon).getGrensekoblinger(gyldighetsDato)
-                Flatetype.SKOLEKRETS -> throw ResponseException.BadRequestException("Støtter ikke oppdatering av grensekoblinger for skolekretser")
+                else -> throw RuntimeException("Det gir ikke mening å oppdatere grensekoblingattributter for flatetypen: ${flate.type}. Dette tyder på en implementasjonsfeil")
             }
 
             val gma = dannGrenseKoblingAttributterForGrenser(oppdatertGrenseKoblingListe.map { it.grense })

@@ -286,7 +286,6 @@ class GrenseService(
             leggTilGrenserForKretserViaKontekstEgenskaper(nyeKontekster, grense, gyldighetsdato, flaterSomHarFaattNyVersjon, endringstype, kontekstEnhetTypeForFeature)
             grenseKoblingService.fjernGrenseFraKretserViaGrenseKobling(grense, tilhorighetEndringer.frafallende, gyldighetsdato, flaterSomHarFaattNyVersjon, endringstype)
         }
-
     }
 
     private fun finnEksisterendeGrensekoblinger(kontekstEnhetType: KontekstEnhetType, grense: Grense, gyldighetsdato: LocalDate): Set<GrenseKobling> {
