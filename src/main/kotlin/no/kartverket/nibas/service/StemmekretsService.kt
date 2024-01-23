@@ -128,7 +128,7 @@ class StemmekretsService(
                 stemmekretsnummer = sammenslaaingsendringRequest.stemmekretsNummer
             }
 
-        val alleStemmekretsGrensekoblinger = viderefortStemmekrets.grenser + stemmekretserSomUtgaar.flatMap { it.grenser }
+        val alleStemmekretsGrensekoblinger = viderefortStemmekrets.getGrensekoblinger(sammenslaaingsDato) + stemmekretserSomUtgaar.flatMap { it.getGrensekoblinger(sammenslaaingsDato) }
 
         // Hvis en grense deler 2 stemmekretser som er med i sammenslåingen så er den ikke en del
         // av et skall eller hull i den nye stemmekretsen
