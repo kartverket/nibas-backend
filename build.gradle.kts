@@ -54,7 +54,7 @@ val intTestImplementation: Configuration by configurations.getting {
 configurations["intTestRuntimeOnly"].extendsFrom(configurations.runtimeOnly.get())
 
 // Definerer versjoner for avhengigheter som ikke dekkes av BOM
-val springdocOpenapiVersion2 = "2.2.0"
+val springdocOpenapiVersion2 = "2.3.0"
 val jtsVersion = "1.19.0"
 val testContainerVersion = "1.19.3"
 val autLibVersion = "2.0.0"
