@@ -136,6 +136,6 @@ data class Metadataendringer(
 @Schema(description = "Representasjon av endringer på grensegeometri.")
 data class Grenseendringer(
     @Schema(description = "Endringer på features.")
-    val endredeFeatures: Map<String, Feature> = emptyMap()
+    val endredeFeatures: List<Feature> = emptyList()
 )
 

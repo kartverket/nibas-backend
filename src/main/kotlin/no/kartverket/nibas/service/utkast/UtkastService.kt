@@ -203,7 +203,7 @@ class UtkastService(
 
         if (endredeFeatures.isNotEmpty()) {
             val flaterMedGrenseendring = grenseService.lagreGrenser(
-                FeatureCollection(features = endredeFeatures.map { it.value }),
+                FeatureCollection(features = endredeFeatures),
                 gyldighetsdato = utkast.gyldigFra,
                 endringstype = utkast.auditInfo.typeEndring
             )

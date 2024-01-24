@@ -30,9 +30,9 @@ class UtkastValidatorService(
 ) {
 
     fun validateGyldigeOperasjoner(operasjoner: Operasjoner): OperasjonerValidering {
-        val endredeFeatures: Map<String, Feature> = operasjoner.grenseendringer.endredeFeatures
+        val endredeFeatures: List<Feature> = operasjoner.grenseendringer.endredeFeatures
 
-        val featuresSomIkkeErEditerbare = endredeFeatures.filterNot { Grensetype.fromValue(it.value.properties.type).editerbar }
+        val featuresSomIkkeErEditerbare = endredeFeatures.filterNot { Grensetype.fromValue(it.properties.type).editerbar }
         if (featuresSomIkkeErEditerbare.isNotEmpty()) {
             return OperasjonerValidering.UgyldigeOperasjoner(operasjoner, ResponseException.BadRequestException("Utkast inneholder ${featuresSomIkkeErEditerbare.size} ikke-redigerbare grenser"))
         }
@@ -160,19 +160,29 @@ class UtkastValidatorService(
                 operasjoner.kretsDelingEndring.opprinneligKrets.lokalId
             )
         } else false
-        if (harUgyldigMetadataendringPaaKretsDeling){
+        if (harUgyldigMetadataendringPaaKretsDeling) {
             return OperasjonerValidering.UgyldigeOperasjoner(
                 operasjoner,
                 ResponseException.BadRequestException(
                     "Utkast inneholder ugyldig metadataendringer på deling"
-            ))
+                ))
         }
 
         return null
     }
 
     private fun validerGrenseEndringerKonflikt(utkast: Utkast): FeilVedOppdatering.OppdateringException? {
-        return utkast.operasjoner?.grenseendringer?.endredeFeatures?.keys?.firstNotNullOfOrNull { id ->
+        val endredeFeatures = utkast.operasjoner?.grenseendringer?.endredeFeatures
+        if (endredeFeatures.isNullOrEmpty()) return null
+
+        // Trenger ikke sjekke konflikter for nye grenser, så filtrerer ut grenser uten id
+        val endredeFeaturesIder = endredeFeatures
+            .filter { it.id != null }
+            .map { it.id }
+
+        return endredeFeaturesIder.firstNotNullOfOrNull { id ->
+            if (id.isNullOrBlank()) return null
+
             val senerePubliserteGrenser = grenseService.hentAlleVersjonerMedGyldigFraEtterGittDato(id, utkast.gyldigFra)
 
             if (senerePubliserteGrenser.isNotEmpty()) {
@@ -268,6 +278,7 @@ class UtkastValidatorService(
 
         return false
     }
+
     private fun isUgyldigKretsnummerEllerNavn(kretsnummer: String, kretsnavn: String): Boolean {
         val numeriskKretsnummer = kretsnummer.toIntOrNull()
         if (numeriskKretsnummer == null || numeriskKretsnummer <= 0) {
@@ -308,11 +319,11 @@ private fun Operasjoner.harEndringer(): Boolean {
 private fun Operasjoner.harIkkeEndringer(): Boolean = !this.harEndringer()
 
 sealed class UtkastValidering {
-    data class KlartForPublisering(val utkast: Utkast): UtkastValidering()
-    data class UgyldigUtkast(val utkast: Utkast, val feil: Exception): UtkastValidering()
+    data class KlartForPublisering(val utkast: Utkast) : UtkastValidering()
+    data class UgyldigUtkast(val utkast: Utkast, val feil: Exception) : UtkastValidering()
 }
 
 sealed class OperasjonerValidering {
-    data class GyldigeOperasjoner(val operasjoner: Operasjoner): OperasjonerValidering()
-    data class UgyldigeOperasjoner(val operasjoner: Operasjoner, val feil: Exception): OperasjonerValidering()
+    data class GyldigeOperasjoner(val operasjoner: Operasjoner) : OperasjonerValidering()
+    data class UgyldigeOperasjoner(val operasjoner: Operasjoner, val feil: Exception) : OperasjonerValidering()
 }

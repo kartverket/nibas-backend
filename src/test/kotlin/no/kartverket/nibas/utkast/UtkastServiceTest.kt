@@ -259,7 +259,7 @@ internal class UtkastServiceTest {
                     stemmekretsendringer = mapOf("Stemmekrets-UUID-1" to StemmekretsRequestBuilder.DEFAULT_REQUEST)
                 ),
                 grenseendringer = Grenseendringer(
-                    endredeFeatures = mapOf("56" to FeatureBuilder("56").withGrensetype(Grensetype.Grunnkretsgrense).build())
+                    endredeFeatures = listOf(FeatureBuilder("56").withGrensetype(Grensetype.Grunnkretsgrense).build())
                 )
             ))
             .build()
@@ -293,7 +293,7 @@ internal class UtkastServiceTest {
                     stemmekretsendringer = mapOf("Stemmekrets-UUID-1" to StemmekretsRequestBuilder.DEFAULT_REQUEST)
                 ),
                 grenseendringer = Grenseendringer(
-                    endredeFeatures = mapOf("56" to FeatureBuilder("56").build())
+                    endredeFeatures = listOf(FeatureBuilder("56").build())
                 )
             ))
             .build()
@@ -332,7 +332,7 @@ internal class UtkastServiceTest {
                         ),
                         stemmekretsSammenslaaingsendring = sammenslaaingsendringRequest,
                         grenseendringer = Grenseendringer(
-                            endredeFeatures = mapOf("56" to FeatureBuilder("56").build())
+                            endredeFeatures = listOf(FeatureBuilder("56").build())
                         )
                     )
                 )
@@ -413,25 +413,25 @@ internal class UtkastServiceTest {
     companion object {
         fun operasjonerMedIkkeEditerbareGrenser() = Operasjoner(
             grenseendringer = Grenseendringer(
-                endredeFeatures = mapOf(
-                    "1" to FeatureBuilder("1").withGrensetype(Grensetype.Fylkesgrense).build(),
-                    "2" to FeatureBuilder("2").withGrensetype(Grensetype.Kommunegrense).build(),
-                    "3" to FeatureBuilder("3").withGrensetype(Grensetype.AvtaltAvgrensningslinje).build(),
-                    "4" to FeatureBuilder("4").withGrensetype(Grensetype.Riksgrense).build(),
-                    "5" to FeatureBuilder("5").withGrensetype(Grensetype.Territorialgrense).build(),
-                    "6" to FeatureBuilder("6").withGrensetype(Grensetype.Grunnkretsgrense).build(),
-                    "7" to FeatureBuilder("7").withGrensetype(Grensetype.Delomraadegrense).build(),
-                    "8" to FeatureBuilder("8").withGrensetype(Grensetype.Stemmekretsgrense).build()
+                endredeFeatures = listOf(
+                    FeatureBuilder("1").withGrensetype(Grensetype.Fylkesgrense).build(),
+                    FeatureBuilder("2").withGrensetype(Grensetype.Kommunegrense).build(),
+                    FeatureBuilder("3").withGrensetype(Grensetype.AvtaltAvgrensningslinje).build(),
+                    FeatureBuilder("4").withGrensetype(Grensetype.Riksgrense).build(),
+                    FeatureBuilder("5").withGrensetype(Grensetype.Territorialgrense).build(),
+                    FeatureBuilder("6").withGrensetype(Grensetype.Grunnkretsgrense).build(),
+                    FeatureBuilder("7").withGrensetype(Grensetype.Delomraadegrense).build(),
+                    FeatureBuilder("8").withGrensetype(Grensetype.Stemmekretsgrense).build()
                 )
             )
         )
 
         fun operasjonerMedKunEditerbareGrenser() = Operasjoner(
             grenseendringer = Grenseendringer(
-                endredeFeatures = mapOf(
-                    "1" to FeatureBuilder("1").withGrensetype(Grensetype.Grunnkretsgrense).build(),
-                    "2" to FeatureBuilder("2").withGrensetype(Grensetype.Delomraadegrense).build(),
-                    "3" to FeatureBuilder("3").withGrensetype(Grensetype.Stemmekretsgrense).build()
+                endredeFeatures = listOf(
+                    FeatureBuilder("1").withGrensetype(Grensetype.Grunnkretsgrense).build(),
+                    FeatureBuilder("2").withGrensetype(Grensetype.Delomraadegrense).build(),
+                    FeatureBuilder("3").withGrensetype(Grensetype.Stemmekretsgrense).build()
                 )
             )
         )

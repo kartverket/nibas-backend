@@ -136,8 +136,8 @@ class UtkastValidatorServiceTest {
             .withOperasjoner(
                 Operasjoner(
                     grenseendringer = Grenseendringer(
-                        endredeFeatures = mapOf(
-                            "0101" to FeatureBuilder()
+                        endredeFeatures = listOf(
+                            FeatureBuilder()
                                 .withGrensetype(Grensetype.Grunnkretsgrense)
                                 .build()
                         )
