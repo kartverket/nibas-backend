@@ -411,7 +411,7 @@ class UtkastValideringTest {
             ))
             .build()
 
-        val grenseendringer = Grenseendringer(endredeFeatures = mapOf(Pair(featureSomPekerTilStemmekretsMedKretsnummer.id!!, featureSomPekerTilStemmekretsMedKretsnummer)))
+        val grenseendringer = Grenseendringer(endredeFeatures = listOf(featureSomPekerTilStemmekretsMedKretsnummer))
 
         every { grenseServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns listOf()
 
@@ -443,7 +443,7 @@ class UtkastValideringTest {
                 ))
             .build()
 
-        val grenseendringer = Grenseendringer(endredeFeatures = mapOf(Pair(featureSomPekerTilStemmekretsMedKretsnummer.id!!, featureSomPekerTilStemmekretsMedKretsnummer)))
+        val grenseendringer = Grenseendringer(endredeFeatures = listOf(featureSomPekerTilStemmekretsMedKretsnummer))
 
         every { grenseServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns listOf()
 

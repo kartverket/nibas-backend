@@ -237,7 +237,7 @@ class UtkastValidatorService(
         if(kretsDelingEndringRequest == null){
             return true
         }
-        val endredeFeatures = utkast.operasjoner?.grenseendringer?.endredeFeatures?.map { it.value }
+        val endredeFeatures = utkast.operasjoner?.grenseendringer?.endredeFeatures
         if (endredeFeatures != null){
             val kontekstEgenskaper = endredeFeatures.flatMap {
                 it.properties.kontekstEgenskaper
