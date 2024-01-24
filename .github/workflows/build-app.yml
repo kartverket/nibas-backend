@@ -1,5 +1,6 @@
 name: Build app
 on:
+  merge_group:
   pull_request:
     branches: [ main ]
   workflow_call:
