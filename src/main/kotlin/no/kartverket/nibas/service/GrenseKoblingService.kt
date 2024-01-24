@@ -75,7 +75,7 @@ class GrenseKoblingService {
         grense: Grense,
         grenseKoblinger: List<T>,
         gyldighetsDato: LocalDate,
-        flaterSomHarFaattNyVersjon: MutableMap<Lokalid, Flate>,
+        flaterSomHarFaattNyVersjon: Map<Lokalid, Flate>,
         endringstype: Endringstype
     ) {
         //Når grensa tidligere hørte til kretsen er det allerede laget ny versjon av kretsen
