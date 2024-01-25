@@ -4,6 +4,7 @@ import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.Feature
+import no.kartverket.nibas.api.v1.common.getUnikeKretsDelingEndringRequests
 import no.kartverket.nibas.common.CurrentTime
 import no.kartverket.nibas.common.FeilVedOppdatering
 import no.kartverket.nibas.common.Identifikator
@@ -141,14 +142,16 @@ class UtkastValidatorService(
                 )
             )
 
-        val harUgyldigMetadataendringPaaKretsDeling = if (operasjoner.kretsDelingEndring != null) {
-            isMetadataendringUgyldig(
-                operasjoner.kretsDelingEndring.flatetype,
-                operasjoner.kretsDelingEndring.kretsNavn,
-                operasjoner.kretsDelingEndring.kretsNummer,
-                operasjoner.kretsDelingEndring.opprinneligKrets.lokalId
-            )
-        } else false
+        val harUgyldigMetadataendringPaaKretsDeling = getUnikeKretsDelingEndringRequests(operasjoner.kretsDelingEndringer)
+                .any {
+                    isMetadataendringUgyldig(
+                        it.flatetype,
+                        it.kretsNavn,
+                        it.kretsNummer,
+                        it.opprinneligKrets.lokalId
+                    )
+                }
+
         if (harUgyldigMetadataendringPaaKretsDeling){
             return OperasjonerValidering.UgyldigeOperasjoner(
                 operasjoner,
@@ -264,7 +267,7 @@ private fun Operasjoner.harEndringer(): Boolean {
         metadata.stemmekretsendringer.isNotEmpty() ||
         this.grenseendringer.endredeFeatures.isNotEmpty() ||
         this.stemmekretsSammenslaaingsendring != null ||
-        this.kretsDelingEndring != null
+        this.kretsDelingEndringer.isNotEmpty()
 }
 
 private fun Operasjoner.harIkkeEndringer(): Boolean = !this.harEndringer()

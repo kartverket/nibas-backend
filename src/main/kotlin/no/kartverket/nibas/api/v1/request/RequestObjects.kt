@@ -156,9 +156,15 @@ data class KretsDelingEndringRequest(
     val opprinneligKrets: IdentifikatorMedVersjon,
     @Schema(description = "Flatetypen som skal deles")
     val flatetype: Flatetype,
-    @Schema(description = "Navnet til den nye kretsen")
+    @Schema(description = "Navn og nummer for de nye kretsene som skal utledes fra opprinnelig krets")
+    val nyeKretser: List<KretsNavnOgNummer> = listOf()
+)
+
+@Schema(description = "Representasjon av navn og nummer for en ny krets")
+data class KretsNavnOgNummer(
+    @Schema(description = "Navne til den nye kretsen som skal dannes fra opprinneligKrets")
     val kretsNavn: String,
-    @Schema(description = "Grunnkrets/stemmekrets-nummmeret til den nye kretsen")
+    @Schema(description = "Grunnkrets/stemmekrets-nummmer til den nye kretsen")
     val kretsNummer: String
 )
 

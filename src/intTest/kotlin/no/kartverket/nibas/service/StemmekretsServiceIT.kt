@@ -10,7 +10,9 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjo
 import no.kartverket.nibas.api.v1.common.geojson.metadata.KodelisteEntry
 import no.kartverket.nibas.api.v1.common.geojson.metadata.KommunalKretsgrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Posisjonskvalitet
+import no.kartverket.nibas.api.v1.common.getUnikeKretsDelingEndringRequests
 import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
+import no.kartverket.nibas.api.v1.request.KretsNavnOgNummer
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
 import no.kartverket.nibas.builders.GrenseMedHullIndex
 import no.kartverket.nibas.builders.MaalemetodeKodeEnum
@@ -765,17 +767,18 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         val delingEndringRequest = KretsDelingEndringRequest(
             IdentifikatorMedVersjon(opprinneligStemmekrets.lokalid, opprinneligStemmekrets.version),
             Flatetype.STEMMEKRETS,
-            "nyStemmekrets",
-            "1"
+            nyeKretser = listOf(KretsNavnOgNummer("nyStemmekrets", "1"))
         )
 
-        val nyStemmekrets = stemmekretsService.delStemmekrets(delingEndringRequest, gyldighetsdato, Endringstype.VEDTATT_DELING)
+        val unikKretsDelingEndring = getUnikeKretsDelingEndringRequests(delingEndringRequest).first()
+
+        val nyStemmekrets = stemmekretsService.delStemmekrets(unikKretsDelingEndring, gyldighetsdato, Endringstype.VEDTATT_DELING)
 
         assertThat(nyStemmekrets).isNotNull
         assertThat(nyStemmekrets.utledetFra?.lokalid).isEqualTo(opprinneligStemmekrets.lokalid)
         assertThat(nyStemmekrets.grenser.size).isEqualTo(0)
-        assertThat(nyStemmekrets.stemmekretsnummer).isEqualTo(delingEndringRequest.kretsNummer)
-        assertThat(nyStemmekrets.stemmekretsnavn).isEqualTo(delingEndringRequest.kretsNavn)
+        assertThat(nyStemmekrets.stemmekretsnummer).isEqualTo(unikKretsDelingEndring.kretsNummer)
+        assertThat(nyStemmekrets.stemmekretsnavn).isEqualTo(unikKretsDelingEndring.kretsNavn)
         assertThat(nyStemmekrets.version).isEqualTo(1)
     }
 
@@ -786,12 +789,13 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         val delingEndringRequest = KretsDelingEndringRequest(
             IdentifikatorMedVersjon(opprinneligStemmekrets.lokalid, opprinneligStemmekrets.version),
             Flatetype.GRUNNKRETS,
-            "nyStemmekrets",
-            "1"
+            nyeKretser = listOf(KretsNavnOgNummer("nyStemmekrets", "1"))
         )
 
+        val unikKretsDelingEndring = getUnikeKretsDelingEndringRequests(delingEndringRequest).first()
+
         assertThatThrownBy {
-            stemmekretsService.delStemmekrets(delingEndringRequest, jan1In2023, Endringstype.VEDTATT_DELING)
+            stemmekretsService.delStemmekrets(unikKretsDelingEndring, jan1In2023, Endringstype.VEDTATT_DELING)
         }
             .isInstanceOf(ResponseException.BadRequestException::class.java)
             .hasMessageContaining("Kan ikke dele og opprette en ny ${delingEndringRequest.flatetype} fra en stemmekrets")
@@ -806,15 +810,17 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         val delingEndringRequest = KretsDelingEndringRequest(
             IdentifikatorMedVersjon(opprinneligStemmekrets.lokalid, opprinneligStemmekrets.version),
             Flatetype.STEMMEKRETS,
-            "nyStemmekrets",
-            "1"
+            nyeKretser = listOf(KretsNavnOgNummer("nyStemmekrets", "1"))
         )
-        val eksiterendeStemmekretsSomTriggerDuplikat = saveStemmekrets("eksisterende", Lokalid("eksisterende"), stemmekretsnummer = delingEndringRequest.kretsNummer)
+
+        val unikKretsDelingEndring = getUnikeKretsDelingEndringRequests(delingEndringRequest).first()
+
+        val eksiterendeStemmekretsSomTriggerDuplikat = saveStemmekrets("eksisterende", Lokalid("eksisterende"), stemmekretsnummer = unikKretsDelingEndring.kretsNummer)
 
         saveKommune(stemmekretser = listOf(opprinneligStemmekrets, eksiterendeStemmekretsSomTriggerDuplikat), gyldigFra = gyldighetsdato)
 
         assertThatThrownBy {
-            stemmekretsService.delStemmekrets(delingEndringRequest, gyldighetsdato, Endringstype.VEDTATT_DELING)
+            stemmekretsService.delStemmekrets(unikKretsDelingEndring, gyldighetsdato, Endringstype.VEDTATT_DELING)
         }
             .isInstanceOf(ResponseException.BadRequestException::class.java)
             .hasMessageContaining("Kretsnummer 1 er brukt på flere stemmekretser innenfor kommunen (0301 UKJENT KOMMUNE) med gyldighet som overlapper med 01.01.2023 og fremover. Vennligst gi stemmekretsene unike kretsnumre før du fortsetter.")
@@ -831,12 +837,13 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         val delingEndringRequest = KretsDelingEndringRequest(
             IdentifikatorMedVersjon(opprinneligStemmekrets.lokalid, opprinneligStemmekrets.version),
             Flatetype.STEMMEKRETS,
-            "nyStemmekrets",
-            "1"
+            nyeKretser = listOf(KretsNavnOgNummer("nyStemmekrets", "1"))
         )
 
+        val unikKretsDelingEndring = getUnikeKretsDelingEndringRequests(delingEndringRequest).first()
+
         assertThatThrownBy {
-            stemmekretsService.delStemmekrets(delingEndringRequest, jan1In2023, Endringstype.VEDTATT_DELING)
+            stemmekretsService.delStemmekrets(unikKretsDelingEndring, jan1In2023, Endringstype.VEDTATT_DELING)
         }
             .isInstanceOf(OptimistiskLaasException::class.java)
             .hasMessageContaining("Det er ikke samsvar med versjon")

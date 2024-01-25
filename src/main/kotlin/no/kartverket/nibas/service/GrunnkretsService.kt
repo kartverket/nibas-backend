@@ -1,8 +1,8 @@
 package no.kartverket.nibas.service
 
 import no.kartverket.nibas.api.v1.common.Flatetype
+import no.kartverket.nibas.api.v1.common.UnikKretsDelingEndring
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
-import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
@@ -132,7 +132,7 @@ class GrunnkretsService(
     }
 
     fun delGrunnkrets(
-        kretsDelingEndringRequest: KretsDelingEndringRequest, delingsDato: LocalDate, endringstype: Endringstype
+        kretsDelingEndringRequest: UnikKretsDelingEndring, delingsDato: LocalDate, endringstype: Endringstype
     ): Grunnkrets {
         if (kretsDelingEndringRequest.flatetype != Flatetype.GRUNNKRETS ){
             throw ResponseException.BadRequestException("Kan ikke dele og opprette en ny ${kretsDelingEndringRequest.flatetype} fra en grunnkrets")
