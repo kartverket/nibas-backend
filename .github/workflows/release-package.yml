@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "Run Pharos"
-        uses: kartverket/pharos@v0.1.1
+        uses: kartverket/pharos@v0.1.5
         with:
           allow_severity_level: critical
           image_url: ${{ needs.build.outputs.image_url }}
