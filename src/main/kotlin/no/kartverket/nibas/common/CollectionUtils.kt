@@ -11,7 +11,3 @@ fun <T> MutableList<T>.findAndRemove(predicate: (item: T) -> Boolean): T? {
     this.remove(element)
     return element
 }
-
-fun <T> List<T>.removeLast(): List<T> {
-    return this.slice(0 until this.lastIndex)
-}

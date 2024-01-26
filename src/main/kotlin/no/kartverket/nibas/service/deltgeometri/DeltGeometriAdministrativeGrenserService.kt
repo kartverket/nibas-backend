@@ -2,7 +2,6 @@ package no.kartverket.nibas.service.deltgeometri
 
 import no.kartverket.nibas.common.getGrenserIRiktigRekkefoelge
 import no.kartverket.nibas.common.pop
-import no.kartverket.nibas.common.removeLast
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Kommune
@@ -89,7 +88,7 @@ class DeltGeometriAdministrativeGrenserService(
         return getGrenserIRiktigRekkefoelge(grenser)
             .map { komplettGrenseSirkel ->
                 komplettGrenseSirkel.flatMap {
-                    it.coordinateSequence.toCoordinateArray().toList().removeLast()
+                    it.coordinateSequence.toCoordinateArray().toList().dropLast(1)
                 }
             }
     }

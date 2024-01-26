@@ -146,7 +146,7 @@ tasks.getByName<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
 tasks.withType<KotlinCompile> {
     kotlinOptions {
         freeCompilerArgs = listOf("-Xjsr305=strict")
-        jvmTarget = "17"
+        jvmTarget = "21"
     }
 }
 
