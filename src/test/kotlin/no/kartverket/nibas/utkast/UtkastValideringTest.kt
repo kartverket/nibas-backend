@@ -470,5 +470,17 @@ class UtkastValideringTest {
         assertThat(utkastValidering).isInstanceOf(UtkastValidering.KlartForPublisering::class.java)
     }
 
+    @Test
+    fun `utkast er ugydlig dersom det kommer inn flere grenseendring-features med samme id`(){
+        val grenseendringFeature1 = FeatureBuilder("1").build()
+        val grenseendringFeature2 = FeatureBuilder("2").build()
+
+        val validateGyldigeOperasjoner = utkastValidatorService.validateGyldigeOperasjoner(Operasjoner(
+            grenseendringer = Grenseendringer(endredeFeatures = listOf(grenseendringFeature1, grenseendringFeature1, grenseendringFeature2, grenseendringFeature2))
+        ))
+        assertThat(validateGyldigeOperasjoner).isInstanceOf(OperasjonerValidering.UgyldigeOperasjoner::class.java)
+        assertThat((validateGyldigeOperasjoner as OperasjonerValidering.UgyldigeOperasjoner).feil.message).contains(
+            "Utkast inneholder grenseendringer for samme grense(r) flere ganger. Grensene (representert ved lokalid) det gjelder er: [1, 2]")
+    }
 
 }

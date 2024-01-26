@@ -31,6 +31,10 @@ class UtkastValidatorService(
 
     fun validateGyldigeOperasjoner(operasjoner: Operasjoner): OperasjonerValidering {
         val endredeFeatures: List<Feature> = operasjoner.grenseendringer.endredeFeatures
+        val featuresSomGjentas = endredeFeatures.groupBy { it.id }.filterValues { it.size > 1 }
+        if (featuresSomGjentas.isNotEmpty()) {
+            return OperasjonerValidering.UgyldigeOperasjoner(operasjoner, ResponseException.BadRequestException("Utkast inneholder grenseendringer for samme grense(r) flere ganger. Grensene (representert ved lokalid) det gjelder er: ${featuresSomGjentas.map { it.key }.sortedBy { it }}"))
+        }
 
         val featuresSomIkkeErEditerbare = endredeFeatures.filterNot { Grensetype.fromValue(it.properties.type).editerbar }
         if (featuresSomIkkeErEditerbare.isNotEmpty()) {
