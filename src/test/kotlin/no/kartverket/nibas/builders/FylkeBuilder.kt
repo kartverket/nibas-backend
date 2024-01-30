@@ -14,7 +14,6 @@ import java.time.ZonedDateTime
 
 class FylkeBuilder(
     private val id: String = "1",
-    private var objtype: String = "Fylke",
     private var fylkesnummerUuid: String = "UUID-2",
     private var fylkesnummer: String = "89",
     private var unikLokalid: UnikLokalid = UnikLokalid("fylke123", Flatetype.FYLKE),
@@ -68,7 +67,6 @@ class FylkeBuilder(
             administrativenhetnavn = listOf(admNavn)
         }
 
-        fylke.objtype = objtype
         fylke.fylkesnummerUuid = fylkesnummerUuid
         fylke.fylkesnummer = fylkesnummer
         fylke.samiskforvaltningsomraade = samiskforvaltningsomraade

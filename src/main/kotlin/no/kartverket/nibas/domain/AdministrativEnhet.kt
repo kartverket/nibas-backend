@@ -37,9 +37,6 @@ abstract class AdministrativEnhet(
     @Version
     override var version: Int = 1
 
-    @Column(name = "objtype")
-    var objtype: String? = null
-
     @Column(name = "opphav")
     override var opphav: String? = null
 
