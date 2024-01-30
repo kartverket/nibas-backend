@@ -8,8 +8,10 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjo
 import no.kartverket.nibas.api.v1.common.geojson.metadata.KodelisteEntry
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Posisjonskvalitet
 import no.kartverket.nibas.api.v1.common.geojson.metadata.StatistiskgrenseMetadata
+import no.kartverket.nibas.api.v1.common.getUnikeKretsDelingEndringRequests
 import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
+import no.kartverket.nibas.api.v1.request.KretsNavnOgNummer
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.GrunnkretsRequestBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
@@ -1081,17 +1083,19 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
             IdentifikatorMedVersjon(opprinneligGrunnkrets.lokalid, opprinneligGrunnkrets.version),
             ObjektIdentifikator(Lokalid(kommune.lokalid), gyldighetsdato),
             Flatetype.GRUNNKRETS,
-            "nyGrunnkrets",
-            "1"
+            nyeKretser = listOf(KretsNavnOgNummer("nyGrunnkrets", "1"))
+
         )
 
-        val nyGrunnkrets = grunnkretsService.delGrunnkrets(delingEndringRequest, gyldighetsdato, Endringstype.VEDTATT_DELING)
+        val unikKretsDelingEndring = getUnikeKretsDelingEndringRequests(delingEndringRequest).first()
+
+        val nyGrunnkrets = grunnkretsService.delGrunnkrets(unikKretsDelingEndring, gyldighetsdato, Endringstype.VEDTATT_DELING)
 
         assertThat(nyGrunnkrets).isNotNull
         assertThat(nyGrunnkrets.grenser.size).isEqualTo(0)
         assertThat(nyGrunnkrets.utledetFra?.lokalid).isEqualTo(opprinneligGrunnkrets.lokalid)
-        assertThat(nyGrunnkrets.grunnkretsnummer).isEqualTo(delingEndringRequest.kretsNummer)
-        assertThat(nyGrunnkrets.grunnkretsnavn).isEqualTo(delingEndringRequest.kretsNavn)
+        assertThat(nyGrunnkrets.grunnkretsnummer).isEqualTo(unikKretsDelingEndring.kretsNummer)
+        assertThat(nyGrunnkrets.grunnkretsnavn).isEqualTo(unikKretsDelingEndring.kretsNavn)
         assertThat(nyGrunnkrets.version).isEqualTo(1)
     }
 
@@ -1105,12 +1109,13 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
             IdentifikatorMedVersjon(opprinneligGrunnkrets.lokalid, opprinneligGrunnkrets.version),
             ObjektIdentifikator(Lokalid(kommune.lokalid), jan1In2023),
             Flatetype.STEMMEKRETS,
-            "nyGrunnkrets",
-            "1"
+            nyeKretser = listOf(KretsNavnOgNummer("nyGrunnkrets","1"))
         )
 
+        val unikKretsDelingEndring = getUnikeKretsDelingEndringRequests(delingEndringRequest).first()
+
         Assertions.assertThatThrownBy {
-            grunnkretsService.delGrunnkrets(delingEndringRequest, jan1In2023, Endringstype.VEDTATT_DELING)
+            grunnkretsService.delGrunnkrets(unikKretsDelingEndring, jan1In2023, Endringstype.VEDTATT_DELING)
         }
             .isInstanceOf(ResponseException.BadRequestException::class.java)
             .hasMessageContaining("Kan ikke dele og opprette en ny ${delingEndringRequest.flatetype} fra en grunnkrets")
@@ -1128,15 +1133,17 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
             IdentifikatorMedVersjon(opprinneligGrunnkrets.lokalid, opprinneligGrunnkrets.version),
             ObjektIdentifikator(Lokalid(kommune.lokalid), gyldighetsdato),
             Flatetype.GRUNNKRETS,
-            "nyStemmekrets",
-            "1"
+            nyeKretser = listOf(KretsNavnOgNummer("nyStemmekrets", "1"))
         )
-        val eksiterendeGrunnkretsSomTriggerDuplikat = saveGrunnkrets("eksisterende", Lokalid("eksisterende"), grunnkretsnummer = delingEndringRequest.kretsNummer)
+
+        val unikKretsDelingEndring = getUnikeKretsDelingEndringRequests(delingEndringRequest).first()
+
+        val eksiterendeGrunnkretsSomTriggerDuplikat = saveGrunnkrets("eksisterende", Lokalid("eksisterende"), grunnkretsnummer = unikKretsDelingEndring.kretsNummer)
 
         saveKommune(grunnkretser = listOf(opprinneligGrunnkrets, eksiterendeGrunnkretsSomTriggerDuplikat), gyldigFra = gyldighetsdato)
 
         Assertions.assertThatThrownBy {
-            grunnkretsService.delGrunnkrets(delingEndringRequest, gyldighetsdato, Endringstype.VEDTATT_DELING)
+            grunnkretsService.delGrunnkrets(unikKretsDelingEndring, gyldighetsdato, Endringstype.VEDTATT_DELING)
         }
             .isInstanceOf(ResponseException.BadRequestException::class.java)
             .hasMessageContaining("Kretsnummer 1 er brukt på flere grunnkretser innenfor kommunen (0301 UKJENT KOMMUNE) med gyldighet som overlapper med 01.01.2023 og fremover. Vennligst gi grunnkretsene unike kretsnumre før du fortsetter.")
@@ -1154,12 +1161,13 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
             IdentifikatorMedVersjon(opprinneligGrunnkrets.lokalid, opprinneligGrunnkrets.version),
             ObjektIdentifikator(Lokalid(kommune.lokalid), jan1In2023),
             Flatetype.GRUNNKRETS,
-            "nyGrunnkrets",
-            "1"
+            nyeKretser = listOf(KretsNavnOgNummer("nyGrunnkrets","1"))
         )
 
+        val unikKretsDelingEndring = getUnikeKretsDelingEndringRequests(delingEndringRequest).first()
+
         Assertions.assertThatThrownBy {
-            grunnkretsService.delGrunnkrets(delingEndringRequest, jan1In2023, Endringstype.VEDTATT_DELING)
+            grunnkretsService.delGrunnkrets(unikKretsDelingEndring, jan1In2023, Endringstype.VEDTATT_DELING)
         }
             .isInstanceOf(OptimistiskLaasException::class.java)
             .hasMessageContaining("Det er ikke samsvar med versjon")

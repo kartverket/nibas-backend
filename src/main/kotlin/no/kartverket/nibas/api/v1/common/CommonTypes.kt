@@ -46,7 +46,7 @@ enum class Grensetype(val value: String, val dbKey: String, val editerbar: Boole
     companion object {
         fun fromValue(valueIn: String): Grensetype {
             try {
-                return values().first { it.value == valueIn }
+                return entries.first { it.value == valueIn }
             } catch (e: NoSuchElementException) {
                 throw IllegalArgumentException("Invalid value: $valueIn")
             }
@@ -54,7 +54,7 @@ enum class Grensetype(val value: String, val dbKey: String, val editerbar: Boole
 
         fun fromDbKey(dbKeyIn: String): Grensetype {
             try {
-                return values().first { it.dbKey == dbKeyIn }
+                return entries.first { it.dbKey == dbKeyIn }
             } catch (e: NoSuchElementException) {
                 throw IllegalArgumentException("Invalid dbKey: $dbKeyIn")
             }
@@ -116,7 +116,7 @@ data class Operasjoner(
     @Schema(description = "Sammenslåing av stemmekretser i samme kommune.")
     val stemmekretsSammenslaaingsendring: StemmekretsSammenslaaingsendringRequest? = null,
     @Schema(description = "Deling av en stemmekrets eller grunnkrets")
-    val kretsDelingEndring: KretsDelingEndringRequest? = null,
+    val kretsDelingEndringer: List<KretsDelingEndringRequest> = listOf(),
 )
 
 @Schema(description = "Representasjon av endringer på metadata.")

@@ -1,17 +1,18 @@
 package no.kartverket.nibas.utkast
 
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
+import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grenseendringer
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.Metadataendringer
 import no.kartverket.nibas.api.v1.common.Operasjoner
-import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
-import no.kartverket.nibas.api.v1.request.FylkeRequest
-import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
-import no.kartverket.nibas.api.v1.request.KommuneRequest
-import no.kartverket.nibas.api.v1.request.NasjonRequest
-import no.kartverket.nibas.api.v1.request.StemmekretsRequest
+import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
+import no.kartverket.nibas.api.v1.request.KretsNavnOgNummer
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
+import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
 import no.kartverket.nibas.builders.FeatureBuilder
 import no.kartverket.nibas.builders.FylkeRequestBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
@@ -25,11 +26,13 @@ import no.kartverket.nibas.builders.StemmekretsBuilder
 import no.kartverket.nibas.builders.StemmekretsRequestBuilder
 import no.kartverket.nibas.builders.UtkastRequestBuilder
 import no.kartverket.nibas.common.CurrentTime
-import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.BadRequestException
-import no.kartverket.nibas.domain.Endringstype
-import no.kartverket.nibas.domain.utkast.Utkast
+import no.kartverket.nibas.domain.Fylke
+import no.kartverket.nibas.domain.Grunnkrets
+import no.kartverket.nibas.domain.Kommune
+import no.kartverket.nibas.domain.Nasjon
+import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
 import no.kartverket.nibas.events.NibasEventPublisher
@@ -47,60 +50,41 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.ArgumentMatchers.anyList
-import org.mockito.ArgumentMatchers.anyString
-import org.mockito.Mock
-import org.mockito.Mockito
-import org.mockito.Mockito.verify
-import org.mockito.MockitoAnnotations
 import java.time.LocalDate
 import java.time.Month
 import java.util.*
-import org.mockito.Mockito.`when` as whenever
-
 
 internal class UtkastServiceTest {
 
-    @Mock
-    private lateinit var utkastRepositoryMock: UtkastRepository
 
-    @Mock
-    private lateinit var nasjonServiceMock: NasjonService
+    private val utkastRepositoryMock = mockk<UtkastRepository>()
 
-    @Mock
-    private lateinit var fylkeServiceMock: FylkeService
+    private val nasjonServiceMock = mockk<NasjonService>()
 
-    @Mock
-    private lateinit var kommuneServiceMock: KommuneService
+    private val fylkeServiceMock = mockk<FylkeService>()
 
-    @Mock
-    private lateinit var grunnkretsServiceMock: GrunnkretsService
+    private val kommuneServiceMock = mockk<KommuneService>()
 
-    @Mock
-    private lateinit var stemmekretsServiceMock: StemmekretsService
+    private val grunnkretsServiceMock = mockk<GrunnkretsService>()
 
-    @Mock
-    private lateinit var kodelisteServiceMock: KodelisteService
+    private val stemmekretsServiceMock = mockk<StemmekretsService>()
 
-    @Mock
-    private lateinit var currentTime: CurrentTime
+    private val kodelisteServiceMock = mockk<KodelisteService>()
 
-    @Mock
-    private lateinit var grenseServiceMock: GrenseService
+    private val currentTime = mockk<CurrentTime>()
 
-    @Mock
-    private lateinit var nibasEventPublisherMock: NibasEventPublisher
+    private val grenseServiceMock = mockk<GrenseService>()
+
+    private val nibasEventPublisherMock = mockk<NibasEventPublisher>()
 
     private lateinit var utkastService: UtkastService
 
     @BeforeEach
     fun beforeEach() {
-        MockitoAnnotations.openMocks(this)
-
-        whenever(currentTime.asLocalDate()).thenReturn(LocalDate.of(2022, 6, 1))
+        every { currentTime.asLocalDate() } returns (LocalDate.of(2022, 6, 1))
         val utkastValidatorService = UtkastValidatorService(grunnkretsServiceMock, grenseServiceMock, stemmekretsServiceMock, kodelisteServiceMock, currentTime)
         utkastService = UtkastService(utkastRepositoryMock, nasjonServiceMock, fylkeServiceMock, kommuneServiceMock, grunnkretsServiceMock,
-            stemmekretsServiceMock, grenseServiceMock, nibasEventPublisherMock, utkastValidatorService, currentTime)
+            stemmekretsServiceMock, grenseServiceMock, nibasEventPublisherMock, utkastValidatorService)
     }
 
     @Test
@@ -109,7 +93,7 @@ internal class UtkastServiceTest {
         val utkast = UtkastBuilder.builder(navn)
             .withFylkeRequests(mapOf("UUID-1" to FylkeRequestBuilder.DEFAULT_REQUEST))
             .build()
-        whenever(utkastRepositoryMock.save(any(Utkast::class.java))).thenReturn(utkast)
+        every { utkastRepositoryMock.save(any()) } returns utkast
 
         val idForOpprettetUtkast = utkastService.opprettUtkast(
             OpprettUtkastRequestBuilder()
@@ -125,7 +109,7 @@ internal class UtkastServiceTest {
             .withOperasjoner(operasjonerMedIkkeEditerbareGrenser())
             .build()
 
-        assertThatThrownBy {utkastService.opprettUtkast(opprettUtkastRequest)}
+        assertThatThrownBy { utkastService.opprettUtkast(opprettUtkastRequest) }
             .isInstanceOf(BadRequestException::class.java)
             .hasMessageContaining("Utkast inneholder 5 ikke-redigerbare grenser")
     }
@@ -141,7 +125,7 @@ internal class UtkastServiceTest {
             ))
             .build()
 
-        assertThatThrownBy {utkastService.opprettUtkast(opprettUtkastRequest)}
+        assertThatThrownBy { utkastService.opprettUtkast(opprettUtkastRequest) }
             .isInstanceOf(BadRequestException::class.java)
             .hasMessageContaining("ugyldige metadataendringer")
     }
@@ -154,13 +138,13 @@ internal class UtkastServiceTest {
             .withKommuneRequests(mapOf("Kommune-UUID-1" to KommuneRequestBuilder.DEFAULT_REQUEST))
         val utkast = utkastBuilder.build()
 
-        whenever(utkastRepositoryMock.findById(anyString())).thenReturn(Optional.of(utkast))
+        every { utkastRepositoryMock.findById(any()) } returns Optional.of(utkast)
 
         val feb3 = LocalDate.of(2025, Month.FEBRUARY, 3)
         val utkastEtterSave = utkastBuilder.withGyldigFra(feb3)
             .build()
 
-        whenever(utkastRepositoryMock.save(any(Utkast::class.java))).thenReturn(utkastEtterSave)
+        every { utkastRepositoryMock.save(any()) } returns utkastEtterSave
 
         val oppdatertUtkast = utkastService.oppdaterUtkast(utkast.id, UtkastRequestBuilder()
             .withGyldigFra(feb3)
@@ -174,7 +158,7 @@ internal class UtkastServiceTest {
         val utkast = UtkastRequestBuilder()
             .withOperasjoner(operasjonerMedIkkeEditerbareGrenser())
             .build()
-        assertThatThrownBy {utkastService.oppdaterUtkast("123", utkast)}
+        assertThatThrownBy { utkastService.oppdaterUtkast("123", utkast) }
             .isInstanceOf(BadRequestException::class.java)
             .hasMessageContaining("Utkast inneholder 5 ikke-redigerbare grenser")
     }
@@ -190,7 +174,7 @@ internal class UtkastServiceTest {
             ))
             .build()
 
-        assertThatThrownBy {utkastService.opprettUtkast(opprettUtkastRequest)}
+        assertThatThrownBy { utkastService.opprettUtkast(opprettUtkastRequest) }
             .isInstanceOf(BadRequestException::class.java)
             .hasMessageContaining("ugyldige metadataendringer")
     }
@@ -206,7 +190,7 @@ internal class UtkastServiceTest {
             ))
             .build()
 
-        assertThatThrownBy {utkastService.opprettUtkast(opprettUtkastRequest)}
+        assertThatThrownBy { utkastService.opprettUtkast(opprettUtkastRequest) }
             .isInstanceOf(BadRequestException::class.java)
             .hasMessageContaining("ugyldige metadataendringer")
     }
@@ -216,7 +200,8 @@ internal class UtkastServiceTest {
         val publisertUtkast = UtkastBuilder.builder("Utkast for publisering")
             .withStatus(UtkastStatus.PUBLISERT)
             .build()
-        whenever(utkastRepositoryMock.findById(anyString())).thenReturn(Optional.of(publisertUtkast))
+
+        every { utkastRepositoryMock.findById(any()) } returns Optional.of(publisertUtkast)
 
         assertThatThrownBy {
             utkastService.publiserUtkast(publisertUtkast.id)
@@ -227,7 +212,7 @@ internal class UtkastServiceTest {
     fun publiserUtkastUtenOperasjonerGirBadRequestEx() {
         val utkastUtenOperasjoner = UtkastBuilder.builder("Utkast for publisering")
             .build()
-        whenever(utkastRepositoryMock.findById(anyString())).thenReturn(Optional.of(utkastUtenOperasjoner))
+        every { utkastRepositoryMock.findById(any()) } returns Optional.of(utkastUtenOperasjoner)
 
         assertThatThrownBy {
             utkastService.publiserUtkast(utkastUtenOperasjoner.id)
@@ -239,7 +224,7 @@ internal class UtkastServiceTest {
         val utkastUtenOperasjoner = UtkastBuilder.builder("Utkast for publisering")
             .withGyldigFra(LocalDate.of(2021, 1, 1))
             .build()
-        whenever(utkastRepositoryMock.findById(anyString())).thenReturn(Optional.of(utkastUtenOperasjoner))
+        every { utkastRepositoryMock.findById(any()) } returns Optional.of(utkastUtenOperasjoner)
 
         assertThatThrownBy {
             utkastService.publiserUtkast(utkastUtenOperasjoner.id)
@@ -263,21 +248,32 @@ internal class UtkastServiceTest {
                 )
             ))
             .build()
-        whenever(utkastRepositoryMock.findById(anyString())).thenReturn(Optional.of(utkast))
-        whenever(grunnkretsServiceMock.hentGrunnkrets(any(Identifikator::class.java))).thenReturn(GrunnkretsBuilder.DEFAULT_GRUNNKRETS)
+        every { utkastRepositoryMock.findById(any()) } returns Optional.of(utkast)
+        every { grunnkretsServiceMock.hentGrunnkrets(any()) } returns GrunnkretsBuilder.DEFAULT_GRUNNKRETS
+        every { grunnkretsServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns listOf()
+        every { stemmekretsServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns listOf()
+        every { grenseServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns listOf()
+
+        every { nasjonServiceMock.oppdaterNasjon(any(), any(), any(), any()) } returns Nasjon()
+        every { fylkeServiceMock.oppdaterFylke(any(), any(), any(), any()) } returns Fylke()
+        every { kommuneServiceMock.oppdaterKommune(any(), any(), any(), any()) } returns Kommune()
+        every { grunnkretsServiceMock.oppdaterGrunnkrets(any(), any(), any(), any()) } returns Grunnkrets()
+        every { stemmekretsServiceMock.oppdaterStemmekrets(any(), any(), any(), any()) } returns Stemmekrets()
+        every { grenseServiceMock.lagreGrenser(any(), any(), any()) } returns emptySet()
+        every { nibasEventPublisherMock.publishNibasEvent(any(), any()) } returns Unit
 
         utkastService.publiserUtkast(utkast.id)
 
         assertThat(utkast.status).isEqualTo(UtkastStatus.PUBLISERT)
         assertThat(utkast.operasjoner).isNull()
 
-        verify(nasjonServiceMock).oppdaterNasjon(any(Lokalid::class.java), any(LocalDate::class.java), any(Endringstype::class.java), any(NasjonRequest::class.java))
-        verify(fylkeServiceMock).oppdaterFylke(any(Lokalid::class.java), any(LocalDate::class.java), any(Endringstype::class.java), any(FylkeRequest::class.java))
-        verify(kommuneServiceMock).oppdaterKommune(any(Lokalid::class.java), any(LocalDate::class.java), any(Endringstype::class.java), any(KommuneRequest::class.java))
-        verify(grunnkretsServiceMock).oppdaterGrunnkrets(any(Lokalid::class.java), any(LocalDate::class.java), any(Endringstype::class.java), any(GrunnkretsRequest::class.java))
-        verify(stemmekretsServiceMock).oppdaterStemmekrets(any(Lokalid::class.java), any(LocalDate::class.java), any(Endringstype::class.java), any(StemmekretsRequest::class.java))
-        verify(grenseServiceMock).lagreGrenser(any(FeatureCollection::class.java), any(LocalDate::class.java), any(Endringstype::class.java))
-        verify(nibasEventPublisherMock).publishNibasEvent(anyList(), any(LocalDate::class.java))
+        verify { nasjonServiceMock.oppdaterNasjon(any(), any(), any(), any()) }
+        verify { fylkeServiceMock.oppdaterFylke(any(), any(), any(), any()) }
+        verify { kommuneServiceMock.oppdaterKommune(any(), any(), any(), any()) }
+        verify { grunnkretsServiceMock.oppdaterGrunnkrets(any(), any(), any(), any()) }
+        verify { stemmekretsServiceMock.oppdaterStemmekrets(any(), any(), any(), any()) }
+        verify { grenseServiceMock.lagreGrenser(any(), any(), any()) }
+        verify { nibasEventPublisherMock.publishNibasEvent(any(), any()) }
     }
 
     @Test
@@ -297,7 +293,7 @@ internal class UtkastServiceTest {
                 )
             ))
             .build()
-        whenever(utkastRepositoryMock.findById(anyString())).thenReturn(Optional.of(utkast))
+        every { utkastRepositoryMock.findById(any()) } returns Optional.of(utkast)
 
         utkastService.forkastUtkast(utkast.id)
 
@@ -333,73 +329,80 @@ internal class UtkastServiceTest {
                         stemmekretsSammenslaaingsendring = sammenslaaingsendringRequest,
                         grenseendringer = Grenseendringer(
                             endredeFeatures = listOf(FeatureBuilder("56").build())
+                        ),
+                        kretsDelingEndringer = listOf(
+                            KretsDelingEndringRequest(
+                                IdentifikatorMedVersjon("Grunnkrets-UUID-1", 1),
+                                kommuneId = ObjektIdentifikator(Lokalid("1"), LocalDate.of(2023, Month.JANUARY, 1)),
+                                flatetype = Flatetype.GRUNNKRETS,
+                                nyeKretser = listOf(
+                                    KretsNavnOgNummer(kretsNummer = "03015215", kretsNavn = "nyGrunnkrets2"),
+                                    KretsNavnOgNummer(kretsNummer = "03015214", kretsNavn = "nyGrunnkrets"))
+                            )
                         )
                     )
                 )
                 .build()
 
-        whenever(utkastRepositoryMock.findById(anyString())).thenReturn(Optional.of(utkast))
-        whenever(
+        every { utkastRepositoryMock.findById(any()) } returns Optional.of(utkast)
+        every {
             nasjonServiceMock.oppdaterNasjon(
-                any(Lokalid::class.java),
-                any(LocalDate::class.java),
-                any(Endringstype::class.java),
-                any(NasjonRequest::class.java)
+                any(),
+                any(),
+                any(),
+                any()
             )
-        )
-            .thenReturn(NasjonBuilder.DEFAULT_NASJON)
-        whenever(
+        } returns NasjonBuilder.DEFAULT_NASJON
+        every {
             grunnkretsServiceMock.oppdaterGrunnkrets(
-                any(Lokalid::class.java),
-                any(LocalDate::class.java),
-                any(Endringstype::class.java),
-                any(GrunnkretsRequest::class.java)
+                any(),
+                any(),
+                any(),
+                any()
             )
-        )
-            .thenReturn(GrunnkretsBuilder.DEFAULT_GRUNNKRETS)
-        whenever(
+        } returns GrunnkretsBuilder.DEFAULT_GRUNNKRETS
+        every {
             stemmekretsServiceMock.oppdaterStemmekrets(
-                any(Lokalid::class.java),
-                any(LocalDate::class.java),
-                any(Endringstype::class.java),
-                any(StemmekretsRequest::class.java)
+                any(),
+                any(),
+                any(),
+                any()
             )
-        )
-            .thenReturn(StemmekretsBuilder.DEFAULT_STEMMEKRETS)
+        } returns StemmekretsBuilder.DEFAULT_STEMMEKRETS
 
-        whenever(
+        every {
             stemmekretsServiceMock.slaaSammenStemmekretser(
-                any(StemmekretsSammenslaaingsendringRequest::class.java),
-                any(LocalDate::class.java),
-                any(Endringstype::class.java)
+                any(),
+                any(),
+                any()
             )
-        )
-            .thenReturn(
-                Pair(
-                    StemmekretsBuilder().withLokalId("2").build(),
-                    listOf(StemmekretsBuilder.DEFAULT_STEMMEKRETS)
-                )
+        } returns
+            Pair(
+                StemmekretsBuilder().withLokalId("2").build(),
+                listOf(StemmekretsBuilder.DEFAULT_STEMMEKRETS)
+            )
+        every {
+            grenseServiceMock.lagreGrenser(
+                any(),
+                any(),
+                any()
+            )
+        } returns
+            setOf(
+                GrunnkretsBuilder().withLokalId("2grunn").build(),
+                KommuneBuilder.DEFAULT_KOMMUNE
             )
 
-        whenever(
-            grenseServiceMock.lagreGrenser(
-                any(FeatureCollection::class.java),
-                any(LocalDate::class.java),
-                any(Endringstype::class.java)
-            )
-        )
-            .thenReturn(
-                setOf(
-                    GrunnkretsBuilder().withLokalId("2grunn").build(),
-                    KommuneBuilder.DEFAULT_KOMMUNE
-                )
-            )
+        every {
+            grunnkretsServiceMock.delGrunnkrets(
+                any(),
+                any(),
+                any())
+        } returns Grunnkrets()
 
         val redigerteFlater = utkastService.publiserEndringer(utkast.operasjoner!!, utkast)
-        assertThat(redigerteFlater).hasSize(8)
+        assertThat(redigerteFlater).hasSize(10)
     }
-
-    private fun <T> any(clazz: Class<T>): T = Mockito.any(clazz)
 
     private val sammenslaaingsendringRequest =
         StemmekretsSammenslaaingsendringRequest(

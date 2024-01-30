@@ -1,7 +1,7 @@
 package no.kartverket.nibas.service
 
 import no.kartverket.nibas.api.v1.common.Flatetype
-import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
+import no.kartverket.nibas.api.v1.common.UnikKretsDelingEndring
 import no.kartverket.nibas.api.v1.request.StemmekretsRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
 import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
@@ -155,7 +155,7 @@ class StemmekretsService(
     }
 
     fun delStemmekrets(
-        kretsDelingEndringRequest: KretsDelingEndringRequest, delingsDato: LocalDate, endringstype: Endringstype
+        kretsDelingEndringRequest: UnikKretsDelingEndring, delingsDato: LocalDate, endringstype: Endringstype
     ): Stemmekrets {
         if (kretsDelingEndringRequest.flatetype != Flatetype.STEMMEKRETS ){
             throw ResponseException.BadRequestException("Kan ikke dele og opprette en ny ${kretsDelingEndringRequest.flatetype} fra en stemmekrets")

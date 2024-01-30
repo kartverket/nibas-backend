@@ -12,6 +12,7 @@ import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.KontekstEgenskaper
 import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
 import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
+import no.kartverket.nibas.api.v1.request.KretsNavnOgNummer
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
 import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
 import no.kartverket.nibas.builders.FeatureBuilder
@@ -348,13 +349,12 @@ class UtkastValideringTest {
             // disse featurene har kontekst til to grunnkretser som IKKE har kretsnummer 25
             grenseendringer = grenseendringer,
             // deling av krets 2 som lager ny krets med kretsnummer 25
-            kretsDelingEndring = KretsDelingEndringRequest(
+            kretsDelingEndringer = listOf(KretsDelingEndringRequest(
                 IdentifikatorMedVersjon("2", 1),
                 ObjektIdentifikator(Lokalid("1"), gyldighetsdato),
                 flatetype = flatetype,
-                kretsNavn = "nyGrunnkrets",
-                kretsNummer = kretsnummer
-            )
+                nyeKretser = listOf(KretsNavnOgNummer(kretsNavn = "nyGrunnkrets", kretsNummer = kretsnummer)),
+            ))
         ))
 
         return Pair(utkast, utkastValidatorService.validateUtkastKlartForPublisering(utkast))
@@ -362,29 +362,33 @@ class UtkastValideringTest {
 
 
     @Test
-    fun `utkast er ugyldig med deling uten grenseendringer som refererer til ny krets skal feile`(){
+    fun `utkast er ugyldig med deling uten grenseendringer som refererer til ny krets`(){
         val gyldighetsdato = LocalDate.now()
         val kretsnummer = "25"
 
         val (utkast, utkastValidering) = testValiderKretsDelingIUtkast(gyldighetsdato, kretsnummer, Flatetype.GRUNNKRETS, operasjonerMedKunEditerbareGrenser().grenseendringer)
 
         assertThat(utkastValidering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
-        assertThat((utkastValidering as UtkastValidering.UgyldigUtkast).feil.message).isEqualTo("" +
-            "Nyopprettet krets med navn: ${utkast.operasjoner?.kretsDelingEndring?.kretsNavn} har ikke fått noen grenser tildelt. " +
-            "Dette er en feil, og den kan rettes opp ved å sette tilhørighet på de relevante grensene til ${utkast.operasjoner?.kretsDelingEndring?.kretsNavn}")
+
+        assertThat((utkastValidering as UtkastValidering.UgyldigUtkast).feil.message)
+            .isEqualTo("Krets(er) med navn: " +
+                "${utkast.operasjoner?.kretsDelingEndringer?.first()?.nyeKretser?.first()?.kretsNavn} " +
+                "har ikke fått noen grenser tildelt. Dette er en feil, og den kan rettes opp ved å sette tilhørighet på de relevante grensene som skal høre til enten: " +
+                "${utkast.operasjoner?.kretsDelingEndringer?.first()?.nyeKretser?.first()?.kretsNavn}")
     }
 
     @Test
-    fun `utkast er ugyldig med deling uten grenseendringer skal feile`(){
+    fun `utkast er ugyldig med deling uten grenseendringer`(){
         val gyldighetsdato = LocalDate.now()
         val kretsnummer = "SPILLER INGEN ROLLE HER FORDI VI HAR IKKE GRENSEENDRINGER"
 
         val (utkast, utkastValidering) = testValiderKretsDelingIUtkast(gyldighetsdato, kretsnummer, Flatetype.GRUNNKRETS, Grenseendringer())
 
         assertThat(utkastValidering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
-        assertThat((utkastValidering as UtkastValidering.UgyldigUtkast).feil.message).isEqualTo("" +
-            "Nyopprettet krets med navn: ${utkast.operasjoner?.kretsDelingEndring?.kretsNavn} har ikke fått noen grenser tildelt. " +
-            "Dette er en feil, og den kan rettes opp ved å sette tilhørighet på de relevante grensene til ${utkast.operasjoner?.kretsDelingEndring?.kretsNavn}")
+        assertThat((utkastValidering as UtkastValidering.UgyldigUtkast).feil.message).isEqualTo("Krets(er) med navn: " +
+            "${utkast.operasjoner?.kretsDelingEndringer?.first()?.nyeKretser?.first()?.kretsNavn} " +
+            "har ikke fått noen grenser tildelt. Dette er en feil, og den kan rettes opp ved å sette tilhørighet på de relevante grensene som skal høre til enten: " +
+            "${utkast.operasjoner?.kretsDelingEndringer?.first()?.nyeKretser?.first()?.kretsNavn}")
     }
 
     @Test
