@@ -2,7 +2,7 @@ package no.kartverket.nibas.domain
 
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grensetype
-import org.hibernate.annotations.Where
+import org.hibernate.annotations.SQLRestriction
 import java.time.LocalDate
 import java.util.*
 import jakarta.persistence.CascadeType
@@ -36,7 +36,7 @@ class Fylke(
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     @JoinColumn(name = "nasjonlokalid", referencedColumnName = "lokalid")
-    @Where(clause="flatetype='NASJON'")
+    @SQLRestriction("flatetype='NASJON'")
     lateinit var nasjonLokalid : UnikLokalid
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -45,7 +45,7 @@ class Fylke(
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     @JoinColumn(name = "lokalid", referencedColumnName = "lokalid", insertable = false, updatable = false)
-    @Where(clause="flatetype='FYLKE'")
+    @SQLRestriction("flatetype='FYLKE'")
     lateinit var fylkeLokalid : UnikLokalid
 
     @OneToMany(mappedBy = "fylkeFk", cascade = [CascadeType.ALL])

@@ -2,7 +2,7 @@ package no.kartverket.nibas.domain
 
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grensetype
-import org.hibernate.annotations.Where
+import org.hibernate.annotations.SQLRestriction
 import java.time.LocalDate
 import java.util.*
 import jakarta.persistence.CascadeType
@@ -30,7 +30,7 @@ class Nasjon(
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     @JoinColumn(name = "lokalid", referencedColumnName = "lokalid", insertable = false, updatable = false)
-    @Where(clause="flatetype='NASJON'")
+    @SQLRestriction("flatetype='NASJON'")
     lateinit var nasjonLokalid : UnikLokalid
 
     override fun getInfo(): String? = doGetInfoFromSingletonCollection(informasjonselementer)
