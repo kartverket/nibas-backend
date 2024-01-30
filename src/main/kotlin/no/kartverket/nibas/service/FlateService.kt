@@ -1,6 +1,8 @@
 package no.kartverket.nibas.service
 
+import no.kartverket.nibas.common.geometry.getGrenserIRiktigRekkefoelge
 import no.kartverket.nibas.common.getInSpraak
+import no.kartverket.nibas.common.geometry.toMultiPolygon
 import no.kartverket.nibas.domain.AdministrativEnhet
 import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.Fylke
@@ -8,15 +10,12 @@ import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.domain.Stemmekrets
-import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.EnhetsGrenseRepository
 import no.kartverket.nibas.repository.FylkeRepository
 import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.NasjonRepository
 import no.kartverket.nibas.repository.StemmekretsRepository
-import no.kartverket.nibas.sosi.sosiimport.GrenseMedLokalid
-import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -28,7 +27,6 @@ class FlateService @Autowired constructor(
     private val nasjonRepository: NasjonRepository,
     private val grunnkretsRepository: GrunnkretsRepository,
     private val stemmekretsRepository: StemmekretsRepository,
-    private val kodelisteService: KodelisteService,
     private val enhetsGrenseRepository: EnhetsGrenseRepository
 ) {
     private val logger = LoggerFactory.getLogger(this.javaClass.name)
@@ -61,8 +59,9 @@ class FlateService @Autowired constructor(
         val kommunenummerVerdi = kommune.kommunenummer
         logger.info("Oppdaterer kommuneflate for $kommunenummerVerdi - ${finnNavn(kommune)}")
 
-        val kommunegrenser = enhetsGrenseRepository.hentGrenserMedRiktigRetning(kommunenummerVerdi, kommune.tillatteGrensetyper(), kommune.gyldighet.gyldigFra)
-        kommune.omraade = SosiGeometryFunctions.dannFlaterMedHullBasertPaaGeometri(kommunegrenser.map{ GrenseMedLokalid(it.grense, it.lokalid) }, kommune.lokalid)
+        val kommunegrenser = enhetsGrenseRepository.hentGrenserAvTyperForEnhet(kommunenummerVerdi, kommune.tillatteGrensetyper(), kommune.gyldighet.gyldigFra)
+
+        kommune.omraade = getGrenserIRiktigRekkefoelge(kommunegrenser.map { it.grense }).toMultiPolygon()
         if (kommune.omraade != null && (kommune.posisjon == null || !kommune.omraade!!.contains(kommune.posisjon))) {
             kommune.posisjon = kommune.omraade?.interiorPoint
         }
@@ -77,8 +76,9 @@ class FlateService @Autowired constructor(
 
     private fun oppdaterFylkesflate(fylke: Fylke) {
         logger.info("Oppdaterer fylkesflate for ${fylke.fylkesnummer} - ${finnNavn(fylke)}")
-        val fylkesgrenser = enhetsGrenseRepository.hentGrenserMedRiktigRetning(fylke.fylkesnummer, fylke.tillatteGrensetyper(), fylke.gyldighet.gyldigFra)
-        fylke.omraade = SosiGeometryFunctions.dannFlaterMedHullBasertPaaGeometri(fylkesgrenser.map{ GrenseMedLokalid(it.grense, it.lokalid) })
+        val fylkesgrenser = enhetsGrenseRepository.hentGrenserAvTyperForEnhet(fylke.fylkesnummer, fylke.tillatteGrensetyper(), fylke.gyldighet.gyldigFra)
+
+        fylke.omraade = getGrenserIRiktigRekkefoelge(fylkesgrenser.map { it.grense }).toMultiPolygon()
         if (fylke.omraade != null && (fylke.posisjon == null || !fylke.omraade!!.contains(fylke.posisjon))) {
             fylke.posisjon = fylke.omraade?.interiorPoint
         }
@@ -92,8 +92,9 @@ class FlateService @Autowired constructor(
 
     private fun oppdaterNasjonsflate(nasjon: Nasjon) {
         logger.info("Oppdaterer nasjonsflate for ${finnNavn(nasjon)}")
-        val riksgrenser = enhetsGrenseRepository.hentGrenserMedRiktigRetning("", nasjon.tillatteGrensetyper(), nasjon.gyldighet.gyldigFra)
-        nasjon.omraade = SosiGeometryFunctions.dannFlaterMedHullBasertPaaGeometri(riksgrenser.map { GrenseMedLokalid(it.grense, it.lokalid) })
+        val riksgrenser = enhetsGrenseRepository.hentGrenserAvTyperForEnhet("", nasjon.tillatteGrensetyper(), nasjon.gyldighet.gyldigFra)
+
+        nasjon.omraade = getGrenserIRiktigRekkefoelge(riksgrenser.map { it.grense }).toMultiPolygon()
         if (nasjon.omraade != null && (nasjon.posisjon == null || !nasjon.omraade!!.contains(nasjon.posisjon))) {
             nasjon.posisjon = nasjon.omraade?.interiorPoint
         }

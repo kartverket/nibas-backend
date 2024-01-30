@@ -1,6 +1,6 @@
 package no.kartverket.nibas.service.deltgeometri
 
-import no.kartverket.nibas.common.getGrenserIRiktigRekkefoelge
+import no.kartverket.nibas.common.geometry.getGrenserIRiktigRekkefoelge
 import no.kartverket.nibas.common.pop
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseKobling

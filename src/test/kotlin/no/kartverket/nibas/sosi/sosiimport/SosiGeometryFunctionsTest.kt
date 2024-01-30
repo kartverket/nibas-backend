@@ -4,10 +4,10 @@ import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.common.geometry.IkkeSammenhengendePolygonException
+import no.kartverket.nibas.common.geometry.UgyldigGeometriException
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
-import no.kartverket.nibas.repository.Grenserad
-import no.kartverket.nibas.sporing.Gyldighet
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -15,7 +15,6 @@ import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.CoordinateList
 import org.locationtech.jts.geom.GeometryFactory
 import org.locationtech.jts.geom.MultiPolygon
-import java.time.LocalDate
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 

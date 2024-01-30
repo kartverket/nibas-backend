@@ -134,7 +134,7 @@ class GrenseServiceIT : TestWithDbContainer() {
             )
 
         }.isInstanceOf(RuntimeException::class.java)
-            .hasMessageContaining("Finner ikke neste LineString i grensen. Dette skal ikke skje og tyder på feil i implementasjonen eller dataene.")
+            .hasMessageContaining("Klarer ikke å sortere grensene slik at de danner et gyldig polygon.")
     }
 
     @Test
@@ -211,7 +211,7 @@ class GrenseServiceIT : TestWithDbContainer() {
             )
 
         }.isInstanceOf(RuntimeException::class.java)
-            .hasMessageContaining("Finner ikke neste LineString i grensen. Dette skal ikke skje og tyder på feil i implementasjonen eller dataene.")
+            .hasMessageContaining("Klarer ikke å sortere grensene slik at de danner et gyldig polygon.")
     }
 
     @Test
@@ -320,7 +320,7 @@ class GrenseServiceIT : TestWithDbContainer() {
             )
 
         }.isInstanceOf(RuntimeException::class.java)
-            .hasMessageContaining("Finner ikke neste LineString i grensen. Dette skal ikke skje og tyder på feil i implementasjonen eller dataene.")
+            .hasMessageContaining("Klarer ikke å sortere grensene slik at de danner et gyldig polygon.")
     }
 
     @Test
@@ -386,7 +386,7 @@ class GrenseServiceIT : TestWithDbContainer() {
                 endringstype = Endringstype.VEDTATT_GRENSEJUSTERING
             )
         }.isInstanceOf(RuntimeException::class.java)
-            .hasMessageContaining("Finner ikke neste LineString i grensen. Dette skal ikke skje og tyder på feil i implementasjonen eller dataene.")
+            .hasMessageContaining("Klarer ikke å sortere grensene slik at de danner et gyldig polygon.")
     }
 
     @Test

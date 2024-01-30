@@ -1,9 +1,11 @@
 package no.kartverket.nibas.sosi.sosiimport
 
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.common.geometry.createGeometryFactory
+import no.kartverket.nibas.common.geometry.validateGeometry
+import no.kartverket.nibas.common.geometry.validerSammenhengendeGrenser
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.getGrenseJustertForRetning
-import no.kartverket.nibas.repository.Grenserad
 import no.kartverket.nibas.sosi.model.SosiKoordinat
 import no.kartverket.nibas.sosi.model.SosiNordOest
 import org.locationtech.jts.geom.Coordinate
@@ -15,10 +17,7 @@ import org.locationtech.jts.geom.LinearRing
 import org.locationtech.jts.geom.MultiPolygon
 import org.locationtech.jts.geom.Point
 import org.locationtech.jts.geom.Polygon
-import org.locationtech.jts.geom.PrecisionModel
 import org.locationtech.jts.operation.buffer.BufferParameters
-import org.locationtech.jts.operation.valid.IsValidOp
-import org.locationtech.jts.operation.valid.TopologyValidationError
 
 object SosiGeometryFunctions {
     const val defaultSrid = 25833
@@ -33,15 +32,7 @@ object SosiGeometryFunctions {
             null -> defaultSrid
             else -> koordsysToSrid.getOrDefault(koordsys, defaultSrid)
         }
-        return createGeometryFactoryFromSrid(srid)
-    }
-
-    private fun createGeometryFactoryFromSrid(srid: Int): GeometryFactory {
-        val geometryFactory = sridToGeometryFactory.getOrDefault(srid, GeometryFactory(PrecisionModel(100.0), srid))
-        if (!sridToGeometryFactory.containsKey(srid)) {
-            sridToGeometryFactory[srid] = geometryFactory
-        }
-        return geometryFactory
+        return createGeometryFactory(srid)
     }
 
     fun sosiKoordinaterToCoordinates(sosiNordOest: List<SosiNordOest>): List<Coordinate> {
@@ -58,7 +49,7 @@ object SosiGeometryFunctions {
     }
 
     fun koordinaterToLineString(coordinates: List<List<Double>>, srid: String = defaultSrid.toString()): LineString {
-        return createGeometryFactoryFromSrid(srid.toInt()).createLineString(
+        return createGeometryFactory(srid.toInt()).createLineString(
             coordinates
                 .map { Coordinate(it[0], it[1]) }
                 .toTypedArray())
@@ -84,49 +75,6 @@ object SosiGeometryFunctions {
         //Dersom vi bufrer to ganger for å få en liten avrundt buffer på enden får vi de to grensene vi ønsker (447470 og 445490)
         return geometryAsLineString.buffer(bufferStorrelse, 8, BufferParameters.CAP_FLAT).buffer(0.2).covers(geometriSomSkalDekkes)
     }
-
-    /**
-     * Sorterer innkommende grenser fra potensielt flere flater, danner flater og pakker den/dem inn i et multipolygon som returneres
-     * Ikke i bruk pr nå, men kan brukes dersom man skal flatedanne nye kretser som har allerede definerte hull.
-     * Vurder om de også bør/kan benytte dannFlaterMedHullBasertPaaGeometri i stedet.
-     */
-    fun dannFlaterFraGrenserader(grenserMedKorrektRetning: List<Grenserad>): MultiPolygon {
-        val flater: List<Polygon> = grenserMedKorrektRetning
-            .groupBy { it.flateIndeks }
-            .map { entry ->
-                val grenseraderForFlate = entry.value
-                val skallGrenser: List<Grenserad> = grenseraderForFlate.filter { it.hullIndeks == null }
-                val hullGrenser: Map<Int, List<Grenserad>> = (grenseraderForFlate - skallGrenser).groupBy { it.hullIndeks!! }
-
-                val skall: FlatedanningResult = finnGrenserSomDannerEnFlate(skallGrenser.map { GrenseMedLokalid(it.grense, it.lokalid) })
-                val hull: List<FlatedanningResult> = hullGrenser.map { hullGrenserForHull: Map.Entry<Int, List<Grenserad>> ->
-                    finnGrenserSomDannerEnFlate(hullGrenserForHull.value.map { GrenseMedLokalid(it.grense, it.lokalid) })
-                }
-
-                val ukompletteHull = hull.filter { it is FlatedanningResult.UkomplettFlate }
-
-                if (skall is FlatedanningResult.KomplettFlate && ukompletteHull.isEmpty()) {
-                    val hullFlateSegmenter: List<List<LineString>> = hull.map {
-                        val hullKomplett = it as FlatedanningResult.KomplettFlate // Vet at den er komplett ettersom det ikke finnes ukomplette hull
-                        hullKomplett.sorterteGrenser.map { grenseMedLokalid -> grenseMedLokalid.grense }
-                    }
-                    val flate = lagFlate(skall.sorterteGrenser.map { grenseMedLokalid -> grenseMedLokalid.grense }, hullFlateSegmenter)
-                    validateGeometry(flate)
-                    flate
-                } else {
-                    if (skall is FlatedanningResult.UkomplettFlate) {
-                        throw RuntimeException("Klarte ikke å danne flate med grenser: ${skall.forsoekteGrenser}")
-                    } else {
-                        throw RuntimeException("Klarte ikke å danne flate grunnet feil med hull, antall hull som feiler: ${ukompletteHull.size}")
-                    }
-                }
-            }
-
-        val multiPolygon = getGeometryFactory().createMultiPolygon(flater.toTypedArray())
-        validateGeometry(multiPolygon)
-        return multiPolygon
-    }
-
 
     /**
      * Danner et multipolygon basert på en eller flere flater med potensielt et eller flere hull
@@ -207,7 +155,7 @@ object SosiGeometryFunctions {
         sorterteGrenserForFlate.add(gjeldendeGrense)
 
         do {
-            var nesteGrense: GrenseMedLokalid = finnNesteGrense(gjeldendeGrense, grenser, enhetsLokalid)
+            val nesteGrense: GrenseMedLokalid = finnNesteGrense(gjeldendeGrense, grenser, enhetsLokalid)
                 ?: return FlatedanningResult.UkomplettFlate(sorterteGrenserForFlate)
 
             if (nesteGrense.grense != forsteGrense.grense) {
@@ -314,34 +262,6 @@ object SosiGeometryFunctions {
         }
     }
 
-    private fun validerSammenhengendeGrenser(
-        lineStrings: List<LineString>
-    ) {
-        val forsteGrense = lineStrings[0]
-        val sisteGrense = lineStrings[lineStrings.size - 1]
-        if (sisteGrense.endPoint != forsteGrense.startPoint) {
-            throw IkkeSammenhengendePolygonException(sisteGrense.endPoint, forsteGrense.startPoint, TopologyValidationError(TopologyValidationError.DISCONNECTED_INTERIOR))
-        }
-        for (i in 0..lineStrings.size - 2) {
-            val gjeldendeGrense = lineStrings[i]
-            val nesteGrense = lineStrings[i + 1]
-
-            if (nesteGrense.startPoint != gjeldendeGrense.endPoint) {
-                throw IkkeSammenhengendePolygonException(gjeldendeGrense.endPoint, nesteGrense.startPoint, TopologyValidationError(TopologyValidationError.DISCONNECTED_INTERIOR))
-            }
-        }
-    }
-
-    /**
-     * Kjører en isValid-sjekk på geometri, se javadoc på IsValidOp for detaljer.
-     */
-    private fun validateGeometry(geometry: Geometry) {
-        val validationError = IsValidOp(geometry).validationError
-        if (validationError != null) {
-            throw UgyldigGeometriException(geometry, validationError)
-        }
-    }
-
     /**
      *@throws GeometriFailedToBeCreatedException dersom linearRing ikke kunne dannes
      */
@@ -359,16 +279,6 @@ object SosiGeometryFunctions {
 
 class GeometriFailedToBeCreatedException(val point: Point, rootEx: Exception? = null)
     : RuntimeException("Geometri-objekt kunne ikke opprettes. Feil-lokasjon: ${point.coordinate}", rootEx)
-
-@Suppress("MaxLineLength")
-class UgyldigGeometriException(val geometry: Geometry,
-                               val topologyValidationError: TopologyValidationError)
-    : RuntimeException("Geometri-objekt er ikke gyldig: $geometry. Validation-feil: ${topologyValidationError.message}. Feil-lokasjon: ${topologyValidationError.coordinate}")
-
-class IkkeSammenhengendePolygonException(sluttPunkt: Point,
-                                         startPunkt: Point,
-                                         topologyValidationError: TopologyValidationError)
-    : RuntimeException("Polygon som skal dannes har ikke-sammenhengende punkter, sluttpunkt: ${sluttPunkt.coordinate}, startPunkt: ${startPunkt.coordinate}. Validation-feil: ${topologyValidationError.message}.")
 
 class GrenseMedLokalid (val grense: LineString, val lokalid: Lokalid)
 

@@ -24,6 +24,7 @@ import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.BadRequestException
 import no.kartverket.nibas.common.ResponseException.NotFoundException
+import no.kartverket.nibas.common.geometry.UgyldigGeometriException
 import no.kartverket.nibas.controller.klient.UtkastController
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
@@ -33,7 +34,6 @@ import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.service.utkast.UtkastService
 import no.kartverket.nibas.sosi.sosiimport.GeometriFailedToBeCreatedException
 import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
-import no.kartverket.nibas.sosi.sosiimport.UgyldigGeometriException
 import no.kartverket.nibas.sporing.AuditInfo
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

@@ -6,11 +6,11 @@ import no.kartverket.nibas.api.v1.response.OptimistiskLaarWrapper
 import no.kartverket.nibas.api.v1.response.ErrorDescription
 import no.kartverket.nibas.common.FeilVedOppdatering
 import no.kartverket.nibas.common.ResponseException
+import no.kartverket.nibas.common.geometry.IkkeSammenhengendePolygonException
+import no.kartverket.nibas.common.geometry.UgyldigGeometriException
 import no.kartverket.nibas.kodelister.MissingKodelisteItemException
 import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.sosi.sosiimport.GeometriFailedToBeCreatedException
-import no.kartverket.nibas.sosi.sosiimport.IkkeSammenhengendePolygonException
-import no.kartverket.nibas.sosi.sosiimport.UgyldigGeometriException
 import org.locationtech.jts.operation.valid.TopologyValidationError
 import org.slf4j.MDC
 import org.springframework.http.HttpHeaders

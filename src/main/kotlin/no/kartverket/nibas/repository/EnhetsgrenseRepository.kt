@@ -18,16 +18,7 @@ class EnhetsGrenseRepository(val namedParameterJdbcTemplate: NamedParameterJdbcT
         RowMapper<Grenserad> { rs: ResultSet, _: Int ->
             val geoJsonReader = GeoJsonReader()
             val geometry: Geometry = geoJsonReader.read(rs.getObject("grense", String::class.java))
-            val lineString: LineString =
-                when (rs.getBoolean("retning_med_klokken")) {
-                    true -> geometry as LineString
-                    false -> geometry.reverse() as LineString
-                }
-
-            var hullIndeks: Int? = rs.getInt("hull_indeks")
-            if (rs.wasNull()) { //Siste kolonne var null
-                hullIndeks = null
-            }
+            val lineString: LineString = geometry as LineString
 
             Grenserad(
                 id = rs.getString("grense_id"),
@@ -37,8 +28,6 @@ class EnhetsGrenseRepository(val namedParameterJdbcTemplate: NamedParameterJdbcT
                     gyldigFra = rs.getDate("grensegyldigfra").toLocalDate(),
                     gyldigTil = rs.getDate("grensegyldigtil")?.toLocalDate(),
                     slettet = rs.getBoolean("grenseslettet")),
-                flateIndeks = rs.getInt("flate_indeks"),
-                hullIndeks = hullIndeks,
                 grunnkretsGyldighet = Gyldighet(
                     gyldigFra = rs.getDate("grunnkretsgyldigfra").toLocalDate(),
                     gyldigTil = rs.getDate("grunnkretsgyldigtil")?.toLocalDate(),
@@ -49,11 +38,11 @@ class EnhetsGrenseRepository(val namedParameterJdbcTemplate: NamedParameterJdbcT
      * Søker i basen etter grensekoblinger knyttet til grunnkrets med grunnkretsnummer som starter med enhetsnummer:
      * Dvs starter med kommunenummer for kommuner, starter med fylkesnummer for fylker og ingen begrensninger for nasjon
      */
-    fun hentGrenserMedRiktigRetning(enhetsnummer: String, tillatteGrensetyper: Set<Grensetype>, gyldighetsdato: LocalDate = LocalDate.now()): List<Grenserad> {
+    fun hentGrenserAvTyperForEnhet(enhetsnummer: String, tillatteGrensetyper: Set<Grensetype>, gyldighetsdato: LocalDate = LocalDate.now()): List<Grenserad> {
         val grensetyper = tillatteGrensetyper.map { it.value }
         val parameters: Map<String, Any>
 
-        var customSql = "select st_asgeojson(g.grense) as grense, gg.retning_med_klokken, gg.flate_indeks, gg.hull_indeks, g.objid as grense_id, " +
+        var customSql = "select st_asgeojson(g.grense) as grense, gg.retning_med_klokken, g.objid as grense_id, " +
             "g.lokalid as grense_lokalid, g.gyldigfra as grensegyldigfra, g.gyldigtil as grensegyldigtil, g.slettet as grenseslettet, " +
             "gk.gyldigfra as grunnkretsgyldigfra, gk.gyldigtil as grunnkretsgyldigtil, gk.slettet as grunnkretsslettet " +
             "from grunnkrets gk " +
@@ -88,6 +77,4 @@ data class Grenserad(
     val grense: LineString,
     val grenseGyldighet: Gyldighet,
     val grunnkretsGyldighet: Gyldighet,
-    val flateIndeks: Int = 0,
-    val hullIndeks: Int? = null,
     val slettet: Boolean = false)
