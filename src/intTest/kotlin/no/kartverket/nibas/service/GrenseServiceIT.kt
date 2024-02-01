@@ -779,6 +779,8 @@ class GrenseServiceIT : TestWithDbContainer() {
         val kretser =
             getTilhorigetTilNyopprettetKretsTestSetup(Grensetype.Grunnkretsgrense, gyldighetsdato, ::saveGrunnkrets)
 
+        saveKommune("1", grunnkretser = kretser)
+
         val kretsOpprinnelig = kretser[0]
         val kretsNordVest = kretser[2]
 
