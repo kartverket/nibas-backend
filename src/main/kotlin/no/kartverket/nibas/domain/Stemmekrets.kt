@@ -58,8 +58,8 @@ class Stemmekrets(
     @JoinColumn(name = "utledetfra")
     var utledetFra: Stemmekrets? = null
 
-    fun getGrensekoblinger(gyldighetsdato: LocalDate = LocalDate.now()): List<StemmekretsGrenseKobling> {
-        return grenser.filter { it.grense.gyldigPaaDato(gyldighetsdato) }
+    override fun getGrensekoblinger(gyldighetsdato: LocalDate): Set<StemmekretsGrenseKobling> {
+        return grenser.filter { it.grense.gyldigPaaDato(gyldighetsdato) }.toSet()
     }
 
     /**

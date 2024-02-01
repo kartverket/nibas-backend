@@ -6,8 +6,8 @@ import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.UnikKretsDelingEndring
 import no.kartverket.nibas.api.v1.common.geojson.Feature
-import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.api.v1.common.getUnikeKretsDelingEndringRequests
+import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.common.CurrentTime
 import no.kartverket.nibas.common.FeilVedOppdatering
 import no.kartverket.nibas.common.Identifikator
@@ -106,7 +106,44 @@ class UtkastValidatorService(
             return UtkastValidering.UgyldigUtkast(utkast, grenseeendringerValideringsFeil)
         }
 
+        val tilhorighetEndringerValideringsFeil = validerTilhorighetEndringer(utkast)
+        if (tilhorighetEndringerValideringsFeil != null) {
+            return tilhorighetEndringerValideringsFeil
+        }
+
         return UtkastValidering.KlartForPublisering(utkast)
+    }
+
+    /**
+     * Sekker om kontekstegenskapene på endrede features gir mening å prøve å endre på i utkastet
+     */
+    fun validerTilhorighetEndringer(utkast: Utkast): UtkastValidering.UgyldigUtkast? {
+        return utkast.operasjoner?.grenseendringer?.endredeFeatures?.firstNotNullOfOrNull { feature ->
+            val harFeilAntallKontekstEgenskaper = feature.id != null && feature.properties.kontekstEgenskaper.size != 2
+            val harToLikeKontekstEgenskaper = if (!harFeilAntallKontekstEgenskaper) { feature.properties.kontekstEgenskaper[0] == feature.properties.kontekstEgenskaper[1] } else {
+                false
+            }
+            val kommuneGrenseHarTilhorigheterISammeKommune = feature.properties.type == Grensetype.Kommunegrense.value &&
+                feature.properties.kontekstEgenskaper
+                    .map { it.kommuneId?.lokalid?.value }
+                    .toSet().size != 2
+            if (harFeilAntallKontekstEgenskaper || harToLikeKontekstEgenskaper || kommuneGrenseHarTilhorigheterISammeKommune){
+                var errorMessage = "Grense med id: ${feature.id} har ugyldig tilhørighet. Årsak(er): \n"
+                if (harFeilAntallKontekstEgenskaper) {
+                    errorMessage += "\t- Grensen har feil antall tilhørigheter.\n"
+                }
+                if (harToLikeKontekstEgenskaper) {
+                    errorMessage += "\t- Grensen har tilhørighet til samme krets på hver side.\n"
+                }
+                if (kommuneGrenseHarTilhorigheterISammeKommune) {
+                    errorMessage += "\t- Grensen er kommunegrense og har tilhørighet til to kretser i samme kommune.\n"
+                }
+                return UtkastValidering.UgyldigUtkast(utkast = utkast, feil = ResponseException.BadRequestException(
+                    title = "Kan ikke publisere utkastet",
+                    msg = errorMessage
+                ) )
+            } else return null
+        }
     }
 
     fun validerKretsinfoEndringer(

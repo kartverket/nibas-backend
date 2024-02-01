@@ -39,7 +39,7 @@ class Nasjon(
         doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { NasjonInformasjon(this) }
     }
 
-    fun getGrensekoblinger(gyldighetsdato: LocalDate = LocalDate.now()): Set<GrunnkretsGrenseKobling> {
+    override fun getGrensekoblinger(gyldighetsdato: LocalDate): Set<GrunnkretsGrenseKobling> {
         return getFylker(gyldighetsdato)
             .flatMap { it.getKommuner(gyldighetsdato) }
             .flatMap { it.getGrunnkretser(gyldighetsdato) }

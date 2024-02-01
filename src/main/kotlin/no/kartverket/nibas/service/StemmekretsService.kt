@@ -39,7 +39,7 @@ class StemmekretsService(
     fun hentStemmekrets(identifikator: Identifikator): Stemmekrets? = stemmekretsRepository.findGyldigObjektForIdentifikator(identifikator)
 
     fun hentGrensekoblingerForStemmekrets(identifikator: Identifikator): List<StemmekretsGrenseKobling> {
-        return hentStemmekrets(identifikator)?.getGrensekoblinger(identifikator.gyldighetsdato) ?: emptyList()
+        return hentStemmekrets(identifikator)?.getGrensekoblinger(identifikator.gyldighetsdato)?.toList() ?: emptyList()
     }
     @Transactional(readOnly = true)
     fun hentStemmekretsForStemmekretsNummerIKommune(kommuneIdentifikator: ObjektIdentifikator, stemmekretsnummer: String, gyldighetsdato: LocalDate): Stemmekrets? {

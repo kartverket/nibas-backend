@@ -37,7 +37,7 @@ class GrunnkretsService(
 
     @Transactional(readOnly = true)
     fun hentGrensekoblingerForGrunnkrets(identifikator: Identifikator): List<GrunnkretsGrenseKobling> {
-        return hentGrunnkrets(identifikator)?.getGrensekoblinger(identifikator.gyldighetsdato) ?: emptyList()
+        return hentGrunnkrets(identifikator)?.getGrensekoblinger(identifikator.gyldighetsdato)?.toList() ?: emptyList()
     }
 
     @Transactional(readOnly = true)

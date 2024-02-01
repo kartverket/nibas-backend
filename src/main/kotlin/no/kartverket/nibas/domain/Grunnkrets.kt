@@ -96,8 +96,8 @@ class Grunnkrets(
             .filter { it.grense.gyldigPaaDato(gyldighetsdato) }
     }
 
-    fun getGrensekoblinger(gyldighetsdato: LocalDate = LocalDate.now()): List<GrunnkretsGrenseKobling> {
-        return grenser.filter { it.grense.gyldigPaaDato(gyldighetsdato) }
+    override fun getGrensekoblinger(gyldighetsdato: LocalDate): Set<GrunnkretsGrenseKobling> {
+        return grenser.filter { it.grense.gyldigPaaDato(gyldighetsdato) }.toSet()
     }
 
     override fun toString(): String {

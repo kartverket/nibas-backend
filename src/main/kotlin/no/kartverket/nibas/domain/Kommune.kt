@@ -57,7 +57,7 @@ class Kommune(
         doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { KommuneInformasjon(this) }
     }
 
-    fun getGrensekoblinger(gyldighetsdato: LocalDate = LocalDate.now()): Set<GrunnkretsGrenseKobling> {
+    override fun getGrensekoblinger(gyldighetsdato: LocalDate): Set<GrunnkretsGrenseKobling> {
         return getGrunnkretser(gyldighetsdato)
             .flatMap { it.getGrensekoblingerAvTyper(tillatteGrensetyper(), gyldighetsdato) }
             .toSet()
