@@ -120,8 +120,6 @@ data class OpprettUtkastRequest(
     val navn: String,
     @Schema(description = "Typen endring utkastet representerer.")
     val endringstype: String,
-    @Schema(description = "Representasjon av endringene som er grunnlaget for å opprette utkastet.")
-    val operasjoner: Operasjoner = Operasjoner()
 )
 
 @Schema(description = "Representasjon for oppdatering av utkast")

@@ -53,10 +53,7 @@ class UtkastService(
     private val logger: Logger = LoggerFactory.getLogger(UtkastService::class.java)
 
     fun opprettUtkast(opprettUtkastRequest: OpprettUtkastRequest): String {
-        when (val operasjonerValideringResult = utkastValidatorService.validateGyldigeOperasjoner(opprettUtkastRequest.operasjoner)) {
-            is OperasjonerValidering.UgyldigeOperasjoner -> throw operasjonerValideringResult.feil
-            is OperasjonerValidering.GyldigeOperasjoner -> return utkastRepository.save(opprettUtkastRequest.createUtkast()).id
-        }
+        return utkastRepository.save(opprettUtkastRequest.createUtkast()).id
     }
 
     @Transactional(readOnly = true)
@@ -261,5 +258,5 @@ class UtkastService(
 
 private fun OpprettUtkastRequest.createUtkast(): Utkast =
     UtkastBuilder.builder(this.navn, Endringstype.fromValue(this.endringstype))
-        .withOperasjoner(this.operasjoner)
+        .withOperasjoner(Operasjoner())
         .build()

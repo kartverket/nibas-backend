@@ -91,7 +91,6 @@ internal class UtkastServiceTest {
     fun opprettUtkast() {
         val navn = "Grenseendring i Oslo"
         val utkast = UtkastBuilder.builder(navn)
-            .withFylkeRequests(mapOf("UUID-1" to FylkeRequestBuilder.DEFAULT_REQUEST))
             .build()
         every { utkastRepositoryMock.save(any()) } returns utkast
 
@@ -100,34 +99,6 @@ internal class UtkastServiceTest {
                 .withNavn(navn)
                 .build())
         assertThat(utkast.id).isEqualTo(idForOpprettetUtkast)
-    }
-
-    @Test
-    fun opprettUtkastMedIkkeEditerbareGrenserGirBadRequest() {
-        val opprettUtkastRequest = OpprettUtkastRequestBuilder()
-            .withNavn("Utkast med ikke-editerbare grenser")
-            .withOperasjoner(operasjonerMedIkkeEditerbareGrenser())
-            .build()
-
-        assertThatThrownBy { utkastService.opprettUtkast(opprettUtkastRequest) }
-            .isInstanceOf(BadRequestException::class.java)
-            .hasMessageContaining("Utkast inneholder 5 ikke-redigerbare grenser")
-    }
-
-    @Test
-    fun opprettUtkastMedBlanktStemmekretsnavnGirBadRequest() {
-        val opprettUtkastRequest = OpprettUtkastRequestBuilder()
-            .withNavn("Utkast med blankt stemmekretsnavn")
-            .withOperasjoner(Operasjoner(
-                metadataendringer = Metadataendringer(
-                    stemmekretsendringer = mapOf("1" to StemmekretsRequestBuilder(stemmekretsnavn = "").build())
-                )
-            ))
-            .build()
-
-        assertThatThrownBy { utkastService.opprettUtkast(opprettUtkastRequest) }
-            .isInstanceOf(BadRequestException::class.java)
-            .hasMessageContaining("ugyldige metadataendringer")
     }
 
     @Test
@@ -154,6 +125,23 @@ internal class UtkastServiceTest {
     }
 
     @Test
+    fun oppdaterUtkastMedBlanktStemmekretsnavnGirBadRequest() {
+        val utkast = UtkastRequestBuilder()
+            .withOperasjoner(
+                Operasjoner(
+                    metadataendringer = Metadataendringer(
+                        stemmekretsendringer = mapOf("1" to StemmekretsRequestBuilder(stemmekretsnavn = "").build())
+                    )
+                )
+            )
+            .build()
+
+        assertThatThrownBy { utkastService.oppdaterUtkast("123", utkast) }
+            .isInstanceOf(BadRequestException::class.java)
+            .hasMessageContaining("ugyldige metadataendringer på stemmekrets")
+    }
+
+    @Test
     fun oppdaterUtkastMedIkkeEditerbareGrenserGirBadRequest() {
         val utkast = UtkastRequestBuilder()
             .withOperasjoner(operasjonerMedIkkeEditerbareGrenser())
@@ -165,7 +153,7 @@ internal class UtkastServiceTest {
 
     @Test
     fun oppdaterUtkastMedUgyldigGrunnkretsnummerGirBadRequest() {
-        val opprettUtkastRequest = OpprettUtkastRequestBuilder()
+        val utkast = UtkastRequestBuilder()
             .withNavn("Utkast med for kort grunnkretsnummer")
             .withOperasjoner(Operasjoner(
                 metadataendringer = Metadataendringer(
@@ -174,14 +162,14 @@ internal class UtkastServiceTest {
             ))
             .build()
 
-        assertThatThrownBy { utkastService.opprettUtkast(opprettUtkastRequest) }
+        assertThatThrownBy { utkastService.oppdaterUtkast("123", utkast) }
             .isInstanceOf(BadRequestException::class.java)
             .hasMessageContaining("ugyldige metadataendringer")
     }
 
     @Test
     fun oppdaterUtkastMedIkkeNumeriskGrunnkretsnummerGirBadRequest() {
-        val opprettUtkastRequest = OpprettUtkastRequestBuilder()
+        val utkastRequest = UtkastRequestBuilder()
             .withNavn("Utkast med for ikke-numerisk grunnkretsnummer")
             .withOperasjoner(Operasjoner(
                 metadataendringer = Metadataendringer(
@@ -190,7 +178,7 @@ internal class UtkastServiceTest {
             ))
             .build()
 
-        assertThatThrownBy { utkastService.opprettUtkast(opprettUtkastRequest) }
+        assertThatThrownBy { utkastService.oppdaterUtkast("123", utkastRequest) }
             .isInstanceOf(BadRequestException::class.java)
             .hasMessageContaining("ugyldige metadataendringer")
     }

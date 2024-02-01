@@ -57,15 +57,8 @@ class UtkastRequestBuilder {
 }
 
 class OpprettUtkastRequestBuilder {
-
     private var navn = "Mitt nye utkast"
     private var endringstype = Endringstype.VEDTATT_GRENSEJUSTERING
-    private var operasjoner = Operasjoner(
-        metadataendringer = Metadataendringer(
-            kommuneendringer = mapOf("6n49a68e-bb52-49f4-b668-48cabb0b8585" to KommuneRequestBuilder.DEFAULT_REQUEST)
-        )
-    )
-
     companion object {
         val DEFAULT_REQUEST = OpprettUtkastRequestBuilder().build()
     }
@@ -74,17 +67,11 @@ class OpprettUtkastRequestBuilder {
         return OpprettUtkastRequest(
             navn = this.navn,
             endringstype = this.endringstype.value,
-            operasjoner = this.operasjoner
         )
     }
 
     fun withNavn(navn: String): OpprettUtkastRequestBuilder {
         this.navn = navn
-        return this
-    }
-
-    fun withOperasjoner(operasjoner: Operasjoner): OpprettUtkastRequestBuilder {
-        this.operasjoner = operasjoner
         return this
     }
 }
