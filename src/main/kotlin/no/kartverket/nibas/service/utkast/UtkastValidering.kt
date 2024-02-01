@@ -38,6 +38,11 @@ class UtkastValidatorService(
             return OperasjonerValidering.UgyldigeOperasjoner(operasjoner, ResponseException.BadRequestException("Utkast inneholder grenseendringer for samme grense(r) flere ganger. Grensene (representert ved lokalid) det gjelder er: ${featuresSomGjentas.map { it.key }.sortedBy { it }}"))
         }
 
+        val featuresSomManglerKontekstEgenskaper = endredeFeatures.filter { it.properties.kontekstEgenskaper.size < 2 }
+        if (featuresSomManglerKontekstEgenskaper.isNotEmpty()) {
+            return OperasjonerValidering.UgyldigeOperasjoner(operasjoner, ResponseException.BadRequestException("Utkast inneholder ${featuresSomManglerKontekstEgenskaper.size} grenser uten kontekstegenskaper. Husk at ved opprettelse av nye grenser må man sette tilhørighet på grensen."))
+        }
+
         val featuresSomIkkeErEditerbare = endredeFeatures.filterNot { Grensetype.fromValue(it.properties.type).editerbar }
         if (featuresSomIkkeErEditerbare.isNotEmpty()) {
             return OperasjonerValidering.UgyldigeOperasjoner(operasjoner, ResponseException.BadRequestException("Utkast inneholder ${featuresSomIkkeErEditerbare.size} ikke-redigerbare grenser"))
@@ -252,15 +257,16 @@ class UtkastValidatorService(
             return true
         }
         val endredeFeatures = utkast.operasjoner?.grenseendringer?.endredeFeatures
-        if (endredeFeatures != null){
+        if (endredeFeatures != null) {
             val kontekstEgenskaper = endredeFeatures.flatMap {
                 it.properties.kontekstEgenskaper
             }
 
             val finnesGrenseendringerForNyopprettetKrets = kontekstEgenskaper.any {
-                when(it.type){
+                when (it.type) {
                     KontekstEnhetType.GRUNNKRETS ->
                         it.kretsNummer == kretsDelingEndringRequest.kretsNummer
+
                     KontekstEnhetType.STEMMEKRETS ->
                         it.kretsNummer == kretsDelingEndringRequest.kretsNummer
                             && it.kommuneId?.lokalid?.value == kretsDelingEndringRequest.kommuneId.lokalid.value

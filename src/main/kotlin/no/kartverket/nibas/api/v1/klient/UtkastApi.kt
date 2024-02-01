@@ -53,6 +53,7 @@ interface UtkastApi {
         description = "Oppdaterer angitt utkast. Returnerer oppdatert utkast."
     )
     @Response200OK
+    @Response400BadRequest
     @Response404NotFound
     @Response409Conflict
     @PutMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])

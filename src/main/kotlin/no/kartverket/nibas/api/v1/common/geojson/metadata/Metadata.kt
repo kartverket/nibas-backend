@@ -217,8 +217,9 @@ data class Posisjonskvalitet(
 )
 
 fun Posisjonskvalitet.toEmbeddable(): PosisjonskvalitetEmbeddable = PosisjonskvalitetEmbeddable(
-    maalemetode = this.maalemetode.id!!,
-    noeyaktighet = noeyaktighet)
+    maalemetode = this.maalemetode.id ?: "",
+    noeyaktighet = noeyaktighet
+)
 
 data class Identifikasjon(
     @Schema(description = "Lokal id som identifiserer geometrien. Dette er en globalt unik id.")
