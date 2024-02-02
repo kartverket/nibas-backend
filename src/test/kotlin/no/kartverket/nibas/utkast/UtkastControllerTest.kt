@@ -134,7 +134,7 @@ internal class UtkastControllerTest : NibasMvcTest() {
     fun hentUtkastMedUkjentIdGir404NotFound() {
         whenever(utkastServiceMock.hentUtkast(anyString())).thenReturn(null)
         get("/v1/utkast/123", responseAsserts = MockResponseAsserts(
-            expectedContentType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+            expectedContentType = MediaType.APPLICATION_JSON_VALUE,
             resultMatchers = listOf(status().isNotFound)
         ))
     }
