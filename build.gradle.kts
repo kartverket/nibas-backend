@@ -10,7 +10,7 @@ plugins {
     kotlin("plugin.spring") version kotlinPluginVersion
     kotlin("plugin.jpa") version kotlinPluginVersion
     kotlin("plugin.allopen") version kotlinPluginVersion
-    id("org.flywaydb.flyway") version "9.21.1"
+    id("org.flywaydb.flyway") version "10.7.1"
 }
 
 group = "no.kartverket.nibas"
@@ -56,7 +56,7 @@ configurations["intTestRuntimeOnly"].extendsFrom(configurations.runtimeOnly.get(
 val springdocOpenapiVersion2 = "2.3.0"
 val jtsVersion = "1.19.0"
 val testContainerVersion = "1.19.3"
-val autLibVersion = "2.0.0"
+val autLibVersion = "2.0.3"
 val flywayVersion = "10.6.0"
 val hypersistenceUtilsHibernate62Version = "3.7.0"
 val springCloudStarterVaultConfigVersion = "4.0.1"
@@ -64,8 +64,8 @@ val spatial4jVersion = "0.8"
 val kotlinxCoroutinesCoreVersion = "1.7.3"
 val logstashVersion = "7.4"
 val springmockkVersion = "4.0.2"
-val kotlinMockitoVersion = "5.1.0"
-val prometheusVersion = "1.12.0"
+val kotlinMockitoVersion = "5.2.1"
+val prometheusVersion = "1.12.2"
 val openTelemetryVersion = "1.32.0"
 
 dependencies {
@@ -99,7 +99,7 @@ dependencies {
     implementation("org.springframework.cloud:spring-cloud-starter-vault-config")
     implementation("io.micrometer:micrometer-registry-prometheus:$prometheusVersion")
     implementation("org.springframework.integration:spring-integration-core")
-    implementation(platform("io.opentelemetry:opentelemetry-bom:1.32.0"))
+    implementation(platform("io.opentelemetry:opentelemetry-bom:1.34.1"))
     implementation("io.opentelemetry:opentelemetry-api")
 
     // This library provides Hibernate 5.5+ Json column support, which is not natively supported by Hibernate
@@ -171,4 +171,11 @@ tasks.withType<Test> {
 
 flyway {
     schemas = arrayOf("nibas")
+}
+
+if (hasProperty("buildScan")) {
+    extensions.findByName("buildScan")?.withGroovyBuilder {
+        setProperty("termsOfServiceUrl", "https://gradle.com/terms-of-service")
+        setProperty("termsOfServiceAgree", "no")
+    }
 }

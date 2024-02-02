@@ -16,7 +16,7 @@ ENV TZ=Europe/Oslo
 EXPOSE 8080
 RUN mkdir /nibas-backend
 COPY build/libs/*.jar /nibas-backend/app.jar
-COPY opentelemetry-javaagent-1.32.0.jar /agent.jar
+COPY opentelemetry-javaagent-1.34.1.jar /agent.jar
 VOLUME /tmp
 USER ${USER_ID}
 
@@ -27,7 +27,6 @@ ENV OTEL_TRACES_EXPORTER=otlp
 
 ENV OTEL_PROPAGATORS=none
 
-ENV OTEL_EXPORTER_OTLP_PROTOCOL="http/protobuf"
 ENV OTEL_EXPORTER_OTLP_ENDPOINT=http://otlp.grafana-agent:4318
 ENV OTEL_EXPORTER_OTLP_INSECURE=true
 ENV OTEL_SERVICE_NAME=nibas-backend
