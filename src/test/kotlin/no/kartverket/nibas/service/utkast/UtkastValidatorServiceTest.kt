@@ -16,6 +16,7 @@ import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.builders.StemmekretsBuilder
 import no.kartverket.nibas.common.CurrentTime
 import no.kartverket.nibas.common.FeilVedOppdatering
+import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.domain.UnikLokalid
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.kodelister.KodelisteService
@@ -100,6 +101,61 @@ class UtkastValidatorServiceTest {
 
         val oppdateringFeil = result.feil as FeilVedOppdatering.OppdateringException
         assertThat(oppdateringFeil.oppdateringInfo.type).isEqualTo(FeilVedOppdatering.Type.GRUNNKRETS)
+    }
+
+    @Test
+    fun `skal gi feil om det finnes flere endringer på grenser med samme ID`() {
+        val utkast = UtkastBuilder.builder("test")
+            .withGyldigFra(datoSomVilGiFremtidEndringKonflikt)
+            .withOperasjoner(
+                Operasjoner(
+                    grenseendringer = Grenseendringer(
+                        endredeFeatures = listOf(
+                            FeatureBuilder()
+                                .withLokalid("123")
+                                .withGrensetype(Grensetype.Grunnkretsgrense)
+                                .build(),
+                            FeatureBuilder()
+                                .withLokalid("123")
+                                .withGrensetype(Grensetype.Grunnkretsgrense)
+                                .build()
+                        )
+                    )
+                )
+            )
+            .build()
+
+        val result = utkastValidatorService.validateUtkastKlartForPublisering(utkast)
+        assertThat(result).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
+
+        val ugyldigUtkast = result as UtkastValidering.UgyldigUtkast
+        assertThat(ugyldigUtkast.feil).isInstanceOf(ResponseException.BadRequestException::class.java)
+    }
+
+    @Test
+    fun `skal ikke gi feil om det er flere nye features i samme utkast`() {
+        val utkast = UtkastBuilder.builder("test")
+            .withGyldigFra(datoSomVilGiFremtidEndringKonflikt)
+            .withOperasjoner(
+                Operasjoner(
+                    grenseendringer = Grenseendringer(
+                        endredeFeatures = listOf(
+                            FeatureBuilder()
+                                .withLokalid(null)
+                                .withGrensetype(Grensetype.Grunnkretsgrense)
+                                .build(),
+                            FeatureBuilder()
+                                .withLokalid(null)
+                                .withGrensetype(Grensetype.Grunnkretsgrense)
+                                .build()
+                        )
+                    )
+                )
+            )
+            .build()
+
+        val result = utkastValidatorService.validateUtkastKlartForPublisering(utkast)
+        assertThat(result).isInstanceOf(UtkastValidering.KlartForPublisering::class.java)
     }
 
     @Test

@@ -26,12 +26,12 @@ import org.locationtech.jts.geom.GeometryFactory
 import java.time.LocalDate
 import java.time.ZonedDateTime
 
-class FeatureBuilder(private val id: String? = "1") {
+class FeatureBuilder(private var id: String? = "1") {
 
     private var grenseType: Grensetype = Grensetype.Kommunegrense
     private var grenseVersjon = 1
     private var metadata: Metadata? = null
-    private var lokalid: String = "123"
+    private var lokalid: String? = "123"
     private var kontekstEgenskaper: List<KontekstEgenskaper> = listOf(
         KontekstEgenskaper(ObjektIdentifikator(Lokalid("1"), LocalDate.now()), version = 1, type = KontekstEnhetType.GRUNNKRETS),
         KontekstEgenskaper(ObjektIdentifikator(Lokalid("2"), LocalDate.now()), version = 1, type = KontekstEnhetType.GRUNNKRETS)
@@ -53,7 +53,7 @@ class FeatureBuilder(private val id: String? = "1") {
 
         if (metadata == null) {
             val commonMetadata = CommonMetadata(
-                identifikasjon = Identifikasjon(lokalid),
+                identifikasjon = Identifikasjon(lokalid ?: "NYFEATURE"),
                 sporingsinformasjon = Sporingsinformasjon(oppdateringsdato = ZonedDateTime.now()),
                 gyldigFra = LocalDate.now()
             )
@@ -119,7 +119,8 @@ class FeatureBuilder(private val id: String? = "1") {
         return this
     }
 
-    fun withLokalid(lokalid: String): FeatureBuilder {
+    fun withLokalid(lokalid: String?): FeatureBuilder {
+        this.id = lokalid
         this.lokalid = lokalid
         return this
     }
