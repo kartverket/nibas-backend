@@ -85,7 +85,10 @@ data class GrunnkretsRef(
     val grunnkretsnummer: String,
 
     @Schema(description = "Antall publiserte framtidige gyldige versjoner.")
-    val antallFramtidigeVersjoner: Int = 0
+    val antallFramtidigeVersjoner: Int = 0,
+
+    @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
+    val version: Int
 )
 
 @Schema(description = "En referanse til en stemmekrets")

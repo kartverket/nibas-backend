@@ -22,16 +22,7 @@ class FeatureMapper {
     }
 
     fun toKontekstEgenskaperForDelomraadeGrense(grense: Grense, gyldighetsdato: LocalDate = LocalDate.now()): List<KontekstEgenskaper> {
-        return grense.gyldigeGrunnkretsGrenseKoblinger(gyldighetsdato).map {
-            it.grenseKoblingToKontekstEgenskaper(
-                lokalid = Lokalid(it.grunnkrets.lokalid),
-                kommuneLokalid = Lokalid(it.grunnkrets.kommuneLokalid.lokalid),
-                kretsNummer = it.grunnkrets.grunnkretsnummer,
-                gyldighetsdato = it.grunnkrets.gyldighet.gyldigFra,
-                kontekstType = KontekstEnhetType.GRUNNKRETS,
-                version = it.grunnkrets.version
-            )
-        }
+        return toKontekstEgenskaperForGrunnkretsGrense(grense, gyldighetsdato)
     }
 
     fun toKontekstEgenskaperForStemmekretsGrense(grense: Grense, gyldighetsdato: LocalDate = LocalDate.now()): List<KontekstEgenskaper> {
@@ -47,17 +38,8 @@ class FeatureMapper {
         }
     }
 
-    // Når vi får delt geometri for administrative grenser så må denne returnere både kontekster for grunnkretsene og stemmekretsene
     fun toKontekstEgenskaperForGrense(grense: Grense, gyldighetsdato: LocalDate = LocalDate.now()): List<KontekstEgenskaper> {
-        return grense.gyldigeGrunnkretsGrenseKoblinger(gyldighetsdato).map {
-            it.grenseKoblingToKontekstEgenskaper(
-                lokalid = Lokalid(it.grunnkrets.lokalid),
-                kommuneLokalid = Lokalid(it.grunnkrets.kommuneLokalid.lokalid),
-                kretsNummer = it.grunnkrets.grunnkretsnummer,
-                gyldighetsdato = it.grunnkrets.gyldighet.gyldigFra,
-                kontekstType = KontekstEnhetType.GRUNNKRETS,
-                version = it.grunnkrets.version
-            )
-        }
+        return toKontekstEgenskaperForGrunnkretsGrense(grense, gyldighetsdato)
+            .plus(toKontekstEgenskaperForStemmekretsGrense(grense, gyldighetsdato))
     }
 }

@@ -1,7 +1,7 @@
 package no.kartverket.nibas.controller.klient
 
-import no.kartverket.nibas.api.v1.klient.KommuneApi
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
+import no.kartverket.nibas.api.v1.klient.KommuneApi
 import no.kartverket.nibas.api.v1.response.GrunnkretsRef
 import no.kartverket.nibas.api.v1.response.KommuneRef
 import no.kartverket.nibas.api.v1.response.KommuneResponse
@@ -16,18 +16,16 @@ import no.kartverket.nibas.common.createIdentifikator
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.extensions.flate.toKommuneResponse
-import no.kartverket.nibas.service.StemmekretsService
+import no.kartverket.nibas.extensions.geometry.grenseKoblingToFeature
 import no.kartverket.nibas.service.GrunnkretsService
 import no.kartverket.nibas.service.KommuneService
-import no.kartverket.nibas.extensions.geometry.grenseKoblingToFeature
-import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.service.StemmekretsService
 import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDate
 
 @RestController("KlientKommuneController")
 class KommuneController(
     private val kommuneService: KommuneService,
-    private val kodelisteService: KodelisteService,
     private val grunnkretsService: GrunnkretsService,
     private val stemmekretsService: StemmekretsService,
     private val hrefProvider: HrefProvider
@@ -95,7 +93,8 @@ private fun Grunnkrets.toGrunnkretsRef(identifikator: Identifikator, grunnkretsS
         href = hrefProvider.getHref(identifikator),
         kommunenummer = this.getKommune(identifikator.gyldighetsdato)?.let { Kommunenummer(it.kommunenummerUuid, it.kommunenummer) }
             ?: Kommunenummer(id = "Ukjent", kodeverdi = "Ukjent"),
-        antallFramtidigeVersjoner = antallFramtidigeVersjoner
+        antallFramtidigeVersjoner = antallFramtidigeVersjoner,
+        version = this.version
     )
 }
 

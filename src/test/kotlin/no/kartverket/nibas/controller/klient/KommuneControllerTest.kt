@@ -14,9 +14,9 @@ import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
-import no.kartverket.nibas.service.StemmekretsService
 import no.kartverket.nibas.service.GrunnkretsService
 import no.kartverket.nibas.service.KommuneService
+import no.kartverket.nibas.service.StemmekretsService
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
@@ -107,6 +107,7 @@ class KommuneControllerTest : NibasMvcTest() {
                         href = href,
                         antallFramtidigeVersjoner = 0,
                         kommunenummer = Kommunenummer("UUID-1", "0301"),
+                        version = grunnkrets.version
                     )),
                 resultMatchers = listOf(status().isOk)
             ))
@@ -134,6 +135,7 @@ class KommuneControllerTest : NibasMvcTest() {
                         href = href,
                         antallFramtidigeVersjoner = 1,
                         kommunenummer = Kommunenummer("UUID-1", "0301"),
+                        version = grunnkrets.version
                     )),
                 resultMatchers = listOf(status().isOk)
             ))
