@@ -29,9 +29,6 @@ class Administrativenhetnavn(
     val lokalid: String = UUID.randomUUID().toString()
 ): Laasbar, Sporbar, Gyldig {
 
-    @Column(name = "objtype")
-    var objtype: String? = null
-
     @Version
     override var version: Int = 1
 
