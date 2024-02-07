@@ -32,7 +32,7 @@ enum class KontekstEnhetType {
  * NB: dbKey brukes som konstant i database-tabellen for grenser (disse må da endres med omhu).
  */
 enum class Grensetype(val value: String, val dbKey: String, val editerbar: Boolean) {
-    Kommunegrense("Kommunegrense", "Kommunegrense", false),
+    Kommunegrense("Kommunegrense", "Kommunegrense", true),
     Fylkesgrense("Fylkesgrense", "Fylkesgrense", false),
     Riksgrense("Riksgrense", "Riksgrense", false),
     AvtaltAvgrensningslinje("AvtaltAvgrensningslinje", "AvtaltAvgrensningslinje", false),

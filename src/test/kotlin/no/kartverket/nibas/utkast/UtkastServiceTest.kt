@@ -148,7 +148,7 @@ internal class UtkastServiceTest {
             .build()
         assertThatThrownBy { utkastService.oppdaterUtkast("123", utkast) }
             .isInstanceOf(BadRequestException::class.java)
-            .hasMessageContaining("Utkast inneholder 5 ikke-redigerbare grenser")
+            .hasMessageContaining("Utkast inneholder 4 ikke-redigerbare grenser")
     }
 
     @Test
@@ -422,7 +422,8 @@ internal class UtkastServiceTest {
                 endredeFeatures = listOf(
                     FeatureBuilder("1").withGrensetype(Grensetype.Grunnkretsgrense).build(),
                     FeatureBuilder("2").withGrensetype(Grensetype.Delomraadegrense).build(),
-                    FeatureBuilder("3").withGrensetype(Grensetype.Stemmekretsgrense).build()
+                    FeatureBuilder("3").withGrensetype(Grensetype.Stemmekretsgrense).build(),
+                    FeatureBuilder("4").withGrensetype(Grensetype.Kommunegrense).build()
                 )
             )
         )
