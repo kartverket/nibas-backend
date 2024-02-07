@@ -26,8 +26,6 @@ class Stemmekrets(
     override val lokalid: String = UUID.randomUUID().toString(),
 ) : KommunalKrets(Flatetype.STEMMEKRETS), KobletTilGrense {
 
-    override var objtype: String? = Flatetype.STEMMEKRETS.name
-
     @Column(name = "stemmekretsnummer", nullable = false)
     var stemmekretsnummer: String? = null
 

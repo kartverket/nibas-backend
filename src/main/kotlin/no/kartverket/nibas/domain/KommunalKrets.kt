@@ -26,9 +26,6 @@ abstract class KommunalKrets(
     @Column(name = "lokalid", nullable = false, updatable = false)
     override val lokalid: String = UUID.randomUUID().toString()
 
-    @Column(name = "objtype")
-    var objtype: String? = type.name
-
     @Embedded
     override var auditInfo: AuditInfo = AuditInfo()
 

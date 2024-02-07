@@ -35,9 +35,6 @@ abstract class StatistiskEnhet(
 
     override var version: Int = 1
 
-    @Column(name = "objtype")
-    var objtype: String? = null
-
     @Column(name = "datafangstdato")
     override var datafangstdato: ZonedDateTime? = null
 
