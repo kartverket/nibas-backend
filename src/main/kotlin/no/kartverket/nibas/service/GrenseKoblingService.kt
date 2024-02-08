@@ -102,17 +102,6 @@ class GrenseKoblingService {
         }
     }
 
-    fun getRetningMedKlokken(grense: Grense, forrigeGrense: Grense): Boolean {
-        val grenseSittStartPunktToucherForrigeGrense = grense.grense.startPoint == forrigeGrense.grense.startPoint || grense.grense.startPoint == forrigeGrense.grense.endPoint
-        val grenseSittEndePunktToucherForrigeGrense = grense.grense.endPoint == forrigeGrense.grense.startPoint || grense.grense.endPoint == forrigeGrense.grense.endPoint
-
-        if (!grenseSittEndePunktToucherForrigeGrense && !grenseSittStartPunktToucherForrigeGrense) {
-            throw RuntimeException("Den nye grensen rører ikke forrige grense i hverken startpunkt eller endepunkt. Dette tyder på noe feil med algoritumen som bygger opp grensene.")
-        }
-
-        return grenseSittStartPunktToucherForrigeGrense
-    }
-
     fun oppdaterGrenseKoblingAttributterForFlater(flater: Set<Flate>, gyldighetsDato: LocalDate) {
         flater
             .filter { (it.type == Flatetype.GRUNNKRETS || it.type == Flatetype.STEMMEKRETS) }
@@ -169,7 +158,7 @@ class GrenseKoblingService {
                         mapLineStringTilGrenseMedAttributter(
                             grense = hullGrenseForLineString,
                             rekkefolge = index,
-                            retningMedKlokken = getRetningMedKlokken(hullGrenseForLineString, finnGrenseMedLineString(forrigeLineString, grenser)),
+                            retningMedKlokken = getRetningMedKlokken(hullGrenseForLineString, finnGrenseMedLineString(forrigeLineString, grenser), hullPolygonLS.size, index),
                             flateIndeks = flateIndeks,
                             hullIndeks = hullIndeks
                         )
@@ -184,7 +173,7 @@ class GrenseKoblingService {
                     mapLineStringTilGrenseMedAttributter(
                         grense = skallGrenseForLineString,
                         rekkefolge = index,
-                        retningMedKlokken = getRetningMedKlokken(skallGrenseForLineString, finnGrenseMedLineString(forrigeLineString, grenser)),
+                        retningMedKlokken = getRetningMedKlokken(skallGrenseForLineString, finnGrenseMedLineString(forrigeLineString, grenser), skallPolygonLS.size, index),
                         flateIndeks = flateIndeks,
                         hullIndeks = null
                     )
@@ -192,6 +181,28 @@ class GrenseKoblingService {
         }
 
         return grenserMedAttributter
+    }
+
+    private fun getRetningMedKlokken(grense: Grense, forrigeGrense: Grense, antallGrenser: Int, grenseIndex: Int): Boolean {
+        val grenseSittStartPunktToucherForrigeGrense = grense.grense.startPoint == forrigeGrense.grense.startPoint || grense.grense.startPoint == forrigeGrense.grense.endPoint
+        val grenseSittEndePunktToucherForrigeGrense = grense.grense.endPoint == forrigeGrense.grense.startPoint || grense.grense.endPoint == forrigeGrense.grense.endPoint
+
+        if(antallGrenser == 1) {
+            return true
+        }
+
+        if (antallGrenser == 2) {
+            if (grenseIndex == 0) {
+                return true
+            }
+            return grense.grense.startPoint == forrigeGrense.grense.endPoint
+        }
+
+        if (!grenseSittEndePunktToucherForrigeGrense && !grenseSittStartPunktToucherForrigeGrense) {
+            throw RuntimeException("Den nye grensen rører ikke forrige grense i hverken startpunkt eller endepunkt. Dette tyder på noe feil med algoritmen som bygger opp grensene.")
+        }
+
+        return grenseSittStartPunktToucherForrigeGrense
     }
 
     private fun finnGrenseMedLineString(linestring: LineString, grenser: List<Grense>): Grense {

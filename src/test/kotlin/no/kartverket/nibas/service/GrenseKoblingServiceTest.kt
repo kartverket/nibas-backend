@@ -73,6 +73,59 @@ class GrenseKoblingServiceTest {
         }
     }
 
+    @Test
+    fun `dannGrenseKoblingAttributterForGrenser skal håndtere polygoner med kun 1 grenser`(){
+        val kretsMedKun2Grenser = listOf(
+            Grense(grensetype = Grensetype.Grunnkretsgrense)
+                .apply {
+                    grense = GrenseHelper.geometryFactory.createLineString(
+                        arrayOf(
+                            Coordinate(0.0, 0.0),
+                            Coordinate(100.0, 0.0),
+                            Coordinate(100.0, 100.0),
+                            Coordinate(0.0, 0.0)
+                        )
+                    )
+                }
+        )
+
+        val result = grenseKoblingService.dannGrenseKoblingAttributterForGrenser(kretsMedKun2Grenser)
+
+        assertThat(result).hasSize(1)
+        assertThat(result[0].attributter.retningMedKlokken).isTrue()
+    }
+
+    @Test
+    fun `dannGrenseKoblingAttributterForGrenser skal håndtere polygoner med kun 2 grenser`(){
+        val kretsMedKun2Grenser = listOf(
+            Grense(grensetype = Grensetype.Grunnkretsgrense)
+                .apply {
+                    grense = GrenseHelper.geometryFactory.createLineString(
+                        arrayOf(
+                            Coordinate(0.0, 0.0),
+                            Coordinate(100.0, 0.0),
+                            Coordinate(200.0, 0.0)
+                        )
+                    )
+                },
+            Grense(grensetype = Grensetype.Grunnkretsgrense)
+                .apply {
+                    grense = GrenseHelper.geometryFactory.createLineString(
+                        arrayOf(
+                            Coordinate(0.0, 0.0),
+                            Coordinate(100.0, 200.0),
+                            Coordinate(200.0, 0.0)
+                        )
+                    )
+                }
+        )
+
+        val result = grenseKoblingService.dannGrenseKoblingAttributterForGrenser(kretsMedKun2Grenser)
+
+        assertThat(result).hasSize(2)
+        assertThat(result[0].attributter.retningMedKlokken).isNotEqualTo(result[1].attributter.retningMedKlokken)
+    }
+
     private fun mockPolygon(coordinatePairs: List<Pair<Coordinate, Coordinate>>, gyldigFra: LocalDate, grensetype: Grensetype, medReversering: Boolean): List<Grense> {
 
         val grenser = coordinatePairs.mapIndexed { index, pair ->

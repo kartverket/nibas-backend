@@ -118,6 +118,53 @@ internal class GeometryFunctionsKtTest {
     }
 
     @Test
+    fun `getGrenserIRiktigRekkefoelge skal fungere med polygoner med kun 1 grense`() {
+        val skallGrenser = listOf(
+            lagLineString(
+                Coordinate(0.0, 0.0),
+                Coordinate(0.0, 100.0),
+                Coordinate(100.0, 100.0),
+                Coordinate(100.0, 0.0),
+                Coordinate(0.0, 0.0),
+            )
+        )
+
+        val result = getGrenserIRiktigRekkefoelge(skallGrenser)
+        assertThat(result).hasSize(1)
+    }
+
+    @Test
+    fun `getGrenserIRiktigRekkefoelge skal håndtere enklaver på kun 1 grense`() {
+        val skallGrenser = listOf(
+            lagLineString(
+                Coordinate(0.0, 0.0),
+                Coordinate(0.0, 100.0),
+            ),
+            lagLineString(
+                Coordinate(0.0, 100.0),
+                Coordinate(100.0, 100.0),
+            ),
+            lagLineString(
+                Coordinate(100.0, 100.0),
+                Coordinate(0.0, 0.0),
+            ),
+        )
+
+        val skall2Grenser = listOf(
+            lagLineString(
+                Coordinate(1000.0, 1000.0),
+                Coordinate(1000.0, 2000.0),
+                Coordinate(2000.0, 2000.0),
+                Coordinate(2000.0, 1000.0),
+                Coordinate(1000.0, 1000.0),
+            ),
+        )
+
+        val result = getGrenserIRiktigRekkefoelge(skallGrenser + skall2Grenser)
+        assertThat(result).hasSize(2)
+    }
+
+    @Test
     fun `getGrenserIRiktigRekkefoelge skal klare å bygge opp grensene for en krets med enklave som henger sammen med hovedkretsen i ett punkt som 2 polygoner`() {
         val skallGrenser = listOf(
             lagLineString(

@@ -31,6 +31,14 @@ fun getGrenserIRiktigRekkefoelge(grenser: List<LineString>): List<List<LineStrin
         }
 
         val forrigeGrense = nyeGrenser.last()
+
+        // Hvis en grense biter seg selv i halen så er dette et eget polygon
+        if (forrigeGrense.startPoint == forrigeGrense.endPoint) {
+            nyeGrenser.removeLast()
+            nyeGrenseRinger.add(listOf(forrigeGrense))
+            continue
+        }
+
         val punkterSomErBesoekt = listOf(nyeGrenser.first().startPoint) + nyeGrenser.map { it.endPoint }
         val nesteGrense = grenserSomGjenstaar.firstOrNull { it.startPoint == forrigeGrense.endPoint || it.endPoint == forrigeGrense.endPoint }
             ?: throw RuntimeException("Klarer ikke å sortere grensene slik at de danner et gyldig polygon.")
