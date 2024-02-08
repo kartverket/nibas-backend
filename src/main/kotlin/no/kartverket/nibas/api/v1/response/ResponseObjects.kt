@@ -81,6 +81,9 @@ data class GrunnkretsRef(
     @Schema(description = "Kommunenummeret til grunnkretsen")
     val kommunenummer: Kommunenummer,
 
+    @Schema(description = "ID-en til kommunen til grunnkretsen")
+    val kommuneIdentifikator: ObjektIdentifikator,
+
     @Schema(description = "Nummeret til grunnkretsen")
     val grunnkretsnummer: String,
 
@@ -108,6 +111,9 @@ data class StemmekretsRef(
 
     @Schema(description = "Kommunenummeret til stemmekretsen")
     val kommunenummer: Kommunenummer,
+
+    @Schema(description = "ID-en til kommunen til stemmekretsen")
+    val kommuneIdentifikator: ObjektIdentifikator,
 
     @Schema(description = "Antall publiserte framtidige gyldige versjoner.")
     val antallFramtidigeVersjoner: Int = 0,
@@ -215,6 +221,9 @@ data class GrunnkretsResponse(
     @Schema(description = "Kommunenummeret til grunnkretsen")
     val kommunenummer: Kommunenummer,
 
+    @Schema(description = "ID-en til kommunen til grunnkretsen")
+    val kommuneIdentifikator: ObjektIdentifikator,
+
     @Schema(description = "Typen endring som ble gjort på objektet")
     val endringstype: String?,
 
@@ -250,6 +259,9 @@ data class StemmekretsResponse(
 
     @Schema(description = "Kommunenummeret til stemmekretsen")
     val kommunenummer: Kommunenummer,
+
+    @Schema(description = "ID-en til kommunen til stemmekretsen")
+    val kommuneIdentifikator: ObjektIdentifikator,
 
     @Schema(description = "Tellekretsnummer til stemmekretsen")
     var tellekretsnummer: String? = null,

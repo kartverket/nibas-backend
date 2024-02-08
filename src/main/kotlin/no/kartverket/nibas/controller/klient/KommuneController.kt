@@ -6,6 +6,7 @@ import no.kartverket.nibas.api.v1.response.GrunnkretsRef
 import no.kartverket.nibas.api.v1.response.KommuneRef
 import no.kartverket.nibas.api.v1.response.KommuneResponse
 import no.kartverket.nibas.api.v1.response.Kommunenummer
+import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.response.StemmekretsRef
 import no.kartverket.nibas.api.v1.response.toObjektIdentifikator
 import no.kartverket.nibas.common.HrefProvider
@@ -86,13 +87,15 @@ private fun Grunnkrets.toGrunnkretsRef(identifikator: Identifikator, grunnkretsS
         grunnkretsService.hentAntallGyldigeVersjonerFramITidFor(identifikator)
     }
 
+    val kommuneForGrunnkrets = this.getKommune(identifikator.gyldighetsdato) ?: throw RuntimeException("Fant ikke kommunen til grunnkrets")
+
     return GrunnkretsRef(
         id = identifikator.toObjektIdentifikator(),
         navn = this.grunnkretsnavn!!,
         grunnkretsnummer = this.grunnkretsnummer!!,
         href = hrefProvider.getHref(identifikator),
-        kommunenummer = this.getKommune(identifikator.gyldighetsdato)?.let { Kommunenummer(it.kommunenummerUuid, it.kommunenummer) }
-            ?: Kommunenummer(id = "Ukjent", kodeverdi = "Ukjent"),
+        kommunenummer = kommuneForGrunnkrets.let { Kommunenummer(it.kommunenummerUuid, it.kommunenummer) },
+        kommuneIdentifikator = ObjektIdentifikator(Lokalid(kommuneForGrunnkrets.lokalid), identifikator.gyldighetsdato),
         antallFramtidigeVersjoner = antallFramtidigeVersjoner,
         version = this.version
     )
@@ -105,13 +108,15 @@ fun Stemmekrets.toStemmekretsRef(identifikator: Identifikator, stemmekretsServic
         stemmekretsService.hentAntallGyldigeVersjonerFramITidFor(identifikator)
     }
 
+    val kommuneForStemmekrets = this.getKommune(identifikator.gyldighetsdato) ?: throw RuntimeException("Fant ikke kommunen til stemmekrets")
+
     return StemmekretsRef(
         id = identifikator.toObjektIdentifikator(),
         navn = this.stemmekretsnavn!!,
         nummer = this.stemmekretsnummer!!,
         href = hrefProvider.getHref(identifikator),
-        kommunenummer = this.getKommune(identifikator.gyldighetsdato)?.let { Kommunenummer(it.kommunenummerUuid, it.kommunenummer) }
-            ?: Kommunenummer(id = "Ukjent", kodeverdi = "Ukjent"),
+        kommunenummer = kommuneForStemmekrets.let { Kommunenummer(it.kommunenummerUuid, it.kommunenummer) },
+        kommuneIdentifikator = ObjektIdentifikator(Lokalid(kommuneForStemmekrets.lokalid), identifikator.gyldighetsdato),
         antallFramtidigeVersjoner = antallFramtidigeVersjoner,
         version = this.version,
     )

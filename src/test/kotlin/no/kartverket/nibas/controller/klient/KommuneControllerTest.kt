@@ -107,6 +107,7 @@ class KommuneControllerTest : NibasMvcTest() {
                         href = href,
                         antallFramtidigeVersjoner = 0,
                         kommunenummer = Kommunenummer("UUID-1", "0301"),
+                        kommuneIdentifikator = ObjektIdentifikator(Lokalid(grunnkrets.kommuneLokalid.lokalid), gyldighetsdato = LocalDate.now()),
                         version = grunnkrets.version
                     )),
                 resultMatchers = listOf(status().isOk)
@@ -135,6 +136,7 @@ class KommuneControllerTest : NibasMvcTest() {
                         href = href,
                         antallFramtidigeVersjoner = 1,
                         kommunenummer = Kommunenummer("UUID-1", "0301"),
+                        kommuneIdentifikator = ObjektIdentifikator(Lokalid(grunnkrets.kommuneLokalid.lokalid), gyldighetsdato = LocalDate.now()),
                         version = grunnkrets.version
                     )),
                 resultMatchers = listOf(status().isOk)

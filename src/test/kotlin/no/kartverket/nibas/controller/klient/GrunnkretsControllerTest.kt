@@ -92,7 +92,9 @@ internal class GrunnkretsControllerTest : NibasMvcTest() {
                     grunnkrets1.posisjon.posisjonToFeature(1),
                     grunnkrets1.flateToFeature(1))),
                 datafangstdato = oppdateringstidspunkt,
-                version = 1),
+                version = 1,
+                kommuneIdentifikator = ObjektIdentifikator(Lokalid(kommune.lokalid), kommune.gyldighet.gyldigFra)
+            ),
             GrunnkretsResponse(
                 id = ObjektIdentifikator(lokalId, gyldighetsdato = jan1In2024),
                 navn = "Dåsvatn",
@@ -107,7 +109,9 @@ internal class GrunnkretsControllerTest : NibasMvcTest() {
                     grunnkrets2.posisjon.posisjonToFeature(1),
                     grunnkrets2.flateToFeature(1))),
                 datafangstdato = oppdateringstidspunkt,
-                version = 1)
+                version = 1,
+                kommuneIdentifikator = ObjektIdentifikator(Lokalid(kommune.lokalid), kommune.gyldighet.gyldigFra)
+            )
         )
 
         whenever(grunnkretsService.hentFramtidigeVersjonerForGrunnkrets(any(Identifikator::class.java)))

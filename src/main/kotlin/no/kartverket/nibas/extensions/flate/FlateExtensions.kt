@@ -9,11 +9,13 @@ import no.kartverket.nibas.api.v1.response.GrunnkretsResponse
 import no.kartverket.nibas.api.v1.response.KommuneResponse
 import no.kartverket.nibas.api.v1.response.Kommunenummer
 import no.kartverket.nibas.api.v1.response.KretsResponse
+import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.response.StemmekretsResponse
 import no.kartverket.nibas.api.v1.response.toGyldighetResponse
 import no.kartverket.nibas.api.v1.response.toObjektIdentifikator
 import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
+import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.Fylke
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
@@ -36,22 +38,25 @@ fun Grunnkrets.toKretsResponse(): KretsResponse = KretsResponse(
     )
 )
 
-fun Grunnkrets.toGrunnkretsResponse(identifikator: Identifikator): GrunnkretsResponse = GrunnkretsResponse(
-    id = identifikator.toObjektIdentifikator(),
-    navn = grunnkretsnavn!!,
-    grunnkretsnummer = grunnkretsnummer!!,
-    gyldighet = gyldighet.toGyldighetResponse(),
-    datafangstdato = datafangstdato,
-    kommunenummer = this.getKommune(gyldighet.gyldigFra)?.let { Kommunenummer(it.kommunenummerUuid, it.kommunenummer) }
-        ?: Kommunenummer(id = "Ukjent", kodeverdi = "Ukjent"),
-    endringstype = auditInfo.typeEndring.value,
-    oppdateringsdato = auditInfo.endretdato,
-    features = FeatureCollection(features = listOf(
-        posisjon.posisjonToFeature(version),
-        flateToFeature(version)
-    )),
-    version = version
-)
+fun Grunnkrets.toGrunnkretsResponse(identifikator: Identifikator): GrunnkretsResponse {
+    val kommune = this.getKommune(gyldighet.gyldigFra) ?: throw RuntimeException("Fant ikke kommune for grunnkrets")
+    return GrunnkretsResponse(
+        id = identifikator.toObjektIdentifikator(),
+        navn = grunnkretsnavn!!,
+        grunnkretsnummer = grunnkretsnummer!!,
+        gyldighet = gyldighet.toGyldighetResponse(),
+        datafangstdato = datafangstdato,
+        kommunenummer = kommune.let { Kommunenummer(it.kommunenummerUuid, it.kommunenummer) },
+        kommuneIdentifikator = ObjektIdentifikator(Lokalid(kommune.lokalid), kommune.gyldighet.gyldigFra),
+        endringstype = auditInfo.typeEndring.value,
+        oppdateringsdato = auditInfo.endretdato,
+        features = FeatureCollection(features = listOf(
+            posisjon.posisjonToFeature(version),
+            flateToFeature(version)
+        )),
+        version = version,
+    )
+}
 
 fun Fylke.toFylkeRef(identifikator: Identifikator, fylkeService: FylkeService, hrefProvider: HrefProvider): FylkeRef {
     val antallFramtidigeVersjoner = if (this.gyldighet.gyldigTil == null) {
@@ -113,22 +118,25 @@ fun Stemmekrets.toKretsResponse(): KretsResponse = KretsResponse(
     )
 )
 
-fun Stemmekrets.toStemmekretsResponse(identifikator: Identifikator): StemmekretsResponse = StemmekretsResponse(
-    id = identifikator.toObjektIdentifikator(),
-    stemmekretsnavn = stemmekretsnavn!!,
-    stemmekretsnummer = stemmekretsnummer!!,
-    kommunenummer = this.getKommune(gyldighet.gyldigFra)?.let { Kommunenummer(it.kommunenummerUuid, it.kommunenummer) }
-        ?: Kommunenummer(id = "Ukjent", kodeverdi = "Ukjent"),
-    valgdistriktsnummer = valgdistriktsnummer,
-    tellekretsnavn = tellekretsnavn,
-    gyldighet = gyldighet.toGyldighetResponse(),
-    endringstype = auditInfo.typeEndring.value,
-    oppdateringsdato = auditInfo.endretdato,
-    tellekretsnummer = tellekretsnummer,
-    features = FeatureCollection(features = listOf(
-        posisjon.posisjonToFeature(version),
-        flateToFeature(version)
-    )),
-    datafangstdato = datafangstdato,
-    version = version
-)
+fun Stemmekrets.toStemmekretsResponse(identifikator: Identifikator): StemmekretsResponse {
+    val kommune = getKommune(gyldighet.gyldigFra) ?: throw RuntimeException("Fant ikke kommune for stemmekrets")
+    return StemmekretsResponse(
+        id = identifikator.toObjektIdentifikator(),
+        stemmekretsnavn = stemmekretsnavn!!,
+        stemmekretsnummer = stemmekretsnummer!!,
+        kommunenummer = kommune.let { Kommunenummer(it.kommunenummerUuid, it.kommunenummer) },
+        kommuneIdentifikator = ObjektIdentifikator(Lokalid(kommune.lokalid), kommune.gyldighet.gyldigFra),
+        valgdistriktsnummer = valgdistriktsnummer,
+        tellekretsnavn = tellekretsnavn,
+        gyldighet = gyldighet.toGyldighetResponse(),
+        endringstype = auditInfo.typeEndring.value,
+        oppdateringsdato = auditInfo.endretdato,
+        tellekretsnummer = tellekretsnummer,
+        features = FeatureCollection(features = listOf(
+            posisjon.posisjonToFeature(version),
+            flateToFeature(version)
+        )),
+        datafangstdato = datafangstdato,
+        version = version
+    )
+}
