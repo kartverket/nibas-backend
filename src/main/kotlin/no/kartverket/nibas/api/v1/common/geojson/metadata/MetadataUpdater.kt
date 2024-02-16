@@ -1,8 +1,9 @@
 package no.kartverket.nibas.api.v1.common.geojson.metadata
 
 import no.kartverket.nibas.domain.CommonMetadataProperties
+import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Grense
-import no.kartverket.nibas.sporing.Gyldighet
+import java.time.LocalDate
 
 /**
  * Hjelpeklasse/mappinglogikk metadata -> grense.
@@ -10,18 +11,18 @@ import no.kartverket.nibas.sporing.Gyldighet
  */
 class MetadataUpdater() {
 
-    fun updateAdministrativGrense(grense: Grense, metadata: AdministrativGrenseMetadata): Grense {
+    fun updateAdministrativGrense(grense: Grense, metadata: AdministrativGrenseMetadata, gyldighetsdato: LocalDate, endringstype: Endringstype): Grense {
         grense.updateWithCommonMetadata(metadata.common)
         updateWithGrenseMetadata(grense, metadata.commonGrense)
-        grense.updateDokumentasjonsreferanser(metadata.dokumentasjonsreferanser)
+        grense.updateDokumentasjonsreferanser(metadata.dokumentasjonsreferanser, gyldighetsdato, endringstype)
 
         return grense
     }
 
-    fun updateRiksgrense(grense: Grense, metadata: RiksgrenseMetadata): Grense {
+    fun updateRiksgrense(grense: Grense, metadata: RiksgrenseMetadata, gyldighetsdato: LocalDate, endringstype: Endringstype): Grense {
         grense.updateWithCommonMetadata(metadata.common)
         updateWithGrenseMetadata(grense, metadata.commonGrense)
-        grense.updateDokumentasjonsreferanser(metadata.dokumentasjonsreferanser)
+        grense.updateDokumentasjonsreferanser(metadata.dokumentasjonsreferanser, gyldighetsdato, endringstype)
         return grense
     }
 
@@ -37,17 +38,17 @@ class MetadataUpdater() {
         return grense
     }
 
-    fun updateAvtaltavgrensningslinje(grense: Grense, metadata: AvtaltAvgrensningslinjeMetadata): Grense {
+    fun updateAvtaltavgrensningslinje(grense: Grense, metadata: AvtaltAvgrensningslinjeMetadata, gyldighetsdato: LocalDate, endringstype: Endringstype): Grense {
         grense.updateWithCommonMetadata(metadata.common)
         updateWithGrenseMetadata(grense, metadata.commonGrense)
-        grense.updateDokumentasjonsreferanser(metadata.dokumentasjonsreferanser)
+        grense.updateDokumentasjonsreferanser(metadata.dokumentasjonsreferanser, gyldighetsdato, endringstype)
         return grense
     }
 
-    fun updateTerritoritalgrense(grense: Grense, metadata: TerritorialgrenseMetadata): Grense {
+    fun updateTerritoritalgrense(grense: Grense, metadata: TerritorialgrenseMetadata, gyldighetsdato: LocalDate, endringstype: Endringstype): Grense {
         grense.updateWithCommonMetadata(metadata.common)
         updateWithGrenseMetadata(grense, metadata.commonGrense)
-        grense.updateDokumentasjonsreferanser(metadata.dokumentasjonsreferanser)
+        grense.updateDokumentasjonsreferanser(metadata.dokumentasjonsreferanser, gyldighetsdato, endringstype)
         return grense
     }
 

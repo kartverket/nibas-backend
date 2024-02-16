@@ -187,7 +187,7 @@ class GrenseKoblingService {
         val grenseSittStartPunktToucherForrigeGrense = grense.grense.startPoint == forrigeGrense.grense.startPoint || grense.grense.startPoint == forrigeGrense.grense.endPoint
         val grenseSittEndePunktToucherForrigeGrense = grense.grense.endPoint == forrigeGrense.grense.startPoint || grense.grense.endPoint == forrigeGrense.grense.endPoint
 
-        if(antallGrenser == 1) {
+        if (antallGrenser == 1) {
             return true
         }
 

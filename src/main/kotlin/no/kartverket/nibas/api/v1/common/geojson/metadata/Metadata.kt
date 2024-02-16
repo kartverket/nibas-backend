@@ -91,7 +91,7 @@ data class AdministrativGrenseMetadata(
     @Schema(description = "Felles metadata-egenskaper for grenser.")
     val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
     @Schema(description = "Henviser til fastsettings- eller lovinformasjon.")
-    var dokumentasjonsreferanser: List<Dokref> = emptyList(),
+    var dokumentasjonsreferanser: List<DokumentasjonsreferanseDTO> = emptyList(),
 ) : Metadata
 
 @Schema(
@@ -104,7 +104,7 @@ data class RiksgrenseMetadata(
     @Schema(description = "Felles metadata-egenskaper for grenser.")
     val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
     @Schema(description = "Henviser til fastsettings- eller lovinformasjon.")
-    var dokumentasjonsreferanser: List<Dokref> = emptyList(),
+    var dokumentasjonsreferanser: List<DokumentasjonsreferanseDTO> = emptyList(),
 ) : Metadata
 
 @Schema(
@@ -117,7 +117,7 @@ data class TerritorialgrenseMetadata(
     @Schema(description = "Felles metadata-egenskaper for grenser.")
     val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
     @Schema(description = "Henviser til fastsettings- eller lovinformasjon.")
-    var dokumentasjonsreferanser: List<Dokref> = emptyList(),
+    var dokumentasjonsreferanser: List<DokumentasjonsreferanseDTO> = emptyList(),
 ) : Metadata
 
 @Schema(
@@ -130,7 +130,7 @@ data class AvtaltAvgrensningslinjeMetadata(
     @Schema(description = "Felles metadata-egenskaper for grenser.")
     val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
     @Schema(description = "Henviser til fastsettings- eller lovinformasjon.")
-    var dokumentasjonsreferanser: List<Dokref> = emptyList(),
+    var dokumentasjonsreferanser: List<DokumentasjonsreferanseDTO> = emptyList(),
 ) : Metadata
 
 @Schema(
@@ -143,7 +143,7 @@ data class GrunnlinjeMetadata(
     @Schema(description = "Felles metadata-egenskaper for grenser.")
     val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
     @Schema(description = "Henviser til fastsettings- eller lovinformasjon.")
-    var dokumentasjonsreferanser: List<Dokref> = emptyList(),
+    var dokumentasjonsreferanser: List<DokumentasjonsreferanseDTO> = emptyList(),
 ) : Metadata
 
 @Schema(
@@ -236,7 +236,7 @@ data class IdentifikatorMedVersjon(
     val version: Int
 )
 
-data class Dokref(
+data class DokumentasjonsreferanseDTO(
     @Schema(description = "ID for dokumentasjonsreferansen.")
     var id: String? = null,
     @Schema(description = "URL til saksdokument.")
@@ -252,7 +252,13 @@ data class Dokref(
     @Schema(description = "Referanse til lov, forskrift, vedtak, dom eller traktat i form av kode som angir type dokument, dato og nummer For eksempel: LOV-2012-09-07-65.")
     var rettskildeId: String? = null,
     @Schema(description = "Navn på lov, forskrift, vedtak, dom eller traktat.")
-    var rettskildeTittel: String
+    var rettskildeTittel: String,
+    @Schema(description = "Tidspunktet når objektet oppstod i den virkelige verden (Vedtakets gyldighet). Påkrevd for alle nye dokumentasjonsreferanser.")
+    var vedtakGyldigFra: LocalDate?,
+    @Schema(description = "Tidspunktet når objektet opphørte å eksistere i den virkelige verden (Vedtakets gyldighet)")
+    var vedtakGyldigTil: LocalDate? = null,
+    @Schema(description = "Egenskap som sier om en dokumentasjonsreferanse skal arkiveres")
+    val shouldArchive: Boolean = false
 )
 
 data class Sporingsinformasjon(

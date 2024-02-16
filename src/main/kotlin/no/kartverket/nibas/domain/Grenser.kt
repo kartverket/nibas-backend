@@ -1,7 +1,7 @@
 package no.kartverket.nibas.domain
 
 import no.kartverket.nibas.api.v1.common.Grensetype
-import no.kartverket.nibas.api.v1.common.geojson.metadata.Dokref
+import no.kartverket.nibas.api.v1.common.geojson.metadata.DokumentasjonsreferanseDTO
 import no.kartverket.nibas.common.ResponseException.BadRequestException
 import no.kartverket.nibas.sporing.AuditInfo
 import no.kartverket.nibas.sporing.Gyldighet
@@ -92,8 +92,10 @@ class Grense(
 
     fun grunnkretser(gyldighetsdato: LocalDate = LocalDate.now()): Set<Grunnkrets> =
         grunnkretser.map { it.grunnkrets }.filter { it.gyldigPaaDato(gyldighetsdato) }.toSet()
+
     fun gyldigeGrunnkretsGrenseKoblinger(gyldighetsdato: LocalDate = LocalDate.now()): Set<GrunnkretsGrenseKobling> =
         grunnkretser.filter { it.grunnkrets.gyldigPaaDato(gyldighetsdato) }.toSet()
+
     fun stemmekretser(gyldighetsdato: LocalDate = LocalDate.now()): Set<Stemmekrets> =
         stemmekretser.map { it.stemmekrets }.filter { it.gyldigPaaDato(gyldighetsdato) }.toSet()
 
@@ -118,7 +120,7 @@ class Grense(
     fun finnFlaterOppTilNasjon(gyldighetsdato: LocalDate = LocalDate.now()): Set<Flate> =
         HashSet(finnFlaterOppTilFylke(gyldighetsdato) + nasjoner(gyldighetsdato))
 
-    fun erAdministrativGrense (): Boolean {
+    fun erAdministrativGrense(): Boolean {
         val adminstrativeGrensetyper = listOf(Grensetype.Kommunegrense, Grensetype.Fylkesgrense, Grensetype.Riksgrense, Grensetype.AvtaltAvgrensningslinje, Grensetype.Territorialgrense)
         return adminstrativeGrensetyper.contains(this.grensetype)
     }
@@ -131,56 +133,89 @@ class Grense(
         this.informasjonstekst = updatedInfo
     }
 
-    fun addDokumentasjonsreferanse(): Dokumentasjonsreferanse {
-        val dokumentasjonsreferanse = Dokumentasjonsreferanse()
+    fun addDokumentasjonsreferanse(lokalid: String? = null): Dokumentasjonsreferanse {
+        val dokumentasjonsreferanse = lokalid?.let { Dokumentasjonsreferanse(lokalid = lokalid) } ?: Dokumentasjonsreferanse()
         this.dokumentasjonsreferanser.add(dokumentasjonsreferanse)
         return dokumentasjonsreferanse
     }
 
-    fun updateDokumentasjonsreferanser(dokRefList: List<Dokref>) {
-        //TODO mangler gyldighet på dokumentasjonsreferanser
+    private fun archiveAndRemoveDokumentasjonsreferanse(dokumentasjonsreferanse: Dokumentasjonsreferanse, gyldigTil: LocalDate) {
+        dokumentasjonsreferanse
+            .gyldighet = dokumentasjonsreferanse.gyldighet.copy(
+            gyldigTil = gyldigTil
+        )
+        this.dokumentasjonsreferanser.removeIf { dokumentasjonsreferanse.id == it.id }
+    }
+
+    private fun createNewVersionOfDokumentasjonsreferanse(dokumentasjonsreferanse: Dokumentasjonsreferanse, dokumentasjonsreferanseDTO: DokumentasjonsreferanseDTO): Dokumentasjonsreferanse? {
+        if (dokumentasjonsreferanse.hasChanges(dokumentasjonsreferanseDTO))
+            addDokumentasjonsreferanse(dokumentasjonsreferanse.lokalid).also {
+                it.dokumentlenker.addAll(dokumentasjonsreferanse.dokumentlenker)
+                it.internReferanserKartverket.addAll(dokumentasjonsreferanse.internReferanserKartverket)
+                setDokrefFields(it, dokumentasjonsreferanseDTO)
+                return it
+            }
+        return null
+    }
+
+    fun updateDokumentasjonsreferanser(dokRefList: List<DokumentasjonsreferanseDTO>, gyldighetsdato: LocalDate, endringstype: Endringstype) {
         dokRefList.forEach { dokRef ->
             val dokRefId = dokRef.id
-            var dokumentasjonsreferanse = this.dokumentasjonsreferanser.find { dokumentasjonsreferanse -> dokumentasjonsreferanse.id == dokRefId }
-            if (dokumentasjonsreferanse == null) { // Legger til ny Dokumentasjonsreferanse hvis id er null
-                if (dokRefId != null) { // Har sendt inn ikke-eksisterende id: Kaster HTTP 400
-                    throw BadRequestException("Non-existing Dokumentasjonsreferanse-id: $dokRefId")
-                }
-                dokumentasjonsreferanse = addDokumentasjonsreferanse()
-            }
+            val persistedDokumentasjonsreferanse = this.dokumentasjonsreferanser.find { dokumentasjonsreferanse -> dokumentasjonsreferanse.id == dokRefId }
+            validateReferanseId(persistedDokumentasjonsreferanse, dokRefId, "Dokumentasjonsreferanse-id eksisterer ikke: $dokRefId")
 
-            dokumentasjonsreferanse.fastsettingsdato = dokRef.fastsettingsdato
-            dokumentasjonsreferanse.fastsettingsmyndighet = dokRef.fastsettingsmyndighet
-            dokumentasjonsreferanse.hjemmel = dokRef.hjemmel
-            dokumentasjonsreferanse.rettskildeid = dokRef.rettskildeId
-            dokumentasjonsreferanse.rettskildetittel = dokRef.rettskildeTittel
-
-            val dokumentlenker = dokumentasjonsreferanse.dokumentlenker
-            dokRef.dokumentlenker.forEach { dokumentLenkeHolder ->
-                val dokumentLenkeHolderId = dokumentLenkeHolder.id
-                var dokumentLink = dokumentlenker.find { dokumentLink -> dokumentLink.id == dokumentLenkeHolderId }
-                if (dokumentLink == null) { // Hvis ny instans, opprettes den
-                    if (dokumentLenkeHolderId != null) { // Har sendt inn ikke-eksisterende id: Kaster HTTP 400
-                        throw BadRequestException("Non-existing DokumentasjonsreferanseDokumentlink-id: $dokumentLenkeHolderId")
+            persistedDokumentasjonsreferanse?.let { oldVersion ->
+                if (!dokRef.shouldArchive)
+                    createNewVersionOfDokumentasjonsreferanse(persistedDokumentasjonsreferanse, dokRef)?.let { newVersion ->
+                        newVersion.gyldighet = Gyldighet(gyldigFra = gyldighetsdato)
+                        newVersion.auditInfo.typeEndring = endringstype
+                        archiveAndRemoveDokumentasjonsreferanse(oldVersion, gyldighetsdato)
                     }
-                    dokumentLink = dokumentasjonsreferanse.addDokumentLenke()
-                }
-                dokumentLink.dokumentlink = dokumentLenkeHolder.beskrivelse
+                else
+                    archiveAndRemoveDokumentasjonsreferanse(oldVersion, gyldighetsdato)
             }
 
-            val internReferanser = dokumentasjonsreferanse.internReferanserKartverket
-            dokRef.internReferanserKartverket.forEach { internRefHolder ->
-                val internRefHolderId = internRefHolder.id
-                var internReferanse = internReferanser.find { internRef -> internRef.id == internRefHolderId }
-                if (internReferanse == null) { // Hvis ny instans, opprettes den
-                    if (internRefHolderId != null) { // Har sendt inn ikke-eksisterende id: Kaster HTTP 400
-                        throw BadRequestException("Non-existing DokumentasjonsreferanseInternReferanseKartverket-id: $internRefHolderId")
-                    }
-                    internReferanse = dokumentasjonsreferanse.addInternReferanse()
-                }
-                internReferanse.internReferanseKartverket = internRefHolder.beskrivelse
-            }
+            persistedDokumentasjonsreferanse ?: addDokumentasjonsreferanse().run { setDokrefFields(this, dokRef) }
         }
+    }
+
+    private fun setDokrefFields(
+        dokumentasjonsreferanse: Dokumentasjonsreferanse,
+        dokRef: DokumentasjonsreferanseDTO
+    ) {
+        dokumentasjonsreferanse.vedtakGyldigFra = dokRef.vedtakGyldigFra ?: throw BadRequestException("\"Gyldig fra\"-dato er påkrevd!")
+        dokumentasjonsreferanse.vedtakGyldigTil = dokRef.vedtakGyldigTil
+        dokumentasjonsreferanse.fastsettingsdato = dokRef.fastsettingsdato
+        dokumentasjonsreferanse.fastsettingsmyndighet = dokRef.fastsettingsmyndighet
+        dokumentasjonsreferanse.hjemmel = dokRef.hjemmel
+        dokumentasjonsreferanse.rettskildeid = dokRef.rettskildeId
+        dokumentasjonsreferanse.rettskildetittel = dokRef.rettskildeTittel
+        val dokumentlenker = dokumentasjonsreferanse.dokumentlenker
+        dokRef.dokumentlenker.forEach { dokumentLenkeHolder ->
+            val dokumentLenkeHolderId = dokumentLenkeHolder.id
+            var dokumentLink = dokumentlenker.find { dokumentLink -> dokumentLink.id == dokumentLenkeHolderId }
+
+            validateReferanseId(dokumentLink, dokumentLenkeHolderId, "DokumentasjonsreferanseDokumentlink-id eksisterer ikke: $dokumentLenkeHolderId")
+
+            dokumentLink = dokumentLink ?: dokumentasjonsreferanse.addDokumentLenke()
+            dokumentLink.dokumentlink = dokumentLenkeHolder.beskrivelse
+        }
+
+        val internReferanser = dokumentasjonsreferanse.internReferanserKartverket
+        dokRef.internReferanserKartverket.forEach { internRefHolder ->
+            val internRefHolderId = internRefHolder.id
+            var internReferanse = internReferanser.find { internRef -> internRef.id == internRefHolderId }
+
+            validateReferanseId(internReferanse, internRefHolderId, "DokumentasjonsreferanseInternReferanseKartverket-id  eksisterer ikke: $internRefHolderId")
+
+            internReferanse = internReferanse ?: dokumentasjonsreferanse.addInternReferanse()
+            internReferanse.internReferanseKartverket = internRefHolder.beskrivelse
+        }
+    }
+
+    private fun <T> validateReferanseId(referanse: T, id: String?, exceptionMessage: String) {
+        if (referanse == null && id != null)
+            throw BadRequestException(exceptionMessage)
     }
 
     fun harGrenseTypeContainedInSet(grensetyper: Set<Grensetype>): Boolean = grensetyper.contains(this.grensetype)

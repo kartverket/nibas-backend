@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.metadata.AdministrativGrenseMetadata
-import no.kartverket.nibas.api.v1.common.geojson.metadata.Dokref
+import no.kartverket.nibas.api.v1.common.geojson.metadata.DokumentasjonsreferanseDTO
 import no.kartverket.nibas.api.v1.common.geojson.metadata.MetadataMapper
 import no.kartverket.nibas.api.v1.common.geojson.metadata.TekstHolder
 import no.kartverket.nibas.builders.FeatureBuilder
@@ -72,11 +72,13 @@ class GrenseControllerActualDBTest {
                 informasjon = beskrivelse
             ),
             dokumentasjonsreferanser = listOf(
-                Dokref(
+                DokumentasjonsreferanseDTO(
                     dokumentlenker = listOf(TekstHolder(beskrivelse = dokumentLink)),
                     fastsettingsmyndighet = fastsettingsmyndighet,
                     rettskildeId = rettskildeId,
-                    rettskildeTittel = rettskildeTittel
+                    rettskildeTittel = rettskildeTittel,
+                    vedtakGyldigFra = LocalDate.now(),
+                    vedtakGyldigTil = LocalDate.now().plusDays(1)
                 )
             )
         )
