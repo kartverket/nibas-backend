@@ -6,14 +6,14 @@ import no.kartverket.nibas.MockResponseAsserts
 import no.kartverket.nibas.NibasMvcTest
 import no.kartverket.nibas.api.v1.request.OppdaterUtkastRequest
 import no.kartverket.nibas.api.v1.request.OpprettUtkastRequest
-import no.kartverket.nibas.api.v1.response.ApiErrorResponse
-import no.kartverket.nibas.api.v1.response.AuditInfoResponse
-import no.kartverket.nibas.api.v1.response.OptimistiskLaarResponse
-import no.kartverket.nibas.api.v1.response.OptimistiskLaarWrapper
-import no.kartverket.nibas.api.v1.response.ErrorDescription
-import no.kartverket.nibas.api.v1.response.UtkastOpprettetResponse
-import no.kartverket.nibas.api.v1.response.UtkastRef
-import no.kartverket.nibas.api.v1.response.UtkastResponse
+import no.kartverket.nibas.api.v1.klient.response.ApiErrorResponse
+import no.kartverket.nibas.api.v1.klient.response.AuditInfoResponse
+import no.kartverket.nibas.api.v1.klient.response.OptimistiskLaasResponse
+import no.kartverket.nibas.api.v1.klient.response.OptimistiskLaasWrapper
+import no.kartverket.nibas.api.v1.klient.response.ErrorDescription
+import no.kartverket.nibas.api.v1.klient.response.UtkastOpprettetResponse
+import no.kartverket.nibas.api.v1.klient.response.UtkastRef
+import no.kartverket.nibas.api.v1.klient.response.UtkastResponse
 import no.kartverket.nibas.builders.FylkeBuilder
 import no.kartverket.nibas.builders.KommuneRequestBuilder
 import no.kartverket.nibas.builders.UtkastRequestBuilder
@@ -240,9 +240,9 @@ internal class UtkastControllerTest : NibasMvcTest() {
         post(
             url = publiserUrl,
             responseAsserts = MockResponseAsserts(
-                expectedResponseObject = OptimistiskLaarWrapper(
+                expectedResponseObject = OptimistiskLaasWrapper(
                     optimisticLockExceptions = listOf(
-                        OptimistiskLaarResponse(
+                        OptimistiskLaasResponse(
                             id = fylkeId,
                             type = "Fylke",
                             gjeldendeVersjon = 4,

@@ -2,18 +2,17 @@ package no.kartverket.nibas.extensions.flate
 
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.common.Fylkesnummer
+import no.kartverket.nibas.api.v1.common.Kommunenummer
+import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
-import no.kartverket.nibas.api.v1.response.FylkeRef
-import no.kartverket.nibas.api.v1.response.FylkeResponse
-import no.kartverket.nibas.api.v1.response.GrunnkretsResponse
-import no.kartverket.nibas.api.v1.response.KommuneRef
-import no.kartverket.nibas.api.v1.response.KommuneResponse
-import no.kartverket.nibas.api.v1.response.Kommunenummer
-import no.kartverket.nibas.api.v1.response.KretsResponse
-import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
-import no.kartverket.nibas.api.v1.response.StemmekretsResponse
-import no.kartverket.nibas.api.v1.response.toGyldighetResponse
-import no.kartverket.nibas.api.v1.response.toObjektIdentifikator
+import no.kartverket.nibas.api.v1.klient.response.FylkeRef
+import no.kartverket.nibas.api.v1.klient.response.FylkeResponse
+import no.kartverket.nibas.api.v1.klient.response.GrunnkretsResponse
+import no.kartverket.nibas.api.v1.klient.response.KommuneRef
+import no.kartverket.nibas.api.v1.klient.response.KommuneResponse
+import no.kartverket.nibas.api.v1.klient.response.StemmekretsResponse
+import no.kartverket.nibas.api.v1.klient.response.toGyldighetResponse
+import no.kartverket.nibas.api.v1.klient.response.toObjektIdentifikator
 import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
@@ -26,20 +25,6 @@ import no.kartverket.nibas.extensions.geometry.posisjonToFeature
 import no.kartverket.nibas.service.FylkeService
 import no.kartverket.nibas.service.KommuneService
 import java.time.LocalDate
-
-fun Grunnkrets.toKretsResponse(): KretsResponse = KretsResponse(
-    id = lokalid,
-    navn = grunnkretsnavn!!,
-    nummer = grunnkretsnummer!!,
-    kommunenummer = this.getKommune(gyldighet.gyldigFra)?.let { Kommunenummer(it.kommunenummerUuid, it.kommunenummer) }
-        ?: Kommunenummer(id = "Ukjent", kodeverdi = "Ukjent"),
-    features = FeatureCollection(
-        features = listOf(
-            posisjon.posisjonToFeature(version),
-            flateToFeature(version)
-        )
-    )
-)
 
 fun Grunnkrets.toGrunnkretsResponse(identifikator: Identifikator): GrunnkretsResponse {
     val kommune = this.getKommune(gyldighet.gyldigFra) ?: throw RuntimeException("Fant ikke kommune for grunnkrets")
@@ -81,7 +66,6 @@ fun Fylke.toFylkeRef(identifikator: Identifikator, fylkeService: FylkeService, h
     )
 }
 
-
 fun Fylke.toFylkeResponse(identifikator: Identifikator): FylkeResponse = FylkeResponse(
     id = identifikator.toObjektIdentifikator(),
     administrativenhetnavn = getAdministrativenhetNavn(identifikator.gyldighetsdato)
@@ -119,20 +103,6 @@ fun Kommune.toKommuneResponse(identifikator: Identifikator, kommunenummer: Kommu
     oppdateringsdato = auditInfo.endretdato,
     features = FeatureCollection(features = listOf(posisjon.posisjonToFeature(version), flateToFeature(version))),
     version = version
-)
-
-fun Stemmekrets.toKretsResponse(): KretsResponse = KretsResponse(
-    id = lokalid,
-    navn = stemmekretsnavn!!,
-    nummer = stemmekretsnummer!!,
-    kommunenummer = this.getKommune(gyldighet.gyldigFra)?.let { Kommunenummer(id = it.kommunenummerUuid, kodeverdi = it.kommunenummer) }
-        ?: Kommunenummer(id = "Ukjent", kodeverdi = "Ukjent"),
-    features = FeatureCollection(
-        features = listOf(
-            posisjon.posisjonToFeature(version),
-            flateToFeature(version)
-        )
-    )
 )
 
 fun Stemmekrets.toStemmekretsResponse(identifikator: Identifikator): StemmekretsResponse {

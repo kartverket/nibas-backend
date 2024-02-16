@@ -3,9 +3,9 @@ package no.kartverket.nibas.controller.klient
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.klient.NasjonApi
-import no.kartverket.nibas.api.v1.response.NasjonRef
-import no.kartverket.nibas.api.v1.response.NasjonResponse
-import no.kartverket.nibas.api.v1.response.toObjektIdentifikator
+import no.kartverket.nibas.api.v1.klient.response.NasjonRef
+import no.kartverket.nibas.api.v1.klient.response.NasjonResponse
+import no.kartverket.nibas.api.v1.klient.response.toObjektIdentifikator
 import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
@@ -18,7 +18,7 @@ import no.kartverket.nibas.extensions.geometry.grenseKoblingToFeature
 import no.kartverket.nibas.extensions.geometry.posisjonToFeature
 import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDate
-import no.kartverket.nibas.api.v1.response.NasjonRef as NasjonRefResponse
+import no.kartverket.nibas.api.v1.klient.response.NasjonRef as NasjonRefResponse
 
 @RestController
 class NasjonController(

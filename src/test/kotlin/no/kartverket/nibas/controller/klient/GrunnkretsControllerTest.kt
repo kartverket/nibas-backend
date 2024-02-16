@@ -4,11 +4,11 @@ import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import no.kartverket.nibas.MockResponseAsserts
 import no.kartverket.nibas.NibasMvcTest
+import no.kartverket.nibas.api.v1.common.GyldighetResponse
+import no.kartverket.nibas.api.v1.common.Kommunenummer
+import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
-import no.kartverket.nibas.api.v1.response.GrunnkretsResponse
-import no.kartverket.nibas.api.v1.response.GyldighetResponse
-import no.kartverket.nibas.api.v1.response.Kommunenummer
-import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
+import no.kartverket.nibas.api.v1.klient.response.GrunnkretsResponse
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.common.Lokalid

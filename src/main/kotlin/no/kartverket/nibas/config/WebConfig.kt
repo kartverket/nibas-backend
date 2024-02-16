@@ -24,8 +24,7 @@ class WebConfig (
     @Bean
     fun kodelisteService(landKodeRepository: LandKodeRepository): KodelisteService {
         return DefaultKodelisteService(
-            KodelisteFetcher(geoNorgeWebClient()),
-            landKodeRepository)
+            KodelisteFetcher(geoNorgeWebClient()))
     }
 
     /**

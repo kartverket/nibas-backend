@@ -6,10 +6,6 @@ interface KodelisteService {
      */
     fun getKommunenummerIdByCodeValue(codeValue: String): String
 
-    fun getCodeValueByKommunenummerId(kommunenummerId: String): String
-
-    fun getCodeValueByFylkesnummerId(fylkesnummerId: String): String?
-
     /**
      * Throws NoSuchElementException hvis ikke match
      */
@@ -27,9 +23,5 @@ interface KodelisteService {
      */
     fun clearCachedeKodelister()
 
-    fun getKommunenumre(): KodelisteRespons
-    fun getFylkesnumre(): KodelisteRespons
     fun getMaalemetodeKoder(): KodelisteRespons
-    fun getLandkoder(): KodelisteRespons
-    fun getGrensetyper(): KodelisteRespons
 }

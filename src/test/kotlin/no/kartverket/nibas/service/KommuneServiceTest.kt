@@ -8,7 +8,6 @@ import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.builders.KommuneRequestBuilder
 import no.kartverket.nibas.builders.StemmekretsBuilder
-import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
@@ -34,7 +33,6 @@ class KommuneServiceTest {
     private val kommuneRepositoryMock = mockk<KommuneRepository>()
     private val fylkeRepositoryMock = mockk<FylkeRepository>()
     private val unikLokalidRepositoryMock = mockk<UnikLokalidRepository>()
-    private val hrefProviderMock = mockk<HrefProvider>()
     private val administrativenhetnavnRepositoryMock = mockk<AdministrativenhetnavnRepository>()
     private val administrativenhetnavnServiceMock = mockk<AdministrativenhetnavnService>()
     val kodelisteServiceMock = mockk<KodelisteService>()

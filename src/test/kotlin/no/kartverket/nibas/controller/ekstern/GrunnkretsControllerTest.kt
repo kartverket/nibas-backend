@@ -5,7 +5,7 @@ import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import no.kartverket.nibas.NibasMvcTest
 import no.kartverket.nibas.api.v1.common.Grensetype
-import no.kartverket.nibas.api.v1.response.KretsResponse
+import no.kartverket.nibas.api.v1.ekstern.response.EksternKretsResponse
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.KretsResponseBuilder
@@ -160,7 +160,7 @@ internal class GrunnkretsControllerTest : NibasMvcTest() {
             .getContentAsString(Charsets.UTF_8)
     }
 
-    private fun grunnkretsKretsResponse(grunnkrets: Grunnkrets): KretsResponse {
+    private fun grunnkretsKretsResponse(grunnkrets: Grunnkrets): EksternKretsResponse {
         return KretsResponseBuilder(grunnkrets = grunnkrets).buildForGrunnkrets()
     }
 

@@ -5,7 +5,7 @@ import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import no.kartverket.nibas.NibasMvcTest
 import no.kartverket.nibas.api.v1.common.Grensetype
-import no.kartverket.nibas.api.v1.response.KretsResponse
+import no.kartverket.nibas.api.v1.ekstern.response.EksternKretsResponse
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.KretsResponseBuilder
 import no.kartverket.nibas.builders.StemmekretsBuilder
@@ -170,7 +170,7 @@ internal class StemmekretsControllerTest : NibasMvcTest() {
             .build()
     }
 
-    private fun stemmekretsKretsResponse(stemmekrets: Stemmekrets): KretsResponse {
+    private fun stemmekretsKretsResponse(stemmekrets: Stemmekrets): EksternKretsResponse {
         return KretsResponseBuilder(
             stemmekrets = stemmekrets)
             .buildForStemmekrets()

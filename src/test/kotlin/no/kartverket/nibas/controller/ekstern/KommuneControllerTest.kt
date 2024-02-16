@@ -5,7 +5,7 @@ import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import no.kartverket.nibas.NibasMvcTest
 import no.kartverket.nibas.api.v1.common.Flatetype
-import no.kartverket.nibas.api.v1.response.KretsResponse
+import no.kartverket.nibas.api.v1.ekstern.response.EksternKretsResponse
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.builders.KretsResponseBuilder
@@ -183,11 +183,11 @@ class KommuneControllerTest : NibasMvcTest() {
             .getContentAsString(Charsets.UTF_8)
     }
 
-    private fun stemmekretsKretsResponse(stemmekrets: Stemmekrets): KretsResponse {
+    private fun stemmekretsKretsResponse(stemmekrets: Stemmekrets): EksternKretsResponse {
         return KretsResponseBuilder(stemmekrets = stemmekrets).buildForStemmekrets()
     }
 
-    private fun grunnkretsKretsResponse(grunnkrets: Grunnkrets): KretsResponse {
+    private fun grunnkretsKretsResponse(grunnkrets: Grunnkrets): EksternKretsResponse {
         return KretsResponseBuilder(grunnkrets = grunnkrets).buildForGrunnkrets()
     }
 

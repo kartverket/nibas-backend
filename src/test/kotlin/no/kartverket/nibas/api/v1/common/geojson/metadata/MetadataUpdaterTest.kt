@@ -27,11 +27,7 @@ import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.*
 
-
 internal class MetadataUpdaterTest {
-
-    @Mock
-    private lateinit var landKodeRepositoryMock: LandKodeRepository
 
     @Mock
     private lateinit var kodelisteHrefProviderMock: KodelisteHrefProviderI
@@ -55,10 +51,6 @@ internal class MetadataUpdaterTest {
         .build()
 
     private val maalemetodeHref = "maalemetodeHref"
-    private val terrengDetaljHref = "terrengHref"
-    private val noeyaktighetHref = "href2"
-    private val landkodeHref = "landkodeHref"
-    private val fastsettingstypeHref = "fastHref"
 
     private val territorialgrenseMetadata = TerritorialgrenseMetadata(
         common = expectedCommonMetadata(),
@@ -81,12 +73,7 @@ internal class MetadataUpdaterTest {
     fun beforeEach() {
         MockitoAnnotations.openMocks(this)
         metadataUpdater = MetadataUpdater()
-
-        `when`(kodelisteHrefProviderMock.terrengDetaljHref()).thenReturn(terrengDetaljHref)
-        `when`(kodelisteHrefProviderMock.noeyaktighetsklasseHref()).thenReturn(noeyaktighetHref)
         `when`(kodelisteHrefProviderMock.maalemetodeKodeHref()).thenReturn(maalemetodeHref)
-        `when`(kodelisteHrefProviderMock.landkodeHref()).thenReturn(landkodeHref)
-        `when`(kodelisteHrefProviderMock.fastsettingstypeKodeHref()).thenReturn(fastsettingstypeHref)
     }
 
     @Test

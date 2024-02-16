@@ -1,12 +1,14 @@
-package no.kartverket.nibas.api.v1.response
+package no.kartverket.nibas.api.v1.klient.response
 
 import io.swagger.v3.oas.annotations.media.Schema
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.common.Fylkesnummer
+import no.kartverket.nibas.api.v1.common.GyldighetResponse
+import no.kartverket.nibas.api.v1.common.Kommunenummer
+import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.common.Identifikator
-import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.sporing.Gyldighet
 import org.springframework.http.HttpStatus
 import java.time.LocalDate
@@ -279,34 +281,6 @@ data class StemmekretsResponse(
     val version: Int
 )
 
-@Schema(description = "Representasjon av en krets. Response-type kun for Matrikkelen. Kan være grunnkrets, stemmekrets etc.")
-data class KretsResponse(
-    @Schema(description = "Lokalid-en til kretsen.")
-    val id: String,
-
-    @Schema(description = "Navnet på kretsen.")
-    val navn: String,
-
-    @Schema(description = "Nummeret til kretsen.")
-    val nummer: String,
-
-    @Schema(description = "Kommunenummeret til kretsen.")
-    val kommunenummer: Kommunenummer,
-
-    @Schema(description = "Geometrien til kretsen, dvs representasjonspunkt og flaten")
-    val features: FeatureCollection
-)
-
-@Schema(description = "Representasjon av et kommunenummer")
-data class Kommunenummer(
-
-    @Schema(description = "Unik UUID for kommunenummeret")
-    val id: String,
-
-    @Schema(description = "Det faktiske kommunenummeret")
-    val kodeverdi: String
-)
-
 @Schema(description = "Returtype for opprettelse av utkast")
 data class UtkastOpprettetResponse(
     @Schema(description = "Unik uuid for utkastet")
@@ -341,14 +315,14 @@ data class AuditInfoResponse(
     val oppdateringsdato: ZonedDateTime
 )
 
-data class OptimistiskLaarWrapper(
+data class OptimistiskLaasWrapper(
     @Schema(description = "HttpStatus for responsen.")
     val httpStatus: HttpStatus = HttpStatus.CONFLICT,
     @Schema(description = "Feil som har oppstått pga optimistisk lås.")
-    val optimisticLockExceptions: List<OptimistiskLaarResponse> = emptyList(),
+    val optimisticLockExceptions: List<OptimistiskLaasResponse> = emptyList(),
 )
 
-data class OptimistiskLaarResponse(
+data class OptimistiskLaasResponse(
     // TODO: Bruke ObjektIdentifikator også her
     @Schema(description = "Identifikatoren til objektet som er utdatert.")
     val id: String,
@@ -385,17 +359,7 @@ data class ApiErrorResponse(
     val errorDescription: ErrorDescription,
 )
 
-data class ObjektIdentifikator(val lokalid: Lokalid, val gyldighetsdato: LocalDate)
-
 fun Identifikator.toObjektIdentifikator(): ObjektIdentifikator = ObjektIdentifikator(this.lokalid, this.gyldighetsdato)
-fun ObjektIdentifikator.toIdentifikator(): Identifikator = Identifikator(this.lokalid, this.gyldighetsdato)
-
-data class GyldighetResponse(
-    @Schema(description = "Tidspunktet objektet er gyldig fra")
-    val gyldigFra: LocalDate,
-    @Schema(description = "Tidspunktet objektet er gyldig til. Kan være tomt/løpende.")
-    val gyldigTil: LocalDate?,
-)
 
 data class AuthZStatusResponse(
     @Schema(description = "Status for autorisering")

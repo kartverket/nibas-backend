@@ -2,8 +2,6 @@ package no.kartverket.nibas.api.v1.common
 
 import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
 import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
-import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
-
 
 data class UnikKretsDelingEndring(
     val opprinneligKrets: IdentifikatorMedVersjon,

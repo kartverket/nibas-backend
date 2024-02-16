@@ -10,10 +10,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import no.kartverket.nibas.api.v1.DefaultFeatureCollectionApiResponses
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
-import no.kartverket.nibas.api.v1.response.GrunnkretsRef
-import no.kartverket.nibas.api.v1.response.KommuneRef
-import no.kartverket.nibas.api.v1.response.KommuneResponse
-import no.kartverket.nibas.api.v1.response.StemmekretsRef
+import no.kartverket.nibas.api.v1.klient.response.GrunnkretsRef
+import no.kartverket.nibas.api.v1.klient.response.KommuneRef
+import no.kartverket.nibas.api.v1.klient.response.KommuneResponse
+import no.kartverket.nibas.api.v1.klient.response.StemmekretsRef
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import java.time.LocalDate
-import java.util.*
 
 @RequestMapping("/v1/kommuner")
 @Tag(
@@ -96,6 +95,17 @@ interface KommuneApi {
         @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?
     ): List<GrunnkretsRef>
 
+    @Operation(summary = "Hent kommunes stemmekretser", description = "Henter alle stemmekretser som tilhører en kommune.")
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            description = "Successful operation",
+            content = [Content(
+                mediaType = "application/json",
+                array = ArraySchema(schema = Schema(implementation = StemmekretsRef::class))
+            )]
+        )
+    )
     @GetMapping("/{id}/stemmekretser", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun hentKommunesStemmekretser(
         @Parameter(description = "ID til kommunen man vil hente stemmekretsene til") @PathVariable(name = "id") lokalid: String,

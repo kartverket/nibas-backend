@@ -5,10 +5,10 @@ import no.kartverket.nibas.api.v1.klient.UtkastApi
 import no.kartverket.nibas.api.v1.request.OppdaterUtkastRequest
 import no.kartverket.nibas.api.v1.request.OpprettUtkastRequest
 import no.kartverket.nibas.api.v1.request.PubliserUtkastRequest
-import no.kartverket.nibas.api.v1.response.AuditInfoResponse
-import no.kartverket.nibas.api.v1.response.UtkastOpprettetResponse
-import no.kartverket.nibas.api.v1.response.UtkastRef
-import no.kartverket.nibas.api.v1.response.UtkastResponse
+import no.kartverket.nibas.api.v1.klient.response.AuditInfoResponse
+import no.kartverket.nibas.api.v1.klient.response.UtkastOpprettetResponse
+import no.kartverket.nibas.api.v1.klient.response.UtkastRef
+import no.kartverket.nibas.api.v1.klient.response.UtkastResponse
 import no.kartverket.nibas.common.CurrentTime
 import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.domain.utkast.Utkast

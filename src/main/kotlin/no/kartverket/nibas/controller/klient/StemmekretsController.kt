@@ -2,7 +2,7 @@ package no.kartverket.nibas.controller.klient
 
 import no.kartverket.nibas.api.v1.klient.StemmekretsApi
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
-import no.kartverket.nibas.api.v1.response.StemmekretsResponse
+import no.kartverket.nibas.api.v1.klient.response.StemmekretsResponse
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.NotFoundException
@@ -10,14 +10,12 @@ import no.kartverket.nibas.common.createIdentifikator
 import no.kartverket.nibas.extensions.flate.toStemmekretsResponse
 import no.kartverket.nibas.service.StemmekretsService
 import no.kartverket.nibas.extensions.geometry.grenseKoblingToFeature
-import no.kartverket.nibas.kodelister.KodelisteService
 import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDate
 
 @RestController("KlientStemmekretsController")
 class StemmekretsController(
-    private val stemmekretsService: StemmekretsService,
-    private val kodelisteService: KodelisteService,
+    private val stemmekretsService: StemmekretsService
 ) : StemmekretsApi {
 
     override fun hentStemmekrets(lokalid: String, gyldighetsdato: LocalDate?): StemmekretsResponse {

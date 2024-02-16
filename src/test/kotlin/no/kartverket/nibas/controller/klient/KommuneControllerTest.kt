@@ -5,9 +5,9 @@ import io.mockk.every
 import no.kartverket.nibas.MockResponseAsserts
 import no.kartverket.nibas.NibasMvcTest
 import no.kartverket.nibas.api.v1.common.Grensetype
-import no.kartverket.nibas.api.v1.response.GrunnkretsRef
-import no.kartverket.nibas.api.v1.response.Kommunenummer
-import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
+import no.kartverket.nibas.api.v1.common.Kommunenummer
+import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
+import no.kartverket.nibas.api.v1.klient.response.GrunnkretsRef
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
@@ -113,7 +113,8 @@ class KommuneControllerTest : NibasMvcTest() {
                         kommunenummer = Kommunenummer("UUID-1", "0301"),
                         kommuneIdentifikator = ObjektIdentifikator(Lokalid(grunnkrets.kommuneLokalid.lokalid), gyldighetsdato = LocalDate.now()),
                         version = grunnkrets.version
-                    )),
+                    )
+                ),
                 resultMatchers = listOf(status().isOk)
             ))
     }
@@ -142,7 +143,8 @@ class KommuneControllerTest : NibasMvcTest() {
                         kommunenummer = Kommunenummer("UUID-1", "0301"),
                         kommuneIdentifikator = ObjektIdentifikator(Lokalid(grunnkrets.kommuneLokalid.lokalid), gyldighetsdato = LocalDate.now()),
                         version = grunnkrets.version
-                    )),
+                    )
+                ),
                 resultMatchers = listOf(status().isOk)
             ))
     }

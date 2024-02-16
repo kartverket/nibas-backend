@@ -1,12 +1,7 @@
 package no.kartverket.nibas.api.v1.common.geojson.metadata
 
-import no.kartverket.nibas.api.v1.FASTSETTINGSTYPE_PATH
-import no.kartverket.nibas.api.v1.GRENSESTATUSKODE_PATH
 import no.kartverket.nibas.api.v1.KODELISTE_BASE_URL
-import no.kartverket.nibas.api.v1.LANDKODE_PATH
 import no.kartverket.nibas.api.v1.MAALEMETODE_KODE_PATH
-import no.kartverket.nibas.api.v1.NOEYAKTIGHETSKLASSEKODE_PATH
-import no.kartverket.nibas.api.v1.TERRENGDETALJKODE_PATH
 import no.kartverket.nibas.domain.CommonMetadataProperties
 import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.Grense
@@ -85,21 +80,11 @@ class MetadataMapper(private val kodelisteHrefProvider: KodelisteHrefProviderI =
  * Interface virker unødvendig, men alternativet er å åpne klassen som heller ikke er ønskelig. (Mockito og final class)
  */
 interface KodelisteHrefProviderI {
-    fun terrengDetaljHref(): String
-    fun landkodeHref(): String
-    fun noeyaktighetsklasseHref(): String
     fun maalemetodeKodeHref(): String
-    fun fastsettingstypeKodeHref(): String
-    fun grensestatusKodeHref(): String
 }
 
 class KodelisteHrefProvider : KodelisteHrefProviderI {
-    override fun terrengDetaljHref(): String = hrefWithSubPath(TERRENGDETALJKODE_PATH)
-    override fun landkodeHref(): String = hrefWithSubPath(LANDKODE_PATH)
-    override fun noeyaktighetsklasseHref(): String = hrefWithSubPath(NOEYAKTIGHETSKLASSEKODE_PATH)
     override fun maalemetodeKodeHref(): String = hrefWithSubPath(MAALEMETODE_KODE_PATH)
-    override fun fastsettingstypeKodeHref(): String = hrefWithSubPath(FASTSETTINGSTYPE_PATH)
-    override fun grensestatusKodeHref(): String = hrefWithSubPath(GRENSESTATUSKODE_PATH)
 
     private fun hrefWithSubPath(subPath: String) = ServletUriComponentsBuilder.fromCurrentContextPath()
         .path(KODELISTE_BASE_URL)

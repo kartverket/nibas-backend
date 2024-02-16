@@ -10,8 +10,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import no.kartverket.nibas.api.v1.DefaultFeatureCollectionApiResponses
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
-import no.kartverket.nibas.api.v1.response.KretsResponse
-import no.kartverket.nibas.api.v1.response.StemmekretsResponse
+import no.kartverket.nibas.api.v1.ekstern.response.EksternKretsResponse
+import no.kartverket.nibas.api.v1.ekstern.response.EksternStemmekretsResponse
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import java.time.LocalDate
-import java.util.*
 
 @RequestMapping("/v1/ekstern/stemmekretser")
 @Tag(
@@ -36,7 +35,7 @@ interface StemmekretsApi {
             content = [
                 Content(
                     mediaType = "application/json",
-                    array = ArraySchema(schema = Schema(implementation = KretsResponse::class))
+                    array = ArraySchema(schema = Schema(implementation = EksternKretsResponse::class))
                 )
             ]
         ),
@@ -45,7 +44,7 @@ interface StemmekretsApi {
     @GetMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
     fun hentStemmekretserForIds(@Parameter(description = "ID-ene til stemmekretsene man vil hente") @RequestParam ids: Set<String>,
                                 @Parameter(description = "Eventuell gyldighetsdato for stemmekrets (default = dagens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-                                @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?): List<KretsResponse>
+                                @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?): List<EksternKretsResponse>
 
     @Operation(summary = "Hent en stemmekrets med gitt id", description = "Henter stemmekrets med gitt id")
     @ApiResponses(
@@ -55,7 +54,7 @@ interface StemmekretsApi {
             content = [
                 Content(
                     mediaType = "application/json",
-                    schema = Schema(implementation = StemmekretsResponse::class)
+                    schema = Schema(implementation = EksternStemmekretsResponse::class)
                 )
             ]
         ),
@@ -66,7 +65,7 @@ interface StemmekretsApi {
                         @Parameter(description = "Eventuell gyldighetsdato for stemmekrets (default = dagens dato")
                         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
                         @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?
-    ): StemmekretsResponse
+    ): EksternStemmekretsResponse
 
     @Operation(
         summary = "Hent grensene til en gitt stemmekrets",

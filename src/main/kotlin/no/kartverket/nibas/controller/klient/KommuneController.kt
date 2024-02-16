@@ -1,14 +1,14 @@
 package no.kartverket.nibas.controller.klient
 
+import no.kartverket.nibas.api.v1.common.Kommunenummer
+import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.klient.KommuneApi
-import no.kartverket.nibas.api.v1.response.GrunnkretsRef
-import no.kartverket.nibas.api.v1.response.KommuneRef
-import no.kartverket.nibas.api.v1.response.KommuneResponse
-import no.kartverket.nibas.api.v1.response.Kommunenummer
-import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
-import no.kartverket.nibas.api.v1.response.StemmekretsRef
-import no.kartverket.nibas.api.v1.response.toObjektIdentifikator
+import no.kartverket.nibas.api.v1.klient.response.GrunnkretsRef
+import no.kartverket.nibas.api.v1.klient.response.KommuneRef
+import no.kartverket.nibas.api.v1.klient.response.KommuneResponse
+import no.kartverket.nibas.api.v1.klient.response.StemmekretsRef
+import no.kartverket.nibas.api.v1.klient.response.toObjektIdentifikator
 import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
@@ -16,6 +16,7 @@ import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.common.createIdentifikator
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Stemmekrets
+import no.kartverket.nibas.extensions.flate.toKommuneRef
 import no.kartverket.nibas.extensions.flate.toKommuneRef
 import no.kartverket.nibas.extensions.flate.toKommuneResponse
 import no.kartverket.nibas.extensions.geometry.grenseKoblingToFeature
