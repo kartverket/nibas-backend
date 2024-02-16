@@ -74,12 +74,14 @@ class NasjonServiceTest {
                 .withKommune(KommuneBuilder()
                     .withGrunnkrets(GrunnkretsBuilder()
                         .withGrenser(
-                            Grense(grensetype = Grensetype.Riksgrense),
-                            Grense(grensetype = Grensetype.Riksgrense),
-                            Grense(grensetype = Grensetype.Riksgrense),
-                            Grense(grensetype = Grensetype.Territorialgrense),
-                            Grense(grensetype = Grensetype.Territorialgrense),
-                            Grense(grensetype = Grensetype.AvtaltAvgrensningslinje),
+                            listOf(
+                                Grense(grensetype = Grensetype.Riksgrense),
+                                Grense(grensetype = Grensetype.Riksgrense),
+                                Grense(grensetype = Grensetype.Riksgrense),
+                                Grense(grensetype = Grensetype.Territorialgrense),
+                                Grense(grensetype = Grensetype.Territorialgrense),
+                                Grense(grensetype = Grensetype.AvtaltAvgrensningslinje)
+                            )
                         )
                         .build())
                     .build())

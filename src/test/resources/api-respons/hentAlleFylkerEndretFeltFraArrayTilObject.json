@@ -1,0 +1,52 @@
+[
+  {
+    "id": {
+      "lokalid": {
+        "value": "6fa6cac4-9f86-4cbf-9ae4-716eb5059541"
+      },
+      "gyldighetsdato": "2024-02-15"
+    },
+    "navn": [
+      {
+        "navn": "Oslo",
+        "spraak": "nor",
+        "version": 1,
+        "rekkefoelge": null
+      }
+    ],
+    "href": "http://kartverket.no",
+    "fylkesnummer": [
+      {
+        "id": "fylkesnummer_id",
+        "kodeverdi": "03"
+      },
+      {
+        "id": "fylkesnummer_navn",
+        "navn": "Oslo"
+      }
+    ],
+    "antallFramtidigeVersjoner": 0
+  },
+  {
+    "id": {
+      "lokalid": {
+        "value": "e70c69ba-5bea-48a8-952c-b4860ada5afa"
+      },
+      "gyldighetsdato": "2024-02-07"
+    },
+    "navn": [
+      {
+        "navn": "Rogaland",
+        "spraak": "nor",
+        "version": 1,
+        "rekkefoelge": null
+      }
+    ],
+    "href": "http://kartverket.no",
+    "fylkesnummer": {
+      "id": "fylkesnummer_id",
+      "kodeverdi": "11"
+    },
+    "antallFramtidigeVersjoner": 0
+  }
+]

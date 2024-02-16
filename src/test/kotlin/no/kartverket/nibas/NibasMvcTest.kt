@@ -3,12 +3,15 @@ package no.kartverket.nibas
 import com.fasterxml.jackson.databind.ObjectMapper
 import no.kartverket.nibas.config.WebSecurityConfig
 import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.utils.IdType
+import no.kartverket.nibas.utils.sammenlignJsonFeltnavn
 import org.assertj.core.api.Assertions.assertThat
 import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.boot.test.mock.mockito.MockBean
+import org.springframework.core.io.DefaultResourceLoader
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
@@ -16,6 +19,7 @@ import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.ResultMatcher
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+import java.nio.charset.Charset
 
 
 @ActiveProfiles("dev", "security-off", "humanReadableLog")
@@ -32,6 +36,10 @@ open class NibasMvcTest {
     @MockBean
     lateinit var kodelisteServiceMock: KodelisteService
 
+    fun get(url: String): MvcResult {
+        return perform(MockMvcRequestBuilders.get(url), emptyList())
+    }
+
     fun get(url: String, matcher: ResultMatcher) {
         perform(MockMvcRequestBuilders.get(url), matcher)
     }
@@ -41,7 +49,6 @@ open class NibasMvcTest {
         assertResponseObject(mvcResult, responseAsserts)
     }
 
-    fun getWithToken(url: String, token: String, matcher: ResultMatcher) = perform(MockMvcRequestBuilders.get(url).header("Authorization", token), matcher)
     fun put(url: String, expected: ResultMatcher) =
         perform(MockMvcRequestBuilders.put(url), expected)
 
@@ -68,11 +75,37 @@ open class NibasMvcTest {
         testPost(url, requestObject, responseAsserts)
     }
 
-    fun post(url: String, requestObject: Any, expected: ResultMatcher) =
-        perform(MockMvcRequestBuilders.post(url).content(asJson(requestObject)), expected)
-
     fun delete(url: String, responseAsserts: MockResponseAsserts) {
         testDelete(url, responseAsserts)
+    }
+
+    fun validerAtFaktiskResponsMatcherForventetRespons(faktiskRespons: MvcResult, filMedForventetRespons: String, idType: IdType = IdType.ID_DIREKTE) {
+        val mapper = ObjectMapper()
+        val faktiskResponsSomJson = mapper.readTree(faktiskRespons.response.contentAsString)
+
+        val forventetRespons = DefaultResourceLoader().getResource(filMedForventetRespons).getContentAsString(Charset.defaultCharset())
+        val forventetResponsSomJson = mapper.readTree(forventetRespons)
+
+        val resultatAvSammenligning = sammenlignJsonFeltnavn(forventetResponsSomJson, faktiskResponsSomJson, idType)
+        assertThat(resultatAvSammenligning.erLike)
+            .`as`("Resultat: %s", resultatAvSammenligning.resultat)
+            .isTrue()
+    }
+
+    fun validerAtFaktiskResponsIkkeMatcherForventetRespons(faktiskRespons: MvcResult, forventetMelding: String, filMedForventetRespons: String, idType: IdType = IdType.ID_DIREKTE) {
+        val mapper = ObjectMapper()
+        val faktiskResponsSomJson = mapper.readTree(faktiskRespons.response.contentAsString)
+
+        val forventetRespons = DefaultResourceLoader().getResource(filMedForventetRespons).getContentAsString(Charset.defaultCharset())
+        val forventetResponsSomJson = mapper.readTree(forventetRespons)
+
+        val resultatAvSammenligning = sammenlignJsonFeltnavn(forventetResponsSomJson, faktiskResponsSomJson, idType)
+        assertThat(resultatAvSammenligning.erLike)
+            .`as`("Resultat: ${resultatAvSammenligning.resultat}")
+            .isFalse()
+        assertThat(resultatAvSammenligning.resultat.contains(forventetMelding))
+            .`as`("Forventet: $forventetMelding, faktisk: ${resultatAvSammenligning.resultat}")
+            .isTrue()
     }
 
     private fun testPost(

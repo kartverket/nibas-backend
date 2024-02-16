@@ -1,5 +1,7 @@
 package no.kartverket.nibas.controller.klient
 
+import com.ninjasquad.springmockk.MockkBean
+import io.mockk.every
 import no.kartverket.nibas.MockResponseAsserts
 import no.kartverket.nibas.NibasMvcTest
 import no.kartverket.nibas.api.v1.common.Grensetype
@@ -20,32 +22,31 @@ import no.kartverket.nibas.service.StemmekretsService
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
-import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import org.mockito.Mockito.`when` as whenever
 
 @WebMvcTest(KommuneController::class)
 class KommuneControllerTest : NibasMvcTest() {
 
-    @MockBean
+    @MockkBean
     private lateinit var kommuneService: KommuneService
 
-    @MockBean
+    @MockkBean
     private lateinit var grunnkretsService: GrunnkretsService
 
-    @MockBean
+    @MockkBean
     private lateinit var stemmekretsService: StemmekretsService
 
-    @MockBean
+    @MockkBean
     private lateinit var hrefProviderMock: HrefProvider
 
     private val href = "http://finPathTilEtObjektHer"
 
     @BeforeEach
-    fun mockKodelisteService() {
-        whenever(hrefProviderMock.getHref(any(Identifikator::class.java))).thenReturn(href)
+    fun setupMocks() {
+        every { hrefProviderMock.getHref(any<Identifikator>()) } returns href
+        every { kommuneService.hentAntallGyldigeVersjonerFramITidFor(any())} returns 1
     }
 
     @Test
@@ -54,36 +55,39 @@ class KommuneControllerTest : NibasMvcTest() {
             .withNavn("Oslo")
             .build()
 
-        whenever(kommuneService.hentAlleKommuner()).thenReturn(listOf(kommune))
+        every { kommuneService.hentAlleKommuner() } returns listOf(kommune)
         get("/v1/kommuner", status().isOk)
     }
 
     @Test
     fun thatHentEnReturns200_OK() {
-        whenever(kommuneService.hentKommune(any(Identifikator::class.java))).thenReturn(KommuneBuilder.DEFAULT_KOMMUNE)
+        every { kommuneService.hentKommune(any()) } returns KommuneBuilder.DEFAULT_KOMMUNE
         get("/v1/kommuner/1", status().isOk)
     }
 
     @Test
     fun thatHentEnReturns404_NotFound() {
-        whenever(kommuneService.hentKommune(any(Identifikator::class.java))).thenReturn(null)
+        every { kommuneService.hentKommune(any()) } returns null
         get("/v1/kommuner/1", status().isNotFound)
     }
 
     @Test
     fun thatHentGrenserReturns200_Ok() {
-        whenever(
-            kommuneService.hentGrensekoblingerForKommune(any(Identifikator::class.java))
-        ).thenReturn(
-            setOf(GrunnkretsGrenseKobling(grunnkrets = GrunnkretsBuilder().build(),
-                grense = GrenseBuilder().withGrensetype(Grensetype.Kommunegrense).build(), GrenseKoblingAttributter()))
-        )
+        every {
+            kommuneService.hentGrensekoblingerForKommune(any())
+         } returns setOf(
+            GrunnkretsGrenseKobling(
+                grunnkrets = GrunnkretsBuilder().build(),
+                grense = GrenseBuilder().withGrensetype(Grensetype.Kommunegrense).build(),
+                grenseKoblingAttributter = GrenseKoblingAttributter())
+         )
+
         get("/v1/kommuner/1/grenser", status().isOk)
     }
 
     @Test
     fun thatHentGrenserReturns404_NotFound() {
-        whenever(kommuneService.hentGrensekoblingerForKommune(any(Identifikator::class.java))).thenReturn(emptySet())
+        every { kommuneService.hentGrensekoblingerForKommune(any()) } returns emptySet()
         get("/v1/kommuner/1/grenser", status().isNotFound)
     }
 
@@ -94,8 +98,8 @@ class KommuneControllerTest : NibasMvcTest() {
             grunnkretsnavn = "Voi",
             grunnkretsnummer = "8989")
             .build()
-        whenever(kommuneService.hentKommunesGrunnkretser(any(Identifikator::class.java))).thenReturn(listOf(grunnkrets))
-        whenever(grunnkretsService.hentAntallGyldigeVersjonerFramITidFor(any(Identifikator::class.java))).thenReturn(1)
+        every { kommuneService.hentKommunesGrunnkretser(any()) } returns listOf(grunnkrets)
+        every { grunnkretsService.hentAntallGyldigeVersjonerFramITidFor(any()) } returns 1
 
         get("/v1/kommuner/1/grunnkretser?gyldighetsdato=${formattedDateString(LocalDate.now())}",
             responseAsserts = MockResponseAsserts(
@@ -123,8 +127,8 @@ class KommuneControllerTest : NibasMvcTest() {
             gyldigFra = LocalDate.of(2022, 1,1),
             gyldigTil = LocalDate.of(2024, 1, 1)
         ).build()
-        whenever(kommuneService.hentKommunesGrunnkretser(any(Identifikator::class.java))).thenReturn(listOf(grunnkrets))
-        whenever(grunnkretsService.hentAntallGyldigeVersjonerFramITidFor(any(Identifikator::class.java))).thenReturn(1)
+        every { kommuneService.hentKommunesGrunnkretser(any()) } returns listOf(grunnkrets)
+        every { grunnkretsService.hentAntallGyldigeVersjonerFramITidFor(any()) } returns 1
 
         get("/v1/kommuner/1/grunnkretser?gyldighetsdato=${formattedDateString(LocalDate.now())}",
             responseAsserts = MockResponseAsserts(

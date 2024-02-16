@@ -116,8 +116,8 @@ class GrunnkretsBuilder(
         return this
     }
 
-    fun withGrenser(vararg grenser: Grense): GrunnkretsBuilder {
-        this.grenser = this.grenser.plus(grenser.toList())
+    fun withGrenser(grenser: List<Grense>): GrunnkretsBuilder {
+        this.grenser = this.grenser.plus(grenser)
         return this
     }
 

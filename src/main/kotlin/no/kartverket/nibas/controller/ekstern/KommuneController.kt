@@ -7,15 +7,16 @@ import no.kartverket.nibas.api.v1.response.KommuneResponse
 import no.kartverket.nibas.api.v1.response.Kommunenummer
 import no.kartverket.nibas.api.v1.response.KretsResponse
 import no.kartverket.nibas.api.v1.response.StemmekretsResponse
+import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.common.createIdentifikator
 import no.kartverket.nibas.extensions.flate.toGrunnkretsResponse
+import no.kartverket.nibas.extensions.flate.toKommuneRef
 import no.kartverket.nibas.extensions.flate.toKommuneResponse
 import no.kartverket.nibas.extensions.flate.toKretsResponse
 import no.kartverket.nibas.extensions.flate.toStemmekretsResponse
-import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.service.KommuneService
 import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDate
@@ -23,18 +24,20 @@ import java.time.LocalDate
 @RestController("EksternKommuneController")
 class KommuneController(
     private val kommuneService: KommuneService,
-    private val kodelisteService: KodelisteService,
+    private val hrefProvider: HrefProvider
 ) : KommuneApi {
 
     override fun hentKommuner(fylkeId: String?, gyldighetsdato: LocalDate?): List<KommuneRef> {
         val datoToUse: LocalDate = gyldighetsdato ?: LocalDate.now()
         return if (fylkeId == null) {
-            kommuneService.hentAlleKommuner(datoToUse).map {
-                kommuneService.kommuneToKommuneRef(it, datoToUse)
+            val alleKommuner = kommuneService.hentAlleKommuner(datoToUse)
+            val map = alleKommuner.map {
+                it.toKommuneRef(datoToUse, kommuneService, hrefProvider)
             }
+            map
         } else {
             kommuneService.hentKommunerForFylke(Identifikator(Lokalid(fylkeId), datoToUse)).map {
-                kommuneService.kommuneToKommuneRef(it, datoToUse)
+                it.toKommuneRef(datoToUse, kommuneService, hrefProvider)
             }
         }
     }

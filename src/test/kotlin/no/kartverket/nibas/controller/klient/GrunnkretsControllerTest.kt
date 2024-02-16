@@ -1,5 +1,7 @@
 package no.kartverket.nibas.controller.klient
 
+import com.ninjasquad.springmockk.MockkBean
+import io.mockk.every
 import no.kartverket.nibas.MockResponseAsserts
 import no.kartverket.nibas.NibasMvcTest
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
@@ -9,43 +11,44 @@ import no.kartverket.nibas.api.v1.response.Kommunenummer
 import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
-import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
-import no.kartverket.nibas.service.GrunnkretsService
 import no.kartverket.nibas.extensions.geometry.flateToFeature
 import no.kartverket.nibas.extensions.geometry.posisjonToFeature
 import no.kartverket.nibas.kodelister.KodelisteType
 import no.kartverket.nibas.kodelister.MissingKodelisteItemException
+import no.kartverket.nibas.service.GrunnkretsService
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
-import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-import java.time.*
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.Month
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.util.*
-import org.mockito.Mockito.`when` as whenever
 
 @WebMvcTest(GrunnkretsController::class)
 internal class GrunnkretsControllerTest : NibasMvcTest() {
 
-    @MockBean
+    @MockkBean
     private lateinit var grunnkretsService: GrunnkretsService
 
     @Test
     fun hentGrunnkretsReturns200_OK() {
-        whenever(grunnkretsService.hentGrunnkrets(any(Identifikator::class.java))).thenReturn(GrunnkretsBuilder.DEFAULT_GRUNNKRETS)
+        every { grunnkretsService.hentGrunnkrets(any()) } returns GrunnkretsBuilder.DEFAULT_GRUNNKRETS
         get("/v1/grunnkretser/1", status().isOk)
     }
 
     @Test
     fun manglendeItemForKodelisteReturns500_InternalServerError() {
         val id: String = UUID.randomUUID().toString()
-        whenever(grunnkretsService.hentGrunnkrets(any(Identifikator::class.java))).thenThrow(MissingKodelisteItemException(KodelisteType.KOMMUNENUMMER, id))
+        every { grunnkretsService.hentGrunnkrets(any()) } throws MissingKodelisteItemException(KodelisteType.KOMMUNENUMMER, id)
         get("/v1/grunnkretser/$id", status().isInternalServerError)
     }
 
     @Test
     fun hentGrunnkretsMedGyldighetDatoGir200_OK() {
-        whenever(grunnkretsService.hentGrunnkrets(any(Identifikator::class.java))).thenReturn(GrunnkretsBuilder.DEFAULT_GRUNNKRETS)
+        every { grunnkretsService.hentGrunnkrets(any()) } returns GrunnkretsBuilder.DEFAULT_GRUNNKRETS
         get("/v1/grunnkretser/1?gyldigDato=2022-01-01", status().isOk)
     }
 
@@ -114,8 +117,7 @@ internal class GrunnkretsControllerTest : NibasMvcTest() {
             )
         )
 
-        whenever(grunnkretsService.hentFramtidigeVersjonerForGrunnkrets(any(Identifikator::class.java)))
-            .thenReturn(listOf(grunnkrets1, grunnkrets2))
+        every { grunnkretsService.hentFramtidigeVersjonerForGrunnkrets(any())} returns listOf(grunnkrets1, grunnkrets2)
         // Vi GET-er etter framtidige versjoner etter 14.12.22 for lokalid 123
         // Responsen skal da returnere id-ene (123, 1.1.23) og (123, 1.1.24)
         get(

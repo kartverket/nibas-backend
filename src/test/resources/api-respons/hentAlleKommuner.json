@@ -1,0 +1,46 @@
+[
+  {
+    "id": {
+      "lokalid": {
+        "value": "2f8abeb3-f180-4800-84a3-df6653fc9468"
+      },
+      "gyldighetsdato": "2024-02-07"
+    },
+    "navn": [
+      {
+        "navn": "Oslo",
+        "spraak": "nor",
+        "version": 2,
+        "rekkefoelge": null
+      }
+    ],
+    "href": "http://localhost:8080/v1/ekstern/kommuner/2f8abeb3-f180-4800-84a3-df6653fc9468?gyldighetsdato=2024-02-07",
+    "kommunenummer": {
+      "id": "298594a1-a14a-424a-bb18-6fcc4efb77d6",
+      "kodeverdi": "0301"
+    },
+    "antallFramtidigeVersjoner": 0
+  },
+  {
+    "id": {
+      "lokalid": {
+        "value": "25c2b192-c6b5-4d2c-ba4e-08ab31b4432d"
+      },
+      "gyldighetsdato": "2024-02-07"
+    },
+    "navn": [
+      {
+        "navn": "Vegårshei",
+        "spraak": "nor",
+        "version": 2,
+        "rekkefoelge": null
+      }
+    ],
+    "href": "http://localhost:8080/v1/ekstern/kommuner/25c2b192-c6b5-4d2c-ba4e-08ab31b4432d?gyldighetsdato=2024-02-07",
+    "kommunenummer": {
+      "id": "39928521-8328-4e20-a632-b44ef4fe8cfb",
+      "kodeverdi": "4212"
+    },
+    "antallFramtidigeVersjoner": 0
+  }
+]

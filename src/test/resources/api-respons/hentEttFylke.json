@@ -1,0 +1,78 @@
+{
+  "id": {
+    "lokalid": {
+      "value": "6fa6cac4-9f86-4cbf-9ae4-716eb5059541"
+    },
+    "gyldighetsdato": "2024-02-07"
+  },
+  "administrativenhetnavn": [
+    {
+      "navn": "Oslo",
+      "spraak": "nor",
+      "version": 2,
+      "rekkefoelge": null
+    }
+  ],
+  "fylkesnummer": {
+    "id": "44eed5a0-c5b2-46de-b654-60ada5744f0b",
+    "kodeverdi": "03"
+  },
+  "samiskforvaltningsomraade": false,
+  "oppdateringsdato": "2023-11-07T23:33:30.1903+01:00",
+  "features": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "id": null,
+        "properties": {
+          "type": "Posisjon",
+          "srid": 25833,
+          "metadata": null,
+          "kontekstEgenskaper": [],
+          "version": 1,
+          "shouldArchive": false
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            264195.59,
+            6656005
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "id": "6fa6cac4-9f86-4cbf-9ae4-716eb5059541",
+        "properties": {
+          "type": "FYLKE",
+          "srid": 25833,
+          "metadata": {
+            "discriminator": "FlateMetadata",
+            "common": {
+              "identifikasjon": {
+                "lokalid": "6fa6cac4-9f86-4cbf-9ae4-716eb5059541"
+              },
+              "datafangstdato": null,
+              "gyldigFra": "2023-11-07",
+              "gyldigTil": null,
+              "informasjon": null,
+              "sporingsinformasjon": {
+                "oppdateringsdato": "2023-11-07T23:33:30.1903+01:00"
+              },
+              "opphav": null
+            }
+          },
+          "kontekstEgenskaper": [],
+          "version": 4,
+          "shouldArchive": false
+        },
+        "geometry": {
+          "type": "MultiPolygon",
+          "coordinates": []
+        }
+      }
+    ]
+  },
+  "version": 4
+}

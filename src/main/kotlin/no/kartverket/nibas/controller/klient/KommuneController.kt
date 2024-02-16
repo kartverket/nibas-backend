@@ -16,6 +16,7 @@ import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.common.createIdentifikator
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Stemmekrets
+import no.kartverket.nibas.extensions.flate.toKommuneRef
 import no.kartverket.nibas.extensions.flate.toKommuneResponse
 import no.kartverket.nibas.extensions.geometry.grenseKoblingToFeature
 import no.kartverket.nibas.service.GrunnkretsService
@@ -36,11 +37,11 @@ class KommuneController(
         val datoToUse: LocalDate = gyldighetsdato ?: LocalDate.now()
         return if (fylkeId == null) {
             kommuneService.hentAlleKommuner(datoToUse).map {
-                kommuneService.kommuneToKommuneRef(it, datoToUse)
+                it.toKommuneRef(datoToUse, kommuneService, hrefProvider)
             }
         } else {
             kommuneService.hentKommunerForFylke(Identifikator(Lokalid(fylkeId), datoToUse)).map {
-                kommuneService.kommuneToKommuneRef(it, datoToUse)
+                it.toKommuneRef(datoToUse, kommuneService, hrefProvider)
             }
         }
     }

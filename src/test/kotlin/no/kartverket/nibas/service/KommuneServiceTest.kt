@@ -45,8 +45,7 @@ class KommuneServiceTest {
         administrativenhetnavnRepositoryMock,
         unikLokalidRepositoryMock,
         kodelisteServiceMock,
-        administrativenhetnavnServiceMock,
-        hrefProviderMock
+        administrativenhetnavnServiceMock
     )
 
     @BeforeEach
