@@ -4,13 +4,13 @@ import org.springframework.boot.gradle.tasks.bundling.BootJar
 plugins {
     val kotlinPluginVersion = "1.9.22"
 
-    id("org.springframework.boot") version "3.2.1"
+    id("org.springframework.boot") version "3.2.2"
     id("io.spring.dependency-management") version "1.1.4"
     kotlin("jvm") version kotlinPluginVersion
     kotlin("plugin.spring") version kotlinPluginVersion
     kotlin("plugin.jpa") version kotlinPluginVersion
     kotlin("plugin.allopen") version kotlinPluginVersion
-    id("org.flywaydb.flyway") version "10.7.1"
+    id("org.flywaydb.flyway") version "10.8.1"
 }
 
 group = "no.kartverket.nibas"
@@ -55,10 +55,10 @@ configurations["intTestRuntimeOnly"].extendsFrom(configurations.runtimeOnly.get(
 // Definerer versjoner for avhengigheter som ikke dekkes av BOM
 val springdocOpenapiVersion2 = "2.3.0"
 val jtsVersion = "1.19.0"
-val testContainerVersion = "1.19.3"
+val testContainerVersion = "1.19.4"
 val autLibVersion = "2.0.3"
-val flywayVersion = "10.6.0"
-val hypersistenceUtilsHibernate62Version = "3.7.0"
+val flywayVersion = "10.7.1"
+val hypersistenceUtilsHibernate62Version = "3.7.3"
 val springCloudStarterVaultConfigVersion = "4.0.1"
 val spatial4jVersion = "0.8"
 val kotlinxCoroutinesCoreVersion = "1.7.3"
