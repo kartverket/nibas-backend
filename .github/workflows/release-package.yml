@@ -45,6 +45,6 @@ jobs:
       version: ${{ needs.build.outputs.version }}
       deploy_dev: true
       deploy_test: true
-      deploy_prod: true
+      deploy_prod: false
     secrets:
       PAT_TOKEN: ${{ secrets.PAT_ARGOCD }}
