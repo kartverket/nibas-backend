@@ -42,6 +42,7 @@ fun Grunnkrets.toGrunnkretsResponse(identifikator: Identifikator): GrunnkretsRes
             posisjon.posisjonToFeature(version),
             flateToFeature(version)
         )),
+        representasjonspunkt = posisjon.posisjonToFeature(version),
         version = version,
     )
 }
@@ -76,7 +77,8 @@ fun Fylke.toFylkeResponse(identifikator: Identifikator): FylkeResponse = FylkeRe
     ),
     samiskforvaltningsomraade = samiskforvaltningsomraade!!,
     oppdateringsdato = auditInfo.endretdato,
-    features = FeatureCollection(features = listOf((posisjon.posisjonToFeature(version)), flateToFeature(version))),
+    features = FeatureCollection(features = listOf((posisjon.posisjonToFeature(version)))),
+    representasjonspunkt = posisjon.posisjonToFeature(version),
     version = version
 )
 
@@ -102,6 +104,7 @@ fun Kommune.toKommuneResponse(identifikator: Identifikator, kommunenummer: Kommu
     samiskforvaltningsomraade = samiskforvaltningsomraade!!,
     oppdateringsdato = auditInfo.endretdato,
     features = FeatureCollection(features = listOf(posisjon.posisjonToFeature(version), flateToFeature(version))),
+    representasjonspunkt = posisjon.posisjonToFeature(version),
     version = version
 )
 
@@ -111,6 +114,8 @@ fun Stemmekrets.toStemmekretsResponse(identifikator: Identifikator): Stemmekrets
         id = identifikator.toObjektIdentifikator(),
         stemmekretsnavn = stemmekretsnavn!!,
         stemmekretsnummer = stemmekretsnummer!!,
+        navn = stemmekretsnavn!!,
+        nummer = stemmekretsnummer!!,
         kommunenummer = kommune.let { Kommunenummer(it.kommunenummerUuid, it.kommunenummer) },
         kommuneIdentifikator = ObjektIdentifikator(Lokalid(kommune.lokalid), kommune.gyldighet.gyldigFra),
         valgdistriktsnummer = valgdistriktsnummer,
@@ -121,8 +126,8 @@ fun Stemmekrets.toStemmekretsResponse(identifikator: Identifikator): Stemmekrets
         tellekretsnummer = tellekretsnummer,
         features = FeatureCollection(features = listOf(
             posisjon.posisjonToFeature(version),
-            flateToFeature(version)
         )),
+        representasjonspunkt = posisjon.posisjonToFeature(version),
         datafangstdato = datafangstdato,
         version = version
     )

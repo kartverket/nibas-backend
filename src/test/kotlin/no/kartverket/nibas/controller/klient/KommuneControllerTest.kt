@@ -5,9 +5,6 @@ import io.mockk.every
 import no.kartverket.nibas.MockResponseAsserts
 import no.kartverket.nibas.NibasMvcTest
 import no.kartverket.nibas.api.v1.common.Grensetype
-import no.kartverket.nibas.api.v1.common.Kommunenummer
-import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
-import no.kartverket.nibas.api.v1.klient.response.GrunnkretsRef
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
@@ -16,6 +13,7 @@ import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
+import no.kartverket.nibas.extensions.flate.toGrunnkretsResponse
 import no.kartverket.nibas.service.GrunnkretsService
 import no.kartverket.nibas.service.KommuneService
 import no.kartverket.nibas.service.StemmekretsService
@@ -103,48 +101,30 @@ class KommuneControllerTest : NibasMvcTest() {
 
         get("/v1/kommuner/1/grunnkretser?gyldighetsdato=${formattedDateString(LocalDate.now())}",
             responseAsserts = MockResponseAsserts(
-                expectedResponseObject = listOf(
-                    GrunnkretsRef(
-                        id = ObjektIdentifikator(lokalid = Lokalid("123"), gyldighetsdato = LocalDate.now()),
-                        navn = "Voi",
-                        grunnkretsnummer = "8989",
-                        href = href,
-                        antallFramtidigeVersjoner = 0,
-                        kommunenummer = Kommunenummer("UUID-1", "0301"),
-                        kommuneIdentifikator = ObjektIdentifikator(Lokalid(grunnkrets.kommuneLokalid.lokalid), gyldighetsdato = LocalDate.now()),
-                        version = grunnkrets.version
-                    )
-                ),
+                expectedResponseObject = listOf(grunnkrets.toGrunnkretsResponse(Identifikator(Lokalid(grunnkrets.lokalid), LocalDate.now()))),
                 resultMatchers = listOf(status().isOk)
             ))
     }
 
     @Test
     fun hentGrunnkretserForKommuneMedFremtidigeVersjonerGir200_OK() {
+        val kommune = KommuneBuilder()
+            .withGyldigFra(LocalDate.of(2022, 1,1))
+            .build()
+
         val grunnkrets = GrunnkretsBuilder(
             lokalId = Lokalid("123"),
             grunnkretsnavn = "Voi",
             grunnkretsnummer = "8989",
             gyldigFra = LocalDate.of(2022, 1,1),
             gyldigTil = LocalDate.of(2024, 1, 1)
-        ).build()
+        ).withKommune(kommune).build()
         every { kommuneService.hentKommunesGrunnkretser(any()) } returns listOf(grunnkrets)
         every { grunnkretsService.hentAntallGyldigeVersjonerFramITidFor(any()) } returns 1
 
         get("/v1/kommuner/1/grunnkretser?gyldighetsdato=${formattedDateString(LocalDate.now())}",
             responseAsserts = MockResponseAsserts(
-                expectedResponseObject = listOf(
-                    GrunnkretsRef(
-                        id = ObjektIdentifikator(lokalid = Lokalid("123"), gyldighetsdato = LocalDate.now()),
-                        navn = "Voi",
-                        grunnkretsnummer = "8989",
-                        href = href,
-                        antallFramtidigeVersjoner = 1,
-                        kommunenummer = Kommunenummer("UUID-1", "0301"),
-                        kommuneIdentifikator = ObjektIdentifikator(Lokalid(grunnkrets.kommuneLokalid.lokalid), gyldighetsdato = LocalDate.now()),
-                        version = grunnkrets.version
-                    )
-                ),
+                expectedResponseObject = listOf(grunnkrets.toGrunnkretsResponse(Identifikator(lokalid = Lokalid("123"), gyldighetsdato = LocalDate.now()))),
                 resultMatchers = listOf(status().isOk)
             ))
     }

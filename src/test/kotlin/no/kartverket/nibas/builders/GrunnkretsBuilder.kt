@@ -132,6 +132,11 @@ class GrunnkretsBuilder(
         return this
     }
 
+    fun withKommune(kommune: Kommune): GrunnkretsBuilder {
+        this.kommune = kommune
+        return this
+    }
+
     fun withGyldighetsIntervall(pair: Pair<LocalDate, LocalDate?>): GrunnkretsBuilder {
         this.withGyldigFra(pair.first)
             .withGyldigTil(pair.second)

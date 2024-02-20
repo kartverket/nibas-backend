@@ -96,6 +96,7 @@ internal class GrunnkretsControllerTest : NibasMvcTest() {
                     grunnkrets1.flateToFeature(1))),
                 datafangstdato = oppdateringstidspunkt,
                 version = 1,
+                representasjonspunkt = grunnkrets2.posisjon.posisjonToFeature(1),
                 kommuneIdentifikator = ObjektIdentifikator(Lokalid(kommune.lokalid), kommune.gyldighet.gyldigFra)
             ),
             GrunnkretsResponse(
@@ -111,6 +112,7 @@ internal class GrunnkretsControllerTest : NibasMvcTest() {
                 features = FeatureCollection(features = listOf(
                     grunnkrets2.posisjon.posisjonToFeature(1),
                     grunnkrets2.flateToFeature(1))),
+                representasjonspunkt = grunnkrets2.posisjon.posisjonToFeature(1),
                 datafangstdato = oppdateringstidspunkt,
                 version = 1,
                 kommuneIdentifikator = ObjektIdentifikator(Lokalid(kommune.lokalid), kommune.gyldighet.gyldigFra)

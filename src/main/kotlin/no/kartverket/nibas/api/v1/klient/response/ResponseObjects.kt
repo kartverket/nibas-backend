@@ -7,28 +7,13 @@ import no.kartverket.nibas.api.v1.common.GyldighetResponse
 import no.kartverket.nibas.api.v1.common.Kommunenummer
 import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.common.Operasjoner
+import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.sporing.Gyldighet
 import org.springframework.http.HttpStatus
 import java.time.LocalDate
 import java.time.ZonedDateTime
-
-@Schema(description = "En referanse til en nasjon")
-data class NasjonRef(
-
-    @Schema(description = "ID-en til nasjonen")
-    val id: ObjektIdentifikator,
-
-    @Schema(description = "Liste over navn til nasjonen")
-    val navn: List<AdministrativEnhetNavn>,
-
-    @Schema(description = "URL til full representasjon av nasjonen")
-    val href: String,
-
-    @Schema(description = "Antall publiserte framtidige gyldige versjoner.")
-    val antallFramtidigeVersjoner: Int = 0
-)
 
 @Schema(description = "En referanse til et fylke")
 data class FylkeRef(
@@ -68,62 +53,6 @@ data class KommuneRef(
     val antallFramtidigeVersjoner: Int = 0
 )
 
-@Schema(description = "En referanse til en grunnkrets")
-data class GrunnkretsRef(
-
-    @Schema(description = "ID-en til grunnkretsen")
-    val id: ObjektIdentifikator,
-
-    @Schema(description = "Navnet på grunnkretser")
-    val navn: String,
-
-    @Schema(description = "URL til full representasjon av grunnkretsen")
-    val href: String,
-
-    @Schema(description = "Kommunenummeret til grunnkretsen")
-    val kommunenummer: Kommunenummer,
-
-    @Schema(description = "ID-en til kommunen til grunnkretsen")
-    val kommuneIdentifikator: ObjektIdentifikator,
-
-    @Schema(description = "Nummeret til grunnkretsen")
-    val grunnkretsnummer: String,
-
-    @Schema(description = "Antall publiserte framtidige gyldige versjoner.")
-    val antallFramtidigeVersjoner: Int = 0,
-
-    @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
-    val version: Int
-)
-
-@Schema(description = "En referanse til en stemmekrets")
-data class StemmekretsRef(
-
-    @Schema(description = "ID-en til stemmekretsen")
-    val id: ObjektIdentifikator,
-
-    @Schema(description = "Navnet på stemmekretsen")
-    val navn: String,
-
-    @Schema(description = "Nummeret til stemmekretsen")
-    val nummer: String,
-
-    @Schema(description = "URL til full representasjon av stemmekrets")
-    val href: String,
-
-    @Schema(description = "Kommunenummeret til stemmekretsen")
-    val kommunenummer: Kommunenummer,
-
-    @Schema(description = "ID-en til kommunen til stemmekretsen")
-    val kommuneIdentifikator: ObjektIdentifikator,
-
-    @Schema(description = "Antall publiserte framtidige gyldige versjoner.")
-    val antallFramtidigeVersjoner: Int = 0,
-
-    @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
-    val version: Int
-)
-
 @Schema(description = "En referanse til et utkast")
 data class UtkastRef(
     @Schema(description = "ID-en til utkastet")
@@ -134,21 +63,6 @@ data class UtkastRef(
     val href: String,
     @Schema(description = "Tidspunktet utkastet ble opprettet.")
     val opprettetDato: ZonedDateTime,
-)
-
-@Schema(description = "Representasjon av en nasjon")
-data class NasjonResponse(
-    @Schema(description = "ID-en til nasjonen")
-    val id: ObjektIdentifikator,
-
-    @Schema(description = "Liste over navn til nasjonen")
-    val administrativenhetnavn: List<AdministrativEnhetNavn>,
-
-    @Schema(description = "Geometrien til nasjonen. Ikke grenser")
-    val features: FeatureCollection,
-
-    @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
-    val version: Int
 )
 
 @Schema(description = "Representasjon av et fylke")
@@ -170,7 +84,11 @@ data class FylkeResponse(
     val oppdateringsdato: ZonedDateTime,
 
     @Schema(description = "Geometrien til fylket. Ikke grenser")
+    @Deprecated("Bruk heller representasjonspunkt eller hent flaten via eget kall. Dette feltet vil fjernes.")
     val features: FeatureCollection,
+    
+    @Schema(description = "Representasjonspunktet for fylket")
+    val representasjonspunkt: Feature,
 
     @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
     val version: Int
@@ -194,7 +112,11 @@ data class KommuneResponse(
     val oppdateringsdato: ZonedDateTime,
 
     @Schema(description = "Geometrien til kommunen. Ikke grenser")
+    @Deprecated("Bruk heller representasjonspunkt eller hent flaten via eget kall. Dette feltet vil fjernes.")
     val features: FeatureCollection,
+
+    @Schema(description = "Representasjonspunktet for kommunen")
+    val representasjonspunkt: Feature,
 
     @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
     val version: Int
@@ -230,7 +152,11 @@ data class GrunnkretsResponse(
     val endringstype: String?,
 
     @Schema(description = "Geometrien til grunnkretsen, dvs representasjonspunkt og flaten")
+    @Deprecated("Bruk heller representasjonspunkt eller hent flaten via eget kall. Dette feltet vil fjernes.")
     val features: FeatureCollection,
+
+    @Schema(description = "Representasjonspunktet for grunnkretsen")
+    val representasjonspunkt: Feature,
 
     @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
     val version: Int
@@ -259,6 +185,14 @@ data class StemmekretsResponse(
     @Schema(description = "Stemmekretsnummeret til stemmekretsen")
     val stemmekretsnummer: String,
 
+    @Deprecated("Er kun her for bakoverkompabilitet. Fjernes i neste PR")
+    @Schema(description = "Navnet på stemmekretsen")
+    val navn: String,
+
+    @Deprecated("Er kun her for bakoverkompabilitet. Fjernes i neste PR")
+    @Schema(description = "Stemmekretsnummeret til stemmekretsen")
+    val nummer: String,
+
     @Schema(description = "Kommunenummeret til stemmekretsen")
     val kommunenummer: Kommunenummer,
 
@@ -275,7 +209,11 @@ data class StemmekretsResponse(
     var valgdistriktsnummer: String? = null,
 
     @Schema(description = "Geometrien til stemmekretsen, dvs representasjonspunkt og flaten")
+    @Deprecated("Bruk heller representasjonspunkt eller hent flaten via eget kall. Dette feltet vil fjernes.")
     val features: FeatureCollection,
+
+    @Schema(description = "Representasjonspunktet for stemmekretsen")
+    val representasjonspunkt: Feature,
 
     @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
     val version: Int

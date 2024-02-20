@@ -10,10 +10,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import no.kartverket.nibas.api.v1.DefaultFeatureCollectionApiResponses
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
-import no.kartverket.nibas.api.v1.klient.response.GrunnkretsRef
+import no.kartverket.nibas.api.v1.klient.response.GrunnkretsResponse
 import no.kartverket.nibas.api.v1.klient.response.KommuneRef
 import no.kartverket.nibas.api.v1.klient.response.KommuneResponse
-import no.kartverket.nibas.api.v1.klient.response.StemmekretsRef
+import no.kartverket.nibas.api.v1.klient.response.StemmekretsResponse
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
@@ -84,7 +84,7 @@ interface KommuneApi {
             description = "Successful operation",
             content = [Content(
                 mediaType = "application/json",
-                array = ArraySchema(schema = Schema(implementation = GrunnkretsRef::class))
+                array = ArraySchema(schema = Schema(implementation = GrunnkretsResponse::class))
             )]
         )
     )
@@ -93,7 +93,16 @@ interface KommuneApi {
         @Parameter(description = "ID til kommunen man vil hente grunnkretsene til") @PathVariable(name = "id") lokalid: String,
         @Parameter(description = "Eventuell gyldighetsdato for kommune (default = dagens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
         @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?
-    ): List<GrunnkretsRef>
+    ): List<GrunnkretsResponse>
+
+    @Operation(summary = "Henter alle grunnkretsgrensene til en gitt kommune")
+    @DefaultFeatureCollectionApiResponses
+    @GetMapping("/{id}/grunnkretsgrenser", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun hentKommunesGrunnkretsgrenser(
+        @Parameter(description = "ID til kommunen man vil hente grunnkretsgrensene til") @PathVariable(name = "id") lokalid: String,
+        @Parameter(description = "Eventuell gyldighetsdato for kommune (default = dagens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?
+    ): FeatureCollection
 
     @Operation(summary = "Hent kommunes stemmekretser", description = "Henter alle stemmekretser som tilhører en kommune.")
     @ApiResponses(
@@ -102,7 +111,7 @@ interface KommuneApi {
             description = "Successful operation",
             content = [Content(
                 mediaType = "application/json",
-                array = ArraySchema(schema = Schema(implementation = StemmekretsRef::class))
+                array = ArraySchema(schema = Schema(implementation = StemmekretsResponse::class))
             )]
         )
     )
@@ -111,5 +120,14 @@ interface KommuneApi {
         @Parameter(description = "ID til kommunen man vil hente stemmekretsene til") @PathVariable(name = "id") lokalid: String,
         @Parameter(description = "Eventuell gyldighetsdato for kommune (default = dagens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
         @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?
-    ): List<StemmekretsRef>
+    ): List<StemmekretsResponse>
+
+    @Operation(summary = "Henter alle stemmekretsgrensene til en gitt kommune")
+    @DefaultFeatureCollectionApiResponses
+    @GetMapping("/{id}/stemmekretsgrenser", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun hentKommunesStemmekretsgrenser(
+        @Parameter(description = "ID til kommunen man vil hente stemmekretsgrensene til") @PathVariable(name = "id") lokalid: String,
+        @Parameter(description = "Eventuell gyldighetsdato for kommune (default = dagens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?
+    ): FeatureCollection
 }

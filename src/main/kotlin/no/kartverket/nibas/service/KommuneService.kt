@@ -12,11 +12,14 @@ import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Stemmekrets
+import no.kartverket.nibas.domain.StemmekretsGrenseKobling
 import no.kartverket.nibas.domain.UnikLokalid
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.FylkeRepository
+import no.kartverket.nibas.repository.GrunnkretsGrenseKoblingRepository
 import no.kartverket.nibas.repository.KommuneRepository
+import no.kartverket.nibas.repository.StemmekretsGrenseKoblingRepository
 import no.kartverket.nibas.repository.UnikLokalidRepository
 import no.kartverket.nibas.repository.findAllGyldigPaaDato
 import no.kartverket.nibas.repository.findAntallFramtidigeVersjonerForIdentifikator
@@ -37,7 +40,9 @@ class KommuneService(
     private val administrativenhetnavnRepository: AdministrativenhetnavnRepository,
     private var unikLokalidRepository: UnikLokalidRepository,
     private val kodelisteService: KodelisteService,
-    private val administrativenhetnavnService: AdministrativenhetnavnService
+    private val administrativenhetnavnService: AdministrativenhetnavnService,
+    private val grunnkretsGrenseKoblingRepository: GrunnkretsGrenseKoblingRepository,
+    private val stemmekretsGrenseKoblingRepository: StemmekretsGrenseKoblingRepository
 ) {
 
     fun hentAlleKommuner(gyldighetsdato: LocalDate = LocalDate.now()): List<Kommune> = kommuneRepository.findAllGyldigPaaDato(gyldighetsdato)
@@ -52,6 +57,22 @@ class KommuneService(
 
     fun hentGrensekoblingerForKommune(identifikator: Identifikator): Set<GrunnkretsGrenseKobling> {
         return hentKommune(identifikator)?.getGrensekoblinger(identifikator.gyldighetsdato) ?: emptySet()
+    }
+
+    fun hentGrensekoblingerForAlleGrunnkretserIKommune(identifikator: Identifikator): Set<GrunnkretsGrenseKobling> {
+        return hentKommune(identifikator)
+            ?.let { grunnkretsGrenseKoblingRepository.findByGrunnkretsKommuneLokalid(it.kommuneLokalid) }
+            ?.filter { it.grense.gyldigPaaDato(identifikator.gyldighetsdato) && it.grunnkrets.gyldigPaaDato(identifikator.gyldighetsdato) }
+            ?.distinctBy { it.grense.lokalid }
+            ?.toSet() ?: emptySet()
+    }
+
+    fun hentGrensekoblingerForAlleStemmekretserIKommune(identifikator: Identifikator): Set<StemmekretsGrenseKobling> {
+        return hentKommune(identifikator)
+            ?.let { stemmekretsGrenseKoblingRepository.findByStemmekretsKommuneLokalid(it.kommuneLokalid) }
+            ?.filter { it.grense.gyldigPaaDato(identifikator.gyldighetsdato) && it.stemmekrets.gyldigPaaDato(identifikator.gyldighetsdato) }
+            ?.distinctBy { it.grense.lokalid }
+            ?.toSet() ?: emptySet()
     }
 
     @Transactional(readOnly = false)
