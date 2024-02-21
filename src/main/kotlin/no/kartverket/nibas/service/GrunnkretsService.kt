@@ -22,6 +22,8 @@ import no.kartverket.nibas.repository.findAntallFramtidigeVersjonerForIdentifika
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import no.kartverket.nibas.repository.findGyldigObjektPaaGyldighetsdato
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
+import org.locationtech.jts.geom.GeometryFactory
+import org.locationtech.jts.geom.MultiPolygon
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -143,11 +145,15 @@ class GrunnkretsService(
 
         verifiserOptimistiskLaas(kretsDelingEndringRequest.opprinneligKrets.version, grunnkrets)?.throwException()
 
+        val geometryFactory = GeometryFactory()
+
         val nyGrunnkrets = Grunnkrets().apply {
             grunnkretsnavn = kretsDelingEndringRequest.kretsNavn
             grunnkretsnummer = kretsDelingEndringRequest.kretsNummer
             kommuneLokalid = grunnkrets.kommuneLokalid
             utledetFra = grunnkrets
+            omraade = MultiPolygon(arrayOfNulls(0), geometryFactory)
+            posisjon = geometryFactory.createPoint()
             setGyldigFra(delingsDato)
         }
 

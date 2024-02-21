@@ -25,6 +25,8 @@ import no.kartverket.nibas.repository.findAntallFramtidigeVersjonerForIdentifika
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import no.kartverket.nibas.repository.findGyldigObjektPaaGyldighetsdato
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
+import org.locationtech.jts.geom.GeometryFactory
+import org.locationtech.jts.geom.MultiPolygon
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -166,11 +168,15 @@ class StemmekretsService(
 
         verifiserOptimistiskLaas(kretsDelingEndringRequest.opprinneligKrets.version, stemmekrets)?.throwException()
 
+        val geometryFactory = GeometryFactory()
+
         val nyStemmekrets = Stemmekrets().apply {
             stemmekretsnavn = kretsDelingEndringRequest.kretsNavn
             stemmekretsnummer = kretsDelingEndringRequest.kretsNummer
             kommuneLokalid = stemmekrets.kommuneLokalid
             utledetFra = stemmekrets
+            omraade = MultiPolygon(arrayOfNulls(0), geometryFactory)
+            posisjon = geometryFactory.createPoint()
             setGyldigFra(delingsDato)
         }
 
