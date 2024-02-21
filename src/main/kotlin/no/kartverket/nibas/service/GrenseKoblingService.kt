@@ -77,8 +77,10 @@ class GrenseKoblingService {
         gyldighetsDato: LocalDate,
         flaterSomHarFaattNyVersjon: Map<Lokalid, Flate>,
         endringstype: Endringstype
-    ) {
+    ): Map<Lokalid, Flate> {
         //Når grensa tidligere hørte til kretsen er det allerede laget ny versjon av kretsen
+        val nyeVersjonerAvFlater = mutableMapOf<Lokalid, Flate>()
+
         grenseKoblinger.forEach { grenseKobling ->
             when (grenseKobling) {
                 is GrunnkretsGrenseKobling -> {
@@ -87,6 +89,7 @@ class GrenseKoblingService {
                         ?: throw ResponseException.NotFoundException("Fant ikke grunnkrets med lokalid: $lokalidForGrunnkrets")) as Grunnkrets
 
                     nyVersjonAvGrunnkrets.removeGrensekobling(grense)
+                    nyeVersjonerAvFlater[lokalidForGrunnkrets] = nyVersjonAvGrunnkrets
                 }
 
                 is StemmekretsGrenseKobling -> {
@@ -95,11 +98,14 @@ class GrenseKoblingService {
                         ?: throw ResponseException.NotFoundException("Fant ikke stemmekrets med lokalid: $lokalidForStemmekrets")) as Stemmekrets
 
                     nyVersjonAvStemmekrets.removeGrensekobling(grense)
+                    nyeVersjonerAvFlater[lokalidForStemmekrets] = nyVersjonAvStemmekrets
                 }
 
                 else -> throw ResponseException.BadRequestException("Kan kun setter endre tilhørighet på grunnkretsgrenser eller stemmekretsgrenser")
             }
         }
+
+        return nyeVersjonerAvFlater
     }
 
     fun oppdaterGrenseKoblingAttributterForFlater(flater: Set<Flate>, gyldighetsDato: LocalDate) {

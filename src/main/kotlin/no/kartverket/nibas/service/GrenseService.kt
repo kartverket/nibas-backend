@@ -78,7 +78,7 @@ class GrenseService(
         //Her er det bare å oppdatere, kretsene/adm.enhetene fikk ny versjon ved lagring av grenser og grensekoblinger
         grenseKoblingService.oppdaterGrenseKoblingAttributterForFlater(enheterSomSkalFlatedannes, gyldighetsdato)
         flateService.oppdaterFlaterFor(enheterSomSkalFlatedannes)
-
+        throw RuntimeException("FEILER MED VILJE")
         return enheterSomSkalFlatedannes
     }
 
@@ -116,27 +116,29 @@ class GrenseService(
             //Oppretter nye versjoner for alle kretser som den nye grensa skal kobles til
             //Alt av grensekoblinger håndteres av tilhørighet ettersom vi ikke setter noen kretstilhørighet for de nye grensene.
             //Man vil se at den skal ha tilhørigheter fra kontekstegenskapene, men disse er ikke blitt satt og tilhørighetsjobben ordnder opp i dette
-            featureForNyGrense.properties.kontekstEgenskaper.forEach {
-                when (it.type) {
-                    KontekstEnhetType.GRUNNKRETS -> {
-                        val grunnkretsForNyGrense = grunnkretsService.hentGrunnkrets(createIdentifikator(it.id!!.lokalid.value, gyldighetsdato))
-                            ?: throw BadRequestException("En av de innsendte featurene med endring er koblet til en grunnkrets som ikke finnes.")
-                        val grunnkretsLokalid = Lokalid(grunnkretsForNyGrense.lokalid)
-                        flaterSomHarFaattNyVersjon[grunnkretsLokalid] = hentEllerOpprettNyVersjonAvGrunnkrets(
-                            flaterSomHarFaattNyVersjon,
-                            Identifikator(grunnkretsLokalid, gyldighetsdato),
-                            endringstype)
+            featureForNyGrense.properties.kontekstEgenskaper
+                .filter { it.id !== null } // trenger ikke lage ny versjon av nyopprettet krets
+                .forEach {
+                    when (it.type) {
+                        KontekstEnhetType.GRUNNKRETS -> {
+                            val grunnkretsForNyGrense = grunnkretsService.hentGrunnkrets(createIdentifikator(it.id!!.lokalid.value, gyldighetsdato))
+                                ?: throw BadRequestException("En av de innsendte featurene med endring er koblet til en grunnkrets som ikke finnes.")
+                            val grunnkretsLokalid = Lokalid(grunnkretsForNyGrense.lokalid)
+                            flaterSomHarFaattNyVersjon[grunnkretsLokalid] = hentEllerOpprettNyVersjonAvGrunnkrets(
+                                flaterSomHarFaattNyVersjon,
+                                Identifikator(grunnkretsLokalid, gyldighetsdato),
+                                endringstype)
+                        }
+                        KontekstEnhetType.STEMMEKRETS -> {
+                            val stemmekretsForNyGrense = stemmekretsService.hentStemmekrets(createIdentifikator(it.id!!.lokalid.value, gyldighetsdato))
+                                ?: throw BadRequestException("En av de innsendte featurene med endring er koblet til en stemmekrets som ikke finnes.")
+                            val stemmekretsLokalid = Lokalid(stemmekretsForNyGrense.lokalid)
+                            flaterSomHarFaattNyVersjon[stemmekretsLokalid] = hentEllerOpprettNyVersjonAvStemmekrets(
+                                flaterSomHarFaattNyVersjon,
+                                Identifikator(stemmekretsLokalid, gyldighetsdato),
+                                endringstype)
+                        }
                     }
-                    KontekstEnhetType.STEMMEKRETS -> {
-                        val stemmekretsForNyGrense = stemmekretsService.hentStemmekrets(createIdentifikator(it.id!!.lokalid.value, gyldighetsdato))
-                            ?: throw BadRequestException("En av de innsendte featurene med endring er koblet til en stemmekrets som ikke finnes.")
-                        val stemmekretsLokalid = Lokalid(stemmekretsForNyGrense.lokalid)
-                        flaterSomHarFaattNyVersjon[stemmekretsLokalid] = hentEllerOpprettNyVersjonAvStemmekrets(
-                            flaterSomHarFaattNyVersjon,
-                            Identifikator(stemmekretsLokalid, gyldighetsdato),
-                            endringstype)
-                    }
-                }
             }
 
             GrenseMedFeature(nyopprettetGrense, featureForNyGrense)
@@ -294,7 +296,7 @@ class GrenseService(
             val nyeKontekster = KretsReferanser(eksisterende = kontekster.first, nyopprettet = kontekster.second)
 
             evtNyeKretser.putAll(leggTilGrenserForKretserViaKontekstEgenskaper(nyeKontekster, grense, gyldighetsdato, flaterSomHarFaattNyVersjon, endringstype, kontekstEnhetTypeForFeature))
-            grenseKoblingService.fjernGrenseFraKretserViaGrenseKobling(grense, tilhorighetEndringer.frafallende, gyldighetsdato, flaterSomHarFaattNyVersjon, endringstype)
+            evtNyeKretser.putAll(grenseKoblingService.fjernGrenseFraKretserViaGrenseKobling(grense, tilhorighetEndringer.frafallende, gyldighetsdato, flaterSomHarFaattNyVersjon, endringstype))
         }
 
         return evtNyeKretser
