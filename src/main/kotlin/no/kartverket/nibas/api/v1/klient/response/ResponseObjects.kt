@@ -8,7 +8,6 @@ import no.kartverket.nibas.api.v1.common.Kommunenummer
 import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.Feature
-import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.sporing.Gyldighet
 import org.springframework.http.HttpStatus
@@ -82,10 +81,6 @@ data class FylkeResponse(
 
     @Schema(description = "Angir når dette fylket ble sist oppdatert")
     val oppdateringsdato: ZonedDateTime,
-
-    @Schema(description = "Geometrien til fylket. Ikke grenser")
-    @Deprecated("Bruk heller representasjonspunkt eller hent flaten via eget kall. Dette feltet vil fjernes.")
-    val features: FeatureCollection,
     
     @Schema(description = "Representasjonspunktet for fylket")
     val representasjonspunkt: Feature,
@@ -110,10 +105,6 @@ data class KommuneResponse(
 
     @Schema(description = "Angir når denne kommunen ble sist oppdatert")
     val oppdateringsdato: ZonedDateTime,
-
-    @Schema(description = "Geometrien til kommunen. Ikke grenser")
-    @Deprecated("Bruk heller representasjonspunkt eller hent flaten via eget kall. Dette feltet vil fjernes.")
-    val features: FeatureCollection,
 
     @Schema(description = "Representasjonspunktet for kommunen")
     val representasjonspunkt: Feature,
@@ -151,10 +142,6 @@ data class GrunnkretsResponse(
     @Schema(description = "Typen endring som ble gjort på objektet")
     val endringstype: String?,
 
-    @Schema(description = "Geometrien til grunnkretsen, dvs representasjonspunkt og flaten")
-    @Deprecated("Bruk heller representasjonspunkt eller hent flaten via eget kall. Dette feltet vil fjernes.")
-    val features: FeatureCollection,
-
     @Schema(description = "Representasjonspunktet for grunnkretsen")
     val representasjonspunkt: Feature,
 
@@ -185,14 +172,6 @@ data class StemmekretsResponse(
     @Schema(description = "Stemmekretsnummeret til stemmekretsen")
     val stemmekretsnummer: String,
 
-    @Deprecated("Er kun her for bakoverkompabilitet. Fjernes i neste PR")
-    @Schema(description = "Navnet på stemmekretsen")
-    val navn: String,
-
-    @Deprecated("Er kun her for bakoverkompabilitet. Fjernes i neste PR")
-    @Schema(description = "Stemmekretsnummeret til stemmekretsen")
-    val nummer: String,
-
     @Schema(description = "Kommunenummeret til stemmekretsen")
     val kommunenummer: Kommunenummer,
 
@@ -207,10 +186,6 @@ data class StemmekretsResponse(
 
     @Schema(description = "Valgdistriktsnummer til stemmekretsen")
     var valgdistriktsnummer: String? = null,
-
-    @Schema(description = "Geometrien til stemmekretsen, dvs representasjonspunkt og flaten")
-    @Deprecated("Bruk heller representasjonspunkt eller hent flaten via eget kall. Dette feltet vil fjernes.")
-    val features: FeatureCollection,
 
     @Schema(description = "Representasjonspunktet for stemmekretsen")
     val representasjonspunkt: Feature,

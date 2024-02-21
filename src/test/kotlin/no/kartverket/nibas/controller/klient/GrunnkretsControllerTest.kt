@@ -7,12 +7,10 @@ import no.kartverket.nibas.NibasMvcTest
 import no.kartverket.nibas.api.v1.common.GyldighetResponse
 import no.kartverket.nibas.api.v1.common.Kommunenummer
 import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
-import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.klient.response.GrunnkretsResponse
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.common.Lokalid
-import no.kartverket.nibas.extensions.geometry.flateToFeature
 import no.kartverket.nibas.extensions.geometry.posisjonToFeature
 import no.kartverket.nibas.kodelister.KodelisteType
 import no.kartverket.nibas.kodelister.MissingKodelisteItemException
@@ -91,9 +89,6 @@ internal class GrunnkretsControllerTest : NibasMvcTest() {
                 oppdateringsdato = oppdateringstidspunkt,
                 endringstype = "Kvalitetsheving",
                 kommunenummer = Kommunenummer(id = "UUID-1", kodeverdi = "0301"),
-                features = FeatureCollection(features = listOf(
-                    grunnkrets1.posisjon.posisjonToFeature(1),
-                    grunnkrets1.flateToFeature(1))),
                 datafangstdato = oppdateringstidspunkt,
                 version = 1,
                 representasjonspunkt = grunnkrets2.posisjon.posisjonToFeature(1),
@@ -109,9 +104,6 @@ internal class GrunnkretsControllerTest : NibasMvcTest() {
                 oppdateringsdato = oppdateringstidspunkt,
                 endringstype = "Kvalitetsheving",
                 kommunenummer = Kommunenummer(id = "UUID-1", kodeverdi = "0301"),
-                features = FeatureCollection(features = listOf(
-                    grunnkrets2.posisjon.posisjonToFeature(1),
-                    grunnkrets2.flateToFeature(1))),
                 representasjonspunkt = grunnkrets2.posisjon.posisjonToFeature(1),
                 datafangstdato = oppdateringstidspunkt,
                 version = 1,

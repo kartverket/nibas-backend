@@ -4,7 +4,6 @@ import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.common.Fylkesnummer
 import no.kartverket.nibas.api.v1.common.Kommunenummer
 import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
-import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.klient.response.FylkeRef
 import no.kartverket.nibas.api.v1.klient.response.FylkeResponse
 import no.kartverket.nibas.api.v1.klient.response.GrunnkretsResponse
@@ -20,7 +19,6 @@ import no.kartverket.nibas.domain.Fylke
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Stemmekrets
-import no.kartverket.nibas.extensions.geometry.flateToFeature
 import no.kartverket.nibas.extensions.geometry.posisjonToFeature
 import no.kartverket.nibas.service.FylkeService
 import no.kartverket.nibas.service.KommuneService
@@ -38,10 +36,6 @@ fun Grunnkrets.toGrunnkretsResponse(identifikator: Identifikator): GrunnkretsRes
         kommuneIdentifikator = ObjektIdentifikator(Lokalid(kommune.lokalid), kommune.gyldighet.gyldigFra),
         endringstype = auditInfo.typeEndring.value,
         oppdateringsdato = auditInfo.endretdato,
-        features = FeatureCollection(features = listOf(
-            posisjon.posisjonToFeature(version),
-            flateToFeature(version)
-        )),
         representasjonspunkt = posisjon.posisjonToFeature(version),
         version = version,
     )
@@ -77,7 +71,6 @@ fun Fylke.toFylkeResponse(identifikator: Identifikator): FylkeResponse = FylkeRe
     ),
     samiskforvaltningsomraade = samiskforvaltningsomraade!!,
     oppdateringsdato = auditInfo.endretdato,
-    features = FeatureCollection(features = listOf((posisjon.posisjonToFeature(version)))),
     representasjonspunkt = posisjon.posisjonToFeature(version),
     version = version
 )
@@ -103,7 +96,6 @@ fun Kommune.toKommuneResponse(identifikator: Identifikator, kommunenummer: Kommu
     kommunenummer = kommunenummer,
     samiskforvaltningsomraade = samiskforvaltningsomraade!!,
     oppdateringsdato = auditInfo.endretdato,
-    features = FeatureCollection(features = listOf(posisjon.posisjonToFeature(version), flateToFeature(version))),
     representasjonspunkt = posisjon.posisjonToFeature(version),
     version = version
 )
@@ -114,8 +106,6 @@ fun Stemmekrets.toStemmekretsResponse(identifikator: Identifikator): Stemmekrets
         id = identifikator.toObjektIdentifikator(),
         stemmekretsnavn = stemmekretsnavn!!,
         stemmekretsnummer = stemmekretsnummer!!,
-        navn = stemmekretsnavn!!,
-        nummer = stemmekretsnummer!!,
         kommunenummer = kommune.let { Kommunenummer(it.kommunenummerUuid, it.kommunenummer) },
         kommuneIdentifikator = ObjektIdentifikator(Lokalid(kommune.lokalid), kommune.gyldighet.gyldigFra),
         valgdistriktsnummer = valgdistriktsnummer,
@@ -124,9 +114,6 @@ fun Stemmekrets.toStemmekretsResponse(identifikator: Identifikator): Stemmekrets
         endringstype = auditInfo.typeEndring.value,
         oppdateringsdato = auditInfo.endretdato,
         tellekretsnummer = tellekretsnummer,
-        features = FeatureCollection(features = listOf(
-            posisjon.posisjonToFeature(version),
-        )),
         representasjonspunkt = posisjon.posisjonToFeature(version),
         datafangstdato = datafangstdato,
         version = version
