@@ -1,5 +1,6 @@
 package no.kartverket.nibas.sporing
 
+import no.kartverket.aut.lib.jwt.impl.PidMaskerer
 import no.kartverket.aut.lib.security.DefaultWebSecurityConfig
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Sporingsinformasjon
 import no.kartverket.nibas.common.ResponseException
@@ -39,7 +40,8 @@ class DefaultUserFacade constructor(private val environment: Environment) : User
         if (authentication == null || !authentication.isAuthenticated) {
             throw RuntimeException("Ugyldig tilstand. Har ingen innlogget bruker.")
         }
-        return authentication.name
+        // Vi burde nok hente navn fra altinn, men enn så lenge bruker vi maskert fødselsnummer
+        return PidMaskerer().getMaskedName(authentication.name)
     }
 
     private fun startedWithSecurityOff(): Boolean {

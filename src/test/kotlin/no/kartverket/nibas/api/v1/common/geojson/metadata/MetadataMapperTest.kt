@@ -57,11 +57,6 @@ internal class MetadataMapperTest {
         .build()
 
     private val maalemetodeHref = "maalemetodeHref"
-    private val terrengDetaljHref = "terrengHref"
-    private val noeyaktighetHref = "href2"
-    private val landkodeHref = "landkodeHref"
-    private val fastsettingstypeHref = "fastHref"
-    private val grensestatusHref = "grensestatusHref"
     private val kv = "Kartverket"
     private val hav = "Havarikommisjonen"
     private val ansvarligMyndighet1 = AnsvarligMyndighetHolder(ansvarligmyndighet = kv)
@@ -72,12 +67,7 @@ internal class MetadataMapperTest {
         MockitoAnnotations.openMocks(this)
         metadataMapper = MetadataMapper(kodelisteHrefProviderMock)
 
-        `when`(kodelisteHrefProviderMock.terrengDetaljHref()).thenReturn(terrengDetaljHref)
-        `when`(kodelisteHrefProviderMock.noeyaktighetsklasseHref()).thenReturn(noeyaktighetHref)
         `when`(kodelisteHrefProviderMock.maalemetodeKodeHref()).thenReturn(maalemetodeHref)
-        `when`(kodelisteHrefProviderMock.landkodeHref()).thenReturn(landkodeHref)
-        `when`(kodelisteHrefProviderMock.fastsettingstypeKodeHref()).thenReturn(fastsettingstypeHref)
-        `when`(kodelisteHrefProviderMock.grensestatusKodeHref()).thenReturn(grensestatusHref)
     }
 
     // Fra Fylkesgrense -> AdministrativGrenseMetadata

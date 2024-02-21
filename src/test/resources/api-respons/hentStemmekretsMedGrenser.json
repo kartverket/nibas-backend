@@ -1,0 +1,340 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "4991cf31-3dd4-346d-ad0d-ca6981ceb90e",
+      "properties": {
+        "type": "Kommunegrense",
+        "srid": 25833,
+        "metadata": {
+          "discriminator": "AdministrativGrenseMetadata",
+          "common": {
+            "identifikasjon": {
+              "lokalid": "4991cf31-3dd4-346d-ad0d-ca6981ceb90e"
+            },
+            "datafangstdato": null,
+            "gyldigFra": "2023-11-07",
+            "gyldigTil": null,
+            "informasjon": null,
+            "sporingsinformasjon": {
+              "oppdateringsdato": "2023-11-07T12:57:07.571828+01:00"
+            },
+            "opphav": null
+          },
+          "commonGrense": {
+            "posisjonskvalitet": {
+              "maalemetode": {
+                "id": "bc54000f-a3b4-4ba1-80fc-70be6640996c",
+                "href": "http://localhost:8080/v1/kodeliste/maalemetode-koder"
+              },
+              "noeyaktighet": 200
+            }
+          },
+          "dokumentasjonsreferanser": []
+        },
+        "kontekstEgenskaper": [
+          {
+            "id": {
+              "lokalid": {
+                "value": "dadd20dc-170c-4c9a-9507-dc571c4d0a3b"
+              },
+              "gyldighetsdato": "2023-11-07"
+            },
+            "kommuneId": {
+              "lokalid": {
+                "value": "25c2b192-c6b5-4d2c-ba4e-08ab31b4432d"
+              },
+              "gyldighetsdato": "2023-11-07"
+            },
+            "kretsNummer": "2",
+            "type": "STEMMEKRETS",
+            "version": 1,
+            "retningMedKlokken": true,
+            "rekkefoelge": 0,
+            "flateIndeks": 0,
+            "hullIndeks": null
+          },
+          {
+            "id": {
+              "lokalid": {
+                "value": "862c3a69-986c-435a-8cda-2f0732b786f2"
+              },
+              "gyldighetsdato": "2023-11-07"
+            },
+            "kommuneId": {
+              "lokalid": {
+                "value": "dbcd6009-d567-44e1-b075-260f19c503ff"
+              },
+              "gyldighetsdato": "2023-11-07"
+            },
+            "kretsNummer": "06",
+            "type": "STEMMEKRETS",
+            "version": 1,
+            "retningMedKlokken": false,
+            "rekkefoelge": 29,
+            "flateIndeks": 0,
+            "hullIndeks": null
+          }
+        ],
+        "version": 2,
+        "shouldArchive": false
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": []
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "bedb41be-62ce-38d6-adc8-792ee9d62847",
+      "properties": {
+        "type": "Kommunegrense",
+        "srid": 25833,
+        "metadata": {
+          "discriminator": "AdministrativGrenseMetadata",
+          "common": {
+            "identifikasjon": {
+              "lokalid": "bedb41be-62ce-38d6-adc8-792ee9d62847"
+            },
+            "datafangstdato": null,
+            "gyldigFra": "2023-11-07",
+            "gyldigTil": null,
+            "informasjon": null,
+            "sporingsinformasjon": {
+              "oppdateringsdato": "2023-11-07T12:57:07.554694+01:00"
+            },
+            "opphav": null
+          },
+          "commonGrense": {
+            "posisjonskvalitet": {
+              "maalemetode": {
+                "id": "e8947d32-56c9-4f87-a248-1defed464caf",
+                "href": "http://localhost:8080/v1/kodeliste/maalemetode-koder"
+              },
+              "noeyaktighet": 200
+            }
+          },
+          "dokumentasjonsreferanser": []
+        },
+        "kontekstEgenskaper": [
+          {
+            "id": {
+              "lokalid": {
+                "value": "862c3a69-986c-435a-8cda-2f0732b786f2"
+              },
+              "gyldighetsdato": "2023-11-07"
+            },
+            "kommuneId": {
+              "lokalid": {
+                "value": "dbcd6009-d567-44e1-b075-260f19c503ff"
+              },
+              "gyldighetsdato": "2023-11-07"
+            },
+            "kretsNummer": "06",
+            "type": "STEMMEKRETS",
+            "version": 1,
+            "retningMedKlokken": false,
+            "rekkefoelge": 28,
+            "flateIndeks": 0,
+            "hullIndeks": null
+          },
+          {
+            "id": {
+              "lokalid": {
+                "value": "dadd20dc-170c-4c9a-9507-dc571c4d0a3b"
+              },
+              "gyldighetsdato": "2023-11-07"
+            },
+            "kommuneId": {
+              "lokalid": {
+                "value": "25c2b192-c6b5-4d2c-ba4e-08ab31b4432d"
+              },
+              "gyldighetsdato": "2023-11-07"
+            },
+            "kretsNummer": "2",
+            "type": "STEMMEKRETS",
+            "version": 1,
+            "retningMedKlokken": true,
+            "rekkefoelge": 1,
+            "flateIndeks": 0,
+            "hullIndeks": null
+          }
+        ],
+        "version": 2,
+        "shouldArchive": false
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": []
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "93558ebb-fef4-35e9-b408-1a9d69342690",
+      "properties": {
+        "type": "Kommunegrense",
+        "srid": 25833,
+        "metadata": {
+          "discriminator": "AdministrativGrenseMetadata",
+          "common": {
+            "identifikasjon": {
+              "lokalid": "93558ebb-fef4-35e9-b408-1a9d69342690"
+            },
+            "datafangstdato": null,
+            "gyldigFra": "2023-11-07",
+            "gyldigTil": null,
+            "informasjon": null,
+            "sporingsinformasjon": {
+              "oppdateringsdato": "2023-11-07T12:57:07.541733+01:00"
+            },
+            "opphav": null
+          },
+          "commonGrense": {
+            "posisjonskvalitet": {
+              "maalemetode": {
+                "id": "bc54000f-a3b4-4ba1-80fc-70be6640996c",
+                "href": "http://localhost:8080/v1/kodeliste/maalemetode-koder"
+              },
+              "noeyaktighet": 200
+            }
+          },
+          "dokumentasjonsreferanser": []
+        },
+        "kontekstEgenskaper": [
+          {
+            "id": {
+              "lokalid": {
+                "value": "dadd20dc-170c-4c9a-9507-dc571c4d0a3b"
+              },
+              "gyldighetsdato": "2023-11-07"
+            },
+            "kommuneId": {
+              "lokalid": {
+                "value": "25c2b192-c6b5-4d2c-ba4e-08ab31b4432d"
+              },
+              "gyldighetsdato": "2023-11-07"
+            },
+            "kretsNummer": "2",
+            "type": "STEMMEKRETS",
+            "version": 1,
+            "retningMedKlokken": true,
+            "rekkefoelge": 2,
+            "flateIndeks": 0,
+            "hullIndeks": null
+          },
+          {
+            "id": {
+              "lokalid": {
+                "value": "862c3a69-986c-435a-8cda-2f0732b786f2"
+              },
+              "gyldighetsdato": "2023-11-07"
+            },
+            "kommuneId": {
+              "lokalid": {
+                "value": "dbcd6009-d567-44e1-b075-260f19c503ff"
+              },
+              "gyldighetsdato": "2023-11-07"
+            },
+            "kretsNummer": "06",
+            "type": "STEMMEKRETS",
+            "version": 1,
+            "retningMedKlokken": false,
+            "rekkefoelge": 27,
+            "flateIndeks": 0,
+            "hullIndeks": null
+          }
+        ],
+        "version": 2,
+        "shouldArchive": false
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": []
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "0310d8ec-e4a7-34fb-8e3f-d9329d4e2675",
+      "properties": {
+        "type": "Stemmekretsgrense",
+        "srid": 25833,
+        "metadata": {
+          "discriminator": "KommunalKretsgrenseMetadata",
+          "common": {
+            "identifikasjon": {
+              "lokalid": "0310d8ec-e4a7-34fb-8e3f-d9329d4e2675"
+            },
+            "datafangstdato": "2006-06-13T00:00:00+02:00",
+            "gyldigFra": "2023-11-07",
+            "gyldigTil": null,
+            "informasjon": null,
+            "sporingsinformasjon": {
+              "oppdateringsdato": "2023-11-07T12:57:08.333242+01:00"
+            },
+            "opphav": null
+          },
+          "commonGrense": {
+            "posisjonskvalitet": {
+              "maalemetode": {
+                "id": "bc54000f-a3b4-4ba1-80fc-70be6640996c",
+                "href": "http://localhost:8080/v1/kodeliste/maalemetode-koder"
+              },
+              "noeyaktighet": 200
+            }
+          }
+        },
+        "kontekstEgenskaper": [
+          {
+            "id": {
+              "lokalid": {
+                "value": "cc680e25-3bd5-4427-bbae-fb47f3d8ce88"
+              },
+              "gyldighetsdato": "2023-11-07"
+            },
+            "kommuneId": {
+              "lokalid": {
+                "value": "25c2b192-c6b5-4d2c-ba4e-08ab31b4432d"
+              },
+              "gyldighetsdato": "2023-11-07"
+            },
+            "kretsNummer": "1",
+            "type": "STEMMEKRETS",
+            "version": 1,
+            "retningMedKlokken": true,
+            "rekkefoelge": 20,
+            "flateIndeks": 0,
+            "hullIndeks": null
+          },
+          {
+            "id": {
+              "lokalid": {
+                "value": "dadd20dc-170c-4c9a-9507-dc571c4d0a3b"
+              },
+              "gyldighetsdato": "2023-11-07"
+            },
+            "kommuneId": {
+              "lokalid": {
+                "value": "25c2b192-c6b5-4d2c-ba4e-08ab31b4432d"
+              },
+              "gyldighetsdato": "2023-11-07"
+            },
+            "kretsNummer": "2",
+            "type": "STEMMEKRETS",
+            "version": 1,
+            "retningMedKlokken": false,
+            "rekkefoelge": 23,
+            "flateIndeks": 0,
+            "hullIndeks": null
+          }
+        ],
+        "version": 2,
+        "shouldArchive": false
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": []
+      }
+    }
+  ]
+}

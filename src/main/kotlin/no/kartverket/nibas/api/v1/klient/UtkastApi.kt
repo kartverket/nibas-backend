@@ -11,11 +11,11 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import no.kartverket.nibas.api.v1.request.OppdaterUtkastRequest
 import no.kartverket.nibas.api.v1.request.OpprettUtkastRequest
 import no.kartverket.nibas.api.v1.request.PubliserUtkastRequest
-import no.kartverket.nibas.api.v1.response.ApiErrorResponse
-import no.kartverket.nibas.api.v1.response.OptimistiskLaarWrapper
-import no.kartverket.nibas.api.v1.response.UtkastOpprettetResponse
-import no.kartverket.nibas.api.v1.response.UtkastRef
-import no.kartverket.nibas.api.v1.response.UtkastResponse
+import no.kartverket.nibas.api.v1.klient.response.ApiErrorResponse
+import no.kartverket.nibas.api.v1.klient.response.OptimistiskLaasWrapper
+import no.kartverket.nibas.api.v1.klient.response.UtkastOpprettetResponse
+import no.kartverket.nibas.api.v1.klient.response.UtkastRef
+import no.kartverket.nibas.api.v1.klient.response.UtkastResponse
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -134,7 +134,7 @@ annotation class Response404NotFound
     responseCode = "409", description = "Conflict",
     content = [Content(
         mediaType = "application/json",
-        schema = Schema(implementation = OptimistiskLaarWrapper::class)
+        schema = Schema(implementation = OptimistiskLaasWrapper::class)
     )]
 )
 annotation class Response409Conflict

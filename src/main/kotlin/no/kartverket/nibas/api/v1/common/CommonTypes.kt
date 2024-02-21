@@ -9,6 +9,8 @@ import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.api.v1.request.NasjonRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
+import no.kartverket.nibas.common.Lokalid
+import java.time.LocalDate
 import jakarta.persistence.AttributeConverter
 import jakarta.persistence.Converter
 import jakarta.validation.constraints.NotNull
@@ -77,6 +79,8 @@ class GrenseTypeConverter : AttributeConverter<Grensetype, String> {
     }
 }
 
+data class ObjektIdentifikator(val lokalid: Lokalid, val gyldighetsdato: LocalDate)
+
 @Schema(description = "Representasjon av et fylkesnummer")
 data class Fylkesnummer(
 
@@ -84,6 +88,16 @@ data class Fylkesnummer(
     val id: String,
 
     @Schema(description = "Det faktiske fylkesnummeret")
+    val kodeverdi: String
+)
+
+@Schema(description = "Representasjon av et kommunenummer")
+data class Kommunenummer(
+
+    @Schema(description = "Unik UUID for kommunenummeret")
+    val id: String,
+
+    @Schema(description = "Det faktiske kommunenummeret")
     val kodeverdi: String
 )
 
@@ -103,6 +117,14 @@ data class AdministrativEnhetNavn(
     @Schema(description = "Rekkefølge på navn")
     val rekkefoelge: Int? = null
 )
+
+data class GyldighetResponse(
+    @Schema(description = "Tidspunktet objektet er gyldig fra")
+    val gyldigFra: LocalDate,
+    @Schema(description = "Tidspunktet objektet er gyldig til. Kan være tomt/løpende.")
+    val gyldigTil: LocalDate?,
+)
+
 
 // TODO: Utvide med felter for sammenslåing og oppsplitting
 // Typen (og undertyper) er Serializable for persistering i jsonb-kolonne

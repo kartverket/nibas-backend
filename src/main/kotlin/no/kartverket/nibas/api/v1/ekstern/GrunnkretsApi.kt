@@ -10,7 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import no.kartverket.nibas.api.v1.DefaultFeatureCollectionApiResponses
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
-import no.kartverket.nibas.api.v1.response.KretsResponse
+import no.kartverket.nibas.api.v1.ekstern.response.EksternKretsResponse
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
@@ -34,17 +34,23 @@ interface GrunnkretsApi {
             content = [
                 Content(
                     mediaType = "application/json",
-                    array = ArraySchema(schema = Schema(implementation = KretsResponse::class))
+                    array = ArraySchema(schema = Schema(implementation = EksternKretsResponse::class))
                 )
             ]
         ),
         ApiResponse(responseCode = "404", description = "Not Found")
     )
     @GetMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentGrunnkretserForIds(@Parameter(description = "ID-ene til grunnkretsene man vil hente") @RequestParam ids: Set<String>,
-                               @Parameter(description = "Eventuell gyldighetsdato for grunnkrets (default = dagens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-                               @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?): List<KretsResponse>
+    fun hentGrunnkretserForIds(
+        @Parameter(description = "ID-ene til grunnkretsene man vil hente") @RequestParam ids: Set<String>,
+        @Parameter(description = "Eventuell gyldighetsdato for grunnkrets (default = dagens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?
+    ): List<EksternKretsResponse>
 
+    @Operation(
+        summary = "Hent grensene til en gitt grunnkrets",
+        description = "Henter grensene til en grunnkrets med gitt id"
+    )
     @DefaultFeatureCollectionApiResponses
     @GetMapping("/{id}/grenser", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun hentGrenserForGrunnkrets(

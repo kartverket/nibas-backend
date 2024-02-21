@@ -1,34 +1,29 @@
 package no.kartverket.nibas.controller.klient
 
+import no.kartverket.nibas.api.v1.common.Kommunenummer
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.klient.KommuneApi
-import no.kartverket.nibas.api.v1.response.GrunnkretsRef
-import no.kartverket.nibas.api.v1.response.KommuneRef
-import no.kartverket.nibas.api.v1.response.KommuneResponse
-import no.kartverket.nibas.api.v1.response.Kommunenummer
-import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
-import no.kartverket.nibas.api.v1.response.StemmekretsRef
-import no.kartverket.nibas.api.v1.response.toObjektIdentifikator
+import no.kartverket.nibas.api.v1.klient.response.GrunnkretsResponse
+import no.kartverket.nibas.api.v1.klient.response.KommuneRef
+import no.kartverket.nibas.api.v1.klient.response.KommuneResponse
+import no.kartverket.nibas.api.v1.klient.response.StemmekretsResponse
 import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.common.createIdentifikator
-import no.kartverket.nibas.domain.Grunnkrets
-import no.kartverket.nibas.domain.Stemmekrets
+import no.kartverket.nibas.extensions.flate.toGrunnkretsResponse
+import no.kartverket.nibas.extensions.flate.toKommuneRef
 import no.kartverket.nibas.extensions.flate.toKommuneResponse
+import no.kartverket.nibas.extensions.flate.toStemmekretsResponse
 import no.kartverket.nibas.extensions.geometry.grenseKoblingToFeature
-import no.kartverket.nibas.service.GrunnkretsService
 import no.kartverket.nibas.service.KommuneService
-import no.kartverket.nibas.service.StemmekretsService
 import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDate
 
 @RestController("KlientKommuneController")
 class KommuneController(
     private val kommuneService: KommuneService,
-    private val grunnkretsService: GrunnkretsService,
-    private val stemmekretsService: StemmekretsService,
     private val hrefProvider: HrefProvider
 ) : KommuneApi {
 
@@ -36,11 +31,11 @@ class KommuneController(
         val datoToUse: LocalDate = gyldighetsdato ?: LocalDate.now()
         return if (fylkeId == null) {
             kommuneService.hentAlleKommuner(datoToUse).map {
-                kommuneService.kommuneToKommuneRef(it, datoToUse)
+                it.toKommuneRef(datoToUse, kommuneService, hrefProvider)
             }
         } else {
             kommuneService.hentKommunerForFylke(Identifikator(Lokalid(fylkeId), datoToUse)).map {
-                kommuneService.kommuneToKommuneRef(it, datoToUse)
+                it.toKommuneRef(datoToUse, kommuneService, hrefProvider)
             }
         }
     }
@@ -63,61 +58,47 @@ class KommuneController(
         )
     }
 
-    override fun hentKommunesGrunnkretser(lokalid: String, gyldighetsdato: LocalDate?): List<GrunnkretsRef> {
+    override fun hentKommunesGrunnkretser(lokalid: String, gyldighetsdato: LocalDate?): List<GrunnkretsResponse> {
         val kommuneIdentifikator = createIdentifikator(lokalid, gyldighetsdato)
         return kommuneService.hentKommunesGrunnkretser(kommuneIdentifikator).map {
             val identifikatorForGrunnkrets = Identifikator(lokalid = Lokalid(it.lokalid), gyldighetsdato = kommuneIdentifikator.gyldighetsdato)
-            it.toGrunnkretsRef(identifikatorForGrunnkrets, grunnkretsService, hrefProvider)
+            it.toGrunnkretsResponse(identifikatorForGrunnkrets)
         }
     }
 
-    override fun hentKommunesStemmekretser(lokalid: String, gyldighetsdato: LocalDate?): List<StemmekretsRef> {
+    override fun hentKommunesGrunnkretsgrenser(lokalid: String, gyldighetsdato: LocalDate?): FeatureCollection {
+        val identifikator = Identifikator(Lokalid(lokalid), gyldighetsdato ?: LocalDate.now())
+        val grensekoblinger = kommuneService.hentGrensekoblingerForAlleGrunnkretserIKommune(identifikator)
+
+        if (grensekoblinger.isEmpty()) {
+            throw NotFoundException("Fant ingen grunnkretsgrenser for $identifikator")
+        }
+
+        return FeatureCollection(
+            features = grensekoblinger
+                .map { it.grenseKoblingToFeature(identifikator.gyldighetsdato) }
+        )
+    }
+
+    override fun hentKommunesStemmekretser(lokalid: String, gyldighetsdato: LocalDate?): List<StemmekretsResponse> {
         val kommuneIdentifikator = createIdentifikator(lokalid, gyldighetsdato)
         return kommuneService.hentKommunesStemmekretser(kommuneIdentifikator).map {
             val identifikatorForStemmekrets = Identifikator(lokalid = Lokalid(it.lokalid), gyldighetsdato = kommuneIdentifikator.gyldighetsdato)
-            it.toStemmekretsRef(identifikatorForStemmekrets, stemmekretsService, hrefProvider)
+            it.toStemmekretsResponse(identifikatorForStemmekrets)
         }
     }
-}
 
-private fun Grunnkrets.toGrunnkretsRef(identifikator: Identifikator, grunnkretsService: GrunnkretsService, hrefProvider: HrefProvider): GrunnkretsRef {
-    val antallFramtidigeVersjoner = if (this.gyldighet.gyldigTil == null) {
-        0
-    } else {
-        grunnkretsService.hentAntallGyldigeVersjonerFramITidFor(identifikator)
+    override fun hentKommunesStemmekretsgrenser(lokalid: String, gyldighetsdato: LocalDate?): FeatureCollection {
+        val identifikator = Identifikator(Lokalid(lokalid), gyldighetsdato ?: LocalDate.now())
+        val grensekoblinger = kommuneService.hentGrensekoblingerForAlleStemmekretserIKommune(identifikator)
+
+        if (grensekoblinger.isEmpty()) {
+            throw NotFoundException("Fant ingen stemmekretsgrenser for $identifikator")
+        }
+
+        return FeatureCollection(
+            features = grensekoblinger
+                .map { it.grenseKoblingToFeature(identifikator.gyldighetsdato) }
+        )
     }
-
-    val kommuneForGrunnkrets = this.getKommune(identifikator.gyldighetsdato) ?: throw RuntimeException("Fant ikke kommunen til grunnkrets")
-
-    return GrunnkretsRef(
-        id = identifikator.toObjektIdentifikator(),
-        navn = this.grunnkretsnavn!!,
-        grunnkretsnummer = this.grunnkretsnummer!!,
-        href = hrefProvider.getHref(identifikator),
-        kommunenummer = kommuneForGrunnkrets.let { Kommunenummer(it.kommunenummerUuid, it.kommunenummer) },
-        kommuneIdentifikator = ObjektIdentifikator(Lokalid(kommuneForGrunnkrets.lokalid), identifikator.gyldighetsdato),
-        antallFramtidigeVersjoner = antallFramtidigeVersjoner,
-        version = this.version
-    )
-}
-
-fun Stemmekrets.toStemmekretsRef(identifikator: Identifikator, stemmekretsService: StemmekretsService, hrefProvider: HrefProvider): StemmekretsRef {
-    val antallFramtidigeVersjoner = if (this.gyldighet.gyldigTil == null) {
-        0
-    } else {
-        stemmekretsService.hentAntallGyldigeVersjonerFramITidFor(identifikator)
-    }
-
-    val kommuneForStemmekrets = this.getKommune(identifikator.gyldighetsdato) ?: throw RuntimeException("Fant ikke kommunen til stemmekrets")
-
-    return StemmekretsRef(
-        id = identifikator.toObjektIdentifikator(),
-        navn = this.stemmekretsnavn!!,
-        nummer = this.stemmekretsnummer!!,
-        href = hrefProvider.getHref(identifikator),
-        kommunenummer = kommuneForStemmekrets.let { Kommunenummer(it.kommunenummerUuid, it.kommunenummer) },
-        kommuneIdentifikator = ObjektIdentifikator(Lokalid(kommuneForStemmekrets.lokalid), identifikator.gyldighetsdato),
-        antallFramtidigeVersjoner = antallFramtidigeVersjoner,
-        version = this.version,
-    )
 }

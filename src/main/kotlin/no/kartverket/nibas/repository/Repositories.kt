@@ -7,11 +7,13 @@ import no.kartverket.nibas.domain.Fylke
 import no.kartverket.nibas.domain.FylkeInformasjon
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.Grunnkrets
+import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.domain.KommuneInformasjon
 import no.kartverket.nibas.domain.Landkode
 import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.domain.Spraakkode
 import no.kartverket.nibas.domain.Stemmekrets
+import no.kartverket.nibas.domain.StemmekretsGrenseKobling
 import no.kartverket.nibas.domain.Typeendring
 import no.kartverket.nibas.domain.UnikLokalid
 import no.kartverket.nibas.domain.utkast.Utkast
@@ -78,6 +80,14 @@ interface StemmekretsRepository : CrudRepositoryWithLokalIdFinder<Stemmekrets, S
 }
 
 interface GrenseRepository : JpaRepositoryWithLokalIdFinder<Grense, String>
+
+interface GrunnkretsGrenseKoblingRepository : JpaRepository<GrunnkretsGrenseKobling, Long> {
+    fun findByGrunnkretsKommuneLokalid(kommuneLokalid: UnikLokalid): List<GrunnkretsGrenseKobling>
+}
+
+interface StemmekretsGrenseKoblingRepository : JpaRepository<StemmekretsGrenseKobling, Long> {
+    fun findByStemmekretsKommuneLokalid(kommuneLokalid: UnikLokalid): List<StemmekretsGrenseKobling>
+}
 
 interface UtkastRepository : CrudRepository<Utkast, String> {
     fun findAllByStatus(status: UtkastStatus): List<Utkast>

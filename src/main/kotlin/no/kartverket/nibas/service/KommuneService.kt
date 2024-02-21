@@ -1,12 +1,7 @@
 package no.kartverket.nibas.service
 
-import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.request.KommuneRequest
-import no.kartverket.nibas.api.v1.response.KommuneRef
-import no.kartverket.nibas.api.v1.response.Kommunenummer
-import no.kartverket.nibas.api.v1.response.toObjektIdentifikator
-import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
@@ -17,12 +12,14 @@ import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Stemmekrets
+import no.kartverket.nibas.domain.StemmekretsGrenseKobling
 import no.kartverket.nibas.domain.UnikLokalid
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.FylkeRepository
+import no.kartverket.nibas.repository.GrunnkretsGrenseKoblingRepository
 import no.kartverket.nibas.repository.KommuneRepository
-import no.kartverket.nibas.repository.OptimistiskLaasException
+import no.kartverket.nibas.repository.StemmekretsGrenseKoblingRepository
 import no.kartverket.nibas.repository.UnikLokalidRepository
 import no.kartverket.nibas.repository.findAllGyldigPaaDato
 import no.kartverket.nibas.repository.findAntallFramtidigeVersjonerForIdentifikator
@@ -44,7 +41,8 @@ class KommuneService(
     private var unikLokalidRepository: UnikLokalidRepository,
     private val kodelisteService: KodelisteService,
     private val administrativenhetnavnService: AdministrativenhetnavnService,
-    private val hrefProvider: HrefProvider
+    private val grunnkretsGrenseKoblingRepository: GrunnkretsGrenseKoblingRepository,
+    private val stemmekretsGrenseKoblingRepository: StemmekretsGrenseKoblingRepository
 ) {
 
     fun hentAlleKommuner(gyldighetsdato: LocalDate = LocalDate.now()): List<Kommune> = kommuneRepository.findAllGyldigPaaDato(gyldighetsdato)
@@ -59,6 +57,22 @@ class KommuneService(
 
     fun hentGrensekoblingerForKommune(identifikator: Identifikator): Set<GrunnkretsGrenseKobling> {
         return hentKommune(identifikator)?.getGrensekoblinger(identifikator.gyldighetsdato) ?: emptySet()
+    }
+
+    fun hentGrensekoblingerForAlleGrunnkretserIKommune(identifikator: Identifikator): Set<GrunnkretsGrenseKobling> {
+        return hentKommune(identifikator)
+            ?.let { grunnkretsGrenseKoblingRepository.findByGrunnkretsKommuneLokalid(it.kommuneLokalid) }
+            ?.filter { it.grense.gyldigPaaDato(identifikator.gyldighetsdato) && it.grunnkrets.gyldigPaaDato(identifikator.gyldighetsdato) }
+            ?.distinctBy { it.grense.lokalid }
+            ?.toSet() ?: emptySet()
+    }
+
+    fun hentGrensekoblingerForAlleStemmekretserIKommune(identifikator: Identifikator): Set<StemmekretsGrenseKobling> {
+        return hentKommune(identifikator)
+            ?.let { stemmekretsGrenseKoblingRepository.findByStemmekretsKommuneLokalid(it.kommuneLokalid) }
+            ?.filter { it.grense.gyldigPaaDato(identifikator.gyldighetsdato) && it.stemmekrets.gyldigPaaDato(identifikator.gyldighetsdato) }
+            ?.distinctBy { it.grense.lokalid }
+            ?.toSet() ?: emptySet()
     }
 
     @Transactional(readOnly = false)
@@ -193,20 +207,6 @@ class KommuneService(
 
         kommune.getAdministrativenhetNavn().forEach { it.setGyldigTil(settHistoriskFraDato) }
         kommune.setGyldigTil(settHistoriskFraDato)
-    }
-
-    fun kommuneToKommuneRef(kommune: Kommune, datoToUse: LocalDate): KommuneRef {
-        val identifikator = Identifikator(Lokalid(kommune.lokalid), datoToUse)
-        val antallFramtidigeVersjoner = hentAntallGyldigeVersjonerFramITidFor(identifikator)
-
-        return KommuneRef(
-            id = identifikator.toObjektIdentifikator(),
-            navn = kommune.getAdministrativenhetNavn(identifikator.gyldighetsdato)
-                .map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version, it.rekkefoelge) },
-            href = hrefProvider.getHref(identifikator),
-            kommunenummer = Kommunenummer(kommune.kommunenummerUuid, kommune.kommunenummer),
-            antallFramtidigeVersjoner = antallFramtidigeVersjoner
-        )
     }
 
     private fun hentKommuneFraNumeriskNummer(numeriskKommunenummer: String, gyldighetsdato: LocalDate): Kommune {

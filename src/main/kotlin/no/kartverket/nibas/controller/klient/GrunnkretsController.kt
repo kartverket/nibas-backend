@@ -2,13 +2,12 @@ package no.kartverket.nibas.controller.klient
 
 import no.kartverket.nibas.api.v1.klient.GrunnkretsApi
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
-import no.kartverket.nibas.api.v1.response.GrunnkretsResponse
+import no.kartverket.nibas.api.v1.klient.response.GrunnkretsResponse
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.common.createIdentifikator
 import no.kartverket.nibas.extensions.flate.toGrunnkretsResponse
-import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.service.GrunnkretsService
 import no.kartverket.nibas.extensions.geometry.grenseKoblingToFeature
 import org.springframework.web.bind.annotation.RestController
@@ -16,8 +15,7 @@ import java.time.LocalDate
 
 @RestController("KlientGrunnkretsController")
 class GrunnkretsController(
-    private val grunnkretsService: GrunnkretsService,
-    private val kodelisteService: KodelisteService
+    private val grunnkretsService: GrunnkretsService
 ) : GrunnkretsApi {
 
     override fun hentGrunnkrets(lokalid: String, gyldighetsdato: LocalDate?): GrunnkretsResponse {

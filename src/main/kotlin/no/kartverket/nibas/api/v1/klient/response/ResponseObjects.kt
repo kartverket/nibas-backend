@@ -1,32 +1,18 @@
-package no.kartverket.nibas.api.v1.response
+package no.kartverket.nibas.api.v1.klient.response
 
 import io.swagger.v3.oas.annotations.media.Schema
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.common.Fylkesnummer
+import no.kartverket.nibas.api.v1.common.GyldighetResponse
+import no.kartverket.nibas.api.v1.common.Kommunenummer
+import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.common.Operasjoner
-import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
+import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.common.Identifikator
-import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.sporing.Gyldighet
 import org.springframework.http.HttpStatus
 import java.time.LocalDate
 import java.time.ZonedDateTime
-
-@Schema(description = "En referanse til en nasjon")
-data class NasjonRef(
-
-    @Schema(description = "ID-en til nasjonen")
-    val id: ObjektIdentifikator,
-
-    @Schema(description = "Liste over navn til nasjonen")
-    val navn: List<AdministrativEnhetNavn>,
-
-    @Schema(description = "URL til full representasjon av nasjonen")
-    val href: String,
-
-    @Schema(description = "Antall publiserte framtidige gyldige versjoner.")
-    val antallFramtidigeVersjoner: Int = 0
-)
 
 @Schema(description = "En referanse til et fylke")
 data class FylkeRef(
@@ -66,62 +52,6 @@ data class KommuneRef(
     val antallFramtidigeVersjoner: Int = 0
 )
 
-@Schema(description = "En referanse til en grunnkrets")
-data class GrunnkretsRef(
-
-    @Schema(description = "ID-en til grunnkretsen")
-    val id: ObjektIdentifikator,
-
-    @Schema(description = "Navnet på grunnkretser")
-    val navn: String,
-
-    @Schema(description = "URL til full representasjon av grunnkretsen")
-    val href: String,
-
-    @Schema(description = "Kommunenummeret til grunnkretsen")
-    val kommunenummer: Kommunenummer,
-
-    @Schema(description = "ID-en til kommunen til grunnkretsen")
-    val kommuneIdentifikator: ObjektIdentifikator,
-
-    @Schema(description = "Nummeret til grunnkretsen")
-    val grunnkretsnummer: String,
-
-    @Schema(description = "Antall publiserte framtidige gyldige versjoner.")
-    val antallFramtidigeVersjoner: Int = 0,
-
-    @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
-    val version: Int
-)
-
-@Schema(description = "En referanse til en stemmekrets")
-data class StemmekretsRef(
-
-    @Schema(description = "ID-en til stemmekretsen")
-    val id: ObjektIdentifikator,
-
-    @Schema(description = "Navnet på stemmekretsen")
-    val navn: String,
-
-    @Schema(description = "Nummeret til stemmekretsen")
-    val nummer: String,
-
-    @Schema(description = "URL til full representasjon av stemmekrets")
-    val href: String,
-
-    @Schema(description = "Kommunenummeret til stemmekretsen")
-    val kommunenummer: Kommunenummer,
-
-    @Schema(description = "ID-en til kommunen til stemmekretsen")
-    val kommuneIdentifikator: ObjektIdentifikator,
-
-    @Schema(description = "Antall publiserte framtidige gyldige versjoner.")
-    val antallFramtidigeVersjoner: Int = 0,
-
-    @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
-    val version: Int
-)
-
 @Schema(description = "En referanse til et utkast")
 data class UtkastRef(
     @Schema(description = "ID-en til utkastet")
@@ -132,21 +62,6 @@ data class UtkastRef(
     val href: String,
     @Schema(description = "Tidspunktet utkastet ble opprettet.")
     val opprettetDato: ZonedDateTime,
-)
-
-@Schema(description = "Representasjon av en nasjon")
-data class NasjonResponse(
-    @Schema(description = "ID-en til nasjonen")
-    val id: ObjektIdentifikator,
-
-    @Schema(description = "Liste over navn til nasjonen")
-    val administrativenhetnavn: List<AdministrativEnhetNavn>,
-
-    @Schema(description = "Geometrien til nasjonen. Ikke grenser")
-    val features: FeatureCollection,
-
-    @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
-    val version: Int
 )
 
 @Schema(description = "Representasjon av et fylke")
@@ -166,9 +81,9 @@ data class FylkeResponse(
 
     @Schema(description = "Angir når dette fylket ble sist oppdatert")
     val oppdateringsdato: ZonedDateTime,
-
-    @Schema(description = "Geometrien til fylket. Ikke grenser")
-    val features: FeatureCollection,
+    
+    @Schema(description = "Representasjonspunktet for fylket")
+    val representasjonspunkt: Feature,
 
     @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
     val version: Int
@@ -191,8 +106,8 @@ data class KommuneResponse(
     @Schema(description = "Angir når denne kommunen ble sist oppdatert")
     val oppdateringsdato: ZonedDateTime,
 
-    @Schema(description = "Geometrien til kommunen. Ikke grenser")
-    val features: FeatureCollection,
+    @Schema(description = "Representasjonspunktet for kommunen")
+    val representasjonspunkt: Feature,
 
     @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
     val version: Int
@@ -227,8 +142,8 @@ data class GrunnkretsResponse(
     @Schema(description = "Typen endring som ble gjort på objektet")
     val endringstype: String?,
 
-    @Schema(description = "Geometrien til grunnkretsen, dvs representasjonspunkt og flaten")
-    val features: FeatureCollection,
+    @Schema(description = "Representasjonspunktet for grunnkretsen")
+    val representasjonspunkt: Feature,
 
     @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
     val version: Int
@@ -272,39 +187,11 @@ data class StemmekretsResponse(
     @Schema(description = "Valgdistriktsnummer til stemmekretsen")
     var valgdistriktsnummer: String? = null,
 
-    @Schema(description = "Geometrien til stemmekretsen, dvs representasjonspunkt og flaten")
-    val features: FeatureCollection,
+    @Schema(description = "Representasjonspunktet for stemmekretsen")
+    val representasjonspunkt: Feature,
 
     @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
     val version: Int
-)
-
-@Schema(description = "Representasjon av en krets. Response-type kun for Matrikkelen. Kan være grunnkrets, stemmekrets etc.")
-data class KretsResponse(
-    @Schema(description = "Lokalid-en til kretsen.")
-    val id: String,
-
-    @Schema(description = "Navnet på kretsen.")
-    val navn: String,
-
-    @Schema(description = "Nummeret til kretsen.")
-    val nummer: String,
-
-    @Schema(description = "Kommunenummeret til kretsen.")
-    val kommunenummer: Kommunenummer,
-
-    @Schema(description = "Geometrien til kretsen, dvs representasjonspunkt og flaten")
-    val features: FeatureCollection
-)
-
-@Schema(description = "Representasjon av et kommunenummer")
-data class Kommunenummer(
-
-    @Schema(description = "Unik UUID for kommunenummeret")
-    val id: String,
-
-    @Schema(description = "Det faktiske kommunenummeret")
-    val kodeverdi: String
 )
 
 @Schema(description = "Returtype for opprettelse av utkast")
@@ -341,14 +228,14 @@ data class AuditInfoResponse(
     val oppdateringsdato: ZonedDateTime
 )
 
-data class OptimistiskLaarWrapper(
+data class OptimistiskLaasWrapper(
     @Schema(description = "HttpStatus for responsen.")
     val httpStatus: HttpStatus = HttpStatus.CONFLICT,
     @Schema(description = "Feil som har oppstått pga optimistisk lås.")
-    val optimisticLockExceptions: List<OptimistiskLaarResponse> = emptyList(),
+    val optimisticLockExceptions: List<OptimistiskLaasResponse> = emptyList(),
 )
 
-data class OptimistiskLaarResponse(
+data class OptimistiskLaasResponse(
     // TODO: Bruke ObjektIdentifikator også her
     @Schema(description = "Identifikatoren til objektet som er utdatert.")
     val id: String,
@@ -385,17 +272,7 @@ data class ApiErrorResponse(
     val errorDescription: ErrorDescription,
 )
 
-data class ObjektIdentifikator(val lokalid: Lokalid, val gyldighetsdato: LocalDate)
-
 fun Identifikator.toObjektIdentifikator(): ObjektIdentifikator = ObjektIdentifikator(this.lokalid, this.gyldighetsdato)
-fun ObjektIdentifikator.toIdentifikator(): Identifikator = Identifikator(this.lokalid, this.gyldighetsdato)
-
-data class GyldighetResponse(
-    @Schema(description = "Tidspunktet objektet er gyldig fra")
-    val gyldigFra: LocalDate,
-    @Schema(description = "Tidspunktet objektet er gyldig til. Kan være tomt/løpende.")
-    val gyldigTil: LocalDate?,
-)
 
 data class AuthZStatusResponse(
     @Schema(description = "Status for autorisering")

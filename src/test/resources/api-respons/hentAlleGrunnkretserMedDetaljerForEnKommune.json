@@ -1,0 +1,156 @@
+[
+  {
+    "id": {
+      "lokalid": {
+        "value": "d0dee964-2b38-4311-aa92-5e0aeeab3440"
+      },
+      "gyldighetsdato": "2024-02-09"
+    },
+    "navn": "Myra vest",
+    "grunnkretsnummer": "42120105",
+    "gyldighet": {
+      "gyldigFra": "2023-11-07",
+      "gyldigTil": null
+    },
+    "oppdateringsdato": "2023-11-07T22:45:04.704444+01:00",
+    "datafangstdato": "1000-01-01T00:00:00+00:53:28",
+    "kommunenummer": {
+      "id": "39928521-8328-4e20-a632-b44ef4fe8cfb",
+      "kodeverdi": "4212"
+    },
+    "endringstype": "Import",
+    "features": {
+      "type": "FeatureCollection",
+      "features": [
+        {
+          "type": "Feature",
+          "id": null,
+          "properties": {
+            "type": "Posisjon",
+            "srid": 25833,
+            "metadata": null,
+            "kontekstEgenskaper": [],
+            "version": 1,
+            "shouldArchive": false
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              143211.99,
+              6529050.76
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "d0dee964-2b38-4311-aa92-5e0aeeab3440",
+          "properties": {
+            "type": "GRUNNKRETS",
+            "srid": 25833,
+            "metadata": {
+              "discriminator": "FlateMetadata",
+              "common": {
+                "identifikasjon": {
+                  "lokalid": "d0dee964-2b38-4311-aa92-5e0aeeab3440"
+                },
+                "datafangstdato": "1000-01-01T00:00:00+00:53:28",
+                "gyldigFra": "2023-11-07",
+                "gyldigTil": null,
+                "informasjon": null,
+                "sporingsinformasjon": {
+                  "oppdateringsdato": "2023-11-07T22:45:04.704444+01:00"
+                },
+                "opphav": null
+              }
+            },
+            "kontekstEgenskaper": [],
+            "version": 1,
+            "shouldArchive": false
+          },
+          "geometry": {
+            "type": "MultiPolygon",
+            "coordinates": []
+          }
+        }
+      ]
+    },
+    "version": 1
+  },
+  {
+    "id": {
+      "lokalid": {
+        "value": "3efb5575-22e3-45da-829e-707a4d01b919"
+      },
+      "gyldighetsdato": "2024-02-09"
+    },
+    "navn": "Tangen",
+    "grunnkretsnummer": "42120101",
+    "gyldighet": {
+      "gyldigFra": "2023-11-07",
+      "gyldigTil": null
+    },
+    "oppdateringsdato": "2023-11-07T22:45:04.387403+01:00",
+    "datafangstdato": "1000-01-01T00:00:00+00:53:28",
+    "kommunenummer": {
+      "id": "39928521-8328-4e20-a632-b44ef4fe8cfb",
+      "kodeverdi": "4212"
+    },
+    "endringstype": "Import",
+    "features": {
+      "type": "FeatureCollection",
+      "features": [
+        {
+          "type": "Feature",
+          "id": null,
+          "properties": {
+            "type": "Posisjon",
+            "srid": 25833,
+            "metadata": null,
+            "kontekstEgenskaper": [],
+            "version": 1,
+            "shouldArchive": false
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              140622.34,
+              6520193.36
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "3efb5575-22e3-45da-829e-707a4d01b919",
+          "properties": {
+            "type": "GRUNNKRETS",
+            "srid": 25833,
+            "metadata": {
+              "discriminator": "FlateMetadata",
+              "common": {
+                "identifikasjon": {
+                  "lokalid": "3efb5575-22e3-45da-829e-707a4d01b919"
+                },
+                "datafangstdato": "1000-01-01T00:00:00+00:53:28",
+                "gyldigFra": "2023-11-07",
+                "gyldigTil": null,
+                "informasjon": null,
+                "sporingsinformasjon": {
+                  "oppdateringsdato": "2023-11-07T22:45:04.387403+01:00"
+                },
+                "opphav": null
+              }
+            },
+            "kontekstEgenskaper": [],
+            "version": 1,
+            "shouldArchive": false
+          },
+          "geometry": {
+            "type": "MultiPolygon",
+            "coordinates": []
+          }
+        }
+      ]
+    },
+    "version": 1
+  }
+]

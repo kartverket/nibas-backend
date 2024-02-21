@@ -6,7 +6,7 @@ import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
-import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
+import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import java.time.LocalDate
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull

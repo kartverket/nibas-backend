@@ -1,6 +1,5 @@
 package no.kartverket.nibas.kodelister
 
-import no.kartverket.nibas.repository.LandKodeRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
@@ -9,15 +8,11 @@ import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
 import org.mockito.MockitoAnnotations
-import java.util.UUID
 
 internal class DefaultKodelisteServiceTest {
 
     @Mock
     private lateinit var kodelisteFetcherMock: KodelisteFetcher
-
-    @Mock
-    private lateinit var landKodeRepositoryMock: LandKodeRepository
 
     private lateinit var kodelisteService: KodelisteService
 
@@ -31,7 +26,7 @@ internal class DefaultKodelisteServiceTest {
     @BeforeEach
     fun beforeEach() {
         MockitoAnnotations.openMocks(this)
-        kodelisteService = DefaultKodelisteService(kodelisteFetcherMock, landKodeRepositoryMock)
+        kodelisteService = DefaultKodelisteService(kodelisteFetcherMock)
     }
 
     @Test
@@ -74,13 +69,6 @@ internal class DefaultKodelisteServiceTest {
         doMockMalemetoder()
         assertThatThrownBy { kodelisteService.getMalemetodeIdByCodeValue("43") }
             .isInstanceOf(NoSuchElementException::class.java)
-    }
-
-    @Test
-    fun getCodeValueByKommunenummerId_NotCachedThrowsException() {
-
-        assertThatThrownBy { kodelisteService.getCodeValueByKommunenummerId(UUID.randomUUID().toString()) }
-            .isInstanceOf(MissingKodelisteItemException::class.java)
     }
 
     private fun doMockKommunenummer() {

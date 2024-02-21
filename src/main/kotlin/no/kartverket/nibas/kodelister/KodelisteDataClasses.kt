@@ -27,23 +27,6 @@ enum class KodelisteType {
     @Schema(description = "Kodeliste for målemetode-koder.")
     MAALEMETODE_KODE,
 
-    @Schema(description = "Kodeliste for landkode.")
-    LAND,
-
-    @Schema(description = "Kodeliste for terrengdetaljer.")
-    TERRENGDETALJ,
-
-    @Schema(description = "Kodeliste for nøyaktighetsklasser.")
-    NOEYAKTIGHETSKLASSE,
-
-    @Schema(description = "Kodeliste for grensetyper.")
-    GRENSETYPE,
-
-    @Schema(description = "Kodeliste for fastsettingstyper.")
-    FASTSETTINGSTYPE,
-
-    @Schema(description = "Kodeliste for grensestatuskoder.")
-    GRENSESTATUS,
 }
 
 // Intern type som holder på JSON-struktur slått opp i Geonorge

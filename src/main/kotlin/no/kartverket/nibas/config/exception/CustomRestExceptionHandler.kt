@@ -1,9 +1,9 @@
 package no.kartverket.nibas.config.exception
 
-import no.kartverket.nibas.api.v1.response.ApiErrorResponse
-import no.kartverket.nibas.api.v1.response.OptimistiskLaarResponse
-import no.kartverket.nibas.api.v1.response.OptimistiskLaarWrapper
-import no.kartverket.nibas.api.v1.response.ErrorDescription
+import no.kartverket.nibas.api.v1.klient.response.ApiErrorResponse
+import no.kartverket.nibas.api.v1.klient.response.OptimistiskLaasResponse
+import no.kartverket.nibas.api.v1.klient.response.OptimistiskLaasWrapper
+import no.kartverket.nibas.api.v1.klient.response.ErrorDescription
 import no.kartverket.nibas.common.FeilVedOppdatering
 import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.common.geometry.IkkeSammenhengendePolygonException
@@ -73,9 +73,9 @@ class CustomRestExceptionHandler {
     fun handleOptimisticLockException(ex: OptimistiskLaasException, request: WebRequest): ResponseEntity<Any>? {
         // For grenser kan det være flere optimistiske låsekonflikter
         logger.warn("Feil med optimistisk lås", ex)
-        return createResponse(OptimistiskLaarWrapper(
+        return createResponse(OptimistiskLaasWrapper(
             optimisticLockExceptions = ex.konflikter.map { conflict ->
-                OptimistiskLaarResponse(
+                OptimistiskLaasResponse(
                     id = conflict.eksisterende.id,
                     type = conflict.eksisterende::class.java.simpleName,
                     gjeldendeVersjon = conflict.eksisterende.version,

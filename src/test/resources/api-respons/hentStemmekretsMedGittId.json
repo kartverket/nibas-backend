@@ -1,0 +1,80 @@
+{
+  "id": {
+    "lokalid": {
+      "value": "dadd20dc-170c-4c9a-9507-dc571c4d0a3b"
+    },
+    "gyldighetsdato": "2024-02-09"
+  },
+  "gyldighet": {
+    "gyldigFra": "2023-11-07",
+    "gyldigTil": null
+  },
+  "endringstype": "Import",
+  "oppdateringsdato": "2023-11-07T12:57:08.480715+01:00",
+  "datafangstdato": "2006-06-13T00:00:00+02:00",
+  "stemmekretsnavn": "Tangen",
+  "stemmekretsnummer": "2",
+  "kommunenummer": {
+    "id": "39928521-8328-4e20-a632-b44ef4fe8cfb",
+    "kodeverdi": "4212"
+  },
+  "tellekretsnummer": null,
+  "tellekretsnavn": null,
+  "valgdistriktsnummer": "09",
+  "features": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "id": null,
+        "properties": {
+          "type": "Posisjon",
+          "srid": 25833,
+          "metadata": null,
+          "kontekstEgenskaper": [],
+          "version": 1,
+          "shouldArchive": false
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            140444.99,
+            6520766.53
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "id": "dadd20dc-170c-4c9a-9507-dc571c4d0a3b",
+        "properties": {
+          "type": "STEMMEKRETS",
+          "srid": 25833,
+          "metadata": {
+            "discriminator": "FlateMetadata",
+            "common": {
+              "identifikasjon": {
+                "lokalid": "dadd20dc-170c-4c9a-9507-dc571c4d0a3b"
+              },
+              "datafangstdato": "2006-06-13T00:00:00+02:00",
+              "gyldigFra": "2023-11-07",
+              "gyldigTil": null,
+              "informasjon": null,
+              "sporingsinformasjon": {
+                "oppdateringsdato": "2023-11-07T12:57:08.480715+01:00"
+              },
+              "opphav": null
+            }
+          },
+          "kontekstEgenskaper": [],
+          "version": 1,
+          "shouldArchive": false
+        },
+        "geometry": {
+          "type": "MultiPolygon",
+          "coordinates": []
+        }
+      }
+    ]
+  },
+  "version": 1
+}

@@ -1,5 +1,7 @@
 package no.kartverket.nibas.controller.klient
 
+import com.ninjasquad.springmockk.MockkBean
+import io.mockk.every
 import no.kartverket.nibas.NibasMvcTest
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.builders.FylkeBuilder
@@ -13,24 +15,22 @@ import no.kartverket.nibas.service.FylkeService
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
-import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-import org.mockito.Mockito.`when` as whenever
 
 @WebMvcTest(FylkeController::class)
 class FylkeControllerTest : NibasMvcTest() {
 
-    @MockBean
+    @MockkBean
     private lateinit var fylkeService: FylkeService
 
-    @MockBean
+    @MockkBean
     private lateinit var hrefProviderMock: HrefProvider
 
     private val href = "http://finPathTilEtObjektHer"
 
     @BeforeEach
     fun beforeEach() {
-        whenever(hrefProviderMock.getHref(any(Identifikator::class.java))).thenReturn(href)
+        every { hrefProviderMock.getHref(any<Identifikator>()) } returns href
     }
 
     @Test
@@ -40,43 +40,46 @@ class FylkeControllerTest : NibasMvcTest() {
             .withFylkesnummer("1")
             .build()
 
-        whenever(fylkeService.hentAlleFylker()).thenReturn(listOf(fylke))
+        every { fylkeService.hentAlleFylker() } returns listOf(fylke)
         get("/v1/fylker", status().isOk)
     }
 
     @Test
     fun thatHentEnReturns200_OK() {
-        whenever(fylkeService.hentFylke(any(Identifikator::class.java))).thenReturn(
+        every { fylkeService.hentFylke(any()) } returns
             FylkeBuilder()
                 .withNavn("Vestland")
                 .withFylkesnummerUuid("UUID-123")
                 .withFylkesnummer("1")
                 .build()
-        )
+
 
         get("/v1/fylker/1", status().isOk)
     }
 
     @Test
     fun thatHentEnReturns404_NotFound() {
-        whenever(fylkeService.hentFylke(any(Identifikator::class.java))).thenReturn(null)
+        every { fylkeService.hentFylke(any()) } returns null
         get("/v1/fylker/1", status().isNotFound)
     }
 
     @Test
     fun thatHentGrenserReturns200_Ok() {
-        whenever(
-            fylkeService.hentGrensekoblingerForFylke(any(Identifikator::class.java))
-        ).thenReturn(
-            setOf(GrunnkretsGrenseKobling(grunnkrets = GrunnkretsBuilder().build(),
-                grense = GrenseBuilder().withGrensetype(Grensetype.Fylkesgrense).build(), GrenseKoblingAttributter()))
-        )
+        every {
+            fylkeService.hentGrensekoblingerForFylke(any())
+         } returns setOf(
+            GrunnkretsGrenseKobling(
+                grunnkrets = GrunnkretsBuilder().build(),
+                grense = GrenseBuilder().withGrensetype(Grensetype.Fylkesgrense).build(),
+                grenseKoblingAttributter = GrenseKoblingAttributter())
+            )
+
         get("/v1/fylker/1/grenser", status().isOk)
     }
 
     @Test
     fun thatHentGrenserReturns404_NotFound() {
-        whenever(fylkeService.hentGrensekoblingerForFylke(any(Identifikator::class.java))).thenReturn(emptySet())
+        every { fylkeService.hentGrensekoblingerForFylke(any()) } returns emptySet()
         get("/v1/fylker/1/grenser", status().isNotFound)
     }
 

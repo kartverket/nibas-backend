@@ -1,8 +1,8 @@
 package no.kartverket.nibas.builders
 
+import no.kartverket.nibas.api.v1.common.Kommunenummer
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
-import no.kartverket.nibas.api.v1.response.Kommunenummer
-import no.kartverket.nibas.api.v1.response.KretsResponse
+import no.kartverket.nibas.api.v1.ekstern.response.EksternKretsResponse
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.extensions.geometry.flateToFeature
@@ -14,8 +14,8 @@ class KretsResponseBuilder(
     private var kommunenummer: String = "0301"
 ) {
 
-    fun buildForGrunnkrets(): KretsResponse {
-        return KretsResponse(
+    fun buildForGrunnkrets(): EksternKretsResponse {
+        return EksternKretsResponse(
             id = grunnkrets.lokalid,
             navn = grunnkrets.grunnkretsnavn!!,
             nummer = grunnkrets.grunnkretsnummer!!,
@@ -29,8 +29,8 @@ class KretsResponseBuilder(
         )
     }
 
-    fun buildForStemmekrets(): KretsResponse {
-        return KretsResponse(
+    fun buildForStemmekrets(): EksternKretsResponse {
+        return EksternKretsResponse(
             id = stemmekrets.lokalid,
             navn = stemmekrets.stemmekretsnavn!!,
             nummer = stemmekrets.stemmekretsnummer!!,

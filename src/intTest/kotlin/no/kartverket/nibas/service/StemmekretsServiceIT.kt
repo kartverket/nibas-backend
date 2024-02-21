@@ -14,7 +14,7 @@ import no.kartverket.nibas.api.v1.common.getUnikeKretsDelingEndringRequests
 import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.api.v1.request.KretsNavnOgNummer
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
-import no.kartverket.nibas.api.v1.response.ObjektIdentifikator
+import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import no.kartverket.nibas.builders.GrenseMedHullIndex
 import no.kartverket.nibas.builders.MaalemetodeKodeEnum
 import no.kartverket.nibas.builders.StemmekretsRequestBuilder

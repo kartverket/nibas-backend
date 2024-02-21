@@ -1,8 +1,5 @@
 package no.kartverket.nibas.kodelister
 
-import no.kartverket.nibas.api.v1.common.Grensetype
-import no.kartverket.nibas.api.v1.response.Kommunenummer
-import no.kartverket.nibas.repository.LandKodeRepository
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.client.WebClient
@@ -10,8 +7,7 @@ import java.time.Duration
 import java.util.logging.Logger
 
 @Transactional(readOnly = true)
-class DefaultKodelisteService constructor(private val kodelisteFetcher: KodelisteFetcher,
-                                          private val landKodeRepository: LandKodeRepository) : KodelisteService {
+class DefaultKodelisteService(private val kodelisteFetcher: KodelisteFetcher) : KodelisteService {
     private val logger: Logger = Logger.getLogger(this::class.java.name)
     private val malemetodeKodeUri = "malemetode-kode.json?"
     private val kommunenummerUri = "inndelinger/inndelingsbase/kommunenummer.json?"
@@ -27,16 +23,6 @@ class DefaultKodelisteService constructor(private val kodelisteFetcher: Kodelist
         kodelisteByTypeMap.clear()
     }
 
-    override fun getCodeValueByKommunenummerId(kommunenummerId: String): String {
-        return getKommunenummerMap().getOrElse(kommunenummerId) {
-            throw MissingKodelisteItemException(KodelisteType.KOMMUNENUMMER, kommunenummerId)
-        }.item.codevalue
-    }
-
-    override fun getCodeValueByFylkesnummerId(fylkesnummerId: String): String? {
-        return getFylkesnummerMap()[fylkesnummerId]?.item?.codevalue
-    }
-
     override fun getKommunenummerIdByCodeValue(codeValue: String): String {
         return findMatchingUUIDFor(KodelisteType.KOMMUNENUMMER, codeValue)
     }
@@ -49,41 +35,11 @@ class DefaultKodelisteService constructor(private val kodelisteFetcher: Kodelist
         return findMatchingUUIDFor(KodelisteType.MAALEMETODE_KODE, codeValue)
     }
 
-    override fun getKommunenumre(): KodelisteRespons {
-        return KodelisteRespons(
-            type = KodelisteType.KOMMUNENUMMER,
-            items = toResponseListe(getKommunenummerMap())
-        )
-    }
-
-    override fun getFylkesnumre(): KodelisteRespons {
-        return KodelisteRespons(
-            type = KodelisteType.FYLKESNUMMER,
-            items = toResponseListe(getFylkesnummerMap())
-        )
-    }
-
     override fun getMaalemetodeKoder(): KodelisteRespons {
         return KodelisteRespons(
             type = KodelisteType.MAALEMETODE_KODE,
             items = toResponseListe(getMaalemetodeKoderMap())
         )
-    }
-
-    override fun getLandkoder(): KodelisteRespons {
-        return KodelisteRespons(
-            type = KodelisteType.LAND,
-            items = landKodeRepository.findAll()
-                .map { KodelisteItem(id = it.id, label = it.description!!) }
-                .sortedBy { it.id })
-    }
-
-    override fun getGrensetyper(): KodelisteRespons {
-        return KodelisteRespons(
-            type = KodelisteType.GRENSETYPE,
-            items = Grensetype.values()
-                .map { KodelisteItem(id = it.value, label = it.name) }
-                .sortedBy { it.id })
     }
 
     private fun toResponseListe(itemByUuidMap: Map<String, CachetKodelisteItem>) = itemByUuidMap.values.map {
@@ -99,7 +55,6 @@ class DefaultKodelisteService constructor(private val kodelisteFetcher: Kodelist
             KodelisteType.KOMMUNENUMMER -> getKommunenummerMap().values.toList()
             KodelisteType.FYLKESNUMMER -> getFylkesnummerMap().values.toList()
             KodelisteType.MAALEMETODE_KODE -> getMaalemetodeKoderMap().values.toList()
-            else -> throw RuntimeException("Ugyldig kodelistetype: $kodelisteType")
         }
         return kodelisteItems.first { it.item.codevalue == codeValue }.item.uuid
     }
@@ -144,8 +99,3 @@ open class KodelisteFetcher(private val webClient: WebClient) {
 class MissingKodelisteItemException(val kodelisteType: KodelisteType, val id: String)
     : RuntimeException("Kodeliste-innslag for: $id finnes ikke for Kodeliste: $kodelisteType")
 
-@Suppress("unused")
-fun KodelisteService.createKommunenummerFromUUID(uuid: String) = Kommunenummer(
-    id = uuid,
-    kodeverdi = this.getCodeValueByKommunenummerId(uuid)
-)
