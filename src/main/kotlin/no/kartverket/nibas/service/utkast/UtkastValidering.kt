@@ -54,6 +54,11 @@ class UtkastValidatorService(
         return OperasjonerValidering.GyldigeOperasjoner(operasjoner)
     }
 
+    fun sjekkUgyldigUtkastNavnOgEndringstype(navn: String, endringstype: String): Boolean {
+        //Sjekker om navn og endringstype er ugyldige
+        return (navn.isBlank() || endringstype.isBlank())
+    }
+
     fun validateUtkastKlartForPublisering(utkast: Utkast): UtkastValidering {
         if (utkast.status != UtkastStatus.OPPRETTET) {
             return UtkastValidering.UgyldigUtkast(utkast, ResponseException.BadRequestException(

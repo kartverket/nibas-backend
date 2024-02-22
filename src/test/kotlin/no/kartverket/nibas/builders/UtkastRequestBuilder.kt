@@ -58,7 +58,7 @@ class UtkastRequestBuilder {
 
 class OpprettUtkastRequestBuilder {
     private var navn = "Mitt nye utkast"
-    private var endringstype = Endringstype.VEDTATT_GRENSEJUSTERING
+    private var endringstype = Endringstype.VEDTATT_GRENSEJUSTERING.value
     companion object {
         val DEFAULT_REQUEST = OpprettUtkastRequestBuilder().build()
     }
@@ -66,7 +66,7 @@ class OpprettUtkastRequestBuilder {
     fun build(): OpprettUtkastRequest {
         return OpprettUtkastRequest(
             navn = this.navn,
-            endringstype = this.endringstype.value,
+            endringstype = this.endringstype,
         )
     }
 
@@ -74,4 +74,9 @@ class OpprettUtkastRequestBuilder {
         this.navn = navn
         return this
     }
+    fun withEndringstype(endringstype: String): OpprettUtkastRequestBuilder {
+        this.endringstype= endringstype
+        return this
+    }
+
 }

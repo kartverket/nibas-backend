@@ -53,6 +53,9 @@ class UtkastService(
     private val logger: Logger = LoggerFactory.getLogger(UtkastService::class.java)
 
     fun opprettUtkast(opprettUtkastRequest: OpprettUtkastRequest): String {
+        if (utkastValidatorService.sjekkUgyldigUtkastNavnOgEndringstype(opprettUtkastRequest.navn, opprettUtkastRequest.endringstype)) {
+            throw ResponseException.BadRequestException("Husk å fylle inn både navnet og endringstypen på utkastet.")
+        }
         return utkastRepository.save(opprettUtkastRequest.createUtkast()).id
     }
 
@@ -65,6 +68,9 @@ class UtkastService(
     }
 
     fun oppdaterUtkast(id: String, request: OppdaterUtkastRequest): Utkast? {
+        if (utkastValidatorService.sjekkUgyldigUtkastNavnOgEndringstype(request.navn, request.endringstype)) {
+            throw ResponseException.BadRequestException("Husk å fylle inn både navnet og endringstypen på utkastet.")
+        }
         when (val operasjonerValideringResult = utkastValidatorService.validateGyldigeOperasjoner(request.operasjoner)) {
             is OperasjonerValidering.UgyldigeOperasjoner -> throw operasjonerValideringResult.feil
             is OperasjonerValidering.GyldigeOperasjoner -> {
@@ -94,6 +100,10 @@ class UtkastService(
                 ?: throw ResponseException.NotFoundException("Utkast ble ikke funnet for id: $utkastId.")
 
         utkast.gyldigFra = gyldigFra
+
+        if (utkastValidatorService.sjekkUgyldigUtkastNavnOgEndringstype(utkast.navn, utkast.auditInfo.typeEndring.value)) {
+            throw ResponseException.BadRequestException("Husk å fylle inn både navnet og endringstypen på utkastet.")
+        }
 
         when (
             val utkastValideringResult =

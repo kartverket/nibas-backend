@@ -12,6 +12,7 @@ import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
 import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.api.v1.request.KretsNavnOgNummer
+import no.kartverket.nibas.api.v1.request.OppdaterUtkastRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
 import no.kartverket.nibas.builders.FeatureBuilder
 import no.kartverket.nibas.builders.FylkeRequestBuilder
@@ -102,6 +103,30 @@ internal class UtkastServiceTest {
     }
 
     @Test
+    fun `opprett utkast med tomt navn gir bad request`() {
+        assertThatThrownBy {
+            utkastService.opprettUtkast(
+                OpprettUtkastRequestBuilder()
+                    .withNavn("     ")
+                    .build())
+        }
+            .isInstanceOf(BadRequestException::class.java)
+            .hasMessageContaining("Husk å fylle inn både navnet og endringstypen på utkastet.")
+    }
+
+    @Test
+    fun `utkast med tom endringstype gir bad request`() {
+        assertThatThrownBy {
+            utkastService.opprettUtkast(
+                OpprettUtkastRequestBuilder()
+                    .withEndringstype("")
+                    .build())
+        }
+            .isInstanceOf(BadRequestException::class.java)
+            .hasMessageContaining("Husk å fylle inn både navnet og endringstypen på utkastet.")
+    }
+
+    @Test
     fun oppdaterUtkast() {
         val utkastBuilder = UtkastBuilder.builder("Utkast 3")
             .withFylkeRequests(mapOf("Fylke-UUID-1" to FylkeRequestBuilder.DEFAULT_REQUEST))
@@ -122,6 +147,23 @@ internal class UtkastServiceTest {
             .build())
         assertThat(oppdatertUtkast).isNotNull
         assertThat(oppdatertUtkast!!.gyldigFra).isEqualTo(feb3)
+    }
+
+    @Test
+    fun `oppdater utkast med tomt navn gir bad request`() {
+        val utkastBuilder = UtkastBuilder.builder("lovlig utkast")
+            .withFylkeRequests(mapOf("Fylke-UUID-1" to FylkeRequestBuilder.DEFAULT_REQUEST))
+            .withGyldigFra(LocalDate.of(2024, Month.JANUARY, 1))
+            .withKommuneRequests(mapOf("Kommune-UUID-1" to KommuneRequestBuilder.DEFAULT_REQUEST))
+        val utkast = utkastBuilder.build()
+
+        assertThatThrownBy {
+            utkastService.oppdaterUtkast(utkast.id, UtkastRequestBuilder()
+                .withNavn("")
+                .build())
+        }
+            .isInstanceOf(BadRequestException::class.java)
+            .hasMessageContaining("Husk å fylle inn både navnet og endringstypen på utkastet.")
     }
 
     @Test
