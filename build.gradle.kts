@@ -1,16 +1,19 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.springframework.boot.gradle.tasks.bundling.BootJar
 
-plugins {
-    val kotlinPluginVersion = "1.9.22"
+// Versjonering settes i gradle/libs.versions.toml - vær obs. på at
+// intellij ikke plukker opp på endringer der, før gradle er reloadet.
+// Mer info: https://docs.gradle.org/current/userguide/platforms.html
 
-    id("org.springframework.boot") version "3.2.2"
-    id("io.spring.dependency-management") version "1.1.4"
-    kotlin("jvm") version kotlinPluginVersion
-    kotlin("plugin.spring") version kotlinPluginVersion
-    kotlin("plugin.jpa") version kotlinPluginVersion
-    kotlin("plugin.allopen") version kotlinPluginVersion
-    id("org.flywaydb.flyway") version "10.8.1"
+plugins {
+
+    alias(libs.plugins.spring.framework)
+    alias(libs.plugins.spring.dependency.management)
+    kotlin("jvm").version(libs.versions.kotlinPluginVersion)
+    kotlin("plugin.spring").version(libs.versions.kotlinPluginVersion)
+    kotlin("plugin.jpa").version(libs.versions.kotlinPluginVersion)
+    kotlin("plugin.allopen").version(libs.versions.kotlinPluginVersion)
+    alias(libs.plugins.flyway)
 }
 
 group = "no.kartverket.nibas"
@@ -36,6 +39,7 @@ repositories {
     }
 }
 
+
 sourceSets {
     create("intTest") {
         compileClasspath += sourceSets.main.get().output
@@ -52,76 +56,64 @@ val intTestImplementation: Configuration by configurations.getting {
 
 configurations["intTestRuntimeOnly"].extendsFrom(configurations.runtimeOnly.get())
 
-// Definerer versjoner for avhengigheter som ikke dekkes av BOM
-val springdocOpenapiVersion2 = "2.3.0"
-val jtsVersion = "1.19.0"
-val testContainerVersion = "1.19.4"
-val autLibVersion = "2.0.3"
-val flywayVersion = "10.7.1"
-val hypersistenceUtilsHibernate62Version = "3.7.3"
-val springCloudStarterVaultConfigVersion = "4.0.1"
-val spatial4jVersion = "0.8"
-val kotlinxCoroutinesCoreVersion = "1.7.3"
-val logstashVersion = "7.4"
-val springmockkVersion = "4.0.2"
-val kotlinMockitoVersion = "5.2.1"
-val prometheusVersion = "1.12.2"
-val openTelemetryVersion = "1.32.0"
+buildscript {
+    dependencies {
+        classpath(libs.flyway.postgres)
+    }
+}
 
 dependencies {
-    implementation("no.kartverket.aut:aut-lib:$autLibVersion")
-
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    implementation("org.springframework.boot:spring-boot-starter-security") // Web-security
-    implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("org.springframework.boot:spring-boot-starter-webflux")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-    implementation("org.jetbrains.kotlin:kotlin-reflect")
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-    implementation("org.springframework.boot:spring-boot-starter-actuator")
-    implementation("org.springframework.boot:spring-boot-starter-validation")
-    implementation("org.springdoc:springdoc-openapi-starter-common:$springdocOpenapiVersion2")
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:$springdocOpenapiVersion2")
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:$springdocOpenapiVersion2")
-    implementation("org.locationtech.jts:jts-core:$jtsVersion")
-    implementation("org.locationtech.jts:jts:$jtsVersion")
-    implementation("org.locationtech.jts:jts-modules:$jtsVersion")
-    implementation("org.locationtech.jts:jts-io:$jtsVersion")
-    implementation("org.locationtech.jts.io:jts-io-common:$jtsVersion") {
+    implementation(libs.kartverket.autlib)
+    implementation(libs.spring.jpa)
+    implementation(libs.spring.security) // Web-security
+    implementation(libs.spring.web)
+    implementation(libs.spring.webflux)
+    implementation(libs.jackson.module.kotlin)
+    implementation(libs.kotlin.reflect)
+    implementation(libs.kotlin.stdlib.jdk)
+    implementation(libs.spring.actuator)
+    implementation(libs.spring.validator)
+    implementation(libs.springdoc.openapi.common)
+    implementation(libs.springdoc.openapi.webmvc.api)
+    implementation(libs.springdoc.openapi.webmvc.ui)
+    implementation(libs.locationtech.jts.core)
+    implementation(libs.locationtech.jts)
+    implementation(libs.locationtech.jts.modules)
+    implementation(libs.locationtech.jts.io)
+    implementation(libs.locationtech.jts.io.common) {
         exclude(group = "junit", module = "junit")
     }
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinxCoroutinesCoreVersion")
-    implementation("org.locationtech.spatial4j:spatial4j:$spatial4jVersion")
-    implementation("org.hibernate.orm:hibernate-spatial")
-    implementation("org.hibernate.orm:hibernate-core")
-    implementation("net.logstash.logback:logstash-logback-encoder:$logstashVersion")
-    implementation("org.springframework.cloud:spring-cloud-starter")
-    implementation("org.springframework.cloud:spring-cloud-starter-vault-config")
-    implementation("io.micrometer:micrometer-registry-prometheus:$prometheusVersion")
-    implementation("org.springframework.integration:spring-integration-core")
-    implementation(platform("io.opentelemetry:opentelemetry-bom:1.34.1"))
-    implementation("io.opentelemetry:opentelemetry-api")
-
+    implementation(libs.kotlinx.coroutines)
+    implementation(libs.locationtech.spatial4j)
+    implementation(libs.hibernate.spatial)
+    implementation(libs.hibernate.core)
+    implementation(libs.logstash.logback.encoder)
+    implementation(libs.spring.cloud.starter)
+    implementation(libs.spring.cloud.vault.configuration)
+    implementation(libs.micrometer.registry.prometheus)
+    implementation(libs.spring.integration.core)
+    implementation(platform(libs.opentelemetry.bom))
+    implementation(libs.opentelemetry.api)
     // This library provides Hibernate 5.5+ Json column support, which is not natively supported by Hibernate
-    implementation("io.hypersistence:hypersistence-utils-hibernate-62:$hypersistenceUtilsHibernate62Version")
+    implementation(libs.hypersistence.utils.hibernate)
 
-    runtimeOnly("org.flywaydb:flyway-core:$flywayVersion")
-    runtimeOnly("org.flywaydb:flyway-database-postgresql:$flywayVersion")
-    runtimeOnly("org.postgresql:postgresql")
+    runtimeOnly(libs.flyway.core)
+    runtimeOnly(libs.flyway.postgres)
+    runtimeOnly(libs.postgres)
 
-    testImplementation("org.jetbrains.kotlin:kotlin-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("org.springframework.batch:spring-batch-test")
-    testImplementation("com.ninja-squad:springmockk:$springmockkVersion")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:$kotlinMockitoVersion")
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.spring.starter.test)
+    testImplementation(libs.spring.batch.test)
+    testImplementation(libs.spring.mockk)
+    testImplementation(libs.kotlin.mockito)
 
-    testRuntimeOnly("com.h2database:h2")
+    testRuntimeOnly(libs.h2.db)
 
-    intTestImplementation("org.jetbrains.kotlin:kotlin-test")
-    intTestImplementation("org.springframework.boot:spring-boot-starter-test")
-    intTestImplementation("org.testcontainers:postgresql:$testContainerVersion")
-    intTestImplementation("org.testcontainers:junit-jupiter:$testContainerVersion")
-    intTestImplementation("com.ninja-squad:springmockk:$springmockkVersion")
+    intTestImplementation(libs.kotlin.test)
+    intTestImplementation(libs.spring.starter.test)
+    intTestImplementation(libs.testcontainers.postgres)
+    intTestImplementation(libs.testcontainers.junit)
+    intTestImplementation(libs.spring.mockk)
 }
 
 allOpen {

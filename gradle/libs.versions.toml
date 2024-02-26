@@ -1,0 +1,68 @@
+[versions]
+springFrameworkVersion = "3.2.2"
+springDependencyManagementVersion = "1.1.4"
+flywayVersion = "10.8.1"
+springmockkVersion = "4.0.2"
+kotlinMockitoVersion = "5.2.1"
+testContainerVersion = "1.19.4"
+springdocOpenapiVersion2 = "2.3.0"
+jtsVersion = "1.19.0"
+autLibVersion = "2.0.3"
+hypersistenceUtilsHibernate62Version = "3.7.3"
+openTelemetryVersion = "1.35.0"
+prometheusVersion = "1.12.2"
+kotlinxCoroutinesCoreVersion = "1.7.3"
+springCloudStarterVaultConfigVersion = "4.1.0"
+spatial4jVersion = "0.8"
+logstashVersion = "7.4"
+kotlinPluginVersion = "1.9.22"
+
+
+[libraries]
+flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flywayVersion" }
+flyway-postgres = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flywayVersion" }
+postgres = { module = "org.postgresql:postgresql" }
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test" }
+spring-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
+spring-batch-test = { module = "org.springframework.batch:spring-batch-test" }
+spring-mockk = { module = "com.ninja-squad:springmockk", version.ref = "springmockkVersion" }
+spring-integration-core = { module = "org.springframework.integration:spring-integration-core" }
+spring-cloud-vault-configuration = { module = "org.springframework.cloud:spring-cloud-starter-vault-config", version.ref = "springCloudStarterVaultConfigVersion" }
+spring-cloud-starter = { module = "org.springframework.cloud:spring-cloud-starter" }
+spring-validator = { module = "org.springframework.boot:spring-boot-starter-validation" }
+spring-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator" }
+spring-webflux = { module = "org.springframework.boot:spring-boot-starter-webflux" }
+spring-web = { module = "org.springframework.boot:spring-boot-starter-web" }
+spring-security = { module = "org.springframework.boot:spring-boot-starter-security" }
+spring-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa" }
+springdoc-openapi-common = { module = "org.springdoc:springdoc-openapi-starter-common", version.ref = "springdocOpenapiVersion2" }
+springdoc-openapi-webmvc-api = { module = "org.springdoc:springdoc-openapi-starter-webmvc-api", version.ref = "springdocOpenapiVersion2" }
+springdoc-openapi-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdocOpenapiVersion2" }
+kotlin-mockito = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "kotlinMockitoVersion" }
+kotlin-stdlib-jdk = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8" }
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect" }
+jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin" }
+h2-db = { module = "com.h2database:h2" }
+testcontainers-postgres = { module = "org.testcontainers:postgresql", version.ref = "testContainerVersion" }
+testcontainers-junit = { module = "org.testcontainers:junit-jupiter", version.ref = "testContainerVersion" }
+locationtech-jts-core = { module = "org.locationtech.jts:jts-core", version.ref = "jtsVersion" }
+locationtech-jts = { module = "org.locationtech.jts:jts", version.ref = "jtsVersion" }
+locationtech-jts-modules = { module = "org.locationtech.jts:jts-modules", version.ref = "jtsVersion" }
+locationtech-jts-io = { module = "org.locationtech.jts:jts-io", version.ref = "jtsVersion" }
+locationtech-jts-io-common = { module = "org.locationtech.jts.io:jts-io-common", version.ref = "jtsVersion" }
+locationtech-spatial4j = { module = "org.locationtech.spatial4j:spatial4j", version.ref = "spatial4jVersion" }
+kartverket-autlib = { module = "no.kartverket.aut:aut-lib", version.ref = "autLibVersion" }
+hypersistence-utils-hibernate = { module = "io.hypersistence:hypersistence-utils-hibernate-62", version.ref = "hypersistenceUtilsHibernate62Version" }
+opentelemetry-api = { module = "io.opentelemetry:opentelemetry-api", version.ref = "openTelemetryVersion" }
+opentelemetry-bom = { module = "io.opentelemetry:opentelemetry-bom", version.ref = "openTelemetryVersion" }
+micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "prometheusVersion" }
+hibernate-core = { module = "org.hibernate.orm:hibernate-core" }
+hibernate-spatial = { module = "org.hibernate.orm:hibernate-spatial" }
+kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutinesCoreVersion" }
+logstash-logback-encoder = { module = "net.logstash.logback:logstash-logback-encoder", version.ref = "logstashVersion" }
+
+[plugins]
+flyway = { id = "org.flywaydb.flyway", version.ref = "flywayVersion" }
+kotlin-jvm = { id = "jvm", version.ref = "kotlinPluginVersion" }
+spring-framework = { id = "org.springframework.boot", version.ref = "springFrameworkVersion" }
+spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "springDependencyManagementVersion" }
