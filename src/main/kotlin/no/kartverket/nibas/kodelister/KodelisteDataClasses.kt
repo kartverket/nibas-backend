@@ -13,7 +13,9 @@ data class KodelisteRespons(
 data class KodelisteItem(
     @Schema(description = "Id til kodeliste-innslaget.")
     val id: String,
-    @Schema(description = "Beskrivelse av kodeliste-innslaget.")
+    @Schema(description = "kode til kodeliste-innslaget.")
+    val kode: String,
+    @Schema(description = "Navnet til kodeliste-innslaget.")
     val label: String
 )
 

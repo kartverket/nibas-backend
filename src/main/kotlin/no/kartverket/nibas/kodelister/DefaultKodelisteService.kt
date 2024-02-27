@@ -46,6 +46,7 @@ class DefaultKodelisteService(private val kodelisteFetcher: KodelisteFetcher) : 
         val geonorgeKodelisteItem = it.item
         KodelisteItem(
             id = geonorgeKodelisteItem.uuid,
+            kode = geonorgeKodelisteItem.codevalue,
             label = geonorgeKodelisteItem.label
         )
     }
