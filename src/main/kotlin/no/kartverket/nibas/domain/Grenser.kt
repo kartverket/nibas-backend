@@ -9,6 +9,7 @@ import no.kartverket.nibas.sporing.Laasbar
 import org.locationtech.jts.geom.LineString
 import java.time.LocalDate
 import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
 import java.util.*
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
@@ -140,10 +141,8 @@ class Grense(
     }
 
     private fun archiveAndRemoveDokumentasjonsreferanse(dokumentasjonsreferanse: Dokumentasjonsreferanse, gyldigTil: LocalDate) {
-        dokumentasjonsreferanse
-            .gyldighet = dokumentasjonsreferanse.gyldighet.copy(
-            gyldigTil = gyldigTil
-        )
+        dokumentasjonsreferanse.setGyldigTil(gyldigTil)
+       
         this.dokumentasjonsreferanser.removeIf { dokumentasjonsreferanse.id == it.id }
     }
 

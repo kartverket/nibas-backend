@@ -69,6 +69,13 @@ internal class MetadataUpdaterTest {
         commonGrense = expectedCommonGrensedata(),
     )
 
+    private fun createFylkesgrense() = FylkesgrenseBuilder()
+        .withEndretDato(oppdDato)
+        .datafangstdato(dataFanget)
+        .gyldigFra(gyldigFraTidspunkt)
+        .dokRef(dokumentasjonsreferanse)
+        .build()
+
     @BeforeEach
     fun beforeEach() {
         MockitoAnnotations.openMocks(this)
@@ -78,7 +85,7 @@ internal class MetadataUpdaterTest {
 
     @Test
     fun `Skal fjerne dokumentasjonsreferanse fra Grense når flagget isArchived`() {
-        val grense = fylkesgrense.copyWithNewUUID()
+        val grense = createFylkesgrense()
         val originalDokrefDtos = grense.dokumentasjonsreferanser.map { it.toDokRef() }
         assertThat(originalDokrefDtos).isNotEmpty()
 
@@ -96,8 +103,28 @@ internal class MetadataUpdaterTest {
     }
 
     @Test
+    fun `Skal slette dokumentasjonsreferanse dersom den arkiveres samme dag`() {
+        val grense = createFylkesgrense()
+        val originalDokrefDtos = grense.dokumentasjonsreferanser.map { it.toDokRef() }
+        assertThat(originalDokrefDtos).isNotEmpty()
+
+        val dokrefDTOflaggedArchived = originalDokrefDtos[0].copy(shouldArchive = true)
+        val dokrefPreArchived = grense.dokumentasjonsreferanser.firstOrNull { it.id == dokrefDTOflaggedArchived.id }
+        assertThat(dokrefPreArchived).isNotNull
+
+        val dokrefDtosWithArchivedEntry = mutableListOf(dokrefDTOflaggedArchived)
+        for (i in 1..<originalDokrefDtos.size) {
+            dokrefDtosWithArchivedEntry.add(originalDokrefDtos[i])
+        }
+
+        grense.updateDokumentasjonsreferanser(dokrefDtosWithArchivedEntry, LocalDate.now(), Endringstype.KVALITETSHEVING)
+        assertThat(dokrefPreArchived?.gyldighet?.slettet).isTrue()
+        assertThat(originalDokrefDtos.size).isEqualTo(grense.dokumentasjonsreferanser.size + 1)
+    }
+
+    @Test
     fun `Skal lage ny versjon av dokumentasjonsreferanse ved oppdatering`() {
-        val grense = fylkesgrense.copyWithNewUUID()
+        val grense = createFylkesgrense()
         val originalDokrefDtos = grense.dokumentasjonsreferanser.map { it.toDokRef() }
         assertThat(originalDokrefDtos).isNotEmpty()
 
