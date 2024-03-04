@@ -9,6 +9,7 @@ import no.kartverket.nibas.api.v1.common.geojson.KontekstEgenskaper
 import no.kartverket.nibas.api.v1.common.geojson.metadata.AdministrativGrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.AvtaltAvgrensningslinjeMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.CommonMetadata
+import no.kartverket.nibas.api.v1.common.geojson.metadata.DokumentasjonsreferanseDTO
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.KommunalKretsgrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Metadata
@@ -40,7 +41,7 @@ class FeatureBuilder(private var id: String? = "1") {
     private var geometry: Geometry =
         GeometryFactory().createLineString(arrayOf(Coordinate(0.0, 0.0), Coordinate(1.0, 1.0)))
     private var shouldArchive: Boolean = false
-
+    private val dokumentasjonsreferanser = mutableListOf<DokumentasjonsreferanseDTO>()
 
     fun build(): Feature {
         var properties = FeatureProperties(
@@ -58,10 +59,10 @@ class FeatureBuilder(private var id: String? = "1") {
                 gyldigFra = LocalDate.now()
             )
             metadata = when (grenseType) {
-                Grensetype.Kommunegrense -> AdministrativGrenseMetadata(common = commonMetadata)
-                Grensetype.Fylkesgrense -> AdministrativGrenseMetadata(common = commonMetadata)
-                Grensetype.Riksgrense -> RiksgrenseMetadata(common = commonMetadata)
-                Grensetype.Territorialgrense -> TerritorialgrenseMetadata(common = commonMetadata)
+                Grensetype.Kommunegrense -> AdministrativGrenseMetadata(common = commonMetadata, dokumentasjonsreferanser = dokumentasjonsreferanser)
+                Grensetype.Fylkesgrense -> AdministrativGrenseMetadata(common = commonMetadata, dokumentasjonsreferanser = dokumentasjonsreferanser)
+                Grensetype.Riksgrense -> RiksgrenseMetadata(common = commonMetadata, dokumentasjonsreferanser = dokumentasjonsreferanser)
+                Grensetype.Territorialgrense -> TerritorialgrenseMetadata(common = commonMetadata, dokumentasjonsreferanser = dokumentasjonsreferanser)
                 Grensetype.AvtaltAvgrensningslinje -> AvtaltAvgrensningslinjeMetadata(common = commonMetadata)
                 Grensetype.Stemmekretsgrense -> KommunalKretsgrenseMetadata(common = commonMetadata)
                 Grensetype.Grunnkretsgrense -> StatistiskgrenseMetadata(common = commonMetadata)
@@ -70,6 +71,9 @@ class FeatureBuilder(private var id: String? = "1") {
             }
         }
         properties = properties.copy(metadata = metadata)
+        if (grenseType == Grensetype.Kommunegrense) {
+            (metadata as AdministrativGrenseMetadata).dokumentasjonsreferanser = dokumentasjonsreferanser
+        }
 
         return Feature(
             id = id,
@@ -81,9 +85,10 @@ class FeatureBuilder(private var id: String? = "1") {
     // Kan brukes for å legge til nye ting på en eksisterende Feature man har.
     // Så slipper man å gjøre alt i en transformasjon, og kan ha mer generelle funksjoner i testkoden.
     fun copy(feature: Feature): FeatureBuilder {
-        this.grenseType = when(feature.properties.type){
+        this.grenseType = when (feature.properties.type) {
             "Stemmekretsgrense" -> Grensetype.Stemmekretsgrense
             "Grunnkretsgrense" -> Grensetype.Grunnkretsgrense
+            "Kommunegrense" -> Grensetype.Kommunegrense
             else -> throw RuntimeException("Mangler støtte for ${feature.properties.type}, legg til dette i testkoden")
         }
         this.kontekstEgenskaper = feature.properties.kontekstEgenskaper
@@ -99,7 +104,7 @@ class FeatureBuilder(private var id: String? = "1") {
         return this
     }
 
-    fun withKontekstEgenskaper(kontekstEgenskaper: List<KontekstEgenskaper>): FeatureBuilder{
+    fun withKontekstEgenskaper(kontekstEgenskaper: List<KontekstEgenskaper>): FeatureBuilder {
         this.kontekstEgenskaper = kontekstEgenskaper
         return this
     }
@@ -127,6 +132,11 @@ class FeatureBuilder(private var id: String? = "1") {
 
     fun withVersion(version: Int): FeatureBuilder {
         this.grenseVersjon = version
+        return this
+    }
+
+    fun withDokref(dokref: List<DokumentasjonsreferanseDTO>): FeatureBuilder {
+        dokumentasjonsreferanser.addAll(dokref)
         return this
     }
 }

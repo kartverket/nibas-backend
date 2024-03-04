@@ -142,15 +142,30 @@ class Grense(
 
     private fun archiveAndRemoveDokumentasjonsreferanse(dokumentasjonsreferanse: Dokumentasjonsreferanse, gyldigTil: LocalDate) {
         dokumentasjonsreferanse.setGyldigTil(gyldigTil)
-       
         this.dokumentasjonsreferanser.removeIf { dokumentasjonsreferanse.id == it.id }
     }
 
     private fun createNewVersionOfDokumentasjonsreferanse(dokumentasjonsreferanse: Dokumentasjonsreferanse, dokumentasjonsreferanseDTO: DokumentasjonsreferanseDTO): Dokumentasjonsreferanse? {
         if (dokumentasjonsreferanse.hasChanges(dokumentasjonsreferanseDTO))
             addDokumentasjonsreferanse(dokumentasjonsreferanse.lokalid).also {
-                it.dokumentlenker.addAll(dokumentasjonsreferanse.dokumentlenker)
-                it.internReferanserKartverket.addAll(dokumentasjonsreferanse.internReferanserKartverket)
+
+                // Viderefører kun internreferanser og dokumentlenker som er med fra requesten.
+                // Disse har 1..* forhold med dokumentasjonsreferansen, må kopieres uansett, og har ingen objid å videreføre.
+                // Klienten støtter kun å slette eller legge til objekter av disse typene - ikke redigering.
+                dokumentasjonsreferanseDTO.dokumentlenker.forEach { lenke ->
+                    it.addDokumentLenke().apply {
+                        this.dokumentasjonsreferanseFk = it
+                        this.dokumentlink = lenke.beskrivelse
+                    }
+                }
+
+                dokumentasjonsreferanseDTO.internReferanserKartverket.forEach { lenke ->
+                    it.addInternReferanse().apply {
+                        this.dokumentasjonsreferanseFk = it
+                        this.internReferanseKartverket = lenke.beskrivelse
+                    }
+                }
+
                 setDokrefFields(it, dokumentasjonsreferanseDTO)
                 return it
             }
@@ -189,27 +204,6 @@ class Grense(
         dokumentasjonsreferanse.hjemmel = dokRef.hjemmel
         dokumentasjonsreferanse.rettskildeid = dokRef.rettskildeId
         dokumentasjonsreferanse.rettskildetittel = dokRef.rettskildeTittel
-        val dokumentlenker = dokumentasjonsreferanse.dokumentlenker
-        dokRef.dokumentlenker.forEach { dokumentLenkeHolder ->
-            val dokumentLenkeHolderId = dokumentLenkeHolder.id
-            var dokumentLink = dokumentlenker.find { dokumentLink -> dokumentLink.id == dokumentLenkeHolderId }
-
-            validateReferanseId(dokumentLink, dokumentLenkeHolderId, "DokumentasjonsreferanseDokumentlink-id eksisterer ikke: $dokumentLenkeHolderId")
-
-            dokumentLink = dokumentLink ?: dokumentasjonsreferanse.addDokumentLenke()
-            dokumentLink.dokumentlink = dokumentLenkeHolder.beskrivelse
-        }
-
-        val internReferanser = dokumentasjonsreferanse.internReferanserKartverket
-        dokRef.internReferanserKartverket.forEach { internRefHolder ->
-            val internRefHolderId = internRefHolder.id
-            var internReferanse = internReferanser.find { internRef -> internRef.id == internRefHolderId }
-
-            validateReferanseId(internReferanse, internRefHolderId, "DokumentasjonsreferanseInternReferanseKartverket-id  eksisterer ikke: $internRefHolderId")
-
-            internReferanse = internReferanse ?: dokumentasjonsreferanse.addInternReferanse()
-            internReferanse.internReferanseKartverket = internRefHolder.beskrivelse
-        }
     }
 
     private fun <T> validateReferanseId(referanse: T, id: String?, exceptionMessage: String) {

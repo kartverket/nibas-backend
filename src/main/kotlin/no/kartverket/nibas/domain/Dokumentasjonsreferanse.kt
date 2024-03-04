@@ -78,8 +78,13 @@ class Dokumentasjonsreferanse(
     @OneToMany(mappedBy = "dokumentasjonsreferanseFk", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     var internReferanserKartverket: MutableSet<DokumentasjonsreferanseInternReferanseKartverket> = mutableSetOf()
 
-    fun hasChanges(dokumentreferanseDto: DokumentasjonsreferanseDTO) =
-        if (dokumentreferanseDto.shouldArchive) true
+    fun hasChanges(dokumentreferanseDto: DokumentasjonsreferanseDTO): Boolean {
+        val ownDokrefs = this.dokumentlenker.map { it.dokumentlink }
+        val dtoDokrefs = dokumentreferanseDto.dokumentlenker.map { it.beskrivelse }
+        val ownInternrefs = this.internReferanserKartverket.map { it.internReferanseKartverket }
+        val dtoInternrefs = dokumentreferanseDto.internReferanserKartverket.map { it.beskrivelse }
+
+        return if (dokumentreferanseDto.shouldArchive) true
         else if (this.id != dokumentreferanseDto.id) true
         else if (this.fastsettingsdato != dokumentreferanseDto.fastsettingsdato) true
         else if (this.vedtakGyldigTil != dokumentreferanseDto.vedtakGyldigTil) true
@@ -90,17 +95,10 @@ class Dokumentasjonsreferanse(
         else if (fastsettingsmyndighet != dokumentreferanseDto.fastsettingsmyndighet) true
         else if (vedtakGyldigFra != dokumentreferanseDto.vedtakGyldigFra) true
         else if (vedtakGyldigTil != dokumentreferanseDto.vedtakGyldigTil) true
-        else if (dokumentlenker.filter {
-                !dokumentreferanseDto.dokumentlenker.map {
-                    it.beskrivelse
-                }.contains(it.dokumentlink)
-            }.isNotEmpty()) true
-        else if (internReferanserKartverket.filter {
-                !dokumentreferanseDto.internReferanserKartverket.map {
-                    it.beskrivelse
-                }.contains(it.internReferanseKartverket)
-            }.isNotEmpty()) true
+        else if (ownDokrefs != dtoDokrefs) true
+        else if (ownInternrefs != dtoInternrefs) true
         else false
+    }
 
     fun addDokumentLenke(): DokumentasjonsreferanseDokumentlink {
         val dokumentLink = DokumentasjonsreferanseDokumentlink()
