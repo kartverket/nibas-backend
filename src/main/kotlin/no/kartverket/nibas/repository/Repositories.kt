@@ -89,7 +89,7 @@ interface StemmekretsGrenseKoblingRepository : JpaRepository<StemmekretsGrenseKo
     fun findByStemmekretsKommuneLokalid(kommuneLokalid: UnikLokalid): List<StemmekretsGrenseKobling>
 }
 
-interface UtkastRepository : CrudRepository<Utkast, String> {
+interface UtkastRepository : CrudRepository<Utkast, String>, JpaRepository<Utkast, String>{
     fun findAllByStatus(status: UtkastStatus): List<Utkast>
 }
 

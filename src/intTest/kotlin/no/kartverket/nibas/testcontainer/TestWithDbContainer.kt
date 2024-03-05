@@ -28,6 +28,7 @@ import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.NasjonRepository
 import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.repository.UnikLokalidRepository
+import no.kartverket.nibas.repository.UtkastRepository
 import no.kartverket.nibas.service.AdministrativenhetnavnService
 import no.kartverket.nibas.service.FlateService
 import no.kartverket.nibas.service.FylkeService
@@ -36,6 +37,7 @@ import no.kartverket.nibas.service.GrunnkretsService
 import no.kartverket.nibas.service.KommuneService
 import no.kartverket.nibas.service.NasjonService
 import no.kartverket.nibas.service.StemmekretsService
+import no.kartverket.nibas.service.utkast.UtkastService
 import no.kartverket.nibas.sporing.Gyldighet
 import org.assertj.core.api.Assertions.assertThat
 import org.locationtech.jts.geom.MultiPolygon
@@ -75,6 +77,9 @@ class TestWithDbContainer {
     lateinit var grenseRepository: GrenseRepository
 
     @Autowired
+    lateinit var utkastRepository: UtkastRepository
+
+    @Autowired
     lateinit var administrativenhetnavnRepository: AdministrativenhetnavnRepository
 
     @Autowired
@@ -97,6 +102,9 @@ class TestWithDbContainer {
 
     @Autowired
     lateinit var grenseService: GrenseService
+
+    @Autowired
+    lateinit var utkastService: UtkastService
 
     @Autowired
     lateinit var administrativenhetnavnService: AdministrativenhetnavnService

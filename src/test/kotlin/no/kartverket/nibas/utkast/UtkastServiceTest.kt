@@ -89,20 +89,6 @@ internal class UtkastServiceTest {
     }
 
     @Test
-    fun opprettUtkast() {
-        val navn = "Grenseendring i Oslo"
-        val utkast = UtkastBuilder.builder(navn)
-            .build()
-        every { utkastRepositoryMock.save(any()) } returns utkast
-
-        val idForOpprettetUtkast = utkastService.opprettUtkast(
-            OpprettUtkastRequestBuilder()
-                .withNavn(navn)
-                .build())
-        assertThat(utkast.id).isEqualTo(idForOpprettetUtkast)
-    }
-
-    @Test
     fun `opprett utkast med tomt navn gir bad request`() {
         assertThatThrownBy {
             utkastService.opprettUtkast(

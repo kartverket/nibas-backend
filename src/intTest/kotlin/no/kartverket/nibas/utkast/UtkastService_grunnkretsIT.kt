@@ -44,11 +44,6 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
     @MockkBean
     private lateinit var currentTime: CurrentTime
 
-    @Autowired
-    private lateinit var utkastService: UtkastService
-    @Autowired
-    private lateinit var utkastRepository: UtkastRepository
-
     private val lokalidOfGrunnkrets = "c54fb55e-15d0-4528-8b88-f58d6c74bd87"
 
     // ID for Kommune med kommunenummerId som matcher i Geonorge og vår cache

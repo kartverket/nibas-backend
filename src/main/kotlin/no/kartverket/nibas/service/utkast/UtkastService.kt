@@ -56,7 +56,7 @@ class UtkastService(
         if (utkastValidatorService.sjekkUgyldigUtkastNavnOgEndringstype(opprettUtkastRequest.navn, opprettUtkastRequest.endringstype)) {
             throw ResponseException.BadRequestException("Husk å fylle inn både navnet og endringstypen på utkastet.")
         }
-        return utkastRepository.save(opprettUtkastRequest.createUtkast()).id
+        return utkastRepository.saveAndFlush(opprettUtkastRequest.createUtkast()).id
     }
 
     @Transactional(readOnly = true)

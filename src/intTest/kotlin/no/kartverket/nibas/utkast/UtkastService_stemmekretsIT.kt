@@ -42,11 +42,6 @@ class UtkastService_stemmekretsIT : TestWithDbContainer() {
     private lateinit var currentTime: CurrentTime
 
     @Autowired
-    private lateinit var utkastService: UtkastService
-    @Autowired
-    private lateinit var utkastRepository: UtkastRepository
-
-    @Autowired
     private lateinit var nibasEventPublisher: NibasEventPublisher
 
     // ID for Kommune med kommunenummerId som matcher i Geonorge og vår cache

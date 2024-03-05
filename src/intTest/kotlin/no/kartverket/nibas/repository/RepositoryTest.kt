@@ -37,9 +37,6 @@ import java.time.Month
 class RepositoryTest : TestWithDbContainer() {
 
     @Autowired
-    private lateinit var utkastRepository: UtkastRepository
-
-    @Autowired
     private lateinit var spraakkodeRepository: SpraakkodeRepository
 
     // Later som nåværende dato er 8.10.2022
