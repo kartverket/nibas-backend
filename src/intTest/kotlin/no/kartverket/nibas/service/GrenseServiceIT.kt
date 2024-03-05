@@ -1429,4 +1429,56 @@ class GrenseServiceIT : TestWithDbContainer() {
         assertThat(persistedGrense?.dokumentasjonsreferanser!!.first().dokumentlenker).hasSize(3)
     }
 
+    @Test
+    fun `Skal tillate samme tekst i ulike dokrefs internreferanser og lenker`() {
+        val gyldighetsdato = LocalDate.now()
+        val (kretsOpprinnelig, kretsOest, kretsNordVest) =
+            getTilhorigetTilNyopprettetKretsTestSetup(Grensetype.Kommunegrense, gyldighetsdato, ::saveStemmekrets)
+        saveKommuneOgUnikLokalid(stemmekretser = listOf(kretsOpprinnelig, kretsOest, kretsNordVest), gyldigFra = gyldighetsdato)
+
+        val grenseSomSkalHaDokref = kretsOpprinnelig.grenser.find { it.grense.lokalid == "grense1_1Lokalid" }?.grense
+
+        assertThat(grenseSomSkalHaDokref).isNotNull()
+
+        repeat(2) {
+            grenseSomSkalHaDokref!!.addDokumentasjonsreferanse().apply {
+                this.fastsettingsdato = LocalDate.now()
+                this.rettskildetittel = "Tittel $it"
+                this.addDokumentLenke().apply {
+                    this.dokumentlink = "https://google.no"
+                }
+                this.addInternReferanse().apply {
+                    this.internReferanseKartverket = "1"
+                }
+            }
+        }
+
+        val grenseMedDokrefs = FeatureBuilder(id = grenseSomSkalHaDokref!!.lokalid)
+            .copy(grenseSomSkalHaDokref.grenseToFeature())
+            .withDokref(grenseSomSkalHaDokref.dokumentasjonsreferanser.map { val dokref = it.toDokRef(); dokref.vedtakGyldigFra = LocalDate.now(); dokref })
+            .withVersion(2)
+            .build()
+
+        grenseService.lagreGrenser(
+            grenser = FeatureCollection(features =
+            listOf(
+                grenseMedDokrefs
+            )),
+            gyldighetsdato = gyldighetsdato,
+            endringstype = Endringstype.VEDTATT_GRENSEJUSTERING
+        )
+
+        val lagretGrense = grenseService.hentGrense(Identifikator(lokalid = Lokalid(grenseSomSkalHaDokref.lokalid), gyldighetsdato = gyldighetsdato))
+
+        assertThat(lagretGrense).isNotNull
+        assertThat(lagretGrense!!.dokumentasjonsreferanser).hasSize(2)
+
+        assertThat(lagretGrense.dokumentasjonsreferanser.first().dokumentlenker.first().dokumentlink).isEqualTo("https://google.no")
+        assertThat(lagretGrense.dokumentasjonsreferanser.elementAt(1).dokumentlenker.first().dokumentlink).isEqualTo("https://google.no")
+
+        assertThat(lagretGrense.dokumentasjonsreferanser.first().internReferanserKartverket.first().internReferanseKartverket).isEqualTo("1")
+        assertThat(lagretGrense.dokumentasjonsreferanser.elementAt(1).internReferanserKartverket.first().internReferanseKartverket).isEqualTo("1")
+    }
+
+
 }

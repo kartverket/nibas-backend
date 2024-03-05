@@ -154,14 +154,12 @@ class Grense(
                 // Klienten støtter kun å slette eller legge til objekter av disse typene - ikke redigering.
                 dokumentasjonsreferanseDTO.dokumentlenker.forEach { lenke ->
                     it.addDokumentLenke().apply {
-                        this.dokumentasjonsreferanseFk = it
                         this.dokumentlink = lenke.beskrivelse
                     }
                 }
 
                 dokumentasjonsreferanseDTO.internReferanserKartverket.forEach { lenke ->
                     it.addInternReferanse().apply {
-                        this.dokumentasjonsreferanseFk = it
                         this.internReferanseKartverket = lenke.beskrivelse
                     }
                 }
