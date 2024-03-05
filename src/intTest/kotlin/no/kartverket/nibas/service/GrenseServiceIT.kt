@@ -14,6 +14,7 @@ import no.kartverket.nibas.builders.GrunnkretsRequestBuilder
 import no.kartverket.nibas.builders.StemmekretsRequestBuilder
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.domain.Dokumentasjonsreferanse
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.Grense
@@ -1440,10 +1441,20 @@ class GrenseServiceIT : TestWithDbContainer() {
 
         assertThat(grenseSomSkalHaDokref).isNotNull()
 
-        repeat(2) {
-            grenseSomSkalHaDokref!!.addDokumentasjonsreferanse().apply {
+        val dokrefs = listOf(
+            Dokumentasjonsreferanse().apply {
                 this.fastsettingsdato = LocalDate.now()
-                this.rettskildetittel = "Tittel $it"
+                this.rettskildetittel = "Tittel 1"
+                this.addDokumentLenke().apply {
+                    this.dokumentlink = "https://google.no"
+                }
+                this.addInternReferanse().apply {
+                    this.internReferanseKartverket = "1"
+                }
+            },
+            Dokumentasjonsreferanse().apply {
+                this.fastsettingsdato = LocalDate.now()
+                this.rettskildetittel = "Tittel 2"
                 this.addDokumentLenke().apply {
                     this.dokumentlink = "https://google.no"
                 }
@@ -1451,11 +1462,16 @@ class GrenseServiceIT : TestWithDbContainer() {
                     this.internReferanseKartverket = "1"
                 }
             }
-        }
+        )
 
         val grenseMedDokrefs = FeatureBuilder(id = grenseSomSkalHaDokref!!.lokalid)
             .copy(grenseSomSkalHaDokref.grenseToFeature())
-            .withDokref(grenseSomSkalHaDokref.dokumentasjonsreferanser.map { val dokref = it.toDokRef(); dokref.vedtakGyldigFra = LocalDate.now(); dokref })
+            .withDokref(dokrefs.map {
+                it.toDokRef().apply {
+                    id = null
+                    vedtakGyldigFra = LocalDate.now()
+                }
+            })
             .withVersion(2)
             .build()
 
@@ -1479,6 +1495,5 @@ class GrenseServiceIT : TestWithDbContainer() {
         assertThat(lagretGrense.dokumentasjonsreferanser.first().internReferanserKartverket.first().internReferanseKartverket).isEqualTo("1")
         assertThat(lagretGrense.dokumentasjonsreferanser.elementAt(1).internReferanserKartverket.first().internReferanseKartverket).isEqualTo("1")
     }
-
 
 }

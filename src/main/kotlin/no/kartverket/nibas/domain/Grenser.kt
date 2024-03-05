@@ -146,34 +146,19 @@ class Grense(
     }
 
     private fun createNewVersionOfDokumentasjonsreferanse(dokumentasjonsreferanse: Dokumentasjonsreferanse, dokumentasjonsreferanseDTO: DokumentasjonsreferanseDTO): Dokumentasjonsreferanse? {
-        if (dokumentasjonsreferanse.hasChanges(dokumentasjonsreferanseDTO))
+        if (dokumentasjonsreferanse.hasChanges(dokumentasjonsreferanseDTO)) {
             addDokumentasjonsreferanse(dokumentasjonsreferanse.lokalid).also {
-
-                // Viderefører kun internreferanser og dokumentlenker som er med fra requesten.
-                // Disse har 1..* forhold med dokumentasjonsreferansen, må kopieres uansett, og har ingen objid å videreføre.
-                // Klienten støtter kun å slette eller legge til objekter av disse typene - ikke redigering.
-                dokumentasjonsreferanseDTO.dokumentlenker.forEach { lenke ->
-                    it.addDokumentLenke().apply {
-                        this.dokumentlink = lenke.beskrivelse
-                    }
-                }
-
-                dokumentasjonsreferanseDTO.internReferanserKartverket.forEach { lenke ->
-                    it.addInternReferanse().apply {
-                        this.internReferanseKartverket = lenke.beskrivelse
-                    }
-                }
-
                 setDokrefFields(it, dokumentasjonsreferanseDTO)
                 return it
             }
+        }
         return null
     }
 
     fun updateDokumentasjonsreferanser(dokRefList: List<DokumentasjonsreferanseDTO>, gyldighetsdato: LocalDate, endringstype: Endringstype) {
         dokRefList.forEach { dokRef ->
             val dokRefId = dokRef.id
-            val persistedDokumentasjonsreferanse = this.dokumentasjonsreferanser.find { dokumentasjonsreferanse -> dokumentasjonsreferanse.id == dokRefId }
+            val persistedDokumentasjonsreferanse = this.dokumentasjonsreferanser.find { dokumentasjonsreferanse -> dokRefId != null && dokumentasjonsreferanse.id == dokRefId }
             validateReferanseId(persistedDokumentasjonsreferanse, dokRefId, "Dokumentasjonsreferanse-id eksisterer ikke: $dokRefId")
 
             persistedDokumentasjonsreferanse?.let { oldVersion ->
@@ -195,6 +180,23 @@ class Grense(
         dokumentasjonsreferanse: Dokumentasjonsreferanse,
         dokRef: DokumentasjonsreferanseDTO
     ) {
+
+        // Viderefører kun internreferanser og dokumentlenker som er med fra requesten.
+        // Disse har 1..* forhold med dokumentasjonsreferansen, må kopieres uansett, og har ingen objid å videreføre.
+        // Klienten støtter kun å slette eller legge til objekter av disse typene - ikke redigering.
+
+        dokRef.dokumentlenker.forEach { lenke ->
+            dokumentasjonsreferanse.addDokumentLenke().apply {
+                this.dokumentlink = lenke.beskrivelse
+            }
+        }
+
+        dokRef.internReferanserKartverket.forEach { lenke ->
+            dokumentasjonsreferanse.addInternReferanse().apply {
+                this.internReferanseKartverket = lenke.beskrivelse
+            }
+        }
+
         dokumentasjonsreferanse.vedtakGyldigFra = dokRef.vedtakGyldigFra ?: throw BadRequestException("\"Gyldig fra\"-dato er påkrevd!")
         dokumentasjonsreferanse.vedtakGyldigTil = dokRef.vedtakGyldigTil
         dokumentasjonsreferanse.fastsettingsdato = dokRef.fastsettingsdato
