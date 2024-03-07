@@ -9,7 +9,6 @@ import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
-import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.service.FylkeService
 import org.junit.jupiter.api.BeforeEach
@@ -67,12 +66,12 @@ class FylkeControllerTest : NibasMvcTest() {
     fun thatHentGrenserReturns200_Ok() {
         every {
             fylkeService.hentGrensekoblingerForFylke(any())
-         } returns setOf(
+        } returns setOf(
             GrunnkretsGrenseKobling(
                 grunnkrets = GrunnkretsBuilder().build(),
                 grense = GrenseBuilder().withGrensetype(Grensetype.Fylkesgrense).build(),
-                grenseKoblingAttributter = GrenseKoblingAttributter())
             )
+        )
 
         get("/v1/fylker/1/grenser", status().isOk)
     }

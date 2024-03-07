@@ -51,13 +51,11 @@ abstract class StatistiskEnhet(
     override var omraade: MultiPolygon? = null
 
     @Suppress("UNCHECKED_CAST")
-    fun <T : GrenseKobling> oppdaterSamling(grense: Grense, attributter: GrenseKoblingAttributter, samling: MutableSet<T>, default: GrenseKobling) {
+    fun <T : GrenseKobling> oppdaterSamling(grense: Grense, samling: MutableSet<T>, default: GrenseKobling) {
         val kobling: T = when (val kobling = samling.find { it.grense.id == grense.id }) {
             null -> default as T
             else -> kobling
         }
-
-        kobling.oppdaterAttributter(attributter)
         samling.add(kobling)
     }
 

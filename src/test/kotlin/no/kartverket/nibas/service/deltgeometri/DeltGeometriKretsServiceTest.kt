@@ -59,58 +59,58 @@ internal class DeltGeometriKretsServiceTest {
 
         // Setter opp grunnkretser
         grunnkretsikommunen.grenser = mutableSetOf(
-            lagGrunnkretsGrenseKobling(grunnkretsikommunen, grenseAB, 0, false),
-            lagGrunnkretsGrenseKobling(grunnkretsikommunen, grenseBC, 1, false),
-            lagGrunnkretsGrenseKobling(grunnkretsikommunen, grenseCD, 2, false),
-            lagGrunnkretsGrenseKobling(grunnkretsikommunen, gGrenseDA, 3, false),
+            lagGrunnkretsGrenseKobling(grunnkretsikommunen, grenseAB),
+            lagGrunnkretsGrenseKobling(grunnkretsikommunen, grenseBC),
+            lagGrunnkretsGrenseKobling(grunnkretsikommunen, grenseCD),
+            lagGrunnkretsGrenseKobling(grunnkretsikommunen, gGrenseDA),
         )
 
         grenseAB.grunnkretser = mutableSetOf(
-            lagGrunnkretsGrenseKobling(grunnkretsikommunen, grenseAB, 0, false),
-            lagGrunnkretsGrenseKobling(grunnkretsUtenfor1, grenseAB, 0, false),
+            lagGrunnkretsGrenseKobling(grunnkretsikommunen, grenseAB),
+            lagGrunnkretsGrenseKobling(grunnkretsUtenfor1, grenseAB),
         )
 
         grenseBC.grunnkretser = mutableSetOf(
-            lagGrunnkretsGrenseKobling(grunnkretsikommunen, grenseBC, 0, false),
-            lagGrunnkretsGrenseKobling(grunnkretsUtenfor1, grenseBC, 0, false),
+            lagGrunnkretsGrenseKobling(grunnkretsikommunen, grenseBC),
+            lagGrunnkretsGrenseKobling(grunnkretsUtenfor1, grenseBC),
         )
 
         grenseCD.grunnkretser = mutableSetOf(
-            lagGrunnkretsGrenseKobling(grunnkretsikommunen, grenseCD, 0, false),
-            lagGrunnkretsGrenseKobling(grunnkretsUtenfor2, grenseCD, 0, false),
+            lagGrunnkretsGrenseKobling(grunnkretsikommunen, grenseCD),
+            lagGrunnkretsGrenseKobling(grunnkretsUtenfor2, grenseCD),
         )
 
         gGrenseDA.grunnkretser = mutableSetOf(
-            lagGrunnkretsGrenseKobling(grunnkretsikommunen, gGrenseDA, 0, false),
-            lagGrunnkretsGrenseKobling(grunnkretsUtenfor2, gGrenseDA, 0, false),
+            lagGrunnkretsGrenseKobling(grunnkretsikommunen, gGrenseDA),
+            lagGrunnkretsGrenseKobling(grunnkretsUtenfor2, gGrenseDA),
         )
 
         // Setter opp stemmekretser
         stemmekretsikommunen.grenser = mutableSetOf(
-            lagStemmekretsGrenseKobling(stemmekretsikommunen, grenseAB, 0, false),
-            lagStemmekretsGrenseKobling(stemmekretsikommunen, grenseBC, 1, false),
-            lagStemmekretsGrenseKobling(stemmekretsikommunen, grenseCD, 2, false),
-            lagStemmekretsGrenseKobling(stemmekretsikommunen, sGrenseDA, 3, false),
+            lagStemmekretsGrenseKobling(stemmekretsikommunen, grenseAB),
+            lagStemmekretsGrenseKobling(stemmekretsikommunen, grenseBC),
+            lagStemmekretsGrenseKobling(stemmekretsikommunen, grenseCD),
+            lagStemmekretsGrenseKobling(stemmekretsikommunen, sGrenseDA),
         )
 
         grenseAB.stemmekretser = mutableSetOf(
-            lagStemmekretsGrenseKobling(stemmekretsikommunen, grenseAB, 0, false),
-            lagStemmekretsGrenseKobling(stemmekretsUtenfor1, grenseAB, 0, false),
+            lagStemmekretsGrenseKobling(stemmekretsikommunen, grenseAB),
+            lagStemmekretsGrenseKobling(stemmekretsUtenfor1, grenseAB),
         )
 
         grenseBC.stemmekretser = mutableSetOf(
-            lagStemmekretsGrenseKobling(stemmekretsikommunen, grenseBC, 0, false),
-            lagStemmekretsGrenseKobling(stemmekretsUtenfor1, grenseBC, 0, false),
+            lagStemmekretsGrenseKobling(stemmekretsikommunen, grenseBC),
+            lagStemmekretsGrenseKobling(stemmekretsUtenfor1, grenseBC),
         )
 
         grenseCD.stemmekretser = mutableSetOf(
-            lagStemmekretsGrenseKobling(stemmekretsikommunen, grenseCD, 0, false),
-            lagStemmekretsGrenseKobling(stemmekretsUtenfor2, grenseCD, 0, false),
+            lagStemmekretsGrenseKobling(stemmekretsikommunen, grenseCD),
+            lagStemmekretsGrenseKobling(stemmekretsUtenfor2, grenseCD),
         )
 
         gGrenseDA.stemmekretser = mutableSetOf(
-            lagStemmekretsGrenseKobling(stemmekretsikommunen, gGrenseDA, 0, false),
-            lagStemmekretsGrenseKobling(stemmekretsUtenfor2, gGrenseDA, 0, false),
+            lagStemmekretsGrenseKobling(stemmekretsikommunen, gGrenseDA),
+            lagStemmekretsGrenseKobling(stemmekretsUtenfor2, gGrenseDA),
         )
     }
 
@@ -138,21 +138,5 @@ internal class DeltGeometriKretsServiceTest {
         assertThat(stemmekretser).contains(stemmekretsikommunen)
         assertThat(stemmekretser).contains(stemmekretsUtenfor1)
         assertThat(stemmekretser).contains(stemmekretsUtenfor2)
-    }
-
-    @Test
-    fun `getDeltGeometriGrensekoblingerForGrunnkrets skal erstatte administrative grenser med med grenser for delt geometri`() {
-        val nyeGrenser = deltGeometriKretsService.getDeltGeometriGrensekoblingerForGrunnkrets(grunnkretsikommunen, KOMMUNENR, LocalDate.now(), nyeAdministrativeGrenser)
-        assertThat(nyeGrenser).hasSize(5)
-        assertThat(nyeGrenser.map { it.grense }).contains(grenseAE)
-        assertThat(nyeGrenser.map { it.grense }).contains(grenseEB)
-    }
-
-    @Test
-    fun `getDeltGeometriGrensekoblingerForStemmekrets skal erstatte administrative grenser med med grenser for delt geometri`() {
-        val nyeGrenser = deltGeometriKretsService.getDeltGeometriGrensekoblingerForStemmekrets(stemmekretsikommunen, KOMMUNENR, LocalDate.now(), nyeAdministrativeGrenser)
-        assertThat(nyeGrenser).hasSize(5)
-        assertThat(nyeGrenser.map { it.grense }).contains(grenseAE)
-        assertThat(nyeGrenser.map { it.grense }).contains(grenseEB)
     }
 }

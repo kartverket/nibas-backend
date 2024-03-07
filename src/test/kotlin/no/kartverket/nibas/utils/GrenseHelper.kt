@@ -85,7 +85,8 @@ object GrenseHelper {
             }
         )
 
-        return grenselist.toList()
+        return grenselist
+            .toList()
     }
 
     fun getGrenserForOestligKrets(gyldighetsdato: LocalDate = LocalDate.now(), grensetype : Grensetype, medToDelteGrenser: Boolean = false, medKommuneGrense: Boolean = false) : List<Grense> {
@@ -207,27 +208,4 @@ object GrenseHelper {
                 }
         }
     }
-
-    fun getRetningMedKlokken(grense: Grense, forrigeGrense: Grense?): Boolean {
-        if (forrigeGrense == null) {
-            return true
-        }
-        //Noen tester setter ikke linestring på grensa
-        try {
-            grense.grense.startPoint
-            forrigeGrense.grense.startPoint
-        } catch (e: UninitializedPropertyAccessException) {
-            return true
-        }
-
-        if (grense.grense.startPoint == forrigeGrense.grense.startPoint || grense.grense.startPoint == forrigeGrense.grense.endPoint) {
-            return true
-        }
-        if (grense.grense.endPoint == forrigeGrense.grense.startPoint || grense.grense.endPoint == forrigeGrense.grense.endPoint) {
-            return false
-        }
-
-        throw RuntimeException("Grensen toucher hverken startpunkt eller endepunktet til forrige grense. Er rekkefølgen riktig?")
-    }
-
 }

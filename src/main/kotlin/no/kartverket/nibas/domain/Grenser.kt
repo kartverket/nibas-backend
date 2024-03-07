@@ -9,7 +9,6 @@ import no.kartverket.nibas.sporing.Laasbar
 import org.locationtech.jts.geom.LineString
 import java.time.LocalDate
 import java.time.ZonedDateTime
-import java.time.temporal.ChronoUnit
 import java.util.*
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column

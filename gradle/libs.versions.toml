@@ -8,7 +8,7 @@ testContainerVersion = "1.19.4"
 springdocOpenapiVersion2 = "2.3.0"
 jtsVersion = "1.19.0"
 autLibVersion = "2.0.3"
-hypersistenceUtilsHibernate62Version = "3.7.3"
+hypersistenceUtilsHibernate63Version = "3.7.3"
 openTelemetryVersion = "1.35.0"
 prometheusVersion = "1.12.2"
 kotlinxCoroutinesCoreVersion = "1.7.3"
@@ -52,7 +52,7 @@ locationtech-jts-io = { module = "org.locationtech.jts:jts-io", version.ref = "j
 locationtech-jts-io-common = { module = "org.locationtech.jts.io:jts-io-common", version.ref = "jtsVersion" }
 locationtech-spatial4j = { module = "org.locationtech.spatial4j:spatial4j", version.ref = "spatial4jVersion" }
 kartverket-autlib = { module = "no.kartverket.aut:aut-lib", version.ref = "autLibVersion" }
-hypersistence-utils-hibernate = { module = "io.hypersistence:hypersistence-utils-hibernate-62", version.ref = "hypersistenceUtilsHibernate62Version" }
+hypersistence-utils-hibernate = { module = "io.hypersistence:hypersistence-utils-hibernate-63", version.ref = "hypersistenceUtilsHibernate63Version" }
 opentelemetry-api = { module = "io.opentelemetry:opentelemetry-api", version.ref = "openTelemetryVersion" }
 opentelemetry-bom = { module = "io.opentelemetry:opentelemetry-bom", version.ref = "openTelemetryVersion" }
 micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "prometheusVersion" }

@@ -4,11 +4,9 @@ import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Grense
-import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.sporing.Gyldighet
-import no.kartverket.nibas.utils.GrenseHelper
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
 import java.time.LocalDate
@@ -56,20 +54,16 @@ class GrunnkretsBuilder(
         grunnkrets.auditInfo.endretdato = endretdato
         grunnkrets.auditInfo.typeEndring = typeEndring
 
-        var forrigeGrense = grenser.lastOrNull()
-        grenser.forEachIndexed { index, grense ->
-            grunnkrets.addGrensekobling(grense, GrenseKoblingAttributter(
-                rekkefoelge = index,
-                retningMedKlokken = GrenseHelper.getRetningMedKlokken(grense, forrigeGrense)
-            ))
-            forrigeGrense = grense
+        grenser.forEach { grense ->
+            grunnkrets.addGrensekobling(grense)
         }
+
         grunnkrets.posisjon = GeometryFactory().createPoint(Coordinate(1.0, 1.0))
         grunnkrets.omraade = GeometryFactory().createMultiPolygon(arrayOf(GeometryFactory().createPolygon()))
 
         //Hack fordi noen tester lager grenser uten linestring
         try {
-            if (grenser.isNotEmpty()) {
+            if (grenser.isNotEmpty() && grenser.all { !it.grense.isEmpty }) {
                 grunnkrets.oppdaterOmraadeOgPosisjon()
                 if (!grunnkrets.omraade!!.isEmpty) {
                     grunnkrets.posisjon = grunnkrets.omraade?.interiorPoint

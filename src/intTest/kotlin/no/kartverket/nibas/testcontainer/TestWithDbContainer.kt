@@ -4,12 +4,10 @@ import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.builders.FylkeBuilder
 import no.kartverket.nibas.builders.GrenseBuilder
-import no.kartverket.nibas.builders.GrenseMedHullIndex
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.builders.NasjonBuilder
 import no.kartverket.nibas.builders.StemmekretsBuilder
-import no.kartverket.nibas.builders.toGrenseMedHullIndex
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.Administrativenhetnavn
 import no.kartverket.nibas.domain.Fylke
@@ -353,8 +351,8 @@ class TestWithDbContainer {
             stemmekretsnummer = stemmekretsnummer,
             stemmekretsnavn = stemmekretsnavn,
             kommune = null,
-            grenser = grenser.map { it.toGrenseMedHullIndex() })
-            .build()
+            grenser = grenser
+        ).build()
 
         return stemmekretsRepository.save(stemmekrets)
     }
@@ -366,7 +364,7 @@ class TestWithDbContainer {
         stemmekretsnavn: String = "Øvre Singsaker",
         gyldigFra: LocalDate = LocalDate.of(2022, Month.OCTOBER, 1),
         gyldigTil: LocalDate? = null,
-        grenser: List<GrenseMedHullIndex> = emptyList()
+        grenser: List<Grense> = emptyList()
     ): Stemmekrets {
 
         val stemmekrets = StemmekretsBuilder(

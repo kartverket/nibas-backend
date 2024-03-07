@@ -97,12 +97,6 @@ class Fylke(
         unikLokalid.fylker.add(this)
     }
 
-    fun tillatteGrensetyper(): Set<Grensetype> = setOf(
-        Grensetype.Fylkesgrense,
-        Grensetype.AvtaltAvgrensningslinje,
-        Grensetype.Territorialgrense,
-        Grensetype.Riksgrense)
-
     fun applyMappingFromExistingFylke(gammeltFylke: Fylke): Fylke {
         return this.apply {
             fylkesnummerUuid = gammeltFylke.fylkesnummerUuid
@@ -134,6 +128,15 @@ class Fylke(
         informasjonselementer.forEach { fylkeInformasjon ->
             setInfo(fylkeInformasjon.informasjon)
         }
+    }
+
+    companion object {
+        fun tillatteGrensetyper(): Set<Grensetype> = setOf(
+            Grensetype.Fylkesgrense,
+            Grensetype.AvtaltAvgrensningslinje,
+            Grensetype.Territorialgrense,
+            Grensetype.Riksgrense
+        )
     }
 }
 

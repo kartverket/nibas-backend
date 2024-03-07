@@ -4,7 +4,6 @@ import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import io.mockk.justRun
 import io.mockk.mockkStatic
-import io.mockk.verify
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.builders.FeatureBuilder
@@ -15,7 +14,6 @@ import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.BadRequestException
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Grense
-import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.StemmekretsGrenseKobling
 import no.kartverket.nibas.extensions.geometry.grenseToFeature
 import no.kartverket.nibas.repository.*
@@ -115,7 +113,7 @@ class GrenseServiceTest {
     }
 
     @Test
-    fun `lagreGrenser skal bare oppdatere gyldige kretser`() {
+    fun `lagreGrenser skal feile om man kun sender inn 1 gyldig krets`() {
 
         val gyldighetsdato = LocalDate.now()
         val lokalid = "grenseVestLokalid"
@@ -140,13 +138,15 @@ class GrenseServiceTest {
                 StemmekretsGrenseKobling(
                     gyldigStemmekrets,
                     grense,
-                    GrenseKoblingAttributter(rekkefoelge = 0)))
+                )
+            )
 
             koblinger.add(
                 StemmekretsGrenseKobling(
                     ugyldigStemmekrets,
                     grense,
-                    GrenseKoblingAttributter(rekkefoelge = 0)))
+                )
+            )
 
             grense.stemmekretser = koblinger
         }
@@ -156,6 +156,7 @@ class GrenseServiceTest {
         val nyGrense = Grense(id = "nyGrense", lokalid = lokalid, grensetype = Grensetype.Stemmekretsgrense)
 
         val grenseIdentifikator = Identifikator(Lokalid(lokalid), gyldighetsdato)
+        every { stemmekretsServiceMock.hentStemmekrets(any()) } returns gyldigStemmekrets
         every { grenseRepositoryKotlinMock.findAllGyldigeObjekterForIdentifikatorer(allAny()) } returns mapOf(grenseIdentifikator to grenseSomSkalOppdateres)
         every { grenseRepositoryKotlinMock.findAllByLokalid(lokalid) } returns listOf(grenseSomSkalOppdateres, nyGrense)
         every { grenseRepositoryKotlinMock.saveAndFlush(allAny()) } returns nyGrense
@@ -164,11 +165,10 @@ class GrenseServiceTest {
         justRun { grenseRepositoryKotlinMock.flush() }
         justRun { flateServiceMock.oppdaterFlaterFor(any()) }
 
-        grenseService.lagreGrenser(FeatureCollection(features = listOf(feature)), endringstype = Endringstype.VEDTATT_GRENSEJUSTERING)
+        assertThatThrownBy {
+            grenseService.lagreGrenser(FeatureCollection(features = listOf(feature)), endringstype = Endringstype.VEDTATT_GRENSEJUSTERING)
+        }.hasMessageContaining("Grense med id grenseVestLokalid har feil antall tilhørigheter")
 
-        // Det skal kun lages en ny versjon av den gyldige stemmekretsen
-        verify(exactly = 1) { stemmekretsServiceMock.createNyVersjonAvStemmekrets(gyldigStemmekrets, LocalDate.now(), Endringstype.VEDTATT_GRENSEJUSTERING) }
-        verify(exactly = 0) { stemmekretsServiceMock.createNyVersjonAvStemmekrets(ugyldigStemmekrets, LocalDate.now(), Endringstype.VEDTATT_GRENSEJUSTERING) }
     }
 
 }

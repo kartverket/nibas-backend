@@ -5,7 +5,6 @@ import no.kartverket.nibas.common.geometry.createGeometryFactory
 import no.kartverket.nibas.common.geometry.validateGeometry
 import no.kartverket.nibas.common.geometry.validerSammenhengendeGrenser
 import no.kartverket.nibas.domain.GrenseKobling
-import no.kartverket.nibas.domain.getGrenseJustertForRetning
 import no.kartverket.nibas.sosi.model.SosiKoordinat
 import no.kartverket.nibas.sosi.model.SosiNordOest
 import org.locationtech.jts.geom.Coordinate
@@ -195,36 +194,6 @@ object SosiGeometryFunctions {
         }
 
         return nesteGrense
-    }
-
-    fun beregnFlate(grenseKoblinger: Set<GrenseKobling>): MultiPolygon {
-        val flater: List<Polygon> = grenseKoblinger
-            .groupBy { it.grenseKoblingAttributter.flateIndeks }
-            .map { entry ->
-                val koblingerForFlate = entry.value
-
-                val skallKoblinger = koblingerForFlate.filterTo(HashSet()) { it.grenseKoblingAttributter.hullIndeks == null }
-                val hullKoblinger: Map<Int, List<GrenseKobling>> = (koblingerForFlate - skallKoblinger)
-                    .groupBy { it.grenseKoblingAttributter.hullIndeks!! }
-
-                val skall: List<LineString> = skallKoblinger
-                    .sortedBy { it.grenseKoblingAttributter.rekkefoelge }
-                    .map { it.getGrenseJustertForRetning() }
-
-                val hull: List<List<LineString>> = hullKoblinger.map { hullkobling ->
-                    hullkobling.value
-                        .sortedBy { it.grenseKoblingAttributter.rekkefoelge }
-                        .map { it.getGrenseJustertForRetning() }
-                }
-
-                val flate: Polygon = lagFlate(skall, hull)
-                validateGeometry(flate) // Validerer hvert polygon for seg
-                flate
-            }
-
-        val multiPolygon = getGeometryFactory().createMultiPolygon(flater.toTypedArray())
-        validateGeometry(multiPolygon) // Validerer også multipolygonet
-        return multiPolygon
     }
 
     fun sosiKoordinatToCoordinate(sosiKoordinat: SosiKoordinat, enhet: Double): Coordinate {

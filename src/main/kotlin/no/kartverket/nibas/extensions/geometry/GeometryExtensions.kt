@@ -153,24 +153,3 @@ fun GrenseKobling.grenseKoblingToFeature(
 ): Feature {
    return grense.grenseToFeature(gyldighetsdato)
 }
-
-fun GrenseKobling.grenseKoblingToKontekstEgenskaper(
-    lokalid: Lokalid,
-    kommuneLokalid: Lokalid,
-    kretsNummer: String?,
-    gyldighetsdato: LocalDate,
-    kontekstType: KontekstEnhetType,
-    version: Int,
-): KontekstEgenskaper {
-    return KontekstEgenskaper(
-        id = ObjektIdentifikator(lokalid, gyldighetsdato),
-        kommuneId = ObjektIdentifikator(kommuneLokalid, gyldighetsdato),
-        kretsNummer = kretsNummer,
-        type = kontekstType,
-        version = version,
-        rekkefoelge = this.grenseKoblingAttributter.rekkefoelge,
-        retningMedKlokken = this.grenseKoblingAttributter.retningMedKlokken,
-        flateIndeks = this.grenseKoblingAttributter.flateIndeks,
-        hullIndeks = this.grenseKoblingAttributter.hullIndeks
-    )
-}

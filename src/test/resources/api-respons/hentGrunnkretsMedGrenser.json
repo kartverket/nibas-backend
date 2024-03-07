@@ -48,11 +48,7 @@
             },
             "kretsNummer": "42120102",
             "type": "GRUNNKRETS",
-            "version": 1,
-            "retningMedKlokken": false,
-            "rekkefoelge": 10,
-            "flateIndeks": 0,
-            "hullIndeks": null
+            "version": 1
           },
           {
             "id": {
@@ -69,11 +65,7 @@
             },
             "kretsNummer": "42120101",
             "type": "GRUNNKRETS",
-            "version": 1,
-            "retningMedKlokken": true,
-            "rekkefoelge": 0,
-            "flateIndeks": 0,
-            "hullIndeks": null
+            "version": 1
           }
         ],
         "version": 2,
@@ -132,11 +124,7 @@
             },
             "kretsNummer": "42120101",
             "type": "GRUNNKRETS",
-            "version": 1,
-            "retningMedKlokken": true,
-            "rekkefoelge": 1,
-            "flateIndeks": 0,
-            "hullIndeks": null
+            "version": 1
           },
           {
             "id": {
@@ -153,11 +141,7 @@
             },
             "kretsNummer": "42170111",
             "type": "GRUNNKRETS",
-            "version": 1,
-            "retningMedKlokken": false,
-            "rekkefoelge": 26,
-            "flateIndeks": 0,
-            "hullIndeks": null
+            "version": 1
           }
         ],
         "version": 2,
@@ -216,11 +200,7 @@
             },
             "kretsNummer": "42170111",
             "type": "GRUNNKRETS",
-            "version": 1,
-            "retningMedKlokken": false,
-            "rekkefoelge": 25,
-            "flateIndeks": 0,
-            "hullIndeks": null
+            "version": 1
           },
           {
             "id": {
@@ -237,11 +217,7 @@
             },
             "kretsNummer": "42120101",
             "type": "GRUNNKRETS",
-            "version": 1,
-            "retningMedKlokken": true,
-            "rekkefoelge": 2,
-            "flateIndeks": 0,
-            "hullIndeks": null
+            "version": 1
           }
         ],
         "version": 2,
@@ -300,11 +276,7 @@
             },
             "kretsNummer": "42120101",
             "type": "GRUNNKRETS",
-            "version": 1,
-            "retningMedKlokken": true,
-            "rekkefoelge": 3,
-            "flateIndeks": 0,
-            "hullIndeks": null
+            "version": 1
           },
           {
             "id": {
@@ -321,11 +293,7 @@
             },
             "kretsNummer": "42170111",
             "type": "GRUNNKRETS",
-            "version": 1,
-            "retningMedKlokken": false,
-            "rekkefoelge": 24,
-            "flateIndeks": 0,
-            "hullIndeks": null
+            "version": 1
           }
         ],
         "version": 2,

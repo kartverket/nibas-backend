@@ -11,7 +11,6 @@ import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
-import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.extensions.flate.toGrunnkretsResponse
 import no.kartverket.nibas.service.GrunnkretsService
@@ -76,8 +75,8 @@ class KommuneControllerTest : NibasMvcTest() {
          } returns setOf(
             GrunnkretsGrenseKobling(
                 grunnkrets = GrunnkretsBuilder().build(),
-                grense = GrenseBuilder().withGrensetype(Grensetype.Kommunegrense).build(),
-                grenseKoblingAttributter = GrenseKoblingAttributter())
+                grense = GrenseBuilder().withGrensetype(Grensetype.Kommunegrense).build()
+            )
          )
 
         get("/v1/kommuner/1/grenser", status().isOk)

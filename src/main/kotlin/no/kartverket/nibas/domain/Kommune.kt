@@ -105,13 +105,6 @@ class Kommune(
         unikLokalid.kommuner.add(this)
     }
 
-    fun tillatteGrensetyper(): Set<Grensetype> = setOf(
-        Grensetype.Kommunegrense,
-        Grensetype.Fylkesgrense,
-        Grensetype.AvtaltAvgrensningslinje,
-        Grensetype.Territorialgrense,
-        Grensetype.Riksgrense)
-
     fun applyMappingFromExistingKommune(gammelKommune: Kommune): Kommune {
         return this.apply {
             kommunenummerUuid = gammelKommune.kommunenummerUuid
@@ -143,6 +136,15 @@ class Kommune(
         informasjonselementer.forEach { kommuneInformasjon ->
             setInfo(kommuneInformasjon.informasjon)
         }
+    }
+    companion object {
+        fun tillatteGrensetyper(): Set<Grensetype> = setOf(
+            Grensetype.Kommunegrense,
+            Grensetype.Fylkesgrense,
+            Grensetype.AvtaltAvgrensningslinje,
+            Grensetype.Territorialgrense,
+            Grensetype.Riksgrense
+        )
     }
 }
 

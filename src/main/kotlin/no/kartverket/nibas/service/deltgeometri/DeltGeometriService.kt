@@ -1,7 +1,9 @@
 package no.kartverket.nibas.service.deltgeometri
 
 import no.kartverket.nibas.common.getInSpraak
+import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.domain.Kommune
+import no.kartverket.nibas.domain.StemmekretsGrenseKobling
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.service.KommuneService
 import org.slf4j.LoggerFactory
@@ -70,11 +72,21 @@ class DeltGeometriService(
         val stemmekretserSomSkaOppdateres = deltGeometriKretsService.getStemmekretserSomGrenserTilKommunegrense(kommuneNr, gyldighetsDato)
 
         val grunnkretsGrenserMap = grunnkretserSomSkalOppdateres.associateWith {
-            deltGeometriKretsService.getDeltGeometriGrensekoblingerForGrunnkrets(it, kommuneNr, gyldighetsDato, nyeAdministrativeGrenser)
+            nyeAdministrativeGrenser.map { grense ->
+                GrunnkretsGrenseKobling(
+                    grunnkrets = it,
+                    grense = grense
+                )
+            }
         }
 
         val stemmekretsGrenserMap = stemmekretserSomSkaOppdateres.associateWith {
-            deltGeometriKretsService.getDeltGeometriGrensekoblingerForStemmekrets(it, kommuneNr, gyldighetsDato, nyeAdministrativeGrenser)
+            nyeAdministrativeGrenser.map { grense ->
+                StemmekretsGrenseKobling(
+                    stemmekrets = it,
+                    grense = grense
+                )
+            }
         }
 
 

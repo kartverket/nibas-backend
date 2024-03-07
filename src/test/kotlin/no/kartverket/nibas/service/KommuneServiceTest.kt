@@ -13,7 +13,6 @@ import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.domain.Endringstype
-import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.domain.StemmekretsGrenseKobling
 import no.kartverket.nibas.kodelister.KodelisteService
@@ -250,13 +249,13 @@ class KommuneServiceTest {
         val deltGrense = GrenseBuilder().withGyldigFra(LocalDate.of(2020, Month.JANUARY, 1)).withLokalId("deltGrense").build()
 
         val grensekoblingerSK1 = listOf(
-            StemmekretsGrenseKobling(stemmekrets = sk1, grense = unikGrenseSK1, grenseKoblingAttributter = GrenseKoblingAttributter()),
-            StemmekretsGrenseKobling(stemmekrets = sk1, grense = deltGrense, grenseKoblingAttributter = GrenseKoblingAttributter())
+            StemmekretsGrenseKobling(stemmekrets = sk1, grense = unikGrenseSK1),
+            StemmekretsGrenseKobling(stemmekrets = sk1, grense = deltGrense)
         )
 
         val grensekoblingerSK2 = listOf(
-            StemmekretsGrenseKobling(stemmekrets = sk2, grense = unikGrenseSK2, grenseKoblingAttributter = GrenseKoblingAttributter()),
-            StemmekretsGrenseKobling(stemmekrets = sk2, grense = deltGrense, grenseKoblingAttributter = GrenseKoblingAttributter())
+            StemmekretsGrenseKobling(stemmekrets = sk2, grense = unikGrenseSK2),
+            StemmekretsGrenseKobling(stemmekrets = sk2, grense = deltGrense)
         )
 
         every { kommuneRepositoryMock.findGyldigObjektForIdentifikator(any()) } returns kommune
@@ -293,13 +292,13 @@ class KommuneServiceTest {
         val deltGrense = GrenseBuilder().withGyldigFra(LocalDate.of(2020, Month.JANUARY, 1)).withLokalId("deltGrense").build()
 
         val grensekoblingerGK1 = listOf(
-            GrunnkretsGrenseKobling(grunnkrets = gk1, grense = unikGrenseGK1, grenseKoblingAttributter = GrenseKoblingAttributter()),
-            GrunnkretsGrenseKobling(grunnkrets = gk1, grense = deltGrense, grenseKoblingAttributter = GrenseKoblingAttributter())
+            GrunnkretsGrenseKobling(grunnkrets = gk1, grense = unikGrenseGK1),
+            GrunnkretsGrenseKobling(grunnkrets = gk1, grense = deltGrense)
         )
 
         val grensekoblingerGK2 = listOf(
-            GrunnkretsGrenseKobling(grunnkrets = gk2, grense = unikGrenseGK2, grenseKoblingAttributter = GrenseKoblingAttributter()),
-            GrunnkretsGrenseKobling(grunnkrets = gk2, grense = deltGrense, grenseKoblingAttributter = GrenseKoblingAttributter())
+            GrunnkretsGrenseKobling(grunnkrets = gk2, grense = unikGrenseGK2),
+            GrunnkretsGrenseKobling(grunnkrets = gk2, grense = deltGrense)
         )
 
         every { kommuneRepositoryMock.findGyldigObjektForIdentifikator(any()) } returns kommune

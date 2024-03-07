@@ -219,50 +219,6 @@ class GrenseServiceIT : TestWithDbContainer() {
             .hasMessageContaining("Klarer ikke å sortere grensene slik at de danner et gyldig polygon.")
     }
 
-    @Test
-    fun `opprett to nye grunnkretsgrenser som sammen danner en enklave i en annen krets`() {
-        val gyldigFra = november28In2022
-        val gyldighetsdato = LocalDate.now()
-
-        val (kretsG1, kretsG2) = setupKretserForNyeGrenserTest(gyldigFra, Grensetype.Grunnkretsgrense, ::saveGrunnkrets)
-        saveKommuneOgUnikLokalid(grunnkretser = listOf(kretsG1, kretsG2), gyldigFra = gyldigFra)
-
-        val deltGrense = kretsG1.grenser.first { it.grense.lokalid == "grenseDeltLokalid" }.grense
-
-        val enklaveGrense1IKretsG1 = lagNyGrense(
-            "grenseEnklave1Id",
-            Grensetype.Grunnkretsgrense,
-            "grenseEnklave1Lokalid",
-            gyldigFra,
-            listOf(Coordinate(3.0, 3.0), Coordinate(6.0, 3.0), Coordinate(6.0, 6.0)))
-        enklaveGrense1IKretsG1.grunnkretser = deltGrense.grunnkretser
-        val featureForNyEnklaveGrense1: Feature = enklaveGrense1IKretsG1.grenseToFeature(gyldighetsdato, nyGrense = true)
-
-        val enklaveGrense2IKretsG1 = lagNyGrense(
-            "grenseEnklave2Id",
-            Grensetype.Grunnkretsgrense,
-            "grenseEnklave2Lokalid",
-            gyldigFra,
-            listOf(Coordinate(6.0, 6.0), Coordinate(3.0, 6.0), Coordinate(3.0, 3.0)))
-        enklaveGrense2IKretsG1.grunnkretser = deltGrense.grunnkretser
-        val featureForNyEnklaveGrense2: Feature = enklaveGrense2IKretsG1.grenseToFeature(gyldighetsdato, nyGrense = true)
-
-        grenseService.lagreGrenser(
-            grenser = FeatureCollection(features = listOf(featureForNyEnklaveGrense1, featureForNyEnklaveGrense2)),
-            gyldighetsdato = gyldighetsdato,
-            endringstype = Endringstype.VEDTATT_GRENSEJUSTERING
-        )
-
-        val kretsMedHullEtterLagring = grunnkretsService.hentGrunnkrets(Identifikator(Lokalid(kretsG1.lokalid), gyldighetsdato))
-        val kretsMedToFlaterEtterLagring = grunnkretsService.hentGrunnkrets((Identifikator(Lokalid(kretsG2.lokalid), gyldighetsdato)))
-
-        assertThat(kretsMedHullEtterLagring?.grenser).hasSize(6).extracting("grense.lokalid")
-        assertThat(kretsMedHullEtterLagring?.grenser?.filter { it.grenseKoblingAttributter.hullIndeks == 0 }).hasSize(2)
-
-        assertThat(kretsMedToFlaterEtterLagring?.grenser).hasSize(6).extracting("grense.lokalid")
-        assertThat(kretsMedToFlaterEtterLagring?.grenser?.filter { it.grenseKoblingAttributter.flateIndeks == 1 }).hasSize(2)
-    }
-
 
     @Test
     fun `arkiver grunnkretsgrense og opprett ny grunnkretsgrense som lukker grunnkretsene`() {
@@ -309,8 +265,9 @@ class GrenseServiceIT : TestWithDbContainer() {
         grenseRepository.flush()
 
         val stemmekrets = saveStemmekrets(id = "1", lokalid = identifikator.lokalid, stemmekretsnummer = "20", gyldigFra = gyldigFra, grenser = lagredeGrenser)
+        val stemmekrets2 = saveStemmekrets(id = "2", lokalid = identifikator.lokalid.copy("lokal2"), stemmekretsnummer = "30", gyldigFra = gyldigFra, grenser = lagredeGrenser)
 
-        saveKommuneOgUnikLokalid(stemmekretser = listOf(stemmekrets), gyldigFra = gyldigFra)
+        saveKommuneOgUnikLokalid(stemmekretser = listOf(stemmekrets, stemmekrets2), gyldigFra = gyldigFra)
         grenseRepository.flush()
 
         val grenseSomSkalArkiveres = stemmekrets.grenser.first { it.grense.lokalid == "grense1Lokalid" }.grense
@@ -376,8 +333,9 @@ class GrenseServiceIT : TestWithDbContainer() {
         grenseRepository.flush()
 
         val grunnkrets = saveGrunnkrets(id = "1", lokalid = identifikator.lokalid, grunnkretsnummer = "20", gyldigFra = gyldigFra, grenser = lagredeGrenser)
+        val naboGrunnkrets = saveGrunnkrets(id = "2", lokalid = Lokalid("nabo"), grunnkretsnummer = "21", gyldigFra = gyldigFra, grenser = lagredeGrenser)
 
-        saveKommuneOgUnikLokalid(grunnkretser = listOf(grunnkrets), gyldigFra = gyldigFra)
+        saveKommuneOgUnikLokalid(grunnkretser = listOf(grunnkrets, naboGrunnkrets), gyldigFra = gyldigFra)
         grenseRepository.flush()
 
         val grenseSomSkalArkiveres = grunnkrets.grenser.first { it.grense.lokalid == "grense1Lokalid" }.grense
@@ -1082,7 +1040,7 @@ class GrenseServiceIT : TestWithDbContainer() {
             )
         }
             .isInstanceOf(RuntimeException::class.java)
-            .hasMessageContaining("Identifikator for kommune manglet for å finne stemmekrets med stemmekretsNummer: ${tilhorighetTilKretsNordVestOgNyStemmekretsFEIL.first().kretsNummer}")
+            .hasMessageContaining("Kretsnummer og kommune-id må være satt når man setter tilhørighet til en ny stemmekrets.")
     }
 
     private fun <T : KobletTilGrense> utfoerGeometriEndring(grense: Grense, kretser: List<T>, gyldighetsdato: LocalDate, kontekstEnhetType: KontekstEnhetType): Feature {
@@ -1437,7 +1395,7 @@ class GrenseServiceIT : TestWithDbContainer() {
             getTilhorigetTilNyopprettetKretsTestSetup(Grensetype.Kommunegrense, gyldighetsdato, ::saveStemmekrets)
         saveKommuneOgUnikLokalid(stemmekretser = listOf(kretsOpprinnelig, kretsOest, kretsNordVest), gyldigFra = gyldighetsdato)
 
-        val grenseSomSkalHaDokref = kretsOpprinnelig.grenser.find { it.grense.lokalid == "grense1_1Lokalid" }?.grense
+        val grenseSomSkalHaDokref = kretsOpprinnelig.grenser.find { it.grense.lokalid == "grense3_1Lokalid" }?.grense
 
         assertThat(grenseSomSkalHaDokref).isNotNull()
 

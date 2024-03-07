@@ -136,16 +136,4 @@ data class KontekstEgenskaper(
     @Schema(description = "Teknisk versjon til referert objekt for å støtte samhandling og redigering")
     @NotNull
     val version: Int,
-
-    @Schema(description = "Angir om grensen skal leses med klokken for å danne flate.")
-    val retningMedKlokken: Boolean = true,
-
-    @Schema(description = "Angir rekkefølgen på gitt grenselinje i flatedanningen.")
-    val rekkefoelge: Int = 0,
-
-    @Schema(description = "Angir hvilken flate for enheten grensen er en del av.")
-    val flateIndeks: Int = 0,
-
-    @Schema(description = "Angir om grensen er en del av et hull, og i så fall index på gitt hull.")
-    val hullIndeks: Int? = null
 )

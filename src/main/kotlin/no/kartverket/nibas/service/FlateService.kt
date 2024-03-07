@@ -1,9 +1,7 @@
 package no.kartverket.nibas.service
 
 import no.kartverket.nibas.api.v1.common.Grensetype
-import no.kartverket.nibas.common.geometry.getGrenserIRiktigRekkefoelge
 import no.kartverket.nibas.common.getInSpraak
-import no.kartverket.nibas.common.geometry.toMultiPolygon
 import no.kartverket.nibas.domain.AdministrativEnhet
 import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.Fylke
@@ -59,49 +57,22 @@ class FlateService @Autowired constructor(
     private fun oppdaterKommuneflate(kommune: Kommune) {
         val kommunenummerVerdi = kommune.kommunenummer
         logger.info("Oppdaterer kommuneflate for $kommunenummerVerdi - ${finnNavn(kommune)}")
-
-        val kommunegrenser = getTilatteGrenserForEnhet(kommune, kommune.gyldighet.gyldigFra, kommune.tillatteGrensetyper())
-
-        kommune.omraade = getGrenserIRiktigRekkefoelge(kommunegrenser.map { it.grense }).toMultiPolygon()
-        if (kommune.omraade != null && (kommune.posisjon == null || !kommune.omraade!!.contains(kommune.posisjon))) {
-            kommune.posisjon = kommune.omraade?.interiorPoint
-        }
-
-        // Om posisjonen er Point Empty setter vi den til null så ting ikke tryner når man senere sammenligner med andre punkter
-        if(kommune.posisjon?.isEmpty == true) {
-            kommune.posisjon = null
-        }
-
+        val kommunegrenser = getTilatteGrenserForEnhet(kommune, kommune.gyldighet.gyldigFra, Kommune.tillatteGrensetyper())
+        kommune.oppdaterOmraadeOgPosisjon(kommunegrenser)
         kommuneRepository.save(kommune)
     }
 
     private fun oppdaterFylkesflate(fylke: Fylke) {
         logger.info("Oppdaterer fylkesflate for ${fylke.fylkesnummer} - ${finnNavn(fylke)}")
-
-
-        val fylkesgrenser = getTilatteGrenserForEnhet(fylke, fylke.gyldighet.gyldigFra, fylke.tillatteGrensetyper())
-
-        fylke.omraade = getGrenserIRiktigRekkefoelge(fylkesgrenser.map { it.grense }).toMultiPolygon()
-        if (fylke.omraade != null && (fylke.posisjon == null || !fylke.omraade!!.contains(fylke.posisjon))) {
-            fylke.posisjon = fylke.omraade?.interiorPoint
-        }
-
-        // Om posisjonen er Point Empty setter vi den til null så ting ikke tryner når man senere sammenligner med andre punkter
-        if (fylke.posisjon?.isEmpty == true) {
-            fylke.posisjon = null
-        }
+        val fylkesgrenser = getTilatteGrenserForEnhet(fylke, fylke.gyldighet.gyldigFra, Fylke.tillatteGrensetyper())
+        fylke.oppdaterOmraadeOgPosisjon(fylkesgrenser)
         fylkeRepository.save(fylke)
     }
 
     private fun oppdaterNasjonsflate(nasjon: Nasjon) {
         logger.info("Oppdaterer nasjonsflate for ${finnNavn(nasjon)}")
-
-        val riksgrenser = getTilatteGrenserForEnhet(nasjon, nasjon.gyldighet.gyldigFra, nasjon.tillatteGrensetyper())
-
-        nasjon.omraade = getGrenserIRiktigRekkefoelge(riksgrenser.map { it.grense }).toMultiPolygon()
-        if (nasjon.omraade != null && (nasjon.posisjon == null || !nasjon.omraade!!.contains(nasjon.posisjon))) {
-            nasjon.posisjon = nasjon.omraade?.interiorPoint
-        }
+        val riksgrenser = getTilatteGrenserForEnhet(nasjon, nasjon.gyldighet.gyldigFra, Nasjon.tillatteGrensetyper())
+        nasjon.oppdaterOmraadeOgPosisjon(riksgrenser)
         nasjonRepository.save(nasjon)
     }
 

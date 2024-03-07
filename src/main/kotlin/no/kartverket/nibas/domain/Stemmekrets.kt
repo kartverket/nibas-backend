@@ -2,14 +2,14 @@ package no.kartverket.nibas.domain
 
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grensetype
-import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
+import no.kartverket.nibas.common.geometry.getGrenserIRiktigRekkefoelge
+import no.kartverket.nibas.common.geometry.toMultiPolygon
 import org.hibernate.annotations.SQLRestriction
 import java.io.Serializable
 import java.time.LocalDate
 import java.util.*
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
-import jakarta.persistence.Embedded
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
 import jakarta.persistence.Id
@@ -68,28 +68,25 @@ class Stemmekrets(
     }
 
     override fun oppdaterOmraadeOgPosisjon() {
-        omraade = SosiGeometryFunctions.beregnFlate(getGrensekoblinger(gyldighetsdato = gyldighet.gyldigFra).toSet())
+        val grenserForFlate = getGrensekoblinger(gyldighetsdato = gyldighet.gyldigFra)
+        omraade = getGrenserIRiktigRekkefoelge(grenserForFlate.map { it.grense.grense }).toMultiPolygon()
         if (omraade != null && (posisjon == null || !omraade!!.contains(posisjon))) {
             posisjon = omraade?.interiorPoint
         }
     }
 
-    override fun oppdaterEllerLeggTilGrenseKobling(grenseMedAttributter: GrenseMedAttributter) {
-        val grense = grenseMedAttributter.grense
-        val attributter = grenseMedAttributter.attributter
-
+    override fun oppdaterEllerLeggTilGrenseKobling(grense: Grense) {
         if (!tillatteGrensetyper().contains(grense.grensetype)) {
             throw RuntimeException("Kan ikke oppdatere/legge til ${grense.grensetype.name} på enhet Stemmekrets")
         }
 
         oppdaterSamling(
             grense = grense,
-            attributter = attributter,
             samling = grenser,
             default = StemmekretsGrenseKobling(
                 stemmekrets = this,
-                grense = grense,
-                grenseKoblingAttributter = attributter))
+                grense = grense
+            ))
 
     }
 
@@ -100,18 +97,17 @@ class Stemmekrets(
         doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { StemmekretsInformasjon(this) }
     }
 
-    override fun addGrensekobling(grense: Grense, grenseKoblingAttributter: GrenseKoblingAttributter) {
+    override fun addGrensekobling(grense: Grense) {
         val stemmekretsGrenseKobling = StemmekretsGrenseKobling(
             stemmekrets = this,
-            grense = grense,
-            grenseKoblingAttributter = grenseKoblingAttributter
+            grense = grense
         )
         //Legger grensekoblingen til i begge steder den hører til, ellers feiler tester
         grenser.add(stemmekretsGrenseKobling)
         grense.stemmekretser.add(stemmekretsGrenseKobling)
     }
 
-    override fun replaceGrensekobling(gammelGrense: Grense, grense: Grense?, grenseKoblingAttributter: GrenseKoblingAttributter) {
+    override fun replaceGrensekobling(gammelGrense: Grense, grense: Grense?) {
         if (!tillatteGrensetyper().contains(grense?.grensetype) && grense != null) {
             throw RuntimeException("Kan ikke oppdatere/legge til ${grense.grensetype.name} på enhet Stemmekrets")
         }
@@ -120,7 +116,7 @@ class Stemmekrets(
             gammelGrense.stemmekretser.removeIf { it.stemmekrets.id == this.id }
             //skal bare adde om det grense != null
             if(grense != null) {
-                addGrensekobling(grense, grenseKoblingAttributter)
+                addGrensekobling(grense)
             }
         }
     }
@@ -152,11 +148,7 @@ class Stemmekrets(
             opphav = gammelStemmekrets.opphav
         }
 
-    fun applyCascadingOperationsBasedOnExistingStemmekrets (gammelStemmekrets: Stemmekrets, gyldigFra: LocalDate = LocalDate.now()) : Stemmekrets {
-        gammelStemmekrets.grenser.forEach { gammelGrenseKobling ->
-            addGrensekobling(grense = gammelGrenseKobling.grense, grenseKoblingAttributter = gammelGrenseKobling.grenseKoblingAttributter)
-        }
-
+    fun copyInformasjonselementerFromExistingStemmekrets(gammelStemmekrets: Stemmekrets, gyldigFra: LocalDate = LocalDate.now()): Stemmekrets {
         informasjonselementer = gammelStemmekrets.informasjonselementer.map { stemmekretsInformasjon ->
             StemmekretsInformasjon(stemmekrets = this).also { it.informasjon = stemmekretsInformasjon.informasjon }
         }.toMutableSet()
@@ -164,13 +156,23 @@ class Stemmekrets(
         return this
     }
 
-    private fun tillatteGrensetyper(): Set<Grensetype> = setOf(
-        Grensetype.Stemmekretsgrense,
-        Grensetype.Kommunegrense,
-        Grensetype.Fylkesgrense,
-        Grensetype.AvtaltAvgrensningslinje,
-        Grensetype.Territorialgrense,
-        Grensetype.Riksgrense)
+    fun copyGrenserFromExistingStemmekrets(gammelStemmekrets: Stemmekrets, gyldigFra: LocalDate = LocalDate.now()): Stemmekrets {
+        gammelStemmekrets.getGrensekoblinger(gyldigFra).forEach { gammelGrenseKobling ->
+            addGrensekobling(grense = gammelGrenseKobling.grense)
+        }
+        return this
+    }
+
+    companion object {
+         fun tillatteGrensetyper(): Set<Grensetype> = setOf(
+            Grensetype.Stemmekretsgrense,
+            Grensetype.Kommunegrense,
+            Grensetype.Fylkesgrense,
+            Grensetype.AvtaltAvgrensningslinje,
+            Grensetype.Territorialgrense,
+            Grensetype.Riksgrense
+        )
+    }
 }
 
 /**
@@ -189,14 +191,7 @@ class StemmekretsGrenseKobling(
     @ManyToOne
     @JoinColumn(name = "grense_fk")
     override var grense: Grense,
-
-    @Embedded
-    override var grenseKoblingAttributter: GrenseKoblingAttributter
 ) : GrenseKobling {
-    override fun oppdaterAttributter(nyeAttributter: GrenseKoblingAttributter) {
-        grenseKoblingAttributter = grenseKoblingAttributter.oppdater(nyeAttributter)
-    }
-
     override fun getEnhetKobletTilGrense(): KobletTilGrense {
         return stemmekrets
     }

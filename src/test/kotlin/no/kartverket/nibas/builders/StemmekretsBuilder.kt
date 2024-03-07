@@ -2,11 +2,9 @@ package no.kartverket.nibas.builders
 
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.Grense
-import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.sporing.Gyldighet
-import no.kartverket.nibas.utils.GrenseHelper
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
 import java.time.LocalDate
@@ -14,7 +12,7 @@ import java.time.ZonedDateTime
 
 class StemmekretsBuilder(
     private val id: String = "1",
-    private var grenser: List<GrenseMedHullIndex> = emptyList(),
+    private var grenser: List<Grense> = emptyList(),
     private var kommune: Kommune? = KommuneBuilder.DEFAULT_KOMMUNE,
     private var lokalId: Lokalid = Lokalid(LOKALID),
     private var stemmekretsnavn: String = "Nordre Follo",
@@ -52,19 +50,9 @@ class StemmekretsBuilder(
         stemmekrets.setInfo(informasjonstekst)
         stemmekrets.opphav = opphav
 
-        grenser.groupBy { it.hullIndex }.map { (_, grenserMedData) ->
-            var forrigeGrense = grenserMedData.lastOrNull()?.grense
-            grenserMedData.forEachIndexed { index, grenseMedData ->
-                stemmekrets.addGrensekobling(grenseMedData.grense, GrenseKoblingAttributter(
-                    rekkefoelge = index,
-                    hullIndeks = grenseMedData.hullIndex,
-                    retningMedKlokken = GrenseHelper.getRetningMedKlokken(grenseMedData.grense, forrigeGrense)
-                ))
-                forrigeGrense = grenseMedData.grense
-            }
-        }
+        grenser.forEach { stemmekrets.addGrensekobling(it) }
         stemmekrets.posisjon = GeometryFactory().createPoint(Coordinate(1.0, 1.0))
-        if (grenser.isNotEmpty()) {
+        if (grenser.isNotEmpty() && grenser.none { it.grense.isEmpty }) {
             stemmekrets.oppdaterOmraadeOgPosisjon()
             if (!stemmekrets.omraade!!.isEmpty) {
                 stemmekrets.posisjon = stemmekrets.omraade?.interiorPoint
@@ -97,15 +85,7 @@ class StemmekretsBuilder(
     }
 
     fun withGrenser(grenser: List<Grense>): StemmekretsBuilder {
-        this.grenser = this.grenser.plus(grenser.map { it.toGrenseMedHullIndex() })
+        this.grenser = this.grenser + grenser
         return this
     }
 }
-
-data class GrenseMedHullIndex(
-    val grense: Grense,
-    val hullIndex: Int? = null,
-)
-
-fun Grense.toGrenseMedHullIndex(hullIndex: Int? = null) =
-    GrenseMedHullIndex(this, hullIndex)

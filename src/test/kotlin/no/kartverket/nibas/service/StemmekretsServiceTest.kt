@@ -18,10 +18,9 @@ import org.assertj.core.api.Assertions.assertThat
 
 internal class StemmekretsServiceTest {
     private val stemmekretsRepositoryMock = mockk<StemmekretsRepository>()
-    private val grenseKoblingService = GrenseKoblingService()
 
     private val stemmekretsService = StemmekretsService(
-        stemmekretsRepositoryMock, grenseKoblingService
+        stemmekretsRepositoryMock
     )
 
     @BeforeEach

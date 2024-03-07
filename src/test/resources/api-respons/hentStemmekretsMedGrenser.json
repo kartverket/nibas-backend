@@ -49,11 +49,7 @@
             },
             "kretsNummer": "2",
             "type": "STEMMEKRETS",
-            "version": 1,
-            "retningMedKlokken": true,
-            "rekkefoelge": 0,
-            "flateIndeks": 0,
-            "hullIndeks": null
+            "version": 1
           },
           {
             "id": {
@@ -70,11 +66,7 @@
             },
             "kretsNummer": "06",
             "type": "STEMMEKRETS",
-            "version": 1,
-            "retningMedKlokken": false,
-            "rekkefoelge": 29,
-            "flateIndeks": 0,
-            "hullIndeks": null
+            "version": 1
           }
         ],
         "version": 2,
@@ -133,11 +125,7 @@
             },
             "kretsNummer": "06",
             "type": "STEMMEKRETS",
-            "version": 1,
-            "retningMedKlokken": false,
-            "rekkefoelge": 28,
-            "flateIndeks": 0,
-            "hullIndeks": null
+            "version": 1
           },
           {
             "id": {
@@ -154,11 +142,7 @@
             },
             "kretsNummer": "2",
             "type": "STEMMEKRETS",
-            "version": 1,
-            "retningMedKlokken": true,
-            "rekkefoelge": 1,
-            "flateIndeks": 0,
-            "hullIndeks": null
+            "version": 1
           }
         ],
         "version": 2,
@@ -217,11 +201,7 @@
             },
             "kretsNummer": "2",
             "type": "STEMMEKRETS",
-            "version": 1,
-            "retningMedKlokken": true,
-            "rekkefoelge": 2,
-            "flateIndeks": 0,
-            "hullIndeks": null
+            "version": 1
           },
           {
             "id": {
@@ -238,11 +218,7 @@
             },
             "kretsNummer": "06",
             "type": "STEMMEKRETS",
-            "version": 1,
-            "retningMedKlokken": false,
-            "rekkefoelge": 27,
-            "flateIndeks": 0,
-            "hullIndeks": null
+            "version": 1
           }
         ],
         "version": 2,
@@ -300,11 +276,7 @@
             },
             "kretsNummer": "1",
             "type": "STEMMEKRETS",
-            "version": 1,
-            "retningMedKlokken": true,
-            "rekkefoelge": 20,
-            "flateIndeks": 0,
-            "hullIndeks": null
+            "version": 1
           },
           {
             "id": {
@@ -321,11 +293,7 @@
             },
             "kretsNummer": "2",
             "type": "STEMMEKRETS",
-            "version": 1,
-            "retningMedKlokken": false,
-            "rekkefoelge": 23,
-            "flateIndeks": 0,
-            "hullIndeks": null
+            "version": 1
           }
         ],
         "version": 2,

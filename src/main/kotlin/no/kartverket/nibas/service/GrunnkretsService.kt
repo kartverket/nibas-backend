@@ -22,6 +22,8 @@ import no.kartverket.nibas.repository.findAntallFramtidigeVersjonerForIdentifika
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import no.kartverket.nibas.repository.findGyldigObjektPaaGyldighetsdato
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
+import org.locationtech.jts.geom.GeometryFactory
+import org.locationtech.jts.geom.MultiPolygon
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -123,12 +125,18 @@ class GrunnkretsService(
     }
 
     fun createNyVersjonAvGrunnkrets(grunnkrets: Grunnkrets, gyldigFra: LocalDate, endringstype: Endringstype): Grunnkrets {
+        return createNyVersjonAvGrunnkretsUtenGrenser(grunnkrets, gyldigFra, endringstype)
+            .copyGrenserFromExistingGrunnkrets(grunnkrets, gyldigFra)
+    }
+
+    fun createNyVersjonAvGrunnkretsUtenGrenser(grunnkrets: Grunnkrets, gyldigFra: LocalDate, endringstype: Endringstype): Grunnkrets {
         val nyGrunnkrets = kopierOgSaveGrunnkrets(grunnkrets, gyldigFra, endringstype)
         // Må legge til denne Grunnkrets på eksisterende Grunnkrets sin kommune
         val kommune = grunnkrets.getKommune(gyldigFra) ?: throw NotFoundException(title = "Kommune ikke funnet",
             msg = "Fant ikke kommune for grunnkrets med id ${grunnkrets.id}, grunnkretsnummer ${grunnkrets.grunnkretsnummer} og gyldig fra $gyldigFra")
         kommune.addGrunnkrets(nyGrunnkrets)
         return nyGrunnkrets
+            .copyInformasjonselementerFromExistingGrunnkrets(grunnkrets, gyldigFra)
     }
 
     fun delGrunnkrets(
@@ -143,11 +151,15 @@ class GrunnkretsService(
 
         verifiserOptimistiskLaas(kretsDelingEndringRequest.opprinneligKrets.version, grunnkrets)?.throwException()
 
+        val geometryFactory = GeometryFactory()
+
         val nyGrunnkrets = Grunnkrets().apply {
             grunnkretsnavn = kretsDelingEndringRequest.kretsNavn
             grunnkretsnummer = kretsDelingEndringRequest.kretsNummer
             kommuneLokalid = grunnkrets.kommuneLokalid
             utledetFra = grunnkrets
+            omraade = MultiPolygon(arrayOfNulls(0), geometryFactory)
+            posisjon = geometryFactory.createPoint()
             setGyldigFra(delingsDato)
         }
 
@@ -162,6 +174,8 @@ class GrunnkretsService(
                                                  gyldigFra: LocalDate, endringstype: Endringstype): Grunnkrets {
         //Antar at kommune sitt kommunenummer stemmer med angitt nytt grunnkretsnummer, for å slippe å søke opp kommunen for hver grunnkrets som skal flyttes
         val nyGrunnkrets = kopierOgSaveGrunnkrets(grunnkrets, gyldigFra, endringstype)
+            .copyInformasjonselementerFromExistingGrunnkrets(grunnkrets, gyldigFra)
+            .copyGrenserFromExistingGrunnkrets(grunnkrets, gyldigFra)
         nyGrunnkrets.grunnkretsnummer = nyttGrunnkretsNummer
         kommune.addGrunnkrets(nyGrunnkrets)
         return nyGrunnkrets
@@ -178,9 +192,7 @@ class GrunnkretsService(
                     auditInfo.typeEndring = endringstype
                 }
         )
-        return nyGrunnkrets
-            .applyCascadingOperationsBasedOnExistingGrunnkrets(grunnkrets, gyldigFra)
-            .also { grunnkrets.setGyldigTil(gyldigFra) }
+        return nyGrunnkrets.also { grunnkrets.setGyldigTil(gyldigFra) }
     }
 
     private fun nesteVersjonForGrunnkrets(lokalId: Lokalid): Int =

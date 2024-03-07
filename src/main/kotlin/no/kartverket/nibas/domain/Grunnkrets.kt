@@ -2,14 +2,14 @@ package no.kartverket.nibas.domain
 
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grensetype
-import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
+import no.kartverket.nibas.common.geometry.getGrenserIRiktigRekkefoelge
+import no.kartverket.nibas.common.geometry.toMultiPolygon
 import org.hibernate.annotations.SQLRestriction
 import java.io.Serializable
 import java.time.LocalDate
 import java.util.*
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
-import jakarta.persistence.Embedded
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
 import jakarta.persistence.Id
@@ -69,23 +69,22 @@ class Grunnkrets(
     }
 
     override fun oppdaterOmraadeOgPosisjon() {
-        omraade = SosiGeometryFunctions.beregnFlate(getGrensekoblinger(gyldighetsdato = gyldighet.gyldigFra).toSet())
+        val grenserForFlate = getGrensekoblinger(gyldighetsdato = gyldighet.gyldigFra)
+        omraade = getGrenserIRiktigRekkefoelge(grenserForFlate.map { it.grense.grense }).toMultiPolygon()
         if (omraade != null && (posisjon == null || !omraade!!.contains(posisjon))) {
             posisjon = omraade?.interiorPoint
         }
     }
 
-    override fun oppdaterEllerLeggTilGrenseKobling(grenseMedAttributter: GrenseMedAttributter) {
-        val grense = grenseMedAttributter.grense
-        val attributter = grenseMedAttributter.attributter
+    override fun oppdaterEllerLeggTilGrenseKobling(grense: Grense) {
         if (!tillatteGrensetyper().contains(grense.grensetype)) {
             throw RuntimeException("Kan ikke oppdatere/legge til ${grense.grensetype.name} på enhet Grunnkrets")
         }
         oppdaterSamling(
             grense = grense,
-            attributter = attributter,
             samling = grenser,
-            default = GrunnkretsGrenseKobling(grunnkrets = this, grense = grense, grenseKoblingAttributter = attributter))
+            default = GrunnkretsGrenseKobling(grunnkrets = this, grense = grense)
+        )
     }
 
     override fun antallGrenser(): Int = grenser.size
@@ -104,27 +103,17 @@ class Grunnkrets(
         return "Grunnkrets(id='$id', grunnkretsnummer=$grunnkretsnummer, grunnkretsnavn=$grunnkretsnavn, gyldighet: $gyldighet)"
     }
 
-    private fun tillatteGrensetyper(): Set<Grensetype> = setOf(
-        Grensetype.Grunnkretsgrense,
-        Grensetype.Delomraadegrense,
-        Grensetype.Kommunegrense,
-        Grensetype.Fylkesgrense,
-        Grensetype.AvtaltAvgrensningslinje,
-        Grensetype.Territorialgrense,
-        Grensetype.Riksgrense)
-
-    override fun addGrensekobling(grense: Grense, grenseKoblingAttributter: GrenseKoblingAttributter) {
+    override fun addGrensekobling(grense: Grense) {
         val grunnkretsGrenseKobling = GrunnkretsGrenseKobling(
             grunnkrets = this,
-            grense = grense,
-            grenseKoblingAttributter = grenseKoblingAttributter
+            grense = grense
         )
         //Legger grensekoblingen til i begge steder den hører til, ellers feiler tester
         grenser.add(grunnkretsGrenseKobling)
         grense.grunnkretser.add(grunnkretsGrenseKobling)
     }
 
-    override fun replaceGrensekobling(gammelGrense: Grense, grense: Grense?, grenseKoblingAttributter: GrenseKoblingAttributter) {
+    override fun replaceGrensekobling(gammelGrense: Grense, grense: Grense?) {
         if (!tillatteGrensetyper().contains(grense?.grensetype) && grense != null) {
             throw RuntimeException("Kan ikke oppdatere/legge til ${grense.grensetype.name} på enhet Grunnkrets")
         }
@@ -132,7 +121,7 @@ class Grunnkrets(
             //Grensa ble tatt vekk fra grunnkretsen. Fjerner grunnkretsen også fra grensa (koblingen fra den andre veien), ellers feiler tester
             gammelGrense.grunnkretser.removeIf { it.grunnkrets.id == this.id }
             if(grense != null) {
-                addGrensekobling(grense, grenseKoblingAttributter)
+                addGrensekobling(grense)
             }
         }
     }
@@ -150,14 +139,17 @@ class Grunnkrets(
         }
     }
 
-    fun applyCascadingOperationsBasedOnExistingGrunnkrets(gammelGrunnkrets: Grunnkrets, gyldigFra: LocalDate = LocalDate.now()): Grunnkrets {
-        return this.apply {
-            // For eksisterende Grunnkrets sine informasjonselementer (1 i tallet), lag nye koblinger med denne Grunnkrets
-            addInformasjonselementerFrom(gammelGrunnkrets.informasjonselementer)
+    fun copyGrenserFromExistingGrunnkrets(gammelGrunnkrets: Grunnkrets, gyldigFra: LocalDate = LocalDate.now()): Grunnkrets {
+        gammelGrunnkrets.getGrensekoblinger(gyldigFra).forEach { gammelGrenseKobling ->
+            addGrensekobling(grense = gammelGrenseKobling.grense)
+        }
+        return this
+    }
 
-            gammelGrunnkrets.grenser.forEach { gammelGrenseKobling ->
-                addGrensekobling(grense = gammelGrenseKobling.grense, grenseKoblingAttributter = gammelGrenseKobling.grenseKoblingAttributter)
-            }
+    fun copyInformasjonselementerFromExistingGrunnkrets(gammelGrunnkrets: Grunnkrets, gyldigFra: LocalDate = LocalDate.now()): Grunnkrets {
+        return this.apply {
+            // For eksisterende Grunnkrets sine informasjonselementer (1 i tallet)
+            addInformasjonselementerFrom(gammelGrunnkrets.informasjonselementer)
         }
     }
 
@@ -172,6 +164,18 @@ class Grunnkrets(
             omraade = gammelGrunnkrets.omraade
             utledetFra = gammelGrunnkrets.utledetFra
         }
+    }
+
+    companion object {
+        fun tillatteGrensetyper(): Set<Grensetype> = setOf(
+            Grensetype.Grunnkretsgrense,
+            Grensetype.Delomraadegrense,
+            Grensetype.Kommunegrense,
+            Grensetype.Fylkesgrense,
+            Grensetype.AvtaltAvgrensningslinje,
+            Grensetype.Territorialgrense,
+            Grensetype.Riksgrense
+        )
     }
 }
 
@@ -206,14 +210,7 @@ class GrunnkretsGrenseKobling(
     @ManyToOne
     @JoinColumn(name = "grense_fk")
     override var grense: Grense,
-
-    @Embedded
-    override var grenseKoblingAttributter: GrenseKoblingAttributter
 ) : GrenseKobling {
-    override fun oppdaterAttributter(nyeAttributter: GrenseKoblingAttributter) {
-        grenseKoblingAttributter = grenseKoblingAttributter.oppdater(nyeAttributter)
-    }
-
     override fun getEnhetKobletTilGrense(): KobletTilGrense {
         return grunnkrets
     }

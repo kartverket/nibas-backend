@@ -32,7 +32,6 @@ class GrunnkretsController(
         }
         return FeatureCollection(
             features = grensekoblinger
-                .sortedBy { it.grenseKoblingAttributter.rekkefoelge }
                 .map { it.grenseKoblingToFeature(identifikator.gyldighetsdato) }
         )
     }

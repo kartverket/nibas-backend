@@ -1,6 +1,8 @@
 package no.kartverket.nibas.domain
 
 import no.kartverket.nibas.api.v1.common.Flatetype
+import no.kartverket.nibas.common.geometry.getGrenserIRiktigRekkefoelge
+import no.kartverket.nibas.common.geometry.toMultiPolygon
 import no.kartverket.nibas.sporing.AuditInfo
 import no.kartverket.nibas.sporing.Gyldighet
 import no.kartverket.nibas.sporing.Laasbar
@@ -53,6 +55,13 @@ abstract class AdministrativEnhet(
     override var foerstedigitaliseringsdato: ZonedDateTime = ZonedDateTime.now()
 
     fun getAdministrativenhetNavn(gyldighetsdato: LocalDate = LocalDate.now()): List<Administrativenhetnavn> = emptyList()
+
+    fun oppdaterOmraadeOgPosisjon(grenserForFlate: List<Grense>) {
+        omraade = getGrenserIRiktigRekkefoelge(grenserForFlate.map { it.grense }).toMultiPolygon()
+        if (omraade != null && (posisjon == null || !omraade!!.contains(posisjon))) {
+            posisjon = omraade?.interiorPoint
+        }
+    }
 
     abstract fun addAdministrativenhetNavn(navn: Administrativenhetnavn)
 

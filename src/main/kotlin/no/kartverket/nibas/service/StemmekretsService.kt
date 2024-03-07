@@ -13,8 +13,6 @@ import no.kartverket.nibas.common.createIdentifikator
 import no.kartverket.nibas.common.getInSpraak
 import no.kartverket.nibas.common.toNorskFormat
 import no.kartverket.nibas.domain.Endringstype
-import no.kartverket.nibas.domain.Grense
-import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.StemmekretsGrenseKobling
@@ -25,6 +23,8 @@ import no.kartverket.nibas.repository.findAntallFramtidigeVersjonerForIdentifika
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import no.kartverket.nibas.repository.findGyldigObjektPaaGyldighetsdato
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
+import org.locationtech.jts.geom.GeometryFactory
+import org.locationtech.jts.geom.MultiPolygon
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -32,8 +32,7 @@ import java.time.LocalDate
 @Transactional(readOnly = true)
 @Service
 class StemmekretsService(
-    private val stemmekretsRepository: StemmekretsRepository,
-    private val grenseKoblingService: GrenseKoblingService
+    private val stemmekretsRepository: StemmekretsRepository
 ) {
 
     fun hentStemmekrets(identifikator: Identifikator): Stemmekrets? = stemmekretsRepository.findGyldigObjektForIdentifikator(identifikator)
@@ -140,10 +139,7 @@ class StemmekretsService(
 
         grensekoblingerSomUtgaar.forEach { it.grense.setGyldigTil(sammenslaaingsDato) }
 
-        nyStemmekrets.grenser = oppdaterGrensekoblingsAtributterForGrenser(
-            stemmekrets = nyStemmekrets,
-            grenser = viderefoerteGrensekoblinger.map { it.grense }
-        ).toMutableSet()
+        nyStemmekrets.grenser = viderefoerteGrensekoblinger.toMutableSet()
 
         nyStemmekrets.oppdaterOmraadeOgPosisjon()
 
@@ -166,11 +162,15 @@ class StemmekretsService(
 
         verifiserOptimistiskLaas(kretsDelingEndringRequest.opprinneligKrets.version, stemmekrets)?.throwException()
 
+        val geometryFactory = GeometryFactory()
+
         val nyStemmekrets = Stemmekrets().apply {
             stemmekretsnavn = kretsDelingEndringRequest.kretsNavn
             stemmekretsnummer = kretsDelingEndringRequest.kretsNummer
             kommuneLokalid = stemmekrets.kommuneLokalid
             utledetFra = stemmekrets
+            omraade = MultiPolygon(arrayOfNulls(0), geometryFactory)
+            posisjon = geometryFactory.createPoint()
             setGyldigFra(delingsDato)
         }
 
@@ -182,12 +182,18 @@ class StemmekretsService(
     }
 
     fun createNyVersjonAvStemmekrets(stemmekrets: Stemmekrets, gyldigFra: LocalDate, endringstype: Endringstype): Stemmekrets {
+        return createNyVersjonAvStemmekretsUtenGrenser(stemmekrets, gyldigFra, endringstype)
+            .copyGrenserFromExistingStemmekrets(stemmekrets, gyldigFra)
+    }
+
+    fun createNyVersjonAvStemmekretsUtenGrenser(stemmekrets: Stemmekrets, gyldigFra: LocalDate, endringstype: Endringstype): Stemmekrets {
         val nyStemmekrets = kopierOgSaveStemmekrets(stemmekrets, gyldigFra, endringstype)
 
         val kommune = stemmekrets.getKommune(gyldigFra) ?: throw ResponseException.NotFoundException(title = "Kommune ikke funnet",
             msg = "Fant ikke kommune for stemmekrets med id ${stemmekrets.id} og gyldig fra $gyldigFra")
         kommune.addStemmekrets(nyStemmekrets)
         return nyStemmekrets
+            .copyInformasjonselementerFromExistingStemmekrets(stemmekrets, gyldigFra)
     }
 
     private fun kopierOgSaveStemmekrets(stemmekrets: Stemmekrets, gyldigFra: LocalDate, endringstype: Endringstype): Stemmekrets {
@@ -203,12 +209,13 @@ class StemmekretsService(
         )
 
         return nyStemmekrets
-            .applyCascadingOperationsBasedOnExistingStemmekrets(stemmekrets, gyldigFra)
             .also { stemmekrets.setGyldigTil(gyldigFra) }
     }
 
     fun createNyVersjonAvStemmekretsIAnnenKommune(stemmekrets: Stemmekrets, kommune: Kommune, gyldigFra: LocalDate, endringstype: Endringstype): Stemmekrets {
         val nyStemmekrets = kopierOgSaveStemmekrets(stemmekrets, gyldigFra, endringstype)
+            .copyInformasjonselementerFromExistingStemmekrets(stemmekrets)
+            .copyGrenserFromExistingStemmekrets(stemmekrets)
 
         kommune.addStemmekrets(nyStemmekrets)
         return nyStemmekrets
@@ -234,25 +241,6 @@ class StemmekretsService(
 
     private fun grenseDeler2StemmekretserSomBlirSlaattSammen(grenseKobling: StemmekretsGrenseKobling, alleGrensekoblinger: Collection<StemmekretsGrenseKobling>) =
         alleGrensekoblinger.count { grenseKobling.grense.id == it.grense.id } == 2
-
-    private fun oppdaterGrensekoblingsAtributterForGrenser(
-        stemmekrets: Stemmekrets,
-        grenser: List<Grense>
-    ): List<StemmekretsGrenseKobling> {
-        val nyeGrensekoblingAtributter = grenseKoblingService.dannGrenseKoblingAttributterForGrenser(grenser)
-        return nyeGrensekoblingAtributter.map {
-            StemmekretsGrenseKobling(
-                stemmekrets = stemmekrets,
-                grense = it.grense,
-                grenseKoblingAttributter = GrenseKoblingAttributter(
-                    retningMedKlokken = it.attributter.retningMedKlokken,
-                    rekkefoelge = it.attributter.rekkefoelge,
-                    flateIndeks = it.attributter.flateIndeks,
-                    hullIndeks = it.attributter.hullIndeks
-                )
-            )
-        }
-    }
 
     private fun nesteVersjonForStemmekrets(lokalId: Lokalid): Int =
         stemmekretsRepository

@@ -30,9 +30,7 @@ class DeltGeometriAdministrativeGrenserService(
     fun getAdministrativeGrenserMedDeltGeometriForKommune(kommune: Kommune, gyldighetsDato: LocalDate): List<Grense> {
         val stemmekretserForKommune = kommune.getStemmekretser(gyldighetsDato)
 
-        val administrativeGrenserForKommune = kommune.getGrensekoblinger(gyldighetsDato).map {
-            if (it.grenseKoblingAttributter.retningMedKlokken) it.grense.grense else it.grense.grense.reverse()
-        }
+        val administrativeGrenserForKommune = kommune.getGrensekoblinger(gyldighetsDato).map { it.grense.grense }
 
         val grensepunkterForGrunnkretser = getGrensepunkterIRiktigRekkefoelge(administrativeGrenserForKommune)
         val administrativeGrenserForStemmekretserIKommunen = stemmekretserForKommune
@@ -40,8 +38,9 @@ class DeltGeometriAdministrativeGrenserService(
             .filter { it.grense.erAdministrativGrense() }
 
         val knutepunktStemmekrets = administrativeGrenserForStemmekretserIKommunen
-            .map { if (it.grenseKoblingAttributter.retningMedKlokken) it.grense.grense.startPoint else it.grense.grense.endPoint }
+            .flatMap { listOf(it.grense.grense.startPoint, it.grense.grense.endPoint) }
             .map { it.coordinate }
+            .distinct()
 
         val knutepunktGrunnkrets = administrativeGrenserForKommune.map { it.startPoint.coordinate }
 

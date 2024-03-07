@@ -7,7 +7,6 @@ import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.builders.NasjonBuilder
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.Grense
-import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.EnhetsGrenseRepository
@@ -81,7 +80,7 @@ class FlateServiceTest {
         )
         val grunnkrets = GrunnkretsBuilder().build()
         val grenseKoblinger = (fylkesgrenser)
-            .map { GrunnkretsGrenseKobling(grunnkrets, it, GrenseKoblingAttributter()) }
+            .map { GrunnkretsGrenseKobling(grunnkrets, it) }
         grunnkrets.apply { grenser = grenseKoblinger.toMutableSet() }
         val kommune = KommuneBuilder().withKommunenummer("1234").build().apply { addGrunnkrets(grunnkrets) }
         val fylke = FylkeBuilder().withFylkesnummer("12").build().apply { addKommune(kommune) }
@@ -109,7 +108,7 @@ class FlateServiceTest {
         )
         val grunnkrets = GrunnkretsBuilder().build()
         val grenseKoblinger = (kommunegrenser)
-            .map { GrunnkretsGrenseKobling(grunnkrets, it, GrenseKoblingAttributter()) }
+            .map { GrunnkretsGrenseKobling(grunnkrets, it) }
         grunnkrets.apply { grenser = grenseKoblinger.toMutableSet() }
         val kommune = KommuneBuilder().withKommunenummer("123").build().apply { addGrunnkrets(grunnkrets) }
 
@@ -136,7 +135,7 @@ class FlateServiceTest {
 
         val grunnkrets = GrunnkretsBuilder().build()
         val grenseKoblinger = (fylkesgrenser)
-            .map { GrunnkretsGrenseKobling(grunnkrets, it, GrenseKoblingAttributter()) }
+            .map { GrunnkretsGrenseKobling(grunnkrets, it) }
         grunnkrets.apply { grenser = grenseKoblinger.toMutableSet() }
         val kommune = KommuneBuilder().withKommunenummer("1234").build().apply { addGrunnkrets(grunnkrets) }
         val fylke = FylkeBuilder().withFylkesnummer("123").build().apply { addKommune(kommune) }
@@ -163,7 +162,7 @@ class FlateServiceTest {
 
         val grunnkrets = GrunnkretsBuilder().build()
         val grenseKoblinger = (fylkesgrenser)
-            .map { GrunnkretsGrenseKobling(grunnkrets, it, GrenseKoblingAttributter()) }
+            .map { GrunnkretsGrenseKobling(grunnkrets, it) }
         grunnkrets.apply { grenser = grenseKoblinger.toMutableSet() }
         val kommune = KommuneBuilder().withKommunenummer("1234").build().apply { addGrunnkrets(grunnkrets) }
         val fylke = FylkeBuilder().withFylkesnummer("123").build().apply { addKommune(kommune) }

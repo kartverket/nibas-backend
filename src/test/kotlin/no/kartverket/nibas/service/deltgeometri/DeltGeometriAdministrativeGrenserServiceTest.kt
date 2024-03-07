@@ -59,52 +59,52 @@ internal class DeltGeometriAdministrativeGrenserServiceTest {
     val stemmekretsOppeVenstre = Stemmekrets()
         .apply {
             grenser = mutableSetOf(
-                lagStemmekretsGrenseKobling(this, stemmekretsGrenseDAB, 0, false),
-                lagStemmekretsGrenseKobling(this, stemmekretsGrenseBE, 1, false),
-                lagStemmekretsGrenseKobling(this, stemmekretsGrenseDE, 2, true)
+                lagStemmekretsGrenseKobling(this, stemmekretsGrenseDAB),
+                lagStemmekretsGrenseKobling(this, stemmekretsGrenseBE),
+                lagStemmekretsGrenseKobling(this, stemmekretsGrenseDE)
             )
         }
 
     val stemmekretsOppeHoyre = Stemmekrets()
         .apply {
             grenser = mutableSetOf(
-                lagStemmekretsGrenseKobling(this, stemmekretsGrenseBCF, 0, false),
-                lagStemmekretsGrenseKobling(this, stemmekretsGrenseEF, 1, true),
-                lagStemmekretsGrenseKobling(this, stemmekretsGrenseBE, 2, true)
+                lagStemmekretsGrenseKobling(this, stemmekretsGrenseBCF),
+                lagStemmekretsGrenseKobling(this, stemmekretsGrenseEF),
+                lagStemmekretsGrenseKobling(this, stemmekretsGrenseBE)
             )
         }
 
     val stemmekretsNedeVenstre = Stemmekrets()
         .apply {
             grenser = mutableSetOf(
-                lagStemmekretsGrenseKobling(this, stemmekretsGrenseHGD, 0, false),
-                lagStemmekretsGrenseKobling(this, stemmekretsGrenseDE, 1, false),
-                lagStemmekretsGrenseKobling(this, stemmekretsGrenseEH, 2, false)
+                lagStemmekretsGrenseKobling(this, stemmekretsGrenseHGD),
+                lagStemmekretsGrenseKobling(this, stemmekretsGrenseDE),
+                lagStemmekretsGrenseKobling(this, stemmekretsGrenseEH)
             )
         }
 
     val stemmekretsNedeHoyre = Stemmekrets()
         .apply {
             grenser = mutableSetOf(
-                lagStemmekretsGrenseKobling(this, stemmekretsGrenseFIH, 0, false),
-                lagStemmekretsGrenseKobling(this, stemmekretsGrenseEH, 1, true),
-                lagStemmekretsGrenseKobling(this, stemmekretsGrenseEF, 2, false)
+                lagStemmekretsGrenseKobling(this, stemmekretsGrenseFIH),
+                lagStemmekretsGrenseKobling(this, stemmekretsGrenseEH),
+                lagStemmekretsGrenseKobling(this, stemmekretsGrenseEF)
             )
         }
 
     val grunnkretsOppe = Grunnkrets()
         .apply {
             grenser = mutableSetOf(
-                lagGrunnkretsGrenseKobling(this, grunnkretsGrenseDACF, 0, false),
-                lagGrunnkretsGrenseKobling(this, grunnkretsGrenseDEF, 1, true)
+                lagGrunnkretsGrenseKobling(this, grunnkretsGrenseDACF),
+                lagGrunnkretsGrenseKobling(this, grunnkretsGrenseDEF)
             )
         }
 
     val grunnkretsNede = Grunnkrets()
         .apply {
             grenser = mutableSetOf(
-                lagGrunnkretsGrenseKobling(this, grunnkretsGrenseFIGD, 0, false),
-                lagGrunnkretsGrenseKobling(this, grunnkretsGrenseDEF, 1, false)
+                lagGrunnkretsGrenseKobling(this, grunnkretsGrenseFIGD),
+                lagGrunnkretsGrenseKobling(this, grunnkretsGrenseDEF)
             )
         }
 

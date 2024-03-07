@@ -2,8 +2,6 @@ package no.kartverket.nibas.sosi.sosiimport
 
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.domain.Grense
-import no.kartverket.nibas.domain.GrenseKoblingAttributter
-import no.kartverket.nibas.domain.GrenseMedAttributter
 import no.kartverket.nibas.domain.KobletTilGrense
 import no.kartverket.nibas.sosi.common.SosiKoder
 import no.kartverket.nibas.sosi.model.SosiGeometri
@@ -150,10 +148,7 @@ class GrenseImporter {
         skallIndex: Int,
         hullIndex: Int?
     ) {
-        krets.oppdaterEllerLeggTilGrenseKobling(
-            GrenseMedAttributter(
-                grense = importerGrense(importSplitRef),
-                attributter = GrenseKoblingAttributter(importSplitRef.splitRef.opprinneligRetningMedKlokken, krets.antallGrenser(), skallIndex, hullIndex)))
+        krets.oppdaterEllerLeggTilGrenseKobling(importerGrense(importSplitRef))
     }
 
     private fun skalGrensenImporteres(

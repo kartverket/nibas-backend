@@ -73,11 +73,6 @@ class Nasjon(
         unikLokalid.nasjoner.add(this)
     }
 
-    fun tillatteGrensetyper(): Set<Grensetype> = setOf(
-        Grensetype.AvtaltAvgrensningslinje,
-        Grensetype.Territorialgrense,
-        Grensetype.Riksgrense)
-
     fun applyMappingFromExistingNasjon(gammelNasjon: Nasjon): Nasjon {
         return this.apply {
             gammelNasjon.gyldighet.gyldigTil?.let { setGyldigTil(it) }
@@ -104,6 +99,14 @@ class Nasjon(
         informasjonselementer.forEach { fylkenasjonInformasjonnformasjon ->
             setInfo(fylkenasjonInformasjonnformasjon.informasjon)
         }
+    }
+
+    companion object {
+        fun tillatteGrensetyper(): Set<Grensetype> = setOf(
+            Grensetype.AvtaltAvgrensningslinje,
+            Grensetype.Territorialgrense,
+            Grensetype.Riksgrense
+        )
     }
 }
 

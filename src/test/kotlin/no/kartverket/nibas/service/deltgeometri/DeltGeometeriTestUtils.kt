@@ -2,7 +2,6 @@ package no.kartverket.nibas.service.deltgeometri
 
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.domain.Grense
-import no.kartverket.nibas.domain.GrenseKoblingAttributter
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.domain.Stemmekrets
@@ -25,18 +24,16 @@ fun lagGrunnkretsGrense(vararg punkter: Point) =
     lagGrense(Grensetype.Grunnkretsgrense, *punkter)
 
 
-fun lagStemmekretsGrenseKobling(stemmekrets: Stemmekrets, grense: Grense, rekkefoelge: Int, reversed: Boolean): StemmekretsGrenseKobling =
+fun lagStemmekretsGrenseKobling(stemmekrets: Stemmekrets, grense: Grense): StemmekretsGrenseKobling =
     StemmekretsGrenseKobling(
         stemmekrets,
-        grense,
-        GrenseKoblingAttributter(flateIndeks = 0, rekkefoelge = rekkefoelge, retningMedKlokken = reversed)
+        grense
     )
 
-fun lagGrunnkretsGrenseKobling(grunnkrets: Grunnkrets, grense: Grense, rekkefoelge: Int, reversed: Boolean): GrunnkretsGrenseKobling =
+fun lagGrunnkretsGrenseKobling(grunnkrets: Grunnkrets, grense: Grense): GrunnkretsGrenseKobling =
     GrunnkretsGrenseKobling(
         grunnkrets,
-        grense,
-        GrenseKoblingAttributter(flateIndeks = 0, rekkefoelge = rekkefoelge, retningMedKlokken = reversed)
+        grense
     )
 
 fun Coordinate.toPoint(): Point =
