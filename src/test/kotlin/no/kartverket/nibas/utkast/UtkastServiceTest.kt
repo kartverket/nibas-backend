@@ -34,6 +34,7 @@ import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.domain.Stemmekrets
+import no.kartverket.nibas.domain.utkast.Utkast
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
 import no.kartverket.nibas.events.NibasEventPublisher
@@ -164,6 +165,8 @@ internal class UtkastServiceTest {
             )
             .build()
 
+        every { utkastRepositoryMock.findById(any()) } returns Optional.of(Utkast(navn="Gyldig"))
+
         assertThatThrownBy { utkastService.oppdaterUtkast("123", utkast) }
             .isInstanceOf(BadRequestException::class.java)
             .hasMessageContaining("ugyldige metadataendringer på stemmekrets")
@@ -171,9 +174,13 @@ internal class UtkastServiceTest {
 
     @Test
     fun oppdaterUtkastMedIkkeEditerbareGrenserGirBadRequest() {
+
         val utkast = UtkastRequestBuilder()
             .withOperasjoner(operasjonerMedIkkeEditerbareGrenser())
             .build()
+
+        every { utkastRepositoryMock.findById(any()) } returns Optional.of(Utkast(navn="Gyldig"))
+
         assertThatThrownBy { utkastService.oppdaterUtkast("123", utkast) }
             .isInstanceOf(BadRequestException::class.java)
             .hasMessageContaining("Utkast inneholder 4 ikke-redigerbare grenser")
@@ -190,6 +197,8 @@ internal class UtkastServiceTest {
             ))
             .build()
 
+        every { utkastRepositoryMock.findById(any()) } returns Optional.of(Utkast(navn="Gyldig"))
+
         assertThatThrownBy { utkastService.oppdaterUtkast("123", utkast) }
             .isInstanceOf(BadRequestException::class.java)
             .hasMessageContaining("ugyldige metadataendringer")
@@ -205,6 +214,8 @@ internal class UtkastServiceTest {
                 )
             ))
             .build()
+
+        every { utkastRepositoryMock.findById(any()) } returns Optional.of(Utkast(navn="Gyldig"))
 
         assertThatThrownBy { utkastService.oppdaterUtkast("123", utkastRequest) }
             .isInstanceOf(BadRequestException::class.java)

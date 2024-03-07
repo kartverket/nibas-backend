@@ -59,15 +59,21 @@ class UtkastValideringTest {
     private lateinit var utkastValidatorService: UtkastValidatorService
 
     @BeforeEach
-    fun setup () {
+    fun setup() {
         MockKAnnotations.init(this)
-        every { currentTime.asLocalDate() }  returns LocalDate.of(2022, 6, 1)
-        every { grunnkretsServiceMock.hentGrunnkrets(any()) }  returns GrunnkretsBuilder.DEFAULT_GRUNNKRETS
+        every { currentTime.asLocalDate() } returns LocalDate.of(2022, 6, 1)
+        every { grunnkretsServiceMock.hentGrunnkrets(any()) } returns GrunnkretsBuilder.DEFAULT_GRUNNKRETS
+        every { grunnkretsServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns emptyList()
+
+        every { stemmekretsServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns emptyList()
+
+        every { grenseServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns emptyList()
+
         utkastValidatorService = UtkastValidatorService(grunnkretsServiceMock, grenseServiceMock, stemmekretsServiceMock, kodelisteServiceMock, currentTime)
     }
 
     @Test
-    fun `valider utkast med annen status enn opprettet gir ugyldig utkast` () { //publiserUtkastMedAnnenStatusEnnOpprettetGirBadRequestEx
+    fun `valider utkast med annen status enn opprettet gir ugyldig utkast`() { //publiserUtkastMedAnnenStatusEnnOpprettetGirBadRequestEx
         val publisertUtkast = UtkastBuilder.builder("Utkast for publisering")
             .withStatus(UtkastStatus.PUBLISERT)
             .build()
@@ -423,6 +429,7 @@ class UtkastValideringTest {
 
         assertThat(res.second).isInstanceOf(UtkastValidering.KlartForPublisering::class.java)
     }
+
     @Test
     fun `utkast er gyldig med deling og grensejusteringer som refererer til grunnkrets`(){
         val gyldighetsdato = LocalDate.now()
@@ -457,15 +464,16 @@ class UtkastValideringTest {
     }
 
     @Test
-    fun `utkast er gyldig uten grenseendringer hvis det ikke er en deling i utkastet`(){
-        val utkast = Utkast(navn = "test", operasjoner = Operasjoner(metadataendringer =
-        Metadataendringer(
-            grunnkretsendringer =
-            mapOf(
-                "1" to GrunnkretsRequestBuilder.DEFAULT_REQUEST,
-                "2" to GrunnkretsRequestBuilder(lokalId = "2").build(),
-            )
-        ),
+    fun `utkast er gyldig uten grenseendringer hvis det ikke er en deling i utkastet`() {
+        val utkast = Utkast(navn = "test", operasjoner = Operasjoner(
+            metadataendringer =
+            Metadataendringer(
+                grunnkretsendringer =
+                mapOf(
+                    "1" to GrunnkretsRequestBuilder.DEFAULT_REQUEST,
+                    "2" to GrunnkretsRequestBuilder(lokalId = "2").build(),
+                )
+            ),
         ))
 
         every { grunnkretsServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns listOf()
@@ -475,7 +483,7 @@ class UtkastValideringTest {
     }
 
     @Test
-    fun `utkast er ugydlig dersom det kommer inn flere grenseendring-features med samme id`(){
+    fun `utkast er ugyldig dersom det kommer inn flere grenseendring-features med samme id`() {
         val grenseendringFeature1 = FeatureBuilder("1").build()
         val grenseendringFeature2 = FeatureBuilder("2").build()
 
@@ -586,4 +594,43 @@ class UtkastValideringTest {
          */
     }
 
+    @Test
+    fun `valider at godkjente operasjoner gir gyldigUtkast`() {
+        val operasjoner =
+            Operasjoner(
+                metadataendringer =
+                Metadataendringer(
+                    grunnkretsendringer =
+                    mapOf(
+                        "1" to GrunnkretsRequestBuilder.DEFAULT_REQUEST,
+                        "2" to GrunnkretsRequestBuilder(lokalId = "2").build(),
+                    ),
+                    stemmekretsendringer =
+                    mapOf("1" to StemmekretsRequestBuilder(stemmekretsnummer = "123").build())
+                ),
+                stemmekretsSammenslaaingsendring =
+                StemmekretsSammenslaaingsendringRequest(
+                    viderefoertStemmekrets = IdentifikatorMedVersjon("1", 5),
+                    stemmekretserTilSammenslaaing = listOf(IdentifikatorMedVersjon("2", 1)),
+                    stemmekretsNavn = "gyldigNavn",
+                    stemmekretsNummer = "4"
+                ),
+                grenseendringer = operasjonerMedKunEditerbareGrenser().grenseendringer
+            )
+        val gyldigUtkast = UtkastBuilder.builder("Gyldignavn")
+            .withOperasjoner(operasjoner)
+            .build()
+
+        val validateGyldigUtkastResult = utkastValidatorService.validateGyldigUtkast(gyldigUtkast)
+        assertThat(validateGyldigUtkastResult).isInstanceOf(UtkastValidering.GyldigUtkast::class.java)
+    }
+
+    @Test
+    fun `validateGyldigUtkast utkast uten operasjoner gir gyldig utkast`() {
+        val utkastUtenOperasjoner = UtkastBuilder.builder("Utkast for publisering")
+            .build()
+
+        val validateGyldigUtkastResult = utkastValidatorService.validateGyldigUtkast(utkastUtenOperasjoner)
+        assertThat(validateGyldigUtkastResult).isInstanceOf(UtkastValidering.GyldigUtkast::class.java)
+    }
 }

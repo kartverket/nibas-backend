@@ -71,21 +71,24 @@ class UtkastService(
         if (utkastValidatorService.sjekkUgyldigUtkastNavnOgEndringstype(request.navn, request.endringstype)) {
             throw ResponseException.BadRequestException("Husk å fylle inn både navnet og endringstypen på utkastet.")
         }
-        when (val operasjonerValideringResult = utkastValidatorService.validateGyldigeOperasjoner(request.operasjoner)) {
-            is OperasjonerValidering.UgyldigeOperasjoner -> throw operasjonerValideringResult.feil
-            is OperasjonerValidering.GyldigeOperasjoner -> {
-                return hentUtkast(id)?.let { eksisterendeUtkast ->
-                    verifiserOptimistiskLaas(request.version, eksisterendeUtkast)?.throwException()
+        val utkast = hentUtkast(id)
+            ?: throw ResponseException.NotFoundException("Utkast ble ikke funnet for id: $id.")
 
-                    eksisterendeUtkast.navn = request.navn
-                    eksisterendeUtkast.auditInfo.typeEndring = Endringstype.fromValue(request.endringstype)
-                    eksisterendeUtkast.gyldigFra = request.gyldigFra!!
-                    eksisterendeUtkast.operasjoner = request.operasjoner
-                    utkastRepository.save(eksisterendeUtkast)
-                }
+            verifiserOptimistiskLaas(request.version, utkast)?.throwException()
+
+            utkast.navn = request.navn
+            utkast.auditInfo.typeEndring = Endringstype.fromValue(request.endringstype)
+            utkast.gyldigFra = request.gyldigFra!!
+            utkast.operasjoner = request.operasjoner
+
+            val utkastValideringResult =
+                utkastValidatorService.validateGyldigUtkast(utkast)
+
+            if (utkastValideringResult is UtkastValidering.UgyldigUtkast) {
+                throw utkastValideringResult.feil
             }
+            return utkastRepository.save(utkast)
         }
-    }
 
     fun forkastUtkast(id: String): Utkast? =
         hentUtkast(id)?.apply {
@@ -101,15 +104,12 @@ class UtkastService(
 
         utkast.gyldigFra = gyldigFra
 
-        if (utkastValidatorService.sjekkUgyldigUtkastNavnOgEndringstype(utkast.navn, utkast.auditInfo.typeEndring.value)) {
-            throw ResponseException.BadRequestException("Husk å fylle inn både navnet og endringstypen på utkastet.")
-        }
-
         when (
             val utkastValideringResult =
                 utkastValidatorService.validateUtkastKlartForPublisering(utkast)
         ) {
             is UtkastValidering.UgyldigUtkast -> throw utkastValideringResult.feil
+            is UtkastValidering.GyldigUtkast -> throw ResponseException.BadRequestException("Noe gikk galt (Utkastet ble markert som GyldigUtkast KlartForPublisering.")
             is UtkastValidering.KlartForPublisering -> {
                 logger.debug(utkast.publiseringsInfo())
 

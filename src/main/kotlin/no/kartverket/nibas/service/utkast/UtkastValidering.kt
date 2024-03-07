@@ -59,14 +59,43 @@ class UtkastValidatorService(
         return (navn.isBlank() || endringstype.isBlank())
     }
 
-    fun validateUtkastKlartForPublisering(utkast: Utkast): UtkastValidering {
+    fun validateGyldigUtkast(utkast: Utkast): UtkastValidering {
+        if (sjekkUgyldigUtkastNavnOgEndringstype(utkast.navn, utkast.auditInfo.typeEndring.value)) {
+            return UtkastValidering.UgyldigUtkast(utkast, ResponseException.BadRequestException(
+                "Husk å fylle inn både navnet og endringstypen på utkastet."))
+        }
+
         if (utkast.status != UtkastStatus.OPPRETTET) {
             return UtkastValidering.UgyldigUtkast(utkast, ResponseException.BadRequestException(
-                title = "Kan ikke publisere utkastet",
-                msg = "Kan ikke publisere et utkast i status ${utkast.status}."
+                title = "Kan ikke oppdatere utkastet",
+                msg = "Kan ikke oppdatere et utkast med status ${utkast.status}"
             ))
         }
 
+        val operasjonerValideringResult = validateGyldigeOperasjoner(utkast.operasjoner!!)
+        if (operasjonerValideringResult is OperasjonerValidering.UgyldigeOperasjoner) {
+            return UtkastValidering.UgyldigUtkast(utkast, operasjonerValideringResult.feil)
+        }
+
+        val grunnkretsValideringsFeil = validerGrunnkretsEndringerKonflikt(utkast)
+        if (grunnkretsValideringsFeil != null) {
+            return UtkastValidering.UgyldigUtkast(utkast, grunnkretsValideringsFeil)
+        }
+
+        val stemmekretsValideringsFeil = validerStemmekretsEndringerKonflikt(utkast)
+        if (stemmekretsValideringsFeil != null) {
+            return UtkastValidering.UgyldigUtkast(utkast, stemmekretsValideringsFeil)
+        }
+
+        val grenseeendringerValideringsFeil = validerGrenseEndringerKonflikt(utkast)
+        if (grenseeendringerValideringsFeil != null) {
+            return UtkastValidering.UgyldigUtkast(utkast, grenseeendringerValideringsFeil)
+        }
+
+        return UtkastValidering.GyldigUtkast(utkast)
+    }
+
+    fun validateUtkastKlartForPublisering(utkast: Utkast): UtkastValidering {
         if (utkast.gyldigFra.isBefore(currentTime.asLocalDate())) {
             return UtkastValidering.UgyldigUtkast(utkast, ResponseException.BadRequestException(
                 title = "Kan ikke publisere utkastet",
@@ -91,29 +120,14 @@ class UtkastValidatorService(
             ))
         }
 
-        val operasjonerValideringResult = validateGyldigeOperasjoner(utkast.operasjoner!!)
-        if (operasjonerValideringResult is OperasjonerValidering.UgyldigeOperasjoner) {
-            return UtkastValidering.UgyldigUtkast(utkast, operasjonerValideringResult.feil)
-        }
-
-        val grunnkretsValideringsFeil = validerGrunnkretsEndringerKonflikt(utkast)
-        if (grunnkretsValideringsFeil != null) {
-            return UtkastValidering.UgyldigUtkast(utkast, grunnkretsValideringsFeil)
-        }
-
-        val stemmekretsValideringsFeil = validerStemmekretsEndringerKonflikt(utkast)
-        if (stemmekretsValideringsFeil != null) {
-            return UtkastValidering.UgyldigUtkast(utkast, stemmekretsValideringsFeil)
-        }
-
-        val grenseeendringerValideringsFeil = validerGrenseEndringerKonflikt(utkast)
-        if (grenseeendringerValideringsFeil != null) {
-            return UtkastValidering.UgyldigUtkast(utkast, grenseeendringerValideringsFeil)
-        }
-
         val tilhorighetEndringerValideringsFeil = validerTilhorighetEndringer(utkast)
         if (tilhorighetEndringerValideringsFeil != null) {
             return tilhorighetEndringerValideringsFeil
+        }
+
+        val valideringResult = validateGyldigUtkast(utkast)
+        if ( valideringResult is UtkastValidering.UgyldigUtkast) {
+            return UtkastValidering.UgyldigUtkast(utkast, valideringResult.feil)
         }
 
         return UtkastValidering.KlartForPublisering(utkast)
@@ -382,6 +396,7 @@ private fun Operasjoner.harIkkeEndringer(): Boolean = !this.harEndringer()
 
 sealed class UtkastValidering {
     data class KlartForPublisering(val utkast: Utkast) : UtkastValidering()
+    data class GyldigUtkast(val utkast: Utkast) : UtkastValidering()
     data class UgyldigUtkast(val utkast: Utkast, val feil: Exception) : UtkastValidering()
 }
 
