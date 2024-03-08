@@ -76,33 +76,6 @@ class GrenseServiceTest {
             .isInstanceOf(BadRequestException::class.java)
             .hasMessageContaining("En eller flere grenser du har endret på eksisterer ikke lengre. For å sørge for at du endrer på en gjeldende grense må du dessverre opprette et nytt utkast og gjennomføre endringene dine på nytt.")
     }
-    @Test
-    fun `lagreGrenser skal kaste optimistiskLaasException hvis grensa har ulik versjon enn requesten`() {
-        val gyldighetsdato = LocalDate.of(2022, Month.DECEMBER, 8)
-
-        // Har en grunnkretsgrense med lokalid 34
-        val grense = GrenseBuilder(id = "3400",
-            lokalId = Lokalid("34"),
-            gyldigFra = LocalDate.of(2020, Month.DECEMBER, 8))
-            .withVersjon(4)
-            .withGrensetype(Grensetype.Grunnkretsgrense).build()
-        val grenseIdentifikator = Identifikator(Lokalid("34"), gyldighetsdato)
-
-        every { grenseRepositoryKotlinMock.findAllGyldigeObjekterForIdentifikatorer(allAny()) } returns mapOf(grenseIdentifikator to grense)
-
-        val featureWithUnknownId = FeatureBuilder("34")
-            .withGrenseversjon(1)
-            .withKontekstEgenskaper(listOf())
-            .build()
-
-        assertThatThrownBy { grenseService.lagreGrenser(
-            FeatureCollection(features = listOf(featureWithUnknownId)),
-            gyldighetsdato = gyldighetsdato,
-            endringstype = Endringstype.FASTSETTING
-        ) }
-            .isInstanceOf(OptimistiskLaasException::class.java)
-            .hasMessageContaining("Det er ikke samsvar med versjon")
-    }
 
     @Test
     fun hentGrenseReturnsNullInCaseOfNoMatch() {

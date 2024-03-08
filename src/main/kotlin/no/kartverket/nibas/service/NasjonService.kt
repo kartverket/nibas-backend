@@ -9,11 +9,9 @@ import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.NasjonRepository
-import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.repository.findAllGyldigPaaDato
 import no.kartverket.nibas.repository.findAntallFramtidigeVersjonerForIdentifikator
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
-import no.kartverket.nibas.repository.verifiserOptimistiskLaas
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -43,8 +41,6 @@ class NasjonService(
         val identifikator = Identifikator(lokalid, gyldigFra)
         val gammelNasjon = hentNasjon(identifikator)
             ?: throw ResponseException.NotFoundException("Nasjon med $identifikator ble ikke funnet.")
-
-        verifiserOptimistiskLaas(oppdatertNasjon.version, gammelNasjon)?.throwException()
 
         val nyNasjon = createNyVersjonAvNasjon(nasjon = gammelNasjon, gyldigFra = gyldigFra, endringstype = endringstype)
         return nyNasjon

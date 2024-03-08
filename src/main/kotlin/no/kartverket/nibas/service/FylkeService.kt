@@ -16,12 +16,10 @@ import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.FylkeRepository
 import no.kartverket.nibas.repository.NasjonRepository
-import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.repository.UnikLokalidRepository
 import no.kartverket.nibas.repository.findAllGyldigPaaDato
 import no.kartverket.nibas.repository.findAntallFramtidigeVersjonerForIdentifikator
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
-import no.kartverket.nibas.repository.verifiserOptimistiskLaas
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -56,8 +54,6 @@ class FylkeService(
         val identifikator = Identifikator(lokalid, gyldigFra)
         val gammeltFylke = hentFylke(Identifikator(lokalid))
             ?: throw ResponseException.NotFoundException("Fylke med $identifikator ble ikke funnet.")
-
-        verifiserOptimistiskLaas(oppdatertFylke.version, gammeltFylke)?.throwException()
 
         val nyttFylke = createNyVersjonAvFylke(fylke = gammeltFylke, gyldigFra = gyldigFra, endringstype = endringstype)
             .applyChangesFromRequest(oppdatertFylke)

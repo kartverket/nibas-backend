@@ -67,8 +67,6 @@ class StemmekretsService(
         val gammelStemmekrets = hentStemmekrets(identifikator)
             ?: throw ResponseException.NotFoundException(title = "Stemmekrets ikke funnet", msg = "Stemmekrets med $identifikator ble ikke funnet.")
 
-        verifiserOptimistiskLaas(oppdatertStemmekrets.version, gammelStemmekrets)?.throwException()
-
         val nyStemmekrets = createNyVersjonAvStemmekrets(gammelStemmekrets, gyldigFra, endringstype)
             .applyChangesFromRequest(oppdatertStemmekrets)
 
@@ -109,16 +107,6 @@ class StemmekretsService(
                     msg = "Stemmekrets til sammenslåing med identifikator: $it ble ikke funnet")
             }
 
-        val stemmekretserForSjekkeOptimistiskLaas = stemmekretserSomUtgaar.map { stemmekrets ->
-            Pair(stemmekrets, sammenslaaingsendringRequest.stemmekretserTilSammenslaaing.find { it.lokalId == stemmekrets.lokalid }?.version!!)
-        }.plus(Pair(viderefortStemmekrets, sammenslaaingsendringRequest.viderefoertStemmekrets.version))
-
-        stemmekretserForSjekkeOptimistiskLaas
-            .forEach { (stemmekrets, versjon) ->
-                verifiserOptimistiskLaas(versjon, stemmekrets)
-                    ?.throwException()
-            }
-
         stemmekretserSomUtgaar.forEach { it.setGyldigTil(sammenslaaingsDato) }
 
         val nyStemmekrets = createNyVersjonAvStemmekrets(viderefortStemmekrets, sammenslaaingsDato, endringstype)
@@ -148,6 +136,26 @@ class StemmekretsService(
         }
 
         return Pair(nyStemmekrets, stemmekretserSomUtgaar)
+    }
+
+    fun validerOptimistiskLaasForStemmekretsSammenslaaing(sammenslaaingsendringRequest: StemmekretsSammenslaaingsendringRequest, gyldigFra: LocalDate) {
+        val identifikatorViderefoerStemmekrets =
+            Identifikator(lokalid = Lokalid(sammenslaaingsendringRequest.viderefoertStemmekrets.lokalId), gyldighetsdato = gyldigFra)
+        val viderefortStemmekrets = hentStemmekrets(identifikatorViderefoerStemmekrets)
+            ?: throw ResponseException.BadRequestException("Fant ikke stemmekrets med id ${identifikatorViderefoerStemmekrets.lokalid.value} som er gyldig ${gyldigFra.toNorskFormat()}")
+
+        val stemmekretserSomUtgaar = sammenslaaingsendringRequest.stemmekretserTilSammenslaaing
+            .map { Identifikator(lokalid = Lokalid(it.lokalId), gyldighetsdato = gyldigFra) }
+            .mapNotNull { hentStemmekrets(it) }
+
+        val stemmekretserForSjekkeOptimistiskLaas = stemmekretserSomUtgaar.map { stemmekrets ->
+            Pair(stemmekrets, sammenslaaingsendringRequest.stemmekretserTilSammenslaaing.find { it.lokalId == stemmekrets.lokalid }?.version!!)
+        }.plus(Pair(viderefortStemmekrets, sammenslaaingsendringRequest.viderefoertStemmekrets.version))
+
+        stemmekretserForSjekkeOptimistiskLaas
+            .forEach { (stemmekrets, versjon) ->
+                verifiserOptimistiskLaas(versjon, stemmekrets)?.throwException()
+            }
     }
 
     fun delStemmekrets(

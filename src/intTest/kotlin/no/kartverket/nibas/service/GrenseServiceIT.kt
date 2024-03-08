@@ -782,7 +782,7 @@ class GrenseServiceIT : TestWithDbContainer() {
                 gyldighetsdato = gyldighetsdato,
                 endringstype = Endringstype.VEDTATT_GRENSEJUSTERING
             )
-        }.isInstanceOf(RuntimeException::class.java).hasMessageContaining("KontekstEgenskaper for feature med id: ${grense2MedEndretTilhorighet.id} er null")
+        }.isInstanceOf(RuntimeException::class.java).hasMessageContaining("Kretsnummer må være satt når man setter tilhørighet til en ny grunnkrets.")
     }
 
     @Test

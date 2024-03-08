@@ -27,6 +27,15 @@ class StemmekretsRequestBuilder(
         this.stemmekretsnummer = stemmekretsnummer
         return this
     }
+    fun withNavn(navn: String): StemmekretsRequestBuilder {
+        this.stemmekretsnavn = navn
+        return this
+    }
+
+    fun withVersion(version: Int): StemmekretsRequestBuilder {
+        this.version = version
+        return this
+    }
 
     fun build(): StemmekretsRequest = StemmekretsRequest(
         stemmekretsnummer = stemmekretsnummer,

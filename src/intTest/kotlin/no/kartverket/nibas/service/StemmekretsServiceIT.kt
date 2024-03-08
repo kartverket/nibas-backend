@@ -34,7 +34,6 @@ import no.kartverket.nibas.utils.GrenseHelper
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
 import org.springframework.test.context.ActiveProfiles
@@ -323,46 +322,6 @@ class StemmekretsServiceIT : TestWithDbContainer() {
 
         assertThat(sammenslattStemmekrets?.grenser?.size).isLessThan(antallGrenser)
         assertThat(grenseIder).doesNotContain("grenseDelt")
-    }
-
-    @Test
-    fun `slaaSammenStemmekretser skal skal kaste konflikt om den feiler optimistiskLaas-sjekken for den viderefoerte stemmekretsen`() {
-        val (vestreKrets, oestreKrets) = saveNaboStemmekretser(gyldigFra = LocalDate.parse("2022-01-01"))
-
-        val sammenslaaingsendringRequest = StemmekretsSammenslaaingsendringRequest(
-            viderefoertStemmekrets = IdentifikatorMedVersjon(vestreKrets.lokalid, 5),
-            stemmekretserTilSammenslaaing = listOf(IdentifikatorMedVersjon(oestreKrets.lokalid, 1)),
-            stemmekretsNavn = "Sammenslått krets",
-            stemmekretsNummer = "nytt nummer"
-        )
-
-        assertThrows<OptimistiskLaasException> {
-            stemmekretsService.slaaSammenStemmekretser(
-                sammenslaaingsendringRequest = sammenslaaingsendringRequest,
-                sammenslaaingsDato = LocalDate.parse("2022-02-01"),
-                endringstype = Endringstype.VEDTATT_SAMMENSLAAING
-            )
-        }
-    }
-
-    @Test
-    fun `slaaSammenStemmekretser skal kaste konflikt om den feiler optimistiskLaas-sjekken for en av stemmekretsene til sammenslaaing`() {
-        val (vestreKrets, oestreKrets) = saveNaboStemmekretser(gyldigFra = LocalDate.parse("2022-01-01"))
-
-        val sammenslaaingsendringRequest = StemmekretsSammenslaaingsendringRequest(
-            viderefoertStemmekrets = IdentifikatorMedVersjon(vestreKrets.lokalid, 1),
-            stemmekretserTilSammenslaaing = listOf(IdentifikatorMedVersjon(oestreKrets.lokalid, 5)),
-            stemmekretsNavn = "Sammenslått krets",
-            stemmekretsNummer = "nytt nummer"
-        )
-
-        assertThrows<OptimistiskLaasException> {
-            stemmekretsService.slaaSammenStemmekretser(
-                sammenslaaingsendringRequest = sammenslaaingsendringRequest,
-                sammenslaaingsDato = LocalDate.parse("2022-02-01"),
-                endringstype = Endringstype.VEDTATT_SAMMENSLAAING
-            )
-        }
     }
 
     private fun utfoerSammenslaaing(vestreKrets: Stemmekrets, oestreKrets: Stemmekrets): Stemmekrets? {

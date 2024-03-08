@@ -10,6 +10,7 @@ import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.api.v1.request.OppdaterUtkastRequest
 import no.kartverket.nibas.api.v1.request.OpprettUtkastRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
+import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.domain.Endringstype
@@ -29,6 +30,7 @@ import no.kartverket.nibas.service.KommuneService
 import no.kartverket.nibas.service.NasjonService
 import no.kartverket.nibas.service.StemmekretsService
 import no.kartverket.nibas.service.utkast.extensions.publiseringsInfo
+import no.kartverket.nibas.sporing.Laasbar
 import no.kartverket.nibas.unwrap
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -112,6 +114,7 @@ class UtkastService(
             is UtkastValidering.GyldigUtkast -> throw ResponseException.BadRequestException("Noe gikk galt (Utkastet ble markert som GyldigUtkast KlartForPublisering.")
             is UtkastValidering.KlartForPublisering -> {
                 logger.debug(utkast.publiseringsInfo())
+                validerOptimistiskLaasForEndringer(utkast)
 
                 utkast.operasjoner?.let { operasjoner ->
                     val flateEndringer = publiserEndringer(operasjoner, utkast)
@@ -137,6 +140,47 @@ class UtkastService(
         val grenseendringer = publiserGrenseendringer(operasjoner.grenseendringer, utkast)
 
         return metadataendringer + sammenslaaingsendringer + grenseendringer + kretsDelingEndringer
+    }
+
+    private fun validerOptimistiskLaasForEndringer(utkast: Utkast) {
+        utkast.operasjoner?.let { operasjoner ->
+            operasjoner.stemmekretsSammenslaaingsendring?.let {
+                stemmekretsService.validerOptimistiskLaasForStemmekretsSammenslaaing(it, utkast.gyldigFra)
+            }
+            grenseService.validerOptimistiskLaasKonflikter(operasjoner.grenseendringer.endredeFeatures, utkast.gyldigFra)
+            validerOptimistiskLaasForMetadataEndringer(operasjoner.metadataendringer, utkast.gyldigFra)
+        }
+    }
+
+    private fun validerOptimistiskLaasForMetadataEndringer(metadataendringer: Metadataendringer, gyldigFra: LocalDate) {
+        metadataendringer.nasjonsendringer.forEach { (lokalId, nasjonRequest) ->
+            nasjonService.hentNasjon(Identifikator(Lokalid(lokalId), gyldigFra))
+                ?.verifiserOptimistiskLaas(nasjonRequest.version)
+        }
+
+        metadataendringer.fylkesendringer.forEach { (lokalId, fylkeRequest) ->
+            fylkeService.hentFylke(Identifikator(Lokalid(lokalId), gyldigFra))
+                ?.verifiserOptimistiskLaas(fylkeRequest.version)
+        }
+
+        metadataendringer.kommuneendringer.forEach { (lokalId, kommuneRequest) ->
+            kommuneService.hentKommune(Identifikator(Lokalid(lokalId), gyldigFra))
+                ?.verifiserOptimistiskLaas(kommuneRequest.version)
+        }
+
+        metadataendringer.stemmekretsendringer.forEach { (lokalId, stemmekretsRequest) ->
+            stemmekretsService.hentStemmekrets(Identifikator(Lokalid(lokalId), gyldigFra))
+                ?.verifiserOptimistiskLaas(stemmekretsRequest.version)
+        }
+
+        metadataendringer.grunnkretsendringer.forEach { (lokalId, grunnkretsRequest) ->
+            grunnkretsService.hentGrunnkrets(Identifikator(Lokalid(lokalId), gyldigFra))
+                ?.verifiserOptimistiskLaas(grunnkretsRequest.version)
+        }
+    }
+
+    private fun Laasbar.verifiserOptimistiskLaas(versjonFraRequest: Int) {
+        verifiserOptimistiskLaas(versjonFraRequest, this)?.throwException()
     }
 
     private fun publiserMetadataEndringer(

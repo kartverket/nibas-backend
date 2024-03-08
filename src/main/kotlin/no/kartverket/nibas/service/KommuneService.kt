@@ -26,7 +26,6 @@ import no.kartverket.nibas.repository.findAntallFramtidigeVersjonerForIdentifika
 import no.kartverket.nibas.repository.findGyldigFylkeForFylkesnummer
 import no.kartverket.nibas.repository.findGyldigKommuneForKommunenummer
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
-import no.kartverket.nibas.repository.verifiserOptimistiskLaas
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -86,8 +85,6 @@ class KommuneService(
         val identifikator = Identifikator(lokalid, gyldigFra)
         val gammelKommune = hentKommune(identifikator)
             ?: throw ResponseException.NotFoundException("Kommune med $identifikator ble ikke funnet.")
-
-        verifiserOptimistiskLaas(oppdatertKommune.version, gammelKommune)?.throwException()
 
         val nyKommune = createNyVersjonAvKommune(kommune = gammelKommune, gyldigFra = gyldigFra, endringstype = endringstype)
             .applyChangesFromRequest(oppdatertKommune)

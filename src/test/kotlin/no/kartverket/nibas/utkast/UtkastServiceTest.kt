@@ -12,9 +12,9 @@ import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
 import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.api.v1.request.KretsNavnOgNummer
-import no.kartverket.nibas.api.v1.request.OppdaterUtkastRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
 import no.kartverket.nibas.builders.FeatureBuilder
+import no.kartverket.nibas.builders.FylkeBuilder
 import no.kartverket.nibas.builders.FylkeRequestBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.GrunnkretsRequestBuilder
@@ -277,6 +277,10 @@ internal class UtkastServiceTest {
             .build()
         every { utkastRepositoryMock.findById(any()) } returns Optional.of(utkast)
         every { grunnkretsServiceMock.hentGrunnkrets(any()) } returns GrunnkretsBuilder.DEFAULT_GRUNNKRETS
+        every { nasjonServiceMock.hentNasjon(any()) } returns NasjonBuilder.DEFAULT_NASJON
+        every { fylkeServiceMock.hentFylke(any()) } returns FylkeBuilder.DEFAULT_FYLKE
+        every { kommuneServiceMock.hentKommune(any()) } returns KommuneBuilder.DEFAULT_KOMMUNE
+        every { stemmekretsServiceMock.hentStemmekrets(any()) } returns StemmekretsBuilder.DEFAULT_STEMMEKRETS
         every { grunnkretsServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns listOf()
         every { stemmekretsServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns listOf()
         every { grenseServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns listOf()
@@ -288,6 +292,7 @@ internal class UtkastServiceTest {
         every { stemmekretsServiceMock.oppdaterStemmekrets(any(), any(), any(), any()) } returns Stemmekrets()
         every { grenseServiceMock.lagreGrenser(any(), any(), any()) } returns emptySet()
         every { nibasEventPublisherMock.publishNibasEvent(any(), any()) } returns Unit
+        every { grenseServiceMock.validerOptimistiskLaasKonflikter(any(), any()) } returns Unit
 
         utkastService.publiserUtkast(utkast.id)
 

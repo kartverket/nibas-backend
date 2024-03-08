@@ -24,6 +24,16 @@ class GrunnkretsRequestBuilder(
         return this
     }
 
+    fun withNavn(navn: String): GrunnkretsRequestBuilder {
+        this.navn = navn
+        return this
+    }
+
+    fun withVersion(version: Int): GrunnkretsRequestBuilder {
+        this.version = version
+        return this
+    }
+
     fun build(): GrunnkretsRequest = GrunnkretsRequest(
         navn = navn,
         grunnkretsnummer = grunnkretsnummer,

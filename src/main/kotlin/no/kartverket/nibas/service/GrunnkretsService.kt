@@ -83,8 +83,6 @@ class GrunnkretsService(
         val gammelGrunnkrets = hentGrunnkrets(identifikator)
             ?: throw NotFoundException("Grunnkrets med $identifikator ble ikke funnet.")
 
-        verifiserOptimistiskLaas(oppdatertGrunnkrets.version, gammelGrunnkrets)?.throwException()
-
         //Lar dette med GrunnkretsHelper ligge, det har noe å gjøre med evt flere fremtidige endringer på grunnkrets
         val grunnkretsHelper = GrunnkretsHelper(grunnkretsRepository.findAllByLokalidSortedByGyldigFra(lokalId))
 
