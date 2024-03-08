@@ -115,6 +115,11 @@ class GrunnkretsBuilder(
         return this
     }
 
+    fun withGrunnkretsnummer(nummer: String): GrunnkretsBuilder {
+        this.grunnkretsnummer = nummer
+        return this
+    }
+
     fun withRandomGrenser(vararg grensePairs: Pair<Grensetype, Int>): GrunnkretsBuilder {
         val grenser = mutableListOf<Grense>()
         grensePairs.forEach { pair ->

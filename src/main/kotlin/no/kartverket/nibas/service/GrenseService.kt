@@ -4,6 +4,7 @@ import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
+import no.kartverket.nibas.api.v1.common.geojson.KontekstEgenskaper
 import no.kartverket.nibas.api.v1.common.geojson.metadata.AdministrativGrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.AvtaltAvgrensningslinjeMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.KommunalKretsgrenseMetadata
@@ -443,7 +444,8 @@ class GrenseService(
             if (innsendteTilhorigheter.size != 2) {
                 throw BadRequestException("Grense med id ${feature.id} har feil antall tilhørigheter. Fikk ${innsendteTilhorigheter.size} men forventet 2.")
             }
-            if (innsendteTilhorigheter[0].id?.lokalid == innsendteTilhorigheter[1].id?.lokalid) {
+
+            if (erSammeTilhorighet(innsendteTilhorigheter[0], innsendteTilhorigheter[1])) {
                 throw BadRequestException("Grense med id ${feature.id} har begge tilhørighetene satt til samme krets. Fikk ${innsendteTilhorigheter[0].id?.lokalid?.value} for begge tilhørhetene.")
             }
 
@@ -452,6 +454,21 @@ class GrenseService(
                 throw BadRequestException("En grense kan ikke være knyttet til tilhørigheter av ulike type. Grense med ID ${feature.id} er knyttet til kretser med følgende typer: ${innsendteTilhorigheter.joinToString(", ")}")
             }
         }
+    }
+
+    private fun erSammeTilhorighet(tilhorighet1: KontekstEgenskaper, tilhorighet2: KontekstEgenskaper): Boolean {
+        if(tilhorighet1.id?.lokalid != tilhorighet2.id?.lokalid) {
+            return false
+        }
+
+        // Hvis begge er null er det nye kretser, vi må da sammenligne kretsnummer (og kommune for stemmekrets)
+        if(tilhorighet1.id?.lokalid == null && tilhorighet2.id?.lokalid == null) {
+            if (tilhorighet1.type == KontekstEnhetType.GRUNNKRETS) {
+                return tilhorighet1.kretsNummer == tilhorighet2.kretsNummer
+            }
+            return tilhorighet1.kretsNummer == tilhorighet2.kretsNummer && tilhorighet1.kommuneId?.lokalid == tilhorighet2.kommuneId?.lokalid
+        }
+        return false
     }
 
     private fun Grense.applyChangesFromRequest(feature: Feature, gyldighetsdato: LocalDate, endringstype: Endringstype): Grense =
