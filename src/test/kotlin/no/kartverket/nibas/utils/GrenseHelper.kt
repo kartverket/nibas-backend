@@ -208,4 +208,20 @@ object GrenseHelper {
                 }
         }
     }
+
+    fun getGrenseRundtVestreOgOestreKrets(gyldigFra: LocalDate, grensetype: Grensetype): Grense {
+        return Grense(id = "grenseRundt", lokalid = "grenseRundtLokalid", grensetype = grensetype)
+            .apply {
+                setGyldigFra(gyldigFra)
+                grense = geometryFactory.createLineString(
+                    arrayOf(
+                        Coordinate(-1000.0, -1000.0),
+                        Coordinate(1000.0, -1000.0),
+                        Coordinate(1000.0, 1000.0),
+                        Coordinate(-1000.0, 1000.0),
+                        Coordinate(-1000.0, -1000.0),
+                    )
+                )
+            }
+    }
 }

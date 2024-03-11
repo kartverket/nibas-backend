@@ -53,6 +53,9 @@ class StemmekretsServiceIT : TestWithDbContainer() {
     private val december1In2022 = LocalDate.of(2022, Month.DECEMBER, 1)
     private val jan1In2023 = LocalDate.of(2023, Month.JANUARY, 1)
     private val jan1In2024 = LocalDate.of(2024, Month.JANUARY, 1)
+    private val sammenslaaingDato =  LocalDate.of(2022, Month.FEBRUARY, 1)
+    private val datoEtterSammanslaaing = LocalDate.of(2022, Month.MARCH, 1)
+    private val datoFoerSammenslaaing = LocalDate.of(2021, Month.JANUARY, 1)
 
     private val stemmekretsLokalid = Lokalid("ac7e05cd-fb07-4270-ad95-88c320137ba6")
     private val grenseLokallid = Lokalid("888")
@@ -324,6 +327,45 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         assertThat(grenseIder).doesNotContain("grenseDelt")
     }
 
+    @Test
+    fun `slaaSammenStemmekretser skal sette tilhørigheter korrekt på alle grensene`() {
+        // Starter med å sette opp 2 nabostemmekretser som skal slåes sammen
+        // og sørger for at de ytre grensene på disse kretsene (altså grensene som ikke er delt)
+        // har tilhørighet til en 3. stemmekrets. Disse kretsene er derfor hull i den 3 kretsen.
+        // Vi ønsker å sjekke at de "ytre"-grensene på den sammenslåtte stemmekretsen har de
+        // riktige 2 tilhørighetene etter sammenslåingen og ikke mister noen knytninger her.
+        val (vestreKrets, oestreKrets) = saveNaboStemmekretser(gyldigFra = datoFoerSammenslaaing)
+        val grenseRundt = grenseRepository.save(GrenseHelper.getGrenseRundtVestreOgOestreKrets(gyldigFra = datoFoerSammenslaaing, grensetype = Grensetype.Stemmekretsgrense))
+        val stemmekretsRundt = saveStemmekrets(
+            id = "stemmekrets-rundt",
+            lokalid = Lokalid("stemmekrets-rundt-lokalid"),
+            stemmekretsnummer = "55",
+            gyldigFra = datoFoerSammenslaaing,
+            grenser = listOf(grenseRundt)
+        )
+
+        val ikkeDelteGrenserVestreKrets = vestreKrets.getGrensekoblinger(datoFoerSammenslaaing).filter { it.grense.stemmekretser(datoFoerSammenslaaing).size < 2 }
+        val ikkeDelteGrenserOestreKrets = oestreKrets.getGrensekoblinger(datoFoerSammenslaaing).filter { it.grense.stemmekretser(datoFoerSammenslaaing).size < 2 }
+        val ikkeDelteGrenser = ikkeDelteGrenserOestreKrets + ikkeDelteGrenserVestreKrets
+
+        ikkeDelteGrenser.forEach { stemmekretsRundt.addGrensekobling(it.grense) }
+
+        val sammenslattStemmekrets = utfoerSammenslaaing(vestreKrets, oestreKrets)!!
+
+        assertThat(sammenslattStemmekrets.stemmekretsnavn).isEqualTo("Sammenslått krets")
+        assertThat(sammenslattStemmekrets.stemmekretsnummer).isEqualTo("999")
+
+        // Vi skal beholde kun de ikke-delte grensene
+        assertThat(sammenslattStemmekrets.getGrensekoblinger(datoEtterSammanslaaing)).hasSize(ikkeDelteGrenser.size)
+
+        sammenslattStemmekrets.getGrensekoblinger(datoEtterSammanslaaing).forEach {
+            assertThat(it.grense.stemmekretser(datoEtterSammanslaaing))
+                .hasSize(2)
+                .extracting("lokalid")
+                .containsExactlyInAnyOrder(sammenslattStemmekrets.lokalid, stemmekretsRundt.lokalid)
+        }
+    }
+
     private fun utfoerSammenslaaing(vestreKrets: Stemmekrets, oestreKrets: Stemmekrets): Stemmekrets? {
         val sammenslaaingsendringRequest = StemmekretsSammenslaaingsendringRequest(
             viderefoertStemmekrets = IdentifikatorMedVersjon(vestreKrets.lokalid, 1),
@@ -334,11 +376,11 @@ class StemmekretsServiceIT : TestWithDbContainer() {
 
         stemmekretsService.slaaSammenStemmekretser(
             sammenslaaingsendringRequest = sammenslaaingsendringRequest,
-            sammenslaaingsDato = LocalDate.parse("2022-02-01"),
+            sammenslaaingsDato = sammenslaaingDato,
             endringstype = Endringstype.VEDTATT_SAMMENSLAAING
         )
 
-        return stemmekretsService.hentStemmekrets(Identifikator(Lokalid(vestreKrets.lokalid), LocalDate.parse("2022-02-01")))
+        return stemmekretsService.hentStemmekrets(Identifikator(Lokalid(vestreKrets.lokalid), datoEtterSammanslaaing))
     }
 
     @Test

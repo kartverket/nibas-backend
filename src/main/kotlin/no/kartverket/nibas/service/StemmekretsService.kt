@@ -109,13 +109,17 @@ class StemmekretsService(
 
         stemmekretserSomUtgaar.forEach { it.setGyldigTil(sammenslaaingsDato) }
 
-        val nyStemmekrets = createNyVersjonAvStemmekrets(viderefortStemmekrets, sammenslaaingsDato, endringstype)
+        val alleStemmekretsGrensekoblinger = viderefortStemmekrets.getGrensekoblinger(sammenslaaingsDato) + stemmekretserSomUtgaar.flatMap { it.getGrensekoblinger(sammenslaaingsDato) }
+
+        val nyStemmekrets = createNyVersjonAvStemmekretsUtenGrenser(viderefortStemmekrets, sammenslaaingsDato, endringstype)
             .apply {
                 stemmekretsnavn = sammenslaaingsendringRequest.stemmekretsNavn
                 stemmekretsnummer = sammenslaaingsendringRequest.stemmekretsNummer
             }
 
-        val alleStemmekretsGrensekoblinger = viderefortStemmekrets.getGrensekoblinger(sammenslaaingsDato) + stemmekretserSomUtgaar.flatMap { it.getGrensekoblinger(sammenslaaingsDato) }
+        if (finnesAnnenStemmekretsMedSammeKommuneOgStemmekretsnummer(nyStemmekrets)) {
+            throw createDuplikatStemmekretsnummerException(nyStemmekrets)
+        }
 
         // Hvis en grense deler 2 stemmekretser som er med i sammenslåingen så er den ikke en del
         // av et skall eller hull i den nye stemmekretsen
@@ -127,13 +131,11 @@ class StemmekretsService(
 
         grensekoblingerSomUtgaar.forEach { it.grense.setGyldigTil(sammenslaaingsDato) }
 
-        nyStemmekrets.grenser = viderefoerteGrensekoblinger.toMutableSet()
+        viderefoerteGrensekoblinger.forEach {
+            nyStemmekrets.addGrensekobling(it.grense)
+        }
 
         nyStemmekrets.oppdaterOmraadeOgPosisjon()
-
-        if (finnesAnnenStemmekretsMedSammeKommuneOgStemmekretsnummer(nyStemmekrets)) {
-            throw createDuplikatStemmekretsnummerException(nyStemmekrets)
-        }
 
         return Pair(nyStemmekrets, stemmekretserSomUtgaar)
     }
