@@ -18,7 +18,7 @@ class FylkeBuilder(
     private var fylkesnummer: String = "89",
     private var unikLokalid: UnikLokalid = UnikLokalid("fylke123", Flatetype.FYLKE),
     private var navn: String? = null,
-    private var spraak: String = "NOR",
+    private var spraak: String = "nor",
     private var samiskforvaltningsomraade: Boolean = false,
     private var endretdato: ZonedDateTime = ZonedDateTime.now(),
     private var kommuner: List<Kommune> = emptyList(),

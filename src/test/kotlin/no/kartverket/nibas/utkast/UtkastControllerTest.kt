@@ -38,7 +38,6 @@ import no.kartverket.nibas.sporing.AuditInfo
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.locationtech.jts.geom.Coordinate
-import org.locationtech.jts.geom.GeometryFactory
 import org.locationtech.jts.operation.valid.TopologyValidationError
 import org.mockito.Mockito.anyString
 import org.mockito.Mockito.verify
@@ -260,7 +259,6 @@ internal class UtkastControllerTest : NibasMvcTest() {
     fun publiserUtkastMedUgyldigGeometriGirHTTP400() {
         whenever(utkastServiceMock.publiserUtkast(anyString(), any(LocalDate::class.java))).thenThrow(
             UgyldigGeometriException(
-                geometry = GeometryFactory().createPolygon(),
                 topologyValidationError = TopologyValidationError(6, Coordinate(0.0, 1.0))))
 
         val expectedHttpStatus = status().isBadRequest

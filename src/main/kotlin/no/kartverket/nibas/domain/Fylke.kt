@@ -2,6 +2,7 @@ package no.kartverket.nibas.domain
 
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grensetype
+import no.kartverket.nibas.common.getInSpraak
 import org.hibernate.annotations.SQLRestriction
 import java.time.LocalDate
 import java.util.*
@@ -62,6 +63,11 @@ class Fylke(
             .flatMap { it.getGrunnkretser(gyldighetsdato) }
             .flatMap { it.getGrensekoblingerAvTyper(tillatteGrensetyper(), gyldighetsdato) }
             .toSet()
+    }
+
+    override fun getFlateInformasjon(): FlateInformasjon {
+        val navn = getAdministrativenhetNavn(gyldighet.gyldigFra).getInSpraak("nor") ?: "Ukjent navn"
+        return FlateInformasjon(type, "$fylkesnummer $navn")
     }
 
     fun addKommune(kommune: Kommune) {

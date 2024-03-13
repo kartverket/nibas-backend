@@ -5,8 +5,8 @@ import java.math.BigInteger
 import java.security.MessageDigest
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-
-fun LocalDate.inThePast(): Boolean = this.isBefore(LocalDate.now())
+import kotlin.math.pow
+import kotlin.math.round
 
 fun LocalDate.toNorskFormat(): String = this.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))
 
@@ -17,3 +17,8 @@ fun String.md5(): String {
 
 fun Collection<Administrativenhetnavn>.getInSpraak(spraak: String): String? =
     this.find { it.spraak?.id == spraak }?.navn
+
+fun Double.round(decimals: Int): Double {
+    val multiplier = 10.0.pow(decimals.toDouble())
+    return round(this * multiplier) / multiplier
+}

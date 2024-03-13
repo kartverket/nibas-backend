@@ -7,10 +7,14 @@ import no.kartverket.nibas.api.v1.klient.response.ErrorDescription
 import no.kartverket.nibas.common.FeilVedOppdatering
 import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.common.geometry.IkkeSammenhengendePolygonException
+import no.kartverket.nibas.common.geometry.UgyldigFlateInformasjon
+import no.kartverket.nibas.common.geometry.UgyldigeFlaterException
 import no.kartverket.nibas.common.geometry.UgyldigGeometriException
+import no.kartverket.nibas.common.round
 import no.kartverket.nibas.kodelister.MissingKodelisteItemException
 import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.sosi.sosiimport.GeometriFailedToBeCreatedException
+import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.operation.valid.TopologyValidationError
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
@@ -129,6 +133,36 @@ class CustomRestExceptionHandler {
             description = ex.message
         )
         return handleException(ex, errorDescription, HttpHeaders(), httpStatus, logAsError = true)
+    }
+
+    @ExceptionHandler(value = [UgyldigeFlaterException::class])
+    fun handleUgydligFlateExceptions(ex: UgyldigeFlaterException, request: WebRequest) : ResponseEntity<Any>? {
+
+        val gruppertPaaKoordinat: Map<Coordinate, List<UgyldigFlateInformasjon>> = ex.ugyldigeFlater.groupBy { it.topologifeil.coordinate }
+        val antallGrupper = gruppertPaaKoordinat.size
+
+        val stringBuilder = StringBuilder()
+        stringBuilder.appendLine("Geometrien er ugyldig. Dette kan bety at alle grensene ikke er lukket eller at tilhørighet er satt feil. Sjekk over endringene du har gjort, og prøv å publiser utkastet på nytt.")
+        stringBuilder.appendLine()
+        stringBuilder.appendLine("$antallGrupper feil ble oppdaget på følgende koordinater og inndelinger:")
+
+        gruppertPaaKoordinat.entries.forEachIndexed { index, entry ->
+            stringBuilder.appendLine("${index + 1}. koordinat: [${entry.key.y.round(2)}]N [${entry.key.x.round(2)}]Ø")
+            entry.value.forEach{
+                stringBuilder.appendLine("- ${it.flateInformasjon.flatetype} ${it.flateInformasjon.lesbartNavn}")
+            }
+            stringBuilder.appendLine("- Feilen som ble oppdaget er: ${topologyErrorToCustomText(entry.value[0].topologifeil)}")
+
+            if (index + 1 < antallGrupper) {
+                stringBuilder.appendLine()
+            }
+        }
+
+        val errorDescription = ErrorDescription(
+            title = "Flatedanning feilet",
+            description = stringBuilder.toString()
+        )
+        return handleException(ex, errorDescription, HttpHeaders(), HttpStatus.BAD_REQUEST)
     }
 
     @ExceptionHandler(value = [Exception::class])

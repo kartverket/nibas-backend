@@ -14,6 +14,7 @@ import no.kartverket.nibas.builders.GrunnkretsRequestBuilder
 import no.kartverket.nibas.builders.StemmekretsRequestBuilder
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.common.geometry.UgyldigeFlaterException
 import no.kartverket.nibas.domain.Dokumentasjonsreferanse
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Flate
@@ -30,10 +31,12 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
+import org.locationtech.jts.operation.valid.TopologyValidationError
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.Month
+import kotlin.test.assertFailsWith
 
 @ActiveProfiles("security-off")
 @Transactional
@@ -131,15 +134,24 @@ class GrenseServiceIT : TestWithDbContainer() {
         ugyldigNyGrense.stemmekretser = grenseSomSkalEndres.stemmekretser
         val featureForNyGrense: Feature = ugyldigNyGrense.grenseToFeature(gyldighetsdato, nyGrense = true)
 
-        assertThatThrownBy {
+        val exception = assertFailsWith<UgyldigeFlaterException> {
             grenseService.lagreGrenser(
                 grenser = FeatureCollection(features = listOf(featureForGrenseSomSkalEndres, featureForNyGrense)),
                 gyldighetsdato = gyldighetsdato,
                 endringstype = Endringstype.VEDTATT_GRENSEJUSTERING
             )
+        }
 
-        }.isInstanceOf(RuntimeException::class.java)
-            .hasMessageContaining("Klarer ikke å sortere grensene slik at de danner et gyldig polygon.")
+        assertThat(exception.message).isEqualTo("Feil ved flatedanning")
+        val ugyldigeFlater = exception.ugyldigeFlater
+        assertThat(ugyldigeFlater).hasSize(2)
+        ugyldigeFlater.find { it.lokalid == kretsG1.lokalid }?.let { assertThat(it.flateInformasjon).isEqualTo(kretsG1.getFlateInformasjon()) }
+        ugyldigeFlater.find { it.lokalid == kretsG2.lokalid }?.let { assertThat(it.flateInformasjon).isEqualTo(kretsG2.getFlateInformasjon()) }
+
+        ugyldigeFlater.forEach {
+            assertThat(it.topologifeil.errorType).isEqualTo(TopologyValidationError.RING_NOT_CLOSED)
+            assertThat(it.topologifeil.coordinate).isEqualTo(Coordinate(10.0, 5.0))
+        }
     }
 
     @Test
@@ -208,15 +220,24 @@ class GrenseServiceIT : TestWithDbContainer() {
         ugyldigNyGrense.grunnkretser = grenseSomSkalEndres.grunnkretser
         val featureForNyGrense: Feature = ugyldigNyGrense.grenseToFeature(gyldighetsdato, nyGrense = true)
 
-        assertThatThrownBy {
+        val exception = assertFailsWith<UgyldigeFlaterException> {
             grenseService.lagreGrenser(
                 grenser = FeatureCollection(features = listOf(featureForGrenseSomSkalEndres, featureForNyGrense)),
                 gyldighetsdato = gyldighetsdato,
                 endringstype = Endringstype.VEDTATT_GRENSEJUSTERING
             )
+        }
 
-        }.isInstanceOf(RuntimeException::class.java)
-            .hasMessageContaining("Klarer ikke å sortere grensene slik at de danner et gyldig polygon.")
+        assertThat(exception.message).isEqualTo("Feil ved flatedanning")
+        val ugyldigeFlater = exception.ugyldigeFlater
+        assertThat(ugyldigeFlater).hasSize(2)
+        ugyldigeFlater.find { it.lokalid == kretsG1.lokalid }?.let { assertThat(it.flateInformasjon).isEqualTo(kretsG1.getFlateInformasjon()) }
+        ugyldigeFlater.find { it.lokalid == kretsG2.lokalid }?.let { assertThat(it.flateInformasjon).isEqualTo(kretsG2.getFlateInformasjon()) }
+
+        ugyldigeFlater.forEach {
+            assertThat(it.topologifeil.errorType).isEqualTo(TopologyValidationError.RING_NOT_CLOSED)
+            assertThat(it.topologifeil.coordinate).isEqualTo(Coordinate(10.0, 5.0))
+        }
     }
 
 
@@ -274,15 +295,25 @@ class GrenseServiceIT : TestWithDbContainer() {
 
         val arkivertFeature = grenseSomSkalArkiveres.grenseToFeature(gyldighetsdato, true)
 
-        assertThatThrownBy {
+        val exception = assertFailsWith<UgyldigeFlaterException> {
             grenseService.lagreGrenser(
                 grenser = FeatureCollection(features = listOf(arkivertFeature)),
                 gyldighetsdato = gyldighetsdato,
                 endringstype = Endringstype.VEDTATT_GRENSEJUSTERING
             )
+        }
 
-        }.isInstanceOf(RuntimeException::class.java)
-            .hasMessageContaining("Klarer ikke å sortere grensene slik at de danner et gyldig polygon.")
+        assertThat(exception.message).isEqualTo("Feil ved flatedanning")
+        val ugyldigeFlater = exception.ugyldigeFlater
+        assertThat(ugyldigeFlater).hasSize(2)
+        ugyldigeFlater.find { it.lokalid == stemmekrets.lokalid }?.let { assertThat(it.flateInformasjon).isEqualTo(stemmekrets.getFlateInformasjon()) }
+        ugyldigeFlater.find { it.lokalid == stemmekrets2.lokalid }?.let { assertThat(it.flateInformasjon).isEqualTo(stemmekrets2.getFlateInformasjon()) }
+
+        ugyldigeFlater.forEach {
+            println("lokalid: ${it.lokalid}, flatetype: ${it.flateInformasjon.flatetype}, lesbart navn: ${it.flateInformasjon.lesbartNavn}, koordinat: ${it.topologifeil.coordinate}, feiltype: ${it.topologifeil.errorType}")
+            assertThat(it.topologifeil.errorType).isEqualTo(TopologyValidationError.RING_NOT_CLOSED)
+            assertThat(it.topologifeil.coordinate).isEqualTo(Coordinate(0.0, 5.0))
+        }
     }
 
     @Test
@@ -342,14 +373,25 @@ class GrenseServiceIT : TestWithDbContainer() {
 
         val arkivertFeature = grenseSomSkalArkiveres.grenseToFeature(gyldighetsdato, true)
 
-        assertThatThrownBy {
+        val exception = assertFailsWith<UgyldigeFlaterException> {
             grenseService.lagreGrenser(
                 grenser = FeatureCollection(features = listOf(arkivertFeature)),
                 gyldighetsdato = gyldighetsdato,
                 endringstype = Endringstype.VEDTATT_GRENSEJUSTERING
             )
-        }.isInstanceOf(RuntimeException::class.java)
-            .hasMessageContaining("Klarer ikke å sortere grensene slik at de danner et gyldig polygon.")
+        }
+
+        assertThat(exception.message).isEqualTo("Feil ved flatedanning")
+        val ugyldigeFlater = exception.ugyldigeFlater
+        assertThat(ugyldigeFlater).hasSize(2)
+        ugyldigeFlater.find { it.lokalid == grunnkrets.lokalid }?.let { assertThat(it.flateInformasjon).isEqualTo(grunnkrets.getFlateInformasjon()) }
+        ugyldigeFlater.find { it.lokalid == naboGrunnkrets.lokalid }?.let { assertThat(it.flateInformasjon).isEqualTo(naboGrunnkrets.getFlateInformasjon()) }
+
+        ugyldigeFlater.forEach {
+            println("lokalid: ${it.lokalid}, flatetype: ${it.flateInformasjon.flatetype}, lesbart navn: ${it.flateInformasjon.lesbartNavn}, koordinat: ${it.topologifeil.coordinate}, feiltype: ${it.topologifeil.errorType}")
+            assertThat(it.topologifeil.errorType).isEqualTo(TopologyValidationError.RING_NOT_CLOSED)
+            assertThat(it.topologifeil.coordinate).isEqualTo(Coordinate(0.0, 5.0))
+        }
     }
 
     @Test

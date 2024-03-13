@@ -60,6 +60,10 @@ class Stemmekrets(
         return grenser.filter { it.grense.gyldigPaaDato(gyldighetsdato) }.toSet()
     }
 
+    override fun getFlateInformasjon(): FlateInformasjon {
+        return FlateInformasjon(type, "$stemmekretsnummer $stemmekretsnavn")
+    }
+
     /**
      * Henter kretsen sin kommune på en gitt dato. Hvis man gir en dato hvor kommunen med gitt lokalid ikke er gyldig, returneres null
      */

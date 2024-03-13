@@ -19,7 +19,7 @@ class KommuneBuilder(
     private var kommunenummer: String = "0301",
     private var unikLokalid: UnikLokalid = UnikLokalid("fe328f8d-fbde-4c21-ab28-cbc583be401f", Flatetype.KOMMUNE),
     private var navn: String? = null,
-    private var spraak: String = "NOR",
+    private var spraak: String = "nor",
     private var samiskforvaltningsomraade: Boolean = false,
     private var endretdato: ZonedDateTime = ZonedDateTime.now(),
     private var grunnkretser: List<Grunnkrets> = listOf(),

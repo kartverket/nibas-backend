@@ -10,6 +10,8 @@ interface Flate : CommonMetadataProperties {
     val type: Flatetype
 
     fun getGrensekoblinger(gyldighetsdato: LocalDate = LocalDate.now()): Set<GrenseKobling>
+
+    fun getFlateInformasjon(): FlateInformasjon
 }
 
 interface KobletTilGrense {
@@ -23,3 +25,8 @@ interface KobletTilGrense {
     fun replaceGrensekobling(gammelGrense: Grense, grense: Grense?)
     fun oppdaterOmraadeOgPosisjon()
 }
+
+data class FlateInformasjon (
+    val flatetype: Flatetype,
+    val lesbartNavn: String
+)

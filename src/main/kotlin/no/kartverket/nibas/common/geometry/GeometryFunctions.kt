@@ -41,7 +41,7 @@ fun getGrenserIRiktigRekkefoelge(grenser: List<LineString>): List<List<LineStrin
 
         val punkterSomErBesoekt = listOf(nyeGrenser.first().startPoint) + nyeGrenser.map { it.endPoint }
         val nesteGrense = grenserSomGjenstaar.firstOrNull { it.startPoint == forrigeGrense.endPoint || it.endPoint == forrigeGrense.endPoint }
-            ?: throw RuntimeException("Klarer ikke å sortere grensene slik at de danner et gyldig polygon.")
+            ?: throw UgyldigGeometriException(TopologyValidationError(TopologyValidationError.RING_NOT_CLOSED, forrigeGrense.endPoint.coordinate))
 
         grenserSomGjenstaar.remove(nesteGrense)
 
@@ -149,7 +149,7 @@ fun erFlateHullIEtPolygon(flate: Geometry, flater: List<Geometry>): Boolean {
 fun validateGeometry(geometry: Geometry) {
     val validationError = IsValidOp(geometry).validationError
     if (validationError != null) {
-        throw UgyldigGeometriException(geometry, validationError)
+        throw UgyldigGeometriException(validationError)
     }
 }
 

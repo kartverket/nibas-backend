@@ -99,6 +99,10 @@ class Grunnkrets(
         return grenser.filter { it.grense.gyldigPaaDato(gyldighetsdato) }.toSet()
     }
 
+    override fun getFlateInformasjon(): FlateInformasjon {
+        return FlateInformasjon(type, "$grunnkretsnummer $grunnkretsnavn")
+    }
+
     override fun toString(): String {
         return "Grunnkrets(id='$id', grunnkretsnummer=$grunnkretsnummer, grunnkretsnavn=$grunnkretsnavn, gyldighet: $gyldighet)"
     }
