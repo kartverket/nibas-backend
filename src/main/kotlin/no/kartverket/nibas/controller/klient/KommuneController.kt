@@ -4,16 +4,13 @@ import no.kartverket.nibas.api.v1.common.Kommunenummer
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.klient.KommuneApi
 import no.kartverket.nibas.api.v1.klient.response.GrunnkretsResponse
-import no.kartverket.nibas.api.v1.klient.response.KommuneRef
 import no.kartverket.nibas.api.v1.klient.response.KommuneResponse
 import no.kartverket.nibas.api.v1.klient.response.StemmekretsResponse
-import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.common.createIdentifikator
 import no.kartverket.nibas.extensions.flate.toGrunnkretsResponse
-import no.kartverket.nibas.extensions.flate.toKommuneRef
 import no.kartverket.nibas.extensions.flate.toKommuneResponse
 import no.kartverket.nibas.extensions.flate.toStemmekretsResponse
 import no.kartverket.nibas.extensions.geometry.grenseKoblingToFeature
@@ -24,18 +21,17 @@ import java.time.LocalDate
 @RestController("KlientKommuneController")
 class KommuneController(
     private val kommuneService: KommuneService,
-    private val hrefProvider: HrefProvider
 ) : KommuneApi {
 
-    override fun hentKommuner(fylkeId: String?, gyldighetsdato: LocalDate?): List<KommuneRef> {
+    override fun hentKommuner(fylkeId: String?, gyldighetsdato: LocalDate?): List<KommuneResponse> {
         val datoToUse: LocalDate = gyldighetsdato ?: LocalDate.now()
         return if (fylkeId == null) {
             kommuneService.hentAlleKommuner(datoToUse).map {
-                it.toKommuneRef(datoToUse, kommuneService, hrefProvider)
+                it.toKommuneResponse(createIdentifikator(it.lokalid, it.gyldighet.gyldigFra),Kommunenummer(it.kommunenummerUuid, it.kommunenummer))
             }
         } else {
             kommuneService.hentKommunerForFylke(Identifikator(Lokalid(fylkeId), datoToUse)).map {
-                it.toKommuneRef(datoToUse, kommuneService, hrefProvider)
+                it.toKommuneResponse(createIdentifikator(it.lokalid, it.gyldighet.gyldigFra), Kommunenummer(it.kommunenummerUuid, it.kommunenummer))
             }
         }
     }

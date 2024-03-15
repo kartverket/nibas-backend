@@ -11,7 +11,6 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import no.kartverket.nibas.api.v1.DefaultFeatureCollectionApiResponses
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.klient.response.GrunnkretsResponse
-import no.kartverket.nibas.api.v1.klient.response.KommuneRef
 import no.kartverket.nibas.api.v1.klient.response.KommuneResponse
 import no.kartverket.nibas.api.v1.klient.response.StemmekretsResponse
 import org.springframework.format.annotation.DateTimeFormat
@@ -36,7 +35,7 @@ interface KommuneApi {
             description = "Successful operation",
             content = [Content(
                 mediaType = "application/json",
-                array = ArraySchema(schema = Schema(implementation = KommuneRef::class))
+                array = ArraySchema(schema = Schema(implementation = KommuneResponse::class))
             )]
         )
     )
@@ -46,7 +45,7 @@ interface KommuneApi {
         @RequestParam(name = "fylkeid", required = false) fylkeId: String?,
         @Parameter(description = "Eventuell gyldighetsdato for kommune (default = dagens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
         @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?
-    ): List<KommuneRef>
+    ): List<KommuneResponse>
 
     @Operation(summary = "Hent en kommune med gitt id", description = "Henter kommune med gitt id")
     @ApiResponses(

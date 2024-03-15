@@ -14,44 +14,6 @@ import org.springframework.http.HttpStatus
 import java.time.LocalDate
 import java.time.ZonedDateTime
 
-@Schema(description = "En referanse til et fylke")
-data class FylkeRef(
-
-    @Schema(description = "ID-en til fylket")
-    val id: ObjektIdentifikator,
-
-    @Schema(description = "Liste over navn til fylket")
-    val navn: List<AdministrativEnhetNavn>,
-
-    @Schema(description = "URL til full representasjon av fylket")
-    val href: String,
-
-    @Schema(description = "Fylkesnummeret til fylket")
-    val fylkesnummer: Fylkesnummer,
-
-    @Schema(description = "Antall publiserte framtidige gyldige versjoner.")
-    val antallFramtidigeVersjoner: Int = 0
-)
-
-@Schema(description = "En referanse til en kommune")
-data class KommuneRef(
-
-    @Schema(description = "ID-en til kommunen")
-    val id: ObjektIdentifikator,
-
-    @Schema(description = "Liste over navn til kommunen")
-    val navn: List<AdministrativEnhetNavn>,
-
-    @Schema(description = "URL til full representasjon av kommunen")
-    val href: String,
-
-    @Schema(description = "Kommunenummeret til kommunen")
-    val kommunenummer: Kommunenummer,
-
-    @Schema(description = "Antall publiserte framtidige gyldige versjoner.")
-    val antallFramtidigeVersjoner: Int = 0
-)
-
 @Schema(description = "En referanse til et utkast")
 data class UtkastRef(
     @Schema(description = "ID-en til utkastet")
@@ -71,7 +33,7 @@ data class FylkeResponse(
     val id: ObjektIdentifikator,
 
     @Schema(description = "Liste over navn til fylket")
-    val administrativenhetnavn: List<AdministrativEnhetNavn>,
+    val navn: List<AdministrativEnhetNavn>,
 
     @Schema(description = "Fylkesnummeret til fylket")
     val fylkesnummer: Fylkesnummer,
@@ -95,7 +57,7 @@ data class KommuneResponse(
     val id: ObjektIdentifikator,
 
     @Schema(description = "Liste over navn til kommunen")
-    val administrativenhetnavn: List<AdministrativEnhetNavn>,
+    val navn: List<AdministrativEnhetNavn>,
 
     @Schema(description = "Kommunenummeret til kommunen")
     val kommunenummer: Kommunenummer,

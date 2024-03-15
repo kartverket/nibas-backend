@@ -10,7 +10,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import no.kartverket.nibas.api.v1.DefaultFeatureCollectionApiResponses
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
-import no.kartverket.nibas.api.v1.klient.response.FylkeRef
 import no.kartverket.nibas.api.v1.klient.response.FylkeResponse
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.MediaType
@@ -34,14 +33,14 @@ interface FylkeApi {
             description = "Successful operation",
             content = [Content(
                 mediaType = "application/json",
-                array = ArraySchema(schema = Schema(implementation = FylkeRef::class))
+                array = ArraySchema(schema = Schema(implementation = FylkeResponse::class))
             )]
         )
     )
     @GetMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
     fun hentFylker(@Parameter(description = "Eventuell gyldighetsdato for fylkene (default = dagens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
                    @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?
-    ): List<FylkeRef>
+    ): List<FylkeResponse>
 
     @Operation(summary = "Hent et fylke med gitt id", description = "Henter fylke med gitt id")
     @ApiResponses(
