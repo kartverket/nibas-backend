@@ -18,8 +18,6 @@ interface KobletTilGrense {
     val lokalid: String
     val version: Int
 
-    fun oppdaterEllerLeggTilGrenseKobling(grense: Grense)
-    fun antallGrenser(): Int
     fun addGrensekobling(grense: Grense)
     fun removeGrensekobling(gammelGrense: Grense)
     fun replaceGrensekobling(gammelGrense: Grense, grense: Grense?)

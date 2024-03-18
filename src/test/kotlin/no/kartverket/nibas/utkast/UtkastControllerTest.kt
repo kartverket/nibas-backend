@@ -25,6 +25,7 @@ import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.BadRequestException
 import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.common.geometry.UgyldigGeometriException
+import no.kartverket.nibas.common.geometry.UgyldigeFlaterException
 import no.kartverket.nibas.controller.klient.UtkastController
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
@@ -32,8 +33,6 @@ import no.kartverket.nibas.domain.utkast.UtkastStatus
 import no.kartverket.nibas.repository.KonfliktVersjon
 import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.service.utkast.UtkastService
-import no.kartverket.nibas.sosi.sosiimport.GeometriFailedToBeCreatedException
-import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import no.kartverket.nibas.sporing.AuditInfo
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -275,8 +274,7 @@ internal class UtkastControllerTest : NibasMvcTest() {
 
     @Test
     fun publiserUtkastMedIkkeSluttetRingGirHTTP400() {
-        whenever(utkastServiceMock.publiserUtkast(anyString(), any(LocalDate::class.java))).thenThrow(
-            GeometriFailedToBeCreatedException(point = SosiGeometryFunctions.coordinateToPoint(Coordinate(0.0, 1.0))))
+        whenever(utkastServiceMock.publiserUtkast(anyString(), any(LocalDate::class.java))).thenThrow(UgyldigeFlaterException())
 
         val expectedHttpStatus = status().isBadRequest
 

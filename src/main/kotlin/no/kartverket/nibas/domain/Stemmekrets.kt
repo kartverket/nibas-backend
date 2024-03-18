@@ -79,23 +79,6 @@ class Stemmekrets(
         }
     }
 
-    override fun oppdaterEllerLeggTilGrenseKobling(grense: Grense) {
-        if (!tillatteGrensetyper().contains(grense.grensetype)) {
-            throw RuntimeException("Kan ikke oppdatere/legge til ${grense.grensetype.name} på enhet Stemmekrets")
-        }
-
-        oppdaterSamling(
-            grense = grense,
-            samling = grenser,
-            default = StemmekretsGrenseKobling(
-                stemmekrets = this,
-                grense = grense
-            ))
-
-    }
-
-    override fun antallGrenser(): Int = grenser.size
-
     override fun getInfo(): String? = doGetInfoFromSingletonCollection(informasjonselementer)
     override fun setInfo(updatedInfo: String?) {
         doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { StemmekretsInformasjon(this) }

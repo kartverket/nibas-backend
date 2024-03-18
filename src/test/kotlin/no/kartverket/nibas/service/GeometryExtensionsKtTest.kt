@@ -1,8 +1,8 @@
 package no.kartverket.nibas.service
 
 import no.kartverket.nibas.api.v1.common.geojson.MultiPolygon
+import no.kartverket.nibas.common.geometry.getGeometryFactory
 import no.kartverket.nibas.extensions.geometry.multiPolygonToDto
-import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.locationtech.jts.geom.Coordinate
@@ -10,7 +10,7 @@ import org.locationtech.jts.geom.Polygon
 
 internal class GeometryExtensionsKtTest {
 
-    private val factory = SosiGeometryFunctions.getGeometryFactory()
+    private val factory = getGeometryFactory()
 
     @Test
     fun multiPolygonToDto() {

@@ -1,6 +1,6 @@
 package no.kartverket.nibas.common.geometry
 
-import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
+import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.GeometryFactory
 import org.locationtech.jts.geom.LineString
@@ -10,6 +10,17 @@ import org.locationtech.jts.geom.Polygon
 import org.locationtech.jts.geom.PrecisionModel
 import org.locationtech.jts.operation.valid.IsValidOp
 import org.locationtech.jts.operation.valid.TopologyValidationError
+
+const val defaultSrid = 25833
+
+private val koordsysToSrid: Map<String, Int> = mapOf(
+    Pair("23", defaultSrid)
+)
+
+fun getGeometryFactory(koordsys: String? = null): GeometryFactory {
+    val srid = koordsys?.let { koordsysToSrid[koordsys] } ?: defaultSrid
+    return createGeometryFactory(srid)
+}
 
 /**
  * Denne funkksjonen tar inn en liste med LineStrings som representerer alle grensene for en krets, og returnerer
@@ -111,7 +122,7 @@ fun List<List<LineString>>.toMultiPolygon(): MultiPolygon {
  * Konverterer en liste av linestrings til et polygon
  */
 fun konverterLineStringsTilPolygon(lineStrings: List<LineString>): Polygon {
-    val geometryFactory = SosiGeometryFunctions.getGeometryFactory()
+    val geometryFactory = getGeometryFactory()
     val linearRing = konverterLineStringsTilLinearRing(lineStrings)
     val polygon = geometryFactory.createPolygon(linearRing)
     validateGeometry(polygon)
@@ -122,7 +133,7 @@ fun konverterLineStringsTilPolygon(lineStrings: List<LineString>): Polygon {
  * Konverterer en liste av linestrings til in linear ring
  */
 fun konverterLineStringsTilLinearRing(lineStrings: List<LineString>): LinearRing {
-    val geometryFactory = SosiGeometryFunctions.getGeometryFactory()
+    val geometryFactory = getGeometryFactory()
     validerSammenhengendeGrenser(lineStrings)
 
     // Startpunkt på lineString er samme koordinat some endepunkt på linestringen før
@@ -173,7 +184,13 @@ fun validerSammenhengendeGrenser(lineStrings: List<LineString>) {
     }
 }
 
-fun createGeometryFactory(srid: Int? = null): GeometryFactory {
-    val defaultSrid = 25833
-    return GeometryFactory(PrecisionModel(100.0), srid ?: defaultSrid)
+fun createGeometryFactory(srid: Int = 25833): GeometryFactory {
+    return GeometryFactory(PrecisionModel(100.0), srid)
+}
+
+fun koordinaterToLineString(coordinates: List<List<Double>>, srid: Int = defaultSrid): LineString {
+    return createGeometryFactory(srid).createLineString(
+        coordinates
+            .map { Coordinate(it[0], it[1]) }
+            .toTypedArray())
 }

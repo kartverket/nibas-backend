@@ -8,7 +8,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Metadata
-import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
+import no.kartverket.nibas.common.geometry.defaultSrid
 import jakarta.validation.constraints.NotNull
 
 const val DISCRIMINATOR_FIELD: String = "type"
@@ -101,7 +101,7 @@ data class FeatureProperties(
     val type: String,
 
     @Schema(description = "Koordinatsystemet. Defaulter til 25833.")
-    val srid: Int = SosiGeometryFunctions.defaultSrid,
+    val srid: Int = defaultSrid,
 
     @Schema(
         description = "Diverse metadata-felter fra sosi-modellen.",

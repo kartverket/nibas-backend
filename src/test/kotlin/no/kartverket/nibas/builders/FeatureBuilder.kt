@@ -18,9 +18,9 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.Sporingsinformasjon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.StatistiskgrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.TerritorialgrenseMetadata
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.common.geometry.defaultSrid
 import no.kartverket.nibas.extensions.geometry.geometryToDto
 import no.kartverket.nibas.extensions.geometry.toLineString
-import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.GeometryFactory
@@ -37,7 +37,7 @@ class FeatureBuilder(private var id: String? = "1") {
         KontekstEgenskaper(ObjektIdentifikator(Lokalid("1"), LocalDate.now()), version = 1, type = KontekstEnhetType.GRUNNKRETS),
         KontekstEgenskaper(ObjektIdentifikator(Lokalid("2"), LocalDate.now()), version = 1, type = KontekstEnhetType.GRUNNKRETS)
     )
-    private var srid: Int = SosiGeometryFunctions.defaultSrid
+    private var srid: Int = defaultSrid
     private var geometry: Geometry =
         GeometryFactory().createLineString(arrayOf(Coordinate(0.0, 0.0), Coordinate(1.0, 1.0)))
     private var shouldArchive: Boolean = false
@@ -116,11 +116,6 @@ class FeatureBuilder(private var id: String? = "1") {
 
     fun withGeometry(geometry: Geometry): FeatureBuilder {
         this.geometry = geometry
-        return this
-    }
-
-    fun withMetadata(metadata: Metadata): FeatureBuilder {
-        this.metadata = metadata
         return this
     }
 

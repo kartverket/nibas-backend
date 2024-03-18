@@ -5,9 +5,11 @@ import no.kartverket.nibas.builders.FylkeBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.builders.NasjonBuilder
-import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.common.geometry.getGrenserIRiktigRekkefoelge
+import no.kartverket.nibas.common.geometry.toMultiPolygon
 import no.kartverket.nibas.common.geometry.UgyldigeFlaterException
 import no.kartverket.nibas.domain.Administrativenhetnavn
+import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.kodelister.KodelisteService
@@ -18,8 +20,6 @@ import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.NasjonRepository
 import no.kartverket.nibas.repository.StemmekretsRepository
-import no.kartverket.nibas.sosi.sosiimport.GrenseMedLokalid
-import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.locationtech.jts.geom.Coordinate
@@ -89,8 +89,8 @@ class FlateServiceTest {
         val kommune = KommuneBuilder().withKommunenummer("1234").build().apply { addGrunnkrets(grunnkrets) }
         val fylke = FylkeBuilder().withFylkesnummer("12").build().apply { addKommune(kommune) }
 
-        val kommuneflate = SosiGeometryFunctions.dannFlaterMedHullBasertPaaGeometri(fylkesgrenser.map{ GrenseMedLokalid(it.grense, Lokalid(it.lokalid)) })
-        val fylkesflate = SosiGeometryFunctions.dannFlaterMedHullBasertPaaGeometri(fylkesgrenser.map{ GrenseMedLokalid(it.grense, Lokalid(it.lokalid)) })
+        val kommuneflate = getGrenserIRiktigRekkefoelge(fylkesgrenser.map { it.grense }).toMultiPolygon()
+        val fylkesflate = getGrenserIRiktigRekkefoelge(fylkesgrenser.map { it.grense }).toMultiPolygon()
 
         flateService.oppdaterFlaterFor(setOf(grunnkrets, kommune, fylke))
 

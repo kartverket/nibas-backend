@@ -76,19 +76,6 @@ class Grunnkrets(
         }
     }
 
-    override fun oppdaterEllerLeggTilGrenseKobling(grense: Grense) {
-        if (!tillatteGrensetyper().contains(grense.grensetype)) {
-            throw RuntimeException("Kan ikke oppdatere/legge til ${grense.grensetype.name} på enhet Grunnkrets")
-        }
-        oppdaterSamling(
-            grense = grense,
-            samling = grenser,
-            default = GrunnkretsGrenseKobling(grunnkrets = this, grense = grense)
-        )
-    }
-
-    override fun antallGrenser(): Int = grenser.size
-
     fun getGrensekoblingerAvTyper(grensetyper: Set<Grensetype>, gyldighetsdato: LocalDate = LocalDate.now()): List<GrunnkretsGrenseKobling> {
         return grenser
             .filter { it.grense.harGrenseTypeContainedInSet(grensetyper) }

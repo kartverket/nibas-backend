@@ -19,10 +19,6 @@ class NibasSosiDeserializerTest {
                 assertNotNull(root.getHode(), "Forventer et hode")
                 assertTrue(root.getKurver().isNotEmpty(), "Forventer kurver")
                 assertTrue(root.getFlater().isNotEmpty(), "Forventer flater")
-
-
-                val noe = root.getObjektMedId("155999")!!
-                noe.getDokumentasjonsReferanse()
             }
         }
     }
@@ -42,7 +38,7 @@ class NibasSosiDeserializerTest {
 
     @Test
     fun testAtFinnForelderFinnerKorrektForelder() {
-        val root = SosiObjekt(niva = 0, type = "ROOT");
+        val root = SosiObjekt(niva = 0, type = "ROOT")
         val barn1 = SosiObjekt(type = "STUFF", niva = 1)
         val barn2 = SosiObjekt(type = "STUFF", niva = 2)
         val barn3 = SosiObjekt(type = "STUFF", niva = 3)

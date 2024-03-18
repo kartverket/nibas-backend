@@ -94,7 +94,7 @@ Applikasjonen starter default med autentisering påskrudd. Dette betyr at alle A
 
 Man kan disable sikkerhet ved lokal kjøring ved å bruke spring-profilen security-off. Man kan kjøre med flere profiler samtidig, så det er bare å legge den
 til (komma-separert) til der du vanligvis spesifiserer spring-profilen (om det er på kommandolinja eller i intellij run config). Alle kall uten denne headeren
-resulterer i en 401 Unauthorized. Om man kjører med profilen `import` er denne profilen lagt til i tillegg automatisk.
+resulterer i en 401 Unauthorized.
 
 ## Test av API utenfor klienten
 

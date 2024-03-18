@@ -1,5 +1,6 @@
 package no.kartverket.nibas.service.deltgeometri
 
+import no.kartverket.nibas.common.geometry.getGeometryFactory
 import no.kartverket.nibas.common.geometry.getGrenserIRiktigRekkefoelge
 import no.kartverket.nibas.common.pop
 import no.kartverket.nibas.domain.Grense
@@ -7,7 +8,6 @@ import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.service.KommuneService
-import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.LineSegment
 import org.locationtech.jts.geom.LineString
@@ -19,7 +19,7 @@ class DeltGeometriAdministrativeGrenserService(
     val kommuneService: KommuneService,
     val kodelisteService: KodelisteService
 ) {
-    private val geometryFactory = SosiGeometryFunctions.getGeometryFactory()
+    private val geometryFactory = getGeometryFactory()
 
     /**
      * Funksjonen tar inn en kommune (og gyldighetsdato) og returnerer ett sett med nye (administrative) grenser for kommunen

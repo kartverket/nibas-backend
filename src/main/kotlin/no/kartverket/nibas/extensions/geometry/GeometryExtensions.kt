@@ -1,18 +1,15 @@
 package no.kartverket.nibas.extensions.geometry
 
 import no.kartverket.nibas.api.v1.common.Grensetype
-import no.kartverket.nibas.api.v1.common.KontekstEnhetType
-import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureMapper
 import no.kartverket.nibas.api.v1.common.geojson.FeatureProperties
-import no.kartverket.nibas.api.v1.common.geojson.KontekstEgenskaper
 import no.kartverket.nibas.api.v1.common.geojson.metadata.MetadataMapper
-import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.common.geometry.defaultSrid
+import no.kartverket.nibas.common.geometry.koordinaterToLineString
 import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseKobling
-import no.kartverket.nibas.sosi.sosiimport.SosiGeometryFunctions
 import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.LineString
 import org.locationtech.jts.geom.LinearRing
@@ -25,11 +22,11 @@ import no.kartverket.nibas.api.v1.common.geojson.LineString as LineStringDto
 import no.kartverket.nibas.api.v1.common.geojson.MultiPolygon as MultiPolygonDto
 import no.kartverket.nibas.api.v1.common.geojson.Point as PointDto
 
-fun GeometryDto.toLineString(srid: Number): LineString {
+fun GeometryDto.toLineString(srid: Int): LineString {
     if (this !is LineStringDto) {
         throw RuntimeException("Geometry kan ikke utledes til en LineString. Geometry var av type: $this")
     }
-    return SosiGeometryFunctions.koordinaterToLineString(this.coordinates, srid.toString())
+    return koordinaterToLineString(this.coordinates, srid)
 }
 
 fun Geometry.geometryToDto(): GeometryDto {
@@ -127,7 +124,7 @@ fun Grense.grenseToFeature(gyldighetsdato: LocalDate = LocalDate.now(), shouldAr
 fun Flate.flateToFeature(version: Int): Feature {
     var featureProperties = FeatureProperties(
         type = type.name,
-        srid = omraade?.srid ?: SosiGeometryFunctions.defaultSrid,
+        srid = omraade?.srid ?: defaultSrid,
         version = version
     )
     val metadataMapper = MetadataMapper()

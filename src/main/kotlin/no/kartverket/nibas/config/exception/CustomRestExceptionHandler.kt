@@ -13,7 +13,6 @@ import no.kartverket.nibas.common.geometry.UgyldigGeometriException
 import no.kartverket.nibas.common.round
 import no.kartverket.nibas.kodelister.MissingKodelisteItemException
 import no.kartverket.nibas.repository.OptimistiskLaasException
-import no.kartverket.nibas.sosi.sosiimport.GeometriFailedToBeCreatedException
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.operation.valid.TopologyValidationError
 import org.slf4j.LoggerFactory
@@ -59,16 +58,6 @@ class CustomRestExceptionHandler {
         val errorDescription = ErrorDescription(
             title = "Feil med geometri",
             description = "Geometrien i utkastet er ikke sammenhengende - og danner derfor ikke fullstendige polygoner."
-        )
-        return handleException(ex, errorDescription, HttpHeaders(), HttpStatus.BAD_REQUEST)
-    }
-
-    @ExceptionHandler(value = [GeometriFailedToBeCreatedException::class])
-    fun handleGeometriFailedToBeCreatedException(ex: GeometriFailedToBeCreatedException, request: WebRequest): ResponseEntity<Any>? {
-        val geomtrifeil = ex.message ?: "Ukjent feil"
-        val errorDescription = ErrorDescription(
-            title = "Feil med geometri",
-            description = "Det er en ukjent feil med geometrien i utkastet. Opprinnelig feilmelding fra baksystem: $geomtrifeil"
         )
         return handleException(ex, errorDescription, HttpHeaders(), HttpStatus.BAD_REQUEST)
     }

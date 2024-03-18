@@ -19,7 +19,6 @@
         </root>
     </springProfile>
     <springProfile name="humanReadableLog">
-        <logger name="org.hibernate.persister.entity.AbstractEntityPersister" level="ERROR"/>
         <root level="INFO">
             <appender-ref ref="stdout_humanreadable"/>
         </root>
