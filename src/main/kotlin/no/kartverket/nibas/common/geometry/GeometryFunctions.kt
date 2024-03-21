@@ -194,3 +194,63 @@ fun koordinaterToLineString(coordinates: List<List<Double>>, srid: Int = default
             .map { Coordinate(it[0], it[1]) }
             .toTypedArray())
 }
+
+/**
+ * Denne funkksjonen tar inn en liste med LineStrings som kan representere en eller flere komplekse polygoner.
+ *
+ * Et komplekst polygon er et polygon som ikke kan bli brutt ned til mindre polygoner.
+ * De kan derimot inneholde andre komplekse polygoner innenfor sitt plan.
+ *
+ * Returnerer en liste med komplekse polygoner i from av lister med LineStrings
+ */
+fun finnAlleKompleksePolygoner(grenser: List<LineString>): List<List<LineString>> {
+
+    // Hvis vi på forhånd vet hvilke grenser som henger sammen kan vi med en gang vi finner et polygon legge alle grensene for dette polygoner i besøkt-listen uten å bekymre oss for om denne grensen er delt av to polygoner.
+    // Rent teknisk dupliserer vi egentlig bare grensen for alle som bruker den.
+    val adjacencyMap = finnSammengengendeGrenser(grenser)
+
+    val polygons = mutableListOf<List<LineString>>()
+    val observerteGrenser = mutableSetOf<LineString>()
+
+    grenser.forEach {grense ->
+        if (grense !in observerteGrenser) {
+            val polygon = finnKomplekstPolygon(grense, adjacencyMap)
+            polygons.add(polygon)
+            observerteGrenser.addAll(polygon)
+        }
+    }
+    return polygons
+}
+
+fun finnKomplekstPolygon(startGrense: LineString, adjacencyMap: Map<Coordinate, MutableList<LineString>>): List<LineString> {
+    val polygon = mutableListOf(startGrense)
+    var currentGrense = startGrense
+    while (true) {
+        val tilkobledeGrenser = adjacencyMap[currentGrense.endPoint.coordinate]
+        val nesteGrense = tilkobledeGrenser?.firstOrNull { it != currentGrense }
+        if (nesteGrense == null ) {
+            break
+        }
+        // sjekker om vi har kommet oss tilbake til startpunket
+        else if (nesteGrense.endPoint.coordinate == startGrense.startPoint.coordinate)    {
+                polygon.add(nesteGrense)
+                break
+            }
+        else {
+            polygon.add(nesteGrense)
+            currentGrense = nesteGrense
+        }
+    }
+    return polygon
+}
+
+fun finnSammengengendeGrenser(grenser: List<LineString>): Map<Coordinate, MutableList<LineString>> {
+    val adjacencyMap = mutableMapOf<Coordinate, MutableList<LineString>>()
+    grenser.forEach {grense ->
+        val start = grense.startPoint.coordinate
+        val end = grense.endPoint.coordinate
+        adjacencyMap.computeIfAbsent(start) { mutableListOf() }.add(grense)
+        adjacencyMap.computeIfAbsent(end) { mutableListOf() }.add(grense)
+    }
+    return adjacencyMap
+}
