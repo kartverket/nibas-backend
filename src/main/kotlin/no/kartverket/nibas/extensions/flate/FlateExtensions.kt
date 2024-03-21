@@ -23,6 +23,7 @@ fun Grunnkrets.toGrunnkretsResponse(identifikator: Identifikator): GrunnkretsRes
     return GrunnkretsResponse(
         id = identifikator.toObjektIdentifikator(),
         navn = grunnkretsnavn!!,
+        nummer = grunnkretsnummer!!,
         grunnkretsnummer = grunnkretsnummer!!,
         gyldighet = gyldighet.toGyldighetResponse(),
         datafangstdato = datafangstdato,
@@ -43,6 +44,7 @@ fun Fylke.toFylkeResponse(identifikator: Identifikator): FylkeResponse = FylkeRe
         id = fylkesnummerUuid,
         kodeverdi = fylkesnummer
     ),
+    nummer = fylkesnummer,
     samiskforvaltningsomraade = samiskforvaltningsomraade!!,
     oppdateringsdato = auditInfo.endretdato,
     representasjonspunkt = posisjon.posisjonToFeature(version),
@@ -54,6 +56,7 @@ fun Kommune.toKommuneResponse(identifikator: Identifikator, kommunenummer: Kommu
     navn = getAdministrativenhetNavn(identifikator.gyldighetsdato)
         .map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version, it.rekkefoelge) },
     kommunenummer = kommunenummer,
+    nummer = this.kommunenummer,
     samiskforvaltningsomraade = samiskforvaltningsomraade!!,
     oppdateringsdato = auditInfo.endretdato,
     representasjonspunkt = posisjon.posisjonToFeature(version),
@@ -64,6 +67,8 @@ fun Stemmekrets.toStemmekretsResponse(identifikator: Identifikator): Stemmekrets
     val kommune = getKommune(gyldighet.gyldigFra) ?: throw RuntimeException("Fant ikke kommune for stemmekrets")
     return StemmekretsResponse(
         id = identifikator.toObjektIdentifikator(),
+        navn = stemmekretsnavn!!,
+        nummer = stemmekretsnummer!!,
         stemmekretsnavn = stemmekretsnavn!!,
         stemmekretsnummer = stemmekretsnummer!!,
         kommunenummer = kommune.let { Kommunenummer(it.kommunenummerUuid, it.kommunenummer) },

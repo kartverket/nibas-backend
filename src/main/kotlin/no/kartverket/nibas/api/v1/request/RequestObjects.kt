@@ -77,6 +77,9 @@ data class GrunnkretsRequest(
     @Schema(description = "Grunnkretsnummeret til grunnkretsen")
     val grunnkretsnummer: String,
 
+    @Schema(description = "Grunnkretsnummeret til grunnkretsen")
+    val nummer: String,
+
     @Schema(description = "Identifikasjon av grunnkretsen")
     val identifikasjon: Identifikasjon,
 
@@ -91,11 +94,17 @@ data class StemmekretsRequest(
     @Schema(description = "Stemmekretsnummeret til stemmekretsen")
     var stemmekretsnummer: String? = null,
 
+    @Schema(description = "Stemmekretsnummeret til stemmekretsen")
+    var nummer: String? = null,
+
     @Schema(description = "Identifikasjon av stemmekretsen")
     val identifikasjon: Identifikasjon,
 
     @Schema(description = "Stemmekretsnavnet til stemmekretsen")
     var stemmekretsnavn: String? = null,
+
+    @Schema(description = "Stemmekretsnavnet til stemmekretsen")
+    var navn: String? = null,
 
     @Schema(description = "Tellekretsnummeret til stemmekretsen")
     var tellekretsnummer: String? = null,
@@ -144,9 +153,9 @@ data class StemmekretsSammenslaaingsendringRequest (
     @Schema(description = "Liste av identifikatorer som skal bli del av den videreførte stemmekretsen")
     val stemmekretserTilSammenslaaing: List<IdentifikatorMedVersjon>,
     @Schema (description = "Navnet til den sammenslåtte stemmekretsen")
-    val stemmekretsNavn: String,
+    val navn: String,
     @Schema (description = "Stemmekretsnummeret til den sammenslåtte stemmekretsen")
-    val stemmekretsNummer: String
+    val nummer: String
 )
 
 @Schema(description = "Representasjon av deling av en krets som ender i to kretser der én er videreført og én er ny")

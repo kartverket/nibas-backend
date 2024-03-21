@@ -28,12 +28,14 @@ data class UtkastRef(
 
 @Schema(description = "Representasjon av et fylke")
 data class FylkeResponse(
-
     @Schema(description = "ID-en til fylket")
     val id: ObjektIdentifikator,
 
     @Schema(description = "Liste over navn til fylket")
     val navn: List<AdministrativEnhetNavn>,
+
+    @Schema(description = "Fylkesnummeret til fylket")
+    val nummer: String,
 
     @Schema(description = "Fylkesnummeret til fylket")
     val fylkesnummer: Fylkesnummer,
@@ -60,6 +62,9 @@ data class KommuneResponse(
     val navn: List<AdministrativEnhetNavn>,
 
     @Schema(description = "Kommunenummeret til kommunen")
+    val nummer: String,
+
+    @Schema(description = "Kommunenummeret til kommunen")
     val kommunenummer: Kommunenummer,
 
     @Schema(description = "Angir om kommunen er et samisk forvaltningsområde eller ikke")
@@ -82,6 +87,9 @@ data class GrunnkretsResponse(
 
     @Schema(description = "Navnet på grunnkretsen")
     val navn: String,
+
+    @Schema(description = "Grunnkretsnummeret til grunnkretsen")
+    val nummer: String,
 
     @Schema(description = "Grunnkretsnummeret til grunnkretsen")
     val grunnkretsnummer: String,
@@ -115,6 +123,12 @@ data class GrunnkretsResponse(
 data class StemmekretsResponse(
     @Schema(description = "ID-en til stemmekretsen")
     val id: ObjektIdentifikator,
+
+    @Schema(description = "Navnet på stemmekretsen")
+    val navn: String,
+
+    @Schema(description = "Stemmekretsnummeret til stemmekretsen")
+    val nummer: String,
 
     @Schema(description = "Gyldighetsintervall for objektet")
     val gyldighet: GyldighetResponse,

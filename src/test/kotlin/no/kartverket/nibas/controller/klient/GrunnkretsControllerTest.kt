@@ -83,6 +83,7 @@ internal class GrunnkretsControllerTest : NibasMvcTest() {
                 id = ObjektIdentifikator(lokalId, gyldighetsdato = jan1In2023),
                 navn = "Dåsvatn",
                 grunnkretsnummer = "12",
+                nummer = "12",
                 gyldighet = GyldighetResponse(
                     gyldigFra = jan1In2023,
                     gyldigTil = jan1In2024),
@@ -98,6 +99,7 @@ internal class GrunnkretsControllerTest : NibasMvcTest() {
                 id = ObjektIdentifikator(lokalId, gyldighetsdato = jan1In2024),
                 navn = "Dåsvatn",
                 grunnkretsnummer = "12",
+                nummer = "12",
                 gyldighet = GyldighetResponse(
                     gyldigFra = jan1In2024,
                     gyldigTil = null),

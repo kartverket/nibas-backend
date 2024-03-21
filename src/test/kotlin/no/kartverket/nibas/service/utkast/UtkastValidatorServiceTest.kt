@@ -88,6 +88,7 @@ class UtkastValidatorServiceTest {
                 "lokalId" to GrunnkretsRequest(
                     "navn",
                     "03013456",
+                    "03013456",
                     Identifikasjon(lokalid = "lokalid"),
                     0)
             ))

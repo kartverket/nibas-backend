@@ -370,8 +370,8 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         val sammenslaaingsendringRequest = StemmekretsSammenslaaingsendringRequest(
             viderefoertStemmekrets = IdentifikatorMedVersjon(vestreKrets.lokalid, 1),
             stemmekretserTilSammenslaaing = listOf(IdentifikatorMedVersjon(oestreKrets.lokalid, 1)),
-            stemmekretsNavn = "Sammenslått krets",
-            stemmekretsNummer = "999"
+            navn = "Sammenslått krets",
+            nummer = "999"
         )
 
         stemmekretsService.slaaSammenStemmekretser(
@@ -631,8 +631,8 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         val sammenslaaingsendringRequest = StemmekretsSammenslaaingsendringRequest(
             viderefoertStemmekrets = IdentifikatorMedVersjon(vestreKrets.lokalid, 1),
             stemmekretserTilSammenslaaing = listOf(IdentifikatorMedVersjon(oestreKrets.lokalid, 1)),
-            stemmekretsNavn = "Sammenslått krets",
-            stemmekretsNummer = tredjeKrets.stemmekretsnummer!!
+            navn = "Sammenslått krets",
+            nummer = tredjeKrets.stemmekretsnummer!!
         )
 
         val sammenslaingsdato = LocalDate.parse("2022-02-01")

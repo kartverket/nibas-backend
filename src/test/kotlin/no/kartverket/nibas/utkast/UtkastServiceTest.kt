@@ -441,8 +441,8 @@ internal class UtkastServiceTest {
             viderefoertStemmekrets = IdentifikatorMedVersjon("Stemmekrets-UUID-1", 1),
             stemmekretserTilSammenslaaing =
             listOf(IdentifikatorMedVersjon("Stemmekrets-UUID-2", 1)),
-            stemmekretsNavn = "Sammenslått krets",
-            stemmekretsNummer = "nytt nummer"
+            navn = "Sammenslått krets",
+            nummer = "nytt nummer"
         )
 
     companion object {

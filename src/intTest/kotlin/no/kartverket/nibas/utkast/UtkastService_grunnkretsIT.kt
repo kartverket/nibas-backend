@@ -11,16 +11,14 @@ import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
-import no.kartverket.nibas.repository.UtkastRepository
-import no.kartverket.nibas.service.utkast.UtkastService
 import no.kartverket.nibas.sporing.AuditInfo
 import no.kartverket.nibas.sporing.Gyldighet
 import no.kartverket.nibas.sporing.UserFacade
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
-import org.assertj.core.api.Assertions.*
+import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.catchThrowableOfType
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -62,7 +60,6 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
     private val january1In2023 = LocalDate.of(2023, Month.JANUARY, 1)
     private val july1In2023 = LocalDate.of(2023, Month.JULY, 1)
     private val january1In2024 = LocalDate.of(2024, Month.JANUARY, 1)
-    private val february1In2024 = LocalDate.of(2024, Month.FEBRUARY, 1)
 
     @BeforeEach
     fun beforeEach() {
@@ -261,6 +258,7 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
         GrunnkretsRequest(
             navn = grkrNavn,
             grunnkretsnummer = grkrNr,
+            nummer = grkrNr,
             identifikasjon = Identifikasjon(
                 lokalid = lokalidOfGrunnkrets,
             ),
@@ -283,7 +281,6 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
     }
 
     private fun assertUtkastIsPublisert(utkastId: String) = assertStatusEr(utkastId, UtkastStatus.PUBLISERT)
-    private fun assertUtkastIsOpprettet(utkastId: String) = assertStatusEr(utkastId, UtkastStatus.OPPRETTET)
     private fun assertStatusEr(utkastId: String, status: UtkastStatus) = assertThat(utkastRepository.findById(utkastId).get().status).isEqualTo(status)
 
 }

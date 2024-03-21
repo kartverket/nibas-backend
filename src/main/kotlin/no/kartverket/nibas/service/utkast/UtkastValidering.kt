@@ -206,8 +206,8 @@ class UtkastValidatorService(
             if (operasjoner.stemmekretsSammenslaaingsendring != null)
                 isMetadataendringUgyldig(
                     Flatetype.STEMMEKRETS,
-                    operasjoner.stemmekretsSammenslaaingsendring.stemmekretsNavn,
-                    operasjoner.stemmekretsSammenslaaingsendring.stemmekretsNummer,
+                    operasjoner.stemmekretsSammenslaaingsendring.navn,
+                    operasjoner.stemmekretsSammenslaaingsendring.nummer,
                     operasjoner.stemmekretsSammenslaaingsendring.viderefoertStemmekrets.lokalId
                 )
             else false

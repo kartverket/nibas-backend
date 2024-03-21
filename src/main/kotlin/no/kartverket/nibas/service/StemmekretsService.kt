@@ -113,8 +113,8 @@ class StemmekretsService(
 
         val nyStemmekrets = createNyVersjonAvStemmekretsUtenGrenser(viderefortStemmekrets, sammenslaaingsDato, endringstype)
             .apply {
-                stemmekretsnavn = sammenslaaingsendringRequest.stemmekretsNavn
-                stemmekretsnummer = sammenslaaingsendringRequest.stemmekretsNummer
+                stemmekretsnavn = sammenslaaingsendringRequest.navn
+                stemmekretsnummer = sammenslaaingsendringRequest.nummer
             }
 
         if (finnesAnnenStemmekretsMedSammeKommuneOgStemmekretsnummer(nyStemmekrets)) {

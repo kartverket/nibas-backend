@@ -154,8 +154,8 @@ class UtkastValideringTest {
                 StemmekretsSammenslaaingsendringRequest(
                     viderefoertStemmekrets = IdentifikatorMedVersjon("1", 5),
                     stemmekretserTilSammenslaaing = listOf(IdentifikatorMedVersjon("2", 1)),
-                    stemmekretsNavn = "",
-                    stemmekretsNummer = "1234567"
+                    navn = "",
+                    nummer = "1234567"
                 )
             )
 
@@ -207,8 +207,8 @@ class UtkastValideringTest {
                 StemmekretsSammenslaaingsendringRequest(
                     viderefoertStemmekrets = IdentifikatorMedVersjon("1", 5),
                     stemmekretserTilSammenslaaing = listOf(IdentifikatorMedVersjon("2", 1)),
-                    stemmekretsNavn = "gyldigNavn",
-                    stemmekretsNummer = "ugyldigNummer"
+                    navn = "gyldigNavn",
+                    nummer = "ugyldigNummer"
                 )
             )
 
@@ -338,8 +338,8 @@ class UtkastValideringTest {
                 StemmekretsSammenslaaingsendringRequest(
                     viderefoertStemmekrets = IdentifikatorMedVersjon("1", 5),
                     stemmekretserTilSammenslaaing = listOf(IdentifikatorMedVersjon("2", 1)),
-                    stemmekretsNavn = "gyldigNavn",
-                    stemmekretsNummer = "4"
+                    navn = "gyldigNavn",
+                    nummer = "4"
                 ),
                 grenseendringer = operasjonerMedKunEditerbareGrenser().grenseendringer
             )
@@ -612,8 +612,8 @@ class UtkastValideringTest {
                 StemmekretsSammenslaaingsendringRequest(
                     viderefoertStemmekrets = IdentifikatorMedVersjon("1", 5),
                     stemmekretserTilSammenslaaing = listOf(IdentifikatorMedVersjon("2", 1)),
-                    stemmekretsNavn = "gyldigNavn",
-                    stemmekretsNummer = "4"
+                    navn = "gyldigNavn",
+                    nummer = "4"
                 ),
                 grenseendringer = operasjonerMedKunEditerbareGrenser().grenseendringer
             )
