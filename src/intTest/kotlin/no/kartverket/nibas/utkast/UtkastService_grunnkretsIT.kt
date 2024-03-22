@@ -257,7 +257,6 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
     ): GrunnkretsRequest =
         GrunnkretsRequest(
             navn = grkrNavn,
-            grunnkretsnummer = grkrNr,
             nummer = grkrNr,
             identifikasjon = Identifikasjon(
                 lokalid = lokalidOfGrunnkrets,

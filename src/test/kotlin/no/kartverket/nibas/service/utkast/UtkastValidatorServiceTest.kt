@@ -88,9 +88,9 @@ class UtkastValidatorServiceTest {
                 "lokalId" to GrunnkretsRequest(
                     "navn",
                     "03013456",
-                    "03013456",
                     Identifikasjon(lokalid = "lokalid"),
-                    0)
+                    0
+                )
             ))
             .build()
 
@@ -166,9 +166,9 @@ class UtkastValidatorServiceTest {
             .withStemmekretsRequests(mapOf(
                 "lokalId" to StemmekretsRequest(
                     identifikasjon = Identifikasjon(lokalid = "lokalid"),
+                    nummer = "0123",
+                    navn = "navn",
                     version = 0,
-                    stemmekretsnummer = "0123",
-                    stemmekretsnavn = "navn",
                     valgdistriktsnummer = "01",
                     tellekretsnavn = "tellekrets",
                     tellekretsnummer = "01"

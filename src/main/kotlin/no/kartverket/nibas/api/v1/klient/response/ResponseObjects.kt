@@ -91,9 +91,6 @@ data class GrunnkretsResponse(
     @Schema(description = "Grunnkretsnummeret til grunnkretsen")
     val nummer: String,
 
-    @Schema(description = "Grunnkretsnummeret til grunnkretsen")
-    val grunnkretsnummer: String,
-
     @Schema(description = "Gyldighetsintervall for objektet")
     val gyldighet: GyldighetResponse,
 
@@ -141,12 +138,6 @@ data class StemmekretsResponse(
 
     @Schema(description = "Datafangsdato for objektet")
     val datafangstdato: ZonedDateTime?,
-
-    @Schema(description = "Navnet på stemmekretsen")
-    val stemmekretsnavn: String,
-
-    @Schema(description = "Stemmekretsnummeret til stemmekretsen")
-    val stemmekretsnummer: String,
 
     @Schema(description = "Kommunenummeret til stemmekretsen")
     val kommunenummer: Kommunenummer,

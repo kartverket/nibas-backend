@@ -36,7 +36,6 @@ class GrunnkretsRequestBuilder(
 
     fun build(): GrunnkretsRequest = GrunnkretsRequest(
         navn = navn,
-        grunnkretsnummer = grunnkretsnummer,
         nummer = grunnkretsnummer,
         identifikasjon = Identifikasjon(
             lokalid = lokalId,

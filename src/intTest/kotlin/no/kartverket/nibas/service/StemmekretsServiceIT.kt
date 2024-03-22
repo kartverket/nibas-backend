@@ -177,9 +177,9 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         val stemmekretsEtter = stemmekretsService.hentStemmekrets(Identifikator(identifikator.lokalid))!!
 
         assertThat(stemmekretsEtter.stemmekretsnummer).isNotEqualTo(stemmekrets.stemmekretsnummer)
-            .isEqualTo(stemmekretsRequest.stemmekretsnummer)
+            .isEqualTo(stemmekretsRequest.nummer)
         assertThat(stemmekretsEtter.stemmekretsnavn).isNotEqualTo(stemmekrets.stemmekretsnavn)
-            .isEqualTo(stemmekretsRequest.stemmekretsnavn)
+            .isEqualTo(stemmekretsRequest.navn)
         assertThat(stemmekretsEtter.omraade).isEqualTo(stemmekrets.omraade)
         assertThat(stemmekretsEtter.posisjon).isEqualTo(stemmekrets.posisjon)
         assertThat(stemmekretsEtter.gyldighet.gyldigFra).isEqualTo(now)

@@ -13,8 +13,6 @@ import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
 import no.kartverket.nibas.events.NibasEventPublisher
 import no.kartverket.nibas.events.PublishEventException
-import no.kartverket.nibas.repository.UtkastRepository
-import no.kartverket.nibas.service.utkast.UtkastService
 import no.kartverket.nibas.sporing.AuditInfo
 import no.kartverket.nibas.sporing.Gyldighet
 import no.kartverket.nibas.sporing.UserFacade
@@ -61,7 +59,6 @@ class UtkastService_stemmekretsIT : TestWithDbContainer() {
     private val january1In2023 = LocalDate.of(2023, Month.JANUARY, 1)
     private val july1In2023 = LocalDate.of(2023, Month.JULY, 1)
     private val january1In2024 = LocalDate.of(2024, Month.JANUARY, 1)
-    private val february1In2024 = LocalDate.of(2024, Month.FEBRUARY, 1)
 
     @BeforeEach
     fun beforeEach() {
@@ -236,8 +233,8 @@ class UtkastService_stemmekretsIT : TestWithDbContainer() {
         version: Int
     ): StemmekretsRequest =
         StemmekretsRequest(
-            stemmekretsnavn = stemmekretsNavn,
-            stemmekretsnummer = stemmekretsNr,
+            navn = stemmekretsNavn,
+            nummer = stemmekretsNr,
             identifikasjon = Identifikasjon(
                 lokalid = lokalidOfStemmekrets,
             ),
@@ -257,7 +254,6 @@ class UtkastService_stemmekretsIT : TestWithDbContainer() {
     }
 
     private fun assertUtkastIsPublisert(utkastId: String) = assertStatusEr(utkastId, UtkastStatus.PUBLISERT)
-    private fun assertUtkastIsOpprettet(utkastId: String) = assertStatusEr(utkastId, UtkastStatus.OPPRETTET)
     private fun assertStatusEr(utkastId: String, status: UtkastStatus) = Assertions.assertThat(utkastRepository.findById(utkastId).get().status).isEqualTo(status)
 
     data class ResultatFraForsoekPaaPublisering(

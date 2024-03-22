@@ -168,7 +168,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         val grunnkretsEtter = grunnkretsService.hentGrunnkrets(Identifikator(identifikator.lokalid))!!
 
         assertThat(grunnkretsEtter.grunnkretsnummer).isNotEqualTo(grunnkrets.grunnkretsnummer)
-            .isEqualTo(grunnkretsRequest.grunnkretsnummer)
+            .isEqualTo(grunnkretsRequest.nummer)
         assertThat(grunnkretsEtter.grunnkretsnavn).isNotEqualTo(grunnkrets.grunnkretsnavn)
             .isEqualTo(grunnkretsRequest.navn)
         assertThat(grunnkretsEtter.omraade).isEqualTo(grunnkrets.omraade)

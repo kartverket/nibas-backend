@@ -38,11 +38,11 @@ class StemmekretsRequestBuilder(
     }
 
     fun build(): StemmekretsRequest = StemmekretsRequest(
-        stemmekretsnummer = stemmekretsnummer,
+        nummer = stemmekretsnummer,
         identifikasjon = Identifikasjon(
             lokalid = lokalId,
         ),
-        stemmekretsnavn = stemmekretsnavn,
+        navn = stemmekretsnavn,
         tellekretsnummer = tellekretsnummer,
         tellekretsnavn = tellekretsnavn,
         valgdistriktsnummer = valgdistriktsnummer,

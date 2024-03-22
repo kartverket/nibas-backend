@@ -172,7 +172,7 @@ class UtkastValidatorService(
                 isMetadataendringUgyldig(
                     Flatetype.GRUNNKRETS,
                     it.navn,
-                    it.grunnkretsnummer,
+                    it.nummer,
                     it.identifikasjon.lokalid
                 )
             }
@@ -188,8 +188,8 @@ class UtkastValidatorService(
             operasjoner.metadataendringer.stemmekretsendringer.values.any {
                 isMetadataendringUgyldig(
                     Flatetype.STEMMEKRETS,
-                    it.stemmekretsnavn,
-                    it.stemmekretsnummer,
+                    it.navn,
+                    it.nummer,
                     it.identifikasjon.lokalid
                 )
             }

@@ -221,7 +221,7 @@ class GrunnkretsService(
 private fun Grunnkrets.applyChangesFromRequest(request: GrunnkretsRequest): Grunnkrets {
     return this.apply {
         grunnkretsnavn = request.navn
-        grunnkretsnummer = request.grunnkretsnummer
+        grunnkretsnummer = request.nummer
     }
 }
 
