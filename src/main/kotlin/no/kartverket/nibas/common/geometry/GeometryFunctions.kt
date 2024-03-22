@@ -196,25 +196,25 @@ fun koordinaterToLineString(coordinates: List<List<Double>>, srid: Int = default
 }
 
 /**
- * Denne funkksjonen tar inn en liste med LineStrings som kan representere en eller flere komplekse polygoner.
+ * Denne funksjonen tar inn en liste med LineStrings som kan representere en eller flere enkle polygoner.
  *
- * Et komplekst polygon er et polygon som ikke kan bli brutt ned til mindre polygoner.
- * De kan derimot inneholde andre komplekse polygoner innenfor sitt plan.
+ * Et enkelt polygon er et polygon som ikke kan bli brutt ned til mindre polygoner.
+ * De kan derimot inneholde andre enkle polygoner innenfor sitt plan.
  *
- * Returnerer en liste med komplekse polygoner i from av lister med LineStrings
+ * Returnerer en liste med enkle polygoner i from av lister med LineStrings
  */
-fun finnAlleKompleksePolygoner(grenser: List<LineString>): List<List<LineString>> {
+fun finnAlleEnklePolygoner(grenser: List<LineString>): List<List<LineString>> {
 
-    // Hvis vi på forhånd vet hvilke grenser som henger sammen kan vi med en gang vi finner et polygon legge alle grensene for dette polygoner i besøkt-listen uten å bekymre oss for om denne grensen er delt av to polygoner.
+    // Hvis vi på forhånd vet hvilke grenser som henger sammen kan vi med en gang vi finner et polygon legge alle grensene for dette polygonet i besøkt-listen uten å bekymre oss for om denne grensen er delt av to polygoner.
     // Rent teknisk dupliserer vi egentlig bare grensen for alle som bruker den.
-    val adjacencyMap = finnSammengengendeGrenser(grenser)
+    val adjacencyMap = finnSammenhengendeGrenser(grenser)
 
     val polygons = mutableListOf<List<LineString>>()
     val observerteGrenser = mutableSetOf<LineString>()
 
     grenser.forEach {grense ->
         if (grense !in observerteGrenser) {
-            val polygon = finnKomplekstPolygon(grense, adjacencyMap)
+            val polygon = finnEnkeltPolygon(grense, adjacencyMap)
             polygons.add(polygon)
             observerteGrenser.addAll(polygon)
         }
@@ -222,7 +222,7 @@ fun finnAlleKompleksePolygoner(grenser: List<LineString>): List<List<LineString>
     return polygons
 }
 
-fun finnKomplekstPolygon(startGrense: LineString, adjacencyMap: Map<Coordinate, MutableList<LineString>>): List<LineString> {
+fun finnEnkeltPolygon(startGrense: LineString, adjacencyMap: Map<Coordinate, MutableList<LineString>>): List<LineString> {
     val polygon = mutableListOf(startGrense)
     var currentGrense = startGrense
     while (true) {
@@ -244,7 +244,7 @@ fun finnKomplekstPolygon(startGrense: LineString, adjacencyMap: Map<Coordinate, 
     return polygon
 }
 
-fun finnSammengengendeGrenser(grenser: List<LineString>): Map<Coordinate, MutableList<LineString>> {
+fun finnSammenhengendeGrenser(grenser: List<LineString>): Map<Coordinate, MutableList<LineString>> {
     val adjacencyMap = mutableMapOf<Coordinate, MutableList<LineString>>()
     grenser.forEach {grense ->
         val start = grense.startPoint.coordinate

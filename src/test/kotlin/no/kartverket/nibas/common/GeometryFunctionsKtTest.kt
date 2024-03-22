@@ -1,6 +1,6 @@
 package no.kartverket.nibas.common
 
-import no.kartverket.nibas.common.geometry.finnAlleKompleksePolygoner
+import no.kartverket.nibas.common.geometry.finnAlleEnklePolygoner
 import no.kartverket.nibas.common.geometry.getGrenserIRiktigRekkefoelge
 import no.kartverket.nibas.common.geometry.toMultiPolygon
 import org.assertj.core.api.Assertions.assertThat
@@ -327,7 +327,7 @@ internal class GeometryFunctionsKtTest {
             grense27, grense28, grense29, grense30
         )
 
-        val polygons = finnAlleKompleksePolygoner(grenser)
+        val polygons = finnAlleEnklePolygoner(grenser)
         assertThat(polygons.size).isEqualTo(8)
     }
 }
