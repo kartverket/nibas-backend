@@ -38,11 +38,6 @@ class UtkastValidatorService(
             return OperasjonerValidering.UgyldigeOperasjoner(operasjoner, ResponseException.BadRequestException("Utkast inneholder grenseendringer for samme grense(r) flere ganger. Grensene (representert ved lokalid) det gjelder er: ${featuresSomGjentas.map { it.key }.sortedBy { it }}"))
         }
 
-        val featuresSomManglerKontekstEgenskaper = endredeFeatures.filter { it.properties.kontekstEgenskaper.size < 2 }
-        if (featuresSomManglerKontekstEgenskaper.isNotEmpty()) {
-            return OperasjonerValidering.UgyldigeOperasjoner(operasjoner, ResponseException.BadRequestException("Utkast inneholder ${featuresSomManglerKontekstEgenskaper.size} grenser uten kontekstegenskaper. Husk at ved opprettelse av nye grenser må man sette tilhørighet på grensen."))
-        }
-
         val featuresSomIkkeErEditerbare = endredeFeatures.filterNot { Grensetype.fromValue(it.properties.type).editerbar }
         if (featuresSomIkkeErEditerbare.isNotEmpty()) {
             return OperasjonerValidering.UgyldigeOperasjoner(operasjoner, ResponseException.BadRequestException("Utkast inneholder ${featuresSomIkkeErEditerbare.size} ikke-redigerbare grenser"))
@@ -112,7 +107,7 @@ class UtkastValidatorService(
         }
 
         val ugyldigeNyeKretser = utkast.operasjoner?.kretsDelingEndringer?.flatMap { validerNyeKretserVilBliForsoektFlatedannet(utkast, it) } ?: emptyList()
-        if (ugyldigeNyeKretser.isNotEmpty()){
+        if (ugyldigeNyeKretser.isNotEmpty()) {
             return UtkastValidering.UgyldigUtkast(utkast, ResponseException.BadRequestException(
                 title = "Kan ikke publisere utkastet",
                 msg = "Krets(er) med navn: ${ugyldigeNyeKretser.joinToString(", ")} har ikke fått noen grenser tildelt. " +
@@ -126,7 +121,7 @@ class UtkastValidatorService(
         }
 
         val valideringResult = validateGyldigUtkast(utkast)
-        if ( valideringResult is UtkastValidering.UgyldigUtkast) {
+        if (valideringResult is UtkastValidering.UgyldigUtkast) {
             return UtkastValidering.UgyldigUtkast(utkast, valideringResult.feil)
         }
 
@@ -137,19 +132,23 @@ class UtkastValidatorService(
      * Sekker om kontekstegenskapene på endrede features gir mening å prøve å endre på i utkastet
      */
     fun validerTilhorighetEndringer(utkast: Utkast): UtkastValidering.UgyldigUtkast? {
+        val krevdAntallKontekstEgenskaper = 2
+
         return utkast.operasjoner?.grenseendringer?.endredeFeatures?.firstNotNullOfOrNull { feature ->
-            val harFeilAntallKontekstEgenskaper = feature.id != null && feature.properties.kontekstEgenskaper.size != 2
-            val harToLikeKontekstEgenskaper = if (!harFeilAntallKontekstEgenskaper) { feature.properties.kontekstEgenskaper[0] == feature.properties.kontekstEgenskaper[1] } else {
+            val harFeilAntallKontekstEgenskaper = feature.properties.kontekstEgenskaper.size != krevdAntallKontekstEgenskaper
+            val harToLikeKontekstEgenskaper = if (!harFeilAntallKontekstEgenskaper) {
+                feature.properties.kontekstEgenskaper[0] == feature.properties.kontekstEgenskaper[1]
+            } else {
                 false
             }
             val kommuneGrenseHarTilhorigheterISammeKommune = feature.properties.type == Grensetype.Kommunegrense.value &&
                 feature.properties.kontekstEgenskaper
                     .map { it.kommuneId?.lokalid?.value }
                     .toSet().size != 2
-            if (harFeilAntallKontekstEgenskaper || harToLikeKontekstEgenskaper || kommuneGrenseHarTilhorigheterISammeKommune){
-                var errorMessage = "Grense med id: ${feature.id} har ugyldig tilhørighet. Årsak(er): \n"
+            if (harFeilAntallKontekstEgenskaper || harToLikeKontekstEgenskaper || kommuneGrenseHarTilhorigheterISammeKommune) {
+                var errorMessage = "Grense med id: ${feature.id ?: "Ny grense, ingen id - "} har ugyldig tilhørighet. Årsak(er): \n"
                 if (harFeilAntallKontekstEgenskaper) {
-                    errorMessage += "\t- Grensen har feil antall tilhørigheter.\n"
+                    errorMessage += "\t- Grensen har ${feature.properties.kontekstEgenskaper.size} tilhørighet(er) satt, men må ha $krevdAntallKontekstEgenskaper.\n"
                 }
                 if (harToLikeKontekstEgenskaper) {
                     errorMessage += "\t- Grensen har tilhørighet til samme krets på hver side.\n"
@@ -160,7 +159,7 @@ class UtkastValidatorService(
                 return UtkastValidering.UgyldigUtkast(utkast = utkast, feil = ResponseException.BadRequestException(
                     title = "Kan ikke publisere utkastet",
                     msg = errorMessage
-                ) )
+                ))
             } else return null
         }
     }
@@ -220,16 +219,16 @@ class UtkastValidatorService(
             )
 
         val harUgyldigMetadataendringPaaKretsDeling = getUnikeKretsDelingEndringRequests(operasjoner.kretsDelingEndringer)
-                .any {
-                    isMetadataendringUgyldig(
-                        flatetype = it.flatetype,
-                        navn = it.kretsNavn,
-                        kretsnummer = it.kretsNummer,
-                        lokalid = it.opprinneligKrets.lokalId
-                    )
-                }
+            .any {
+                isMetadataendringUgyldig(
+                    flatetype = it.flatetype,
+                    navn = it.kretsNavn,
+                    kretsnummer = it.kretsNummer,
+                    lokalid = it.opprinneligKrets.lokalId
+                )
+            }
 
-        if (harUgyldigMetadataendringPaaKretsDeling){
+        if (harUgyldigMetadataendringPaaKretsDeling) {
             return OperasjonerValidering.UgyldigeOperasjoner(
                 operasjoner,
                 ResponseException.BadRequestException(
@@ -309,7 +308,7 @@ class UtkastValidatorService(
      **/
 
     private fun validerNyKretsVilBliForsoektFlatedannet(utkast: Utkast, kretsDelingEndringRequest: UnikKretsDelingEndring?): Boolean {
-        if(kretsDelingEndringRequest == null){
+        if (kretsDelingEndringRequest == null) {
             return true
         }
         val endredeFeatures = utkast.operasjoner?.grenseendringer?.endredeFeatures

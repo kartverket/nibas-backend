@@ -571,15 +571,13 @@ class UtkastValideringTest {
         val utkast1Validering = utkastValidatorService.validerTilhorighetEndringer(utkast1)
         assertThat(utkast1Validering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
         assertThat((utkast1Validering as UtkastValidering.UgyldigUtkast).feil.message)
-            .contains("Grensen har feil antall tilhørigheter")
+            .contains("Grensen har 0 tilhørighet(er) satt")
 
         val utkast2Validering = utkastValidatorService.validerTilhorighetEndringer(utkast2)
         assertThat(utkast2Validering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
         assertThat((utkast2Validering as UtkastValidering.UgyldigUtkast).feil.message)
             .contains("Grensen har tilhørighet til samme krets på hver side")
 
-        // TODO Aktiver disse når man kan redigere administrative grenser
-        /*
         val utkast3Validering = utkastValidatorService.validerTilhorighetEndringer(utkast3)
         assertThat(utkast3Validering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
         assertThat((utkast3Validering as UtkastValidering.UgyldigUtkast).feil.message)
@@ -591,7 +589,6 @@ class UtkastValideringTest {
             .contains("Grense med id: 1 har ugyldig tilhørighet. Årsak(er): \n" +
                 "\t- Grensen har tilhørighet til samme krets på hver side.\n" +
                 "\t- Grensen er kommunegrense og har tilhørighet til to kretser i samme kommune.\n")
-         */
     }
 
     @Test
