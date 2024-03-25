@@ -13,6 +13,7 @@ import no.kartverket.nibas.common.CurrentTime
 import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.domain.utkast.Utkast
 import no.kartverket.nibas.service.utkast.UtkastService
+import no.kartverket.nibas.service.utkast.UtkastValidering
 import no.kartverket.nibas.sporing.AuditInfo
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.RestController
@@ -29,6 +30,12 @@ class UtkastController(
         opprettUtkastRequest: OpprettUtkastRequest
     ): UtkastOpprettetResponse {
         return UtkastOpprettetResponse(id = utkastService.opprettUtkast(opprettUtkastRequest))
+    }
+
+    override fun validerUtkast(
+        id: String
+    ): List<UtkastValidering> {
+        return utkastService.validerUtkast(id) ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
     }
 
     override fun hentUtkast(id: String): UtkastResponse {

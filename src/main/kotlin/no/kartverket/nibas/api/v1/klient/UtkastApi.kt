@@ -16,6 +16,7 @@ import no.kartverket.nibas.api.v1.klient.response.OptimistiskLaasWrapper
 import no.kartverket.nibas.api.v1.klient.response.UtkastOpprettetResponse
 import no.kartverket.nibas.api.v1.klient.response.UtkastRef
 import no.kartverket.nibas.api.v1.klient.response.UtkastResponse
+import no.kartverket.nibas.service.utkast.UtkastValidering
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -49,6 +50,17 @@ interface UtkastApi {
     fun hentUtkast(@Parameter(description = "ID-en til utkastet man vil hente") @PathVariable id: String): UtkastResponse
 
     @Operation(
+        summary = "Valider er utkast med gitt id.",
+        description = "Validerer et utkast med gitt id og se alle feil som ble funnet på utkastet."
+    )
+    @Response200OK
+    @Response404NotFound
+    @GetMapping("/{id}/valider", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun validerUtkast(
+        @Parameter(description = "ID til utkastet man vil validere") @PathVariable id: String,
+    ): List<UtkastValidering>
+
+    @Operation(
         summary = "Oppdater angitt utkast.",
         description = "Oppdaterer angitt utkast. Returnerer oppdatert utkast."
     )
@@ -61,6 +73,7 @@ interface UtkastApi {
         @Parameter(description = "ID til utkastet man vil oppdatere") @PathVariable id: String,
         @RequestBody utkast: OppdaterUtkastRequest
     ): UtkastResponse
+
 
     @Operation(
         summary = "Forkast angitt utkast.",

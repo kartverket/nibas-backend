@@ -69,47 +69,47 @@ class UtkastService(
         return utkastRepository.findAllByStatus(UtkastStatus.OPPRETTET)
     }
 
+    fun validerUtkast(id: String): List<UtkastValidering> {
+        val utkast = hentUtkast(id) ?: throw ResponseException.NotFoundException("Utkast ble ikke funnet for id: $id.")
+
+        val utkastValideringResult = utkastValidatorService.validateGyldigUtkast(utkast)
+
+        return emptyList();
+    }
+
     fun oppdaterUtkast(id: String, request: OppdaterUtkastRequest): Utkast? {
         if (utkastValidatorService.sjekkUgyldigUtkastNavnOgEndringstype(request.navn, request.endringstype)) {
             throw ResponseException.BadRequestException("Husk å fylle inn både navnet og endringstypen på utkastet.")
         }
-        val utkast = hentUtkast(id)
-            ?: throw ResponseException.NotFoundException("Utkast ble ikke funnet for id: $id.")
+        val utkast = hentUtkast(id) ?: throw ResponseException.NotFoundException("Utkast ble ikke funnet for id: $id.")
 
-            verifiserOptimistiskLaas(request.version, utkast)?.throwException()
+        verifiserOptimistiskLaas(request.version, utkast)?.throwException()
 
-            utkast.navn = request.navn
-            utkast.auditInfo.typeEndring = Endringstype.fromValue(request.endringstype)
-            utkast.gyldigFra = request.gyldigFra!!
-            utkast.operasjoner = request.operasjoner
+        utkast.navn = request.navn
+        utkast.auditInfo.typeEndring = Endringstype.fromValue(request.endringstype)
+        utkast.gyldigFra = request.gyldigFra!!
+        utkast.operasjoner = request.operasjoner
 
-            val utkastValideringResult =
-                utkastValidatorService.validateGyldigUtkast(utkast)
+        val utkastValideringResult = utkastValidatorService.validateGyldigUtkast(utkast)
 
-            if (utkastValideringResult is UtkastValidering.UgyldigUtkast) {
-                throw utkastValideringResult.feil
-            }
-            return utkastRepository.save(utkast)
+        if (utkastValideringResult is UtkastValidering.UgyldigUtkast) {
+            throw utkastValideringResult.feil
         }
+        return utkastRepository.save(utkast)
+    }
 
-    fun forkastUtkast(id: String): Utkast? =
-        hentUtkast(id)?.apply {
-            status = UtkastStatus.FORKASTET
-            operasjoner = null
-        }
+    fun forkastUtkast(id: String): Utkast? = hentUtkast(id)?.apply {
+        status = UtkastStatus.FORKASTET
+        operasjoner = null
+    }
 
     @Transactional
     fun publiserUtkast(utkastId: String, gyldigFra: LocalDate = LocalDate.now()) {
-        val utkast =
-            hentUtkast(utkastId)
-                ?: throw ResponseException.NotFoundException("Utkast ble ikke funnet for id: $utkastId.")
+        val utkast = hentUtkast(utkastId) ?: throw ResponseException.NotFoundException("Utkast ble ikke funnet for id: $utkastId.")
 
         utkast.gyldigFra = gyldigFra
 
-        when (
-            val utkastValideringResult =
-                utkastValidatorService.validateUtkastKlartForPublisering(utkast)
-        ) {
+        when (val utkastValideringResult = utkastValidatorService.validateUtkastKlartForPublisering(utkast)) {
             is UtkastValidering.UgyldigUtkast -> throw utkastValideringResult.feil
             is UtkastValidering.GyldigUtkast -> throw ResponseException.BadRequestException("Noe gikk galt (Utkastet ble markert som GyldigUtkast KlartForPublisering.")
             is UtkastValidering.KlartForPublisering -> {
@@ -128,14 +128,9 @@ class UtkastService(
     internal fun publiserEndringer(operasjoner: Operasjoner, utkast: Utkast): List<EventRad> {
         val kretsDelingEndringer = publiserKretsDelingEndringer(operasjoner.kretsDelingEndringer, utkast)
 
-        val sammenslaaingsendringer =
-            publiserSammenslaaingsendringer(operasjoner.stemmekretsSammenslaaingsendring, utkast)
+        val sammenslaaingsendringer = publiserSammenslaaingsendringer(operasjoner.stemmekretsSammenslaaingsendring, utkast)
 
-        val metadataendringer =
-            publiserMetadataEndringer(
-                operasjoner.metadataendringer,
-                utkast
-            )
+        val metadataendringer = publiserMetadataEndringer(operasjoner.metadataendringer, utkast)
 
         val grenseendringer = publiserGrenseendringer(operasjoner.grenseendringer, utkast)
 
@@ -154,28 +149,23 @@ class UtkastService(
 
     private fun validerOptimistiskLaasForMetadataEndringer(metadataendringer: Metadataendringer, gyldigFra: LocalDate) {
         metadataendringer.nasjonsendringer.forEach { (lokalId, nasjonRequest) ->
-            nasjonService.hentNasjon(Identifikator(Lokalid(lokalId), gyldigFra))
-                ?.verifiserOptimistiskLaas(nasjonRequest.version)
+            nasjonService.hentNasjon(Identifikator(Lokalid(lokalId), gyldigFra))?.verifiserOptimistiskLaas(nasjonRequest.version)
         }
 
         metadataendringer.fylkesendringer.forEach { (lokalId, fylkeRequest) ->
-            fylkeService.hentFylke(Identifikator(Lokalid(lokalId), gyldigFra))
-                ?.verifiserOptimistiskLaas(fylkeRequest.version)
+            fylkeService.hentFylke(Identifikator(Lokalid(lokalId), gyldigFra))?.verifiserOptimistiskLaas(fylkeRequest.version)
         }
 
         metadataendringer.kommuneendringer.forEach { (lokalId, kommuneRequest) ->
-            kommuneService.hentKommune(Identifikator(Lokalid(lokalId), gyldigFra))
-                ?.verifiserOptimistiskLaas(kommuneRequest.version)
+            kommuneService.hentKommune(Identifikator(Lokalid(lokalId), gyldigFra))?.verifiserOptimistiskLaas(kommuneRequest.version)
         }
 
         metadataendringer.stemmekretsendringer.forEach { (lokalId, stemmekretsRequest) ->
-            stemmekretsService.hentStemmekrets(Identifikator(Lokalid(lokalId), gyldigFra))
-                ?.verifiserOptimistiskLaas(stemmekretsRequest.version)
+            stemmekretsService.hentStemmekrets(Identifikator(Lokalid(lokalId), gyldigFra))?.verifiserOptimistiskLaas(stemmekretsRequest.version)
         }
 
         metadataendringer.grunnkretsendringer.forEach { (lokalId, grunnkretsRequest) ->
-            grunnkretsService.hentGrunnkrets(Identifikator(Lokalid(lokalId), gyldigFra))
-                ?.verifiserOptimistiskLaas(grunnkretsRequest.version)
+            grunnkretsService.hentGrunnkrets(Identifikator(Lokalid(lokalId), gyldigFra))?.verifiserOptimistiskLaas(grunnkretsRequest.version)
         }
     }
 
@@ -187,75 +177,36 @@ class UtkastService(
         metadata: Metadataendringer,
         utkast: Utkast,
     ): List<EventRad> {
-        val endredeNasjoner =
-            metadata.nasjonsendringer.mapNotNull { nasjonEndring ->
-                nasjonService.oppdaterNasjon(
-                    lokalid = Lokalid(value = nasjonEndring.key),
-                    gyldigFra = utkast.gyldigFra,
-                    endringstype = utkast.auditInfo.typeEndring,
-                    oppdatertNasjon = nasjonEndring.value
-                )
-            }
+        val endredeNasjoner = metadata.nasjonsendringer.mapNotNull { nasjonEndring ->
+            nasjonService.oppdaterNasjon(lokalid = Lokalid(value = nasjonEndring.key), gyldigFra = utkast.gyldigFra, endringstype = utkast.auditInfo.typeEndring, oppdatertNasjon = nasjonEndring.value)
+        }
 
-        val endredeFylker =
-            metadata.fylkesendringer.mapNotNull { fylkeEndring ->
-                fylkeService.oppdaterFylke(
-                    lokalid = Lokalid(value = fylkeEndring.key),
-                    gyldigFra = utkast.gyldigFra,
-                    endringstype = utkast.auditInfo.typeEndring,
-                    oppdatertFylke = fylkeEndring.value
-                )
-            }
+        val endredeFylker = metadata.fylkesendringer.mapNotNull { fylkeEndring ->
+            fylkeService.oppdaterFylke(lokalid = Lokalid(value = fylkeEndring.key), gyldigFra = utkast.gyldigFra, endringstype = utkast.auditInfo.typeEndring, oppdatertFylke = fylkeEndring.value)
+        }
 
-        val endredeKommuner =
-            metadata.kommuneendringer.mapNotNull { kommuneEndring ->
-                kommuneService.oppdaterKommune(
-                    lokalid = Lokalid(value = kommuneEndring.key),
-                    gyldigFra = utkast.gyldigFra,
-                    oppdatertKommune = kommuneEndring.value,
-                    endringstype = utkast.auditInfo.typeEndring
-                )
-            }
+        val endredeKommuner = metadata.kommuneendringer.mapNotNull { kommuneEndring ->
+            kommuneService.oppdaterKommune(lokalid = Lokalid(value = kommuneEndring.key), gyldigFra = utkast.gyldigFra, oppdatertKommune = kommuneEndring.value, endringstype = utkast.auditInfo.typeEndring)
+        }
 
-        val endredeGrunnkretser =
-            metadata.grunnkretsendringer.mapNotNull { grunnkretsEndring ->
-                grunnkretsService.oppdaterGrunnkrets(
-                    lokalId = Lokalid(grunnkretsEndring.key),
-                    gyldigFra = utkast.gyldigFra,
-                    oppdatertGrunnkrets = grunnkretsEndring.value,
-                    endringstype = utkast.auditInfo.typeEndring
-                )
-            }
+        val endredeGrunnkretser = metadata.grunnkretsendringer.mapNotNull { grunnkretsEndring ->
+            grunnkretsService.oppdaterGrunnkrets(lokalId = Lokalid(grunnkretsEndring.key), gyldigFra = utkast.gyldigFra, oppdatertGrunnkrets = grunnkretsEndring.value, endringstype = utkast.auditInfo.typeEndring)
+        }
 
-        val endredeStemmekretser =
-            metadata.stemmekretsendringer.mapNotNull { stemmekretsEndring ->
-                stemmekretsService.oppdaterStemmekrets(
-                    lokalId = Lokalid(stemmekretsEndring.key),
-                    gyldigFra = utkast.gyldigFra,
-                    oppdatertStemmekrets = stemmekretsEndring.value,
-                    endringstype = utkast.auditInfo.typeEndring
-                )
-            }
+        val endredeStemmekretser = metadata.stemmekretsendringer.mapNotNull { stemmekretsEndring ->
+            stemmekretsService.oppdaterStemmekrets(lokalId = Lokalid(stemmekretsEndring.key), gyldigFra = utkast.gyldigFra, oppdatertStemmekrets = stemmekretsEndring.value, endringstype = utkast.auditInfo.typeEndring)
+        }
 
-        val alleEndringer =
-            endredeNasjoner +
-                endredeFylker +
-                endredeKommuner +
-                endredeGrunnkretser +
-                endredeStemmekretser
+        val alleEndringer = endredeNasjoner + endredeFylker + endredeKommuner + endredeGrunnkretser + endredeStemmekretser
         return alleEndringer.map { lagFlateEndring(it, EventType.MODIFIED) }
     }
 
-    private fun publiserGrenseendringer(grenseendringer: Grenseendringer, utkast: Utkast) : List<EventRad> {
+    private fun publiserGrenseendringer(grenseendringer: Grenseendringer, utkast: Utkast): List<EventRad> {
         val endredeFeatures = grenseendringer.endredeFeatures
         var eventer: List<EventRad> = emptyList()
 
         if (endredeFeatures.isNotEmpty()) {
-            val flaterMedGrenseendring = grenseService.lagreGrenser(
-                FeatureCollection(features = endredeFeatures),
-                gyldighetsdato = utkast.gyldigFra,
-                endringstype = utkast.auditInfo.typeEndring
-            )
+            val flaterMedGrenseendring = grenseService.lagreGrenser(FeatureCollection(features = endredeFeatures), gyldighetsdato = utkast.gyldigFra, endringstype = utkast.auditInfo.typeEndring)
             eventer = flaterMedGrenseendring.map { lagFlateEndring(it, EventType.MODIFIED) }
         }
         return eventer
@@ -265,52 +216,27 @@ class UtkastService(
     private fun publiserSammenslaaingsendringer(
         stemmekretsSammenslaaingsendring: StemmekretsSammenslaaingsendringRequest?,
         utkast: Utkast,
-    ): List<EventRad> =
-        stemmekretsSammenslaaingsendring?.let { stemmekretsendring ->
-            val (modifiedStemmekrets, expiredStemmekretser) = stemmekretsService.slaaSammenStemmekretser(
-                sammenslaaingsendringRequest = stemmekretsendring,
-                sammenslaaingsDato = utkast.gyldigFra,
-                endringstype = utkast.auditInfo.typeEndring
-            )
-            expiredStemmekretser.map { lagFlateEndring(it, EventType.EXPIRED) } +
-                lagFlateEndring(modifiedStemmekrets, EventType.MODIFIED)
-        } ?: emptyList()
+    ): List<EventRad> = stemmekretsSammenslaaingsendring?.let { stemmekretsendring ->
+        val (modifiedStemmekrets, expiredStemmekretser) = stemmekretsService.slaaSammenStemmekretser(sammenslaaingsendringRequest = stemmekretsendring, sammenslaaingsDato = utkast.gyldigFra, endringstype = utkast.auditInfo.typeEndring)
+        expiredStemmekretser.map { lagFlateEndring(it, EventType.EXPIRED) } + lagFlateEndring(modifiedStemmekrets, EventType.MODIFIED)
+    } ?: emptyList()
 
-    private fun publiserKretsDelingEndringer(
-        kretsDelingEndringRequests: List<KretsDelingEndringRequest>,
-        utkast: Utkast
-    ): List<EventRad> = getUnikeKretsDelingEndringRequests(kretsDelingEndringRequests).flatMap {
-            it.let { unikKretsDelingEndring ->
-                val nyKrets = when(unikKretsDelingEndring.flatetype) {
-                    Flatetype.STEMMEKRETS -> stemmekretsService.delStemmekrets(
-                        unikKretsDelingEndring,
-                        utkast.gyldigFra,
-                        utkast.auditInfo.typeEndring
-                    )
-                    Flatetype.GRUNNKRETS -> grunnkretsService.delGrunnkrets(
-                        unikKretsDelingEndring,
-                        utkast.gyldigFra,
-                        utkast.auditInfo.typeEndring
-                    )
-                    else -> throw ResponseException.BadRequestException("Støtter kun deling av grunnkrets eller stemmekrets, ikke ${unikKretsDelingEndring.flatetype}")
-                }
-                listOf(
-                    lagFlateEndring(nyKrets, EventType.ADDED)
-                )
+    private fun publiserKretsDelingEndringer(kretsDelingEndringRequests: List<KretsDelingEndringRequest>, utkast: Utkast): List<EventRad> = getUnikeKretsDelingEndringRequests(kretsDelingEndringRequests).flatMap {
+        it.let { unikKretsDelingEndring ->
+            val nyKrets = when (unikKretsDelingEndring.flatetype) {
+                Flatetype.STEMMEKRETS -> stemmekretsService.delStemmekrets(unikKretsDelingEndring, utkast.gyldigFra, utkast.auditInfo.typeEndring)
+
+                Flatetype.GRUNNKRETS -> grunnkretsService.delGrunnkrets(unikKretsDelingEndring, utkast.gyldigFra, utkast.auditInfo.typeEndring)
+
+                else -> throw ResponseException.BadRequestException("Støtter kun deling av grunnkrets eller stemmekrets, ikke ${unikKretsDelingEndring.flatetype}")
             }
+            listOf(lagFlateEndring(nyKrets, EventType.ADDED))
         }
+    }
 
     private fun lagFlateEndring(flate: Flate, eventType: EventType): EventRad {
-        return EventRad(
-            uuid = flate.id,
-            eventType = eventType,
-            lokalid = flate.lokalid,
-            flateType = flate.type
-        )
+        return EventRad(uuid = flate.id, eventType = eventType, lokalid = flate.lokalid, flateType = flate.type)
     }
 }
 
-private fun OpprettUtkastRequest.createUtkast(): Utkast =
-    UtkastBuilder.builder(this.navn, Endringstype.fromValue(this.endringstype))
-        .withOperasjoner(Operasjoner())
-        .build()
+private fun OpprettUtkastRequest.createUtkast(): Utkast = UtkastBuilder.builder(this.navn, Endringstype.fromValue(this.endringstype)).withOperasjoner(Operasjoner()).build()
