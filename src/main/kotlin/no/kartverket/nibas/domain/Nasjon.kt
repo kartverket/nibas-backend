@@ -3,6 +3,8 @@ package no.kartverket.nibas.domain
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.common.getInSpraak
+import no.kartverket.nibas.events.EventRad
+import no.kartverket.nibas.events.EventType
 import org.hibernate.annotations.SQLRestriction
 import java.time.LocalDate
 import java.util.*
@@ -52,6 +54,14 @@ class Nasjon(
         val navn = getAdministrativenhetNavn(gyldighet.gyldigFra).getInSpraak("nor") ?: "Ukjent navn"
         return FlateInformasjon(type, navn)
     }
+
+    override fun toEventRad(eventType: EventType): EventRad =
+        EventRad(
+            uuid = this.id,
+            eventType = eventType,
+            flateType = Flatetype.NASJON,
+            lokalid = this.lokalid
+        )
 
     fun getFylker(gyldighetsdato: LocalDate = LocalDate.now()): List<Fylke> {
         return nasjonLokalid.fylkerForNasjon.filter { it.gyldigPaaDato(gyldighetsdato) }

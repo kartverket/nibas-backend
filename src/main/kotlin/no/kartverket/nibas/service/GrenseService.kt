@@ -37,6 +37,7 @@ import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.repository.findAllGyldigeObjekterForIdentifikatorer
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
+import org.locationtech.jts.geom.LineString
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -113,6 +114,22 @@ class GrenseService(
             .also {
                 grense.setGyldigTil(gyldigFra)
             }
+    }
+
+    fun createNyGrenseKopiertFraAnnenGrenseMedNyLokalid(kopierFraGrense: Grense, nyLineString: LineString, gyldigFra: LocalDate, endringstype: Endringstype): Grense {
+        val nyGrense = grenseRepository.saveAndFlush(
+            Grense(grensetype = kopierFraGrense.grensetype)
+                .apply {
+                    applyMappingFromExistingGrense(kopierFraGrense)
+                    setGyldigFra(gyldigFra)
+                    grense = nyLineString
+                    version = 1
+                    auditInfo.typeEndring = endringstype
+                }
+        )
+
+        return nyGrense
+            .applyCascadingOperationsBasedOnExistingGrense(kopierFraGrense)
     }
 
     fun endreGrensetypeForGrunnkretser(grunnkretser: List<Grunnkrets>, gyldigFra: LocalDate, endringstype: Endringstype) {
@@ -294,11 +311,17 @@ class GrenseService(
         return tilhorheterTilNyeKretser + tilhorigheterTilEksisterendeKretser
     }
 
-    private fun createNyeVersjonerAvFlaterHoyereIHierakietForGrenser(grenser: Collection<Grense>, gyldighetsdato: LocalDate, endringstype: Endringstype): Set<Flate> {
+    fun createNyeVersjonerAvFlaterHoyereIHierakietForGrenser(
+        grenser: Collection<Grense>,
+        gyldighetsdato: LocalDate,
+        endringstype: Endringstype,
+        flaterSomHarFaattNyVersjon: Map<Lokalid, Flate> = emptyMap()
+    ): Set<Flate> {
         val nyeVersjonAvNasjoner = grenser
             .filter { Nasjon.tillatteGrensetyper().contains(it.grensetype) }
             .flatMap { it.nasjoner(gyldighetsdato) }
             .distinctBy { it.lokalid }
+            .filterNot { flaterSomHarFaattNyVersjon.containsKey(Lokalid(it.lokalid)) }
             .map { nasjonService.createNyVersjonAvNasjon(it, gyldighetsdato, endringstype) }
             .toSet()
 
@@ -306,6 +329,7 @@ class GrenseService(
             .filter { Fylke.tillatteGrensetyper().contains(it.grensetype) }
             .flatMap { it.fylker(gyldighetsdato) }
             .distinctBy { it.lokalid }
+            .filterNot { flaterSomHarFaattNyVersjon.containsKey(Lokalid(it.lokalid)) }
             .map { fylkeService.createNyVersjonAvFylke(it, gyldighetsdato, endringstype) }
             .toSet()
 
@@ -313,6 +337,7 @@ class GrenseService(
             .filter { Kommune.tillatteGrensetyper().contains(it.grensetype) }
             .flatMap { it.kommuner(gyldighetsdato) }
             .distinctBy { it.lokalid }
+            .filterNot { flaterSomHarFaattNyVersjon.containsKey(Lokalid(it.lokalid)) }
             .map { kommuneService.createNyVersjonAvKommune(it, gyldighetsdato, endringstype) }
             .toSet()
 

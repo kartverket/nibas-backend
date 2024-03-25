@@ -194,3 +194,4 @@ fun koordinaterToLineString(coordinates: List<List<Double>>, srid: Int = default
             .map { Coordinate(it[0], it[1]) }
             .toTypedArray())
 }
+

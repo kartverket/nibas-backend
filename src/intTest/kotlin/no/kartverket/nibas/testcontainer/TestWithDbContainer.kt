@@ -36,6 +36,8 @@ import no.kartverket.nibas.service.KommuneService
 import no.kartverket.nibas.service.NasjonService
 import no.kartverket.nibas.service.StemmekretsService
 import no.kartverket.nibas.service.utkast.UtkastService
+import no.kartverket.nibas.service.deltgeometri.DeltGeometriAdministrativeGrenserService
+import no.kartverket.nibas.service.deltgeometri.DeltGeometriService
 import no.kartverket.nibas.sporing.Gyldighet
 import org.assertj.core.api.Assertions.assertThat
 import org.locationtech.jts.geom.MultiPolygon
@@ -106,6 +108,12 @@ class TestWithDbContainer {
 
     @Autowired
     lateinit var administrativenhetnavnService: AdministrativenhetnavnService
+
+    @Autowired
+    lateinit var deltGeometriService: DeltGeometriService
+
+    @Autowired
+    lateinit var deltGeometriAdministrativeGrenserService: DeltGeometriAdministrativeGrenserService
 
     companion object dbContainer : PostgreSQLContainer<dbContainer>(
         DockerImageName.parse("postgis/postgis:14-3.4-alpine").asCompatibleSubstituteFor("postgres")

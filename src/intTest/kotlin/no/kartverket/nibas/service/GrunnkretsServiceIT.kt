@@ -906,9 +906,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         val nySiljan = kommuneService.createNyVersjonAvKommune(kommune = gamleSiljan, gyldigFra = november28In2022, endringstype = Endringstype.KVALITETSHEVING)
         val nyLarvik = kommuneService.createNyVersjonAvKommune(kommune = gamleLarvik, gyldigFra = november28In2022, endringstype = Endringstype.KVALITETSHEVING)
 
-        nyVersjonAvVestreKrets.oppdaterOmraadeOgPosisjon()
-        nyVersjonAvOestreKrets.oppdaterOmraadeOgPosisjon()
-        flateService.oppdaterFlaterFor(setOf(nySiljan, nyLarvik))
+        flateService.oppdaterFlaterFor(setOf(nyVersjonAvVestreKrets, nyVersjonAvOestreKrets, nySiljan, nyLarvik))
 
         assertTopologi(nySiljan.omraade, nyVersjonAvVestreKrets.omraade)
         assertTopologi(nySiljan.omraade, gamleSiljan.omraade, lik = false)

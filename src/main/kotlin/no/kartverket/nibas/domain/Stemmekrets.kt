@@ -4,6 +4,8 @@ import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.common.geometry.getGrenserIRiktigRekkefoelge
 import no.kartverket.nibas.common.geometry.toMultiPolygon
+import no.kartverket.nibas.events.EventRad
+import no.kartverket.nibas.events.EventType
 import org.hibernate.annotations.SQLRestriction
 import java.io.Serializable
 import java.time.LocalDate
@@ -63,6 +65,14 @@ class Stemmekrets(
     override fun getFlateInformasjon(): FlateInformasjon {
         return FlateInformasjon(type, "$stemmekretsnummer $stemmekretsnavn")
     }
+
+    override fun toEventRad(eventType: EventType): EventRad =
+        EventRad(
+            uuid = this.id,
+            eventType = eventType,
+            flateType = Flatetype.STEMMEKRETS,
+            lokalid = this.lokalid
+        )
 
     /**
      * Henter kretsen sin kommune på en gitt dato. Hvis man gir en dato hvor kommunen med gitt lokalid ikke er gyldig, returneres null

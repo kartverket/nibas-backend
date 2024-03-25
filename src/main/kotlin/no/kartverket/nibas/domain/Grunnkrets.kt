@@ -4,6 +4,8 @@ import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.common.geometry.getGrenserIRiktigRekkefoelge
 import no.kartverket.nibas.common.geometry.toMultiPolygon
+import no.kartverket.nibas.events.EventRad
+import no.kartverket.nibas.events.EventType
 import org.hibernate.annotations.SQLRestriction
 import java.io.Serializable
 import java.time.LocalDate
@@ -93,6 +95,14 @@ class Grunnkrets(
     override fun toString(): String {
         return "Grunnkrets(id='$id', grunnkretsnummer=$grunnkretsnummer, grunnkretsnavn=$grunnkretsnavn, gyldighet: $gyldighet)"
     }
+
+    override fun toEventRad(eventType: EventType): EventRad =
+        EventRad(
+            uuid = this.id,
+            eventType = eventType,
+            flateType = Flatetype.GRUNNKRETS,
+            lokalid = this.lokalid
+        )
 
     override fun addGrensekobling(grense: Grense) {
         val grunnkretsGrenseKobling = GrunnkretsGrenseKobling(

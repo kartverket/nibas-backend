@@ -1,9 +1,11 @@
 package no.kartverket.nibas.service.deltgeometri
 
+import no.kartverket.nibas.domain.Grunnkrets
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.locationtech.jts.geom.Coordinate
+import org.locationtech.jts.geom.GeometryFactory
 
 /**
  * Denne tester at breddeførst-søket for testene våre fungerer som forventet.
@@ -30,16 +32,81 @@ internal class DeltGeometriGrenserStiSoekTest {
     val grenseAB = lagKommuneGrense(punktA, punktB)
     val grenseBC = lagKommuneGrense(punktB, punktC)
     val grenseCD = lagKommuneGrense(punktC, punktD)
-    val grenseDE = lagKommuneGrense(punktD, punktE)
-    val grenseEF = lagKommuneGrense(punktE, punktF)
-    val grenseFG = lagKommuneGrense(punktF, punktG)
-    val grenseGH = lagKommuneGrense(punktG, punktH)
+    val grenseDEF = lagKommuneGrense(punktD, punktE, punktF)
+    val grenseFGH = lagKommuneGrense(punktF, punktG, punktH)
     val grenseHA = lagKommuneGrense(punktH, punktA)
 
+    val grenser = listOf(grenseAB, grenseBC, grenseCD, grenseDEF, grenseFGH, grenseHA)
 
-    val grenser = listOf(
-        grenseAB, grenseBC, grenseCD, grenseDE, grenseEF, grenseFG, grenseGH, grenseHA
-    )
+    private val grunnkrets = Grunnkrets()
+        .apply {
+            grenser = mutableSetOf(
+                lagGrunnkretsGrenseKobling(this, grenseAB),
+                lagGrunnkretsGrenseKobling(this, grenseBC),
+                lagGrunnkretsGrenseKobling(this, grenseCD),
+                lagGrunnkretsGrenseKobling(this, grenseDEF),
+                lagGrunnkretsGrenseKobling(this, grenseFGH),
+                lagGrunnkretsGrenseKobling(this, grenseHA)
+            )
+        }
+
+    @Test
+    fun `punkt paa rett grense`() {
+        assertThat(grunnkrets.grenser.finnGrensekoblingForGrense(grenseAB.grense)!!.grense).isEqualTo(grenseAB)
+        assertThat(grunnkrets.grenser.finnGrensekoblingForGrense(grenseAB.grense.reverse())!!.grense).isEqualTo(grenseAB)
+
+        val kortLinjeSomStarterIpunktA = GeometryFactory().createLineString(arrayOf(
+            punktA.coordinate,
+            punktB.coordinate.copy().also { it.setX(it.getX() - 10) }
+        ))
+        assertThat(grunnkrets.grenser.finnGrensekoblingForGrense(kortLinjeSomStarterIpunktA)!!.grense).isEqualTo(grenseAB)
+        assertThat(grunnkrets.grenser.finnGrensekoblingForGrense(kortLinjeSomStarterIpunktA.reverse())!!.grense).isEqualTo(grenseAB)
+
+        val kortLinjeSomSlutterIpunktB = GeometryFactory().createLineString(arrayOf(
+            punktA.coordinate.copy().also { it.setX(it.getX() + 10) },
+            punktB.coordinate
+        ))
+        assertThat(grunnkrets.grenser.finnGrensekoblingForGrense(kortLinjeSomSlutterIpunktB)!!.grense).isEqualTo(grenseAB)
+        assertThat(grunnkrets.grenser.finnGrensekoblingForGrense(kortLinjeSomSlutterIpunktB.reverse())!!.grense).isEqualTo(grenseAB)
+
+        val kortLinjeMellomPunktAogPunktB = GeometryFactory().createLineString(arrayOf(
+            punktA.coordinate.copy().also { it.setX(it.getX() + 10) },
+            punktB.coordinate.copy().also { it.setX(it.getX() - 10) }
+        ))
+        assertThat(grunnkrets.grenser.finnGrensekoblingForGrense(kortLinjeMellomPunktAogPunktB)!!.grense).isEqualTo(grenseAB)
+        assertThat(grunnkrets.grenser.finnGrensekoblingForGrense(kortLinjeMellomPunktAogPunktB.reverse())!!.grense).isEqualTo(grenseAB)
+    }
+
+    @Test
+    fun `punkt paa grense med vinkel`() {
+        assertThat(grunnkrets.grenser.finnGrensekoblingForGrense(grenseDEF.grense)!!.grense).isEqualTo(grenseDEF)
+        assertThat(grunnkrets.grenser.finnGrensekoblingForGrense(grenseDEF.grense.reverse())!!.grense).isEqualTo(grenseDEF)
+
+        val grenseDE = GeometryFactory().createLineString(arrayOf(punktD.coordinate, punktE.coordinate))
+        assertThat(grunnkrets.grenser.finnGrensekoblingForGrense(grenseDE)!!.grense).isEqualTo(grenseDEF)
+        assertThat(grunnkrets.grenser.finnGrensekoblingForGrense(grenseDE.reverse())!!.grense).isEqualTo(grenseDEF)
+
+        val kortLinjeSomStarterIpunktD = GeometryFactory().createLineString(arrayOf(
+            punktD.coordinate,
+            punktE.coordinate.copy().also { it.setY(it.getY() + 10) }
+        ))
+        assertThat(grunnkrets.grenser.finnGrensekoblingForGrense(kortLinjeSomStarterIpunktD)!!.grense).isEqualTo(grenseDEF)
+        assertThat(grunnkrets.grenser.finnGrensekoblingForGrense(kortLinjeSomStarterIpunktD.reverse())!!.grense).isEqualTo(grenseDEF)
+
+        val kortLinjeSomSlutterIpunktE = GeometryFactory().createLineString(arrayOf(
+            punktD.coordinate.copy().also { it.setY(it.getY() - 10) },
+            punktE.coordinate
+        ))
+        assertThat(grunnkrets.grenser.finnGrensekoblingForGrense(kortLinjeSomSlutterIpunktE)!!.grense).isEqualTo(grenseDEF)
+        assertThat(grunnkrets.grenser.finnGrensekoblingForGrense(kortLinjeSomSlutterIpunktE.reverse())!!.grense).isEqualTo(grenseDEF)
+
+        val kortLinjeMellomPunktDogPunktE = GeometryFactory().createLineString(arrayOf(
+            punktD.coordinate.copy().also { it.setY(it.getY() - 10) },
+            punktE.coordinate.copy().also { it.setY(it.getY() + 10) }
+        ))
+        assertThat(grunnkrets.grenser.finnGrensekoblingForGrense(kortLinjeMellomPunktDogPunktE)!!.grense).isEqualTo(grenseDEF)
+        assertThat(grunnkrets.grenser.finnGrensekoblingForGrense(kortLinjeMellomPunktDogPunktE.reverse())!!.grense).isEqualTo(grenseDEF)
+    }
 
     @Test
     fun `korteste vei fra C til D skal være kun grenseCD`() {
@@ -50,11 +117,32 @@ internal class DeltGeometriGrenserStiSoekTest {
     }
 
     @Test
-    fun `korteste vei fra E til D skal være kun grenseDE selv om den går motsatt vei`() {
-        val kortesteVei = finnStiMellomPunkterMedBreddeFoerstSoek(punktE, punktD, grenser)
+    fun `korteste vei fra C til D skal være kun grenseCD selv om den går motsatt vei`() {
+        val kortesteVei = finnStiMellomPunkterMedBreddeFoerstSoek(punktD, punktC, grenser)
 
         assertThat(kortesteVei).hasSize(1)
-        assertThat(kortesteVei.first()).isEqualTo(grenseDE)
+        assertThat(kortesteVei.first()).isEqualTo(grenseCD)
+    }
+
+    @Test
+    fun `skal finne alle grenser hvis startpunkt er likt sluttpunkt`() {
+        val kortesteVei = finnStiMellomPunkterMedBreddeFoerstSoek(punktC, punktC, grenser)
+
+        assertThat(kortesteVei).hasSize(6)
+        assertThat(kortesteVei).containsExactlyInAnyOrder(grenseAB, grenseBC, grenseCD, grenseDEF, grenseFGH, grenseHA)
+    }
+
+    @Test
+    fun `finn sti hvis det er to muligheter`() {
+        val kortesteVeiMedPunktD = finnStiMellomPunkterMedBreddeFoerstSoek(punktB, punktF, grenser, listOf(punktD.coordinate))
+
+        assertThat(kortesteVeiMedPunktD).hasSize(3)
+        assertThat(kortesteVeiMedPunktD).containsExactlyInAnyOrder(grenseBC, grenseCD, grenseDEF)
+
+        val kortesteVeiMedPunktA = finnStiMellomPunkterMedBreddeFoerstSoek(punktB, punktF, grenser, listOf(punktA.coordinate))
+
+        assertThat(kortesteVeiMedPunktA).hasSize(3)
+        assertThat(kortesteVeiMedPunktA).containsExactlyInAnyOrder(grenseAB, grenseHA, grenseFGH)
     }
 
     @Test
@@ -67,10 +155,10 @@ internal class DeltGeometriGrenserStiSoekTest {
     }
 
     @Test
-    fun `korteste vei fra B til G skal være B A H G`() {
-        val kortesteVei = finnStiMellomPunkterMedBreddeFoerstSoek(punktB, punktG, grenser)
+    fun `korteste vei fra C til H skal være C B A H`() {
+        val kortesteVei = finnStiMellomPunkterMedBreddeFoerstSoek(punktC, punktH, grenser)
 
         assertThat(kortesteVei).hasSize(3)
-        assertThat(kortesteVei).isEqualTo(listOf(grenseAB, grenseHA, grenseGH))
+        assertThat(kortesteVei).isEqualTo(listOf(grenseBC, grenseAB, grenseHA))
     }
 }

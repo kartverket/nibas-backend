@@ -12,7 +12,6 @@ import java.time.ZonedDateTime
 import java.util.*
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
-import jakarta.persistence.ElementCollection
 import jakarta.persistence.Embedded
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
@@ -67,12 +66,6 @@ class Grense(
 
     @Column(name = "info")
     var informasjonstekst: String? = null
-
-    // Holder på liste av kommunenummer-UUIDs grensen er tilknyttet
-    // Uten at vi behøver definere egen entity for dette.
-    // Brukes av grenser av type Lovvirkeomraadegrense
-    @ElementCollection
-    var kommunenummer: MutableSet<String> = mutableSetOf()
 
     @ManyToMany(cascade = [CascadeType.ALL])
     @JoinTable(

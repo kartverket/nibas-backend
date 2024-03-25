@@ -9,6 +9,7 @@ import no.kartverket.nibas.sporing.Gyldighet
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
 import org.locationtech.jts.geom.LineString
+import org.locationtech.jts.geom.Point
 import java.time.LocalDate
 import java.time.ZonedDateTime
 
@@ -32,7 +33,8 @@ class GrenseBuilder(private val id: String = "1",
                     private var grenseGeometri: LineString = GeometryFactory().createLineString(),
                     private var gyldigFra: LocalDate = LocalDate.now(),
                     private var gyldigTil: LocalDate? = null,
-                    private var opphav: String = "Eidsvoll",
+                    private var kvalitet: PosisjonskvalitetEmbeddable? = null,
+                    private var opphav: String? = "Eidsvoll",
                     private var versjon: Int = 1,
                     private var grensetype: Grensetype = Grensetype.Grunnkretsgrense) {
 
@@ -43,6 +45,9 @@ class GrenseBuilder(private val id: String = "1",
         grense.opphav = opphav
         grense.version = versjon
 
+        if (kvalitet != null) {
+            grense.kvalitet = kvalitet
+        }
         return grense
     }
 
@@ -51,8 +56,22 @@ class GrenseBuilder(private val id: String = "1",
         return this
     }
 
+    fun withKvalitet(maalemetode: MaalemetodeKodeEnum, noyaktighet: Int): GrenseBuilder {
+        val posisjonskvalitetEmbeddable = PosisjonskvalitetEmbeddable(
+            maalemetode = maalemetode.uuid,
+            noeyaktighet = noyaktighet,
+        )
+        this.kvalitet = posisjonskvalitetEmbeddable
+        return this
+    }
+
     fun withGrenseGeometri(coordinates: List<Coordinate>): GrenseBuilder {
         this.grenseGeometri = GeometryFactory().createLineString(coordinates.toTypedArray())
+        return this
+    }
+
+    fun withGrenseGeometri(vararg punkter: Point): GrenseBuilder {
+        this.grenseGeometri = GeometryFactory().createLineString(punkter.map { punkt -> punkt.coordinate }.toTypedArray())
         return this
     }
 

@@ -15,7 +15,6 @@ import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.Landkode
 import no.kartverket.nibas.repository.LandKodeRepository
-import no.kartverket.nibas.service.deltgeometri.copyWithNewUUID
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -85,7 +84,12 @@ internal class MetadataUpdaterTest {
 
     @Test
     fun `Skal fjerne dokumentasjonsreferanse fra Grense når flagget isArchived`() {
-        val grense = createFylkesgrense()
+        val grense = FylkesgrenseBuilder()
+            .withEndretDato(oppdDato)
+            .datafangstdato(dataFanget)
+            .gyldigFra(gyldigFraTidspunkt)
+            .dokRef(dokumentasjonsreferanse)
+            .build()
         val originalDokrefDtos = grense.dokumentasjonsreferanser.map { it.toDokRef() }
         assertThat(originalDokrefDtos).isNotEmpty()
 
@@ -124,7 +128,12 @@ internal class MetadataUpdaterTest {
 
     @Test
     fun `Skal lage ny versjon av dokumentasjonsreferanse ved oppdatering`() {
-        val grense = createFylkesgrense()
+        val grense = FylkesgrenseBuilder()
+            .withEndretDato(oppdDato)
+            .datafangstdato(dataFanget)
+            .gyldigFra(gyldigFraTidspunkt)
+            .dokRef(dokumentasjonsreferanse)
+            .build()
         val originalDokrefDtos = grense.dokumentasjonsreferanser.map { it.toDokRef() }
         assertThat(originalDokrefDtos).isNotEmpty()
 

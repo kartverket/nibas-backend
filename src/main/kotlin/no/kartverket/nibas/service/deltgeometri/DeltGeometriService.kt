@@ -1,32 +1,29 @@
 package no.kartverket.nibas.service.deltgeometri
 
-import no.kartverket.nibas.common.getInSpraak
-import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
-import no.kartverket.nibas.domain.Kommune
-import no.kartverket.nibas.domain.StemmekretsGrenseKobling
+import no.kartverket.nibas.api.v1.common.Flatetype
+import no.kartverket.nibas.events.EventRad
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.service.KommuneService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
+import no.kartverket.nibas.events.NibasEventPublisher
 
 /**
  * Danner delt geometri for en eller flere kommuner. Med andre ord sørger den for at stemmekretser og grunnkretser som gjelder for samme geometriske område
  * vil bruke de samme underliggende grensene, og ikke de dupliserte.
  *
  * Algoritmen er implementert slik at den ser isolert på en kommune om gangen. Så om man ønsker å danne delt geometri for flere kommuner kaller man bare
- * `dannDeltGeometriForKommune` for alle de kommunene man ønsker. Om man kaller den for 2 nabokommuner vil de delte grensene bli "fikset" 2 ganger. Dette er
- * ikke optimalt. Men siden den i første omgang kun skal kjøre som en del av import er ytelse ikke det viktigste fokuset her.
+ * `dannDeltGeometriForKommune` for alle de kommunene man ønsker.
  *
  * Algoritmen fungerer på følgende måte:
  *      1. Vi henter ut alle grensene for grunnkretsene i en kommune
- *      2. Vi filtrere så vi kun beholder de administrative grensene
- *      3. Vi gjør om grensene til grensepunkter, slik at vi nå har en liste med grensepunkter som representerer geometrien til skallet for den administrative enheten
+ *      2. Vi filtrerer så vi kun beholder de administrative grensene
+ *      3. Vi gjør om grensene til punkter, slik at vi nå har en liste med punkter som representerer geometrien til skallet for den administrative enheten
  *      4. Vi henter ut alle stemmekretsgrenser, og filtrerer så vi beholder kun de administrative grensene
  *      5. Lager en liste med kun knutepunktene for stemmekrets sine administrative grenser
  *          5.1 Filtrerer denne lista så den kun inneholder punkter som ikke allerede er i listen over grensepunkter fra grunnkretser
- *      6. For hvert punkt i listen over finn ut mellom hvilke 2 grensepunkter i listen laget i punkt 3. Insert dette punktet der
+ *      6. For hvert punkt i listen over - finn ut mellom hvilke 2 grensepunkter i listen laget i punkt 3. Insert dette punktet der
  *          6.1 Dette gjøres ved at man for hvert grensepunkt tegner en strek fra punktet til neste punkt, og ser om punktet man sjekker ligger på denne linjen
  *      7. Vi må nå gjøre grensepunktene om til grensestykker. Dette gjøres med en løkke:
  *         * Plukk første punkt som startpunkt på første grense
@@ -37,63 +34,65 @@ import java.time.LocalDate
  *                  * Legg grensen til i listen over grenser
  *                  * Start ny grense med dette punktet som startpunkt
  *      8. Vi må så bygge nye grenser for kretsene hvor vi bytter ut de administrative grensene med grenser som er delt mellom stemmekrets og grunnkrets
- *          * For hver (gammel) administrative grense finner vi de nye grensene som gjelder mellom samme 2 punkter
- *          * Vi gjør ett breddeførst-søk fra startpunkt til sluttpunktet for grensen. Grensen(e) som gir korteste vei mellom disse punktene vil være riktige grenser
- *      9. For hver grense må man nå oppdatere grensekobling for både stemmekretser og grunnkretser denne er tilknyttet.
- *          * Vi kan finne ut hvilken kretser en grense deler ved å velge 2 punkter i grensen, og finne den originale grensen med samme 2 punkter - grensen vil være koblet mot samme kretser
- *              * Dette fungerer siden eneste endringen som blir gjort ved delt geometri er å potensielt splitte enkelte grenser opp i flere deler
- *          * Vi må også oppdatere metadata for grensekoblingen. Altså rekkefølge og retning med klokken
- *              * Letteste måten er å bare bygge opp flaten på nytt. Velg 1 grense som første grense, og så velg neste grense som grensen som starter på punktet forrige sluttet
+ *          * For hvert nytt grensestykke finner vi den/de gamle adm.grensene (for grunnkretser) som gjelder mellom samme 2 punkter
+ *              * Hvis den gamle adm.grensa ikke skal splittes, beholdes den uendret
+ *              * Hvis den gamle adm.grensa skal splittes, opprettes det en ny adm.grense som knyttes til ny versjon av de samme grunnkretsene
+ *                som den gamle adm.grensa hadde (dvs også for grunnkretsen i nabokommunen).
+ *                Det opprettes også ny versjon av kommune/fylke/nasjon, avhengig av grensetypen. Den gamle adm.grensa arkiveres
+ *          * For hver gammel adm.grense for stemmekrets finner vi den/de nye grensene som gjelder mellom samme 2 punkter
+ *              * Vi gjør ett breddeførst-søk fra startpunkt til sluttpunktet for grensen. Grensen(e) som gir korteste vei mellom disse punktene
+ *                vil som regel være riktige grenser, i noen tilfeller må vi også sjekke et mellompunkt
+ *              * Grensen(e) som skal erstatte en gammel adm.grense for stemmekrets knyttes til ny versjon av de samme stemmekretsene
+ *  *             som den gamle adm.grensa hadde (dvs også for stemmekretsen i nabokommunen). Den gamle adm.grensa arkiveres
+ *      9. Når man er ferdig med en kommune, vil også (deler) av grunnkretser og stemmekretser i nabokommunene ha fått oppdatert adm.grensene sine.
+ *         Til slutt for kommunen dannes det flater for berørte grunnkretser, stemmekretser, kommuner, fylker og evt nasjon.
+ *         Kjøringen committer til databasen for hver kommune.
+ *         Når alle kommunene er prosessert, lages det en event med modified for alle de berørte flatene.
  */
 
 @Service
 class DeltGeometriService(
     val kommuneService: KommuneService,
     val kodelisteService: KodelisteService,
-    val deltGeometriKretsService: DeltGeometriKretsService,
-    val deltGeometriAdministrativeGrenserService: DeltGeometriAdministrativeGrenserService
+    val deltGeometriAdministrativeGrenserService: DeltGeometriAdministrativeGrenserService,
+    val nibasEventPublisher: NibasEventPublisher
 ) {
     private val logger = LoggerFactory.getLogger(this.javaClass)
 
-    @Transactional
     fun dannDeltGeometriForAdministrativeGrenser() {
-        val alleKommuner = kommuneService.hentAlleKommuner(LocalDate.now())
+        val gyldighetsdato = LocalDate.now()
+        val alleKommuner = kommuneService.hentAlleKommuner(gyldighetsdato)
+        val eventRaderForOppdaterteFlater = mutableMapOf<String, EventRad>()
+
         alleKommuner.mapIndexed { index, kommune ->
-            logger.info("[${index+1}/${alleKommuner.size}] Danner delt geometri for ${kommune.getAdministrativenhetNavn(LocalDate.now()).getInSpraak("nor")}")
-            dannDeltGeometriForKommune(kommune)
+            val loggmelding = "[${index + 1}/${alleKommuner.size}] Danner delt geometri for"
+            val (_, evtNyeEventRaderForFlater) =
+                deltGeometriAdministrativeGrenserService.dannDeltGeometriForKommune(kommuneLokalid = kommune.lokalid, gyldighetsDato = gyldighetsdato,
+                    eventRaderForAlleredeOppdaterteFlater = eventRaderForOppdaterteFlater, loggmelding = loggmelding)
+            skrivLoggmelding(evtNyeEventRaderForFlater, kommune.kommunenummer)
+
+            evtNyeEventRaderForFlater.forEach { eventRaderForOppdaterteFlater[it.key] = it.value }
         }
+
+        nibasEventPublisher.publishNibasEvent(inntreffer = gyldighetsdato, redigerteFlater = eventRaderForOppdaterteFlater.values.toList())
     }
 
-    fun dannDeltGeometriForKommune(kommune: Kommune, gyldighetsDato: LocalDate = LocalDate.now()) {
-        val kommuneNr = kommune.kommunenummer
-        val nyeAdministrativeGrenser = deltGeometriAdministrativeGrenserService.getAdministrativeGrenserMedDeltGeometriForKommune(kommune, gyldighetsDato)
-
-        val grunnkretserSomSkalOppdateres = deltGeometriKretsService.getGrunnkretserSomGrenserTilKommunegrense(kommuneNr, gyldighetsDato)
-        val stemmekretserSomSkaOppdateres = deltGeometriKretsService.getStemmekretserSomGrenserTilKommunegrense(kommuneNr, gyldighetsDato)
-
-        val grunnkretsGrenserMap = grunnkretserSomSkalOppdateres.associateWith {
-            nyeAdministrativeGrenser.map { grense ->
-                GrunnkretsGrenseKobling(
-                    grunnkrets = it,
-                    grense = grense
-                )
-            }
+    private fun skrivLoggmelding(eventer: Map<String, EventRad>, kommunenr: String) {
+        val antallGrunnkretser = eventer.values.count { it.flateType == Flatetype.GRUNNKRETS }
+        val antallStemmekretser = eventer.values.count { it.flateType == Flatetype.STEMMEKRETS }
+        val antallKommuner = eventer.values.count { it.flateType == Flatetype.KOMMUNE }
+        val antallFylker = eventer.values.count { it.flateType == Flatetype.FYLKE }
+        val antallNasjoner = eventer.values.count { it.flateType == Flatetype.NASJON }
+        var infomelding = ""
+        if (antallGrunnkretser > 0 || antallStemmekretser > 0 || antallKommuner > 0 || antallFylker > 0 || antallNasjoner > 0) {
+            infomelding = "Antall oppdaterte for $kommunenr: "
         }
-
-        val stemmekretsGrenserMap = stemmekretserSomSkaOppdateres.associateWith {
-            nyeAdministrativeGrenser.map { grense ->
-                StemmekretsGrenseKobling(
-                    stemmekrets = it,
-                    grense = grense
-                )
-            }
-        }
-
-
-        /**
-         * TODO: Bytt ut alle grensene med grensekoblinger med de nye grensene+grensekoblingene. Siden dette skjer som en del av import går det fint
-         *       om man her bare sletter alle de gamle grensene/grensekoblingene og ikke lager nye versjoner. De gamle er ikke relevante.
-         *       Over har vi 2 maps (Krets -> nye grensekoblinger). Så her ligger dataene vi skal bytte ut til.
-         */
+        if (antallGrunnkretser > 0) infomelding += " -grunnkretser: $antallGrunnkretser"
+        if (antallStemmekretser > 0) infomelding += " -stemmekretser: $antallStemmekretser"
+        if (antallKommuner > 0) infomelding += " -kommuner: $antallKommuner"
+        if (antallFylker > 0) infomelding += " -fylker: $antallFylker"
+        if (antallNasjoner > 0) infomelding += " -nasjoner: $antallNasjoner"
+        logger.info(infomelding)
     }
+
 }

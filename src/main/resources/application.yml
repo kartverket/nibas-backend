@@ -89,11 +89,11 @@ spring:
       connection-timeout: 5000
       read-timeout: 15000
   config:
-    import:
-      vault://nibas/nibas-backend,
-      vault://nibas/nibas-db,
-      vault://nibas/nibas-backend-apikeys,
-      vault://nibas/nibas-events-apikeys,
+    # Optionally connect to Config Server (Vault). Gjør at vault-pathene ikke evalueres for import.
+    import: optional:vault://nibas/nibas-backend,
+      optional:vault://nibas/nibas-db,
+      optional:vault://nibas/nibas-backend-apikeys,
+      optional:vault://nibas/nibas-events-apikeys,
 
   jmx:
     enabled: true
@@ -120,4 +120,24 @@ spring:
       enabled: true
 
 aut.host.url: https://aut-idporten.dev.skip.statkart.no
+---
+spring:
+  config:
+    activate:
+      on-profile:
+        - import
+        - deling
+        - deltgeometri
+  autoconfigure:
+    # For å kunne bruke siste versjon av springdoc-openapi også for importen (https://github.com/springdoc/springdoc-openapi/issues/2142)
+    exclude: org.springdoc.core.configuration.SpringDocJacksonKotlinModuleConfiguration
+  main:
+    web-application-type: none
+  jpa:
+    open-in-view: false
+  cloud:
+    vault:
+      enabled: false
+  jmx:
+    enabled: false
 

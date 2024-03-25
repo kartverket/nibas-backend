@@ -56,27 +56,26 @@ class FlateService @Autowired constructor(
     }
 
     private fun oppdaterGrunnkretsflate(grunnkrets: Grunnkrets) {
-        logger.info("Oppdaterer grunnkretsflate for ${finnNavn(grunnkrets)}")
+        logger.info("Oppdaterer grunnkretsflate for ${grunnkrets.grunnkretsnummer} ${finnNavn(grunnkrets)}")
         grunnkrets.oppdaterOmraadeOgPosisjon()
         grunnkretsRepository.save(grunnkrets)
     }
 
     private fun oppdaterStemmekretsflate(stemmekrets: Stemmekrets) {
-        logger.info("Oppdaterer stemmekretsflate for ${finnNavn(stemmekrets)}")
+        logger.info("Oppdaterer stemmekretsflate for ${stemmekrets.stemmekretsnummer} ${finnNavn(stemmekrets)} i kommune ${stemmekrets.getKommune(stemmekrets.gyldighet.gyldigFra)?.kommunenummer}")
         stemmekrets.oppdaterOmraadeOgPosisjon()
         stemmekretsRepository.save(stemmekrets)
     }
 
     private fun oppdaterKommuneflate(kommune: Kommune) {
-        val kommunenummerVerdi = kommune.kommunenummer
-        logger.info("Oppdaterer kommuneflate for $kommunenummerVerdi - ${finnNavn(kommune)}")
+        logger.info("Oppdaterer kommuneflate for ${kommune.kommunenummer} ${finnNavn(kommune)}")
         val kommunegrenser = getTilatteGrenserForEnhet(kommune, kommune.gyldighet.gyldigFra, Kommune.tillatteGrensetyper())
         kommune.oppdaterOmraadeOgPosisjon(kommunegrenser)
         kommuneRepository.save(kommune)
     }
 
     private fun oppdaterFylkesflate(fylke: Fylke) {
-        logger.info("Oppdaterer fylkesflate for ${fylke.fylkesnummer} - ${finnNavn(fylke)}")
+        logger.info("Oppdaterer fylkesflate for ${fylke.fylkesnummer} ${finnNavn(fylke)}")
         val fylkesgrenser = getTilatteGrenserForEnhet(fylke, fylke.gyldighet.gyldigFra, Fylke.tillatteGrensetyper())
         fylke.oppdaterOmraadeOgPosisjon(fylkesgrenser)
         fylkeRepository.save(fylke)
