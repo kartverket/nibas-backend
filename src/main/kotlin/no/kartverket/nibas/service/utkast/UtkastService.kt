@@ -147,6 +147,9 @@ class UtkastService(
             operasjoner.stemmekretsSammenslaaingsendring?.let {
                 stemmekretsService.validerOptimistiskLaasForStemmekretsSammenslaaing(it, utkast.gyldigFra)
             }
+            operasjoner.grunnkretsSammenslaaingsendring?.let {
+                grunnkretsService.validerOptimistiskLaasForGrunnkretsSammenslaaing(it, utkast.gyldigFra)
+            }
             grenseService.validerOptimistiskLaasKonflikter(operasjoner.grenseendringer.endredeFeatures, utkast.gyldigFra)
             validerOptimistiskLaasForMetadataEndringer(operasjoner.metadataendringer, utkast.gyldigFra)
         }

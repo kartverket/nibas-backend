@@ -169,6 +169,18 @@ data class KretsNavnOgNummer(
     val kretsNummer: String
 )
 
+@Schema(description = "Representasjon av sammenslåing av en grunnkrets med 1 eller flere andre grunnkretser i samme kommune")
+data class GrunnkretsSammenslaaingsendringRequest (
+    @Schema (description = "Identifikator til den grunnkretsen som skal videreføres")
+    val viderefoertGrunnkrets: IdentifikatorMedVersjon,
+    @Schema(description = "Liste av identifikatorer som skal bli del av den videreførte grunnkretsen")
+    val grunnkretserTilSammenslaaing: List<IdentifikatorMedVersjon>,
+    @Schema (description = "Navnet til den sammenslåtte grunnkretsen")
+    val navn: String,
+    @Schema (description = "Grunnkretsnummeret til den sammenslåtte grunnkretsen")
+    val nummer: String
+)
+
 @Schema(description = "Requestbody for publisering av utkast.")
 data class PubliserUtkastRequest (
     @Schema (description = "Datoen utkastet skal publiseres fra. Settes default til dagens dato om ikke satt.")

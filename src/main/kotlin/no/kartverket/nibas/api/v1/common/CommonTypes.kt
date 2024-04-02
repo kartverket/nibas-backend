@@ -9,6 +9,7 @@ import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.api.v1.request.NasjonRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
+import no.kartverket.nibas.api.v1.request.GrunnkretsSammenslaaingsendringRequest
 import no.kartverket.nibas.common.Lokalid
 import java.time.LocalDate
 import jakarta.persistence.AttributeConverter
@@ -137,6 +138,8 @@ data class Operasjoner(
     val grenseendringer: Grenseendringer = Grenseendringer(),
     @Schema(description = "Sammenslåing av stemmekretser i samme kommune.")
     val stemmekretsSammenslaaingsendring: StemmekretsSammenslaaingsendringRequest? = null,
+    @Schema(description = "Sammenslåing av stemmekretser i samme kommune.")
+    val grunnkretsSammenslaaingsendring: GrunnkretsSammenslaaingsendringRequest? = null,
     @Schema(description = "Deling av en stemmekrets eller grunnkrets")
     val kretsDelingEndringer: List<KretsDelingEndringRequest> = listOf(),
 )

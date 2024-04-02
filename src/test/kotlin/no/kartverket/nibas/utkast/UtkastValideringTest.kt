@@ -12,6 +12,7 @@ import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.KontekstEgenskaper
 import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
+import no.kartverket.nibas.api.v1.request.GrunnkretsSammenslaaingsendringRequest
 import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.api.v1.request.KretsNavnOgNummer
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
@@ -611,6 +612,13 @@ class UtkastValideringTest {
                     stemmekretserTilSammenslaaing = listOf(IdentifikatorMedVersjon("2", 1)),
                     navn = "gyldigNavn",
                     nummer = "4"
+                ),
+                grunnkretsSammenslaaingsendring =
+                GrunnkretsSammenslaaingsendringRequest(
+                    viderefoertGrunnkrets = IdentifikatorMedVersjon("1", 5),
+                    grunnkretserTilSammenslaaing = listOf(IdentifikatorMedVersjon("2", 1)),
+                    navn = "gyldigNavn",
+                    nummer = "03010567"
                 ),
                 grenseendringer = operasjonerMedKunEditerbareGrenser().grenseendringer
             )

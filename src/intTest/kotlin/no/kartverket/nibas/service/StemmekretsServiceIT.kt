@@ -819,7 +819,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
     }
 
     @Test
-    fun `delStemmekrets kaster OptimistiksLaasException ved versjonsfeil på den opprinnelige kretsen`(){
+    fun `delStemmekrets kaster OptimistiskLaasException ved versjonsfeil på den opprinnelige kretsen`(){
         val opprinneligStemmekrets = saveStemmekrets("opprinneligKrets", Lokalid("opprinneligKrets"))
 
         val kommune = saveKommune(stemmekretser = listOf(opprinneligStemmekrets), gyldigFra = jan1In2023)

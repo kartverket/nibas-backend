@@ -13,6 +13,7 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.StatistiskgrenseMetada
 import no.kartverket.nibas.api.v1.common.getUnikeKretsDelingEndringRequests
 import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
+import no.kartverket.nibas.api.v1.request.GrunnkretsSammenslaaingsendringRequest
 import no.kartverket.nibas.api.v1.request.KretsNavnOgNummer
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.GrunnkretsRequestBuilder
@@ -58,6 +59,9 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
     private val december1In2022 = LocalDate.of(2022, Month.DECEMBER, 1)
     private val jan1In2023 = LocalDate.of(2023, Month.JANUARY, 1)
     private val jan1In2024 = LocalDate.of(2024, Month.JANUARY, 1)
+    private val sammenslaaingDato =  LocalDate.of(2022, Month.FEBRUARY, 1)
+    private val datoEtterSammanslaaing = LocalDate.of(2022, Month.MARCH, 1)
+    private val datoFoerSammenslaaing = LocalDate.of(2021, Month.JANUARY, 1)
 
     private val grenseLokallid = Lokalid("888")
     private val grunnkretsLokalid = Lokalid("1001")
@@ -318,6 +322,107 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         }.isInstanceOf(ResponseException.BadRequestException::class.java)
             .hasMessageContaining("Kretsnummer ${vestreKrets.grunnkretsnummer} er brukt på flere grunnkretser innenfor kommunen")
 
+    }
+
+    private fun utfoerSammenslaaing(vestreKrets: Grunnkrets, oestreKrets: Grunnkrets): Grunnkrets? {
+        val sammenslaaingsendringRequest = GrunnkretsSammenslaaingsendringRequest(
+            viderefoertGrunnkrets = IdentifikatorMedVersjon(vestreKrets.lokalid, 1),
+            grunnkretserTilSammenslaaing = listOf(IdentifikatorMedVersjon(oestreKrets.lokalid, 1)),
+            navn = "Sammenslått krets",
+            nummer = "999"
+        )
+
+        grunnkretsService.slaaSammenGrunnkretser(
+            sammenslaaingsendringRequest = sammenslaaingsendringRequest,
+            sammenslaaingsDato = sammenslaaingDato,
+            endringstype = Endringstype.VEDTATT_SAMMENSLAAING
+        )
+
+        return grunnkretsService.hentGrunnkrets(Identifikator(Lokalid(vestreKrets.lokalid), datoEtterSammanslaaing))
+    }
+
+    @Test
+    fun `slaaSammenGrunnkretser ny krets skal bruke viderefoert navn og nummer`() {
+        val (vestreKrets, oestreKrets) = saveNaboGrunnkretser(gyldigFra = LocalDate.parse("2022-01-01"))
+
+        val sammenslattGrunnkrets = utfoerSammenslaaing(vestreKrets, oestreKrets)
+
+        assertThat(sammenslattGrunnkrets?.grunnkretsnavn).isEqualTo("Sammenslått krets")
+        assertThat(sammenslattGrunnkrets?.grunnkretsnummer).isEqualTo("999")
+    }
+
+    @Test
+    fun `slaaSammenGrunnkretser skal inneholde alle grenser utenom delte grenser`() {
+        val (vestreKrets, oestreKrets) = saveNaboGrunnkretser(gyldigFra = LocalDate.parse("2022-01-01"))
+
+        val sammenslattGrunnkrets = utfoerSammenslaaing(vestreKrets, oestreKrets)
+
+        val antallGrenser = vestreKrets.grenser.size + oestreKrets.grenser.size
+        val grenseIder = sammenslattGrunnkrets?.grenser?.map { it.grense.id }
+
+        assertThat(sammenslattGrunnkrets?.grenser?.size).isLessThan(antallGrenser)
+        assertThat(grenseIder).doesNotContain("grenseDelt")
+    }
+
+    @Test
+    fun `slaaSammenGrunnkretser skal sette tilhørigheter korrekt på alle grensene`() {
+        // Starter med å sette opp 2 nabogrunnkretser som skal slåes sammen
+        // og sørger for at de ytre grensene på disse kretsene (altså grensene som ikke er delt)
+        // har tilhørighet til en 3. grunnkrets. Disse kretsene er derfor hull i den 3 kretsen.
+        // Vi ønsker å sjekke at de "ytre"-grensene på den sammenslåtte grunnkretsen har de
+        // riktige 2 tilhørighetene etter sammenslåingen og ikke mister noen knytninger her.
+        val (vestreKrets, oestreKrets) = saveNaboGrunnkretser(gyldigFra = datoFoerSammenslaaing)
+        val grenseRundt = grenseRepository.save(GrenseHelper.getGrenseRundtVestreOgOestreKrets(gyldigFra = datoFoerSammenslaaing, grensetype = Grensetype.Grunnkretsgrense))
+        val grunnkretsRundt = saveGrunnkrets(
+            id = "grunnkrets-rundt",
+            lokalid = Lokalid("stemmekrets-rundt-lokalid"),
+            grunnkretsnummer = "03010020",
+            gyldigFra = datoFoerSammenslaaing,
+            grenser = listOf(grenseRundt)
+        )
+
+        val ikkeDelteGrenserVestreKrets = vestreKrets.getGrensekoblinger(datoFoerSammenslaaing).filter { it.grense.grunnkretser(datoFoerSammenslaaing).size < 2 }
+        val ikkeDelteGrenserOestreKrets = oestreKrets.getGrensekoblinger(datoFoerSammenslaaing).filter { it.grense.grunnkretser(datoFoerSammenslaaing).size < 2 }
+        val ikkeDelteGrenser = ikkeDelteGrenserOestreKrets + ikkeDelteGrenserVestreKrets
+
+        ikkeDelteGrenser.forEach { grunnkretsRundt.addGrensekobling(it.grense) }
+
+        val sammenslattGrunnkrets = utfoerSammenslaaing(vestreKrets, oestreKrets)!!
+
+        assertThat(sammenslattGrunnkrets.grunnkretsnavn).isEqualTo("Sammenslått krets")
+        assertThat(sammenslattGrunnkrets.grunnkretsnummer).isEqualTo("999")
+
+        // Vi skal beholde kun de ikke-delte grensene
+        assertThat(sammenslattGrunnkrets.getGrensekoblinger(datoEtterSammanslaaing)).hasSize(ikkeDelteGrenser.size)
+
+        sammenslattGrunnkrets.getGrensekoblinger(datoEtterSammanslaaing).forEach {
+            assertThat(it.grense.grunnkretser(datoEtterSammanslaaing))
+                .hasSize(2)
+                .extracting("lokalid")
+                .containsExactlyInAnyOrder(sammenslattGrunnkrets.lokalid, grunnkretsRundt.lokalid)
+        }
+    }
+
+    @Test
+    fun `slaa sammen Vestre og Oestre grunnkretser med gjenbruk av nummer fra Tredje skal gi feil`() {
+        val (vestreKrets, oestreKrets, tredjeKrets) = saveNaboGrunnkretser(gyldigFra = LocalDate.parse("2022-01-01"), medTredjeKrets = true)
+
+        val sammenslaaingsendringRequest = GrunnkretsSammenslaaingsendringRequest(
+            viderefoertGrunnkrets = IdentifikatorMedVersjon(vestreKrets.lokalid, 1),
+            grunnkretserTilSammenslaaing = listOf(IdentifikatorMedVersjon(oestreKrets.lokalid, 1)),
+            navn = "Sammenslått krets",
+            nummer = tredjeKrets.grunnkretsnummer!!
+        )
+
+        val sammenslaingsdato = LocalDate.parse("2022-02-01")
+        Assertions.assertThatThrownBy {
+            grunnkretsService.slaaSammenGrunnkretser(
+                sammenslaaingsendringRequest = sammenslaaingsendringRequest,
+                sammenslaaingsDato = sammenslaingsdato,
+                endringstype = Endringstype.VEDTATT_SAMMENSLAAING
+            )
+        }.isInstanceOf(ResponseException.BadRequestException::class.java)
+            .hasMessageContaining("Kretsnummer 03010022 er brukt på flere grunnkretser innenfor kommunen")
     }
 
     @Test
@@ -1211,7 +1316,8 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         saveKommuneOgUnikLokalid(grunnkretser = listOf(grunnkrets, grunnkretsFramtidigVersjon))
     }
 
-    fun saveNaboGrunnkretser(gyldigFra: LocalDate, medHull: Boolean = false, medToDelteGrenser: Boolean = false): List<Grunnkrets> {
+    private fun saveNaboGrunnkretser(gyldigFra: LocalDate, medHull: Boolean = false, medTredjeKrets: Boolean = false, medToDelteGrenser: Boolean = false)
+    : List<Grunnkrets> {
         val grenserForVest = if (medHull) {
             GrenseHelper.getGrenserForVestligKrets(gyldigFra, Grensetype.Grunnkretsgrense, medToDelteGrenser) +
                 GrenseHelper.getHullVestligKrets(gyldigFra, Grensetype.Grunnkretsgrense)
@@ -1242,9 +1348,22 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
             grenser = lagredeGrenserForOest
         )
 
-        saveKommuneOgUnikLokalid(grunnkretser = listOf(kretsVest, kretsOest), gyldigFra = gyldigFra)
+        val grunnkretsMutableList = mutableListOf(kretsVest, kretsOest)
+        if (medTredjeKrets) {
+            val tredjeKrets = saveGrunnkrets(
+                id = "3",
+                lokalid = Lokalid("345"),
+                grunnkretsnummer = "03010022",
+                grunnkretsnavn = "Tredje krets",
+                gyldigFra = gyldigFra
+            )
+            grunnkretsMutableList.add(tredjeKrets)
+        }
+
+        val grunnkretser = grunnkretsMutableList.toList()
+        saveKommuneOgUnikLokalid(grunnkretser = grunnkretser, gyldigFra = gyldigFra)
         grenseRepository.flush()
-        return listOf(kretsVest, kretsOest)
+        return grunnkretser
     }
 
     private fun saveNaboGrunnkretserIHverSinKommune(gyldigFra: LocalDate, medHull: Boolean = false, medToDelteGrenser: Boolean = false, kommunenummer1: String = "0301", kommunenummer2: String = "0302"): List<Grunnkrets> {

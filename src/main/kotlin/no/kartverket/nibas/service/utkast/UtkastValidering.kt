@@ -183,6 +183,22 @@ class UtkastValidatorService(
                     "Utkast inneholder ugyldige metadataendringer på grunnkrets"
                 )
             )
+        val harUgyldigMetadataendringPaaGrunnkretsSammenslaaing =
+            if (operasjoner.grunnkretsSammenslaaingsendring != null)
+                isMetadataendringUgyldig(
+                    Flatetype.GRUNNKRETS,
+                    operasjoner.grunnkretsSammenslaaingsendring.navn,
+                    operasjoner.grunnkretsSammenslaaingsendring.nummer,
+                    operasjoner.grunnkretsSammenslaaingsendring.viderefoertGrunnkrets.lokalId
+                )
+            else false
+        if (harUgyldigMetadataendringPaaGrunnkretsSammenslaaing)
+            return OperasjonerValidering.UgyldigeOperasjoner(
+                operasjoner,
+                ResponseException.BadRequestException(
+                    "Utkast inneholder ugyldige metadataendringer på sammenslåing"
+                )
+            )
 
         val harUgyldigMetadataendringPaaStemmekrets =
             operasjoner.metadataendringer.stemmekretsendringer.values.any {
