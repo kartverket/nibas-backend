@@ -2,6 +2,7 @@ package no.kartverket.nibas.api.v1.klient.response
 
 import io.swagger.v3.oas.annotations.media.Schema
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
+import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Fylkesnummer
 import no.kartverket.nibas.api.v1.common.GyldighetResponse
 import no.kartverket.nibas.api.v1.common.Kommunenummer
@@ -10,6 +11,7 @@ import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.sporing.Gyldighet
+import org.locationtech.jts.geom.Coordinate
 import org.springframework.http.HttpStatus
 import java.time.LocalDate
 import java.time.ZonedDateTime
@@ -187,6 +189,19 @@ data class UtkastResponse(
     val operasjoner: Operasjoner = Operasjoner(),
     @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
     val version: Int
+)
+
+data class InndelingResponse(
+    @Schema(description = "Lokalid til inndelingen")
+    val id: String,
+    @Schema(description = "Flatetypen til inndelingen")
+    val type: Flatetype,
+    @Schema(description = "Navnet til inndelingen")
+    val navn: String,
+    @Schema(description = "Nummeret til inndelingen")
+    val nummer: String,
+    @Schema(description = "Koordinatet til representasjonspunktet til inndelingen.")
+    val representasjonspunkt: Coordinate,
 )
 
 @Schema(description = "Representasjon av audit info for et objekt.")

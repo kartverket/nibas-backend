@@ -32,12 +32,12 @@ import no.kartverket.nibas.service.FlateService
 import no.kartverket.nibas.service.FylkeService
 import no.kartverket.nibas.service.GrenseService
 import no.kartverket.nibas.service.GrunnkretsService
+import no.kartverket.nibas.service.InndelingerService
 import no.kartverket.nibas.service.KommuneService
 import no.kartverket.nibas.service.NasjonService
 import no.kartverket.nibas.service.StemmekretsService
 import no.kartverket.nibas.service.utkast.UtkastService
 import no.kartverket.nibas.service.deltgeometri.DeltGeometriAdministrativeGrenserService
-import no.kartverket.nibas.service.deltgeometri.DeltGeometriService
 import no.kartverket.nibas.sporing.Gyldighet
 import org.assertj.core.api.Assertions.assertThat
 import org.locationtech.jts.geom.MultiPolygon
@@ -110,7 +110,7 @@ class TestWithDbContainer {
     lateinit var administrativenhetnavnService: AdministrativenhetnavnService
 
     @Autowired
-    lateinit var deltGeometriService: DeltGeometriService
+    lateinit var inndelingerService: InndelingerService
 
     @Autowired
     lateinit var deltGeometriAdministrativeGrenserService: DeltGeometriAdministrativeGrenserService
