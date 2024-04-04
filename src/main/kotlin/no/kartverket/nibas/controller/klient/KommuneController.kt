@@ -1,6 +1,5 @@
 package no.kartverket.nibas.controller.klient
 
-import no.kartverket.nibas.api.v1.common.Kommunenummer
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.klient.KommuneApi
 import no.kartverket.nibas.api.v1.klient.response.GrunnkretsResponse
@@ -27,20 +26,18 @@ class KommuneController(
         val datoToUse: LocalDate = gyldighetsdato ?: LocalDate.now()
         return if (fylkeId == null) {
             kommuneService.hentAlleKommuner(datoToUse).map {
-                it.toKommuneResponse(createIdentifikator(it.lokalid, it.gyldighet.gyldigFra),Kommunenummer(it.kommunenummerUuid, it.kommunenummer))
+                it.toKommuneResponse(createIdentifikator(it.lokalid, it.gyldighet.gyldigFra))
             }
         } else {
             kommuneService.hentKommunerForFylke(Identifikator(Lokalid(fylkeId), datoToUse)).map {
-                it.toKommuneResponse(createIdentifikator(it.lokalid, it.gyldighet.gyldigFra), Kommunenummer(it.kommunenummerUuid, it.kommunenummer))
+                it.toKommuneResponse(createIdentifikator(it.lokalid, it.gyldighet.gyldigFra))
             }
         }
     }
 
     override fun hentKommune(lokalid: String, gyldighetsdato: LocalDate?): KommuneResponse {
         val identifikator = createIdentifikator(lokalid, gyldighetsdato)
-        return kommuneService.hentKommune(identifikator)?.let {
-            it.toKommuneResponse(identifikator, Kommunenummer(it.kommunenummerUuid, it.kommunenummer))
-        } ?: throw NotFoundException("Kommune $identifikator ble ikke funnet.")
+        return kommuneService.hentKommune(identifikator)?.toKommuneResponse(identifikator) ?: throw NotFoundException("Kommune $identifikator ble ikke funnet.")
     }
 
     override fun hentGrenserForKommune(lokalid: String, gyldighetsdato: LocalDate?): FeatureCollection {

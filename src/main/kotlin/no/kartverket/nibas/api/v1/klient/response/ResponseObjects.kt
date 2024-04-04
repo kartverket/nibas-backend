@@ -3,7 +3,6 @@ package no.kartverket.nibas.api.v1.klient.response
 import io.swagger.v3.oas.annotations.media.Schema
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.common.Flatetype
-import no.kartverket.nibas.api.v1.common.Fylkesnummer
 import no.kartverket.nibas.api.v1.common.GyldighetResponse
 import no.kartverket.nibas.api.v1.common.Kommunenummer
 import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
@@ -39,9 +38,6 @@ data class FylkeResponse(
     @Schema(description = "Fylkesnummeret til fylket")
     val nummer: String,
 
-    @Schema(description = "Fylkesnummeret til fylket")
-    val fylkesnummer: Fylkesnummer,
-
     @Schema(description = "Angir om fylket er et samisk forvaltningsområde eller ikke")
     val samiskforvaltningsomraade: Boolean,
 
@@ -65,9 +61,6 @@ data class KommuneResponse(
 
     @Schema(description = "Kommunenummeret til kommunen")
     val nummer: String,
-
-    @Schema(description = "Kommunenummeret til kommunen")
-    val kommunenummer: Kommunenummer,
 
     @Schema(description = "Angir om kommunen er et samisk forvaltningsområde eller ikke")
     val samiskforvaltningsomraade: Boolean,

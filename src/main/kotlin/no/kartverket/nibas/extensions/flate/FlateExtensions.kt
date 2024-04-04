@@ -1,7 +1,6 @@
 package no.kartverket.nibas.extensions.flate
 
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
-import no.kartverket.nibas.api.v1.common.Fylkesnummer
 import no.kartverket.nibas.api.v1.common.Kommunenummer
 import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.klient.response.FylkeResponse
@@ -39,10 +38,6 @@ fun Fylke.toFylkeResponse(identifikator: Identifikator): FylkeResponse = FylkeRe
     id = identifikator.toObjektIdentifikator(),
     navn = getAdministrativenhetNavn(identifikator.gyldighetsdato)
         .map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version, it.rekkefoelge) },
-    fylkesnummer = Fylkesnummer(
-        id = fylkesnummerUuid,
-        kodeverdi = fylkesnummer
-    ),
     nummer = fylkesnummer,
     samiskforvaltningsomraade = samiskforvaltningsomraade!!,
     oppdateringsdato = auditInfo.endretdato,
@@ -50,11 +45,10 @@ fun Fylke.toFylkeResponse(identifikator: Identifikator): FylkeResponse = FylkeRe
     version = version
 )
 
-fun Kommune.toKommuneResponse(identifikator: Identifikator, kommunenummer: Kommunenummer): KommuneResponse = KommuneResponse(
+fun Kommune.toKommuneResponse(identifikator: Identifikator): KommuneResponse = KommuneResponse(
     id = identifikator.toObjektIdentifikator(),
     navn = getAdministrativenhetNavn(identifikator.gyldighetsdato)
         .map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version, it.rekkefoelge) },
-    kommunenummer = kommunenummer,
     nummer = this.kommunenummer,
     samiskforvaltningsomraade = samiskforvaltningsomraade!!,
     oppdateringsdato = auditInfo.endretdato,
