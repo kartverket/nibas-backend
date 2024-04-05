@@ -1,14 +1,11 @@
 package no.kartverket.nibas.config
 
-import no.kartverket.aut.lib.security.DefaultWebSecurityConfig
-import no.kartverket.aut.lib.security.hasActiveProfile
 import no.kartverket.nibas.events.NibasEventsService
 import org.slf4j.MDC
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.env.Environment
 import org.springframework.http.HttpHeaders
-import org.springframework.web.context.annotation.RequestScope
 import org.springframework.web.reactive.function.client.WebClient
 
 @Configuration
@@ -49,6 +46,6 @@ class NibasEventsConfig (
     }
 
     fun inProduction(): Boolean {
-        return environment.hasActiveProfile(DefaultWebSecurityConfig.PRODUCTION_PROFILE_STRING)
+        return environment.activeProfiles.toList().contains("production")
     }
 }

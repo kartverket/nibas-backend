@@ -1,5 +1,4 @@
 [versions]
-autLibVersion = "2.0.3"
 flywayVersion = "10.9.0"
 hibernateVersion = "6.4.2.Final" # Siste versjon som fungerer med testene :(
 hypersistenceUtilsHibernate63Version = "3.7.3"
@@ -8,6 +7,7 @@ kotlinMockitoVersion = "5.2.1"
 kotlinPluginVersion = "1.9.22"
 kotlinxCoroutinesCoreVersion = "1.8.0"
 logstashVersion = "7.4"
+nimbusJwtVersion = "9.37.3"
 openTelemetryVersion = "1.35.0"
 prometheusVersion = "1.12.3"
 spatial4jVersion = "0.8"
@@ -26,7 +26,6 @@ hibernate-core = { module = "org.hibernate.orm:hibernate-core", version.ref = "h
 hibernate-spatial = { module = "org.hibernate.orm:hibernate-spatial", version.ref = "hibernateVersion" }
 hypersistence-utils-hibernate = { module = "io.hypersistence:hypersistence-utils-hibernate-63", version.ref = "hypersistenceUtilsHibernate63Version" }
 jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin" }
-kartverket-autlib = { module = "no.kartverket.aut:aut-lib", version.ref = "autLibVersion" }
 kotlin-mockito = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "kotlinMockitoVersion" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect" }
 kotlin-stdlib-jdk = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8" }
@@ -40,6 +39,7 @@ locationtech-jts-modules = { module = "org.locationtech.jts:jts-modules", versio
 locationtech-spatial4j = { module = "org.locationtech.spatial4j:spatial4j", version.ref = "spatial4jVersion" }
 logstash-logback-encoder = { module = "net.logstash.logback:logstash-logback-encoder", version.ref = "logstashVersion" }
 micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "prometheusVersion" }
+nimbus-jose-jwt = { module = "com.nimbusds:nimbus-jose-jwt", version.ref = "nimbusJwtVersion" }
 opentelemetry-api = { module = "io.opentelemetry:opentelemetry-api", version.ref = "openTelemetryVersion" }
 opentelemetry-bom = { module = "io.opentelemetry:opentelemetry-bom", version.ref = "openTelemetryVersion" }
 postgres = { module = "org.postgresql:postgresql" }

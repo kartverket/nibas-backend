@@ -1,8 +1,7 @@
 package no.kartverket.nibas.sporing
 
-import no.kartverket.aut.lib.jwt.impl.PidMaskerer
-import no.kartverket.aut.lib.security.DefaultWebSecurityConfig
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Sporingsinformasjon
+import no.kartverket.nibas.auth.PidMaskerer
 import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.domain.Endringstype
 import org.hibernate.event.service.spi.EventListenerRegistry
@@ -13,7 +12,6 @@ import org.hibernate.event.spi.PreInsertEventListener
 import org.hibernate.event.spi.PreUpdateEvent
 import org.hibernate.event.spi.PreUpdateEventListener
 import org.hibernate.internal.SessionFactoryImpl
-import org.springframework.core.env.Environment
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Component
 import java.time.LocalDate
@@ -29,25 +27,16 @@ interface UserFacade {
 }
 
 @Component
-class DefaultUserFacade constructor(private val environment: Environment) : UserFacade {
+class DefaultUserFacade : UserFacade {
 
     override fun getAuthenticatedUser(): String {
-        if (startedWithSecurityOff()) {
-            return "DUMMY"
-        }
-
         val authentication = SecurityContextHolder.getContext().authentication
         if (authentication == null || !authentication.isAuthenticated) {
             throw RuntimeException("Ugyldig tilstand. Har ingen innlogget bruker.")
         }
         // Vi burde nok hente navn fra altinn, men enn så lenge bruker vi maskert fødselsnummer
-        return PidMaskerer().getMaskedName(authentication.name)
+        return PidMaskerer.getMaskedName(authentication.name)
     }
-
-    private fun startedWithSecurityOff(): Boolean {
-        return listOf(*environment.activeProfiles).contains(DefaultWebSecurityConfig.SECURITY_OFF_PROFILE_STRING)
-    }
-
 }
 
 @Component

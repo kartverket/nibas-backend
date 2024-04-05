@@ -29,8 +29,6 @@ springdoc:
   api-docs:
     path: /api-docs
 
-aut.host.url: http://aut-idporten.aut-main:8080
-
 spring:
   profiles:
     active: prod
@@ -100,6 +98,8 @@ spring:
 
 # Hver dag kl 03
 nibas:
+  idporten:
+    url: https://idporten.no
   cron:
     kodeliste:
       invalidate: 0 0 3 * * *
@@ -107,37 +107,20 @@ nibas:
 spring:
   config:
     activate:
-      on-profile: localhost
+      on-profile:
+        - localhost
+        - deltgeometri
   datasource:
     url: ${DB_CONNECTION_STRING:jdbc:postgresql://localhost:5432/nibas}
     username: ${DB_USER:nibas}
     password: ${DB_PASSWORD:nibas}
   cloud:
     vault:
-      uri: ${VAULT_ADDR:https://vault.dev.skip.statkart.no/}
-      authentication: token
-      token: ${VAULT_TOKEN:myroot}
-      enabled: true
-
-aut.host.url: https://aut-idporten.dev.skip.statkart.no
----
-spring:
-  config:
-    activate:
-      on-profile:
-        - import
-        - deling
-        - deltgeometri
-  autoconfigure:
-    # For å kunne bruke siste versjon av springdoc-openapi også for importen (https://github.com/springdoc/springdoc-openapi/issues/2142)
-    exclude: org.springdoc.core.configuration.SpringDocJacksonKotlinModuleConfiguration
-  main:
-    web-application-type: none
-  jpa:
-    open-in-view: false
-  cloud:
-    vault:
       enabled: false
-  jmx:
-    enabled: false
+
+nibas:
+  authorized:
+    users: bd23d991ffd8b950373470ed4b27e965
+  idporten:
+    url: https://test.idporten.no
 

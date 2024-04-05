@@ -28,15 +28,6 @@ dependencyManagement {
 repositories {
     mavenLocal()
     mavenCentral()
-    // Aut-lib package registry
-    maven {
-        name = "Aut-lib GitHubPackages"
-        url = uri("https://maven.pkg.github.com/kartverket/aut-lib")
-        credentials {
-            username = project.findProperty("gh_username") as String? ?: System.getenv("GH_USERNAME")
-            password = project.findProperty("pat") as String? ?: System.getenv("PAT")
-        }
-    }
 }
 
 
@@ -63,7 +54,6 @@ buildscript {
 }
 
 dependencies {
-    implementation(libs.kartverket.autlib)
     implementation(libs.spring.jpa)
     implementation(libs.spring.security) // Web-security
     implementation(libs.spring.web)
@@ -92,6 +82,7 @@ dependencies {
     implementation(libs.spring.cloud.vault.configuration)
     implementation(libs.micrometer.registry.prometheus)
     implementation(libs.spring.integration.core)
+    implementation(libs.nimbus.jose.jwt)
     implementation(platform(libs.opentelemetry.bom))
     implementation(libs.opentelemetry.api)
     // This library provides Hibernate 5.5+ Json column support, which is not natively supported by Hibernate

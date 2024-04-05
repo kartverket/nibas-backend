@@ -1,5 +1,7 @@
 package no.kartverket.nibas.testcontainer
 
+import com.ninjasquad.springmockk.MockkBean
+import io.mockk.every
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.builders.FylkeBuilder
@@ -9,6 +11,7 @@ import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.builders.NasjonBuilder
 import no.kartverket.nibas.builders.StemmekretsBuilder
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.config.SimpleAuthenticationToken
 import no.kartverket.nibas.domain.Administrativenhetnavn
 import no.kartverket.nibas.domain.Fylke
 import no.kartverket.nibas.domain.Grense
@@ -33,6 +36,7 @@ import no.kartverket.nibas.service.FylkeService
 import no.kartverket.nibas.service.GrenseService
 import no.kartverket.nibas.service.GrunnkretsService
 import no.kartverket.nibas.service.InndelingerService
+import no.kartverket.nibas.service.JWTSignatureVerifier
 import no.kartverket.nibas.service.KommuneService
 import no.kartverket.nibas.service.NasjonService
 import no.kartverket.nibas.service.StemmekretsService
@@ -40,10 +44,13 @@ import no.kartverket.nibas.service.utkast.UtkastService
 import no.kartverket.nibas.service.deltgeometri.DeltGeometriAdministrativeGrenserService
 import no.kartverket.nibas.sporing.Gyldighet
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.locationtech.jts.geom.MultiPolygon
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment
+import org.springframework.security.core.authority.SimpleGrantedAuthority
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.containers.PostgreSQLContainer
@@ -115,6 +122,9 @@ class TestWithDbContainer {
     @Autowired
     lateinit var deltGeometriAdministrativeGrenserService: DeltGeometriAdministrativeGrenserService
 
+    @MockkBean
+    lateinit var jwtSignatureVerifier: JWTSignatureVerifier
+
     companion object dbContainer : PostgreSQLContainer<dbContainer>(
         DockerImageName.parse("postgis/postgis:14-3.4-alpine").asCompatibleSubstituteFor("postgres")
     ) {
@@ -134,6 +144,16 @@ class TestWithDbContainer {
             registry.add("spring.datasource.username", dbContainer::getUsername)
             registry.add("spring.datasource.password", dbContainer::getPassword)
         }
+    }
+
+    @BeforeEach
+    fun setupJwtSignastureVerifierMock() {
+        every { jwtSignatureVerifier.verifyJwtSignature(any()) } returns true
+        SecurityContextHolder.getContext().authentication = SimpleAuthenticationToken(
+            user = "DUMMY",
+            credentials = "DUMMY",
+            authorities = listOf(SimpleGrantedAuthority("NIBAS"))
+        )
     }
 
     fun saveNasjon(id: String = "nasjon-9000",

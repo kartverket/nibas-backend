@@ -58,9 +58,6 @@ jobs:
 
       - name: Build with Gradle
         run: ./gradlew build --info
-        env:
-          GH_USERNAME: ${{ secrets.PAT_USERNAME }}
-          PAT: ${{ secrets.PAT_SCOPE_READ_PACKAGE }}
 
       - name: Bump version and push tag
         id: tag_version

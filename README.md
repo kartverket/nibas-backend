@@ -59,7 +59,7 @@ psql -f {DB_DUMP_FILENAME} -h localhost -U nibas -d nibas
 
 ## Kjøre applikasjonen
 
-Om man bruker intelliJ kan man da starte main-metoden i `NibasBackendApplication.kt`. Husk å sette aktiv spring-profil til `localhost,security-off`. Dette gjøres under "Run/Debug Configurations" og vil se slik ut i IntelliJ: 
+Om man bruker intelliJ kan man da starte main-metoden i `NibasBackendApplication.kt`. Husk å sette aktiv spring-profil til `localhost`. Dette gjøres under "Run/Debug Configurations" og vil se slik ut i IntelliJ: 
 
 ![image](https://github.com/kartverket/nibas-backend/assets/39772759/6f6f8156-70d7-4d34-87df-8535d47980b7)
 
@@ -83,7 +83,7 @@ Nå skal applikasjonen være klar til bruk og du kan sette opp [nibas-frontend](
 Om integrasjonen mot nibas-events skal fungere, må du gjøre følgende:
 
 - Miljøvariabel `nibas-events.host` må settes til aktuell nibas-events applikasjon. Denne skal inneholde host:port.
-- Dersom du kjører nibas-events med security, må det også finnes en miljøvariabel `api.key.publisher`. Den samme som nibas-events autentiserer mot.
+- Dersom du kjører nibas-events, må det også finnes en miljøvariabel `api.key.publisher`. Den samme som nibas-events autentiserer mot.
 
 
 # Autentisering <a name="autentisering"></a>

@@ -19,8 +19,10 @@ spring:
     time-zone: "Europe/Oslo"
 # Hver dag kl 03
 nibas:
+  idporten:
+    url: https://dummy.url.idporten
   cron:
     kodeliste:
       invalidate: 0 0 3 * * *
 
-aut.host.url: https://aut-idporten.dev.skip.statkart.no
+

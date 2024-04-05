@@ -122,7 +122,7 @@ data class AdministrativEnhetNavn(
 data class GyldighetResponse(
     @Schema(description = "Tidspunktet objektet er gyldig fra")
     val gyldigFra: LocalDate,
-    @Schema(description = "Tidspunktet objektet er gyldig til. Kan være tomt/løpende.")
+    @Schema(description = "Tidspunktet objektet er gyldig til. Kan være tomt/løpende.", nullable = true)
     val gyldigTil: LocalDate?,
 )
 

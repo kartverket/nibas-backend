@@ -1,11 +1,15 @@
 package no.kartverket.nibas
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.ninjasquad.springmockk.MockkBean
+import io.mockk.every
 import no.kartverket.nibas.config.WebSecurityConfig
 import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.service.JWTSignatureVerifier
 import no.kartverket.nibas.utils.IdType
 import no.kartverket.nibas.utils.sammenlignJsonFeltnavn
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
@@ -22,10 +26,12 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import java.nio.charset.Charset
 
 
-@ActiveProfiles("dev", "security-off", "humanReadableLog")
+@ActiveProfiles("humanReadableLog", "security-off")
 @ImportAutoConfiguration(WebSecurityConfig::class)
 @WebMvcTest
 open class NibasMvcTest {
+    @MockkBean
+    lateinit var jwtSignatureVerifier: JWTSignatureVerifier
 
     @Autowired
     lateinit var mvc: MockMvc
@@ -35,6 +41,11 @@ open class NibasMvcTest {
 
     @MockBean
     lateinit var kodelisteServiceMock: KodelisteService
+
+    @BeforeEach
+    fun setupJwtSignastureVerifierMock() {
+        every { jwtSignatureVerifier.verifyJwtSignature(any()) } returns true
+    }
 
     fun get(url: String): MvcResult {
         return perform(MockMvcRequestBuilders.get(url), emptyList())
