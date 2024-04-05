@@ -16,15 +16,7 @@ For å sette opp applikasjonen trenger du følgende:
 - Java, versjon 17 skal fungere, men nyere versjoner kan få byggefeil
 - PostgreSQL, versjon 16 er den nyligste versjonen vi har testet
 - Docker, versjon 24 er den nyligste versjonen vi har testet
-  
-Du må også lage en `gradle.properties`-fil som skal ha følgende innhold:
 
-```
-pat=<PERSONLIG_PAT>
-gh_username=<BRUKERNAVN_GITHUB>
-```
-
-Propertiene pat og gh_username må være tilstede for å kunne hente artifakter som aut-lib fra Github. Da vil nedlasting av artifakter (som aut-lib) fra Github fungere og en vil også kunne bruke Gradle Sync fra IntelliJ uten å bygge først. Da vil også source-jaren bli lastet ned.
 
 ## Kjøre databasen og vault
 
@@ -89,6 +81,9 @@ Om integrasjonen mot nibas-events skal fungere, må du gjøre følgende:
 # Autentisering <a name="autentisering"></a>
 
 Applikasjonen starter default med autentisering påskrudd. Dette betyr at alle API-endepunkt er sikret og trenger en Authorization-header for å kunne aksesseres.
+Med default-oppsett så vil man kun kunne logge inn med brukeren `05865396092` lokalt. Men kan kan fint legge til flere
+brukere om man ønsker det ved å legge de til i miljøvaribelen `nibas.authorized.users`. Her legger man en kommeseparert liste
+med MD5-hashen av fødselsnummer man ønsker at skal være autoriserte for tjenesten.
 
 ## Disable autentisering ved lokal kjøring
 
@@ -119,12 +114,6 @@ eksempel [WebSecurityConfigTest](src/test/kotlin/no/kartverket/nibas/config/WebS
 ```kotlin
 @ActiveProfiles("dev", inheritProfiles = false)
 ```
-
-## Testbrukere i lokal Vault
-Dersom du ønsker å teste med påskrudd sikkerhet lokalt, må det legges inn testbrukere i lokal vault.
-Dette gjøres ved å legge inn følgende på sti `nibas/nibas-backend/nibas.authorized.users`: `42dfc6b0432747c8ed8aeea84562f201,4952921544649dddf0f20b4449ccaa5c,bd23d991ffd8b950373470ed4b27e965,5c3f2c0ce444a612bacd939912fccce9`
-Dette tilsvarer fødselsnummer for følgende testbrukere:
-11841497939,18929197670,05865396092,03894999895
 
 # Diverse tilleggskommandoer <a name="kommandoer"></a>
 
