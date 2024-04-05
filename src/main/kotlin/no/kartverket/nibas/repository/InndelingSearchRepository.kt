@@ -18,10 +18,19 @@ class InndelingSearchRepository(val jdbcTemplate: NamedParameterJdbcTemplate) {
 
     fun finnGrunnkretser(gyldighetsdato: LocalDate, searchString: String, limit: Int): List<Inndeling> {
         val query = """
-                select lokalid, grunnkretsnavn as navn, grunnkretsnummer as nummer, posisjon as representasjonspunkt from grunnkrets g
-                where gyldigfra <= (:gyldighetsdato) and (gyldigtil > (:gyldighetsdato) or gyldigtil is null) and slettet = false 
-                and (grunnkretsnavn ilike CONCAT(:searchString, '%') or grunnkretsnummer ilike CONCAT(:searchString, '%'))
-                limit :limit
+                SELECT 
+                    lokalid, 
+                    grunnkretsnavn AS navn, 
+                    grunnkretsnummer AS nummer, 
+                    posisjon AS representasjonspunkt 
+                FROM 
+                    grunnkrets g 
+                WHERE 
+                    gyldigfra <= :gyldighetsdato
+                    AND (gyldigtil > :gyldighetsdato OR gyldigtil IS NULL) 
+                    AND slettet = FALSE 
+                    AND CONCAT(grunnkretsnummer, ' ', grunnkretsnavn) ILIKE CONCAT('%', :searchString, '%')
+                LIMIT :limit
             """.trimIndent()
 
         return jdbcTemplate.query(query, mapOf("gyldighetsdato" to gyldighetsdato, "searchString" to searchString, "limit" to limit), InndelingRowMapper(Flatetype.GRUNNKRETS))
@@ -29,10 +38,17 @@ class InndelingSearchRepository(val jdbcTemplate: NamedParameterJdbcTemplate) {
 
     fun finnStemmekretser(gyldighetsdato: LocalDate, searchString: String, limit: Int): List<Inndeling> {
         val query = """
-                select lokalid, stemmekretsnavn as navn, stemmekretsnummer as nummer, posisjon as representasjonspunkt from stemmekrets s
-                where gyldigfra <= (:gyldighetsdato) and (gyldigtil > (:gyldighetsdato) or gyldigtil is null) and slettet = false 
-                and (stemmekretsnavn ilike CONCAT(:searchString, '%') or stemmekretsnummer ilike CONCAT(:searchString, '%'))
-                limit :limit
+                SELECT s.lokalid,
+                        s.stemmekretsnavn AS navn,
+                        concat(k.kommunenummer, s.stemmekretsnummer) AS nummer,
+                        s.posisjon AS representasjonspunkt
+                FROM stemmekrets s
+                JOIN kommune k ON k.lokalid = s.kommunelokalid
+                WHERE s.gyldigfra <= :gyldighetsdato
+                  AND (s.gyldigtil > :gyldighetsdato OR s.gyldigtil IS NULL)
+                  AND s.slettet = FALSE 
+                  AND CONCAT(k.kommunenummer, s.stemmekretsnummer, ' ', s.stemmekretsnavn) ILIKE CONCAT('%', :searchString, '%')
+                LIMIT :limit
             """.trimIndent()
 
         return jdbcTemplate.query(query, mapOf("gyldighetsdato" to gyldighetsdato, "searchString" to searchString, "limit" to limit), InndelingRowMapper(Flatetype.STEMMEKRETS))
@@ -54,7 +70,7 @@ class InndelingSearchRepository(val jdbcTemplate: NamedParameterJdbcTemplate) {
                 WHERE gyldigfra <= :gyldighetsdato
                   AND (gyldigtil > :gyldighetsdato OR gyldigtil IS NULL)
                   AND slettet = false
-                  AND (a.navn ILIKE CONCAT(:searchString, '%') OR k.kommunenummer ILIKE CONCAT(:searchString, '%'))
+                  AND CONCAT(k.kommunenummer, ' ', a.navn) ILIKE CONCAT('%', :searchString, '%')
                 LIMIT :limit
             """.trimIndent()
         return jdbcTemplate.query(query, mapOf("gyldighetsdato" to gyldighetsdato, "searchString" to searchString, "limit" to limit), InndelingRowMapper(Flatetype.KOMMUNE))
@@ -76,7 +92,7 @@ class InndelingSearchRepository(val jdbcTemplate: NamedParameterJdbcTemplate) {
                 WHERE gyldigfra <= :gyldighetsdato
                   AND (gyldigtil > :gyldighetsdato OR gyldigtil IS NULL)
                   AND slettet = false
-                  AND (a.navn ILIKE CONCAT(:searchString, '%') OR f.fylkesnummer ILIKE CONCAT(:searchString, '%'))
+                  AND CONCAT(f.fylkesnummer, ' ', a.navn) ILIKE CONCAT('%', :searchString, '%')
                 LIMIT :limit
             """.trimIndent()
         return jdbcTemplate.query(query, mapOf("gyldighetsdato" to gyldighetsdato, "searchString" to searchString, "limit" to limit), InndelingRowMapper(Flatetype.FYLKE))
