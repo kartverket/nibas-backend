@@ -15,5 +15,5 @@ nibas:
   cron:
     kodeliste:
       invalidate: 0 0 3 * * *
-
-aut.host.url: https://aut-idporten.dev.skip.statkart.no
+  idporten:
+    url: https://test.idporten.no

@@ -16,11 +16,6 @@ on:
       image_url:
         description: "The full URL to the docker-image created"
         value: ${{ jobs.build.outputs.image_url }}
-    secrets:
-      PAT_USERNAME:
-        required: true
-      PAT_SCOPE_READ_PACKAGE:
-        required: true
 
 env:
   image_name: nibas-backend

@@ -5,7 +5,7 @@ import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import no.kartverket.nibas.config.WebSecurityConfig
 import no.kartverket.nibas.kodelister.KodelisteService
-import no.kartverket.nibas.service.JWTSignatureVerifier
+import no.kartverket.nibas.service.JWTVerifier
 import no.kartverket.nibas.utils.IdType
 import no.kartverket.nibas.utils.sammenlignJsonFeltnavn
 import org.assertj.core.api.Assertions.assertThat
@@ -31,7 +31,7 @@ import java.nio.charset.Charset
 @WebMvcTest
 open class NibasMvcTest {
     @MockkBean
-    lateinit var jwtSignatureVerifier: JWTSignatureVerifier
+    lateinit var jwtVerifier: JWTVerifier
 
     @Autowired
     lateinit var mvc: MockMvc
@@ -44,7 +44,7 @@ open class NibasMvcTest {
 
     @BeforeEach
     fun setupJwtSignastureVerifierMock() {
-        every { jwtSignatureVerifier.verifyJwtSignature(any()) } returns true
+        every { jwtVerifier.verifyJwt(any()) } returns true
     }
 
     fun get(url: String): MvcResult {

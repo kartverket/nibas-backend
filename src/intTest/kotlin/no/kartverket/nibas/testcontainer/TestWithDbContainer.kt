@@ -36,7 +36,7 @@ import no.kartverket.nibas.service.FylkeService
 import no.kartverket.nibas.service.GrenseService
 import no.kartverket.nibas.service.GrunnkretsService
 import no.kartverket.nibas.service.InndelingerService
-import no.kartverket.nibas.service.JWTSignatureVerifier
+import no.kartverket.nibas.service.JWTVerifier
 import no.kartverket.nibas.service.KommuneService
 import no.kartverket.nibas.service.NasjonService
 import no.kartverket.nibas.service.StemmekretsService
@@ -123,7 +123,7 @@ class TestWithDbContainer {
     lateinit var deltGeometriAdministrativeGrenserService: DeltGeometriAdministrativeGrenserService
 
     @MockkBean
-    lateinit var jwtSignatureVerifier: JWTSignatureVerifier
+    lateinit var jwtVerifier: JWTVerifier
 
     companion object dbContainer : PostgreSQLContainer<dbContainer>(
         DockerImageName.parse("postgis/postgis:14-3.4-alpine").asCompatibleSubstituteFor("postgres")
@@ -148,7 +148,7 @@ class TestWithDbContainer {
 
     @BeforeEach
     fun setupJwtSignastureVerifierMock() {
-        every { jwtSignatureVerifier.verifyJwtSignature(any()) } returns true
+        every { jwtVerifier.verifyJwt(any()) } returns true
         SecurityContextHolder.getContext().authentication = SimpleAuthenticationToken(
             user = "DUMMY",
             credentials = "DUMMY",

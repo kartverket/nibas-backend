@@ -3,8 +3,6 @@ registries:
   maven-github:
     type: maven-repository
     url: https://maven.pkg.github.com/kartverket
-    username: ${{ secrets.PAT_USERNAME }}
-    password: ${{ secrets.PAT_SCOPE_READ_PACKAGE }}
 updates:
   # Sjekker også oppdateringer på GitHub Maven Package aut-lib
   - package-ecosystem: "gradle"

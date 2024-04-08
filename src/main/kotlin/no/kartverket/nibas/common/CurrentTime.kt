@@ -1,6 +1,7 @@
 package no.kartverket.nibas.common
 
 import org.springframework.stereotype.Component
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -11,4 +12,7 @@ class CurrentTime {
 
     fun asLocalDateTime(): LocalDateTime =
         LocalDateTime.now()
+
+    fun asInstant(): Instant =
+        Instant.now()
 }

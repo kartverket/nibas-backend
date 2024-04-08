@@ -4,7 +4,7 @@ import com.nimbusds.jwt.JWT
 import com.nimbusds.jwt.SignedJWT
 import no.kartverket.nibas.auth.PidMaskerer
 import no.kartverket.nibas.common.md5
-import no.kartverket.nibas.service.JWTSignatureVerifier
+import no.kartverket.nibas.service.JWTVerifier
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
@@ -46,7 +46,7 @@ import jakarta.servlet.http.HttpServletResponse
 @EnableMethodSecurity(securedEnabled = true)
 class WebSecurityConfig @Autowired constructor(
     private val environment: Environment,
-    private val jwtSignatureVerifier: JWTSignatureVerifier
+    private val jwtVerifier: JWTVerifier
 ) {
     private val LOGGER = LoggerFactory.getLogger(this.javaClass)
 
@@ -119,7 +119,7 @@ class WebSecurityConfig @Autowired constructor(
             LOGGER.warn("Startet applikasjonen med JWT-REQUEST-FILTER skrudd av (security off)")
             SecurityOffAuthenticationFilter()
         } else {
-            UserBearerTokenAuthenticationFilter(jwtSignatureVerifier, environment)
+            UserBearerTokenAuthenticationFilter(jwtVerifier, environment)
         }
     }
 
@@ -152,7 +152,7 @@ class ApiKeyAuthenticationFilter(
     }
 }
 class UserBearerTokenAuthenticationFilter(
-    private val jwtSignatureVerifier: JWTSignatureVerifier,
+    private val jwtVerifier: JWTVerifier,
     private val environment: Environment
 ) : OncePerRequestFilter() {
     override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain) {
@@ -161,7 +161,7 @@ class UserBearerTokenAuthenticationFilter(
         if (!token.isNullOrBlank()) {
             try {
                 val signedJWT = SignedJWT.parse(token)
-                if (signedJWT != null && jwtSignatureVerifier.verifyJwtSignature(signedJWT)) {
+                if (signedJWT != null && jwtVerifier.verifyJwt(signedJWT)) {
                     val authentication = createAuthenticationFrom(signedJWT, request)
                     SecurityContextHolder.getContext().authentication = authentication
                     logger.info("Authenticated user ${PidMaskerer.getMaskedName(authentication.name)},  with authorities: ${grantedAuthoritiesString(authentication.authorities)}")
