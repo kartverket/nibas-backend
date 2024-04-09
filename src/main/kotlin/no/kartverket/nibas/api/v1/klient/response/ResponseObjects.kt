@@ -12,7 +12,6 @@ import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.sporing.Gyldighet
 import org.locationtech.jts.geom.Coordinate
 import org.springframework.http.HttpStatus
-import java.time.LocalDate
 import java.time.ZonedDateTime
 
 @Schema(description = "En referanse til et utkast")
@@ -172,8 +171,6 @@ data class UtkastResponse(
     val endringstype: String,
     @Schema(description = "Status for utkastet.")
     val status: String,
-    @Schema(description = "Tidspunktet utkastet skal være gyldig fra.")
-    val gyldigFra: LocalDate,
     @Schema(description = "Da utkastet ble opprettet.")
     val opprettetDato: ZonedDateTime,
     @Schema(description = "Info om endringer på utkast.")

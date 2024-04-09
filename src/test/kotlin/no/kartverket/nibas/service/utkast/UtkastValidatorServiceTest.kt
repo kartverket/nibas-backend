@@ -83,7 +83,6 @@ class UtkastValidatorServiceTest {
         }
 
         val utkast = UtkastBuilder.builder("test")
-            .withGyldigFra(datoSomVilGiFremtidEndringKonflikt)
             .withGrunnkretsRequests(mapOf(
                 "lokalId" to GrunnkretsRequest(
                     "navn",
@@ -94,7 +93,7 @@ class UtkastValidatorServiceTest {
             ))
             .build()
 
-        val result = utkastValidatorService.validateUtkastKlartForPublisering(utkast)
+        val result = utkastValidatorService.validateUtkastKlartForPublisering(utkast, datoSomVilGiFremtidEndringKonflikt)
         assertThat(result).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
 
         val ugyldigUtkast = result as UtkastValidering.UgyldigUtkast
@@ -107,7 +106,6 @@ class UtkastValidatorServiceTest {
     @Test
     fun `skal gi feil om det finnes flere endringer på grenser med samme ID`() {
         val utkast = UtkastBuilder.builder("test")
-            .withGyldigFra(datoSomVilGiFremtidEndringKonflikt)
             .withOperasjoner(
                 Operasjoner(
                     grenseendringer = Grenseendringer(
@@ -126,7 +124,7 @@ class UtkastValidatorServiceTest {
             )
             .build()
 
-        val result = utkastValidatorService.validateUtkastKlartForPublisering(utkast)
+        val result = utkastValidatorService.validateUtkastKlartForPublisering(utkast, datoSomVilGiFremtidEndringKonflikt)
         assertThat(result).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
 
         val ugyldigUtkast = result as UtkastValidering.UgyldigUtkast
@@ -136,7 +134,6 @@ class UtkastValidatorServiceTest {
     @Test
     fun `skal ikke gi feil om det er flere nye features i samme utkast`() {
         val utkast = UtkastBuilder.builder("test")
-            .withGyldigFra(datoSomVilGiFremtidEndringKonflikt)
             .withOperasjoner(
                 Operasjoner(
                     grenseendringer = Grenseendringer(
@@ -155,14 +152,13 @@ class UtkastValidatorServiceTest {
             )
             .build()
 
-        val result = utkastValidatorService.validateUtkastKlartForPublisering(utkast)
+        val result = utkastValidatorService.validateUtkastKlartForPublisering(utkast, datoSomVilGiFremtidEndringKonflikt)
         assertThat(result).isInstanceOf(UtkastValidering.KlartForPublisering::class.java)
     }
 
     @Test
     fun `skal gi feil om det finnes nyere endringer paa stemmekrets`() {
         val utkast = UtkastBuilder.builder("test")
-            .withGyldigFra(datoSomVilGiFremtidEndringKonflikt)
             .withStemmekretsRequests(mapOf(
                 "lokalId" to StemmekretsRequest(
                     identifikasjon = Identifikasjon(lokalid = "lokalid"),
@@ -176,7 +172,7 @@ class UtkastValidatorServiceTest {
             ))
             .build()
 
-        val result = utkastValidatorService.validateUtkastKlartForPublisering(utkast)
+        val result = utkastValidatorService.validateUtkastKlartForPublisering(utkast, datoSomVilGiFremtidEndringKonflikt)
         assertThat(result).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
 
         val ugyldigUtkast = result as UtkastValidering.UgyldigUtkast
@@ -189,7 +185,6 @@ class UtkastValidatorServiceTest {
     @Test
     fun `skal gi feil om det finnes nyere endringer paa grense`() {
         val utkast = UtkastBuilder.builder("test")
-            .withGyldigFra(datoSomVilGiFremtidEndringKonflikt)
             .withOperasjoner(
                 Operasjoner(
                     grenseendringer = Grenseendringer(
@@ -203,7 +198,7 @@ class UtkastValidatorServiceTest {
             )
             .build()
 
-        val result = utkastValidatorService.validateUtkastKlartForPublisering(utkast)
+        val result = utkastValidatorService.validateUtkastKlartForPublisering(utkast, datoSomVilGiFremtidEndringKonflikt)
         assertThat(result).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
 
         val ugyldigUtkast = result as UtkastValidering.UgyldigUtkast

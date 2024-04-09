@@ -162,7 +162,6 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
         val utkastId = saveGrunnkretsUtkast(
             navn = "Jeg vil endre grunnkretsnr til 12340123 fra 1.7.23",
             oppdateringsdato = october24In2022,
-            gyldigFra = july1In2023,
             grunnkretsRequest
         )
 
@@ -216,7 +215,7 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
 
     private fun saveAndPubliserGrunnkretsUtkast(navn: String, grkrNr: String, grkrNavn: String,
                                                 oppdateringsdato: ZonedDateTime, gyldigFra: LocalDate, version: Int) {
-        val utkastId = saveGrunnkretsUtkast(navn, grkrNavn, grkrNr, version, oppdateringsdato, gyldigFra)
+        val utkastId = saveGrunnkretsUtkast(navn, grkrNavn, grkrNr, version, oppdateringsdato)
         publiser(utkastId, gyldigFra)
     }
 
@@ -228,14 +227,12 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
     private fun saveGrunnkretsUtkast(
         navn: String,
         oppdateringsdato: ZonedDateTime,
-        gyldigFra: LocalDate,
         grunnkretsRequest: GrunnkretsRequest
     ): String {
         val utkast = UtkastBuilder.builder(navn)
             .withGrunnkretsRequests(
                 mapOf(lokalidOfGrunnkrets to grunnkretsRequest))
             .withAuditInfo(AuditInfo(oppdateringsdato, "DUMMY"))
-            .withGyldigFra(gyldigFra)
             .build()
         utkastRepository.save(utkast)
         return utkast.id
@@ -246,9 +243,8 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
         grkrNavn: String,
         grkrNr: String,
         version: Int,
-        oppdateringsdato: ZonedDateTime,
-        gyldigFra: LocalDate
-    ): String = saveGrunnkretsUtkast(navn, oppdateringsdato, gyldigFra, createGrunnkretsRequest(grkrNavn, grkrNr, version))
+        oppdateringsdato: ZonedDateTime
+    ): String = saveGrunnkretsUtkast(navn, oppdateringsdato, createGrunnkretsRequest(grkrNavn, grkrNr, version))
 
     private fun createGrunnkretsRequest(
         grkrNavn: String,

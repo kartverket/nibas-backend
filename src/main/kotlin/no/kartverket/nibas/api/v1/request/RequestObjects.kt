@@ -128,8 +128,6 @@ data class OppdaterUtkastRequest(
     val navn: String,
     @Schema(description = "Typen endring utkastet representerer.")
     val endringstype: String,
-    @Schema(description = "Tidspunktet utkastet skal være gyldig fra.")
-    val gyldigFra: LocalDate? = LocalDate.now().plusYears(10),
     @Schema(description = "Representasjon av endringene som er utført i utkastet.")
     val operasjoner: Operasjoner = Operasjoner(),
     @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")

@@ -62,7 +62,6 @@ private fun Utkast.toUtkastResponse(): UtkastResponse =
         navn = this.navn,
         endringstype = this.auditInfo.typeEndring.value,
         status = this.status.value,
-        gyldigFra = this.gyldigFra,
         operasjoner = this.operasjoner ?: Operasjoner(),
         opprettetDato = this.opprettetDato,
         auditInfoResponse = this.auditInfo.toAuditInfoResponse(),

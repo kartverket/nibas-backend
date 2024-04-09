@@ -59,10 +59,12 @@ class UtkastValideringTest {
 
     private lateinit var utkastValidatorService: UtkastValidatorService
 
+    private val june2024 = LocalDate.of(2024, 6, 1)
+
     @BeforeEach
     fun setup() {
         MockKAnnotations.init(this)
-        every { currentTime.asLocalDate() } returns LocalDate.of(2022, 6, 1)
+        every { currentTime.asLocalDate() } returns june2024
         every { grunnkretsServiceMock.hentGrunnkrets(any()) } returns GrunnkretsBuilder.DEFAULT_GRUNNKRETS
         every { grunnkretsServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns emptyList()
 
@@ -79,7 +81,7 @@ class UtkastValideringTest {
             .withStatus(UtkastStatus.PUBLISERT)
             .build()
 
-        val validateUtkastKlartForPublisering = utkastValidatorService.validateUtkastKlartForPublisering(publisertUtkast)
+        val validateUtkastKlartForPublisering = utkastValidatorService.validateUtkastKlartForPublisering(publisertUtkast, june2024)
         assertThat(validateUtkastKlartForPublisering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
     }
 
@@ -88,17 +90,7 @@ class UtkastValideringTest {
         val utkastUtenOperasjoner = UtkastBuilder.builder("Utkast for publisering")
             .build()
 
-        val validateUtkastKlartForPublisering = utkastValidatorService.validateUtkastKlartForPublisering(utkastUtenOperasjoner)
-        assertThat(validateUtkastKlartForPublisering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
-    }
-
-    @Test
-    fun `valider utkast med gyldig fra i fortiden gir ugyldig utkast`() {
-        val utkastMedGyldigFraIFortiden = UtkastBuilder.builder("Utkast for publisering")
-            .withGyldigFra(LocalDate.of(2021, 1, 1))
-            .build()
-
-        val validateUtkastKlartForPublisering = utkastValidatorService.validateUtkastKlartForPublisering(utkastMedGyldigFraIFortiden)
+        val validateUtkastKlartForPublisering = utkastValidatorService.validateUtkastKlartForPublisering(utkastUtenOperasjoner, june2024)
         assertThat(validateUtkastKlartForPublisering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
     }
 
@@ -364,7 +356,7 @@ class UtkastValideringTest {
             ))
         ))
 
-        return Pair(utkast, utkastValidatorService.validateUtkastKlartForPublisering(utkast))
+        return Pair(utkast, utkastValidatorService.validateUtkastKlartForPublisering(utkast, june2024))
     }
 
 
@@ -479,7 +471,7 @@ class UtkastValideringTest {
 
         every { grunnkretsServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns listOf()
 
-        val utkastValidering = utkastValidatorService.validateUtkastKlartForPublisering(utkast)
+        val utkastValidering = utkastValidatorService.validateUtkastKlartForPublisering(utkast, june2024)
         assertThat(utkastValidering).isInstanceOf(UtkastValidering.KlartForPublisering::class.java)
     }
 
@@ -626,7 +618,7 @@ class UtkastValideringTest {
             .withOperasjoner(operasjoner)
             .build()
 
-        val validateGyldigUtkastResult = utkastValidatorService.validateGyldigUtkast(gyldigUtkast)
+        val validateGyldigUtkastResult = utkastValidatorService.validateGyldigUtkast(gyldigUtkast, june2024)
         assertThat(validateGyldigUtkastResult).isInstanceOf(UtkastValidering.GyldigUtkast::class.java)
     }
 
@@ -635,7 +627,7 @@ class UtkastValideringTest {
         val utkastUtenOperasjoner = UtkastBuilder.builder("Utkast for publisering")
             .build()
 
-        val validateGyldigUtkastResult = utkastValidatorService.validateGyldigUtkast(utkastUtenOperasjoner)
+        val validateGyldigUtkastResult = utkastValidatorService.validateGyldigUtkast(utkastUtenOperasjoner, june2024)
         assertThat(validateGyldigUtkastResult).isInstanceOf(UtkastValidering.GyldigUtkast::class.java)
     }
 }

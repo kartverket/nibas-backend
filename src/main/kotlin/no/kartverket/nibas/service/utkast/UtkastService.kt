@@ -77,14 +77,14 @@ class UtkastService(
             ?: throw ResponseException.NotFoundException("Utkast ble ikke funnet for id: $id.")
 
             verifiserOptimistiskLaas(request.version, utkast)?.throwException()
+            validerOptimistiskLaasForEndringer(utkast, LocalDate.now())
 
             utkast.navn = request.navn
             utkast.auditInfo.typeEndring = Endringstype.fromValue(request.endringstype)
-            utkast.gyldigFra = request.gyldigFra!!
             utkast.operasjoner = request.operasjoner
 
             val utkastValideringResult =
-                utkastValidatorService.validateGyldigUtkast(utkast)
+                utkastValidatorService.validateGyldigUtkast(utkast, LocalDate.now())
 
             if (utkastValideringResult is UtkastValidering.UgyldigUtkast) {
                 throw utkastValideringResult.feil
@@ -104,54 +104,53 @@ class UtkastService(
             hentUtkast(utkastId)
                 ?: throw ResponseException.NotFoundException("Utkast ble ikke funnet for id: $utkastId.")
 
-        utkast.gyldigFra = gyldigFra
-
         when (
             val utkastValideringResult =
-                utkastValidatorService.validateUtkastKlartForPublisering(utkast)
+                utkastValidatorService.validateUtkastKlartForPublisering(utkast, gyldigFra)
         ) {
             is UtkastValidering.UgyldigUtkast -> throw utkastValideringResult.feil
             is UtkastValidering.GyldigUtkast -> throw ResponseException.BadRequestException("Noe gikk galt (Utkastet ble markert som GyldigUtkast KlartForPublisering.")
             is UtkastValidering.KlartForPublisering -> {
                 logger.debug(utkast.publiseringsInfo())
-                validerOptimistiskLaasForEndringer(utkast)
+                validerOptimistiskLaasForEndringer(utkast, gyldigFra)
 
                 utkast.operasjoner?.let { operasjoner ->
-                    val flateEndringer = publiserEndringer(operasjoner, utkast)
-                    nibasEventPublisher.publishNibasEvent(flateEndringer, utkast.gyldigFra)
+                    val flateEndringer = publiserEndringer(operasjoner, utkast, gyldigFra)
+                    nibasEventPublisher.publishNibasEvent(flateEndringer, gyldigFra)
                 }
                 utkast.settPublisert()
             }
         }
     }
 
-    internal fun publiserEndringer(operasjoner: Operasjoner, utkast: Utkast): List<EventRad> {
-        val kretsDelingEndringer = publiserKretsDelingEndringer(operasjoner.kretsDelingEndringer, utkast)
+    internal fun publiserEndringer(operasjoner: Operasjoner, utkast: Utkast, gyldigFra: LocalDate): List<EventRad> {
+        val kretsDelingEndringer = publiserKretsDelingEndringer(operasjoner.kretsDelingEndringer, utkast, gyldigFra)
 
         val sammenslaaingsendringer =
-            publiserSammenslaaingsendringer(operasjoner.stemmekretsSammenslaaingsendring, utkast)
+            publiserSammenslaaingsendringer(operasjoner.stemmekretsSammenslaaingsendring, utkast, gyldigFra)
 
         val metadataendringer =
             publiserMetadataEndringer(
                 operasjoner.metadataendringer,
-                utkast
+                utkast,
+                gyldigFra
             )
 
-        val grenseendringer = publiserGrenseendringer(operasjoner.grenseendringer, utkast)
+        val grenseendringer = publiserGrenseendringer(operasjoner.grenseendringer, utkast, gyldigFra)
 
         return metadataendringer + sammenslaaingsendringer + grenseendringer + kretsDelingEndringer
     }
 
-    private fun validerOptimistiskLaasForEndringer(utkast: Utkast) {
+    private fun validerOptimistiskLaasForEndringer(utkast: Utkast, gyldigFra: LocalDate) {
         utkast.operasjoner?.let { operasjoner ->
             operasjoner.stemmekretsSammenslaaingsendring?.let {
-                stemmekretsService.validerOptimistiskLaasForStemmekretsSammenslaaing(it, utkast.gyldigFra)
+                stemmekretsService.validerOptimistiskLaasForStemmekretsSammenslaaing(it, gyldigFra)
             }
             operasjoner.grunnkretsSammenslaaingsendring?.let {
-                grunnkretsService.validerOptimistiskLaasForGrunnkretsSammenslaaing(it, utkast.gyldigFra)
+                grunnkretsService.validerOptimistiskLaasForGrunnkretsSammenslaaing(it, gyldigFra)
             }
-            grenseService.validerOptimistiskLaasKonflikter(operasjoner.grenseendringer.endredeFeatures, utkast.gyldigFra)
-            validerOptimistiskLaasForMetadataEndringer(operasjoner.metadataendringer, utkast.gyldigFra)
+            grenseService.validerOptimistiskLaasKonflikter(operasjoner.grenseendringer.endredeFeatures, gyldigFra)
+            validerOptimistiskLaasForMetadataEndringer(operasjoner.metadataendringer, gyldigFra)
         }
     }
 
@@ -189,12 +188,13 @@ class UtkastService(
     private fun publiserMetadataEndringer(
         metadata: Metadataendringer,
         utkast: Utkast,
+        gyldigFra: LocalDate
     ): List<EventRad> {
         val endredeNasjoner =
             metadata.nasjonsendringer.mapNotNull { nasjonEndring ->
                 nasjonService.oppdaterNasjon(
                     lokalid = Lokalid(value = nasjonEndring.key),
-                    gyldigFra = utkast.gyldigFra,
+                    gyldigFra = gyldigFra,
                     endringstype = utkast.auditInfo.typeEndring,
                     oppdatertNasjon = nasjonEndring.value
                 )
@@ -204,7 +204,7 @@ class UtkastService(
             metadata.fylkesendringer.mapNotNull { fylkeEndring ->
                 fylkeService.oppdaterFylke(
                     lokalid = Lokalid(value = fylkeEndring.key),
-                    gyldigFra = utkast.gyldigFra,
+                    gyldigFra = gyldigFra,
                     endringstype = utkast.auditInfo.typeEndring,
                     oppdatertFylke = fylkeEndring.value
                 )
@@ -214,7 +214,7 @@ class UtkastService(
             metadata.kommuneendringer.mapNotNull { kommuneEndring ->
                 kommuneService.oppdaterKommune(
                     lokalid = Lokalid(value = kommuneEndring.key),
-                    gyldigFra = utkast.gyldigFra,
+                    gyldigFra = gyldigFra,
                     oppdatertKommune = kommuneEndring.value,
                     endringstype = utkast.auditInfo.typeEndring
                 )
@@ -224,7 +224,7 @@ class UtkastService(
             metadata.grunnkretsendringer.mapNotNull { grunnkretsEndring ->
                 grunnkretsService.oppdaterGrunnkrets(
                     lokalId = Lokalid(grunnkretsEndring.key),
-                    gyldigFra = utkast.gyldigFra,
+                    gyldigFra = gyldigFra,
                     oppdatertGrunnkrets = grunnkretsEndring.value,
                     endringstype = utkast.auditInfo.typeEndring
                 )
@@ -234,7 +234,7 @@ class UtkastService(
             metadata.stemmekretsendringer.mapNotNull { stemmekretsEndring ->
                 stemmekretsService.oppdaterStemmekrets(
                     lokalId = Lokalid(stemmekretsEndring.key),
-                    gyldigFra = utkast.gyldigFra,
+                    gyldigFra = gyldigFra,
                     oppdatertStemmekrets = stemmekretsEndring.value,
                     endringstype = utkast.auditInfo.typeEndring
                 )
@@ -249,14 +249,14 @@ class UtkastService(
         return alleEndringer.map { lagFlateEndring(it, EventType.MODIFIED) }
     }
 
-    private fun publiserGrenseendringer(grenseendringer: Grenseendringer, utkast: Utkast) : List<EventRad> {
+    private fun publiserGrenseendringer(grenseendringer: Grenseendringer, utkast: Utkast, gyldigFra: LocalDate) : List<EventRad> {
         val endredeFeatures = grenseendringer.endredeFeatures
         var eventer: List<EventRad> = emptyList()
 
         if (endredeFeatures.isNotEmpty()) {
             val flaterMedGrenseendring = grenseService.lagreGrenser(
                 FeatureCollection(features = endredeFeatures),
-                gyldighetsdato = utkast.gyldigFra,
+                gyldighetsdato = gyldigFra,
                 endringstype = utkast.auditInfo.typeEndring
             )
             eventer = flaterMedGrenseendring.map { lagFlateEndring(it, EventType.MODIFIED) }
@@ -268,11 +268,12 @@ class UtkastService(
     private fun publiserSammenslaaingsendringer(
         stemmekretsSammenslaaingsendring: StemmekretsSammenslaaingsendringRequest?,
         utkast: Utkast,
+        gyldigFra: LocalDate
     ): List<EventRad> =
         stemmekretsSammenslaaingsendring?.let { stemmekretsendring ->
             val (modifiedStemmekrets, expiredStemmekretser) = stemmekretsService.slaaSammenStemmekretser(
                 sammenslaaingsendringRequest = stemmekretsendring,
-                sammenslaaingsDato = utkast.gyldigFra,
+                sammenslaaingsDato = gyldigFra,
                 endringstype = utkast.auditInfo.typeEndring
             )
             expiredStemmekretser.map { lagFlateEndring(it, EventType.EXPIRED) } +
@@ -281,18 +282,19 @@ class UtkastService(
 
     private fun publiserKretsDelingEndringer(
         kretsDelingEndringRequests: List<KretsDelingEndringRequest>,
-        utkast: Utkast
+        utkast: Utkast,
+        gyldigFra: LocalDate
     ): List<EventRad> = getUnikeKretsDelingEndringRequests(kretsDelingEndringRequests).flatMap {
             it.let { unikKretsDelingEndring ->
                 val nyKrets = when(unikKretsDelingEndring.flatetype) {
                     Flatetype.STEMMEKRETS -> stemmekretsService.delStemmekrets(
                         unikKretsDelingEndring,
-                        utkast.gyldigFra,
+                        gyldigFra,
                         utkast.auditInfo.typeEndring
                     )
                     Flatetype.GRUNNKRETS -> grunnkretsService.delGrunnkrets(
                         unikKretsDelingEndring,
-                        utkast.gyldigFra,
+                        gyldigFra,
                         utkast.auditInfo.typeEndring
                     )
                     else -> throw ResponseException.BadRequestException("Støtter kun deling av grunnkrets eller stemmekrets, ikke ${unikKretsDelingEndring.flatetype}")

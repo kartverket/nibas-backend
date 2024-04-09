@@ -119,7 +119,6 @@ class UtkastService_stemmekretsIT : TestWithDbContainer() {
         val utkastId = saveStemmekretsUtkast(
             navn = "Jeg vil endre stemmekretsnr til 4589 fra 1.7.23",
             oppdateringsdato = october24In2022,
-            gyldigFra = july1In2023,
             stemmekretsRequest
         )
 
@@ -190,7 +189,7 @@ class UtkastService_stemmekretsIT : TestWithDbContainer() {
 
     private fun saveAndPubliserStemmekretsUtkast(navn: String, stemmekretsNr: String, stemmekretsNavn: String,
                                                  oppdateringsdato: ZonedDateTime, gyldigFra: LocalDate, version: Int) {
-        val utkastId = saveStemmekretsUtkast(navn, stemmekretsNavn, stemmekretsNr, version, oppdateringsdato, gyldigFra)
+        val utkastId = saveStemmekretsUtkast(navn, stemmekretsNavn, stemmekretsNr, version, oppdateringsdato)
         publiser(utkastId, gyldigFra)
     }
 
@@ -204,14 +203,12 @@ class UtkastService_stemmekretsIT : TestWithDbContainer() {
     private fun saveStemmekretsUtkast(
         navn: String,
         oppdateringsdato: ZonedDateTime,
-        gyldigFra: LocalDate,
         stemmekretsRequest: StemmekretsRequest
     ): String {
         val utkast = UtkastBuilder.builder(navn)
             .withStemmekretsRequests(
                 mapOf(lokalidOfStemmekrets to stemmekretsRequest))
             .withAuditInfo(AuditInfo(oppdateringsdato, "DUMMY"))
-            .withGyldigFra(gyldigFra)
             .build()
         utkastRepository.save(utkast)
         return utkast.id
@@ -223,8 +220,7 @@ class UtkastService_stemmekretsIT : TestWithDbContainer() {
         stemmekretsNr: String,
         version: Int,
         oppdateringsdato: ZonedDateTime,
-        gyldigFra: LocalDate
-    ): String = saveStemmekretsUtkast(navn, oppdateringsdato, gyldigFra, createStemmekretsRequest(stemmekretsNavn, stemmekretsNr, version))
+    ): String = saveStemmekretsUtkast(navn, oppdateringsdato, createStemmekretsRequest(stemmekretsNavn, stemmekretsNr, version))
 
 
     private fun createStemmekretsRequest(

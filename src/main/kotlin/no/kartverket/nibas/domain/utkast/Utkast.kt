@@ -13,7 +13,6 @@ import no.kartverket.nibas.sporing.Sporbar
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.annotations.Type
 import org.hibernate.type.SqlTypes
-import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.*
 import jakarta.persistence.Column
@@ -51,9 +50,6 @@ class Utkast(
     @Embedded
     override var auditInfo: AuditInfo = AuditInfo()
 
-    @Column(name = "gyldig_fra")
-    var gyldigFra: LocalDate = LocalDate.now()
-
     // Blir mappet av Converter
     var status: UtkastStatus = UtkastStatus.OPPRETTET
 
@@ -67,7 +63,6 @@ class UtkastBuilder private constructor(val navn: String, private val endringsty
 
     private var status: UtkastStatus = UtkastStatus.OPPRETTET
     private var operasjoner: Operasjoner = Operasjoner()
-    private var gyldigFra: LocalDate = LocalDate.now()
     private var auditInfo: AuditInfo? = null
 
     companion object {
@@ -82,16 +77,10 @@ class UtkastBuilder private constructor(val navn: String, private val endringsty
             operasjoner = this.operasjoner,
         )
         utkast.auditInfo.typeEndring = this.endringstype
-        utkast.gyldigFra = this.gyldigFra
         auditInfo?.let { utkast.auditInfo = it }
         utkast.status = status
 
         return utkast
-    }
-
-    fun withGyldigFra(gyldigFra: LocalDate): UtkastBuilder {
-        this.gyldigFra = gyldigFra
-        return this
     }
 
     fun withAuditInfo(auditInfo: AuditInfo): UtkastBuilder {

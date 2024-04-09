@@ -28,7 +28,6 @@ class UtkastRequestBuilder {
         return OppdaterUtkastRequest(
             navn = this.navn,
             endringstype = this.endringstype.value,
-            gyldigFra = this.gyldigFra,
             operasjoner = this.operasjoner,
             version = version
         )

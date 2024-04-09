@@ -13,6 +13,7 @@ import no.kartverket.nibas.common.FeilVedOppdatering
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
+import no.kartverket.nibas.common.toNorskFormat
 import no.kartverket.nibas.domain.utkast.Utkast
 import no.kartverket.nibas.domain.utkast.UtkastStatus
 import no.kartverket.nibas.kodelister.KodelisteService
@@ -54,7 +55,7 @@ class UtkastValidatorService(
         return (navn.isBlank() || endringstype.isBlank())
     }
 
-    fun validateGyldigUtkast(utkast: Utkast): UtkastValidering {
+    fun validateGyldigUtkast(utkast: Utkast, gyldighetDato: LocalDate): UtkastValidering {
         if (sjekkUgyldigUtkastNavnOgEndringstype(utkast.navn, utkast.auditInfo.typeEndring.value)) {
             return UtkastValidering.UgyldigUtkast(utkast, ResponseException.BadRequestException(
                 "Husk å fylle inn både navnet og endringstypen på utkastet."))
@@ -72,17 +73,17 @@ class UtkastValidatorService(
             return UtkastValidering.UgyldigUtkast(utkast, operasjonerValideringResult.feil)
         }
 
-        val grunnkretsValideringsFeil = validerGrunnkretsEndringerKonflikt(utkast)
+        val grunnkretsValideringsFeil = validerGrunnkretsEndringerKonflikt(utkast, gyldighetDato)
         if (grunnkretsValideringsFeil != null) {
             return UtkastValidering.UgyldigUtkast(utkast, grunnkretsValideringsFeil)
         }
 
-        val stemmekretsValideringsFeil = validerStemmekretsEndringerKonflikt(utkast)
+        val stemmekretsValideringsFeil = validerStemmekretsEndringerKonflikt(utkast, gyldighetDato)
         if (stemmekretsValideringsFeil != null) {
             return UtkastValidering.UgyldigUtkast(utkast, stemmekretsValideringsFeil)
         }
 
-        val grenseeendringerValideringsFeil = validerGrenseEndringerKonflikt(utkast)
+        val grenseeendringerValideringsFeil = validerGrenseEndringerKonflikt(utkast, gyldighetDato)
         if (grenseeendringerValideringsFeil != null) {
             return UtkastValidering.UgyldigUtkast(utkast, grenseeendringerValideringsFeil)
         }
@@ -90,11 +91,11 @@ class UtkastValidatorService(
         return UtkastValidering.GyldigUtkast(utkast)
     }
 
-    fun validateUtkastKlartForPublisering(utkast: Utkast): UtkastValidering {
-        if (utkast.gyldigFra.isBefore(currentTime.asLocalDate())) {
+    fun validateUtkastKlartForPublisering(utkast: Utkast, gyldighetDato: LocalDate): UtkastValidering {
+        if (gyldighetDato.isBefore(currentTime.asLocalDate())) {
             return UtkastValidering.UgyldigUtkast(utkast, ResponseException.BadRequestException(
                 title = "Kan ikke publisere utkastet",
-                msg = "Kan ikke publisere et utkast som trer i kraft før dagens dato. Utkastet er satt til å tre i kraft ${utkast.gyldigFra}"
+                msg = "Kan ikke publisere et utkast som trer i kraft før dagens dato. Utkastet er satt til å tre i kraft ${gyldighetDato.toNorskFormat()}"
             ))
         }
 
@@ -120,7 +121,7 @@ class UtkastValidatorService(
             return tilhorighetEndringerValideringsFeil
         }
 
-        val valideringResult = validateGyldigUtkast(utkast)
+        val valideringResult = validateGyldigUtkast(utkast, gyldighetDato)
         if (valideringResult is UtkastValidering.UgyldigUtkast) {
             return UtkastValidering.UgyldigUtkast(utkast, valideringResult.feil)
         }
@@ -255,7 +256,7 @@ class UtkastValidatorService(
         return null
     }
 
-    private fun validerGrenseEndringerKonflikt(utkast: Utkast): FeilVedOppdatering.OppdateringException? {
+    private fun validerGrenseEndringerKonflikt(utkast: Utkast, gyldighetDato: LocalDate): FeilVedOppdatering.OppdateringException? {
         val endredeFeatures = utkast.operasjoner?.grenseendringer?.endredeFeatures
         if (endredeFeatures.isNullOrEmpty()) return null
 
@@ -267,11 +268,11 @@ class UtkastValidatorService(
         return endredeFeaturesIder.firstNotNullOfOrNull { id ->
             if (id.isNullOrBlank()) return null
 
-            val senerePubliserteGrenser = grenseService.hentAlleVersjonerMedGyldigFraEtterGittDato(id, utkast.gyldigFra)
+            val senerePubliserteGrenser = grenseService.hentAlleVersjonerMedGyldigFraEtterGittDato(id, gyldighetDato)
 
             if (senerePubliserteGrenser.isNotEmpty()) {
                 FeilVedOppdatering.OppdateringException(FeilVedOppdatering.OppdateringInfo(
-                    id = Identifikator(Lokalid(id), utkast.gyldigFra),
+                    id = Identifikator(Lokalid(id), gyldighetDato),
                     type = FeilVedOppdatering.Type.GRENSE,
                     affectedIds = senerePubliserteGrenser.map { Identifikator(Lokalid(it.lokalid), it.gyldighet.gyldigFra) }
                 ))
@@ -281,13 +282,13 @@ class UtkastValidatorService(
         }
     }
 
-    private fun validerGrunnkretsEndringerKonflikt(utkast: Utkast): FeilVedOppdatering.OppdateringException? {
+    private fun validerGrunnkretsEndringerKonflikt(utkast: Utkast, gyldighetDato: LocalDate): FeilVedOppdatering.OppdateringException? {
         return utkast.operasjoner?.metadataendringer?.grunnkretsendringer?.firstNotNullOfOrNull { grunnkretsendring ->
-            val senerePubliserteEndringer = grunnkretsService.hentAlleVersjonerMedGyldigFraEtterGittDato(lokalId = Lokalid(grunnkretsendring.key), dato = utkast.gyldigFra)
+            val senerePubliserteEndringer = grunnkretsService.hentAlleVersjonerMedGyldigFraEtterGittDato(lokalId = Lokalid(grunnkretsendring.key), dato = gyldighetDato)
 
             if (senerePubliserteEndringer.isNotEmpty()) {
                 FeilVedOppdatering.OppdateringException(FeilVedOppdatering.OppdateringInfo(
-                    id = Identifikator(Lokalid(grunnkretsendring.key), utkast.gyldigFra),
+                    id = Identifikator(Lokalid(grunnkretsendring.key), gyldighetDato),
                     type = FeilVedOppdatering.Type.GRUNNKRETS,
                     affectedIds = senerePubliserteEndringer.map { Identifikator(Lokalid(it.lokalid), it.gyldighet.gyldigFra) }
                 ))
@@ -297,13 +298,13 @@ class UtkastValidatorService(
         }
     }
 
-    private fun validerStemmekretsEndringerKonflikt(utkast: Utkast): FeilVedOppdatering.OppdateringException? {
+    private fun validerStemmekretsEndringerKonflikt(utkast: Utkast, gyldighetDato: LocalDate): FeilVedOppdatering.OppdateringException? {
         return utkast.operasjoner?.metadataendringer?.stemmekretsendringer?.firstNotNullOfOrNull { stemmekretsendring ->
-            val senerePubliserteEndringer = stemmekretsService.hentAlleVersjonerMedGyldigFraEtterGittDato(lokalId = Lokalid(stemmekretsendring.key), dato = utkast.gyldigFra)
+            val senerePubliserteEndringer = stemmekretsService.hentAlleVersjonerMedGyldigFraEtterGittDato(lokalId = Lokalid(stemmekretsendring.key), dato = gyldighetDato)
 
             if (senerePubliserteEndringer.isNotEmpty()) {
                 FeilVedOppdatering.OppdateringException(FeilVedOppdatering.OppdateringInfo(
-                    id = Identifikator(Lokalid(stemmekretsendring.key), utkast.gyldigFra),
+                    id = Identifikator(Lokalid(stemmekretsendring.key), gyldighetDato),
                     type = FeilVedOppdatering.Type.STEMMEKRETS,
                     affectedIds = senerePubliserteEndringer.map { Identifikator(Lokalid(it.lokalid), it.gyldighet.gyldigFra) }
                 ))

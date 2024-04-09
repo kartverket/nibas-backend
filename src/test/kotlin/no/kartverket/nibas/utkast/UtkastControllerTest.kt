@@ -99,12 +99,10 @@ internal class UtkastControllerTest : NibasMvcTest() {
 
         val syvendeJuli = ZonedDateTime.of(LocalDateTime.of(2022, Month.JULY, 7, 12, 0), ZoneId.systemDefault())
         val dummy = "DUMMY"
-        val foersteJanuar = LocalDate.of(2024, Month.JANUARY, 1)
         val kommuneRequests = mapOf("UUID-1" to KommuneRequestBuilder.DEFAULT_REQUEST)
         val utkast = UtkastBuilder.builder(navn)
             .withKommuneRequests(kommuneRequests)
             .withAuditInfo(AuditInfo(syvendeJuli, dummy, Endringstype.KVALITETSHEVING))
-            .withGyldigFra(foersteJanuar)
             .build()
         val operasjoner = utkast.operasjoner
         val utkastId = utkast.id
@@ -118,7 +116,6 @@ internal class UtkastControllerTest : NibasMvcTest() {
             status = UtkastStatus.OPPRETTET.value,
             auditInfoResponse = AuditInfoResponse(oppdateringsdato = syvendeJuli),
             opprettetDato = opprettetTidspunkt,
-            gyldigFra = foersteJanuar,
             operasjoner = operasjoner!!,
             version = 1
         )
@@ -146,7 +143,6 @@ internal class UtkastControllerTest : NibasMvcTest() {
         val utkastEtterOppdatering = UtkastBuilder.builder(utkastNavn)
             .withKommuneRequests(mapOf("1234" to KommuneRequestBuilder.DEFAULT_REQUEST))
             .withAuditInfo(AuditInfo(oppdateringsdato, endretAv, Endringstype.KVALITETSHEVING))
-            .withGyldigFra(gyldigFra)
             .build()
         val operasjoner = utkastEtterOppdatering.operasjoner
         val opprettetDato = utkastEtterOppdatering.opprettetDato
@@ -167,7 +163,6 @@ internal class UtkastControllerTest : NibasMvcTest() {
             status = UtkastStatus.OPPRETTET.value,
             auditInfoResponse = AuditInfoResponse(oppdateringsdato = oppdateringsdato),
             opprettetDato = opprettetDato,
-            gyldigFra = gyldigFra,
             operasjoner = operasjoner,
             version = 1
         )

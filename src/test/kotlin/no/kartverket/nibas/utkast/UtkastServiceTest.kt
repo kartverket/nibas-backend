@@ -84,6 +84,7 @@ internal class UtkastServiceTest {
     @BeforeEach
     fun beforeEach() {
         every { currentTime.asLocalDate() } returns (LocalDate.of(2022, 6, 1))
+        every { grenseServiceMock.validerOptimistiskLaasKonflikter(any(), any()) } returns Unit
         val utkastValidatorService = UtkastValidatorService(grunnkretsServiceMock, grenseServiceMock, stemmekretsServiceMock, kodelisteServiceMock, currentTime)
         utkastService = UtkastService(utkastRepositoryMock, nasjonServiceMock, fylkeServiceMock, kommuneServiceMock, grunnkretsServiceMock,
             stemmekretsServiceMock, grenseServiceMock, nibasEventPublisherMock, utkastValidatorService)
@@ -117,15 +118,15 @@ internal class UtkastServiceTest {
     fun oppdaterUtkast() {
         val utkastBuilder = UtkastBuilder.builder("Utkast 3")
             .withFylkeRequests(mapOf("Fylke-UUID-1" to FylkeRequestBuilder.DEFAULT_REQUEST))
-            .withGyldigFra(LocalDate.of(2024, Month.JANUARY, 1))
             .withKommuneRequests(mapOf("Kommune-UUID-1" to KommuneRequestBuilder.DEFAULT_REQUEST))
         val utkast = utkastBuilder.build()
 
         every { utkastRepositoryMock.findById(any()) } returns Optional.of(utkast)
+        every { fylkeServiceMock.hentFylke(any()) } returns FylkeBuilder.DEFAULT_FYLKE
+        every { kommuneServiceMock.hentKommune(any()) } returns KommuneBuilder.DEFAULT_KOMMUNE
 
         val feb3 = LocalDate.of(2025, Month.FEBRUARY, 3)
-        val utkastEtterSave = utkastBuilder.withGyldigFra(feb3)
-            .build()
+        val utkastEtterSave = utkastBuilder.build()
 
         every { utkastRepositoryMock.save(any()) } returns utkastEtterSave
 
@@ -133,14 +134,12 @@ internal class UtkastServiceTest {
             .withGyldigFra(feb3)
             .build())
         assertThat(oppdatertUtkast).isNotNull
-        assertThat(oppdatertUtkast!!.gyldigFra).isEqualTo(feb3)
     }
 
     @Test
     fun `oppdater utkast med tomt navn gir bad request`() {
         val utkastBuilder = UtkastBuilder.builder("lovlig utkast")
             .withFylkeRequests(mapOf("Fylke-UUID-1" to FylkeRequestBuilder.DEFAULT_REQUEST))
-            .withGyldigFra(LocalDate.of(2024, Month.JANUARY, 1))
             .withKommuneRequests(mapOf("Kommune-UUID-1" to KommuneRequestBuilder.DEFAULT_REQUEST))
         val utkast = utkastBuilder.build()
 
@@ -248,9 +247,7 @@ internal class UtkastServiceTest {
 
     @Test
     fun publiserUtkastMedDatoIFortidenGirBadRequestEx() {
-        val utkastUtenOperasjoner = UtkastBuilder.builder("Utkast for publisering")
-            .withGyldigFra(LocalDate.of(2021, 1, 1))
-            .build()
+        val utkastUtenOperasjoner = UtkastBuilder.builder("Utkast for publisering").build()
         every { utkastRepositoryMock.findById(any()) } returns Optional.of(utkastUtenOperasjoner)
 
         assertThatThrownBy {
@@ -261,7 +258,6 @@ internal class UtkastServiceTest {
     @Test
     fun publiserUtkast() {
         val utkast = UtkastBuilder.builder("Utkast for publisering")
-            .withGyldigFra(LocalDate.of(2024, Month.JANUARY, 1))
             .withOperasjoner(Operasjoner(
                 metadataendringer = Metadataendringer(
                     nasjonsendringer = mapOf("Nasjon-UUID-1" to NasjonRequestBuilder.DEFAULT_NASJON),
@@ -311,7 +307,6 @@ internal class UtkastServiceTest {
     @Test
     fun forkastUtkast() {
         val utkast = UtkastBuilder.builder("Utkast for forkasting")
-            .withGyldigFra(LocalDate.of(2024, Month.JANUARY, 1))
             .withOperasjoner(Operasjoner(
                 metadataendringer = Metadataendringer(
                     nasjonsendringer = mapOf("Nasjon-UUID-1" to NasjonRequestBuilder.DEFAULT_NASJON),
@@ -338,7 +333,6 @@ internal class UtkastServiceTest {
 
         val utkast =
             UtkastBuilder.builder("Utkast for publisering")
-                .withGyldigFra(LocalDate.of(2024, Month.JANUARY, 1))
                 .withOperasjoner(
                     Operasjoner(
                         metadataendringer =
@@ -432,7 +426,7 @@ internal class UtkastServiceTest {
                 any())
         } returns Grunnkrets()
 
-        val redigerteFlater = utkastService.publiserEndringer(utkast.operasjoner!!, utkast)
+        val redigerteFlater = utkastService.publiserEndringer(utkast.operasjoner!!, utkast, LocalDate.of(2024, Month.JANUARY, 1))
         assertThat(redigerteFlater).hasSize(10)
     }
 
