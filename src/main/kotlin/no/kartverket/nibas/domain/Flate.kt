@@ -4,13 +4,14 @@ import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.events.EventRad
 import no.kartverket.nibas.events.EventType
 import org.locationtech.jts.geom.MultiPolygon
+import org.locationtech.jts.geom.Point
 import java.time.LocalDate
 
 interface Flate : CommonMetadataProperties {
     val id: String
     var omraade: MultiPolygon?
+    var posisjon: Point?
     val type: Flatetype
-
     fun getGrensekoblinger(gyldighetsdato: LocalDate = LocalDate.now()): Set<GrenseKobling>
 
     fun getFlateInformasjon(): FlateInformasjon

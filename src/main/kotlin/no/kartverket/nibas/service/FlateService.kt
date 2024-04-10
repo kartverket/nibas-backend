@@ -1,9 +1,11 @@
 package no.kartverket.nibas.service
 
 import no.kartverket.nibas.api.v1.common.Grensetype
+import no.kartverket.nibas.common.geometry.IngenGrenserForFlateException
 import no.kartverket.nibas.common.geometry.UgyldigFlateInformasjon
 import no.kartverket.nibas.common.geometry.UgyldigeFlaterException
 import no.kartverket.nibas.common.geometry.UgyldigGeometriException
+import no.kartverket.nibas.common.geometry.toCustomText
 import no.kartverket.nibas.common.getInSpraak
 import no.kartverket.nibas.domain.AdministrativEnhet
 import no.kartverket.nibas.domain.Flate
@@ -45,8 +47,10 @@ class FlateService @Autowired constructor(
                     is Fylke -> oppdaterFylkesflate(enhet)
                     is Nasjon -> oppdaterNasjonsflate(enhet)
                 }
-            } catch (ex: UgyldigGeometriException){
-                flatefeil.add(UgyldigFlateInformasjon(enhet.lokalid, enhet.getFlateInformasjon(), ex.topologyValidationError))
+            } catch (ex: UgyldigGeometriException) {
+                flatefeil.add(UgyldigFlateInformasjon(enhet.lokalid, enhet.getFlateInformasjon(), ex.topologyValidationError.toCustomText(), ex.topologyValidationError.coordinate))
+            } catch (ex: IngenGrenserForFlateException) {
+                flatefeil.add(UgyldigFlateInformasjon(enhet.lokalid, enhet.getFlateInformasjon(), "Flaten har ingen grenser", enhet.posisjon?.coordinate!!))
             }
         }
 

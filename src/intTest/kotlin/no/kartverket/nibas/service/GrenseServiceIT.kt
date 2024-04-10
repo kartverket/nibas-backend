@@ -15,6 +15,7 @@ import no.kartverket.nibas.builders.StemmekretsRequestBuilder
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.geometry.UgyldigeFlaterException
+import no.kartverket.nibas.common.geometry.topologyValidationErrorToCustomText
 import no.kartverket.nibas.domain.Dokumentasjonsreferanse
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Flate
@@ -142,15 +143,15 @@ class GrenseServiceIT : TestWithDbContainer() {
             )
         }
 
-        assertThat(exception.message).isEqualTo("Feil ved flatedanning")
+        assertThat(exception.message).contains("Feil ved flatedanning")
         val ugyldigeFlater = exception.ugyldigeFlater
         assertThat(ugyldigeFlater).hasSize(2)
         ugyldigeFlater.find { it.lokalid == kretsG1.lokalid }?.let { assertThat(it.flateInformasjon).isEqualTo(kretsG1.getFlateInformasjon()) }
         ugyldigeFlater.find { it.lokalid == kretsG2.lokalid }?.let { assertThat(it.flateInformasjon).isEqualTo(kretsG2.getFlateInformasjon()) }
 
         ugyldigeFlater.forEach {
-            assertThat(it.topologifeil.errorType).isEqualTo(TopologyValidationError.RING_NOT_CLOSED)
-            assertThat(it.topologifeil.coordinate).isEqualTo(Coordinate(10.0, 5.0))
+            assertThat(it.topologifeil).isEqualTo(topologyValidationErrorToCustomText(TopologyValidationError.RING_NOT_CLOSED))
+            assertThat(it.koordinat).isEqualTo(Coordinate(10.0, 5.0))
         }
     }
 
@@ -228,15 +229,15 @@ class GrenseServiceIT : TestWithDbContainer() {
             )
         }
 
-        assertThat(exception.message).isEqualTo("Feil ved flatedanning")
+        assertThat(exception.message).contains("Feil ved flatedanning")
         val ugyldigeFlater = exception.ugyldigeFlater
         assertThat(ugyldigeFlater).hasSize(2)
         ugyldigeFlater.find { it.lokalid == kretsG1.lokalid }?.let { assertThat(it.flateInformasjon).isEqualTo(kretsG1.getFlateInformasjon()) }
         ugyldigeFlater.find { it.lokalid == kretsG2.lokalid }?.let { assertThat(it.flateInformasjon).isEqualTo(kretsG2.getFlateInformasjon()) }
 
         ugyldigeFlater.forEach {
-            assertThat(it.topologifeil.errorType).isEqualTo(TopologyValidationError.RING_NOT_CLOSED)
-            assertThat(it.topologifeil.coordinate).isEqualTo(Coordinate(10.0, 5.0))
+            assertThat(it.topologifeil).isEqualTo(topologyValidationErrorToCustomText(TopologyValidationError.RING_NOT_CLOSED))
+            assertThat(it.koordinat).isEqualTo(Coordinate(10.0, 5.0))
         }
     }
 
@@ -303,16 +304,15 @@ class GrenseServiceIT : TestWithDbContainer() {
             )
         }
 
-        assertThat(exception.message).isEqualTo("Feil ved flatedanning")
+        assertThat(exception.message).contains("Feil ved flatedanning")
         val ugyldigeFlater = exception.ugyldigeFlater
         assertThat(ugyldigeFlater).hasSize(2)
         ugyldigeFlater.find { it.lokalid == stemmekrets.lokalid }?.let { assertThat(it.flateInformasjon).isEqualTo(stemmekrets.getFlateInformasjon()) }
         ugyldigeFlater.find { it.lokalid == stemmekrets2.lokalid }?.let { assertThat(it.flateInformasjon).isEqualTo(stemmekrets2.getFlateInformasjon()) }
 
         ugyldigeFlater.forEach {
-            println("lokalid: ${it.lokalid}, flatetype: ${it.flateInformasjon.flatetype}, lesbart navn: ${it.flateInformasjon.lesbartNavn}, koordinat: ${it.topologifeil.coordinate}, feiltype: ${it.topologifeil.errorType}")
-            assertThat(it.topologifeil.errorType).isEqualTo(TopologyValidationError.RING_NOT_CLOSED)
-            assertThat(it.topologifeil.coordinate).isEqualTo(Coordinate(0.0, 5.0))
+            assertThat(it.topologifeil).isEqualTo(topologyValidationErrorToCustomText(TopologyValidationError.RING_NOT_CLOSED))
+            assertThat(it.koordinat).isEqualTo(Coordinate(0.0, 5.0))
         }
     }
 
@@ -381,16 +381,15 @@ class GrenseServiceIT : TestWithDbContainer() {
             )
         }
 
-        assertThat(exception.message).isEqualTo("Feil ved flatedanning")
+        assertThat(exception.message).contains("Feil ved flatedanning")
         val ugyldigeFlater = exception.ugyldigeFlater
         assertThat(ugyldigeFlater).hasSize(2)
         ugyldigeFlater.find { it.lokalid == grunnkrets.lokalid }?.let { assertThat(it.flateInformasjon).isEqualTo(grunnkrets.getFlateInformasjon()) }
         ugyldigeFlater.find { it.lokalid == naboGrunnkrets.lokalid }?.let { assertThat(it.flateInformasjon).isEqualTo(naboGrunnkrets.getFlateInformasjon()) }
 
         ugyldigeFlater.forEach {
-            println("lokalid: ${it.lokalid}, flatetype: ${it.flateInformasjon.flatetype}, lesbart navn: ${it.flateInformasjon.lesbartNavn}, koordinat: ${it.topologifeil.coordinate}, feiltype: ${it.topologifeil.errorType}")
-            assertThat(it.topologifeil.errorType).isEqualTo(TopologyValidationError.RING_NOT_CLOSED)
-            assertThat(it.topologifeil.coordinate).isEqualTo(Coordinate(0.0, 5.0))
+            assertThat(it.topologifeil).isEqualTo(topologyValidationErrorToCustomText(TopologyValidationError.RING_NOT_CLOSED))
+            assertThat(it.koordinat).isEqualTo(Coordinate(0.0, 5.0))
         }
     }
 
@@ -613,10 +612,6 @@ class GrenseServiceIT : TestWithDbContainer() {
         val kommuneSoer = saveKommuneOgUnikLokalid(id = "kommuneSoer", lokalid = "kommuneSoer", kommunenummer = "0302", kommunenummerUuid = "0302", stemmekretser = listOf(kretsG3), gyldigFra = gyldighetsdato)
         saveFylke(kommuner = listOf(kommuneNord, kommuneSoer), gyldigFra = gyldighetsdato)
 
-        grenseRepository.flush()
-        flateService.oppdaterFlaterFor(setOf(kommuneSoer, kommuneNord))
-        kommuneNord.posisjon = kommuneNord.omraade?.interiorPoint
-        kommuneSoer.posisjon = kommuneSoer.omraade?.interiorPoint
         grenseRepository.flush()
 
         val grenseSomSkalEndreTilhorighet = kretsG1.grenser.map { it.grense }.first { it.lokalid == "grenseSørVestLokalid" }

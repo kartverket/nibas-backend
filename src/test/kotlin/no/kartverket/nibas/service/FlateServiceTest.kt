@@ -10,6 +10,7 @@ import no.kartverket.nibas.common.geometry.toMultiPolygon
 import no.kartverket.nibas.common.geometry.UgyldigeFlaterException
 import no.kartverket.nibas.domain.Administrativenhetnavn
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.common.geometry.topologyValidationErrorToCustomText
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.kodelister.KodelisteService
@@ -21,6 +22,7 @@ import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.NasjonRepository
 import no.kartverket.nibas.repository.StemmekretsRepository
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
@@ -149,21 +151,21 @@ class FlateServiceTest {
             flateService.oppdaterFlaterFor(setOf(grunnkretsMedKorrekteGrenser, feilaktigGrunnkrets1, kommune))
         }
 
-        assertThat(exception.message).isEqualTo("Feil ved flatedanning")
+        assertThat(exception.message).contains("Feil ved flatedanning")
         val ugyldigeFlater = exception.ugyldigeFlater
         assertThat(ugyldigeFlater).hasSize(2)
         val ugyldigFlateInformasjonForGrunnkrets1 = ugyldigeFlater.find { it.lokalid == feilaktigGrunnkrets1.lokalid }
         ugyldigFlateInformasjonForGrunnkrets1?.let {
             assertThat(it.flateInformasjon).isEqualTo(feilaktigGrunnkrets1.getFlateInformasjon())
-            assertThat(it.topologifeil.errorType).isEqualTo(TopologyValidationError.RING_NOT_CLOSED)
-            assertThat(it.topologifeil.coordinate).isEqualTo(Coordinate(10.0, 20.0))
+            assertThat(it.topologifeil).isEqualTo(topologyValidationErrorToCustomText(TopologyValidationError.RING_NOT_CLOSED))
+            assertThat(it.koordinat).isEqualTo(Coordinate(10.0, 20.0))
         }
 
         val ugyldigFlateInformasjonForKommune = ugyldigeFlater.find { it.lokalid == kommune.lokalid }
         ugyldigFlateInformasjonForKommune?.let {
             assertThat(it.flateInformasjon).isEqualTo(kommune.getFlateInformasjon())
-            assertThat(it.topologifeil.errorType).isEqualTo(TopologyValidationError.RING_NOT_CLOSED)
-            assertThat(it.topologifeil.coordinate).isEqualTo(Coordinate(10.0, 15.0))
+            assertThat(it.topologifeil).isEqualTo(topologyValidationErrorToCustomText(TopologyValidationError.RING_NOT_CLOSED))
+            assertThat(it.koordinat).isEqualTo(Coordinate(10.0, 15.0))
         }
     }
 
@@ -188,13 +190,13 @@ class FlateServiceTest {
             flateService.oppdaterFlaterFor(setOf(kommune))
         }
 
-        assertThat(exception.message).isEqualTo("Feil ved flatedanning")
+        assertThat(exception.message).contains("Feil ved flatedanning")
         val ugyldigeFlater = exception.ugyldigeFlater
         assertThat(ugyldigeFlater).hasSize(1)
         val ugyldigFlate = ugyldigeFlater.first()
         assertThat(ugyldigFlate.flateInformasjon).isEqualTo(kommune.getFlateInformasjon())
-        assertThat(ugyldigFlate.topologifeil.errorType).isEqualTo(TopologyValidationError.RING_NOT_CLOSED)
-        assertThat(ugyldigFlate.topologifeil.coordinate).isEqualTo(Coordinate(10.0, 20.0))
+        assertThat(ugyldigFlate.topologifeil).isEqualTo(topologyValidationErrorToCustomText(TopologyValidationError.RING_NOT_CLOSED))
+        assertThat(ugyldigFlate.koordinat).isEqualTo(Coordinate(10.0, 20.0))
     }
 
     @Test
@@ -226,13 +228,21 @@ class FlateServiceTest {
             flateService.oppdaterFlaterFor(setOf(fylke))
         }
 
-        assertThat(exception.message).isEqualTo("Feil ved flatedanning")
+        assertThat(exception.message).contains("Feil ved flatedanning")
         val ugyldigeFlater = exception.ugyldigeFlater
         assertThat(ugyldigeFlater).hasSize(1)
         val ugyldigFlate = ugyldigeFlater.first()
         assertThat(ugyldigFlate.flateInformasjon).isEqualTo(fylke.getFlateInformasjon())
-        assertThat(ugyldigFlate.topologifeil.errorType).isEqualTo(TopologyValidationError.RING_NOT_CLOSED)
-        assertThat(ugyldigFlate.topologifeil.coordinate).isEqualTo(Coordinate(10.0, 20.0))
+        assertThat(ugyldigFlate.topologifeil).isEqualTo(topologyValidationErrorToCustomText(TopologyValidationError.RING_NOT_CLOSED))
+        assertThat(ugyldigFlate.koordinat).isEqualTo(Coordinate(10.0, 20.0))
+    }
+
+    @Test
+    fun `skal gi feilmelding om flaten ikke har noen grenser`() {
+        val grunnkrets = GrunnkretsBuilder().build()
+        assertThatThrownBy { flateService.oppdaterFlaterFor(setOf(grunnkrets)) }
+            .isInstanceOf(UgyldigeFlaterException::class.java)
+            .hasMessageContaining("Feil ved flatedanning: [lokalId1 - Flaten har ingen grenser]")
     }
 
     @Test
@@ -263,12 +273,12 @@ class FlateServiceTest {
             flateService.oppdaterFlaterFor(setOf(nasjon))
         }
 
-        assertThat(exception.message).isEqualTo("Feil ved flatedanning")
+        assertThat(exception.message).contains("Feil ved flatedanning")
         val ugyldigeFlater = exception.ugyldigeFlater
         assertThat(ugyldigeFlater).hasSize(1)
         val ugyldigFlate = ugyldigeFlater.first()
         assertThat(ugyldigFlate.flateInformasjon).isEqualTo(nasjon.getFlateInformasjon())
-        assertThat(ugyldigFlate.topologifeil.errorType).isEqualTo(TopologyValidationError.RING_NOT_CLOSED)
-        assertThat(ugyldigFlate.topologifeil.coordinate).isEqualTo(Coordinate(10.0, 20.0))
+        assertThat(ugyldigFlate.topologifeil).isEqualTo(topologyValidationErrorToCustomText(TopologyValidationError.RING_NOT_CLOSED))
+        assertThat(ugyldigFlate.koordinat).isEqualTo(Coordinate(10.0, 20.0))
     }
 }

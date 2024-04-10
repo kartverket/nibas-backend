@@ -10,11 +10,11 @@ import no.kartverket.nibas.common.geometry.IkkeSammenhengendePolygonException
 import no.kartverket.nibas.common.geometry.UgyldigFlateInformasjon
 import no.kartverket.nibas.common.geometry.UgyldigeFlaterException
 import no.kartverket.nibas.common.geometry.UgyldigGeometriException
+import no.kartverket.nibas.common.geometry.toCustomText
 import no.kartverket.nibas.common.round
 import no.kartverket.nibas.kodelister.MissingKodelisteItemException
 import no.kartverket.nibas.repository.OptimistiskLaasException
 import org.locationtech.jts.geom.Coordinate
-import org.locationtech.jts.operation.valid.TopologyValidationError
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
 import org.springframework.http.HttpHeaders
@@ -48,7 +48,7 @@ class CustomRestExceptionHandler {
     fun handleUgyldigGeometriException(ugyldigGEx: UgyldigGeometriException, request: WebRequest): ResponseEntity<Any>? {
         val errorDescription = ErrorDescription(
             title = "Feil med geometri",
-            description = "Det er ble oppdaget feil med geometrien i utkastet: ${topologyErrorToCustomText(ugyldigGEx.topologyValidationError)}"
+            description = "Det er ble oppdaget feil med geometrien i utkastet: ${ugyldigGEx.topologyValidationError.toCustomText()}"
         )
         return handleException(ugyldigGEx, errorDescription, HttpHeaders(), HttpStatus.BAD_REQUEST)
     }
@@ -127,7 +127,7 @@ class CustomRestExceptionHandler {
     @ExceptionHandler(value = [UgyldigeFlaterException::class])
     fun handleUgydligFlateExceptions(ex: UgyldigeFlaterException, request: WebRequest) : ResponseEntity<Any>? {
 
-        val gruppertPaaKoordinat: Map<Coordinate, List<UgyldigFlateInformasjon>> = ex.ugyldigeFlater.groupBy { it.topologifeil.coordinate }
+        val gruppertPaaKoordinat: Map<Coordinate, List<UgyldigFlateInformasjon>> = ex.ugyldigeFlater.groupBy { it.koordinat }
         val antallGrupper = gruppertPaaKoordinat.size
 
         val stringBuilder = StringBuilder()
@@ -140,7 +140,7 @@ class CustomRestExceptionHandler {
             entry.value.forEach{
                 stringBuilder.appendLine("- ${it.flateInformasjon.flatetype} ${it.flateInformasjon.lesbartNavn}")
             }
-            stringBuilder.appendLine("- Feilen som ble oppdaget er: ${topologyErrorToCustomText(entry.value[0].topologifeil)}")
+            stringBuilder.appendLine("- Feilen som ble oppdaget er: ${entry.value[0].topologifeil}")
 
             if (index + 1 < antallGrupper) {
                 stringBuilder.appendLine()
@@ -180,14 +180,4 @@ class CustomRestExceptionHandler {
     private fun <T> createResponse(body: T, headers: HttpHeaders, statusCode: HttpStatusCode): ResponseEntity<T> {
         return ResponseEntity(body, headers, statusCode)
     }
-
-    private fun topologyErrorToCustomText(topologyError: TopologyValidationError): String =
-        when(topologyError.errorType) {
-            TopologyValidationError.SELF_INTERSECTION -> "En grense kan ikke krysse en annen grense."
-            TopologyValidationError.RING_SELF_INTERSECTION -> "En grense kan ikke krysse en annen grense."
-            TopologyValidationError.INVALID_COORDINATE -> "Grensen inneholder ett eller flere punkter med ugyldig koordinat."
-            TopologyValidationError.TOO_FEW_POINTS -> "For få grensepunkter i flaten."
-            TopologyValidationError.RING_NOT_CLOSED -> "Flaten er ikke lukket."
-            else -> "Ukjent feil med feilkode [${topologyError.errorType} - ${topologyError.message}]"
-        }
 }

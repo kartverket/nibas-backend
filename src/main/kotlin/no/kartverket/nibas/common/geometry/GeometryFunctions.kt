@@ -35,6 +35,10 @@ fun getGrenserIRiktigRekkefoelge(grenser: List<LineString>): List<List<LineStrin
     val nyeGrenseRinger = mutableListOf<List<LineString>>()
     var nyeGrenser = mutableListOf<LineString>()
 
+    if (grenser.isEmpty()) {
+        throw IngenGrenserForFlateException()
+    }
+
     while (grenserSomGjenstaar.size > 0) {
         if (nyeGrenser.isEmpty()) {
             nyeGrenser.add(grenserSomGjenstaar.first())
@@ -194,4 +198,3 @@ fun koordinaterToLineString(coordinates: List<List<Double>>, srid: Int = default
             .map { Coordinate(it[0], it[1]) }
             .toTypedArray())
 }
-

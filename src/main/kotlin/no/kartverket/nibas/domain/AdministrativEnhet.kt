@@ -46,7 +46,7 @@ abstract class AdministrativEnhet(
     override var datafangstdato: ZonedDateTime? = null
 
     @Column(name = "posisjon")
-    var posisjon: Point? = null
+    override var posisjon: Point? = null
 
     @Column(name = "omraade")
     override var omraade: MultiPolygon? = null

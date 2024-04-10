@@ -45,7 +45,7 @@ abstract class StatistiskEnhet(
     override var opphav: String? = null
 
     @Column(name = "posisjon")
-    var posisjon: Point? = null
+    override var posisjon: Point? = null
 
     @Column(name = "omraade")
     override var omraade: MultiPolygon? = null
