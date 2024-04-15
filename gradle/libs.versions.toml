@@ -14,7 +14,7 @@ spatial4jVersion = "0.8"
 springCloudStarterVaultConfigVersion = "4.1.0"
 springDependencyManagementVersion = "1.1.4"
 springFrameworkVersion = "3.2.4"
-springdocOpenapiVersion2 = "2.4.0"
+springdocOpenapiVersion2 = "2.5.0"
 springmockkVersion = "4.0.2"
 testContainerVersion = "1.19.7"
 
