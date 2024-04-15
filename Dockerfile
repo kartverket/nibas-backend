@@ -16,7 +16,7 @@ ENV TZ=Europe/Oslo
 EXPOSE 8080
 RUN mkdir /nibas-backend
 COPY build/libs/*.jar /nibas-backend/app.jar
-COPY opentelemetry-javaagent-1.34.1.jar /agent.jar
+COPY opentelemetry-javaagent-1.37.0.jar /agent.jar
 VOLUME /tmp
 USER ${USER_ID}
 
