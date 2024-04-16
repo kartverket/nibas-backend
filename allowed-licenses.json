@@ -1,0 +1,30 @@
+{
+  "allowedLicenses": [
+    { "moduleLicense": "Apache License, Version 2.0" },
+    { "moduleLicense": "Apache License 2.0" },
+    { "moduleLicense": "Apache 2.0" },
+    { "moduleLicense": "Apache-2.0" },
+    { "moduleLicense": "The Apache Software License, Version 2.0" },
+    { "moduleLicense": "The Apache License, Version 2.0" },
+    { "moduleLicense": "\"Apache-2.0\";link=\"https://www.apache.org/licenses/LICENSE-2.0.txt\"" },
+    { "moduleLicense": "Eclipse Distribution License - v 1.0" },
+    { "moduleLicense": "Eclipse Public License - v 1.0" },
+    { "moduleLicense": "Eclipse Public License v. 2.0" },
+    { "moduleLicense": "GNU General Public License, version 2 with the GNU Classpath Exception" },
+    { "moduleLicense": "Eclipse Public License - v 2.0" },
+    { "moduleLicense": "LGPL 3.0" },
+    { "moduleLicense": "MIT" },
+    { "moduleLicense": "MIT\\-0" },
+    { "moduleLicense": "The MIT License" },
+    { "moduleLicense": "MIT License" },
+    { "moduleLicense": "GNU Library General Public License v2.1 or later" },
+    { "moduleLicense": "Public Domain, per Creative Commons CC0" },
+    { "moduleLicense": "BSD-2-Clause" },
+    { "moduleLicense": "BSD-3-Clause" },
+    { "moduleLicense": "Bouncy Castle Licence" },
+    { "moduleName": "org\\.locationtech\\.jts.*" },
+    { "moduleName": "com\\.fasterxml\\.jackson.*" },
+    { "moduleName": "io\\.opentelemetry.*" },
+    { "moduleName": "org\\.jetbrains.*" }
+  ]
+}

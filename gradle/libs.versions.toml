@@ -17,6 +17,7 @@ springFrameworkVersion = "3.2.4"
 springdocOpenapiVersion2 = "2.5.0"
 springmockkVersion = "4.0.2"
 testContainerVersion = "1.19.7"
+licenceReport = "2.6"
 
 [libraries]
 flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flywayVersion" }
@@ -66,3 +67,4 @@ flyway = { id = "org.flywaydb.flyway", version.ref = "flywayVersion" }
 kotlin-jvm = { id = "jvm", version.ref = "kotlinPluginVersion" }
 spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "springDependencyManagementVersion" }
 spring-framework = { id = "org.springframework.boot", version.ref = "springFrameworkVersion" }
+jk1-licence-report = { id = "com.github.jk1.dependency-license-report", version.ref = "licenceReport" }

@@ -1,5 +1,6 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.springframework.boot.gradle.tasks.bundling.BootJar
+import com.github.jk1.license.render.*
 
 // Versjonering settes i gradle/libs.versions.toml - vær obs. på at
 // intellij ikke plukker opp på endringer der, før gradle er reloadet.
@@ -14,6 +15,7 @@ plugins {
     kotlin("plugin.jpa").version(libs.versions.kotlinPluginVersion)
     kotlin("plugin.allopen").version(libs.versions.kotlinPluginVersion)
     alias(libs.plugins.flyway)
+    alias(libs.plugins.jk1.licence.report)
 }
 
 group = "no.kartverket.nibas"
@@ -160,5 +162,12 @@ if (hasProperty("buildScan")) {
     extensions.findByName("buildScan")?.withGroovyBuilder {
         setProperty("termsOfServiceUrl", "https://gradle.com/terms-of-service")
         setProperty("termsOfServiceAgree", "no")
+    }
+}
+
+licenseReport {
+    renderers = arrayOf(InventoryHtmlReportRenderer())
+    licenseReport {
+        allowedLicensesFile = File("$projectDir/allowed-licenses.json")
     }
 }
