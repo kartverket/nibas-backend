@@ -14,6 +14,7 @@ class FeatureMapper {
                 lokalid = Lokalid(it.grunnkrets.lokalid),
                 kommuneLokalid = Lokalid(it.grunnkrets.kommuneLokalid.lokalid),
                 kretsNummer = it.grunnkrets.grunnkretsnummer,
+                kretsNavn = it.grunnkrets.grunnkretsnavn,
                 gyldighetsdato = it.grunnkrets.gyldighet.gyldigFra,
                 kontekstType = KontekstEnhetType.GRUNNKRETS,
                 version = it.grunnkrets.version
@@ -31,6 +32,7 @@ class FeatureMapper {
                 lokalid = Lokalid(it.stemmekrets.lokalid),
                 kommuneLokalid = Lokalid(it.stemmekrets.kommuneLokalid.lokalid),
                 kretsNummer = it.stemmekrets.stemmekretsnummer,
+                kretsNavn = it.stemmekrets.stemmekretsnavn,
                 gyldighetsdato = it.stemmekrets.gyldighet.gyldigFra,
                 kontekstType = KontekstEnhetType.STEMMEKRETS,
                 version = it.stemmekrets.version
@@ -47,6 +49,7 @@ class FeatureMapper {
         lokalid: Lokalid,
         kommuneLokalid: Lokalid,
         kretsNummer: String?,
+        kretsNavn: String?,
         gyldighetsdato: LocalDate,
         kontekstType: KontekstEnhetType,
         version: Int,
@@ -55,6 +58,7 @@ class FeatureMapper {
             id = ObjektIdentifikator(lokalid, gyldighetsdato),
             kommuneId = ObjektIdentifikator(kommuneLokalid, gyldighetsdato),
             kretsNummer = kretsNummer,
+            kretsNavn = kretsNavn,
             type = kontekstType,
             version = version,
         )

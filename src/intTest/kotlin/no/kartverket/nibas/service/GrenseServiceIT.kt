@@ -987,11 +987,13 @@ class GrenseServiceIT : TestWithDbContainer() {
                         ObjektIdentifikator(Lokalid(kretser[0].lokalid), gyldighetsdato),
                         null,
                         null,
+                       null,
                         kontekstEnhetType,
                         kretser[0].version
                     ),
                     KontekstEgenskaper(
                         ObjektIdentifikator(Lokalid(kretser[1].lokalid), gyldighetsdato),
+                        null,
                         null,
                         null,
                         kontekstEnhetType,

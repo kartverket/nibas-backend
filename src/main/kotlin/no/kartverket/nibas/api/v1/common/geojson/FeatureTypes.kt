@@ -130,6 +130,9 @@ data class KontekstEgenskaper(
     @Schema(description = "kretsnummeret til konteksten")
     val kretsNummer: String? = null,
 
+    @Schema(description = "kretsnummeret til konteksten")
+    val kretsNavn: String? = null,
+
     @Schema(description = "Hvilken kontekst geometrien skal sees i")
     val type: KontekstEnhetType,
 
