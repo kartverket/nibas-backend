@@ -15,6 +15,7 @@ import no.kartverket.nibas.builders.StemmekretsRequestBuilder
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.geometry.UgyldigeFlaterException
+import no.kartverket.nibas.domain.DokrefGrenseKobling
 import no.kartverket.nibas.common.geometry.topologyValidationErrorToCustomText
 import no.kartverket.nibas.domain.Dokumentasjonsreferanse
 import no.kartverket.nibas.domain.Endringstype
@@ -25,6 +26,8 @@ import no.kartverket.nibas.domain.KobletTilGrense
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.extensions.geometry.geometryToDto
 import no.kartverket.nibas.extensions.geometry.grenseToFeature
+import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
+import no.kartverket.nibas.sporing.Gyldighet
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import no.kartverket.nibas.utils.GrenseHelper
 import org.assertj.core.api.Assertions.assertThat
@@ -1165,8 +1168,17 @@ class GrenseServiceIT : TestWithDbContainer() {
             .addLenker(dokLink("http://1.no"), dokLink("https://2.no"))
             .addInternRefs(internReferanse("ref1"))
             .build()
+        dokumentasjonsreferanseRepository.save(dokumentasjonsreferanse)
 
-        grense3_2.dokumentasjonsreferanser.add(dokumentasjonsreferanse)
+        val dokrefGrensekobling = DokrefGrenseKobling().apply {
+            this.dokumentasjonsreferanse = dokumentasjonsreferanse
+            this.grense = grense3_2
+        }
+        dokumentasjonsreferanse.dokrefGrenseKobling.add(
+            dokrefGrensekobling
+        )
+        grense3_2.dokrefGrensekobling.add(dokrefGrensekobling)
+
         val lagredeGrenserForOpprinneligKrets = grenseRepository.saveAll(listOf(grense1_1, grense1_2, grense2, grense3_1, grense3_2, grense4))
         val lagredeGrenserForOestreKrets = grenseRepository.saveAll(listOf(grense3_2, grense3_1, grense5, grense6, grense7))
         val lagredeGrenserForNordVestKrets = grenseRepository.saveAll(listOf(grense8, grense9, grense2, grense1_2))
@@ -1282,18 +1294,20 @@ class GrenseServiceIT : TestWithDbContainer() {
         val (kretsOpprinnelig, kretsOest, kretsNordVest) =
             getTilhorigetTilNyopprettetKretsTestSetup(Grensetype.Kommunegrense, gyldighetsdato, ::saveStemmekrets)
         saveKommuneOgUnikLokalid(stemmekretser = listOf(kretsOpprinnelig, kretsOest, kretsNordVest), gyldigFra = gyldighetsdato)
-
         val grenseSomSkalEndreDokref = kretsOpprinnelig.grenser.find { it.grense.lokalid == "grense3_2Lokalid" }?.grense
 
         assertThat(grenseSomSkalEndreDokref).isNotNull()
 
-        grenseSomSkalEndreDokref?.dokumentasjonsreferanser?.first()?.addDokumentLenke().apply {
-            this?.dokumentlink = "https://3.no"
+        grenseSomSkalEndreDokref?.dokrefGrensekobling?.first()?.dokumentasjonsreferanse?.addDokumentLenke()?.apply {
+            dokumentlink = "https://3.no"
         }
-
         val grenseMedNyDokref = FeatureBuilder(id = grenseSomSkalEndreDokref!!.lokalid)
             .copy(grenseSomSkalEndreDokref.grenseToFeature())
-            .withDokref(grenseSomSkalEndreDokref.dokumentasjonsreferanser.map { val dokref = it.toDokRef(); dokref.vedtakGyldigFra = LocalDate.now(); dokref })
+            .withDokref(grenseSomSkalEndreDokref.dokrefGrensekobling.map {
+                it.dokumentasjonsreferanse.toDokrefDTO().apply {
+                    vedtakGyldigFra = gyldighetsdato
+                }
+            })
             .withVersion(2)
             .build()
 
@@ -1305,10 +1319,63 @@ class GrenseServiceIT : TestWithDbContainer() {
             gyldighetsdato = gyldighetsdato,
             endringstype = Endringstype.VEDTATT_GRENSEJUSTERING
         )
-
+        entityManager.flush()
+        entityManager.clear()
         val persistedGrense = grenseService.hentGrense(Identifikator(lokalid = Lokalid(grenseSomSkalEndreDokref.lokalid), gyldighetsdato = gyldighetsdato))
-        assertThat(persistedGrense?.dokumentasjonsreferanser).isNotNull().isNotEmpty()
-        assertThat(persistedGrense?.dokumentasjonsreferanser!!.first().dokumentlenker).hasSize(3)
+        assertThat(persistedGrense?.getDokumentasjonsreferanser(gyldighetsdato)).isNotNull().isNotEmpty()
+        assertThat(persistedGrense?.getDokumentasjonsreferanser(gyldighetsdato)?.first()?.dokumentlenker).hasSize(3)
+    }
+
+    @Test
+    fun `Skal hente nyeste dokref-versjon i grense B, dersom grense A sin dokref med samme lokalid oppdateres `() {
+        val gyldighetsdato = LocalDate.now()
+        val grunnkretser = saveNaboGrunnkretser(gyldigFra = gyldighetsdato, medToDelteGrenser = true, medKommunegrense = true )
+
+        entityManager.flush()
+        entityManager.clear()
+
+        val dokumentasjonsreferanse = DokumentasjonsreferanseBuilder()
+            .fastSettingAt(LocalDate.now())
+            .addLenker(dokLink("http://1.no"), dokLink("https://2.no"))
+            .addInternRefs(internReferanse("ref1"))
+            .build()
+
+        val grenseA = grunnkretser.flatMap { it.grenser }.first { it.grense.lokalid == "grenseDelt2Lokalid" }.grense
+        val grenseB = grunnkretser.flatMap { it.grenser }.first  { it.grense.lokalid == "grenseSørVestLokalid" }.grense
+
+        dokumentasjonsreferanse.dokrefGrenseKobling.add(DokrefGrenseKobling().apply {
+            this.dokumentasjonsreferanse = dokumentasjonsreferanse
+            this.grense = grenseA
+        })
+        dokumentasjonsreferanse.dokrefGrenseKobling.add(DokrefGrenseKobling().apply {
+            this.dokumentasjonsreferanse = dokumentasjonsreferanse
+            this.grense = grenseB
+        })
+        dokumentasjonsreferanseRepository.save(dokumentasjonsreferanse)
+        entityManager.flush()
+
+        val persistedGrenseA = grenseRepository.findLastByLokalid(grenseA.lokalid)
+
+        val oppdatertTittel = "Oppdatert tittel"
+        persistedGrenseA!!.dokrefGrensekobling.first().dokumentasjonsreferanse.rettskildetittel = oppdatertTittel
+
+        val grenseAFeature = FeatureBuilder(id = grenseA.lokalid)
+            .copy(grenseA.grenseToFeature())
+            .withDokref(grenseA.dokrefGrensekobling.map { val dokref = it.dokumentasjonsreferanse.toDokrefDTO(); dokref.vedtakGyldigFra = LocalDate.now(); dokref })
+            .build()
+
+        grenseService.lagreGrenser(
+            grenser = FeatureCollection(features =
+            listOf(
+                grenseAFeature
+            )),
+            gyldighetsdato = gyldighetsdato,
+            endringstype = Endringstype.KVALITETSHEVING
+        )
+
+        val persistedGrenseB = grenseService.hentGrense(Identifikator(lokalid = Lokalid(grenseB.lokalid), gyldighetsdato = gyldighetsdato))
+        assertThat(persistedGrenseB?.dokrefGrensekobling?.first()?.dokumentasjonsreferanse?.rettskildetittel).isEqualTo(oppdatertTittel)
+
     }
 
     @Test
@@ -1318,7 +1385,7 @@ class GrenseServiceIT : TestWithDbContainer() {
             getTilhorigetTilNyopprettetKretsTestSetup(Grensetype.Kommunegrense, gyldighetsdato, ::saveStemmekrets)
         saveKommuneOgUnikLokalid(stemmekretser = listOf(kretsOpprinnelig, kretsOest, kretsNordVest), gyldigFra = gyldighetsdato)
 
-        val grenseSomSkalHaDokref = kretsOpprinnelig.grenser.find { it.grense.lokalid == "grense3_1Lokalid" }?.grense
+        val grenseSomSkalHaDokref = kretsOpprinnelig.grenser.find { it.grense.lokalid == "grense3_1Lokalid" }!!.grense
 
         assertThat(grenseSomSkalHaDokref).isNotNull()
 
@@ -1345,10 +1412,10 @@ class GrenseServiceIT : TestWithDbContainer() {
             }
         )
 
-        val grenseMedDokrefs = FeatureBuilder(id = grenseSomSkalHaDokref!!.lokalid)
+        val grenseMedDokrefs = FeatureBuilder(id = grenseSomSkalHaDokref.lokalid)
             .copy(grenseSomSkalHaDokref.grenseToFeature())
             .withDokref(dokrefs.map {
-                it.toDokRef().apply {
+                it.toDokrefDTO().apply {
                     id = null
                     vedtakGyldigFra = LocalDate.now()
                 }
@@ -1364,17 +1431,97 @@ class GrenseServiceIT : TestWithDbContainer() {
             gyldighetsdato = gyldighetsdato,
             endringstype = Endringstype.VEDTATT_GRENSEJUSTERING
         )
+        entityManager.flush()
+        entityManager.clear()
 
         val lagretGrense = grenseService.hentGrense(Identifikator(lokalid = Lokalid(grenseSomSkalHaDokref.lokalid), gyldighetsdato = gyldighetsdato))
 
         assertThat(lagretGrense).isNotNull
-        assertThat(lagretGrense!!.dokumentasjonsreferanser).hasSize(2)
+        assertThat(lagretGrense!!.dokrefGrensekobling).hasSize(2)
 
-        assertThat(lagretGrense.dokumentasjonsreferanser.first().dokumentlenker.first().dokumentlink).isEqualTo("https://google.no")
-        assertThat(lagretGrense.dokumentasjonsreferanser.elementAt(1).dokumentlenker.first().dokumentlink).isEqualTo("https://google.no")
+        assertThat(lagretGrense.dokrefGrensekobling.first().dokumentasjonsreferanse.dokumentlenker.first().dokumentlink).isEqualTo("https://google.no")
+        assertThat(lagretGrense.dokrefGrensekobling.elementAt(1).dokumentasjonsreferanse.dokumentlenker.first().dokumentlink).isEqualTo("https://google.no")
 
-        assertThat(lagretGrense.dokumentasjonsreferanser.first().internReferanserKartverket.first().internReferanseKartverket).isEqualTo("1")
-        assertThat(lagretGrense.dokumentasjonsreferanser.elementAt(1).internReferanserKartverket.first().internReferanseKartverket).isEqualTo("1")
+        assertThat(lagretGrense.dokrefGrensekobling.first().dokumentasjonsreferanse.internReferanserKartverket.first().internReferanseKartverket).isEqualTo("1")
+        assertThat(lagretGrense.dokrefGrensekobling.elementAt(1).dokumentasjonsreferanse.internReferanserKartverket.first().internReferanseKartverket).isEqualTo("1")
     }
 
+    @Test
+    fun `Skal hente gammel dokref-versjon når man henter arkivert grense`() {
+        val gyldighetsdato = LocalDate.parse("2023-01-01")
+        val grunnkretser = saveNaboGrunnkretser(gyldighetsdato, medToDelteGrenser = true, medKommunegrense = true)
+        entityManager.flush()
+
+        val dokumentasjonsreferanse = DokumentasjonsreferanseBuilder()
+            .fastSettingAt(LocalDate.now())
+            .addLenker(dokLink("http://1.no"), dokLink("https://2.no"))
+            .addInternRefs(internReferanse("ref1"))
+            .addGyldighet(Gyldighet(gyldigFra = gyldighetsdato))
+            .build()
+
+        val grenseA = grunnkretser.flatMap { it.grenser }.find { it.grense.lokalid == "grenseDeltLokalid" }!!.grense
+
+        val grensekobling = DokrefGrenseKobling().apply {
+            this.dokumentasjonsreferanse = dokumentasjonsreferanse
+            this.grense = grenseA
+        }
+        dokumentasjonsreferanse.dokrefGrenseKobling.add(grensekobling)
+        grenseA.dokrefGrensekobling.add(grensekobling)
+        val orginalTittel = "tittel 1"
+        grenseA.dokrefGrensekobling.first().dokumentasjonsreferanse.rettskildetittel = orginalTittel
+        val grenseAFeature = FeatureBuilder()
+            .copy(grenseA.grenseToFeature(gyldighetsdato = gyldighetsdato))
+            .withLokalid(grenseA.lokalid)
+            .withDokref(grenseA.dokrefGrensekobling.map {
+                it.dokumentasjonsreferanse.toDokrefDTO().apply {
+                    vedtakGyldigFra = gyldighetsdato
+                }
+            })
+            .build()
+
+        grenseService.lagreGrenser(
+            grenser = FeatureCollection(features =
+            listOf(
+                grenseAFeature
+            )),
+            gyldighetsdato = gyldighetsdato,
+            endringstype = Endringstype.KVALITETSHEVING
+        )
+        entityManager.flush()
+        entityManager.clear()
+        val persistedGrenseA = grenseService.hentGrense(Identifikator(lokalid = Lokalid(grenseA.lokalid), gyldighetsdato = gyldighetsdato))
+        assertThat(persistedGrenseA).isNotNull()
+
+        val oppdatertTittel = "tittel 2"
+        val nyGyldighetsdato = LocalDate.parse("2024-04-04")
+
+        val nyVersjonAvGrenseFeature = FeatureBuilder()
+            .withLokalid(persistedGrenseA!!.lokalid)
+            .copy(persistedGrenseA.grenseToFeature(gyldighetsdato = nyGyldighetsdato))
+            .withDokref(persistedGrenseA.dokrefGrensekobling.map {
+                it.dokumentasjonsreferanse.toDokrefDTO().apply {
+                    vedtakGyldigFra = nyGyldighetsdato
+                    rettskildeTittel = oppdatertTittel
+                }
+            })
+            .build()
+
+        grenseService.lagreGrenser(
+            grenser = FeatureCollection(features =
+            listOf(
+                nyVersjonAvGrenseFeature
+            )),
+            gyldighetsdato = nyGyldighetsdato,
+            endringstype = Endringstype.KVALITETSHEVING
+        )
+        entityManager.flush()
+        entityManager.clear()
+
+        val gammelVersjonAvGrense = grenseRepository.findGyldigObjektForIdentifikator(Identifikator(lokalid = Lokalid(grenseA.lokalid), gyldighetsdato = gyldighetsdato))
+        assertThat(gammelVersjonAvGrense).isNotNull()
+
+        grenseRepository.findAllByLokalid(grenseA.lokalid)
+        val dokrefPaaGyldighetsdato = gammelVersjonAvGrense?.getDokumentasjonsreferanser(gyldighetsdato)
+        assertThat(dokrefPaaGyldighetsdato?.first()?.rettskildetittel).isEqualTo(orginalTittel)
+    }
 }

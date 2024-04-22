@@ -22,6 +22,8 @@ import no.kartverket.nibas.domain.Spraakkode
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.UnikLokalid
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
+import no.kartverket.nibas.repository.DokrefGrenseKoblingRepository
+import no.kartverket.nibas.repository.DokumentasjonsreferanseRepository
 import no.kartverket.nibas.repository.FylkeRepository
 import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.GrunnkretsRepository
@@ -43,6 +45,7 @@ import no.kartverket.nibas.service.StemmekretsService
 import no.kartverket.nibas.service.utkast.UtkastService
 import no.kartverket.nibas.service.deltgeometri.DeltGeometriAdministrativeGrenserService
 import no.kartverket.nibas.sporing.Gyldighet
+import no.kartverket.nibas.utils.GrenseHelper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.locationtech.jts.geom.MultiPolygon
@@ -58,9 +61,13 @@ import org.testcontainers.utility.DockerImageName
 import java.time.LocalDate
 import java.time.Month
 import java.util.*
+import jakarta.persistence.EntityManager
 
 @SpringBootTest(webEnvironment = WebEnvironment.MOCK)
 class TestWithDbContainer {
+
+    @Autowired
+    lateinit var entityManager: EntityManager
 
     @Autowired
     lateinit var unikLokalidRepository: UnikLokalidRepository
@@ -125,10 +132,17 @@ class TestWithDbContainer {
     @MockkBean
     lateinit var jwtVerifier: JWTVerifier
 
+    @Autowired
+    lateinit var dokumentasjonsreferanseRepository: DokumentasjonsreferanseRepository
+
+    @Autowired
+    lateinit var dokrefGrenseKoblingRepository: DokrefGrenseKoblingRepository
+
     companion object dbContainer : PostgreSQLContainer<dbContainer>(
         DockerImageName.parse("postgis/postgis:14-3.4-alpine").asCompatibleSubstituteFor("postgres")
     ) {
         private val randomContainerSuffix = Random().nextInt().toString()
+
         init {
             withDatabaseName("nibas")
             withUsername("nibas")
@@ -447,4 +461,53 @@ class TestWithDbContainer {
         assertThat(flate1?.equals(flate2)).`as`("Flate1: " + flate1 + " Flate2: " + flate2).isEqualTo(lik)
     }
 
+    fun saveNaboGrunnkretser(gyldigFra: LocalDate, medHull: Boolean = false, medTredjeKrets: Boolean = false, medToDelteGrenser: Boolean = false, medKommunegrense: Boolean = false)
+        : List<Grunnkrets> {
+        val grenserForVest = if (medHull) {
+            GrenseHelper.getGrenserForVestligKrets(gyldigFra, Grensetype.Grunnkretsgrense, medToDelteGrenser) +
+                GrenseHelper.getHullVestligKrets(gyldigFra, Grensetype.Grunnkretsgrense)
+        } else {
+            GrenseHelper.getGrenserForVestligKrets(gyldigFra, Grensetype.Grunnkretsgrense, medToDelteGrenser)
+        }
+
+        //Lagrer grensene først, for å være sikker på at de er tilgjengelige for å knyttes til kretsene
+        val lagredeGrenserForVest = grenseRepository.saveAll(grenserForVest)
+        val lagredeGrenserForOest = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(gyldigFra, Grensetype.Grunnkretsgrense, medToDelteGrenser, medKommunegrense))
+        grenseRepository.flush()
+
+        val kretsVest = saveGrunnkrets(
+            id = "1",
+            lokalid = Lokalid("123"),
+            grunnkretsnummer = "03010020",
+            grunnkretsnavn = "Vestre krets",
+            gyldigFra = gyldigFra,
+            grenser = lagredeGrenserForVest
+        )
+
+        val kretsOest = saveGrunnkrets(
+            id = "2",
+            lokalid = Lokalid("234"),
+            grunnkretsnummer = "03010021",
+            grunnkretsnavn = "Østre krets",
+            gyldigFra = gyldigFra,
+            grenser = lagredeGrenserForOest
+        )
+
+        val grunnkretsMutableList = mutableListOf(kretsVest, kretsOest)
+        if (medTredjeKrets) {
+            val tredjeKrets = saveGrunnkrets(
+                id = "3",
+                lokalid = Lokalid("345"),
+                grunnkretsnummer = "03010022",
+                grunnkretsnavn = "Tredje krets",
+                gyldigFra = gyldigFra
+            )
+            grunnkretsMutableList.add(tredjeKrets)
+        }
+
+        val grunnkretser = grunnkretsMutableList.toList()
+        saveKommuneOgUnikLokalid(grunnkretser = grunnkretser, gyldigFra = gyldigFra)
+        grenseRepository.flush()
+        return grunnkretser
+    }
 }

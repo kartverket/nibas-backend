@@ -72,14 +72,26 @@ const val DISCRIMINATOR_FIELD: String = "discriminator"
 )
 interface Metadata
 
+interface HarCommonMetadata {
+    val common: CommonMetadata
+}
+
+interface HarCommonGrense {
+    val commonGrense: CommonGrenseMetadata
+}
+
+interface HarDokumentasjonsreferanse {
+    var dokumentasjonsreferanser: List<DokumentasjonsreferanseDTO>
+}
+
 @Schema(
     name = FLATE_METADATA_SCHEMA,
     description = "Metadata for en flate (felles for nasjon, fylke, kommune og grunnkrets)",
 )
 data class FlateMetadata(
     @Schema(description = "Felles metadata-egenskaper.")
-    val common: CommonMetadata,
-) : Metadata
+    override val common: CommonMetadata,
+) : Metadata, HarCommonMetadata
 
 @Schema(
     name = ADMINISTRATIV_GRENSE_METADATA_SCHEMA,
@@ -87,12 +99,12 @@ data class FlateMetadata(
 )
 data class AdministrativGrenseMetadata(
     @Schema(description = "Felles metadata-egenskaper.")
-    val common: CommonMetadata,
+    override val common: CommonMetadata,
     @Schema(description = "Felles metadata-egenskaper for grenser.")
-    val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
+    override val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
     @Schema(description = "Henviser til fastsettings- eller lovinformasjon.")
-    var dokumentasjonsreferanser: List<DokumentasjonsreferanseDTO> = emptyList(),
-) : Metadata
+    override var dokumentasjonsreferanser: List<DokumentasjonsreferanseDTO> = emptyList(),
+) : Metadata, HarCommonMetadata, HarDokumentasjonsreferanse, HarCommonGrense
 
 @Schema(
     name = RIKSGRENSE_METADATA_SCHEMA,
@@ -100,12 +112,12 @@ data class AdministrativGrenseMetadata(
 )
 data class RiksgrenseMetadata(
     @Schema(description = "Felles metadata-egenskaper.")
-    val common: CommonMetadata,
+    override val common: CommonMetadata,
     @Schema(description = "Felles metadata-egenskaper for grenser.")
-    val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
+    override val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
     @Schema(description = "Henviser til fastsettings- eller lovinformasjon.")
-    var dokumentasjonsreferanser: List<DokumentasjonsreferanseDTO> = emptyList(),
-) : Metadata
+    override var dokumentasjonsreferanser: List<DokumentasjonsreferanseDTO> = emptyList(),
+) : Metadata, HarCommonMetadata, HarCommonGrense, HarDokumentasjonsreferanse
 
 @Schema(
     name = TERRITORIALGRENSE_METADATA_SCHEMA,
@@ -113,12 +125,12 @@ data class RiksgrenseMetadata(
 )
 data class TerritorialgrenseMetadata(
     @Schema(description = "Felles metadata-egenskaper.")
-    val common: CommonMetadata,
+    override val common: CommonMetadata,
     @Schema(description = "Felles metadata-egenskaper for grenser.")
-    val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
+    override val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
     @Schema(description = "Henviser til fastsettings- eller lovinformasjon.")
-    var dokumentasjonsreferanser: List<DokumentasjonsreferanseDTO> = emptyList(),
-) : Metadata
+    override var dokumentasjonsreferanser: List<DokumentasjonsreferanseDTO> = emptyList(),
+) : Metadata, HarCommonMetadata, HarCommonGrense, HarDokumentasjonsreferanse
 
 @Schema(
     name = AVTALT_AVGRENSNINGSLINJE_METADATA_SCHEMA,
@@ -126,12 +138,12 @@ data class TerritorialgrenseMetadata(
 )
 data class AvtaltAvgrensningslinjeMetadata(
     @Schema(description = "Felles metadata-egenskaper.")
-    val common: CommonMetadata,
+    override val common: CommonMetadata,
     @Schema(description = "Felles metadata-egenskaper for grenser.")
-    val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
+    override val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
     @Schema(description = "Henviser til fastsettings- eller lovinformasjon.")
-    var dokumentasjonsreferanser: List<DokumentasjonsreferanseDTO> = emptyList(),
-) : Metadata
+    override var dokumentasjonsreferanser: List<DokumentasjonsreferanseDTO> = emptyList(),
+) : Metadata, HarCommonMetadata, HarCommonGrense, HarDokumentasjonsreferanse
 
 @Schema(
     name = GRUNNLINJE_METADATA_SCHEMA,
@@ -139,12 +151,12 @@ data class AvtaltAvgrensningslinjeMetadata(
 )
 data class GrunnlinjeMetadata(
     @Schema(description = "Felles metadata-egenskaper.")
-    val common: CommonMetadata,
+    override val common: CommonMetadata,
     @Schema(description = "Felles metadata-egenskaper for grenser.")
-    val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
+    override val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
     @Schema(description = "Henviser til fastsettings- eller lovinformasjon.")
-    var dokumentasjonsreferanser: List<DokumentasjonsreferanseDTO> = emptyList(),
-) : Metadata
+    override var dokumentasjonsreferanser: List<DokumentasjonsreferanseDTO> = emptyList(),
+) : Metadata, HarCommonMetadata, HarCommonGrense, HarDokumentasjonsreferanse
 
 @Schema(
     name = STATISTISKGRENSE_METADATA_SCHEMA,
@@ -152,10 +164,10 @@ data class GrunnlinjeMetadata(
 )
 data class StatistiskgrenseMetadata(
     @Schema(description = "Felles metadata-egenskaper.")
-    val common: CommonMetadata,
+    override val common: CommonMetadata,
     @Schema(description = "Felles metadata-egenskaper for grenser.")
-    val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
-) : Metadata
+    override val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
+) : Metadata, HarCommonMetadata, HarCommonGrense
 
 @Schema(
     name = KOMMUNAL_KRETSGRENSE_METADATA_SCHEMA,
@@ -163,10 +175,10 @@ data class StatistiskgrenseMetadata(
 )
 data class KommunalKretsgrenseMetadata(
     @Schema(description = "Felles metadata-egenskaper.")
-    val common: CommonMetadata,
+    override val common: CommonMetadata,
     @Schema(description = "Felles metadata-egenskaper for grenser.")
-    val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
-) : Metadata
+    override val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
+) : Metadata, HarCommonMetadata, HarCommonGrense
 
 data class CommonMetadata(
     @Schema(description = "Unik identifikasjon av et objekt")

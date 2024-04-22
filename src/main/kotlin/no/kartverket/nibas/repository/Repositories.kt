@@ -1,6 +1,7 @@
 package no.kartverket.nibas.repository
 
 import no.kartverket.nibas.domain.Administrativenhetnavn
+import no.kartverket.nibas.domain.DokrefGrenseKobling
 import no.kartverket.nibas.domain.Dokumentasjonsreferanse
 import no.kartverket.nibas.domain.DokumentasjonsreferanseDokumentlink
 import no.kartverket.nibas.domain.Fylke
@@ -43,12 +44,13 @@ interface JpaRepositoryWithLokalIdFinder<T, ID> : JpaRepository<T, ID> {
 
 interface LandKodeRepository : CrudRepository<Landkode, String>
 interface TypeendringRepository : CrudRepository<Typeendring, String>
-interface DokumentasjonsreferanseRepository : CrudRepository<Dokumentasjonsreferanse, String>
+interface DokumentasjonsreferanseRepository : JpaRepositoryWithLokalIdFinder<Dokumentasjonsreferanse, String>
 interface DokumentasjonsreferanseDokumentlinkRepository : CrudRepository<DokumentasjonsreferanseDokumentlink, String>
 interface SpraakkodeRepository : CrudRepository<Spraakkode, String>
 interface AdministrativenhetnavnRepository : CrudRepository<Administrativenhetnavn, String>
-interface UnikLokalidRepository : CrudRepositoryWithLokalIdFinder<UnikLokalid, String>
+interface UnikLokalidRepository : JpaRepositoryWithLokalIdFinder<UnikLokalid, String>
 interface NasjonRepository : CrudRepositoryWithLokalIdFinder<Nasjon, String>
+interface DokrefGrenseKoblingRepository : JpaRepository<DokrefGrenseKobling, String>
 interface FylkeInformasjonRepository : CrudRepository<FylkeInformasjon, String>
 interface FylkeRepository : CrudRepositoryWithLokalIdFinder<Fylke, String> {
 
@@ -89,7 +91,7 @@ interface StemmekretsGrenseKoblingRepository : JpaRepository<StemmekretsGrenseKo
     fun findByStemmekretsKommuneLokalid(kommuneLokalid: UnikLokalid): List<StemmekretsGrenseKobling>
 }
 
-interface UtkastRepository : CrudRepository<Utkast, String>, JpaRepository<Utkast, String>{
+interface UtkastRepository : CrudRepository<Utkast, String>, JpaRepository<Utkast, String> {
     fun findAllByStatus(status: UtkastStatus): List<Utkast>
 }
 
@@ -97,7 +99,7 @@ fun verifiserOptimistiskLaas(nyVersion: Int, eksisterende: Laasbar): KonfliktVer
     if (nyVersion == eksisterende.version) null else KonfliktVersjon(nyVersion, eksisterende)
 
 data class KonfliktVersjon(val nyVersjon: Int, val eksisterende: Laasbar) {
-    fun throwException() : Unit = throw OptimistiskLaasException(this)
+    fun throwException(): Unit = throw OptimistiskLaasException(this)
     fun getMessage(): String =
         "Det er ikke samsvar med versjon. Ønsket versjon = ${nyVersjon}, eksisterende versjon = ${eksisterende.version} for objekt med id = ${eksisterende.id}"
 }

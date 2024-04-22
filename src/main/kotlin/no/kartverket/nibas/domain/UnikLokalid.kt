@@ -19,37 +19,35 @@ class UnikLokalid(
     val lokalid: String = UUID.randomUUID().toString(),
     val flatetype: Flatetype
 ) {
+    @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    @JoinColumn(name = "lokalid", referencedColumnName = "lokalid")
+    var nasjoner: MutableSet<Nasjon> = mutableSetOf()
 
     @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     @JoinColumn(name = "lokalid", referencedColumnName = "lokalid")
-    var nasjoner : MutableSet<Nasjon> = mutableSetOf()
+    var fylker: MutableSet<Fylke> = mutableSetOf()
 
     @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     @JoinColumn(name = "lokalid", referencedColumnName = "lokalid")
-    var fylker : MutableSet<Fylke> = mutableSetOf()
-
-    @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
-    @JoinColumn(name = "lokalid", referencedColumnName = "lokalid")
-    var kommuner : MutableSet<Kommune> = mutableSetOf()
+    var kommuner: MutableSet<Kommune> = mutableSetOf()
 
     @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     @JoinColumn(name = "nasjonlokalid", referencedColumnName = "lokalid")
-    var fylkerForNasjon : MutableSet<Fylke> = mutableSetOf()
+    var fylkerForNasjon: MutableSet<Fylke> = mutableSetOf()
 
     @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     @JoinColumn(name = "fylkelokalid", referencedColumnName = "lokalid")
-    var kommunerForFylke : MutableSet<Kommune> = mutableSetOf()
+    var kommunerForFylke: MutableSet<Kommune> = mutableSetOf()
 
     @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     @JoinColumn(name = "administrativenhetlokalid", referencedColumnName = "lokalid")
-    var administrativenhetnavn : MutableSet<Administrativenhetnavn> = mutableSetOf()
+    var administrativenhetnavn: MutableSet<Administrativenhetnavn> = mutableSetOf()
 
     @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     @JoinColumn(name = "kommunelokalid", referencedColumnName = "lokalid")
-    var stemmekretser : MutableSet<Stemmekrets> = mutableSetOf()
+    var stemmekretser: MutableSet<Stemmekrets> = mutableSetOf()
 
     @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     @JoinColumn(name = "kommunelokalid", referencedColumnName = "lokalid")
-    var grunnkretser : MutableSet<Grunnkrets> = mutableSetOf()
-
+    var grunnkretser: MutableSet<Grunnkrets> = mutableSetOf()
 }

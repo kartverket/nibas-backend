@@ -5,18 +5,18 @@ import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.KontekstEgenskaper
-import no.kartverket.nibas.api.v1.common.geojson.metadata.AdministrativGrenseMetadata
-import no.kartverket.nibas.api.v1.common.geojson.metadata.AvtaltAvgrensningslinjeMetadata
-import no.kartverket.nibas.api.v1.common.geojson.metadata.KommunalKretsgrenseMetadata
-import no.kartverket.nibas.api.v1.common.geojson.metadata.MetadataUpdater
-import no.kartverket.nibas.api.v1.common.geojson.metadata.RiksgrenseMetadata
-import no.kartverket.nibas.api.v1.common.geojson.metadata.StatistiskgrenseMetadata
-import no.kartverket.nibas.api.v1.common.geojson.metadata.TerritorialgrenseMetadata
+import no.kartverket.nibas.api.v1.common.geojson.metadata.CommonGrenseMetadata
+import no.kartverket.nibas.api.v1.common.geojson.metadata.CommonMetadata
+import no.kartverket.nibas.api.v1.common.geojson.metadata.HarDokumentasjonsreferanse
+import no.kartverket.nibas.api.v1.common.geojson.metadata.HarCommonGrense
+import no.kartverket.nibas.api.v1.common.geojson.metadata.HarCommonMetadata
+import no.kartverket.nibas.api.v1.common.geojson.metadata.toEmbeddable
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.BadRequestException
 import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.common.toNorskFormat
+import no.kartverket.nibas.domain.CommonMetadataProperties
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.Fylke
@@ -30,6 +30,7 @@ import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.StemmekretsGrenseKobling
 import no.kartverket.nibas.extensions.geometry.toLineString
+import no.kartverket.nibas.repository.DokrefGrenseKoblingRepository
 import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.OptimistiskLaasException
@@ -54,6 +55,8 @@ class GrenseService(
     private val kommuneService: KommuneService,
     private val fylkeService: FylkeService,
     private val nasjonService: NasjonService,
+    private val dokumentasjonsreferanseService: DokumentasjonsreferanseService,
+    private val grenseKoblingRepository: DokrefGrenseKoblingRepository
 ) {
     fun hentGrense(identifikator: Identifikator): Grense? = grenseRepository.findGyldigObjektForIdentifikator(identifikator)
 
@@ -76,7 +79,7 @@ class GrenseService(
             addTilhorigheterTilGrense(grenseUtenTilhorighet, feature, stemmekretserForTilhorigheter, grunnkretserForTilhorigheter, gyldighetsdato)
         }
 
-        val flaterSomSkalOppdatereHoyereIHierakiet = createNyeVersjonerAvFlaterHoyereIHierakietForGrenser(endredeGrenserMedTilhorigheter ,gyldighetsdato, endringstype)
+        val flaterSomSkalOppdatereHoyereIHierakiet = createNyeVersjonerAvFlaterHoyereIHierakietForGrenser(endredeGrenserMedTilhorigheter, gyldighetsdato, endringstype)
         val flaterSomSkalFlatedannes = (stemmekretserForTilhorigheter + grunnkretserForTilhorigheter + flaterSomSkalOppdatereHoyereIHierakiet)
             .distinctBy { it.id }
             .toSet()
@@ -84,6 +87,7 @@ class GrenseService(
         flateService.oppdaterFlaterFor(flaterSomSkalFlatedannes)
         return flaterSomSkalFlatedannes
     }
+
     fun createNyGrenseMedNyLokalid(feature: Feature, gyldigFra: LocalDate, endringstype: Endringstype): Grense {
         val grenseFraFeature = Grense(grensetype = Grensetype.fromValue(feature.properties.type))
         grenseFraFeature.apply {
@@ -95,7 +99,6 @@ class GrenseService(
         return grenseRepository.saveAndFlush(
             grenseFraFeature
         )
-
     }
 
     fun createNyVersjonAvGrense(grense: Grense, gyldigFra: LocalDate, endringstype: Endringstype): Grense {
@@ -108,7 +111,6 @@ class GrenseService(
                     auditInfo.typeEndring = endringstype
                 }
         )
-
         return nyGrense
             .applyCascadingOperationsBasedOnExistingGrense(grense)
             .also {
@@ -482,12 +484,12 @@ class GrenseService(
     }
 
     private fun erSammeTilhorighet(tilhorighet1: KontekstEgenskaper, tilhorighet2: KontekstEgenskaper): Boolean {
-        if(tilhorighet1.id?.lokalid != tilhorighet2.id?.lokalid) {
+        if (tilhorighet1.id?.lokalid != tilhorighet2.id?.lokalid) {
             return false
         }
 
         // Hvis begge er null er det nye kretser, vi må da sammenligne kretsnummer (og kommune for stemmekrets)
-        if(tilhorighet1.id?.lokalid == null && tilhorighet2.id?.lokalid == null) {
+        if (tilhorighet1.id?.lokalid == null && tilhorighet2.id?.lokalid == null) {
             if (tilhorighet1.type == KontekstEnhetType.GRUNNKRETS) {
                 return tilhorighet1.kretsNummer == tilhorighet2.kretsNummer
             }
@@ -536,26 +538,32 @@ class GrenseService(
         endringstype: Endringstype
     ): Grense {
         val featureMetadata = feature.properties.metadata
-        if (featureMetadata != null) {
-            val metadataUpdater = MetadataUpdater()
-            when (grense.grensetype) {
-                Grensetype.Kommunegrense -> metadataUpdater.updateAdministrativGrense(grense, (featureMetadata as AdministrativGrenseMetadata), gyldighetsdato, endringstype)
-                Grensetype.Fylkesgrense -> metadataUpdater.updateAdministrativGrense(grense, (featureMetadata as AdministrativGrenseMetadata), gyldighetsdato, endringstype)
-                Grensetype.Riksgrense -> metadataUpdater.updateRiksgrense(grense, (featureMetadata as RiksgrenseMetadata), gyldighetsdato, endringstype)
-                Grensetype.AvtaltAvgrensningslinje -> metadataUpdater.updateAvtaltavgrensningslinje(
-                    grense = grense,
-                    metadata = (featureMetadata as AvtaltAvgrensningslinjeMetadata),
-                    gyldighetsdato = gyldighetsdato,
-                    endringstype = endringstype
-                )
 
-                Grensetype.Territorialgrense -> metadataUpdater.updateTerritoritalgrense(grense, (featureMetadata as TerritorialgrenseMetadata), gyldighetsdato, endringstype)
-                Grensetype.Delomraadegrense -> metadataUpdater.updateStatistiskGrense(grense, (featureMetadata as StatistiskgrenseMetadata))
-                Grensetype.Grunnkretsgrense -> metadataUpdater.updateStatistiskGrense(grense, (featureMetadata as StatistiskgrenseMetadata))
-                Grensetype.Stemmekretsgrense -> metadataUpdater.updateKommunalKretsgrense(grense, (featureMetadata as KommunalKretsgrenseMetadata))
-                else -> throw RuntimeException("Ikke støttet å oppdatere metadata for grensetype: " + grense.grensetype.name)
-            }
+        if (featureMetadata is HarCommonMetadata) {
+            grense.updateWithCommonMetadata(featureMetadata.common)
         }
+        if (featureMetadata is HarCommonGrense) {
+            updateWithGrenseMetadata(grense, featureMetadata.commonGrense)
+        }
+        if (featureMetadata is HarDokumentasjonsreferanse) {
+            dokumentasjonsreferanseService.updateDokumentasjonsreferanser(
+                dokumentasjonsreferanseDTOer = featureMetadata.dokumentasjonsreferanser,
+                endringstype = endringstype,
+                gyldighetsdato = gyldighetsdato,
+                grense = grense
+            )
+        }
+        
         return grense
+    }
+
+    private fun CommonMetadataProperties.updateWithCommonMetadata(common: CommonMetadata) {
+        this.datafangstdato = common.datafangstdato
+        this.setInfo(common.informasjon)
+        this.opphav = common.opphav
+    }
+
+    private fun updateWithGrenseMetadata(grense: Grense, commonGrenseMetadata: CommonGrenseMetadata) {
+        grense.kvalitet = commonGrenseMetadata.posisjonskvalitet?.toEmbeddable()
     }
 }

@@ -115,7 +115,7 @@ class KommuneService(
         )
         return nyKommune
             .applyCascadingOperationsBasedOnExistingKommune(kommune)
-            .also { kommune.setGyldigTil(gyldigFra)  }
+            .also { kommune.setGyldigTil(gyldigFra) }
     }
 
     fun createNyKommuneMedNyUnikLokalid(
@@ -136,7 +136,7 @@ class KommuneService(
                 utledetFra = kopierFraKommune
             }
 
-        var unikLokalid = UnikLokalid(nyKommune.lokalid, Flatetype.KOMMUNE)
+        var unikLokalid = UnikLokalid(nyKommune.lokalid, flatetype = Flatetype.KOMMUNE)
         unikLokalid = unikLokalidRepository.save(unikLokalid)
 
         nyKommune = kommuneRepository.save(nyKommune)
@@ -195,10 +195,10 @@ class KommuneService(
             "${it.stemmekretsnummer}: ${it.stemmekretsnavn}"
         }
 
-        if(grunnkretser.isNotEmpty() ){
+        if (grunnkretser.isNotEmpty()) {
             throw UgyldigTilstandException("Kan ikke sette kommunen med lokalId: ${kommune.lokalid} til historisk da den har grunnkretser som er gyldige etter $settHistoriskFraDato. Gjelder grunnkretser: $grunnkretser")
         }
-        if(stemmekretser.isNotEmpty() ){
+        if (stemmekretser.isNotEmpty()) {
             throw UgyldigTilstandException("Kan ikke sette kommunen med lokalId: ${kommune.lokalid} til historisk da den har stemmekretser som er gyldige etter $settHistoriskFraDato. Gjelder stemmekretser: $stemmekretser")
         }
 

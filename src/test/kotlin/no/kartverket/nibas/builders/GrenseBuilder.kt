@@ -2,6 +2,7 @@ package no.kartverket.nibas.builders
 
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.domain.DokrefGrenseKobling
 import no.kartverket.nibas.domain.Dokumentasjonsreferanse
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.PosisjonskvalitetEmbeddable
@@ -130,7 +131,12 @@ class FylkesgrenseBuilder(private val id: String = "1",
         fylkesgrense.setInfo(informasjonstekst)
         fylkesgrense.grense = grenseGeometri
 
-        fylkesgrense.dokumentasjonsreferanser.addAll(dokumentasjonsreferanser)
+        fylkesgrense.dokrefGrensekobling.addAll(dokumentasjonsreferanser.map {
+            DokrefGrenseKobling().apply {
+                dokumentasjonsreferanse = it
+                grense = fylkesgrense
+            }
+        })
         return fylkesgrense
     }
 

@@ -7,6 +7,7 @@ import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.sporing.toSporingsinformasjon
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
+import java.time.LocalDate
 
 /**
  * Hjelpeklasse/mappinglogikk grense/flate -> metadata.
@@ -18,35 +19,35 @@ class MetadataMapper(private val kodelisteHrefProvider: KodelisteHrefProviderI =
         common = flate.getCommonMetadata()
     )
 
-    fun toMetadataForAdministrativGrense(grense: Grense): AdministrativGrenseMetadata = AdministrativGrenseMetadata(
+    fun toMetadataForAdministrativGrense(grense: Grense, gyldighetsdato: LocalDate): AdministrativGrenseMetadata = AdministrativGrenseMetadata(
         common = grense.getCommonMetadata(),
         commonGrense = getCommonGrenseMetadata(grense),
-        dokumentasjonsreferanser = grense.dokumentasjonsreferanser.map { it.toDokRef() },
+        dokumentasjonsreferanser = grense.getDokumentasjonsreferanser(gyldighetsdato).map { it.toDokrefDTO() }
     )
 
-    fun toMetadataForRiksgrense(grense: Grense): RiksgrenseMetadata = RiksgrenseMetadata(
+    fun toMetadataForRiksgrense(grense: Grense, gyldighetsdato: LocalDate): RiksgrenseMetadata = RiksgrenseMetadata(
         common = grense.getCommonMetadata(),
         commonGrense = getCommonGrenseMetadata(grense),
-        dokumentasjonsreferanser = grense.dokumentasjonsreferanser.map { it.toDokRef() },
+        dokumentasjonsreferanser = grense.getDokumentasjonsreferanser(gyldighetsdato).map { it.toDokrefDTO() },
     )
 
-    fun toMetadataForAvtaltAvgrensningslinje(grense: Grense): AvtaltAvgrensningslinjeMetadata = AvtaltAvgrensningslinjeMetadata(
+    fun toMetadataForAvtaltAvgrensningslinje(grense: Grense, gyldighetsdato: LocalDate): AvtaltAvgrensningslinjeMetadata = AvtaltAvgrensningslinjeMetadata(
         common = grense.getCommonMetadata(),
         commonGrense = getCommonGrenseMetadata(grense),
-        dokumentasjonsreferanser = grense.dokumentasjonsreferanser.map { it.toDokRef() },
+        dokumentasjonsreferanser = grense.getDokumentasjonsreferanser(gyldighetsdato).map { it.toDokrefDTO() },
     )
 
-    fun toMetadataForTerritorialgrense(grense: Grense): TerritorialgrenseMetadata = TerritorialgrenseMetadata(
+    fun toMetadataForTerritorialgrense(grense: Grense, gyldighetsdato: LocalDate): TerritorialgrenseMetadata = TerritorialgrenseMetadata(
         common = grense.getCommonMetadata(),
         commonGrense = getCommonGrenseMetadata(grense),
-        dokumentasjonsreferanser = grense.dokumentasjonsreferanser.map { it.toDokRef() },
+        dokumentasjonsreferanser = grense.getDokumentasjonsreferanser(gyldighetsdato).map { it.toDokrefDTO() },
     )
 
-    fun toMetadataForGrunnlinje(grense: Grense): GrunnlinjeMetadata {
+    fun toMetadataForGrunnlinje(grense: Grense, gyldighetsdato: LocalDate): GrunnlinjeMetadata {
         val grunnlinjeMetadata = GrunnlinjeMetadata(
             common = grense.getCommonMetadata(),
             commonGrense = getCommonGrenseMetadata(grense),
-            dokumentasjonsreferanser = grense.dokumentasjonsreferanser.map { it.toDokRef() },
+            dokumentasjonsreferanser = grense.getDokumentasjonsreferanser(gyldighetsdato).map { it.toDokrefDTO() },
         )
         return grunnlinjeMetadata
     }

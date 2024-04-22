@@ -1,8 +1,6 @@
 package no.kartverket.nibas.domain
 
 import no.kartverket.nibas.api.v1.common.Grensetype
-import no.kartverket.nibas.api.v1.common.geojson.metadata.DokumentasjonsreferanseDTO
-import no.kartverket.nibas.common.ResponseException.BadRequestException
 import no.kartverket.nibas.sporing.AuditInfo
 import no.kartverket.nibas.sporing.Gyldighet
 import no.kartverket.nibas.sporing.Laasbar
@@ -14,10 +12,8 @@ import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Embedded
 import jakarta.persistence.Entity
+import jakarta.persistence.FetchType
 import jakarta.persistence.Id
-import jakarta.persistence.JoinColumn
-import jakarta.persistence.JoinTable
-import jakarta.persistence.ManyToMany
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import jakarta.persistence.Version
@@ -36,7 +32,10 @@ class Grense(
     // Blir mappet av Converter
     @Column(name = "avgrensningstype")
     var grensetype: Grensetype,
-) : CommonMetadataProperties, Laasbar {
+
+    ) : CommonMetadataProperties, Laasbar {
+    @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "grense")
+    var dokrefGrensekobling: MutableSet<DokrefGrenseKobling> = Collections.synchronizedSet(mutableSetOf())
 
     @Embedded
     override var auditInfo: AuditInfo = AuditInfo()
@@ -67,14 +66,6 @@ class Grense(
     @Column(name = "info")
     var informasjonstekst: String? = null
 
-    @ManyToMany(cascade = [CascadeType.ALL])
-    @JoinTable(
-        name = "grense_dokumentasjonsreferanse",
-        joinColumns = [JoinColumn(name = "grense_fk")],
-        inverseJoinColumns = [JoinColumn(name = "dokumentasjonsreferanse_fk")]
-    )
-    var dokumentasjonsreferanser: MutableSet<Dokumentasjonsreferanse> = mutableSetOf()
-
     // Relasjon oppover i treet til Grunnkrets
     @OneToMany(mappedBy = "grense")
     var grunnkretser: MutableSet<GrunnkretsGrenseKobling> = mutableSetOf()
@@ -83,6 +74,8 @@ class Grense(
     @OneToMany(mappedBy = "grense")
     var stemmekretser: MutableSet<StemmekretsGrenseKobling> = mutableSetOf()
 
+    fun getAllDokumentasjonsreferanser() = dokrefGrensekobling.map { it.dokumentasjonsreferanse }.toSet()
+    fun getDokumentasjonsreferanser(gyldighetsdato: LocalDate = LocalDate.now()) = dokrefGrensekobling.map { it.dokumentasjonsreferanse }.filter { it.gyldigPaaDato(gyldighetsdato) }.toSet()
     fun grunnkretser(gyldighetsdato: LocalDate = LocalDate.now()): Set<Grunnkrets> =
         grunnkretser.map { it.grunnkrets }.filter { it.gyldigPaaDato(gyldighetsdato) }.toSet()
 
@@ -126,83 +119,6 @@ class Grense(
         this.informasjonstekst = updatedInfo
     }
 
-    fun addDokumentasjonsreferanse(lokalid: String? = null): Dokumentasjonsreferanse {
-        val dokumentasjonsreferanse = lokalid?.let { Dokumentasjonsreferanse(lokalid = lokalid) } ?: Dokumentasjonsreferanse()
-        this.dokumentasjonsreferanser.add(dokumentasjonsreferanse)
-        return dokumentasjonsreferanse
-    }
-
-    private fun archiveAndRemoveDokumentasjonsreferanse(dokumentasjonsreferanse: Dokumentasjonsreferanse, gyldigTil: LocalDate) {
-        dokumentasjonsreferanse.setGyldigTil(gyldigTil)
-        this.dokumentasjonsreferanser.removeIf { dokumentasjonsreferanse.id == it.id }
-    }
-
-    private fun createNewVersionOfDokumentasjonsreferanse(dokumentasjonsreferanse: Dokumentasjonsreferanse, dokumentasjonsreferanseDTO: DokumentasjonsreferanseDTO): Dokumentasjonsreferanse? {
-        if (dokumentasjonsreferanse.hasChanges(dokumentasjonsreferanseDTO)) {
-            addDokumentasjonsreferanse(dokumentasjonsreferanse.lokalid).also {
-                setDokrefFields(it, dokumentasjonsreferanseDTO)
-                return it
-            }
-        }
-        return null
-    }
-
-    fun updateDokumentasjonsreferanser(dokRefList: List<DokumentasjonsreferanseDTO>, gyldighetsdato: LocalDate, endringstype: Endringstype) {
-        dokRefList.forEach { dokRef ->
-            val dokRefId = dokRef.id
-            val persistedDokumentasjonsreferanse = this.dokumentasjonsreferanser.find { dokumentasjonsreferanse -> dokRefId != null && dokumentasjonsreferanse.id == dokRefId }
-            validateReferanseId(persistedDokumentasjonsreferanse, dokRefId, "Dokumentasjonsreferanse-id eksisterer ikke: $dokRefId")
-
-            persistedDokumentasjonsreferanse?.let { oldVersion ->
-                if (!dokRef.shouldArchive)
-                    createNewVersionOfDokumentasjonsreferanse(persistedDokumentasjonsreferanse, dokRef)?.let { newVersion ->
-                        newVersion.gyldighet = Gyldighet(gyldigFra = gyldighetsdato)
-                        newVersion.auditInfo.typeEndring = endringstype
-                        archiveAndRemoveDokumentasjonsreferanse(oldVersion, gyldighetsdato)
-                    }
-                else
-                    archiveAndRemoveDokumentasjonsreferanse(oldVersion, gyldighetsdato)
-            }
-
-            persistedDokumentasjonsreferanse ?: addDokumentasjonsreferanse().run { setDokrefFields(this, dokRef) }
-        }
-    }
-
-    private fun setDokrefFields(
-        dokumentasjonsreferanse: Dokumentasjonsreferanse,
-        dokRef: DokumentasjonsreferanseDTO
-    ) {
-
-        // Viderefører kun internreferanser og dokumentlenker som er med fra requesten.
-        // Disse har 1..* forhold med dokumentasjonsreferansen, må kopieres uansett, og har ingen objid å videreføre.
-        // Klienten støtter kun å slette eller legge til objekter av disse typene - ikke redigering.
-
-        dokRef.dokumentlenker.forEach { lenke ->
-            dokumentasjonsreferanse.addDokumentLenke().apply {
-                this.dokumentlink = lenke.beskrivelse
-            }
-        }
-
-        dokRef.internReferanserKartverket.forEach { lenke ->
-            dokumentasjonsreferanse.addInternReferanse().apply {
-                this.internReferanseKartverket = lenke.beskrivelse
-            }
-        }
-
-        dokumentasjonsreferanse.vedtakGyldigFra = dokRef.vedtakGyldigFra ?: throw BadRequestException("\"Gyldig fra\"-dato er påkrevd!")
-        dokumentasjonsreferanse.vedtakGyldigTil = dokRef.vedtakGyldigTil
-        dokumentasjonsreferanse.fastsettingsdato = dokRef.fastsettingsdato
-        dokumentasjonsreferanse.fastsettingsmyndighet = dokRef.fastsettingsmyndighet
-        dokumentasjonsreferanse.hjemmel = dokRef.hjemmel
-        dokumentasjonsreferanse.rettskildeid = dokRef.rettskildeId
-        dokumentasjonsreferanse.rettskildetittel = dokRef.rettskildeTittel
-    }
-
-    private fun <T> validateReferanseId(referanse: T, id: String?, exceptionMessage: String) {
-        if (referanse == null && id != null)
-            throw BadRequestException(exceptionMessage)
-    }
-
     fun harGrenseTypeContainedInSet(grensetyper: Set<Grensetype>): Boolean = grensetyper.contains(this.grensetype)
 
     fun applyMappingFromExistingGrense(gammelGrense: Grense): Grense {
@@ -213,14 +129,22 @@ class Grense(
             grensetype = gammelGrense.grensetype
             kvalitet = gammelGrense.kvalitet
             setInfo(gammelGrense.informasjonstekst)
-
             grense = gammelGrense.grense
         }
     }
 
     fun applyCascadingOperationsBasedOnExistingGrense(gammelGrense: Grense): Grense {
         return this.apply {
-            dokumentasjonsreferanser.addAll(gammelGrense.dokumentasjonsreferanser)
+            gammelGrense.dokrefGrensekobling.forEach { kobling ->
+                if (kobling.grense != this) {
+                    val nyKobling = DokrefGrenseKobling()
+
+                    nyKobling.grense = this
+                    nyKobling.dokumentasjonsreferanse = kobling.dokumentasjonsreferanse
+
+                    dokrefGrensekobling.add(nyKobling)
+                }
+            }
         }
     }
 }

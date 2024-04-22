@@ -50,7 +50,7 @@ internal class DokumentasjonsreferanseTest {
             vedtakGyldigTil = march1.plusDays(1)
         )
 
-        val dokRef = dokumentasjonsreferanse.toDokRef()
+        val dokRef = dokumentasjonsreferanse.toDokrefDTO()
         assertThat(dokRef).isEqualTo(expectedDokRef)
     }
 

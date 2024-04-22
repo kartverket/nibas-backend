@@ -60,8 +60,8 @@ class FylkeService(
 
         return nyttFylke
 
-            //Kommentert vekk det med adm.enhetnavn, siden klienten pr.nå ikke oppdaterer navn. Lot det ligge pga TS-1192
-            // Finner basert på språkkode, og oppdaterer den
+        //Kommentert vekk det med adm.enhetnavn, siden klienten pr.nå ikke oppdaterer navn. Lot det ligge pga TS-1192
+        // Finner basert på språkkode, og oppdaterer den
 //            oppdatertFylke.administrativenhetnavn.forEach { navn ->
 //                gammel.fylkeLokalid.administrativenhetnavn.first { it.spraak?.id == navn.spraak }.let { gammeltNavn ->
 //                    verifiserOptimistiskLaas(navn.version, gammeltNavn)?.let { throw OptimistiskLaasException(it) }
@@ -84,7 +84,7 @@ class FylkeService(
         )
         return nyFylke
             .applyCascadingOperationsBasedOnExistingFylke(fylke)
-            .also { fylke.setGyldigTil(gyldigFra)  }
+            .also { fylke.setGyldigTil(gyldigFra) }
     }
 
     fun createNyttFylkeMedNyUnikLokalid(
@@ -105,7 +105,7 @@ class FylkeService(
                 utledetFra = kopierFraFylke
             }
 
-        var unikLokalid = UnikLokalid(nyttFylke.lokalid, Flatetype.FYLKE)
+        var unikLokalid = UnikLokalid(nyttFylke.lokalid, flatetype = Flatetype.FYLKE)
         unikLokalid = unikLokalidRepository.save(unikLokalid)
 
         nyttFylke = fylkeRepository.save(nyttFylke)
@@ -135,7 +135,7 @@ class FylkeService(
     fun hentAntallGyldigeVersjonerFramITidFor(identifikator: Identifikator): Int = fylkeRepository.findAntallFramtidigeVersjonerForIdentifikator(identifikator)
 
     @Transactional
-    fun settFylkeSomHistorisk(fylke: Fylke, settHistoriskFraDato: LocalDate){
+    fun settFylkeSomHistorisk(fylke: Fylke, settHistoriskFraDato: LocalDate) {
 
         val kommuner = fylke.getKommuner(settHistoriskFraDato).map {
             it.getAdministrativenhetNavn(settHistoriskFraDato).getInSpraak("nor")
@@ -145,7 +145,7 @@ class FylkeService(
             throw UgyldigTilstandException("Kan ikke sette fylket med lokalId: ${fylke.lokalid} til historisk da den har kommuner som er gyldige etter $settHistoriskFraDato. Gjelder kommuner: $kommuner")
         }
 
-        fylke.getAdministrativenhetNavn().forEach{ it.setGyldigTil(settHistoriskFraDato) }
+        fylke.getAdministrativenhetNavn().forEach { it.setGyldigTil(settHistoriskFraDato) }
         fylke.setGyldigTil(settHistoriskFraDato)
     }
 }

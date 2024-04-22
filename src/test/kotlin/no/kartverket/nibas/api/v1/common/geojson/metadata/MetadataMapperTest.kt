@@ -14,6 +14,7 @@ import no.kartverket.nibas.builders.REF_TEKST_2
 import no.kartverket.nibas.builders.TerritorialgrenseBuilder
 import no.kartverket.nibas.domain.AnsvarligMyndighetHolder
 import no.kartverket.nibas.repository.LandKodeRepository
+import no.kartverket.nibas.sporing.Gyldighet
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -49,11 +50,13 @@ internal class MetadataMapperTest {
     private val link2 = dokLink(LINK_TEKST_2)
     private val referanse1 = internReferanse(REF_TEKST_1)
     private val referanse2 = internReferanse(REF_TEKST_2)
+    val gyldighetsdato = LocalDate.parse("2024-04-16")
 
     private val dokumentasjonsreferanse = DokumentasjonsreferanseBuilder()
         .fastSettingAt(fastsettingsdato)
         .addLenker(link1, link2)
         .addInternRefs(referanse1, referanse2)
+        .addGyldighet(Gyldighet(gyldigFra = gyldighetsdato))
         .build()
 
     private val maalemetodeHref = "maalemetodeHref"
@@ -83,10 +86,9 @@ internal class MetadataMapperTest {
         val administrativGrenseMetadata = AdministrativGrenseMetadata(
             common = expectedCommonMetadata(),
             commonGrense = expectedCommonGrensedata(),
-            dokumentasjonsreferanser = listOf(dokumentasjonsreferanse).map { it.toDokRef() }
+            dokumentasjonsreferanser = listOf(dokumentasjonsreferanse).map { it.toDokrefDTO() }
         )
-
-        val metadata: AdministrativGrenseMetadata = metadataMapper.toMetadataForAdministrativGrense(fylkesgrense)
+        val metadata: AdministrativGrenseMetadata = metadataMapper.toMetadataForAdministrativGrense(fylkesgrense, gyldighetsdato)
         assertThat(metadata).isEqualTo(administrativGrenseMetadata)
     }
 
@@ -109,10 +111,10 @@ internal class MetadataMapperTest {
         val territorialgrenseMetadata = TerritorialgrenseMetadata(
             common = expectedCommonMetadata(),
             commonGrense = expectedCommonGrensedata(),
-            dokumentasjonsreferanser = listOf(dokumentasjonsreferanse).map { it.toDokRef() },
+            dokumentasjonsreferanser = listOf(dokumentasjonsreferanse).map { it.toDokrefDTO() },
         )
 
-        val metadata: TerritorialgrenseMetadata = metadataMapper.toMetadataForTerritorialgrense(territorialgrense)
+        val metadata: TerritorialgrenseMetadata = metadataMapper.toMetadataForTerritorialgrense(territorialgrense, LocalDate.now())
         assertThat(metadata).isEqualTo(territorialgrenseMetadata)
     }
 

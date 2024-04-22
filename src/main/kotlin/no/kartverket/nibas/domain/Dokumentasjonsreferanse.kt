@@ -2,11 +2,13 @@ package no.kartverket.nibas.domain
 
 import no.kartverket.nibas.api.v1.common.geojson.metadata.DokumentasjonsreferanseDTO
 import no.kartverket.nibas.api.v1.common.geojson.metadata.TekstHolder
+import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.sporing.AuditInfo
 import no.kartverket.nibas.sporing.Gyldig
 import no.kartverket.nibas.sporing.Gyldighet
 import no.kartverket.nibas.sporing.Laasbar
 import no.kartverket.nibas.sporing.Sporbar
+import java.io.Serializable
 import java.time.LocalDate
 import java.util.*
 import jakarta.persistence.CascadeType
@@ -15,6 +17,7 @@ import jakarta.persistence.Embedded
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
 import jakarta.persistence.Id
+import jakarta.persistence.IdClass
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
@@ -29,8 +32,12 @@ class Dokumentasjonsreferanse(
     override val id: String = UUID.randomUUID().toString(),
 
     @Column(name = "lokalid", nullable = false, updatable = false)
-    val lokalid: String = UUID.randomUUID().toString()
-) : Laasbar, Sporbar, Gyldig {
+    val lokalid: String = UUID.randomUUID().toString(),
+
+
+    ) : Laasbar, Sporbar, Gyldig {
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "dokumentasjonsreferanse", cascade = [CascadeType.ALL])
+    var dokrefGrenseKobling: MutableSet<DokrefGrenseKobling> = Collections.synchronizedSet(mutableSetOf())
 
     @Column(name = "foerstedigitaliseringsdato", nullable = false, updatable = false)
     var foerstedigitaliseringsdato: LocalDate = LocalDate.now()
@@ -114,7 +121,29 @@ class Dokumentasjonsreferanse(
         return internReferanse
     }
 
-    fun toDokRef(): DokumentasjonsreferanseDTO = DokumentasjonsreferanseDTO(
+    fun setFieldsFromDto(dokRef: DokumentasjonsreferanseDTO) {
+        dokRef.dokumentlenker.forEach { lenke ->
+            this.addDokumentLenke().apply {
+                this.dokumentlink = lenke.beskrivelse
+            }
+        }
+
+        dokRef.internReferanserKartverket.forEach { lenke ->
+            addInternReferanse().apply {
+                internReferanseKartverket = lenke.beskrivelse
+            }
+        }
+
+        vedtakGyldigFra = dokRef.vedtakGyldigFra ?: throw ResponseException.BadRequestException("\"Gyldig fra\"-dato er påkrevd!")
+        vedtakGyldigTil = dokRef.vedtakGyldigTil
+        fastsettingsdato = dokRef.fastsettingsdato
+        fastsettingsmyndighet = dokRef.fastsettingsmyndighet
+        hjemmel = dokRef.hjemmel
+        rettskildeid = dokRef.rettskildeId
+        rettskildetittel = dokRef.rettskildeTittel
+    }
+
+    fun toDokrefDTO(): DokumentasjonsreferanseDTO = DokumentasjonsreferanseDTO(
         id = this.id,
         dokumentlenker = this.dokumentlenker
             .filter { it.dokumentlink != null }
@@ -133,26 +162,17 @@ class Dokumentasjonsreferanse(
         vedtakGyldigFra = this.vedtakGyldigFra
     )
 
-    override fun hashCode(): Int {
-        var result = lokalid.hashCode()
-        result = 31 * result + id.hashCode()
-        result = 31 * result + foerstedigitaliseringsdato.hashCode()
-        result = 31 * result + auditInfo.hashCode()
-        result = 31 * result + gyldighet.hashCode()
-        result = 31 * result + (objtype?.hashCode() ?: 0)
-        result = 31 * result + version
-        result = 31 * result + (rettskildetittel?.hashCode() ?: 0)
-        result = 31 * result + (rettskildeid?.hashCode() ?: 0)
-        result = 31 * result + (hjemmel?.hashCode() ?: 0)
-        result = 31 * result + (fastsettingsmyndighet?.hashCode() ?: 0)
-        result = 31 * result + (fastsettingsdato?.hashCode() ?: 0)
-        result = 31 * result + vedtakGyldigFra.hashCode()
-        result = 31 * result + (vedtakGyldigTil?.hashCode() ?: 0)
-        result = 31 * result + dokumentlenker.hashCode()
-        result = 31 * result + internReferanserKartverket.hashCode()
-        return result
-    }
+    fun applyCascadingOperationsBasedOnExistingDokumentasjonsreferanse(dokumentasjonsreferanse: Dokumentasjonsreferanse) =
+        dokumentasjonsreferanse.dokrefGrenseKobling.mapNotNull { kobling ->
+            if (kobling.dokumentasjonsreferanse.id != id) {
+                val nyKobling = DokrefGrenseKobling()
+                nyKobling.dokumentasjonsreferanse = this
+                nyKobling.grense = kobling.grense
 
+                this.dokrefGrenseKobling.add(nyKobling)
+                nyKobling
+            } else null
+        }
 }
 
 @Table(name = "dokumentasjonsreferanse_dokumentlink")
@@ -184,3 +204,21 @@ class DokumentasjonsreferanseInternReferanseKartverket {
     @Column(name = "internreferansekartverket")
     var internReferanseKartverket: String? = null
 }
+
+@Table(name = "grense_dokumentasjonsreferanse")
+@Entity
+@IdClass(DokrefGrenseId::class)
+class DokrefGrenseKobling {
+    @Id
+    @ManyToOne
+    @JoinColumn(name = "grense_fk")
+    lateinit var grense: Grense
+
+    @Id
+    @ManyToOne
+    @JoinColumn(name = "dokumentasjonsreferanse_fk")
+    lateinit var dokumentasjonsreferanse: Dokumentasjonsreferanse
+}
+
+data class DokrefGrenseId(val dokumentasjonsreferanse: String = "", val grense: String = "") : Serializable
+

@@ -2,6 +2,7 @@ package no.kartverket.nibas.builders
 
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.domain.AnsvarligMyndighetHolder
+import no.kartverket.nibas.domain.DokrefGrenseKobling
 import no.kartverket.nibas.domain.Dokumentasjonsreferanse
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.Landkode
@@ -41,7 +42,13 @@ class TerritorialgrenseBuilder {
         territorialgrense.auditInfo.endretdato = endretdato
         territorialgrense.opphav = opphav
         territorialgrense.setInfo(informasjonstekst)
-        territorialgrense.dokumentasjonsreferanser.addAll(dokumentasjonsreferanser)
+        territorialgrense.dokrefGrensekobling.addAll(dokumentasjonsreferanser.map {
+            DokrefGrenseKobling().apply {
+                dokumentasjonsreferanse = it
+                grense = territorialgrense
+            }
+        }
+        )
         return territorialgrense
     }
 

@@ -40,6 +40,7 @@ class StemmekretsService(
     fun hentGrensekoblingerForStemmekrets(identifikator: Identifikator): List<StemmekretsGrenseKobling> {
         return hentStemmekrets(identifikator)?.getGrensekoblinger(identifikator.gyldighetsdato)?.toList() ?: emptyList()
     }
+
     @Transactional(readOnly = true)
     fun hentStemmekretsForStemmekretsNummerIKommune(kommuneIdentifikator: ObjektIdentifikator, stemmekretsnummer: String, gyldighetsdato: LocalDate): Stemmekrets? {
         return findGyldigObjektPaaGyldighetsdato(stemmekretsRepository.findAllByStemmekretsnummerAndKommuneLokalid(stemmekretsnummer, UnikLokalid(kommuneIdentifikator.lokalid.value, Flatetype.KOMMUNE)))
@@ -163,7 +164,7 @@ class StemmekretsService(
     fun delStemmekrets(
         kretsDelingEndringRequest: UnikKretsDelingEndring, delingsDato: LocalDate, endringstype: Endringstype
     ): Stemmekrets {
-        if (kretsDelingEndringRequest.flatetype != Flatetype.STEMMEKRETS ){
+        if (kretsDelingEndringRequest.flatetype != Flatetype.STEMMEKRETS) {
             throw ResponseException.BadRequestException("Kan ikke dele og opprette en ny ${kretsDelingEndringRequest.flatetype} fra en stemmekrets")
         }
         val identifikator = Identifikator(Lokalid(kretsDelingEndringRequest.opprinneligKrets.lokalId), delingsDato)

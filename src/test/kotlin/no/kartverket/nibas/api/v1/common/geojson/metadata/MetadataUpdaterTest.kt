@@ -14,7 +14,10 @@ import no.kartverket.nibas.domain.DokumentasjonsreferanseInternReferanseKartverk
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.Landkode
+import no.kartverket.nibas.repository.DokrefGrenseKoblingRepository
+import no.kartverket.nibas.repository.DokumentasjonsreferanseRepository
 import no.kartverket.nibas.repository.LandKodeRepository
+import no.kartverket.nibas.service.DokumentasjonsreferanseService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -31,7 +34,13 @@ internal class MetadataUpdaterTest {
     @Mock
     private lateinit var kodelisteHrefProviderMock: KodelisteHrefProviderI
 
-    private lateinit var metadataUpdater: MetadataUpdater
+    @Mock
+    private lateinit var dokrefRepo: DokumentasjonsreferanseRepository
+
+    @Mock
+    private lateinit var dokrefGrenseKoblingRepo: DokrefGrenseKoblingRepository
+
+    private lateinit var dokrefService: DokumentasjonsreferanseService
 
     private val oppdDato: ZonedDateTime = ZonedDateTime.now()
     private val dataFanget = oppdDato.minusYears(1)
@@ -78,42 +87,46 @@ internal class MetadataUpdaterTest {
     @BeforeEach
     fun beforeEach() {
         MockitoAnnotations.openMocks(this)
-        metadataUpdater = MetadataUpdater()
         `when`(kodelisteHrefProviderMock.maalemetodeKodeHref()).thenReturn(maalemetodeHref)
+        dokrefService = DokumentasjonsreferanseService(dokrefRepo, dokrefGrenseKoblingRepo)
     }
 
     @Test
-    fun `Skal fjerne dokumentasjonsreferanse fra Grense når flagget isArchived`() {
+    fun `Skal sette GyldigTil når dokref er flagget isArchived`() {
+        val gyldighetsdato = LocalDate.now().plusDays(1)
         val grense = FylkesgrenseBuilder()
             .withEndretDato(oppdDato)
             .datafangstdato(dataFanget)
             .gyldigFra(gyldigFraTidspunkt)
             .dokRef(dokumentasjonsreferanse)
             .build()
-        val originalDokrefDtos = grense.dokumentasjonsreferanser.map { it.toDokRef() }
+        val originalDokrefDtos = grense.dokrefGrensekobling.map { it.dokumentasjonsreferanse.toDokrefDTO() }
+        originalDokrefDtos.forEach { it.vedtakGyldigFra = gyldigFraTidspunkt }
         assertThat(originalDokrefDtos).isNotEmpty()
 
         val dokrefDTOflaggedArchived = originalDokrefDtos[0].copy(shouldArchive = true)
-        val dokrefPreArchived = grense.dokumentasjonsreferanser.firstOrNull { it.id == dokrefDTOflaggedArchived.id }
+        val dokrefPreArchived = grense.dokrefGrensekobling.firstOrNull { it.dokumentasjonsreferanse.id == dokrefDTOflaggedArchived.id }
         assertThat(dokrefPreArchived).isNotNull
         val dokrefDtosWithArchivedEntry = mutableListOf(dokrefDTOflaggedArchived)
         for (i in 1..<originalDokrefDtos.size) {
             dokrefDtosWithArchivedEntry.add(originalDokrefDtos[i])
         }
 
-        grense.updateDokumentasjonsreferanser(dokrefDtosWithArchivedEntry, LocalDate.now().plusDays(1), Endringstype.KVALITETSHEVING)
-        assertThat(dokrefPreArchived?.gyldighet?.gyldigTil).isNotNull()
-        assertThat(originalDokrefDtos.size).isEqualTo(grense.dokumentasjonsreferanser.size + 1)
+        dokrefService.updateDokumentasjonsreferanser(dokrefDtosWithArchivedEntry, grense, gyldighetsdato, Endringstype.KVALITETSHEVING)
+        assertThat(dokrefPreArchived?.dokumentasjonsreferanse?.gyldighet?.gyldigTil).isNotNull()
     }
 
     @Test
     fun `Skal slette dokumentasjonsreferanse dersom den arkiveres samme dag`() {
         val grense = createFylkesgrense()
-        val originalDokrefDtos = grense.dokumentasjonsreferanser.map { it.toDokRef() }
+        val originalDokrefDtos = grense.dokrefGrensekobling.map { it.dokumentasjonsreferanse.toDokrefDTO() }
+        val gyldighetsdato = LocalDate.now()
         assertThat(originalDokrefDtos).isNotEmpty()
 
         val dokrefDTOflaggedArchived = originalDokrefDtos[0].copy(shouldArchive = true)
-        val dokrefPreArchived = grense.dokumentasjonsreferanser.firstOrNull { it.id == dokrefDTOflaggedArchived.id }
+        dokrefDTOflaggedArchived.vedtakGyldigFra = gyldighetsdato
+        val dokrefPreArchived = grense.dokrefGrensekobling.firstOrNull { it.dokumentasjonsreferanse.id == dokrefDTOflaggedArchived.id }
+
         assertThat(dokrefPreArchived).isNotNull
 
         val dokrefDtosWithArchivedEntry = mutableListOf(dokrefDTOflaggedArchived)
@@ -121,9 +134,8 @@ internal class MetadataUpdaterTest {
             dokrefDtosWithArchivedEntry.add(originalDokrefDtos[i])
         }
 
-        grense.updateDokumentasjonsreferanser(dokrefDtosWithArchivedEntry, LocalDate.now(), Endringstype.KVALITETSHEVING)
-        assertThat(dokrefPreArchived?.gyldighet?.slettet).isTrue()
-        assertThat(originalDokrefDtos.size).isEqualTo(grense.dokumentasjonsreferanser.size + 1)
+        dokrefService.updateDokumentasjonsreferanser(dokrefDtosWithArchivedEntry, grense, gyldighetsdato, Endringstype.KVALITETSHEVING)
+        assertThat(dokrefPreArchived?.dokumentasjonsreferanse?.gyldighet?.slettet).isTrue()
     }
 
     @Test
@@ -134,11 +146,11 @@ internal class MetadataUpdaterTest {
             .gyldigFra(gyldigFraTidspunkt)
             .dokRef(dokumentasjonsreferanse)
             .build()
-        val originalDokrefDtos = grense.dokumentasjonsreferanser.map { it.toDokRef() }
+        val originalDokrefDtos = grense.dokrefGrensekobling.map { it.dokumentasjonsreferanse.toDokrefDTO() }
         assertThat(originalDokrefDtos).isNotEmpty()
 
         val changedDokrefDTO = originalDokrefDtos[0].copy(rettskildeTittel = "En helt annen tittel", vedtakGyldigFra = LocalDate.now())
-        val dokrefToChange = grense.dokumentasjonsreferanser.firstOrNull { it.id == changedDokrefDTO.id }
+        val dokrefToChange = grense.dokrefGrensekobling.firstOrNull { it.dokumentasjonsreferanse.id == changedDokrefDTO.id }
         assertThat(dokrefToChange).isNotNull
 
         val dtosWithModifiedEntry = mutableListOf(changedDokrefDTO)
@@ -147,51 +159,12 @@ internal class MetadataUpdaterTest {
         }
 
         val gyldighetsdato = LocalDate.now().plusDays(1)
-        grense.updateDokumentasjonsreferanser(dtosWithModifiedEntry, gyldighetsdato, Endringstype.KVALITETSHEVING)
-        assertThat(dokrefToChange?.gyldighet?.gyldigTil).isEqualTo(gyldighetsdato)
+        val grensekoblinger = dokrefService.updateDokumentasjonsreferanser(dtosWithModifiedEntry, grense, gyldighetsdato, Endringstype.KVALITETSHEVING)
+        assertThat(dokrefToChange?.dokumentasjonsreferanse?.gyldighet?.gyldigTil).isEqualTo(gyldighetsdato)
 
-        val changedDokref = grense.dokumentasjonsreferanser.first { it.lokalid == dokrefToChange?.lokalid }
-        assertThat(changedDokref).isNotEqualTo(dokrefToChange)
-        assertThat(changedDokref.gyldighet.gyldigFra).isEqualTo(gyldighetsdato)
-        assertThat(changedDokref.auditInfo.typeEndring).isEqualTo(Endringstype.KVALITETSHEVING)
-    }
-
-    @Test
-    fun `Skal oppdatere AdministrativGrense`() {
-        val opprinneligInformasjonstekst = fylkesgrense.informasjonstekst
-        val opprinneligKvalitet = fylkesgrense.kvalitet
-        val opprinneligeDokumentasjonsreferanser = fylkesgrense.dokumentasjonsreferanser
-
-        val newGyldigFraDato: LocalDate = gyldigFraTidspunkt.plusMonths(1)
-        val updatedMetadata = administrativGrenseMetadata.copy(
-            common = administrativGrenseMetadata.common.copy(
-                gyldigFra = newGyldigFraDato,
-            )
-        )
-        val updatedFylkesgrense: Grense = metadataUpdater.updateAdministrativGrense(fylkesgrense, updatedMetadata, LocalDate.now(), Endringstype.KVALITETSHEVING)
-        assertThat(updatedFylkesgrense.informasjonstekst).isNotEqualTo(opprinneligInformasjonstekst).isEqualTo(updatedMetadata.common.informasjon)
-        assertThat(updatedFylkesgrense.kvalitet!!.noeyaktighet).isNotEqualTo(opprinneligKvalitet!!.noeyaktighet)
-            .isEqualTo(updatedMetadata.commonGrense.posisjonskvalitet!!.noeyaktighet)
-        assertThat(updatedFylkesgrense.dokumentasjonsreferanser).isEqualTo(opprinneligeDokumentasjonsreferanser)
-    }
-
-    @Test
-    fun `Skal oppdatere TerritorialGrense`() {
-        val opprinneligInformasjonstekst = fylkesgrense.informasjonstekst
-        val opprinneligKvalitet = fylkesgrense.kvalitet
-        val opprinneligeDokumentasjonsreferanser = fylkesgrense.dokumentasjonsreferanser
-
-        val newGyldigFraDato: LocalDate = gyldigFraTidspunkt.plusMonths(1)
-        val updatedMetadata = territorialgrenseMetadata.copy(
-            common = territorialgrenseMetadata.common.copy(
-                gyldigFra = newGyldigFraDato,
-            )
-        )
-        val updatedFylkesgrense: Grense = metadataUpdater.updateTerritoritalgrense(fylkesgrense, updatedMetadata, LocalDate.now(), Endringstype.KVALITETSHEVING)
-        assertThat(updatedFylkesgrense.informasjonstekst).isNotEqualTo(opprinneligInformasjonstekst).isEqualTo(updatedMetadata.common.informasjon)
-        assertThat(updatedFylkesgrense.kvalitet!!.noeyaktighet).isNotEqualTo(opprinneligKvalitet!!.noeyaktighet)
-            .isEqualTo(updatedMetadata.commonGrense.posisjonskvalitet!!.noeyaktighet)
-        assertThat(updatedFylkesgrense.dokumentasjonsreferanser).isEqualTo(opprinneligeDokumentasjonsreferanser)
+        assertThat(grensekoblinger.first().dokumentasjonsreferanse).isNotEqualTo(dokrefToChange?.dokumentasjonsreferanse)
+        assertThat(grensekoblinger.first().dokumentasjonsreferanse.gyldighet.gyldigFra).isEqualTo(gyldighetsdato)
+        assertThat(grensekoblinger.first().dokumentasjonsreferanse.auditInfo.typeEndring).isEqualTo(Endringstype.KVALITETSHEVING)
     }
 
     private fun expectedCommonMetadata() = CommonMetadata(

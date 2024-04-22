@@ -1316,56 +1316,6 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         saveKommuneOgUnikLokalid(grunnkretser = listOf(grunnkrets, grunnkretsFramtidigVersjon))
     }
 
-    private fun saveNaboGrunnkretser(gyldigFra: LocalDate, medHull: Boolean = false, medTredjeKrets: Boolean = false, medToDelteGrenser: Boolean = false)
-    : List<Grunnkrets> {
-        val grenserForVest = if (medHull) {
-            GrenseHelper.getGrenserForVestligKrets(gyldigFra, Grensetype.Grunnkretsgrense, medToDelteGrenser) +
-                GrenseHelper.getHullVestligKrets(gyldigFra, Grensetype.Grunnkretsgrense)
-        } else {
-            GrenseHelper.getGrenserForVestligKrets(gyldigFra, Grensetype.Grunnkretsgrense, medToDelteGrenser)
-        }
-
-        //Lagrer grensene først, for å være sikker på at de er tilgjengelige for å knyttes til kretsene
-        val lagredeGrenserForVest = grenseRepository.saveAll(grenserForVest)
-        val lagredeGrenserForOest = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(gyldigFra, Grensetype.Grunnkretsgrense, medToDelteGrenser))
-        grenseRepository.flush()
-
-        val kretsVest = saveGrunnkrets(
-            id = "1",
-            lokalid = Lokalid("123"),
-            grunnkretsnummer = "03010020",
-            grunnkretsnavn = "Vestre krets",
-            gyldigFra = gyldigFra,
-            grenser = lagredeGrenserForVest
-        )
-
-        val kretsOest = saveGrunnkrets(
-            id = "2",
-            lokalid = Lokalid("234"),
-            grunnkretsnummer = "03010021",
-            grunnkretsnavn = "Østre krets",
-            gyldigFra = gyldigFra,
-            grenser = lagredeGrenserForOest
-        )
-
-        val grunnkretsMutableList = mutableListOf(kretsVest, kretsOest)
-        if (medTredjeKrets) {
-            val tredjeKrets = saveGrunnkrets(
-                id = "3",
-                lokalid = Lokalid("345"),
-                grunnkretsnummer = "03010022",
-                grunnkretsnavn = "Tredje krets",
-                gyldigFra = gyldigFra
-            )
-            grunnkretsMutableList.add(tredjeKrets)
-        }
-
-        val grunnkretser = grunnkretsMutableList.toList()
-        saveKommuneOgUnikLokalid(grunnkretser = grunnkretser, gyldigFra = gyldigFra)
-        grenseRepository.flush()
-        return grunnkretser
-    }
-
     private fun saveNaboGrunnkretserIHverSinKommune(gyldigFra: LocalDate, medHull: Boolean = false, medToDelteGrenser: Boolean = false, kommunenummer1: String = "0301", kommunenummer2: String = "0302"): List<Grunnkrets> {
 
         val fylkesnummer1 = kommunenummer1.slice(0..1)
