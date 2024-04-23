@@ -25,19 +25,15 @@ class KommuneController(
     override fun hentKommuner(fylkeId: String?, gyldighetsdato: LocalDate?): List<KommuneResponse> {
         val datoToUse: LocalDate = gyldighetsdato ?: LocalDate.now()
         return if (fylkeId == null) {
-            kommuneService.hentAlleKommuner(datoToUse).map {
-                it.toKommuneResponse(createIdentifikator(it.lokalid, it.gyldighet.gyldigFra))
-            }
+            kommuneService.hentAlleKommuner(datoToUse).map { it.toKommuneResponse() }
         } else {
-            kommuneService.hentKommunerForFylke(Identifikator(Lokalid(fylkeId), datoToUse)).map {
-                it.toKommuneResponse(createIdentifikator(it.lokalid, it.gyldighet.gyldigFra))
-            }
+            kommuneService.hentKommunerForFylke(Identifikator(Lokalid(fylkeId), datoToUse)).map { it.toKommuneResponse() }
         }
     }
 
     override fun hentKommune(lokalid: String, gyldighetsdato: LocalDate?): KommuneResponse {
         val identifikator = createIdentifikator(lokalid, gyldighetsdato)
-        return kommuneService.hentKommune(identifikator)?.toKommuneResponse(identifikator) ?: throw NotFoundException("Kommune $identifikator ble ikke funnet.")
+        return kommuneService.hentKommune(identifikator)?.toKommuneResponse() ?: throw NotFoundException("Kommune $identifikator ble ikke funnet.")
     }
 
     override fun hentGrenserForKommune(lokalid: String, gyldighetsdato: LocalDate?): FeatureCollection {
@@ -54,8 +50,7 @@ class KommuneController(
     override fun hentKommunesGrunnkretser(lokalid: String, gyldighetsdato: LocalDate?): List<GrunnkretsResponse> {
         val kommuneIdentifikator = createIdentifikator(lokalid, gyldighetsdato)
         return kommuneService.hentKommunesGrunnkretser(kommuneIdentifikator).map {
-            val identifikatorForGrunnkrets = Identifikator(lokalid = Lokalid(it.lokalid), gyldighetsdato = kommuneIdentifikator.gyldighetsdato)
-            it.toGrunnkretsResponse(identifikatorForGrunnkrets)
+            it.toGrunnkretsResponse()
         }
     }
 
@@ -76,8 +71,7 @@ class KommuneController(
     override fun hentKommunesStemmekretser(lokalid: String, gyldighetsdato: LocalDate?): List<StemmekretsResponse> {
         val kommuneIdentifikator = createIdentifikator(lokalid, gyldighetsdato)
         return kommuneService.hentKommunesStemmekretser(kommuneIdentifikator).map {
-            val identifikatorForStemmekrets = Identifikator(lokalid = Lokalid(it.lokalid), gyldighetsdato = kommuneIdentifikator.gyldighetsdato)
-            it.toStemmekretsResponse(identifikatorForStemmekrets)
+            it.toStemmekretsResponse()
         }
     }
 

@@ -69,6 +69,11 @@ class StemmekretsBuilder(
         return this
     }
 
+    fun withNavn(navn: String): StemmekretsBuilder {
+        this.stemmekretsnavn = navn
+        return this
+    }
+
     fun withDatafangstdato(zonedDateTime: ZonedDateTime): StemmekretsBuilder {
         this.datafangstdato = zonedDateTime
         return this

@@ -109,7 +109,6 @@ spring:
     activate:
       on-profile:
         - localhost
-        - deltgeometri
   datasource:
     url: ${DB_CONNECTION_STRING:jdbc:postgresql://localhost:5432/nibas}
     username: ${DB_USER:nibas}

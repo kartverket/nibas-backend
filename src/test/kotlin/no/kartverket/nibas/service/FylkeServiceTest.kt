@@ -8,6 +8,7 @@ import no.kartverket.nibas.builders.FylkeBuilder
 import no.kartverket.nibas.builders.FylkeRequestBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
+import no.kartverket.nibas.builders.StemmekretsBuilder
 import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
@@ -27,7 +28,6 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import java.time.LocalDate
-import java.util.*
 import kotlin.test.assertEquals
 
 @SpringBootTest(classes = [FylkeService::class])
@@ -112,6 +112,76 @@ class FylkeServiceTest {
             .isInstanceOf(ResponseException.NotFoundException::class.java)
             .hasMessageContaining("Fylke med Identifikator")
             .hasMessageContaining("ble ikke funnet")
+    }
+
+    @Test
+    fun `hentAlleGrunnkretserIFylke skal returnere alle gyldige grunnkretser for fylket`() {
+        val gyldighethetsdato = LocalDate.now()
+
+        val gyldigGrunnkrets1 = GrunnkretsBuilder().withNavn("GYLDIG GRUNNKRETS KOMMUNE 1").build()
+        val ugyldigGrunnkrets1 = GrunnkretsBuilder()
+            .withGyldigFra(gyldighethetsdato.minusDays(20))
+            .withGyldigTil(gyldighethetsdato.minusDays(10))
+            .build()
+
+        val gyldigGrunnkrets2 = GrunnkretsBuilder().withNavn("GYLDIG GRUNNKRETS KOMMUNE 2").build()
+        val ugyldigGrunnkrets2 = GrunnkretsBuilder()
+            .withGyldigFra(gyldighethetsdato.minusDays(20))
+            .withGyldigTil(gyldighethetsdato.minusDays(10))
+            .build()
+
+        val fylke = FylkeBuilder()
+            .withKommune(KommuneBuilder()
+                .withGrunnkrets(gyldigGrunnkrets1)
+                .withGrunnkrets(ugyldigGrunnkrets1)
+                .build())
+            .withKommune(KommuneBuilder()
+                .withGrunnkrets(gyldigGrunnkrets2)
+                .withGrunnkrets(ugyldigGrunnkrets2)
+                .build())
+            .build()
+
+        every { fylkeRepositoryMock.findGyldigObjektForIdentifikator(any()) } returns fylke
+
+        val result = fylkeService.hentAlleGrunnkretserIFylke(Identifikator(lokalid = Lokalid("123"), gyldighetsdato = gyldighethetsdato))
+        assertThat(result).hasSize(2)
+        assertThat(result).flatExtracting({ it.grunnkretsnavn }).contains("GYLDIG GRUNNKRETS KOMMUNE 1")
+        assertThat(result).flatExtracting({ it.grunnkretsnavn }).contains("GYLDIG GRUNNKRETS KOMMUNE 2")
+    }
+
+    @Test
+    fun `hentAlleStemmekretserIFylke skal returnere alle gyldige stemmekretser for fylket`() {
+        val gyldighethetsdato = LocalDate.now()
+
+        val gyldigStemmekrets1 = StemmekretsBuilder().withNavn("GYLDIG STEMMEKRETS KOMMUNE 1").build()
+        val ugyldigStemmekrets1 = StemmekretsBuilder()
+            .withGyldigFra(gyldighethetsdato.minusDays(20))
+            .withGyldigTil(gyldighethetsdato.minusDays(10))
+            .build()
+
+        val gyldigStemmekrets2 = StemmekretsBuilder().withNavn("GYLDIG STEMMEKRETS KOMMUNE 2").build()
+        val ugyldigStemmekrets2 = StemmekretsBuilder()
+            .withGyldigFra(gyldighethetsdato.minusDays(20))
+            .withGyldigTil(gyldighethetsdato.minusDays(10))
+            .build()
+
+        val fylke = FylkeBuilder()
+            .withKommune(KommuneBuilder()
+                .withStemmekrets(gyldigStemmekrets1)
+                .withStemmekrets(ugyldigStemmekrets1)
+                .build())
+            .withKommune(KommuneBuilder()
+                .withStemmekrets(gyldigStemmekrets2)
+                .withStemmekrets(ugyldigStemmekrets2)
+                .build())
+            .build()
+
+        every { fylkeRepositoryMock.findGyldigObjektForIdentifikator(any()) } returns fylke
+
+        val result = fylkeService.hentAlleStemmekretserIFylke(Identifikator(lokalid = Lokalid("123"), gyldighetsdato = gyldighethetsdato))
+        assertThat(result).hasSize(2)
+        assertThat(result).flatExtracting({ it.stemmekretsnavn }).contains("GYLDIG STEMMEKRETS KOMMUNE 1")
+        assertThat(result).flatExtracting({ it.stemmekretsnavn }).contains("GYLDIG STEMMEKRETS KOMMUNE 2")
     }
 
 }

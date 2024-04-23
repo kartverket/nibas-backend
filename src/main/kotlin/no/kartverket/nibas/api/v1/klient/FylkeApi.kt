@@ -11,6 +11,8 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import no.kartverket.nibas.api.v1.DefaultFeatureCollectionApiResponses
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.klient.response.FylkeResponse
+import no.kartverket.nibas.api.v1.klient.response.GrunnkretsResponse
+import no.kartverket.nibas.api.v1.klient.response.StemmekretsResponse
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
@@ -71,4 +73,17 @@ interface FylkeApi {
                             @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?
     ): FeatureCollection
 
+    @GetMapping("/{id}/grunnkretser", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun hentFylkesGrunnkretser(
+        @Parameter(description = "ID til fylket man vil hente grunnkretsene til") @PathVariable(name = "id") lokalid: String,
+        @Parameter(description = "Eventuell gyldighetsdato for fylket (default = dagens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?
+    ): List<GrunnkretsResponse>
+
+    @GetMapping("/{id}/stemmekretser", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun hentFylkesStemmekretser(
+        @Parameter(description = "ID til fylket man vil hente stemmekretsenee til") @PathVariable(name = "id") lokalid: String,
+        @Parameter(description = "Eventuell gyldighetsdato for fylket (default = dagens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?
+    ): List<StemmekretsResponse>
 }

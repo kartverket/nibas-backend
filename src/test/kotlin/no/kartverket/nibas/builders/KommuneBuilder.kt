@@ -18,6 +18,7 @@ class KommuneBuilder(
     private var kommunenummerUuid: String = "UUID-1",
     private var kommunenummer: String = "0301",
     private var unikLokalid: UnikLokalid = UnikLokalid("fe328f8d-fbde-4c21-ab28-cbc583be401f", Flatetype.KOMMUNE),
+    private var fylkeUnikLokalid: UnikLokalid = UnikLokalid("FYLKE-DUMMY", Flatetype.FYLKE),
     private var navn: String? = null,
     private var spraak: String = "nor",
     private var samiskforvaltningsomraade: Boolean = false,
@@ -48,6 +49,7 @@ class KommuneBuilder(
     fun build(): Kommune {
         val kommune = buildUtenUnikLokalidOgTilkntninger()
         kommune.addKommuneTilUnikLokalid(unikLokalid)
+        kommune.fylkeLokalid = fylkeUnikLokalid
 
         grunnkretser.forEach { kommune.addGrunnkrets(it) }
         stemmekretser.forEach { kommune.addStemmekrets(it) }

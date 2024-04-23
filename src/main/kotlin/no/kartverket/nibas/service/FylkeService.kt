@@ -7,10 +7,13 @@ import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.common.UgyldigTilstandException
 import no.kartverket.nibas.common.getInSpraak
+import no.kartverket.nibas.common.toNorskFormat
 import no.kartverket.nibas.domain.Administrativenhetnavn
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Fylke
+import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
+import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.UnikLokalid
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
@@ -147,6 +150,20 @@ class FylkeService(
 
         fylke.getAdministrativenhetNavn().forEach { it.setGyldigTil(settHistoriskFraDato) }
         fylke.setGyldigTil(settHistoriskFraDato)
+    }
+
+    fun hentAlleGrunnkretserIFylke(identifikator: Identifikator): List<Grunnkrets> {
+        return hentFylke(identifikator)
+            ?.getKommuner(identifikator.gyldighetsdato)
+            ?.flatMap { it.getGrunnkretser(identifikator.gyldighetsdato) }
+            ?: throw ResponseException.NotFoundException("Fant ingen grunnkretser for fylke med identifikator ${identifikator.lokalid} på gyldighetsdato ${identifikator.gyldighetsdato.toNorskFormat()}")
+    }
+
+    fun hentAlleStemmekretserIFylke(identifikator: Identifikator): List<Stemmekrets> {
+        return hentFylke(identifikator)
+            ?.getKommuner(identifikator.gyldighetsdato)
+            ?.flatMap { it.getStemmekretser(identifikator.gyldighetsdato) }
+            ?: throw ResponseException.NotFoundException("Fant ingen stemmekrets for fylke med identifikator ${identifikator.lokalid} på gyldighetsdato ${identifikator.gyldighetsdato.toNorskFormat()}")
     }
 }
 

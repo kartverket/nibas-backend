@@ -3,8 +3,6 @@ package no.kartverket.nibas.controller.klient
 import no.kartverket.nibas.api.v1.klient.GrunnkretsApi
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.klient.response.GrunnkretsResponse
-import no.kartverket.nibas.common.Identifikator
-import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.common.createIdentifikator
 import no.kartverket.nibas.extensions.flate.toGrunnkretsResponse
@@ -20,7 +18,7 @@ class GrunnkretsController(
 
     override fun hentGrunnkrets(lokalid: String, gyldighetsdato: LocalDate?): GrunnkretsResponse {
         val identifikator = createIdentifikator(lokalid, gyldighetsdato)
-        return grunnkretsService.hentGrunnkrets(identifikator)?.toGrunnkretsResponse(identifikator)
+        return grunnkretsService.hentGrunnkrets(identifikator)?.toGrunnkretsResponse()
             ?: throw NotFoundException("Grunnkrets $identifikator ble ikke funnet.")
     }
 
@@ -39,12 +37,6 @@ class GrunnkretsController(
     override fun hentFramtidigeVersjonerForGrunnkrets(lokalid: String, gyldighetsdato: LocalDate?): List<GrunnkretsResponse> {
         val identifikatorForGrunnkrets = createIdentifikator(lokalid, gyldighetsdato)
         return grunnkretsService.hentFramtidigeVersjonerForGrunnkrets(identifikatorForGrunnkrets)
-            .map {
-                it.toGrunnkretsResponse(
-                    Identifikator(
-                        lokalid = Lokalid(it.lokalid),
-                        gyldighetsdato = it.gyldighet.gyldigFra)
-                )
-            }
+            .map { it.toGrunnkretsResponse() }
     }
 }

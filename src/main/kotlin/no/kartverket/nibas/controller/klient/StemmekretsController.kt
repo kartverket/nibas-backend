@@ -3,7 +3,6 @@ package no.kartverket.nibas.controller.klient
 import no.kartverket.nibas.api.v1.klient.StemmekretsApi
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.klient.response.StemmekretsResponse
-import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.common.createIdentifikator
@@ -20,7 +19,7 @@ class StemmekretsController(
 
     override fun hentStemmekrets(lokalid: String, gyldighetsdato: LocalDate?): StemmekretsResponse {
         val identifikator = createIdentifikator(lokalid, gyldighetsdato)
-        return stemmekretsService.hentStemmekrets(identifikator)?.toStemmekretsResponse(identifikator)
+        return stemmekretsService.hentStemmekrets(identifikator)?.toStemmekretsResponse()
             ?: throw NotFoundException("Stemmekrets $identifikator ble ikke funnet.")
     }
 
@@ -38,6 +37,6 @@ class StemmekretsController(
 
     override fun hentFramtidigeVersjonerForStemmekrets(lokalid: String, gyldighetsdato: LocalDate?): List<StemmekretsResponse> =
         stemmekretsService.hentFramtidigeVersjonerForStemmekrets(Lokalid(lokalid), gyldighetsdato)
-            .map { it.toStemmekretsResponse(Identifikator(Lokalid(it.lokalid), it.gyldighet.gyldigFra)) }
+            .map { it.toStemmekretsResponse() }
 
 }

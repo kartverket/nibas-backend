@@ -100,7 +100,7 @@ class KommuneControllerTest : NibasMvcTest() {
 
         get("/v1/kommuner/1/grunnkretser?gyldighetsdato=${formattedDateString(LocalDate.now())}",
             responseAsserts = MockResponseAsserts(
-                expectedResponseObject = listOf(grunnkrets.toGrunnkretsResponse(Identifikator(Lokalid(grunnkrets.lokalid), LocalDate.now()))),
+                expectedResponseObject = listOf(grunnkrets.toGrunnkretsResponse()),
                 resultMatchers = listOf(status().isOk)
             ))
     }
@@ -123,7 +123,7 @@ class KommuneControllerTest : NibasMvcTest() {
 
         get("/v1/kommuner/1/grunnkretser?gyldighetsdato=${formattedDateString(LocalDate.now())}",
             responseAsserts = MockResponseAsserts(
-                expectedResponseObject = listOf(grunnkrets.toGrunnkretsResponse(Identifikator(lokalid = Lokalid("123"), gyldighetsdato = LocalDate.now()))),
+                expectedResponseObject = listOf(grunnkrets.toGrunnkretsResponse()),
                 resultMatchers = listOf(status().isOk)
             ))
     }

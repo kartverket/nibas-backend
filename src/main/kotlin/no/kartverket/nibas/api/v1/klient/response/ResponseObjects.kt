@@ -55,6 +55,9 @@ data class KommuneResponse(
     @Schema(description = "ID-en til kommunen")
     val id: ObjektIdentifikator,
 
+    @Schema(description = "Lokal-id til fylket denne kommunen er i")
+    val fylkeId: String,
+
     @Schema(description = "Liste over navn til kommunen")
     val navn: List<AdministrativEnhetNavn>,
 

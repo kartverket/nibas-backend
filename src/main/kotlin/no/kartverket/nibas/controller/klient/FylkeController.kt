@@ -3,11 +3,13 @@ package no.kartverket.nibas.controller.klient
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.klient.FylkeApi
 import no.kartverket.nibas.api.v1.klient.response.FylkeResponse
-import no.kartverket.nibas.common.Identifikator
-import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.api.v1.klient.response.GrunnkretsResponse
+import no.kartverket.nibas.api.v1.klient.response.StemmekretsResponse
 import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.common.createIdentifikator
 import no.kartverket.nibas.extensions.flate.toFylkeResponse
+import no.kartverket.nibas.extensions.flate.toGrunnkretsResponse
+import no.kartverket.nibas.extensions.flate.toStemmekretsResponse
 import no.kartverket.nibas.extensions.geometry.grenseKoblingToFeature
 import no.kartverket.nibas.service.FylkeService
 import org.springframework.web.bind.annotation.RestController
@@ -20,15 +22,12 @@ class FylkeController(
 
     override fun hentFylker(gyldighetsdato: LocalDate?): List<FylkeResponse> {
         val datoToUse: LocalDate = gyldighetsdato ?: LocalDate.now()
-        return fylkeService.hentAlleFylker(datoToUse).map {
-            val identifikatorForFylke = Identifikator(Lokalid(it.lokalid), datoToUse)
-            it.toFylkeResponse(identifikatorForFylke)
-        }
+        return fylkeService.hentAlleFylker(datoToUse).map { it.toFylkeResponse() }
     }
 
     override fun hentFylke(lokalid: String, gyldighetsdato: LocalDate?): FylkeResponse {
         val identifikator = createIdentifikator(lokalid, gyldighetsdato)
-        return fylkeService.hentFylke(identifikator)?.toFylkeResponse(identifikator)
+        return fylkeService.hentFylke(identifikator)?.toFylkeResponse()
             ?: throw NotFoundException("Fylke $identifikator ble ikke funnet.")
     }
 
@@ -42,4 +41,17 @@ class FylkeController(
             features = grenseKoblinger.map { it.grenseKoblingToFeature(identifikator.gyldighetsdato) }
         )
     }
+
+    override fun hentFylkesGrunnkretser(lokalid: String, gyldighetsdato: LocalDate?): List<GrunnkretsResponse> {
+        val identifikator = createIdentifikator(lokalid = lokalid, gyldighetsdato = gyldighetsdato)
+        return fylkeService.hentAlleGrunnkretserIFylke(identifikator)
+            .map { it.toGrunnkretsResponse() }
+    }
+
+    override fun hentFylkesStemmekretser(lokalid: String, gyldighetsdato: LocalDate?): List<StemmekretsResponse> {
+        val identifikator = createIdentifikator(lokalid = lokalid, gyldighetsdato = gyldighetsdato)
+        return fylkeService.hentAlleStemmekretserIFylke(identifikator)
+            .map { it.toStemmekretsResponse() }    }
+
+
 }
