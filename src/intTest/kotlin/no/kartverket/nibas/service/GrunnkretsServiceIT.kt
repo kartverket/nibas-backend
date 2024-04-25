@@ -4,6 +4,7 @@ import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grensetype
+import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
@@ -11,9 +12,8 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.KodelisteEntry
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Posisjonskvalitet
 import no.kartverket.nibas.api.v1.common.geojson.metadata.StatistiskgrenseMetadata
 import no.kartverket.nibas.api.v1.common.getUnikeKretsDelingEndringRequests
-import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
-import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.request.GrunnkretsSammenslaaingsendringRequest
+import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.api.v1.request.KretsNavnOgNummer
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.GrunnkretsRequestBuilder
@@ -22,10 +22,7 @@ import no.kartverket.nibas.builders.MaalemetodeKodeEnum
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
-import no.kartverket.nibas.domain.AdministrativEnhet
 import no.kartverket.nibas.domain.Endringstype
-import no.kartverket.nibas.domain.Flate
-import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.extensions.geometry.geometryToDto
@@ -59,7 +56,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
     private val december1In2022 = LocalDate.of(2022, Month.DECEMBER, 1)
     private val jan1In2023 = LocalDate.of(2023, Month.JANUARY, 1)
     private val jan1In2024 = LocalDate.of(2024, Month.JANUARY, 1)
-    private val sammenslaaingDato =  LocalDate.of(2022, Month.FEBRUARY, 1)
+    private val sammenslaaingDato = LocalDate.of(2022, Month.FEBRUARY, 1)
     private val datoEtterSammanslaaing = LocalDate.of(2022, Month.MARCH, 1)
     private val datoFoerSammenslaaing = LocalDate.of(2021, Month.JANUARY, 1)
 
@@ -426,116 +423,6 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
     }
 
     @Test
-    fun `endre kommunegrense for grunnkrets skal opprette ny versjon for grensa og dens grunnkrets og kommune`() {
-        val (vestreGrunnkrets, _) = saveNaboGrunnkretserIHverSinKommune(gyldigFra = october1In2022)
-
-        val kommuneVest = vestreGrunnkrets.getKommune()!!
-        flateService.oppdaterFlaterFor(setOf(kommuneVest))
-        grenseRepository.flush()
-
-        assertThat(vestreGrunnkrets.gyldighet.gyldigTil).isNull()
-        assertThat(kommuneVest.gyldighet.gyldigTil).isNull()
-        assertTopologi(vestreGrunnkrets.omraade, kommuneVest.omraade)
-
-        val grenseKobling = vestreGrunnkrets.getGrensekoblinger(gyldighetsdato = october1In2022).first { it.grense.lokalid == "grenseDeltLokalid" }
-        val grense = grenseKobling.grense.grense
-
-        val oppdatertGeometri = GeometryFactory().createLineString(arrayOf(
-            grense.getCoordinateN(0).copy(),
-            Coordinate(13.0, 5.0),
-            grense.getCoordinateN(2).copy()
-        ))
-
-        val oppdatertGrensefeature = grenseKobling.grense.grenseToFeature(october1In2022)
-        oppdatertGeometri.geometryToDto().also { oppdatertGrensefeature.geometry = it }
-
-        val flaterSomErEndret = grenseService.lagreGrenser(
-            grenser = FeatureCollection(features = listOf(oppdatertGrensefeature)),
-            gyldighetsdato = november28In2022,
-            endringstype = Endringstype.KVALITETSHEVING
-        )
-
-        val grunnkretsEtterLagring = grunnkretsService.hentGrunnkrets(Identifikator(Lokalid(vestreGrunnkrets.lokalid), november28In2022))!!
-        val kommuneEtterLagring = kommuneService.hentKommune(Identifikator(Lokalid(kommuneVest.lokalid), november28In2022))!!
-
-        assertTopologi(kommuneEtterLagring.omraade, grunnkretsEtterLagring.omraade)
-        assertThat(flaterSomErEndret).hasSize(4).extracting("id").contains(grunnkretsEtterLagring.id, kommuneEtterLagring.id)
-        assertOmradeGyldighetVersjon(grunnkretsEtterLagring, vestreGrunnkrets, november28In2022, Endringstype.KVALITETSHEVING)
-        assertOmradeGyldighetVersjon(kommuneEtterLagring, kommuneVest, november28In2022, Endringstype.KVALITETSHEVING)
-    }
-
-    @Test
-    fun `endre fylkegrense for grunnkrets skal opprette ny versjon for grensa og dens grunnkrets og kommune og fylke`() {
-        val (vestreGrunnkrets, _) = saveNaboGrunnkretserIHverSinKommune(gyldigFra = october1In2022, kommunenummer1 = "3201", kommunenummer2 = "3301")
-
-        val kommuneVest = vestreGrunnkrets.getKommune()!!
-        val fylkeVest = kommuneVest.getFylke()!!
-        flateService.oppdaterFlaterFor(setOf(kommuneVest, fylkeVest))
-        grenseRepository.flush()
-
-        assertThat(vestreGrunnkrets.gyldighet.gyldigTil).isNull()
-        assertThat(kommuneVest.gyldighet.gyldigTil).isNull()
-        assertTopologi(vestreGrunnkrets.omraade, kommuneVest.omraade)
-        assertTopologi(vestreGrunnkrets.omraade, fylkeVest.omraade)
-
-        val grenseKobling = vestreGrunnkrets.getGrensekoblinger(gyldighetsdato = october1In2022).first { it.grense.lokalid == "grenseDeltLokalid" }
-        val grense = grenseKobling.grense.grense
-
-        val oppdatertGeometri = GeometryFactory().createLineString(arrayOf(
-            grense.getCoordinateN(0).copy(),
-            Coordinate(13.0, 5.0),
-            grense.getCoordinateN(2).copy()
-        ))
-
-        val oppdatertGrensefeature = grenseKobling.grense.grenseToFeature(october1In2022)
-        oppdatertGeometri.geometryToDto().also { oppdatertGrensefeature.geometry = it }
-
-        val flaterSomErEndret = grenseService.lagreGrenser(
-            grenser = FeatureCollection(features = listOf(oppdatertGrensefeature)),
-            gyldighetsdato = november28In2022,
-            endringstype = Endringstype.KVALITETSHEVING
-        )
-
-        val grunnkretsEtterLagring = grunnkretsService.hentGrunnkrets(Identifikator(Lokalid(vestreGrunnkrets.lokalid), november28In2022))!!
-        val kommuneEtterLagring = kommuneService.hentKommune(Identifikator(Lokalid(kommuneVest.lokalid), november28In2022))!!
-        val fylkeEtterLagring = fylkeService.hentFylke(Identifikator(Lokalid(fylkeVest.lokalid), november28In2022))!!
-
-        assertTopologi(kommuneEtterLagring.omraade, grunnkretsEtterLagring.omraade)
-        assertThat(flaterSomErEndret).hasSize(6).extracting("id").contains(grunnkretsEtterLagring.id, kommuneEtterLagring.id)
-        assertOmradeGyldighetVersjon(grunnkretsEtterLagring, vestreGrunnkrets, november28In2022, Endringstype.KVALITETSHEVING)
-        assertOmradeGyldighetVersjon(kommuneEtterLagring, kommuneVest, november28In2022, Endringstype.KVALITETSHEVING)
-        assertOmradeGyldighetVersjon(fylkeEtterLagring, fylkeVest, november28In2022, Endringstype.KVALITETSHEVING)
-    }
-
-    private fun assertOmradeGyldighetVersjon(
-        nyGrunnkrets: Grunnkrets,
-        gammelGrunnkrets: Grunnkrets,
-        endringsdato: LocalDate?,
-        endringstype: Endringstype
-    ) {
-        assertOmradeGyldighet(gammelGrunnkrets, endringsdato, nyGrunnkrets, endringstype)
-        assertThat(nyGrunnkrets.version).isGreaterThan(gammelGrunnkrets.version)
-    }
-
-    private fun assertOmradeGyldighetVersjon(
-        nyAdmEnhet: AdministrativEnhet,
-        gammelAdmEnhet: AdministrativEnhet,
-        endringsdato: LocalDate?,
-        endringstype: Endringstype
-    ) {
-        assertOmradeGyldighet(gammelAdmEnhet, endringsdato, nyAdmEnhet, endringstype)
-        assertThat(nyAdmEnhet.version).isGreaterThan(gammelAdmEnhet.version)
-    }
-
-    private fun assertOmradeGyldighet(gammel: Flate, endringsdato: LocalDate?, ny: Flate, endringstype: Endringstype) {
-        assertThat(gammel.gyldighet.gyldigTil).isEqualTo(endringsdato)
-        assertThat(ny.gyldighet.gyldigFra).isEqualTo(endringsdato)
-        assertThat(ny.gyldighet.gyldigTil).isNull()
-        assertThat(ny.omraade).isNotEqualTo(gammel.omraade)
-        assertThat(endringstype).isEqualTo(ny.auditInfo.typeEndring)
-    }
-
-    @Test
     fun `endre grense for grunnkrets skal opprette nye versjoner for grensa og dens grunnkretser`() {
         val opprinneligDato = LocalDate.parse("2022-01-01")
         val endringsdato = LocalDate.parse("2022-02-01")
@@ -723,7 +610,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         val endringsdato = LocalDate.parse("2022-02-01")
         val (_, oestreKrets) = saveNaboGrunnkretser(gyldigFra = opprinneligDato)
 
-        val featureForAnnenGrense = lagFeatureEndreYkoordinat(oestreKrets, opprinneligDato,"grenseDeltLokalid")
+        val featureForAnnenGrense = lagFeatureEndreYkoordinat(oestreKrets, opprinneligDato, "grenseDeltLokalid")
         val statistiskgrenseMetadata = featureForAnnenGrense.properties.metadata as StatistiskgrenseMetadata
         statistiskgrenseMetadata.common.informasjon = "En eller annen informasjon"
         statistiskgrenseMetadata.commonGrense.posisjonskvalitet =
@@ -759,29 +646,6 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         assertOmradeGyldighetVersjon(oestreKretsEtterLagring, opprinneligOestreKrets, endringsdato, Endringstype.VEDTATT_GRENSEJUSTERING)
     }
 
-    private fun assertDeltGrenseEtterGrenseendring(
-        @Suppress("SameParameterValue") deltGrenseLokalid: String, datoForGrenseendring: LocalDate, opprinneligGrense: Grense,
-        vestreKretsEtterLagring: Grunnkrets, oestreKretsEtterLagring: Grunnkrets, opprinneligVestreKrets: Grunnkrets, opprinneligOestreKrets: Grunnkrets) {
-
-        val deltGrenseEtterGrenseendring = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), datoForGrenseendring))!!
-        assertThat(deltGrenseEtterGrenseendring.grunnkretser).hasSize(2)
-        assertThat(deltGrenseEtterGrenseendring.grunnkretser.map { it.grunnkrets.id })
-            .containsExactlyInAnyOrder(vestreKretsEtterLagring.id, oestreKretsEtterLagring.id)
-
-        assertThat(opprinneligGrense.gyldighet.gyldigTil).isEqualTo(datoForGrenseendring)
-        assertThat(deltGrenseEtterGrenseendring.gyldighet.gyldigTil).isNull()
-        assertThat(opprinneligGrense.lokalid).isEqualTo(deltGrenseEtterGrenseendring.lokalid)
-        assertThat(opprinneligGrense.grense).isNotEqualTo(deltGrenseEtterGrenseendring.grense)
-        assertThat(deltGrenseEtterGrenseendring.version).isGreaterThan(opprinneligGrense.version)
-
-        assertThat(opprinneligVestreKrets.grenser.map { it.grense.id }).contains("grenseDelt")
-        assertThat(opprinneligOestreKrets.grenser.map { it.grense.id }).contains("grenseDelt")
-        assertThat(vestreKretsEtterLagring.grenser.map { it.grense.id }).doesNotContain("grenseDelt")
-        assertThat(oestreKretsEtterLagring.grenser.map { it.grense.id }).doesNotContain("grenseDelt")
-        assertThat(vestreKretsEtterLagring.grenser.map { it.grense.lokalid }).contains(deltGrenseLokalid)
-        assertThat(oestreKretsEtterLagring.grenser.map { it.grense.lokalid }).contains(deltGrenseLokalid)
-    }
-
     private fun assertAnnenGrenseEtterGrenseendring(annenGrenseId: String, annenGrenseLokalid: String, datoForGrenseendring: LocalDate,
                                                     opprinneligDato: LocalDate, kretsEtterLagring: Grunnkrets, opprinneligKrets: Grunnkrets) {
         val opprinneligGrense = grenseService.hentGrense(Identifikator(Lokalid(annenGrenseLokalid), opprinneligDato))!!
@@ -804,54 +668,6 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
     }
 
     @Test
-    fun `endre delt kommunegrense etter oppdatering av grunnkrets paa andre sida skal opprette nye versjoner for grensa og dens grunnkretser`() {
-        val opprinneligDato = LocalDate.parse("2022-01-01")
-        val datoForOppdatering = october1In2022
-        val datoForGrenseendring = LocalDate.parse("2023-02-01")
-        val deltGrenseLokalid = "grenseDeltLokalid"
-        val (vestreKrets, oestreKrets) = saveNaboGrunnkretserIHverSinKommune(gyldigFra = opprinneligDato)
-        val vestreKommune = vestreKrets.getKommune(opprinneligDato)!!
-        val oestreKommune = oestreKrets.getKommune(opprinneligDato)!!
-        grenseRepository.flush()
-
-        val oestreGrunnkretsEtterOppdatering = utfoerMetadataoppdatering(kretsSomSkalOppdateres = oestreKrets, datoForOppdatering = datoForOppdatering)!!
-        grenseRepository.flush()
-
-        val deltGrense = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), datoForOppdatering))!!
-        assertThat(deltGrense.grunnkretser).hasSize(3)
-        assertThat(deltGrense.grunnkretser.map { it.grunnkrets.id })
-            .containsExactlyInAnyOrder(vestreKrets.id, oestreKrets.id, oestreGrunnkretsEtterOppdatering.id)
-
-        val flaterSomErEndret = utfoerGrenseendring(kretsSomSkalHaGrenseendring = vestreKrets, opprinneligDato = datoForOppdatering,
-            endringsdato = datoForGrenseendring)
-
-        val opprinneligVestreKrets = grunnkretsService.hentGrunnkrets(Identifikator(Lokalid(vestreKrets.lokalid), datoForOppdatering))!!
-        val opprinneligOestreKrets = grunnkretsService.hentGrunnkrets(Identifikator(Lokalid(oestreKrets.lokalid), datoForOppdatering))!!
-        assertThat(opprinneligVestreKrets.gyldighet.gyldigTil).isEqualTo(datoForGrenseendring)
-        assertThat(opprinneligOestreKrets.gyldighet.gyldigTil).isEqualTo(datoForGrenseendring)
-
-        val vestreKretsEtterLagring = grunnkretsService.hentGrunnkrets(Identifikator(Lokalid(vestreKrets.lokalid), datoForGrenseendring))!!
-        val oestreKretsEtterLagring = grunnkretsService.hentGrunnkrets(Identifikator(Lokalid(oestreKrets.lokalid), datoForGrenseendring))!!
-        val vestreKommuneEtterLagring = kommuneService.hentKommune(Identifikator(Lokalid(vestreKommune.lokalid), datoForGrenseendring))!!
-        val oestreKommuneEtterLagring = kommuneService.hentKommune(Identifikator(Lokalid(oestreKommune.lokalid), datoForGrenseendring))!!
-        assertThat(vestreKommune.id).isNotEqualTo(vestreKommuneEtterLagring.id)
-        assertThat(oestreKommune.id).isNotEqualTo(oestreKommuneEtterLagring.id)
-        assertOmradeGyldighetVersjon(vestreKretsEtterLagring, oestreKretsEtterLagring, opprinneligVestreKrets, opprinneligOestreKrets, datoForGrenseendring)
-        assertThat(flaterSomErEndret).hasSize(4).extracting("id")
-            .contains(vestreKommuneEtterLagring.id, oestreKommuneEtterLagring.id, vestreKretsEtterLagring.id, oestreKretsEtterLagring.id)
-
-        val opprinneligDeltGrense = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), opprinneligDato))!!
-
-        //Sjekker at gammel versjon av grensa ikke har fått endra sine grunnkretser
-        assertThat(opprinneligDeltGrense.grunnkretser).hasSize(3)
-        assertThat(opprinneligDeltGrense.grunnkretser.map { it.grunnkrets.id })
-            .containsExactlyInAnyOrder(vestreKrets.id, oestreKrets.id, oestreGrunnkretsEtterOppdatering.id)
-
-        assertDeltGrenseEtterGrenseendring(deltGrenseLokalid, datoForGrenseendring, opprinneligDeltGrense,
-            vestreKretsEtterLagring, oestreKretsEtterLagring, opprinneligVestreKrets, opprinneligOestreKrets)
-    }
-
-    @Test
     fun `to grunnkretser i hver sin kommune i samme fylke som splittes til to fylker`() {
         every { kodelisteServiceMock.getFylkesnummerIdByCodeValue("39") } returns "583a2846-e90c-4911-b8bb-b2537fd896a0"
         every { kodelisteServiceMock.getFylkesnummerIdByCodeValue("40") } returns "f26cc714-7289-4026-a076-35f83f9f2332"
@@ -859,7 +675,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         every { kodelisteServiceMock.getKommunenummerIdByCodeValue("4010") } returns "4010"
 
         val opprinneligDato = october1In2022
-        val (vestreKrets, oestreKrets) = saveNaboGrunnkretserIHverSinKommune(gyldigFra = opprinneligDato,
+        val (vestreKrets, oestreKrets) = saveNaboGrunnkretserOgStemmekretserIHverSinKommune(gyldigFra = opprinneligDato,
             kommunenummer1 = "3812", kommunenummer2 = "3805", medToDelteGrenser = true)
         settGrensetypeForGrenserSomIkkeErDelt(vestreKrets, oestreKrets, Grensetype.Fylkesgrense)
         val gamleSiljan = vestreKrets.getKommune(opprinneligDato)!!
@@ -869,13 +685,10 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         val vestfoldOgTelemark = saveFylkeOgUnikLokalid(id = "fylke38", lokalid = "38VestfoldOgTelemark",
             fylkesnummerUuid = "e79b7a63-13ff-4ba5-b4ef-0dfa4e6af1df", fylkesnummer = "38",
             administrativenhetnavn = listOf(norskNavn), gyldigFra = opprinneligDato, kommuner = listOf(gamleSiljan, gamleLarvik))
-        saveNasjonOgUnikLokalid(id="test-1234", lokalid = "test-1234-lokalid", fylker = listOf(vestfoldOgTelemark))
+        saveNasjonOgUnikLokalid(id = "test-1234", lokalid = "test-1234-lokalid", fylker = listOf(vestfoldOgTelemark))
 
         grenseRepository.flush()
         flateService.oppdaterFlaterFor(setOf(gamleSiljan, gamleLarvik, vestfoldOgTelemark))
-        gamleSiljan.posisjon = gamleSiljan.omraade?.interiorPoint
-        gamleLarvik.posisjon = gamleLarvik.omraade?.interiorPoint
-        vestfoldOgTelemark.posisjon = vestfoldOgTelemark.omraade?.interiorPoint
         grenseRepository.flush()
 
         val vestfoldNavn = administrativenhetnavnService.createNyttAdmEnhetNavn(oppgittNavn = "Vestfold", spraakForkortelse = "nor")
@@ -950,21 +763,19 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
     @Test
     fun `flytt grense til grunnkrets i annen kommune`() {
         val opprinneligDato = october1In2022
-        val (vestreKrets, oestreKrets) = saveNaboGrunnkretserIHverSinKommune(gyldigFra = opprinneligDato,
+        val (vestreKrets, oestreKrets) = saveNaboGrunnkretserOgStemmekretserIHverSinKommune(gyldigFra = opprinneligDato,
             kommunenummer1 = "3812", kommunenummer2 = "3805", medToDelteGrenser = true)
         val gamleSiljan = vestreKrets.getKommune(opprinneligDato)!!
         val gamleLarvik = oestreKrets.getKommune(opprinneligDato)!!
-        val nasjon = vestreKrets.getKommune()?.getFylke()?.getNasjon()!!
+        gamleSiljan.posisjon = gamleSiljan.omraade?.interiorPoint
+        gamleLarvik.posisjon = gamleLarvik.omraade?.interiorPoint
 
+        val nasjon = vestreKrets.getKommune()!!.getFylke()!!.getNasjon()!!
 
         val vestfoldOgTelemark = saveFylkeOgUnikLokalid(id = "fylke38", lokalid = "38VestfoldOgTelemark", fylkesnummerUuid = "e79b7a63-13ff-4ba5-b4ef-0dfa4e6af1df",
             fylkesnummer = "38", administrativenhetnavn = emptyList(), gyldigFra = opprinneligDato, kommuner = listOf(gamleSiljan, gamleLarvik))
         nasjon.addFylke(vestfoldOgTelemark)
 
-        grenseRepository.flush()
-        flateService.oppdaterFlaterFor(setOf(gamleSiljan, gamleLarvik))
-        gamleSiljan.posisjon = gamleSiljan.omraade?.interiorPoint
-        gamleLarvik.posisjon = gamleLarvik.omraade?.interiorPoint
         grenseRepository.flush()
 
         val nyVersjonAvOestreKrets = grunnkretsService.createNyVersjonAvGrunnkrets(oestreKrets, november28In2022, Endringstype.KVALITETSHEVING)
@@ -990,15 +801,11 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         val gammelGrenseSoerVest = vestreKoblingGrenseSoerVest.grense
         val nyGrenseSoerVest = grenseService.createNyVersjonAvGrense(gammelGrenseSoerVest, november28In2022, Endringstype.KVALITETSHEVING)
 
-
         nyVersjonAvOestreKrets.replaceGrensekobling(gammelGrenseDelt2, nyGrenseDelt2)
-
         nyVersjonAvOestreKrets.addGrensekobling(nyGrenseSoerVest)
-
         nyVersjonAvOestreKrets.replaceGrensekobling(gammelGrenseDelt, nyGrenseDelt)
 
         nyVersjonAvVestreKrets.replaceGrensekobling(gammelGrenseDelt2, nyGrenseDelt2)
-
         nyVersjonAvVestreKrets.replaceGrensekobling(gammelGrenseDelt, nyGrenseDelt)
 
         if (nyVersjonAvVestreKrets.grenser.removeIf { it.grense.id == "grenseSørVest" }) {
@@ -1039,7 +846,6 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
 
         grenseRepository.flush()
         flateService.oppdaterFlaterFor(setOf(gamleAalesund))
-        gamleAalesund.posisjon = gamleAalesund.omraade?.interiorPoint
         grenseRepository.flush()
 
         val haram = kommuneService.createNyKommuneMedNyUnikLokalid(
@@ -1082,7 +888,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
     }
 
     @Test
-    fun `delGrunnkrets klarer å opprette en ny grunnkrets`(){
+    fun `delGrunnkrets klarer å opprette en ny grunnkrets`() {
         val gyldighetsdato = jan1In2023
 
         val opprinneligGrunnkrets = saveGrunnkrets("opprinneligKrets", Lokalid("opprinneligKrets"))
@@ -1110,7 +916,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
     }
 
     @Test
-    fun `delGrunnkrets kaster hvis feil flatetype er satt i request`(){
+    fun `delGrunnkrets kaster hvis feil flatetype er satt i request`() {
         val opprinneligGrunnkrets = saveGrunnkrets("opprinneligKrets", Lokalid("opprinneligKrets"))
 
         val kommune = saveKommune(grunnkretser = listOf(opprinneligGrunnkrets), gyldigFra = jan1In2023)
@@ -1119,7 +925,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
             IdentifikatorMedVersjon(opprinneligGrunnkrets.lokalid, opprinneligGrunnkrets.version),
             ObjektIdentifikator(Lokalid(kommune.lokalid), jan1In2023),
             Flatetype.STEMMEKRETS,
-            nyeKretser = listOf(KretsNavnOgNummer("nyGrunnkrets","1"))
+            nyeKretser = listOf(KretsNavnOgNummer("nyGrunnkrets", "1"))
         )
 
         val unikKretsDelingEndring = getUnikeKretsDelingEndringRequests(delingEndringRequest).first()
@@ -1132,7 +938,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
     }
 
     @Test
-    fun `delGrunnkrets kaster exception hvis ny grunnkrets skaper duplikat`(){
+    fun `delGrunnkrets kaster exception hvis ny grunnkrets skaper duplikat`() {
         val gyldighetsdato = jan1In2023
 
         val opprinneligGrunnkrets = saveGrunnkrets("opprinneligKrets", Lokalid("opprinneligKrets"))
@@ -1147,7 +953,6 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         )
 
         val unikKretsDelingEndring = getUnikeKretsDelingEndringRequests(delingEndringRequest).first()
-
         val eksiterendeGrunnkretsSomTriggerDuplikat = saveGrunnkrets("eksisterende", Lokalid("eksisterende"), grunnkretsnummer = unikKretsDelingEndring.kretsNummer)
 
         saveKommune(grunnkretser = listOf(opprinneligGrunnkrets, eksiterendeGrunnkretsSomTriggerDuplikat), gyldigFra = gyldighetsdato)
@@ -1160,7 +965,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
     }
 
     @Test
-    fun `delGrunnkrets kaster OptimistiksLaasException ved versjonsfeil på den opprinnelige kretsen`(){
+    fun `delGrunnkrets kaster OptimistiskLaasException ved versjonsfeil på den opprinnelige kretsen`() {
         val opprinneligGrunnkrets = saveGrunnkrets("opprinneligKrets", Lokalid("opprinneligKrets"))
 
         val kommune = saveKommune(grunnkretser = listOf(opprinneligGrunnkrets), gyldigFra = jan1In2023)
@@ -1171,7 +976,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
             IdentifikatorMedVersjon(opprinneligGrunnkrets.lokalid, opprinneligGrunnkrets.version),
             ObjektIdentifikator(Lokalid(kommune.lokalid), jan1In2023),
             Flatetype.GRUNNKRETS,
-            nyeKretser = listOf(KretsNavnOgNummer("nyGrunnkrets","1"))
+            nyeKretser = listOf(KretsNavnOgNummer("nyGrunnkrets", "1"))
         )
 
         val unikKretsDelingEndring = getUnikeKretsDelingEndringRequests(delingEndringRequest).first()
@@ -1210,46 +1015,6 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
     fun settGrensetypeForGrenserSomIkkeErDelt(vestreKrets: Grunnkrets, oestreKrets: Grunnkrets, grensetype: Grensetype) {
         vestreKrets.grenser.stream().forEach { if (it.grense.id != "grenseDelt" && it.grense.id != "grenseDelt2") it.grense.grensetype = grensetype }
         oestreKrets.grenser.stream().forEach { if (it.grense.id != "grenseDelt" && it.grense.id != "grenseDelt2") it.grense.grensetype = grensetype }
-    }
-
-    private fun utfoerMetadataoppdatering(kretsSomSkalOppdateres: Grunnkrets, datoForOppdatering: LocalDate): Grunnkrets? {
-        val grunnkretsRequest = GrunnkretsRequestBuilder().withLokalId(kretsSomSkalOppdateres.lokalid)
-            .withGrunnkretsnummer(kretsSomSkalOppdateres.grunnkretsnummer!!).build()
-        val identifikator = Identifikator(Lokalid(grunnkretsRequest.identifikasjon.lokalid), datoForOppdatering)
-
-        grunnkretsService.oppdaterGrunnkrets(
-            lokalId = identifikator.lokalid,
-            oppdatertGrunnkrets = grunnkretsRequest,
-            gyldigFra = datoForOppdatering,
-            endringstype = Endringstype.RETTING
-        )
-        return grunnkretsService.hentGrunnkrets(identifikator)
-    }
-
-    private fun utfoerGrenseendring(
-        kretsSomSkalHaGrenseendring: Grunnkrets,
-        opprinneligDato: LocalDate,
-        endringsdato: LocalDate,
-        featureAnnenOppdatertGrense: Feature? = null,
-    ): Set<Flate> {
-        val grenseKobling = kretsSomSkalHaGrenseendring.getGrensekoblinger(gyldighetsdato = opprinneligDato)
-            .first { it.grense.lokalid == "grenseDeltLokalid" }
-
-        val oppdatertGeometri = GeometryFactory().createLineString(arrayOf(
-            Coordinate(10.0, 10.0),
-            Coordinate(5.0, 5.0),
-            Coordinate(10.0, 0.0)
-        ))
-
-        val oppdatertGrensefeature = grenseKobling.grense.grenseToFeature(opprinneligDato)
-        oppdatertGeometri.geometryToDto().also { oppdatertGrensefeature.geometry = it }
-
-        val features = if (featureAnnenOppdatertGrense != null) listOf(oppdatertGrensefeature, featureAnnenOppdatertGrense) else listOf(oppdatertGrensefeature)
-        return grenseService.lagreGrenser(
-            grenser = FeatureCollection(features = features),
-            gyldighetsdato = endringsdato,
-            endringstype = Endringstype.VEDTATT_GRENSEJUSTERING
-        )
     }
 
     private fun lagFeatureEndreYkoordinat(kretsSomSkalHaGrenseendring: Grunnkrets, opprinneligDato: LocalDate, lokalidGrenseSomSkalEndres: String): Feature {

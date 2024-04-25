@@ -4,15 +4,21 @@ import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grensetype
+import no.kartverket.nibas.api.v1.common.geojson.Feature
+import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.builders.FylkeBuilder
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
+import no.kartverket.nibas.builders.GrunnkretsRequestBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.builders.NasjonBuilder
 import no.kartverket.nibas.builders.StemmekretsBuilder
+import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.config.SimpleAuthenticationToken
 import no.kartverket.nibas.domain.Administrativenhetnavn
+import no.kartverket.nibas.domain.Endringstype
+import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.Fylke
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.Grunnkrets
@@ -21,6 +27,8 @@ import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.domain.Spraakkode
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.UnikLokalid
+import no.kartverket.nibas.extensions.geometry.geometryToDto
+import no.kartverket.nibas.extensions.geometry.grenseToFeature
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.DokrefGrenseKoblingRepository
 import no.kartverket.nibas.repository.DokumentasjonsreferanseRepository
@@ -45,9 +53,12 @@ import no.kartverket.nibas.service.StemmekretsService
 import no.kartverket.nibas.service.utkast.UtkastService
 import no.kartverket.nibas.service.deltgeometri.DeltGeometriAdministrativeGrenserService
 import no.kartverket.nibas.sporing.Gyldighet
+import no.kartverket.nibas.sporing.Laasbar
 import no.kartverket.nibas.utils.GrenseHelper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
+import org.locationtech.jts.geom.Coordinate
+import org.locationtech.jts.geom.GeometryFactory
 import org.locationtech.jts.geom.MultiPolygon
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -510,4 +521,152 @@ class TestWithDbContainer {
         grenseRepository.flush()
         return grunnkretser
     }
+    fun assertOmradeGyldighetVersjon(nyFlate: Flate, gammelFlate: Flate, endringsdato: LocalDate?, endringstype: Endringstype) {
+        assertThat(gammelFlate.gyldighet.gyldigTil).isEqualTo(endringsdato)
+        assertThat(nyFlate.gyldighet.gyldigFra).isEqualTo(endringsdato)
+        assertThat(nyFlate.gyldighet.gyldigTil).isNull()
+        assertThat(nyFlate.id).isNotEqualTo(gammelFlate.id)
+        assertThat(nyFlate.omraade).isNotEqualTo(gammelFlate.omraade)
+        assertThat(endringstype).isEqualTo(nyFlate.auditInfo.typeEndring)
+
+        assertThat((nyFlate as Laasbar).version).isGreaterThan((gammelFlate as Laasbar).version)
+    }
+
+    fun saveNaboGrunnkretserOgStemmekretserIHverSinKommune(gyldigFra: LocalDate, medHull: Boolean = false, medToDelteGrenser: Boolean = false,
+                                                           kommunenummer1: String = "0301", kommunenummer2: String = "0302"): List<Grunnkrets> {
+
+        val fylkesnummer1 = kommunenummer1.slice(0..1)
+        val fylkesnummer2 = kommunenummer2.slice(0..1)
+
+        val grenseType = if (fylkesnummer1 == fylkesnummer2) Grensetype.Kommunegrense else Grensetype.Fylkesgrense
+
+        val grenserForVest = if (medHull) {
+            GrenseHelper.getGrenserForVestligKrets(gyldigFra, grenseType, medToDelteGrenser) +
+                GrenseHelper.getHullVestligKrets(gyldigFra, grenseType)
+        } else {
+            GrenseHelper.getGrenserForVestligKrets(gyldigFra, grenseType, medToDelteGrenser)
+        }
+
+        //Lagrer grensene først, for å være sikker på at de er tilgjengelige for å knyttes til kretsene
+        val lagredeGrenserForVest = grenseRepository.saveAll(grenserForVest)
+        val lagredeGrenserForOest = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(gyldigFra, grenseType, medToDelteGrenser))
+        grenseRepository.flush()
+
+        val kretsVest = saveGrunnkrets(
+            id = "1",
+            lokalid = Lokalid("123"),
+            grunnkretsnummer = kommunenummer1 + "0020",
+            grunnkretsnavn = "Vestre krets",
+            gyldigFra = gyldigFra,
+            grenser = lagredeGrenserForVest
+        )
+
+        val kretsOest = saveGrunnkrets(
+            id = "2",
+            lokalid = Lokalid("234"),
+            grunnkretsnummer = kommunenummer2 + "0021",
+            grunnkretsnavn = "Østre krets",
+            gyldigFra = gyldigFra,
+            grenser = lagredeGrenserForOest
+        )
+
+        val stemmekrets1 = saveStemmekrets(id = "S1", lokalid = Lokalid("S1"),
+            stemmekretsnummer = "20", stemmekretsnavn = "Vestre stemmekrets", gyldigFra = gyldigFra, grenser = lagredeGrenserForVest)
+        val stemmekrets2 = saveStemmekrets(id = "S2", lokalid = Lokalid("S2"),
+            stemmekretsnummer = "21", stemmekretsnavn = "Østre stemmekrets", gyldigFra = gyldigFra, grenser = lagredeGrenserForOest)
+
+        val kommune1 = saveKommuneOgUnikLokalid(
+            id = "idKommuneVest", lokalid = "kommuneVest", gyldigFra = gyldigFra,
+            kommunenummerUuid = kommunenummer1, kommunenummer = kommunenummer1,
+            grunnkretser = listOf(kretsVest), stemmekretser = listOf(stemmekrets1))
+        val kommune2 = saveKommuneOgUnikLokalid(
+            id = "idKommuneOest", lokalid = "kommuneOest", gyldigFra = gyldigFra,
+            kommunenummerUuid = kommunenummer2, kommunenummer = kommunenummer2,
+            grunnkretser = listOf(kretsOest), stemmekretser = listOf(stemmekrets2))
+
+        grenseRepository.flush()
+        flateService.oppdaterFlaterFor(setOf(kommune1, kommune2))
+
+        val nasjon = saveNasjonOgUnikLokalid()
+        if (fylkesnummer1 != fylkesnummer2) {
+            val fylke1 = saveFylkeOgUnikLokalid(id = "fylke1", lokalid = "fylke1", fylkesnummer = fylkesnummer1, kommuner = listOf(kommune1))
+            val fylke2 = saveFylkeOgUnikLokalid(id = "fylke2", lokalid = "fylke2", fylkesnummer = fylkesnummer2, kommuner = listOf(kommune2))
+            nasjon.addFylke(fylke1)
+            nasjon.addFylke(fylke2)
+            flateService.oppdaterFlaterFor(setOf(fylke1, fylke2))
+        } else {
+            val fylke = saveFylkeOgUnikLokalid(kommuner = listOf(kommune1, kommune2))
+            nasjon.addFylke(fylke)
+        }
+
+        grenseRepository.flush()
+        return listOf(kretsVest, kretsOest)
+    }
+
+    fun utfoerGrenseendring(
+        kretsSomSkalHaGrenseendring: Grunnkrets,
+        opprinneligDato: LocalDate,
+        endringsdato: LocalDate,
+        featureAnnenOppdatertGrense: Feature? = null,
+    ): Set<Flate> {
+        val grenseKobling = kretsSomSkalHaGrenseendring.getGrensekoblinger(gyldighetsdato = opprinneligDato)
+            .first { it.grense.lokalid == "grenseDeltLokalid" }
+
+        val oppdatertGeometri = GeometryFactory().createLineString(arrayOf(
+            Coordinate(10.0, 10.0),
+            Coordinate(5.0, 5.0),
+            Coordinate(10.0, 0.0)
+        ))
+
+        val oppdatertGrensefeature = grenseKobling.grense.grenseToFeature(opprinneligDato)
+        oppdatertGeometri.geometryToDto().also { oppdatertGrensefeature.geometry = it }
+
+        val features = if (featureAnnenOppdatertGrense != null) listOf(oppdatertGrensefeature, featureAnnenOppdatertGrense) else listOf(oppdatertGrensefeature)
+        return grenseService.lagreGrenser(
+            grenser = FeatureCollection(features = features),
+            gyldighetsdato = endringsdato,
+            endringstype = Endringstype.VEDTATT_GRENSEJUSTERING
+        )
+    }
+
+    fun utfoerMetadataoppdatering(kretsSomSkalOppdateres: Grunnkrets, datoForOppdatering: LocalDate): Grunnkrets? {
+        val grunnkretsRequest = GrunnkretsRequestBuilder().withLokalId(kretsSomSkalOppdateres.lokalid)
+            .withGrunnkretsnummer(kretsSomSkalOppdateres.grunnkretsnummer!!).build()
+        val identifikator = Identifikator(Lokalid(grunnkretsRequest.identifikasjon.lokalid), datoForOppdatering)
+
+        grunnkretsService.oppdaterGrunnkrets(
+            lokalId = identifikator.lokalid,
+            oppdatertGrunnkrets = grunnkretsRequest,
+            gyldigFra = datoForOppdatering,
+            endringstype = Endringstype.RETTING
+        )
+        return grunnkretsService.hentGrunnkrets(identifikator)
+    }
+
+    fun assertDeltGrenseEtterGrenseendring(
+        @Suppress("SameParameterValue") deltGrenseLokalid: String, datoForGrenseendring: LocalDate, opprinneligGrense: Grense,
+        vestreKretsEtterLagring: Grunnkrets, oestreKretsEtterLagring: Grunnkrets, opprinneligVestreKrets: Grunnkrets, opprinneligOestreKrets: Grunnkrets)
+        : Grense {
+
+        val deltGrenseEtterGrenseendring = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), datoForGrenseendring))!!
+        assertThat(deltGrenseEtterGrenseendring.grunnkretser).hasSize(2)
+        assertThat(deltGrenseEtterGrenseendring.grunnkretser.map { it.grunnkrets.id })
+            .containsExactlyInAnyOrder(vestreKretsEtterLagring.id, oestreKretsEtterLagring.id)
+
+        assertThat(opprinneligGrense.gyldighet.gyldigTil).isEqualTo(datoForGrenseendring)
+        assertThat(deltGrenseEtterGrenseendring.gyldighet.gyldigTil).isNull()
+        assertThat(opprinneligGrense.lokalid).isEqualTo(deltGrenseEtterGrenseendring.lokalid)
+        assertThat(opprinneligGrense.grense).isNotEqualTo(deltGrenseEtterGrenseendring.grense)
+        assertThat(deltGrenseEtterGrenseendring.version).isGreaterThan(opprinneligGrense.version)
+
+        assertThat(opprinneligVestreKrets.grenser.map { it.grense.id }).contains("grenseDelt")
+        assertThat(opprinneligOestreKrets.grenser.map { it.grense.id }).contains("grenseDelt")
+        assertThat(vestreKretsEtterLagring.grenser.map { it.grense.id }).doesNotContain("grenseDelt")
+        assertThat(oestreKretsEtterLagring.grenser.map { it.grense.id }).doesNotContain("grenseDelt")
+        assertThat(vestreKretsEtterLagring.grenser.map { it.grense.lokalid }).contains(deltGrenseLokalid)
+        assertThat(oestreKretsEtterLagring.grenser.map { it.grense.lokalid }).contains(deltGrenseLokalid)
+
+        return deltGrenseEtterGrenseendring
+    }
+
 }

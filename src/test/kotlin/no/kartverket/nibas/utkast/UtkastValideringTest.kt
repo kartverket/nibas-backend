@@ -343,7 +343,7 @@ class UtkastValideringTest {
             .isInstanceOf(OperasjonerValidering.GyldigeOperasjoner::class.java)
     }
 
-    private fun testValiderKretsDelingIUtkast(gyldighetsdato: LocalDate, kretsnummer: String, flatetype: Flatetype, grenseendringer: Grenseendringer ): Pair<Utkast, UtkastValidering> {
+    private fun testValiderKretsDelingIUtkast(gyldighetsdato: LocalDate, kretsnummer: String, flatetype: Flatetype, grenseendringer: Grenseendringer): Pair<Utkast, UtkastValidering> {
         val utkast = Utkast(navn = "test", operasjoner = Operasjoner(
             // disse featurene har kontekst til to grunnkretser som IKKE har kretsnummer 25
             grenseendringer = grenseendringer,
@@ -361,7 +361,7 @@ class UtkastValideringTest {
 
 
     @Test
-    fun `utkast er ugyldig med deling uten grenseendringer som refererer til ny krets`(){
+    fun `utkast er ugyldig med deling uten grenseendringer som refererer til ny krets`() {
         val gyldighetsdato = LocalDate.now()
         val kretsnummer = "25"
 
@@ -377,7 +377,7 @@ class UtkastValideringTest {
     }
 
     @Test
-    fun `utkast er ugyldig med deling uten grenseendringer`(){
+    fun `utkast er ugyldig med deling uten grenseendringer`() {
         val gyldighetsdato = LocalDate.now()
         val kretsnummer = "SPILLER INGEN ROLLE HER FORDI VI HAR IKKE GRENSEENDRINGER"
 
@@ -411,7 +411,7 @@ class UtkastValideringTest {
                     type = KontekstEnhetType.STEMMEKRETS,
                     version = 1
                 )
-            ))
+                ))
             .build()
 
         val grenseendringer = Grenseendringer(endredeFeatures = listOf(featureSomPekerTilStemmekretsMedKretsnummer))
@@ -424,7 +424,7 @@ class UtkastValideringTest {
     }
 
     @Test
-    fun `utkast er gyldig med deling og grensejusteringer som refererer til grunnkrets`(){
+    fun `utkast er gyldig med deling og grensejusteringer som refererer til grunnkrets`() {
         val gyldighetsdato = LocalDate.now()
 
         val kretsnummer = "03012354"
@@ -489,25 +489,116 @@ class UtkastValideringTest {
     }
 
     @Test
-    fun `utkast er ugyldig hvis tilhørighet for endrede features er ugyldig`(){
+    fun `utkast er ugyldig hvis tilhørighet for endrede features er ugyldig`() {
         val gyldighetsdato = LocalDate.now()
-        val featureMedFeilAntallTilhorigheter = FeatureBuilder("1")
+
+        val featureUtenTilhorigheter = FeatureBuilder("1")
             .withGrensetype(Grensetype.Grunnkretsgrense)
             .withKontekstEgenskaper(listOf())
             .build()
+        val utkast1 = Utkast(navn = "test",
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureUtenTilhorigheter))))
+        val utkast1Validering = utkastValidatorService.validerTilhorighetEndringer(utkast1)
+        assertThat(utkast1Validering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
+        assertThat((utkast1Validering as UtkastValidering.UgyldigUtkast).feil.message)
+            .contains("Grensen har 0 tilhørighet(er) satt")
+
+        val featureMedFeilAntallTilhorigheter = FeatureBuilder("1")
+            .withGrensetype(Grensetype.Grunnkretsgrense)
+            .withKontekstEgenskaper(listOf(KontekstEgenskaper(
+                id = ObjektIdentifikator(Lokalid("G3"), gyldighetsdato),
+                type = KontekstEnhetType.GRUNNKRETS,
+                version = 1,
+            )))
+            .build()
+        val utkast1b = Utkast(navn = "test",
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedFeilAntallTilhorigheter))))
+        val utkast1bValidering = utkastValidatorService.validerTilhorighetEndringer(utkast1b)
+        assertThat(utkast1bValidering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
+        assertThat((utkast1bValidering as UtkastValidering.UgyldigUtkast).feil.message)
+            .contains("Grensen har 1 tilhørighet(er) satt")
+
+        val featureMedFeilToNyeTilhorigheter = FeatureBuilder("1")
+            .withGrensetype(Grensetype.Grunnkretsgrense)
+            .withKontekstEgenskaper(listOf(KontekstEgenskaper(
+                type = KontekstEnhetType.GRUNNKRETS,
+                kretsNummer = "12345678",
+                version = 1,
+            ), KontekstEgenskaper(
+                type = KontekstEnhetType.GRUNNKRETS,
+                kretsNummer = "87654321",
+                version = 1,
+            )))
+            .build()
+        val utkast1c = Utkast(navn = "test",
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedFeilToNyeTilhorigheter))))
+        assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast1c)).isNull()
+
         val featureMedToLikeTilhorigheter = FeatureBuilder("1")
             .withGrensetype(Grensetype.Grunnkretsgrense)
             .withKontekstEgenskaper(
                 listOf(KontekstEgenskaper(
                     id = ObjektIdentifikator(Lokalid("G3"), gyldighetsdato),
                     type = KontekstEnhetType.GRUNNKRETS,
+                    kretsNummer = "12345678",
                     version = 1,
                 ), KontekstEgenskaper(
                     id = ObjektIdentifikator(Lokalid("G3"), gyldighetsdato),
                     type = KontekstEnhetType.GRUNNKRETS,
+                    kretsNummer = "12345678",
                     version = 1
                 ))
             ).build()
+        val utkast2 = Utkast(navn = "test",
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedToLikeTilhorigheter))))
+        val utkast2Validering = utkastValidatorService.validerTilhorighetEndringer(utkast2)
+        assertThat(utkast2Validering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
+        assertThat((utkast2Validering as UtkastValidering.UgyldigUtkast).feil.message)
+            .contains("Grensen har flere tilhørigheter til samme krets. Gjelder kretsnr 12345678 med lokalid G3")
+
+        val featureMedToTilhorigheterMedSammeLokalid = FeatureBuilder("1")
+            .withGrensetype(Grensetype.Grunnkretsgrense)
+            .withKontekstEgenskaper(
+                listOf(KontekstEgenskaper(
+                    id = ObjektIdentifikator(Lokalid("G3"), gyldighetsdato),
+                    type = KontekstEnhetType.GRUNNKRETS,
+                    kretsNummer = "11111111",
+                    version = 1,
+                ), KontekstEgenskaper(
+                    id = ObjektIdentifikator(Lokalid("G3"), gyldighetsdato),
+                    type = KontekstEnhetType.GRUNNKRETS,
+                    kretsNummer = "12345678",
+                    version = 1
+                ))
+            ).build()
+        val utkast2b = Utkast(navn = "test",
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedToTilhorigheterMedSammeLokalid))))
+        val utkast2bValidering = utkastValidatorService.validerTilhorighetEndringer(utkast2b)
+        assertThat(utkast2bValidering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
+        assertThat((utkast2bValidering as UtkastValidering.UgyldigUtkast).feil.message)
+            .contains("Grensen har flere tilhørigheter til samme krets")
+
+        val featureMedToTilhorigheterMedSammeData = FeatureBuilder("1")
+            .withGrensetype(Grensetype.Grunnkretsgrense)
+            .withKontekstEgenskaper(
+                listOf(KontekstEgenskaper(
+                    type = KontekstEnhetType.GRUNNKRETS,
+                    kretsNummer = "12345678",
+                    version = 1,
+                ), KontekstEgenskaper(
+                    id = ObjektIdentifikator(Lokalid("G3"), gyldighetsdato),
+                    type = KontekstEnhetType.GRUNNKRETS,
+                    kretsNummer = "12345678",
+                    version = 1
+                ))
+            ).build()
+        val utkast2c = Utkast(navn = "test",
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedToTilhorigheterMedSammeData))))
+        val utkast2cValidering = utkastValidatorService.validerTilhorighetEndringer(utkast2c)
+        assertThat(utkast2cValidering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
+        assertThat((utkast2cValidering as UtkastValidering.UgyldigUtkast).feil.message)
+            .contains("Grensen har flere tilhørigheter til samme krets")
+
         val kommuneGrenseFeatureMedTilhorigheterISammeKommune = FeatureBuilder("1")
             .withGrensetype(Grensetype.Kommunegrense)
             .withKontekstEgenskaper(
@@ -524,6 +615,15 @@ class UtkastValideringTest {
                 ))
             )
             .build()
+        val utkast3 = Utkast(navn = "test",
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(kommuneGrenseFeatureMedTilhorigheterISammeKommune))))
+        val utkast3Validering = utkastValidatorService.validerTilhorighetEndringer(utkast3)
+        assertThat(utkast3Validering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
+        assertThat((utkast3Validering as UtkastValidering.UgyldigUtkast).feil.message)
+            .contains("Grensen har 2 tilhørighet(er) satt, men må ha 4")
+            .contains("Grensen har 1 tilhørighetstyper satt, men må ha 2")
+            .contains("Grensen er kommune-/fylkesgrense og har tilhørighet til to kretser i samme kommune")
+
         val featureMedToFeil = FeatureBuilder("1")
             .withGrensetype(Grensetype.Kommunegrense)
             .withKontekstEgenskaper(
@@ -531,57 +631,157 @@ class UtkastValideringTest {
                     id = ObjektIdentifikator(Lokalid("G3"), gyldighetsdato),
                     kommuneId = ObjektIdentifikator(Lokalid("1"), gyldighetsdato),
                     type = KontekstEnhetType.GRUNNKRETS,
+                    kretsNummer = "12345678",
                     version = 1,
                 ), KontekstEgenskaper(
                     id = ObjektIdentifikator(Lokalid("G3"), gyldighetsdato),
                     kommuneId = ObjektIdentifikator(Lokalid("1"), gyldighetsdato),
                     type = KontekstEnhetType.GRUNNKRETS,
+                    kretsNummer = "12345678",
                     version = 1
                 ))
             )
             .build()
-        val utkast1 = Utkast(navn = "test", operasjoner = Operasjoner(grenseendringer =
-            Grenseendringer(endredeFeatures = listOf(
-                featureMedFeilAntallTilhorigheter
-            ))
-        ))
-        val utkast2 = Utkast(navn = "test", operasjoner = Operasjoner(grenseendringer =
-            Grenseendringer(endredeFeatures = listOf(
-                featureMedToLikeTilhorigheter
-            ))
-        ))
-        val utkast3 = Utkast(navn = "test", operasjoner = Operasjoner(grenseendringer =
-            Grenseendringer(endredeFeatures = listOf(
-                kommuneGrenseFeatureMedTilhorigheterISammeKommune
-            ))
-        ))
-        val utkast4 = Utkast(navn = "test", operasjoner = Operasjoner(grenseendringer =
-            Grenseendringer(endredeFeatures = listOf(
-                featureMedToFeil
-            ))
-        ))
-
-        val utkast1Validering = utkastValidatorService.validerTilhorighetEndringer(utkast1)
-        assertThat(utkast1Validering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
-        assertThat((utkast1Validering as UtkastValidering.UgyldigUtkast).feil.message)
-            .contains("Grensen har 0 tilhørighet(er) satt")
-
-        val utkast2Validering = utkastValidatorService.validerTilhorighetEndringer(utkast2)
-        assertThat(utkast2Validering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
-        assertThat((utkast2Validering as UtkastValidering.UgyldigUtkast).feil.message)
-            .contains("Grensen har tilhørighet til samme krets på hver side")
-
-        val utkast3Validering = utkastValidatorService.validerTilhorighetEndringer(utkast3)
-        assertThat(utkast3Validering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
-        assertThat((utkast3Validering as UtkastValidering.UgyldigUtkast).feil.message)
-            .contains("Grensen er kommunegrense og har tilhørighet til to kretser i samme kommune")
-
+        val utkast4 = Utkast(navn = "test",
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedToFeil))))
         val utkast4Validering = utkastValidatorService.validerTilhorighetEndringer(utkast4)
         assertThat(utkast4Validering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
         assertThat((utkast4Validering as UtkastValidering.UgyldigUtkast).feil.message)
-            .contains("Grense med id: 1 har ugyldig tilhørighet. Årsak(er): \n" +
-                "\t- Grensen har tilhørighet til samme krets på hver side.\n" +
-                "\t- Grensen er kommunegrense og har tilhørighet til to kretser i samme kommune.\n")
+            .contains("Grense med id: 1 har ugyldig tilhørighet. Årsak(er)")
+            .contains("Grensen har 2 tilhørighet(er) satt, men må ha 4")
+            .contains("Grensen har 1 tilhørighetstyper satt, men må ha 2")
+            .contains("Grensen har flere tilhørigheter til samme krets. Gjelder kretsnr 12345678 med lokalid G3")
+
+        val featureMedStemmekretsOgGrunnkrets = FeatureBuilder("1")
+            .withGrensetype(Grensetype.Kommunegrense)
+            .withKontekstEgenskaper(
+                listOf(KontekstEgenskaper(
+                    id = ObjektIdentifikator(Lokalid("G3"), gyldighetsdato),
+                    kommuneId = ObjektIdentifikator(Lokalid("1"), gyldighetsdato),
+                    type = KontekstEnhetType.GRUNNKRETS,
+                    kretsNummer = "12345678",
+                    version = 1,
+                ), KontekstEgenskaper(
+                    id = ObjektIdentifikator(Lokalid("S3"), gyldighetsdato),
+                    kommuneId = ObjektIdentifikator(Lokalid("1"), gyldighetsdato),
+                    type = KontekstEnhetType.STEMMEKRETS,
+                    kretsNummer = "1234",
+                    version = 1
+                ))
+            )
+            .build()
+        val utkast5 = Utkast(navn = "test",
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedStemmekretsOgGrunnkrets))))
+        val utkast5Validering = utkastValidatorService.validerTilhorighetEndringer(utkast5)
+        assertThat(utkast5Validering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
+        assertThat((utkast5Validering as UtkastValidering.UgyldigUtkast).feil.message)
+            .contains("Grense med id: 1 har ugyldig tilhørighet. Årsak(er)")
+            .contains("Grensen har 2 tilhørighet(er) satt, men må ha 4")
+            .doesNotContain("Grensen har 1 tilhørighetstyper satt, men må ha 2")
+
+        val featureMedTreKontekstegenskaper = FeatureBuilder("1")
+            .withGrensetype(Grensetype.Kommunegrense)
+            .withKontekstEgenskaper(
+                listOf(KontekstEgenskaper(
+                    id = ObjektIdentifikator(Lokalid("G3"), gyldighetsdato),
+                    kommuneId = ObjektIdentifikator(Lokalid("1"), gyldighetsdato),
+                    type = KontekstEnhetType.GRUNNKRETS,
+                    kretsNummer = "12345678",
+                    version = 1,
+                ), KontekstEgenskaper(
+                    id = ObjektIdentifikator(Lokalid("S3"), gyldighetsdato),
+                    kommuneId = ObjektIdentifikator(Lokalid("1"), gyldighetsdato),
+                    type = KontekstEnhetType.STEMMEKRETS,
+                    kretsNummer = "1234",
+                    version = 1
+                ), KontekstEgenskaper(
+                    id = ObjektIdentifikator(Lokalid("S4"), gyldighetsdato),
+                    kommuneId = ObjektIdentifikator(Lokalid("2"), gyldighetsdato),
+                    type = KontekstEnhetType.STEMMEKRETS,
+                    kretsNummer = "1234",
+                    version = 1
+                ))
+            )
+            .build()
+        val utkast6 = Utkast(navn = "test",
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedTreKontekstegenskaper))))
+        val utkast6Validering = utkastValidatorService.validerTilhorighetEndringer(utkast6)
+        assertThat(utkast6Validering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
+        assertThat((utkast6Validering as UtkastValidering.UgyldigUtkast).feil.message)
+            .contains("Grensen har 3 tilhørighet(er) satt, men må ha 4")
+            .doesNotContain("Grensen har 1 tilhørighetstyper satt, men må ha 2")
+            .doesNotContain("Grensen er kommune-/fylkesgrense og har tilhørighet til to kretser i samme kommune")
+
+        val featureMedFireKontekstegenskaper = FeatureBuilder("1")
+            .withGrensetype(Grensetype.Kommunegrense)
+            .withKontekstEgenskaper(
+                listOf(KontekstEgenskaper(
+                    id = ObjektIdentifikator(Lokalid("G1"), gyldighetsdato),
+                    kommuneId = ObjektIdentifikator(Lokalid("1"), gyldighetsdato),
+                    type = KontekstEnhetType.GRUNNKRETS,
+                    kretsNummer = "12345678",
+                    version = 1,
+                ), KontekstEgenskaper(
+                    id = ObjektIdentifikator(Lokalid("G3"), gyldighetsdato),
+                    kommuneId = ObjektIdentifikator(Lokalid("1"), gyldighetsdato),
+                    type = KontekstEnhetType.GRUNNKRETS,
+                    kretsNummer = "87654321",
+                    version = 1,
+                ), KontekstEgenskaper(
+                    id = ObjektIdentifikator(Lokalid("S3"), gyldighetsdato),
+                    kommuneId = ObjektIdentifikator(Lokalid("1"), gyldighetsdato),
+                    type = KontekstEnhetType.STEMMEKRETS,
+                    kretsNummer = "1234",
+                    version = 1
+                ), KontekstEgenskaper(
+                    id = ObjektIdentifikator(Lokalid("S4"), gyldighetsdato),
+                    kommuneId = ObjektIdentifikator(Lokalid("1"), gyldighetsdato),
+                    type = KontekstEnhetType.STEMMEKRETS,
+                    kretsNummer = "4321",
+                    version = 1
+                ))
+            )
+            .build()
+        val utkast7 = Utkast(navn = "test",
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedFireKontekstegenskaper))))
+        val utkast7Validering = utkastValidatorService.validerTilhorighetEndringer(utkast7)
+        assertThat(utkast7Validering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
+        assertThat((utkast7Validering as UtkastValidering.UgyldigUtkast).feil.message)
+            .contains("Grensen er kommune-/fylkesgrense og har tilhørighet til to kretser i samme kommune")
+
+        val korrektKommunegrenseFeature = FeatureBuilder("1")
+            .withGrensetype(Grensetype.Kommunegrense)
+            .withKontekstEgenskaper(
+                listOf(KontekstEgenskaper(
+                    id = ObjektIdentifikator(Lokalid("G3"), gyldighetsdato),
+                    kommuneId = ObjektIdentifikator(Lokalid("1"), gyldighetsdato),
+                    type = KontekstEnhetType.GRUNNKRETS,
+                    kretsNummer = "12345678",
+                    version = 1,
+                ), KontekstEgenskaper(
+                    id = ObjektIdentifikator(Lokalid("G4"), gyldighetsdato),
+                    kommuneId = ObjektIdentifikator(Lokalid("2"), gyldighetsdato),
+                    type = KontekstEnhetType.GRUNNKRETS,
+                    kretsNummer = "87654321",
+                    version = 1,
+                ), KontekstEgenskaper(
+                    id = ObjektIdentifikator(Lokalid("S3"), gyldighetsdato),
+                    kommuneId = ObjektIdentifikator(Lokalid("1"), gyldighetsdato),
+                    type = KontekstEnhetType.STEMMEKRETS,
+                    kretsNummer = "1234",
+                    version = 1
+                ), KontekstEgenskaper(
+                    id = ObjektIdentifikator(Lokalid("S4"), gyldighetsdato),
+                    kommuneId = ObjektIdentifikator(Lokalid("2"), gyldighetsdato),
+                    type = KontekstEnhetType.STEMMEKRETS,
+                    kretsNummer = "1234",
+                    version = 1
+                ))
+            )
+            .build()
+        val utkastOk = Utkast(navn = "test",
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(korrektKommunegrenseFeature))))
+        assertThat(utkastValidatorService.validerTilhorighetEndringer(utkastOk)).isNull()
     }
 
     @Test

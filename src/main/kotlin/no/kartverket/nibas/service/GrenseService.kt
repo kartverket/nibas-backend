@@ -4,12 +4,11 @@ import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
-import no.kartverket.nibas.api.v1.common.geojson.KontekstEgenskaper
 import no.kartverket.nibas.api.v1.common.geojson.metadata.CommonGrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.CommonMetadata
-import no.kartverket.nibas.api.v1.common.geojson.metadata.HarDokumentasjonsreferanse
 import no.kartverket.nibas.api.v1.common.geojson.metadata.HarCommonGrense
 import no.kartverket.nibas.api.v1.common.geojson.metadata.HarCommonMetadata
+import no.kartverket.nibas.api.v1.common.geojson.metadata.HarDokumentasjonsreferanse
 import no.kartverket.nibas.api.v1.common.geojson.metadata.toEmbeddable
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
@@ -24,7 +23,6 @@ import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
-import no.kartverket.nibas.domain.KobletTilGrense
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.domain.Stemmekrets
@@ -188,8 +186,6 @@ class GrenseService(
                 msg = "En eller flere grenser du har endret på eksisterer ikke lengre. For å sørge for at du endrer på en gjeldende grense må du dessverre opprette et nytt utkast og gjennomføre endringene dine på nytt.",
                 additionalInfo = "Feilen gjelder følgende grenser: ${identifikatorDiffs.joinToString(",") { "(lokalid: ${it.lokalid.value}), gyldig fra: ${it.gyldighetsdato})" }}")
         }
-
-        sjekkAtTilhorigheterErSattKorrekt(features)
     }
 
     fun validerOptimistiskLaasKonflikter(features: Collection<Feature>, gyldighetsdato: LocalDate) {
@@ -267,50 +263,49 @@ class GrenseService(
     }
 
     private fun addTilhorigheterTilGrense(grense: Grense, feature: Feature, stemmekretser: Collection<Stemmekrets>, grunnkretser: Collection<Grunnkrets>, gyldighetsdato: LocalDate): Grense {
-        val tilhorighetstype = feature.properties.kontekstEgenskaper.first().type
-        val tilhorigheter: List<KobletTilGrense> = when (tilhorighetstype) {
-            KontekstEnhetType.STEMMEKRETS -> createStemmekretserForIilhorigheterIFeature(feature, stemmekretser, gyldighetsdato)
-            KontekstEnhetType.GRUNNKRETS -> createGrunnkretserForTilhorigheterIFeature(feature, grunnkretser)
-        }
+        hentStemmekretserForTilhorigheterIFeature(feature, stemmekretser, gyldighetsdato)
+            .forEach { it.addGrensekobling(grense) }
+        hentGrunnkretserForTilhorigheterIFeature(feature, grunnkretser)
+            .forEach { it.addGrensekobling(grense) }
 
-        tilhorigheter.forEach { it.addGrensekobling(grense) }
         return grense
     }
 
-    private fun createStemmekretserForIilhorigheterIFeature(feature: Feature, stemmekretser: Collection<Stemmekrets>, gyldighetsdato: LocalDate): List<Stemmekrets> {
-        val tilhorheterTilNyeKretser = feature.properties.kontekstEgenskaper
-            .filter { it.id == null }
+    private fun hentStemmekretserForTilhorigheterIFeature(feature: Feature, stemmekretser: Collection<Stemmekrets>, gyldighetsdato: LocalDate)
+        : List<Stemmekrets> {
+        val tilhorigheterTilNyeKretser = feature.properties.kontekstEgenskaper
+            .filter { it.type == KontekstEnhetType.STEMMEKRETS && it.id == null }
             .map { kontekstEgenskap ->
                 stemmekretser.firstOrNull { it.stemmekretsnummer == kontekstEgenskap.kretsNummer && kontekstEgenskap.kommuneId?.lokalid?.value == it.getKommune(gyldighetsdato)?.lokalid }
                     ?: throw RuntimeException("Kunne ikke sette tilhørighet på grensen. Fant ikke stemmekrets med stemmekretsnummer: ${kontekstEgenskap.kretsNummer}")
             }
 
         val tilhorigheterTilEksisterendeKretser = feature.properties.kontekstEgenskaper
-            .filter { it.id != null }
+            .filter { it.type == KontekstEnhetType.STEMMEKRETS && it.id != null }
             .map { kontekstEgenskap ->
                 stemmekretser.firstOrNull { it.lokalid == kontekstEgenskap.id?.lokalid?.value }
                     ?: throw BadRequestException("Kunne ikke sette tilhørighet på grensen. Fant ikke stemmekrets med lokalid: ${kontekstEgenskap.id?.lokalid?.value}")
             }
 
-        return tilhorheterTilNyeKretser + tilhorigheterTilEksisterendeKretser
+        return tilhorigheterTilNyeKretser + tilhorigheterTilEksisterendeKretser
     }
 
-    private fun createGrunnkretserForTilhorigheterIFeature(feature: Feature, grunnkretser: Collection<Grunnkrets>): List<Grunnkrets> {
-        val tilhorheterTilNyeKretser = feature.properties.kontekstEgenskaper
-            .filter { it.id == null }
+    private fun hentGrunnkretserForTilhorigheterIFeature(feature: Feature, grunnkretser: Collection<Grunnkrets>): List<Grunnkrets> {
+        val tilhorigheterTilNyeKretser = feature.properties.kontekstEgenskaper
+            .filter { it.type == KontekstEnhetType.GRUNNKRETS && it.id == null }
             .map { kontekstEgenskap ->
                 grunnkretser.firstOrNull { it.grunnkretsnummer == kontekstEgenskap.kretsNummer }
                     ?: throw RuntimeException("Kunne ikke sette tilhørighet på grensen. Fant ikke grunnkrets med grunnkretsnummer: ${kontekstEgenskap.kretsNummer}")
             }
 
         val tilhorigheterTilEksisterendeKretser = feature.properties.kontekstEgenskaper
-            .filter { it.id != null }
+            .filter { it.type == KontekstEnhetType.GRUNNKRETS && it.id != null }
             .map { kontekstEgenskap ->
                 grunnkretser.firstOrNull { it.lokalid == kontekstEgenskap.id?.lokalid?.value }
                     ?: throw BadRequestException("Kunne ikke sette tilhørighet på grensen. Fant ikke grunnkrets med lokalid: ${kontekstEgenskap.id?.lokalid?.value}")
             }
 
-        return tilhorheterTilNyeKretser + tilhorigheterTilEksisterendeKretser
+        return tilhorigheterTilNyeKretser + tilhorigheterTilEksisterendeKretser
     }
 
     fun createNyeVersjonerAvFlaterHoyereIHierakietForGrenser(
@@ -465,39 +460,6 @@ class GrenseService(
         }
     }
 
-    private fun sjekkAtTilhorigheterErSattKorrekt(features: Collection<Feature>) {
-        features.forEach { feature ->
-            val innsendteTilhorigheter = feature.properties.kontekstEgenskaper
-            if (innsendteTilhorigheter.size != 2) {
-                throw BadRequestException("Grense med id ${feature.id} har feil antall tilhørigheter. Fikk ${innsendteTilhorigheter.size} men forventet 2.")
-            }
-
-            if (erSammeTilhorighet(innsendteTilhorigheter[0], innsendteTilhorigheter[1])) {
-                throw BadRequestException("Grense med id ${feature.id} har begge tilhørighetene satt til samme krets. Fikk ${innsendteTilhorigheter[0].id?.lokalid?.value} for begge tilhørhetene.")
-            }
-
-            val tilhorighetstyper = innsendteTilhorigheter.map { it.type.name }.distinct()
-            if (tilhorighetstyper.size > 1) {
-                throw BadRequestException("En grense kan ikke være knyttet til tilhørigheter av ulike type. Grense med ID ${feature.id} er knyttet til kretser med følgende typer: ${innsendteTilhorigheter.joinToString(", ")}")
-            }
-        }
-    }
-
-    private fun erSammeTilhorighet(tilhorighet1: KontekstEgenskaper, tilhorighet2: KontekstEgenskaper): Boolean {
-        if (tilhorighet1.id?.lokalid != tilhorighet2.id?.lokalid) {
-            return false
-        }
-
-        // Hvis begge er null er det nye kretser, vi må da sammenligne kretsnummer (og kommune for stemmekrets)
-        if (tilhorighet1.id?.lokalid == null && tilhorighet2.id?.lokalid == null) {
-            if (tilhorighet1.type == KontekstEnhetType.GRUNNKRETS) {
-                return tilhorighet1.kretsNummer == tilhorighet2.kretsNummer
-            }
-            return tilhorighet1.kretsNummer == tilhorighet2.kretsNummer && tilhorighet1.kommuneId?.lokalid == tilhorighet2.kommuneId?.lokalid
-        }
-        return false
-    }
-
     private fun Grense.applyChangesFromRequest(feature: Feature, gyldighetsdato: LocalDate, endringstype: Endringstype): Grense =
         this.apply {
             grense = feature.geometry.toLineString(feature.properties.srid)
@@ -553,7 +515,7 @@ class GrenseService(
                 grense = grense
             )
         }
-        
+
         return grense
     }
 

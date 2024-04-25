@@ -63,8 +63,9 @@ enum class Grensetype(val value: String, val dbKey: String, val editerbar: Boole
             }
         }
 
-        fun erNasjonsgrense(grensetype: Grensetype) : Boolean {
-            return AvtaltAvgrensningslinje == grensetype || Riksgrense == grensetype || Territorialgrense == grensetype
+        fun erAdministrativGrense(grensetype: Grensetype): Boolean {
+            val adminstrativeGrensetyper = listOf(Kommunegrense, Fylkesgrense, Riksgrense, AvtaltAvgrensningslinje, Territorialgrense)
+            return adminstrativeGrensetyper.contains(grensetype)
         }
     }
 }

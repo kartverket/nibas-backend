@@ -6,6 +6,7 @@ import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.UnikKretsDelingEndring
 import no.kartverket.nibas.api.v1.common.geojson.Feature
+import no.kartverket.nibas.api.v1.common.geojson.KontekstEgenskaper
 import no.kartverket.nibas.api.v1.common.getUnikeKretsDelingEndringRequests
 import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.common.CurrentTime
@@ -133,29 +134,53 @@ class UtkastValidatorService(
      * Sekker om kontekstegenskapene på endrede features gir mening å prøve å endre på i utkastet
      */
     fun validerTilhorighetEndringer(utkast: Utkast): UtkastValidering.UgyldigUtkast? {
-        val krevdAntallKontekstEgenskaper = 2
 
         return utkast.operasjoner?.grenseendringer?.endredeFeatures?.firstNotNullOfOrNull { feature ->
+            val innsendteTilhorigheter = feature.properties.kontekstEgenskaper
+            //Kommunegrense og fylkesgrense skal ha 4 tilhørigheter (2 grunnkretser og 2 stemmekretser), andre skal bare ha 2
+            val grensetype = Grensetype.fromValue(feature.properties.type)
+            val erKommuneEllerFylkesGrense = grensetype == Grensetype.Kommunegrense || grensetype == Grensetype.Fylkesgrense
+            val krevdAntallKontekstEgenskaper = if (erKommuneEllerFylkesGrense) 4 else 2
+            val krevdAntallTilhorighetstyper = if (Grensetype.erAdministrativGrense(grensetype)) 2 else 1
+
             val harFeilAntallKontekstEgenskaper = feature.properties.kontekstEgenskaper.size != krevdAntallKontekstEgenskaper
-            val harToLikeKontekstEgenskaper = if (!harFeilAntallKontekstEgenskaper) {
-                feature.properties.kontekstEgenskaper[0] == feature.properties.kontekstEgenskaper[1]
-            } else {
-                false
+
+            val tilhorighetstyper = innsendteTilhorigheter.map { it.type.name }.distinct()
+            val harFeilAntallTilhorighetstyper = tilhorighetstyper.size != krevdAntallTilhorighetstyper
+
+            var duplisertKontekstEgenskaper: KontekstEgenskaper? = null
+            innsendteTilhorigheter.forEachIndexed { index, element ->
+                innsendteTilhorigheter.filterIndexed { i, _ -> i > index && duplisertKontekstEgenskaper == null }.forEach { indreElement ->
+                    if (erSammeTilhorighet(element, indreElement)) {
+                        duplisertKontekstEgenskaper = element
+                    }
+                }
             }
-            val kommuneGrenseHarTilhorigheterISammeKommune = feature.properties.type == Grensetype.Kommunegrense.value &&
-                feature.properties.kontekstEgenskaper
-                    .map { it.kommuneId?.lokalid?.value }
-                    .toSet().size != 2
-            if (harFeilAntallKontekstEgenskaper || harToLikeKontekstEgenskaper || kommuneGrenseHarTilhorigheterISammeKommune) {
+
+            val kommuneGrenseHarTilhorigheterISammeKommune =
+                if (erKommuneEllerFylkesGrense && duplisertKontekstEgenskaper == null) {
+                    val map = mutableMapOf<Pair<KontekstEnhetType, String>, Int>()
+                    feature.properties.kontekstEgenskaper
+                        .forEach {
+                            val pair = Pair(it.type, it.kommuneId?.lokalid?.value?: "")
+                            map[pair] = map.getOrDefault(pair, 0) + 1
+                        }
+                    map.values.any { it > 1 }
+                } else false
+
+            if (harFeilAntallKontekstEgenskaper || duplisertKontekstEgenskaper != null || kommuneGrenseHarTilhorigheterISammeKommune || harFeilAntallTilhorighetstyper) {
                 var errorMessage = "Grense med id: ${feature.id ?: "Ny grense, ingen id - "} har ugyldig tilhørighet. Årsak(er): \n"
                 if (harFeilAntallKontekstEgenskaper) {
                     errorMessage += "\t- Grensen har ${feature.properties.kontekstEgenskaper.size} tilhørighet(er) satt, men må ha $krevdAntallKontekstEgenskaper.\n"
                 }
-                if (harToLikeKontekstEgenskaper) {
-                    errorMessage += "\t- Grensen har tilhørighet til samme krets på hver side.\n"
+                if (harFeilAntallTilhorighetstyper) {
+                    errorMessage += "\t- Grensen har ${tilhorighetstyper.size} tilhørighetstyper satt, men må ha $krevdAntallTilhorighetstyper.\n"
+                }
+                if (duplisertKontekstEgenskaper != null) {
+                    errorMessage += "\t- Grensen har flere tilhørigheter til samme krets. Gjelder kretsnr ${duplisertKontekstEgenskaper?.kretsNummer} med lokalid ${duplisertKontekstEgenskaper?.id?.lokalid?.value}.\n"
                 }
                 if (kommuneGrenseHarTilhorigheterISammeKommune) {
-                    errorMessage += "\t- Grensen er kommunegrense og har tilhørighet til to kretser i samme kommune.\n"
+                    errorMessage += "\t- Grensen er kommune-/fylkesgrense og har tilhørighet til to kretser i samme kommune.\n"
                 }
                 return UtkastValidering.UgyldigUtkast(utkast = utkast, feil = ResponseException.BadRequestException(
                     title = "Kan ikke publisere utkastet",
@@ -164,6 +189,24 @@ class UtkastValidatorService(
             } else return null
         }
     }
+
+    private fun erSammeTilhorighet(tilhorighet1: KontekstEgenskaper, tilhorighet2: KontekstEgenskaper): Boolean {
+        //Hvis begge lokalid-er er gitt og er ulike, er det ikke samme tilhørighet
+        //Hvis begge lokalid-er er gitt og ulike, er det samme tilhørighet
+        if (tilhorighet1.id?.lokalid != null && tilhorighet2.id?.lokalid != null) {
+            return tilhorighet1.id.lokalid == tilhorighet2.id.lokalid
+        }
+
+        // Hvis en er null er det ny(e) krets(er), vi må da sammenligne kretsnummer (og kommune for stemmekrets)
+        if (tilhorighet1.id?.lokalid == null || tilhorighet2.id?.lokalid == null) {
+            if (tilhorighet1.type == KontekstEnhetType.GRUNNKRETS) {
+                return tilhorighet1.kretsNummer == tilhorighet2.kretsNummer
+            }
+            return tilhorighet1.kretsNummer == tilhorighet2.kretsNummer && tilhorighet1.kommuneId?.lokalid == tilhorighet2.kommuneId?.lokalid
+        }
+        return false
+    }
+
 
     fun validerKretsinfoEndringer(
         operasjoner: Operasjoner

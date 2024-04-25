@@ -107,8 +107,7 @@ class Grense(
         HashSet(finnFlaterOppTilFylke(gyldighetsdato) + nasjoner(gyldighetsdato))
 
     fun erAdministrativGrense(): Boolean {
-        val adminstrativeGrensetyper = listOf(Grensetype.Kommunegrense, Grensetype.Fylkesgrense, Grensetype.Riksgrense, Grensetype.AvtaltAvgrensningslinje, Grensetype.Territorialgrense)
-        return adminstrativeGrensetyper.contains(this.grensetype)
+        return Grensetype.erAdministrativGrense(this.grensetype)
     }
 
     override fun getInfo(): String? {
