@@ -8,6 +8,7 @@ import no.kartverket.nibas.api.v1.common.Kommunenummer
 import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.Feature
+import no.kartverket.nibas.api.v1.common.geojson.MultiPolygon
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.sporing.Gyldighet
 import org.locationtech.jts.geom.Coordinate
@@ -24,6 +25,26 @@ data class UtkastRef(
     val href: String,
     @Schema(description = "Tidspunktet utkastet ble opprettet.")
     val opprettetDato: ZonedDateTime,
+)
+@Schema(description = "Representasjon av nasjon")
+data class NasjonResponse(
+    @Schema(description = "ID-en til nasjonen")
+    val id: ObjektIdentifikator,
+
+    @Schema(description = "Liste over navn til nasjon")
+    val navn: List<AdministrativEnhetNavn>,
+
+    @Schema(description = "Området til nasjonen")
+    val omraade: MultiPolygon? = null,
+
+    @Schema(description = "Representasjonspunktet for nasjonen")
+    val representasjonspunkt: Feature,
+
+    @Schema(description = "Angir når denne nasjonen ble sist oppdatert")
+    val oppdateringsdato: ZonedDateTime,
+
+    @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
+    val version: Int
 )
 
 @Schema(description = "Representasjon av et fylke")

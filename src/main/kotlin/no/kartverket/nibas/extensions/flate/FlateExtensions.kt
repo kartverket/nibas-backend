@@ -6,6 +6,7 @@ import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.klient.response.FylkeResponse
 import no.kartverket.nibas.api.v1.klient.response.GrunnkretsResponse
 import no.kartverket.nibas.api.v1.klient.response.KommuneResponse
+import no.kartverket.nibas.api.v1.klient.response.NasjonResponse
 import no.kartverket.nibas.api.v1.klient.response.StemmekretsResponse
 import no.kartverket.nibas.api.v1.klient.response.toGyldighetResponse
 import no.kartverket.nibas.api.v1.klient.response.toObjektIdentifikator
@@ -14,7 +15,9 @@ import no.kartverket.nibas.common.createIdentifikator
 import no.kartverket.nibas.domain.Fylke
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
+import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.domain.Stemmekrets
+import no.kartverket.nibas.extensions.geometry.multiPolygonToDto
 import no.kartverket.nibas.extensions.geometry.posisjonToFeature
 
 fun Grunnkrets.toGrunnkretsResponse(): GrunnkretsResponse {
@@ -79,6 +82,19 @@ fun Stemmekrets.toStemmekretsResponse(): StemmekretsResponse {
         tellekretsnummer = tellekretsnummer,
         representasjonspunkt = posisjon.posisjonToFeature(version),
         datafangstdato = datafangstdato,
+        version = version
+    )
+}
+
+fun Nasjon.toNasjonResponse(): NasjonResponse {
+    val identifikator = createIdentifikator(lokalid, gyldighet.gyldigFra)
+    return NasjonResponse(
+        id = ObjektIdentifikator(Lokalid(lokalid), gyldighet.gyldigFra),
+        navn = getAdministrativenhetNavn(identifikator.gyldighetsdato)
+            .map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version, it.rekkefoelge) },
+        omraade = omraade?.multiPolygonToDto(),
+        representasjonspunkt = posisjon.posisjonToFeature(version),
+        oppdateringsdato = auditInfo.endretdato,
         version = version
     )
 }
