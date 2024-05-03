@@ -15,9 +15,8 @@ import jakarta.persistence.Id
 import jakarta.persistence.MappedSuperclass
 
 @MappedSuperclass
-abstract class StatistiskEnhet(
-    @Transient
-    override val type: Flatetype,
+abstract class InndelingMedDeltGeometri(
+    @Transient override val type: Flatetype
 ) : Flate, Sporbar, Laasbar {
 
     @Id
@@ -38,9 +37,6 @@ abstract class StatistiskEnhet(
     @Column(name = "datafangstdato")
     override var datafangstdato: ZonedDateTime? = null
 
-    @Column(name = "foerstedigitaliseringsdato")
-    override var foerstedigitaliseringsdato: ZonedDateTime = ZonedDateTime.now()
-
     @Column(name = "opphav")
     override var opphav: String? = null
 
@@ -50,13 +46,16 @@ abstract class StatistiskEnhet(
     @Column(name = "omraade")
     override var omraade: MultiPolygon? = null
 
+    @Column(name = "foerstedigitaliseringsdato")
+    override var foerstedigitaliseringsdato: ZonedDateTime = ZonedDateTime.now()
+
     @Suppress("UNCHECKED_CAST")
     fun <T : GrenseKobling> oppdaterSamling(grense: Grense, samling: MutableSet<T>, default: GrenseKobling) {
         val kobling: T = when (val kobling = samling.find { it.grense.id == grense.id }) {
             null -> default as T
             else -> kobling
         }
+
         samling.add(kobling)
     }
-
 }

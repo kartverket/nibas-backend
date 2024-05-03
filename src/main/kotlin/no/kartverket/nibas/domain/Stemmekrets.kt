@@ -26,7 +26,7 @@ import jakarta.persistence.Table
 class Stemmekrets(
     override val id: String = UUID.randomUUID().toString(),
     override val lokalid: String = UUID.randomUUID().toString(),
-) : KommunalKrets(Flatetype.STEMMEKRETS), KobletTilGrense {
+) : InndelingMedDeltGeometri(Flatetype.STEMMEKRETS), KobletTilGrense {
 
     @Column(name = "stemmekretsnummer", nullable = false)
     var stemmekretsnummer: String? = null

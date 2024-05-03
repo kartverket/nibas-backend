@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import no.kartverket.nibas.api.v1.DefaultFeatureCollectionApiResponses
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.klient.response.GrunnkretsResponse
+import no.kartverket.nibas.api.v1.klient.response.InndelingerMedDeltGeometriResponse
 import no.kartverket.nibas.api.v1.klient.response.KommuneResponse
 import no.kartverket.nibas.api.v1.klient.response.StemmekretsResponse
 import org.springframework.format.annotation.DateTimeFormat
@@ -129,4 +130,22 @@ interface KommuneApi {
         @Parameter(description = "Eventuell gyldighetsdato for kommune (default = dagens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
         @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?
     ): FeatureCollection
+
+    @Operation(summary = "Henter alle grenser til inndelinger med delt geometri til kommunegrensa i en gitt kommune")
+    @DefaultFeatureCollectionApiResponses
+    @GetMapping("/{id}/inndelingerdeltgeometrigrenser", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun hentKommunesInndelingerMedDeltGeometriGrenser(
+        @Parameter(description = "ID til kommunen man vil hente grensene i inndelingene til") @PathVariable(name = "id") lokalid: String,
+        @Parameter(description = "Eventuell gyldighetsdato for kommune (default = dagens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?
+    ): FeatureCollection
+
+    @Operation(summary = "Henter alle inndelinger med delt geometri til kommunegrensa i en gitt kommune")
+    @DefaultFeatureCollectionApiResponses
+    @GetMapping("/{id}/inndelingerdeltgeometri", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun hentKommunesInndelingerMedDeltGeometri(
+        @Parameter(description = "ID til kommunen man vil hente inndelingene til") @PathVariable(name = "id") lokalid: String,
+        @Parameter(description = "Eventuell gyldighetsdato for kommune (default = dagens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?
+    ): InndelingerMedDeltGeometriResponse
 }

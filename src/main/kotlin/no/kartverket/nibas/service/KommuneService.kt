@@ -8,6 +8,7 @@ import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.common.UgyldigTilstandException
 import no.kartverket.nibas.domain.Administrativenhetnavn
 import no.kartverket.nibas.domain.Endringstype
+import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.domain.Kommune
@@ -72,6 +73,13 @@ class KommuneService(
             ?.filter { it.grense.gyldigPaaDato(identifikator.gyldighetsdato) && it.stemmekrets.gyldigPaaDato(identifikator.gyldighetsdato) }
             ?.distinctBy { it.grense.lokalid }
             ?.toSet() ?: emptySet()
+    }
+
+    fun hentKommunesInndelingerMedDeltGeometriGrenser(identifikator: Identifikator): List<GrenseKobling> {
+        val stemmekretsKoblinger = hentGrensekoblingerForAlleStemmekretserIKommune(identifikator)
+        val grunnkretsKoblinger = hentGrensekoblingerForAlleGrunnkretserIKommune(identifikator)
+
+        return (stemmekretsKoblinger + grunnkretsKoblinger).distinctBy { it.grense.lokalid }
     }
 
     @Transactional(readOnly = false)

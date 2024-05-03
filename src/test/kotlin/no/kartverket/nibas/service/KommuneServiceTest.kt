@@ -28,6 +28,7 @@ import no.kartverket.nibas.repository.findGyldigKommuneForKommunenummer
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -99,7 +100,7 @@ class KommuneServiceTest {
     fun `that oppdater kommune returns null when kommune not found`() {
         every { kommuneRepositoryMock.findAllByLokalid(any()) } returns emptyList()
 
-        Assertions.assertThatThrownBy {
+        assertThatThrownBy {
             kommuneService.oppdaterKommune(Lokalid("1"), LocalDate.now(), Endringstype.FASTSETTING, KommuneRequestBuilder.DEFAULT_REQUEST)
         }
             .isInstanceOf(ResponseException.NotFoundException::class.java)
@@ -311,5 +312,88 @@ class KommuneServiceTest {
         assertThat(grenser[0].grense.lokalid).isEqualTo("deltGrense")
         assertThat(grenser[1].grense.lokalid).isEqualTo("unikGrenseGK1")
         assertThat(grenser[2].grense.lokalid).isEqualTo("unikGrenseGK2")
+    }
+
+    @Test
+    fun `hent kommunes inndelinger med delt geometri grenser skal hente baade stemmekrets-, grunnkrets- og kommunegrenser for en kommune, uten duplikater`() {
+        val gyldighetsdato: LocalDate = LocalDate.of(2020, Month.JANUARY, 1)
+
+        val gk1 =
+            GrunnkretsBuilder(id = "1", lokalId = Lokalid("87"))
+                .withGyldigFra(gyldighetsdato)
+                .build()
+        val sk1 =
+            StemmekretsBuilder(id = "2", lokalId = Lokalid("88"))
+                .withGyldigFra(gyldighetsdato)
+                .build()
+
+        val gkGrense = GrenseBuilder().withLokalId("gk-grense").withGyldigFra(gyldighetsdato).withGrensetype(Grensetype.Grunnkretsgrense).build()
+        val skGrense = GrenseBuilder().withLokalId("sk-grense").withGyldigFra(gyldighetsdato).withGrensetype(Grensetype.Stemmekretsgrense).build()
+        val kommuneGrense = GrenseBuilder().withLokalId("kommune-grense").withGyldigFra(gyldighetsdato).withGrensetype(Grensetype.Kommunegrense).build()
+
+        val skKoblinger = listOf(
+            StemmekretsGrenseKobling(sk1, skGrense),
+            StemmekretsGrenseKobling(sk1, kommuneGrense)
+        )
+
+        val gkKoblinger = listOf(
+            GrunnkretsGrenseKobling(gk1, gkGrense),
+            GrunnkretsGrenseKobling(gk1, kommuneGrense)
+        )
+
+        gk1.grenser.addAll(gkKoblinger)
+
+        val kommune =
+            KommuneBuilder()
+                .withNavn("Oslo")
+                .withGrunnkrets(gk1)
+                .withStemmekrets(sk1)
+                .build()
+
+        every { kommuneRepositoryMock.findGyldigObjektForIdentifikator(any()) } returns kommune
+        every { grunnkretsGrenseKoblingRepositoryMock.findByGrunnkretsKommuneLokalid(any()) } returns gkKoblinger
+        every { stemmekretsGrenseKoblingRepositoryMock.findByStemmekretsKommuneLokalid(any()) } returns skKoblinger
+
+        val grenser = kommuneService.hentKommunesInndelingerMedDeltGeometriGrenser(Identifikator(Lokalid(kommune.lokalid), gyldighetsdato))
+
+        assertThat(grenser).hasSize(3)
+        assertThat(grenser).flatExtracting({ it.grense.lokalid }).containsExactlyInAnyOrder("gk-grense", "sk-grense", "kommune-grense")
+    }
+
+    @Test
+    fun `hent kommunes inndelinger med delt geometri grenser kan returnere enkle grensekoblinger`() {
+        val gyldighetsdato: LocalDate = LocalDate.of(2023, Month.JANUARY, 1)
+
+        val gk1 =
+            GrunnkretsBuilder(id = "1", lokalId = Lokalid("87"))
+                .withGyldigFra(gyldighetsdato)
+                .build()
+
+        val gkGrense = GrenseBuilder().withLokalId("gk-grense").withGyldigFra(gyldighetsdato).withGrensetype(Grensetype.Grunnkretsgrense).build()
+
+        val gkKoblinger = listOf(
+            GrunnkretsGrenseKobling(gk1, gkGrense),
+        )
+
+        gk1.grenser.addAll(gkKoblinger)
+
+        val kommune =
+            KommuneBuilder()
+                .withNavn("Oslo")
+                .withGrunnkrets(gk1)
+                .build()
+
+
+        val identifikator = Identifikator(Lokalid(kommune.lokalid), gyldighetsdato)
+
+        every { kommuneRepositoryMock.findGyldigObjektForIdentifikator(any()) } returns kommune
+        every { grunnkretsGrenseKoblingRepositoryMock.findByGrunnkretsKommuneLokalid(any()) } returns gkKoblinger
+        every { stemmekretsGrenseKoblingRepositoryMock.findByStemmekretsKommuneLokalid(any()) } returns emptyList()
+
+        val actualGrenser = kommuneService.hentKommunesInndelingerMedDeltGeometriGrenser(identifikator)
+
+        assertThat(actualGrenser).hasSize(1)
+        assertThat(actualGrenser[0].grense.lokalid).isEqualTo("gk-grense")
+
     }
 }

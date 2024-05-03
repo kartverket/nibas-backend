@@ -97,6 +97,14 @@ data class KommuneResponse(
     @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
     val version: Int
 )
+@Schema(description = "Samling av alle inndelinger med delt geometri for en kommune")
+data class InndelingerMedDeltGeometriResponse(
+    @Schema(description = "Stemmekretsene i kommunen")
+    val stemmekretser: List<StemmekretsResponse>,
+
+    @Schema(description = "Grunnkretsene i kommunen")
+    val grunnkretser: List<GrunnkretsResponse>
+)
 
 @Schema(description = "Representasjon av en grunnkrets")
 data class GrunnkretsResponse(

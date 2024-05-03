@@ -30,7 +30,7 @@ import jakarta.persistence.Table
 class Grunnkrets(
     override val id: String = UUID.randomUUID().toString(),
     override val lokalid: String = UUID.randomUUID().toString()
-) : StatistiskEnhet(Flatetype.GRUNNKRETS), KobletTilGrense {
+) : InndelingMedDeltGeometri(Flatetype.GRUNNKRETS), KobletTilGrense {
 
     @Column(name = "grunnkretsnummer", nullable = false)
     var grunnkretsnummer: String? = null

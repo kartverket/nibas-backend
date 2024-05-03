@@ -11,16 +11,21 @@ import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.extensions.flate.toGrunnkretsResponse
+import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import no.kartverket.nibas.service.GrunnkretsService
 import no.kartverket.nibas.service.KommuneService
 import no.kartverket.nibas.service.StemmekretsService
+import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.time.LocalDate
+import java.time.Month
 import java.time.format.DateTimeFormatter
 
 @WebMvcTest(KommuneController::class)
@@ -43,7 +48,7 @@ class KommuneControllerTest : NibasMvcTest() {
     @BeforeEach
     fun setupMocks() {
         every { hrefProviderMock.getHref(any<Identifikator>()) } returns href
-        every { kommuneService.hentAntallGyldigeVersjonerFramITidFor(any())} returns 1
+        every { kommuneService.hentAntallGyldigeVersjonerFramITidFor(any()) } returns 1
     }
 
     @Test
@@ -72,12 +77,12 @@ class KommuneControllerTest : NibasMvcTest() {
     fun thatHentGrenserReturns200_Ok() {
         every {
             kommuneService.hentGrensekoblingerForKommune(any())
-         } returns setOf(
+        } returns setOf(
             GrunnkretsGrenseKobling(
                 grunnkrets = GrunnkretsBuilder().build(),
                 grense = GrenseBuilder().withGrensetype(Grensetype.Kommunegrense).build()
             )
-         )
+        )
 
         get("/v1/kommuner/1/grenser", status().isOk)
     }
@@ -108,14 +113,14 @@ class KommuneControllerTest : NibasMvcTest() {
     @Test
     fun hentGrunnkretserForKommuneMedFremtidigeVersjonerGir200_OK() {
         val kommune = KommuneBuilder()
-            .withGyldigFra(LocalDate.of(2022, 1,1))
+            .withGyldigFra(LocalDate.of(2022, 1, 1))
             .build()
 
         val grunnkrets = GrunnkretsBuilder(
             lokalId = Lokalid("123"),
             grunnkretsnavn = "Voi",
             grunnkretsnummer = "8989",
-            gyldigFra = LocalDate.of(2022, 1,1),
+            gyldigFra = LocalDate.of(2022, 1, 1),
             gyldigTil = LocalDate.of(2024, 1, 1)
         ).withKommune(kommune).build()
         every { kommuneService.hentKommunesGrunnkretser(any()) } returns listOf(grunnkrets)
@@ -126,6 +131,21 @@ class KommuneControllerTest : NibasMvcTest() {
                 expectedResponseObject = listOf(grunnkrets.toGrunnkretsResponse()),
                 resultMatchers = listOf(status().isOk)
             ))
+    }
+
+    @Test
+    fun `hent kommunes inndelinger med delt geometri grenser feiler naar ingen grenser er tilgjengelig`() {
+        every { kommuneService.hentKommunesInndelingerMedDeltGeometriGrenser(any()) } returns emptyList()
+
+        get("/v1/kommuner/1/inndelingerdeltgeometrigrenser", status().isNotFound)
+    }
+
+    @Test
+    fun `hent kommunes inndelinger med delt geometri feiler naar ingen inndelinger er tilgjengelig`() {
+        every { kommuneService.hentKommunesStemmekretser(any()) } returns emptyList()
+        every { kommuneService.hentKommunesGrunnkretser(any()) } returns emptyList()
+
+        get("/v1/kommuner/1/inndelingerdeltgeometri", status().isNotFound)
     }
 
     private fun formattedDateString(date: LocalDate): String? = DateTimeFormatter.ISO_DATE.format(date)

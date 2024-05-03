@@ -3,6 +3,7 @@ package no.kartverket.nibas.controller.klient
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.klient.KommuneApi
 import no.kartverket.nibas.api.v1.klient.response.GrunnkretsResponse
+import no.kartverket.nibas.api.v1.klient.response.InndelingerMedDeltGeometriResponse
 import no.kartverket.nibas.api.v1.klient.response.KommuneResponse
 import no.kartverket.nibas.api.v1.klient.response.StemmekretsResponse
 import no.kartverket.nibas.common.Identifikator
@@ -87,5 +88,27 @@ class KommuneController(
             features = grensekoblinger
                 .map { it.grenseKoblingToFeature(identifikator.gyldighetsdato) }
         )
+    }
+
+    override fun hentKommunesInndelingerMedDeltGeometriGrenser(lokalid: String, gyldighetsdato: LocalDate?): FeatureCollection {
+        val identifikator = Identifikator(Lokalid(lokalid), gyldighetsdato ?: LocalDate.now())
+        val alleGrensekoblinger = kommuneService.hentKommunesInndelingerMedDeltGeometriGrenser(identifikator)
+
+        if (alleGrensekoblinger.isEmpty()) {
+            throw NotFoundException("Fant ingen grenser for inndelinger med delt geometri for kommunegrenser i kommune med id $identifikator")
+        }
+
+        return FeatureCollection(features = alleGrensekoblinger.map { it.grenseKoblingToFeature(identifikator.gyldighetsdato) })
+    }
+
+    override fun hentKommunesInndelingerMedDeltGeometri(lokalid: String, gyldighetsdato: LocalDate?): InndelingerMedDeltGeometriResponse {
+        val stemmekretser = hentKommunesStemmekretser(lokalid, gyldighetsdato)
+        val grunnkretser = hentKommunesGrunnkretser(lokalid, gyldighetsdato)
+
+        if (stemmekretser.isEmpty() && grunnkretser.isEmpty()) {
+            throw NotFoundException("Fant ingen inndelinger med delt geometri for kommunegrenser i kommune med id $lokalid")
+        }
+
+        return InndelingerMedDeltGeometriResponse(stemmekretser, grunnkretser)
     }
 }
