@@ -8,7 +8,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
-import no.kartverket.nibas.api.v1.klient.response.InndelingResponse
+import no.kartverket.nibas.api.v1.klient.response.InndelingSearchResponse
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
@@ -30,7 +30,7 @@ interface InndelingerApi {
             description = "Successful operation",
             content = [Content(
                 mediaType = "application/json",
-                array = ArraySchema(schema = Schema(implementation = InndelingResponse::class))
+                array = ArraySchema(schema = Schema(implementation = InndelingSearchResponse::class))
             )]
         ),
         ApiResponse(responseCode = "404", description = "Not Found")
@@ -43,5 +43,5 @@ interface InndelingerApi {
         @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate = LocalDate.now(),
         @Parameter(description = "Maksgrense for antall treff man ønsker seg")
         @RequestParam(required = false, defaultValue = "15", name = "limit") limit: Int = 15
-    ): List<InndelingResponse>
+    ): List<InndelingSearchResponse>
 }

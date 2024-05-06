@@ -63,7 +63,7 @@ data class FylkeResponse(
 
     @Schema(description = "Angir når dette fylket ble sist oppdatert")
     val oppdateringsdato: ZonedDateTime,
-    
+
     @Schema(description = "Representasjonspunktet for fylket")
     val representasjonspunkt: Feature,
 
@@ -96,14 +96,6 @@ data class KommuneResponse(
 
     @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
     val version: Int
-)
-@Schema(description = "Samling av alle inndelinger med delt geometri for en kommune")
-data class InndelingerMedDeltGeometriResponse(
-    @Schema(description = "Stemmekretsene i kommunen")
-    val stemmekretser: List<StemmekretsResponse>,
-
-    @Schema(description = "Grunnkretsene i kommunen")
-    val grunnkretser: List<GrunnkretsResponse>
 )
 
 @Schema(description = "Representasjon av en grunnkrets")
@@ -213,7 +205,7 @@ data class UtkastResponse(
     val version: Int
 )
 
-data class InndelingResponse(
+data class InndelingSearchResponse(
     @Schema(description = "Lokalid til inndelingen")
     val id: String,
     @Schema(description = "Flatetypen til inndelingen")
@@ -224,6 +216,19 @@ data class InndelingResponse(
     val nummer: String,
     @Schema(description = "Koordinatet til representasjonspunktet til inndelingen.")
     val representasjonspunkt: Coordinate,
+)
+
+data class InndelingResponse(
+    @Schema(description = "ID til inndelingen")
+    val id: ObjektIdentifikator,
+    @Schema(description = "Flatetypen til inndelingen")
+    val type: Flatetype,
+    @Schema(description = "Navnet til inndelingen")
+    val navn: String,
+    @Schema(description = "Nummeret til inndelingen")
+    val nummer: String,
+    @Schema(description = "Feature til representasjonspunktet til inndelingen.")
+    val representasjonspunkt: Feature,
 )
 
 @Schema(description = "Representasjon av audit info for et objekt.")
@@ -284,3 +289,4 @@ data class AuthZStatusResponse(
 )
 
 fun Gyldighet.toGyldighetResponse(): GyldighetResponse = GyldighetResponse(this.gyldigFra, this.gyldigTil)
+
