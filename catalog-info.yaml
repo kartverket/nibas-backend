@@ -1,0 +1,58 @@
+# nonk8s
+apiVersion: "backstage.io/v1alpha1"
+kind: "Component"
+metadata:
+  name: "nibas-backend"
+  tags:
+    - "internal"
+spec:
+  type: "service"
+  lifecycle: "production"
+  owner: "smia"
+  system: "nibas"
+  providesApis:
+    - "nibas-backend-api"
+---
+apiVersion: "backstage.io/v1alpha1"
+kind: "Group"
+metadata:
+  name: "security_champion_nibas-backend"
+  title: "Security Champion nibas-backend"
+spec:
+  type: "security_champion"
+  parent: "eiendom_security_champions"
+  members:
+    - "etse"
+  children:
+    - "resource:nibas-backend"
+---
+apiVersion: "backstage.io/v1alpha1"
+kind: "Resource"
+metadata:
+  name: "nibas-backend"
+  links:
+    - url: "https://github.com/kartverket/nibas-backend"
+      title: "nibas-backend på GitHub"
+spec:
+  type: "repo"
+  owner: "security_champion_nibas-backend"
+  system: "nibas"
+  dependencyOf:
+    - "component:nibas-backend"
+---
+apiVersion: "backstage.io/v1alpha1"
+kind: "API"
+metadata:
+  name: "nibas-backend-api"
+  tags:
+    - "internal"
+spec:
+  type: "openapi"
+  lifecycle: "production"
+  owner: "smia"
+  system: "nibas"
+  definition: |
+    openapi: "3.0.0"
+    info:
+        title: nibas-backend API
+    paths:
