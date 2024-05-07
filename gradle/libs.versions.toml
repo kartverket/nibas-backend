@@ -1,7 +1,7 @@
 [versions]
 flywayVersion = "10.11.0"
 hibernateVersion = "6.4.2.Final" # Siste versjon som fungerer med testene :(
-hypersistenceUtilsHibernate63Version = "3.7.3"
+hypersistenceUtilsHibernate63Version = "3.7.5"
 jtsVersion = "1.19.0"
 kotlinMockitoVersion = "5.2.1"
 kotlinPluginVersion = "1.9.22"
