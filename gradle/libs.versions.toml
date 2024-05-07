@@ -1,5 +1,5 @@
 [versions]
-flywayVersion = "10.11.0"
+flywayVersion = "10.11.1"
 hibernateVersion = "6.4.2.Final" # Siste versjon som fungerer med testene :(
 hypersistenceUtilsHibernate63Version = "3.7.5"
 jtsVersion = "1.19.0"
