@@ -225,12 +225,10 @@ class RepositoryTest : TestWithDbContainer() {
         val navn = "Oslo"
         val spraak = "NOR"
         val lokalId = "123"
-        val kommunenummer = "123"
         val samiskforvaltningsomraade = false
         return mapOf("UUID-1" to KommuneRequest(
             administrativenhetnavn = listOf(AdministrativEnhetNavn(navn, spraak, version = 1)),
             lokalid = lokalId,
-            kommunenummerId = kommunenummer,
             samiskforvaltningsomraade = samiskforvaltningsomraade,
             version = 1
         ))

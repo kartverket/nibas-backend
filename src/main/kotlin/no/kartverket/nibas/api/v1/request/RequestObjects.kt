@@ -32,10 +32,6 @@ data class FylkeRequest(
     @NotBlank
     val lokalid: String,
 
-    @Schema(description = "UUID til fylkesnummeret")
-    @NotBlank
-    val fylkesnummerId: String,
-
     @Schema(description = "Angir om fylket er et samisk forvaltningsområde")
     @NotNull
     val samiskforvaltningsomraade: Boolean,
@@ -54,10 +50,6 @@ data class KommuneRequest(
     @Schema(description = "LokalId for angitt kommune")
     @NotBlank
     val lokalid: String,
-
-    @Schema(description = "UUID til kommunenummeret")
-    @NotBlank
-    val kommunenummerId: String,
 
     @Schema(description = "Angir om kommunen er et samisk forvaltningsområde")
     @NotNull

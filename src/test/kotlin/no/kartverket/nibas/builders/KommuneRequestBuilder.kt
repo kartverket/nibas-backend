@@ -12,14 +12,12 @@ class KommuneRequestBuilder {
     private var navn = "Oslo"
     private var spraak = "NOR"
     private var lokalId = "kommune123"
-    private var kommunenummer = "123"
     private var samiskforvaltningsomraade = false
     private var version = 1
 
     fun build(): KommuneRequest = KommuneRequest(
         administrativenhetnavn = listOf(AdministrativEnhetNavn(navn, spraak, version = 1)),
         lokalid = lokalId,
-        kommunenummerId = kommunenummer,
         samiskforvaltningsomraade = samiskforvaltningsomraade,
         version = version
     )

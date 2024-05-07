@@ -406,7 +406,6 @@ class KommuneServiceIT : TestWithDbContainer() {
             id = "2",
             lokalid = identifikator.lokalid.value,
             gyldigFra = october1In2022,
-            kommunenummerUuid = kommuneRequest.kommunenummerId
         )
         saveFylkeOgUnikLokalid(kommuner = listOf(kommune))
         val versjonFoerOppdatering = kommune.version

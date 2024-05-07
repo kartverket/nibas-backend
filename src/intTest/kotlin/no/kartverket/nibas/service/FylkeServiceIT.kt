@@ -262,7 +262,6 @@ class FylkeServiceIT : TestWithDbContainer() {
             id = "2",
             lokalid = identifikator.lokalid.value,
             gyldigFra = october1In2022,
-            fylkesnummerUuid = fylkeRequest.fylkesnummerId
         )
         saveNasjonOgUnikLokalid(fylker = listOf(fylke))
         val versjonFoerOppdatering = fylke.version
