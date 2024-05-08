@@ -47,7 +47,8 @@ fun Fylke.toFylkeResponse(): FylkeResponse {
         samiskforvaltningsomraade = samiskforvaltningsomraade!!,
         oppdateringsdato = auditInfo.endretdato,
         representasjonspunkt = posisjon.posisjonToFeature(version),
-        version = version
+        version = version,
+        gyldighet = gyldighet.toGyldighetResponse()
     )
 }
 
@@ -62,7 +63,8 @@ fun Kommune.toKommuneResponse(): KommuneResponse {
         oppdateringsdato = auditInfo.endretdato,
         representasjonspunkt = posisjon.posisjonToFeature(version),
         fylkeId = fylkeLokalid.lokalid,
-        version = version
+        version = version,
+        gyldighet = gyldighet.toGyldighetResponse()
     )
 }
 
@@ -95,6 +97,7 @@ fun Nasjon.toNasjonResponse(): NasjonResponse {
         omraade = omraade?.multiPolygonToDto(),
         representasjonspunkt = posisjon.posisjonToFeature(version),
         oppdateringsdato = auditInfo.endretdato,
-        version = version
+        version = version,
+        gyldighet = gyldighet.toGyldighetResponse()
     )
 }

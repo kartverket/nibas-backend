@@ -3,17 +3,19 @@ package no.kartverket.nibas.api.v1.klient.response
 import no.kartverket.nibas.api.v1.common.Flatetype
 
 fun StemmekretsResponse.toInndelingResponse(): InndelingResponse = InndelingResponse(
-    id,
-    Flatetype.STEMMEKRETS,
-    navn,
-    nummer,
-    representasjonspunkt
+    id = id,
+    type = Flatetype.STEMMEKRETS,
+    navn = navn,
+    nummer = nummer,
+    representasjonspunkt = representasjonspunkt,
+    gyldighet = gyldighet
 )
 
 fun GrunnkretsResponse.toInndelingResponse(): InndelingResponse = InndelingResponse(
-    id,
-    Flatetype.GRUNNKRETS,
-    navn,
-    nummer,
-    representasjonspunkt
+    id = id,
+    type = Flatetype.GRUNNKRETS,
+    navn = navn,
+    nummer = nummer,
+    representasjonspunkt = representasjonspunkt,
+    gyldighet = gyldighet
 )

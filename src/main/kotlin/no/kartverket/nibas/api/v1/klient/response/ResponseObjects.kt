@@ -34,6 +34,9 @@ data class NasjonResponse(
     @Schema(description = "Liste over navn til nasjon")
     val navn: List<AdministrativEnhetNavn>,
 
+    @Schema(description = "Gyldighetsintervall for objektet")
+    val gyldighet: GyldighetResponse,
+
     @Schema(description = "Området til nasjonen")
     val omraade: MultiPolygon? = null,
 
@@ -57,6 +60,9 @@ data class FylkeResponse(
 
     @Schema(description = "Fylkesnummeret til fylket")
     val nummer: String,
+
+    @Schema(description = "Gyldighetsintervall for objektet")
+    val gyldighet: GyldighetResponse,
 
     @Schema(description = "Angir om fylket er et samisk forvaltningsområde eller ikke")
     val samiskforvaltningsomraade: Boolean,
@@ -84,6 +90,9 @@ data class KommuneResponse(
 
     @Schema(description = "Kommunenummeret til kommunen")
     val nummer: String,
+
+    @Schema(description = "Gyldighetsintervall for objektet")
+    val gyldighet: GyldighetResponse,
 
     @Schema(description = "Angir om kommunen er et samisk forvaltningsområde eller ikke")
     val samiskforvaltningsomraade: Boolean,
@@ -229,6 +238,8 @@ data class InndelingResponse(
     val nummer: String,
     @Schema(description = "Feature til representasjonspunktet til inndelingen.")
     val representasjonspunkt: Feature,
+    @Schema(description = "Gyldighetsintervall for objektet")
+    val gyldighet: GyldighetResponse,
 )
 
 @Schema(description = "Representasjon av audit info for et objekt.")
