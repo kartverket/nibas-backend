@@ -1,6 +1,7 @@
 package no.kartverket.nibas.service.deltgeometri
 
 import no.kartverket.nibas.api.v1.common.Flatetype
+import no.kartverket.nibas.config.SimpleAuthenticationToken
 import no.kartverket.nibas.events.EventRad
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.service.KommuneService
@@ -8,6 +9,8 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.LocalDate
 import no.kartverket.nibas.events.NibasEventPublisher
+import org.springframework.security.core.authority.SimpleGrantedAuthority
+import org.springframework.security.core.context.SecurityContextHolder
 
 /**
  * Danner delt geometri for en eller flere kommuner. Med andre ord sørger den for at stemmekretser og grunnkretser som gjelder for samme geometriske område
@@ -60,6 +63,11 @@ class DeltGeometriService(
     private val logger = LoggerFactory.getLogger(this.javaClass)
 
     fun dannDeltGeometriForAdministrativeGrenser() {
+        SecurityContextHolder.getContext().authentication = SimpleAuthenticationToken(
+            user = "deltgeometri",
+            credentials = "DUMMY",
+            authorities = listOf(SimpleGrantedAuthority("NIBAS"))
+        )
         val gyldighetsdato = LocalDate.now()
         val alleKommuner = kommuneService.hentAlleKommuner(gyldighetsdato)
         val eventRaderForOppdaterteFlater = mutableMapOf<String, EventRad>()

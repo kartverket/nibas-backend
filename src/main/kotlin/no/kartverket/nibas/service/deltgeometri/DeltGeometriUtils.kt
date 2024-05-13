@@ -7,8 +7,16 @@ import org.locationtech.jts.geom.LineSegment
 import org.locationtech.jts.geom.LineString
 import org.locationtech.jts.geom.Point
 
-fun Grense.antallLikePunkt(annenGrense: LineString): Int =
-    this.grense.coordinates.count { punkt -> annenGrense.coordinates.any { erSammePunkt(it, punkt) } }
+fun Grense.antallLikePunkt(annenGrense: LineString): Int {
+    var count = this.grense.coordinates.count { punkt -> annenGrense.coordinates.any { erSammePunkt(it, punkt) } }
+    //Det er bare to grenser rundt en av flatene for 50310310 Mostadmark. For å unngå at "den andre" velges, dvs den med kun start- og sluttpunkt likt,
+    //telles antall like punkt på nytt for de mellomliggende punktene
+    if (this.id == "b090082e-415b-4828-807e-b3ccd343bb25" && count == 2) {
+        val mellompunkter = this.grense.coordinateSequence.toCoordinateArray().toList().drop(1).dropLast(1)
+        count = mellompunkter.count { punkt -> annenGrense.coordinates.any { erSammePunkt(it, punkt) } }
+    }
+    return count
+}
 
 fun Collection<GrenseKobling>.finnGrensekoblingForGrense(lineString: LineString): GrenseKobling? {
     // Vi forsøker først å finne en grense som har 2 like punkt (endepunkt eller kurvepunkt) som linestringen.

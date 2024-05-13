@@ -122,3 +122,16 @@ nibas:
     users: bd23d991ffd8b950373470ed4b27e965
   idporten:
     url: https://test.idporten.no
+---
+spring:
+  config:
+    activate:
+      on-profile:
+        - deltgeometri
+  cloud:
+    vault:
+      uri: ${VAULT_URL}
+      authentication: token
+      token: ${VAULT_TOKEN}
+      enabled: true
+
