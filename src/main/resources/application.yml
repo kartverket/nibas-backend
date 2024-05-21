@@ -17,9 +17,6 @@ management:
   info:
     env:
       enabled: true
-  health:
-    vault:
-      enabled: false
 
 info:
   application:
@@ -71,28 +68,6 @@ spring:
     schemas: nibas
     validateMigrationNaming: true
 
-  # Vault-konfigurasjon
-  cloud:
-    vault:
-      uri: https://vault.vault:8200
-      authentication: kubernetes
-      kubernetes:
-        role: nibas # Er en rolle definert hos skip
-        kubernetes-path: ${KUBERNETES_CLUSTER}
-        service-account-token-file: /var/run/secrets/kubernetes.io/serviceaccount/token
-      ssl:
-        trust-store: classpath:ca.jks
-        trust-store-type: jks
-        trust-store-password: changeit
-      connection-timeout: 5000
-      read-timeout: 15000
-  config:
-    # Optionally connect to Config Server (Vault). Gjør at vault-pathene ikke evalueres for import.
-    import: optional:vault://nibas/nibas-backend,
-      optional:vault://nibas/nibas-db,
-      optional:vault://nibas/nibas-backend-apikeys,
-      optional:vault://nibas/nibas-events-apikeys,
-
   jmx:
     enabled: true
 
@@ -110,12 +85,9 @@ spring:
       on-profile:
         - localhost
   datasource:
-    url: ${DB_CONNECTION_STRING:jdbc:postgresql://localhost:5432/nibas}
-    username: ${DB_USER:nibas}
-    password: ${DB_PASSWORD:nibas}
-  cloud:
-    vault:
-      enabled: false
+    url: jdbc:postgresql://localhost:5432/nibas
+    username: nibas
+    password: nibas
 
 nibas:
   authorized:
@@ -128,10 +100,3 @@ spring:
     activate:
       on-profile:
         - deltgeometri
-  cloud:
-    vault:
-      uri: ${VAULT_URL}
-      authentication: token
-      token: ${VAULT_TOKEN}
-      enabled: true
-

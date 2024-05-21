@@ -78,8 +78,6 @@ dependencies {
     implementation(libs.hibernate.spatial)
     implementation(libs.hibernate.core)
     implementation(libs.logstash.logback.encoder)
-    implementation(libs.spring.cloud.starter)
-    implementation(libs.spring.cloud.vault.configuration)
     implementation(libs.micrometer.registry.prometheus)
     implementation(libs.spring.integration.core)
     implementation(libs.nimbus.jose.jwt)
