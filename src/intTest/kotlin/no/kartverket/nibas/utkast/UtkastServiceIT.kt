@@ -1,5 +1,6 @@
 package no.kartverket.nibas.utkast
 
+import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grenseendringer
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.Metadataendringer
@@ -9,9 +10,12 @@ import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringReques
 import no.kartverket.nibas.builders.GrunnkretsRequestBuilder
 import no.kartverket.nibas.builders.OpprettUtkastRequestBuilder
 import no.kartverket.nibas.builders.StemmekretsRequestBuilder
+import no.kartverket.nibas.events.NibasEventPublisher
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
+import no.kartverket.nibas.events.EventType
+import no.kartverket.nibas.events.PublishEventException
 import no.kartverket.nibas.extensions.geometry.grenseToFeature
 import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
@@ -19,15 +23,18 @@ import no.kartverket.nibas.utils.GrenseHelper
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertDoesNotThrow
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDate
 import java.time.ZonedDateTime
 
 @ActiveProfiles(profiles = ["security-off", "eventsDisabled"])
 @Transactional
 class UtkastServiceIT : TestWithDbContainer() {
 
+    @Autowired
+    private lateinit var nibasEventPublisher: NibasEventPublisher
 
     @Test
     fun opprettUtkast() {
@@ -53,7 +60,7 @@ class UtkastServiceIT : TestWithDbContainer() {
     }
 
     @Test
-    fun `skal gi optimistisklaasexception om man har har en grenseendring på utdatert versjon av grunnkrets`() {
+    fun `skal gi optimistisklaasexception om man har en grenseendring paa utdatert versjon av grunnkrets`() {
         val grenser = grenseRepository.saveAllAndFlush(GrenseHelper.getGrenserForVestligKrets(grensetype = Grensetype.Grunnkretsgrense))
         val kommune = saveKommune()
         val grunnkrets = saveGrunnkrets(lokalid = Lokalid("test1"), grunnkretsnavn = "gammelt navn")
@@ -86,7 +93,7 @@ class UtkastServiceIT : TestWithDbContainer() {
     }
 
     @Test
-    fun `skal gi optimistisklaasexception om man har har en metadataendring på utdatert versjon av en grunnkrets`() {
+    fun `skal gi optimistisklaasexception om man har har en metadataendring paa utdatert versjon av en grunnkrets`() {
         val kommune = saveKommune()
         val grunnkrets = saveGrunnkrets(lokalid = Lokalid("test1"), grunnkretsnavn = "gammelt navn")
         kommune.addGrunnkrets(grunnkrets)
@@ -115,7 +122,7 @@ class UtkastServiceIT : TestWithDbContainer() {
     }
 
     @Test
-    fun `skal gi optimistisklaasexception om man har har en metadataendring på utdatert versjon av en stemmekrets`() {
+    fun `skal gi optimistisklaasexception om man har en metadataendring paa utdatert versjon av en stemmekrets`() {
         saveStemmekrets(lokalid = Lokalid("test1"), stemmekretsnavn = "gammelt navn")
 
         val stemmekretsendring = StemmekretsRequestBuilder()
@@ -142,7 +149,7 @@ class UtkastServiceIT : TestWithDbContainer() {
     }
 
     @Test
-    fun `skal gi optimistisklaasexception om man slår sammen 2 stemmekretser hvor videreført er utdatert`() {
+    fun `skal gi optimistisklaasexception om man slaar sammen 2 stemmekretser hvor viderefoert er utdatert`() {
         saveStemmekrets(id = "test1", lokalid = Lokalid("test1"), stemmekretsnavn = "gammelt navn1")
         saveStemmekrets(id = "test2", lokalid = Lokalid("test2"), stemmekretsnavn = "gammelt navn2")
 
@@ -167,7 +174,7 @@ class UtkastServiceIT : TestWithDbContainer() {
     }
 
     @Test
-    fun `skal gi optimistisklaasexception om man slår sammen 2 stemmekretser hvor 1 av krets i sammenslåingen er utdatert`() {
+    fun `skal gi optimistisklaasexception om man slaar sammen 2 stemmekretser hvor 1 av krets i sammenslaaingen er utdatert`() {
         saveStemmekrets(id = "test1", lokalid = Lokalid("test1"), stemmekretsnavn = "gammelt navn1")
         saveStemmekrets(id = "test2", lokalid = Lokalid("test2"), stemmekretsnavn = "gammelt navn2")
 
@@ -192,7 +199,7 @@ class UtkastServiceIT : TestWithDbContainer() {
     }
 
     @Test
-    fun `skal ikke gi optimistisklaasexception om man endrer samme grunnkrets i både metadata og grenseendring så lenge det er gyldig versjon`() {
+    fun `skal ikke gi optimistisklaasexception om man endrer samme grunnkrets i baade metadata og grenseendring saa lenge det er gyldig versjon`() {
         val grenser = grenseRepository.saveAllAndFlush(GrenseHelper.getGrenserForVestligKrets(grensetype = Grensetype.Grunnkretsgrense))
         val kommune = saveKommune()
         val grunnkrets = saveGrunnkrets(lokalid = Lokalid("test1"), grunnkretsnavn = "gammelt navn")
@@ -227,6 +234,19 @@ class UtkastServiceIT : TestWithDbContainer() {
 
         utkastRepository.save(utkast)
 
-        assertDoesNotThrow { utkastService.publiserUtkast(utkast.id) }
+        val eventsForPublisering = utkastService.publiserUtkast(utkast.id)
+        assertThat(eventsForPublisering.eventRader).extracting("lokalid").contains(grunnkrets.lokalid)
+        assertThat(eventsForPublisering.eventRader).extracting("flateType").contains(Flatetype.GRUNNKRETS)
+        assertThat(eventsForPublisering.eventRader).extracting("eventType").contains(EventType.MODIFIED)
+        assertThat(eventsForPublisering.eventRader).extracting("lokalid").contains(grunnkrets2.lokalid)
+    }
+
+    @Test
+    fun publiserUtkastUtenEventRad() {
+        assertThatThrownBy {
+            nibasEventPublisher.publishNibasEvent(emptyList(), LocalDate.now())
+        }
+            .isInstanceOf(PublishEventException::class.java)
+            .hasMessageContaining("Event må inneholde minst 1 EventRad")
     }
 }

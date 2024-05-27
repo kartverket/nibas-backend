@@ -14,12 +14,12 @@ import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.domain.Endringstype
-import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.utkast.Utkast
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
 import no.kartverket.nibas.events.EventRad
 import no.kartverket.nibas.events.EventType
+import no.kartverket.nibas.events.NibasEvent
 import no.kartverket.nibas.events.NibasEventPublisher
 import no.kartverket.nibas.repository.UtkastRepository
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
@@ -76,21 +76,22 @@ class UtkastService(
         val utkast = hentUtkast(id)
             ?: throw ResponseException.NotFoundException("Utkast ble ikke funnet for id: $id.")
 
-            verifiserOptimistiskLaas(request.version, utkast)?.throwException()
+        verifiserOptimistiskLaas(request.version, utkast)?.throwException()
             validerOptimistiskLaasForEndringer(utkast, LocalDate.now())
 
-            utkast.navn = request.navn
-            utkast.auditInfo.typeEndring = Endringstype.fromValue(request.endringstype)
-            utkast.operasjoner = request.operasjoner
+        utkast.navn = request.navn
+        utkast.auditInfo.typeEndring = Endringstype.fromValue(request.endringstype)
+        
+        utkast.operasjoner = request.operasjoner
 
-            val utkastValideringResult =
-                utkastValidatorService.validateGyldigUtkast(utkast, LocalDate.now())
+        val utkastValideringResult =
+            utkastValidatorService.validateGyldigUtkast(utkast, LocalDate.now())
 
-            if (utkastValideringResult is UtkastValidering.UgyldigUtkast) {
-                throw utkastValideringResult.feil
-            }
-            return utkastRepository.save(utkast)
+        if (utkastValideringResult is UtkastValidering.UgyldigUtkast) {
+            throw utkastValideringResult.feil
         }
+        return utkastRepository.save(utkast)
+    }
 
     fun forkastUtkast(id: String): Utkast? =
         hentUtkast(id)?.apply {
@@ -99,7 +100,8 @@ class UtkastService(
         }
 
     @Transactional
-    fun publiserUtkast(utkastId: String, gyldigFra: LocalDate = LocalDate.now()) {
+    fun publiserUtkast(utkastId: String, gyldigFra: LocalDate = LocalDate.now()): NibasEvent {
+        val eventsForPublisering: NibasEvent
         val utkast =
             hentUtkast(utkastId)
                 ?: throw ResponseException.NotFoundException("Utkast ble ikke funnet for id: $utkastId.")
@@ -109,18 +111,22 @@ class UtkastService(
                 utkastValidatorService.validateUtkastKlartForPublisering(utkast, gyldigFra)
         ) {
             is UtkastValidering.UgyldigUtkast -> throw utkastValideringResult.feil
-            is UtkastValidering.GyldigUtkast -> throw ResponseException.BadRequestException("Noe gikk galt (Utkastet ble markert som GyldigUtkast KlartForPublisering.")
+            is UtkastValidering.GyldigUtkast -> throw ResponseException.BadRequestException("Noe gikk galt! Utkastet ble markert som GyldigUtkast i stedet for KlartForPublisering.")
             is UtkastValidering.KlartForPublisering -> {
                 logger.debug(utkast.publiseringsInfo())
                 validerOptimistiskLaasForEndringer(utkast, gyldigFra)
 
+                var flateEndringer: List<EventRad> = emptyList()
                 utkast.operasjoner?.let { operasjoner ->
-                    val flateEndringer = publiserEndringer(operasjoner, utkast, gyldigFra)
+                    flateEndringer = publiserEndringer(operasjoner, utkast, gyldigFra)
                     nibasEventPublisher.publishNibasEvent(flateEndringer, gyldigFra)
                 }
+
                 utkast.settPublisert()
+                eventsForPublisering = nibasEventPublisher.publishNibasEvent(flateEndringer, gyldigFra)
             }
         }
+        return eventsForPublisering
     }
 
     internal fun publiserEndringer(operasjoner: Operasjoner, utkast: Utkast, gyldigFra: LocalDate): List<EventRad> {
@@ -246,7 +252,7 @@ class UtkastService(
                 endredeKommuner +
                 endredeGrunnkretser +
                 endredeStemmekretser
-        return alleEndringer.map { lagFlateEndring(it, EventType.MODIFIED) }
+        return alleEndringer.map { it.toEventRad(EventType.MODIFIED) }
     }
 
     private fun publiserGrenseendringer(grenseendringer: Grenseendringer, utkast: Utkast, gyldigFra: LocalDate) : List<EventRad> {
@@ -259,7 +265,7 @@ class UtkastService(
                 gyldighetsdato = gyldigFra,
                 endringstype = utkast.auditInfo.typeEndring
             )
-            eventer = flaterMedGrenseendring.map { lagFlateEndring(it, EventType.MODIFIED) }
+            eventer = flaterMedGrenseendring.map { it.toEventRad(EventType.MODIFIED) }
         }
         return eventer
     }
@@ -276,8 +282,8 @@ class UtkastService(
                 sammenslaaingsDato = gyldigFra,
                 endringstype = utkast.auditInfo.typeEndring
             )
-            expiredStemmekretser.map { lagFlateEndring(it, EventType.EXPIRED) } +
-                lagFlateEndring(modifiedStemmekrets, EventType.MODIFIED)
+            expiredStemmekretser.map { it.toEventRad(EventType.EXPIRED) } +
+                modifiedStemmekrets.toEventRad(EventType.MODIFIED)
         } ?: emptyList()
 
     private fun publiserKretsDelingEndringer(
@@ -285,33 +291,24 @@ class UtkastService(
         utkast: Utkast,
         gyldigFra: LocalDate
     ): List<EventRad> = getUnikeKretsDelingEndringRequests(kretsDelingEndringRequests).flatMap {
-            it.let { unikKretsDelingEndring ->
-                val nyKrets = when(unikKretsDelingEndring.flatetype) {
-                    Flatetype.STEMMEKRETS -> stemmekretsService.delStemmekrets(
-                        unikKretsDelingEndring,
-                        gyldigFra,
-                        utkast.auditInfo.typeEndring
-                    )
-                    Flatetype.GRUNNKRETS -> grunnkretsService.delGrunnkrets(
-                        unikKretsDelingEndring,
-                        gyldigFra,
-                        utkast.auditInfo.typeEndring
-                    )
-                    else -> throw ResponseException.BadRequestException("Støtter kun deling av grunnkrets eller stemmekrets, ikke ${unikKretsDelingEndring.flatetype}")
-                }
-                listOf(
-                    lagFlateEndring(nyKrets, EventType.ADDED)
+        it.let { unikKretsDelingEndring ->
+            val nyKrets = when (unikKretsDelingEndring.flatetype) {
+                Flatetype.STEMMEKRETS -> stemmekretsService.delStemmekrets(
+                    unikKretsDelingEndring,
+                    gyldigFra,
+                    utkast.auditInfo.typeEndring
                 )
+                Flatetype.GRUNNKRETS -> grunnkretsService.delGrunnkrets(
+                    unikKretsDelingEndring,
+                    gyldigFra,
+                    utkast.auditInfo.typeEndring
+                )
+                else -> throw ResponseException.BadRequestException("Støtter kun deling av grunnkrets eller stemmekrets, ikke ${unikKretsDelingEndring.flatetype}")
             }
+            listOf(
+                nyKrets.toEventRad(EventType.ADDED)
+            )
         }
-
-    private fun lagFlateEndring(flate: Flate, eventType: EventType): EventRad {
-        return EventRad(
-            uuid = flate.id,
-            eventType = eventType,
-            lokalid = flate.lokalid,
-            flateType = flate.type
-        )
     }
 }
 

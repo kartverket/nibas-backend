@@ -11,8 +11,6 @@ import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
-import no.kartverket.nibas.events.NibasEventPublisher
-import no.kartverket.nibas.events.PublishEventException
 import no.kartverket.nibas.sporing.AuditInfo
 import no.kartverket.nibas.sporing.Gyldighet
 import no.kartverket.nibas.sporing.UserFacade
@@ -20,7 +18,6 @@ import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -38,9 +35,6 @@ class UtkastService_stemmekretsIT : TestWithDbContainer() {
 
     @MockkBean
     private lateinit var currentTime: CurrentTime
-
-    @Autowired
-    private lateinit var nibasEventPublisher: NibasEventPublisher
 
     // ID for Kommune med kommunenummerId som matcher i Geonorge og vår cache
     private val kommuneIdGeonorge = "e24e9dcf-4ae9-475c-afc2-1a5c49f166e4"
@@ -64,15 +58,6 @@ class UtkastService_stemmekretsIT : TestWithDbContainer() {
     fun beforeEach() {
         every { currentTime.asLocalDate() } returns LocalDate.of(2022, 6, 1)
         every { userFacade.getAuthenticatedUser() } returns "Testbruker 123"
-    }
-
-    @Test
-    fun publiserUtkastUtenEventRad() {
-        Assertions.assertThatThrownBy {
-            nibasEventPublisher.publishNibasEvent(emptyList(), LocalDate.now())
-        }
-            .isInstanceOf(PublishEventException::class.java)
-            .hasMessageContaining("Event må inneholde minst 1 EventRad")
     }
 
     @Test

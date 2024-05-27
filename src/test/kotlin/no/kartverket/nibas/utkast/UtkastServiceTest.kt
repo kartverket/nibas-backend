@@ -37,6 +37,7 @@ import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.utkast.Utkast
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
+import no.kartverket.nibas.events.NibasEvent
 import no.kartverket.nibas.events.NibasEventPublisher
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.UtkastRepository
@@ -287,7 +288,7 @@ internal class UtkastServiceTest {
         every { grunnkretsServiceMock.oppdaterGrunnkrets(any(), any(), any(), any()) } returns Grunnkrets()
         every { stemmekretsServiceMock.oppdaterStemmekrets(any(), any(), any(), any()) } returns Stemmekrets()
         every { grenseServiceMock.lagreGrenser(any(), any(), any()) } returns emptySet()
-        every { nibasEventPublisherMock.publishNibasEvent(any(), any()) } returns Unit
+        every { nibasEventPublisherMock.publishNibasEvent(any(), any()) } returns NibasEvent(LocalDate.of(2024, Month.JANUARY, 1), emptySet())
         every { grenseServiceMock.validerOptimistiskLaasKonflikter(any(), any()) } returns Unit
 
         utkastService.publiserUtkast(utkast.id)

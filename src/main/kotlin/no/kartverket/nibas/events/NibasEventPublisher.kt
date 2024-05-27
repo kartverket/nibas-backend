@@ -14,19 +14,23 @@ class NibasEventPublisher(
 ) {
     private val logger = LoggerFactory.getLogger(this.javaClass.name)
 
-    fun publishNibasEvent(redigerteFlater: List<EventRad>, inntreffer: LocalDate) {
+    fun publishNibasEvent(redigerteFlater: List<EventRad>, inntreffer: LocalDate): NibasEvent {
         validate(redigerteFlater)
 
         val eventPublishingDisabled = environment.activeProfiles.any { it == "eventsDisabled" }
 
-        if (eventPublishingDisabled) { return }
         if (redigerteFlater.isEmpty()) logger.warn("Ingen modifiserte flater funnet, event blir ikke sendt.") //burde denne kaste feil istedet?
 
         // Sender kun en oppdatering per flate, filtrert på viktighet (EXPIRED > MODIFIED f. eks)
         val eventRader = redigerteFlater.sortedBy { it.eventType }.distinctBy { it.lokalid }
-        nibasEventsService.publishEvent(
-            NibasEvent(inntreffer = inntreffer, eventRader = eventRader.toSet())
-        )
+        val eventsForPublisering = NibasEvent(inntreffer = inntreffer, eventRader = eventRader.toSet())
+
+        if (!eventPublishingDisabled) {
+            nibasEventsService.publishEvent(
+                eventsForPublisering)
+        }
+
+        return eventsForPublisering
     }
 
     private fun validate(rader: List<EventRad>) {

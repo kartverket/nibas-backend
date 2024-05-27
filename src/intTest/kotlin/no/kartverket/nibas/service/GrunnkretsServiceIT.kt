@@ -1145,5 +1145,4 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         grenseRepository.flush()
         return listOf(kretsVest, kretsOest)
     }
-
 }
