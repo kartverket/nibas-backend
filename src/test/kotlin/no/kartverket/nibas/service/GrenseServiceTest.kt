@@ -3,6 +3,7 @@ package no.kartverket.nibas.service
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import io.mockk.mockkStatic
+import io.mockk.verify
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.builders.FeatureBuilder
@@ -76,6 +77,37 @@ class GrenseServiceTest {
         ) }
             .isInstanceOf(BadRequestException::class.java)
             .hasMessageContaining("En eller flere grenser du har endret på eksisterer ikke lengre. For å sørge for at du endrer på en gjeldende grense må du dessverre opprette et nytt utkast og gjennomføre endringene dine på nytt.")
+    }
+
+    @Test
+    fun `features med ID som starter på ny-grense- skal lage nye features med ny generert UUID`() {
+        val gyldighetsdato = LocalDate.of(2022, Month.DECEMBER, 8)
+
+        val grense = GrenseBuilder(id = "3400",
+            lokalId = Lokalid("34"))
+            .withGrensetype(Grensetype.Grunnkretsgrense).build()
+        val grenseIdentifikator = Identifikator(Lokalid("34"), gyldighetsdato)
+
+        every { grenseRepositoryKotlinMock.findAllGyldigeObjekterForIdentifikatorer(allAny()) } returns mapOf(grenseIdentifikator to grense)
+        every { flateServiceMock.oppdaterFlaterFor(any()) } returns Unit
+        every { grenseRepositoryKotlinMock.saveAndFlush(any()) } returns grense
+
+        val featureWithNyGrenseId = FeatureBuilder("ny-grense-33")
+            .withKontekstEgenskaper(listOf())
+            .withGrensetype(Grensetype.Grunnkretsgrense)
+            .build()
+
+        grenseService.lagreGrenser(
+            FeatureCollection(features = listOf(featureWithNyGrenseId)),
+            gyldighetsdato = gyldighetsdato,
+            endringstype = Endringstype.FASTSETTING
+        )
+
+        verify {
+            grenseRepositoryKotlinMock.saveAndFlush(
+                withArg { grense -> assertThat(grense.lokalid).doesNotStartWith("ny-grense-") }
+            )
+        }
     }
 
     @Test

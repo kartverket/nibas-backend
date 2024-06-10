@@ -28,7 +28,6 @@ import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.StemmekretsGrenseKobling
 import no.kartverket.nibas.extensions.geometry.toLineString
-import no.kartverket.nibas.repository.DokrefGrenseKoblingRepository
 import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.OptimistiskLaasException
@@ -53,8 +52,7 @@ class GrenseService(
     private val kommuneService: KommuneService,
     private val fylkeService: FylkeService,
     private val nasjonService: NasjonService,
-    private val dokumentasjonsreferanseService: DokumentasjonsreferanseService,
-    private val grenseKoblingRepository: DokrefGrenseKoblingRepository
+    private val dokumentasjonsreferanseService: DokumentasjonsreferanseService
 ) {
     fun hentGrense(identifikator: Identifikator): Grense? = grenseRepository.findGyldigObjektForIdentifikator(identifikator)
 
@@ -174,7 +172,7 @@ class GrenseService(
 
     fun sjekkAtGrenseendringerErGyldige(features: Collection<Feature>, gyldighetsdato: LocalDate) {
         // Henter eksisterende grenser på identifikator (kun allerede eksisterende grenser). Sorterer på lokalid for testens skyld.
-        val featuresForEksisterendeGrenser = features.filter { it.id != null }
+        val featuresForEksisterendeGrenser = features.filter { !erNyGrense(it) }
         val grenseIdentifikatorer = featuresForEksisterendeGrenser.map { featureIdToIdentifikator(it.id, gyldighetsdato) }.sortedBy { it.lokalid.value }
         val identifikatorToGrenseMap = grenseRepository.findAllGyldigeObjekterForIdentifikatorer(grenseIdentifikatorer)
 
@@ -189,7 +187,7 @@ class GrenseService(
     }
 
     fun validerOptimistiskLaasKonflikter(features: Collection<Feature>, gyldighetsdato: LocalDate) {
-        val featuresForEksisterendeGrenser = features.filter { it.id != null }
+        val featuresForEksisterendeGrenser = features.filter { !erNyGrense(it) }
         val grenseIdentifikatorer = featuresForEksisterendeGrenser.map { featureIdToIdentifikator(it.id, gyldighetsdato) }.sortedBy { it.lokalid.value }
         val identifikatorToGrenseMap = grenseRepository.findAllGyldigeObjekterForIdentifikatorer(grenseIdentifikatorer)
         val eksisterendeGrenser: List<Grense> = identifikatorToGrenseMap.values.toList()
@@ -252,7 +250,7 @@ class GrenseService(
     private fun createGrenseForFeatureUtenTilhorigheter(feature: Feature, gyldighetsdato: LocalDate, endringstype: Endringstype): Grense {
         val featureId = feature.id
 
-        if (featureId != null) {
+        if (featureId != null && !erNyGrense(feature)) {
             val gammelGrense = grenseRepository.findGyldigObjektForIdentifikator(Identifikator(Lokalid(featureId), gyldighetsdato))
                 ?: throw BadRequestException("Kan ikke endre på grense med lokalid $featureId. Fant ingen gyldige grenser med denne IDen på gyldighetsdato $gyldighetsdato.")
             return createNyVersjonAvGrense(gammelGrense, gyldighetsdato, endringstype)
@@ -424,8 +422,12 @@ class GrenseService(
         return grense
     }
 
+    private fun erNyGrense(feature: Feature): Boolean {
+        return feature.id == null || feature.id.startsWith("ny-grense-")
+    }
+
     private fun sjekkForKonflikterForGrenser(features: Collection<Feature>, eksisterendeGrenser: List<Grense>, gyldighetsdato: LocalDate) {
-        val konflikterIGrenser = features.filter { it.id != null }.mapNotNull { feature ->
+        val konflikterIGrenser = features.filter { !erNyGrense(it) }.mapNotNull { feature ->
             val featureIdentifikator = featureIdToIdentifikator(feature.id, gyldighetsdato)
             verifiserOptimistiskLaas(feature.properties.version, findGrenseForIdentifikator(eksisterendeGrenser, featureIdentifikator))
         }

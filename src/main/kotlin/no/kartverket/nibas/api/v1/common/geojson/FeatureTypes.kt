@@ -83,7 +83,7 @@ data class Feature(
     @Schema(description = "En konstant, navn: type, verdi: Feature")
     val type: String = "Feature",
 
-    @Schema(description = "Id til feature")
+    @Schema(description = "Id til feature. Om ID er NULL eller starter med `ny-grense-` representerer det en grense som ikke er publisert enda.")
     val id: String? = null,
 
     @Schema(description = "Et sett med egenskaper som beskriver denne featuren")
