@@ -508,6 +508,7 @@ class GrenseService(
             updateWithGrenseMetadata(grense, featureMetadata.commonGrense)
         }
         if (featureMetadata is HarDokumentasjonsreferanse) {
+            grenseRepository.saveAndFlush(grense)
             dokumentasjonsreferanseService.updateDokumentasjonsreferanser(
                 dokumentasjonsreferanseDTOer = featureMetadata.dokumentasjonsreferanser,
                 endringstype = endringstype,
