@@ -16,6 +16,9 @@ jobs:
       packages: write
       security-events: write
       actions: read
+      issues: read
+      checks: write
+      pull-requests: write
     uses: kartverket/nibas-backend/.github/workflows/build-app.yml@main
     with:
       deploy_ghcr: true

@@ -30,6 +30,9 @@ jobs:
       packages: write
       security-events: write
       actions: read
+      issues: read
+      checks: write
+      pull-requests: write
 
     outputs:
       new_tag: ${{ steps.tag_version.outputs.new_tag }}
@@ -53,6 +56,14 @@ jobs:
 
       - name: Build with Gradle
         run: ./gradlew build --info
+
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: |
+            build/test-results/test/TEST-*.xml
+            build/test-results/integrationTest/TEST-*.xml
 
       - name: Bump version and push tag
         id: tag_version
