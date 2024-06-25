@@ -13,6 +13,7 @@ import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringReques
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
+import no.kartverket.nibas.common.toNorskFormat
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.utkast.Utkast
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
@@ -21,6 +22,7 @@ import no.kartverket.nibas.events.EventRad
 import no.kartverket.nibas.events.EventType
 import no.kartverket.nibas.events.NibasEvent
 import no.kartverket.nibas.events.NibasEventPublisher
+import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.repository.UtkastRepository
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
 import no.kartverket.nibas.service.FylkeService
@@ -55,9 +57,8 @@ class UtkastService(
     private val logger: Logger = LoggerFactory.getLogger(UtkastService::class.java)
 
     fun opprettUtkast(opprettUtkastRequest: OpprettUtkastRequest): String {
-        if (utkastValidatorService.sjekkUgyldigUtkastNavnOgEndringstype(opprettUtkastRequest.navn, opprettUtkastRequest.endringstype)) {
-            throw ResponseException.BadRequestException("Husk å fylle inn både navnet og endringstypen på utkastet.")
-        }
+        utkastValidatorService.sjekkUgyldigUtkastNavnOgEndringstype(opprettUtkastRequest.navn, opprettUtkastRequest.endringstype)
+            ?.let { throw ResponseException.BadRequestException(title = "Kan ikke lagre utkastet", msg = it) }
         return utkastRepository.saveAndFlush(opprettUtkastRequest.createUtkast()).id
     }
 
@@ -70,31 +71,65 @@ class UtkastService(
     }
 
     fun oppdaterUtkast(id: String, request: OppdaterUtkastRequest): Utkast? {
-        if (utkastValidatorService.sjekkUgyldigUtkastNavnOgEndringstype(request.navn, request.endringstype)) {
-            throw ResponseException.BadRequestException("Husk å fylle inn både navnet og endringstypen på utkastet.")
-        }
         val utkast = hentUtkast(id)
             ?: throw ResponseException.NotFoundException("Utkast ble ikke funnet for id: $id.")
-
-        verifiserOptimistiskLaas(request.version, utkast)?.throwException()
-            validerOptimistiskLaasForEndringer(utkast, LocalDate.now())
-
-        utkast.navn = request.navn
-        utkast.auditInfo.typeEndring = Endringstype.fromValue(request.endringstype)
-        
         utkast.operasjoner = request.operasjoner
 
-        val utkastValideringResult =
-            utkastValidatorService.validateGyldigUtkast(utkast, LocalDate.now())
+        //Valideringer som brukeren ikke kan rette opp i
+        validateOptimistiskLaasOgFremtidigeEndringer(utkast, request.version, LocalDate.now())
 
-        if (utkastValideringResult is UtkastValidering.UgyldigUtkast) {
-            throw utkastValideringResult.feil
+        utkast.navn = request.navn
+        val utkastValideringResult = utkastValidatorService.validateGyldigUtkast(utkast, request.endringstype, LocalDate.now())
+
+        if (utkastValideringResult.isNotEmpty()) {
+            throw ResponseException.BadRequestException(title = "Kan ikke lagre utkastet", msg = utkastValideringResult.joinToString("\n"))
         }
+        utkast.auditInfo.typeEndring = Endringstype.fromValue(request.endringstype)
         return utkastRepository.save(utkast)
+    }
+
+    /**
+     * Sjekker at alle objekter som skal oppdateres finnes, og at de har det versjonsnummeret utkastet mener de skal ha.
+     * Sjekker også at de ikke har noen senere forekomster etter ønsket dato.
+     * utkastetsVersion er gitt ved oppdatering av utkastet, ved publisering hentes utkastet fra basen.
+     */
+    private fun validateOptimistiskLaasOgFremtidigeEndringer(utkast: Utkast, utkastetsVersion: Int? = null, gyldigFra: LocalDate) {
+        if (utkast.status != UtkastStatus.OPPRETTET) {
+            throw ResponseException.BadRequestException(
+                msg = "Kan ikke " + let { if (utkastetsVersion != null) "oppdatere" else "publisere" } + " et utkast med status ${utkast.status}"
+            )
+        }
+        if (utkast.operasjoner == null) {
+            throw ResponseException.BadRequestException(
+                msg = "Kan ikke " + let { if (utkastetsVersion != null) "oppdatere" else "publisere" } + " et utkast uten operasjoner"
+            )
+        }
+
+        //Lager liste med alle objekter som utkastet ønsker å oppdatere, og hvilken versjon utkastet mener de skal ha
+        val laasbarMedOensketVersjonListe = validerLaasbarForEndringerFinnesOgLagListeMedLaasbarOgOensketVersjon(utkast, gyldigFra)
+        utkastetsVersion?.let { laasbarMedOensketVersjonListe.addFirst(Pair(utkast, it)) }
+
+        //Sjekker at de låsbare (grense, krets, administrativ enhet pluss evt utkastet selv) som utkastet vil oppdatere på har ønsket versjon
+        val optimistiskLaasKonflikter = laasbarMedOensketVersjonListe
+            .mapNotNull { (laasbar, versjon) ->
+                verifiserOptimistiskLaas(versjon, laasbar)
+            }
+
+        if (optimistiskLaasKonflikter.isNotEmpty()) {
+            throw OptimistiskLaasException(*optimistiskLaasKonflikter.toTypedArray())
+        }
+
+        utkastValidatorService.validerFremtidigeEndringer(utkast, gyldigFra)?.let { throw it }
     }
 
     fun forkastUtkast(id: String): Utkast? =
         hentUtkast(id)?.apply {
+            if (status == UtkastStatus.PUBLISERT) {
+                throw ResponseException.BadRequestException(title = "Kan ikke slette utkastet",
+                    msg = "Kan ikke forkaste et utkast som er publisert"
+                )
+            }
+
             status = UtkastStatus.FORKASTET
             operasjoner = null
         }
@@ -102,30 +137,23 @@ class UtkastService(
     @Transactional
     fun publiserUtkast(utkastId: String, gyldigFra: LocalDate = LocalDate.now()): NibasEvent {
         val eventsForPublisering: NibasEvent
-        val utkast =
-            hentUtkast(utkastId)
-                ?: throw ResponseException.NotFoundException("Utkast ble ikke funnet for id: $utkastId.")
+        val utkast = hentUtkast(utkastId)
+            ?: throw ResponseException.NotFoundException("Utkast ble ikke funnet for id: $utkastId.")
 
-        when (
-            val utkastValideringResult =
-                utkastValidatorService.validateUtkastKlartForPublisering(utkast, gyldigFra)
-        ) {
-            is UtkastValidering.UgyldigUtkast -> throw utkastValideringResult.feil
-            is UtkastValidering.GyldigUtkast -> throw ResponseException.BadRequestException("Noe gikk galt! Utkastet ble markert som GyldigUtkast i stedet for KlartForPublisering.")
-            is UtkastValidering.KlartForPublisering -> {
-                logger.debug(utkast.publiseringsInfo())
-                validerOptimistiskLaasForEndringer(utkast, gyldigFra)
+        //Valideringer som brukeren ikke kan rette opp i
+        validateOptimistiskLaasOgFremtidigeEndringer(utkast = utkast, gyldigFra = gyldigFra)
 
-                var flateEndringer: List<EventRad> = emptyList()
-                utkast.operasjoner?.let { operasjoner ->
-                    flateEndringer = publiserEndringer(operasjoner, utkast, gyldigFra)
-                    nibasEventPublisher.publishNibasEvent(flateEndringer, gyldigFra)
-                }
-
-                utkast.settPublisert()
-                eventsForPublisering = nibasEventPublisher.publishNibasEvent(flateEndringer, gyldigFra)
-            }
+        val utkastValideringResult = utkastValidatorService.validateUtkastKlartForPublisering(utkast, gyldigFra)
+        if (utkastValideringResult.isNotEmpty()) {
+            throw ResponseException.BadRequestException(title = "Kan ikke publisere utkastet", msg = utkastValideringResult.joinToString("\n"))
         }
+
+        logger.debug(utkast.publiseringsInfo())
+        val flateEndringer: List<EventRad> = publiserEndringer(utkast.operasjoner!!, utkast, gyldigFra)
+
+        utkast.settPublisert()
+        eventsForPublisering = nibasEventPublisher.publishNibasEvent(flateEndringer, gyldigFra)
+
         return eventsForPublisering
     }
 
@@ -147,48 +175,71 @@ class UtkastService(
         return metadataendringer + sammenslaaingsendringer + grenseendringer + kretsDelingEndringer
     }
 
-    private fun validerOptimistiskLaasForEndringer(utkast: Utkast, gyldigFra: LocalDate) {
+    /**
+     * Sjekker at det som utkastet ønsker å oppdatere finnes. Alt som kan oppdateres er en subklasse av Laasbar:
+     * Grense, Grunnkrets, Stemmekrets, Kommune, Fylke, Nasjon
+     * Returnerer liste med alle låsbare og hvilken versjon utkastet mener de skal ha
+     * Den kallende tjenesten validerer at de låsbare har ønsket versjon
+     */
+    private fun validerLaasbarForEndringerFinnesOgLagListeMedLaasbarOgOensketVersjon(utkast: Utkast, gyldigFra: LocalDate): List<Pair<Laasbar, Int>> {
+        val laasbarMedOensketVersjonListe = mutableListOf<Pair<Laasbar, Int>>()
         utkast.operasjoner?.let { operasjoner ->
             operasjoner.stemmekretsSammenslaaingsendring?.let {
-                stemmekretsService.validerOptimistiskLaasForStemmekretsSammenslaaing(it, gyldigFra)
+                laasbarMedOensketVersjonListe.addAll(stemmekretsService.validerStemmekretserForSammenslaaingFinnesOgLagListeMedStemmekretsOgOensketVersjon(it, gyldigFra))
             }
             operasjoner.grunnkretsSammenslaaingsendring?.let {
-                grunnkretsService.validerOptimistiskLaasForGrunnkretsSammenslaaing(it, gyldigFra)
+                laasbarMedOensketVersjonListe.addAll(grunnkretsService.validerGrunnkretserForSammenslaaingFinnesOgLagListeMedGrunnkretsOgOensketVersjon(it, gyldigFra))
             }
-            grenseService.validerOptimistiskLaasKonflikter(operasjoner.grenseendringer.endredeFeatures, gyldigFra)
-            validerOptimistiskLaasForMetadataEndringer(operasjoner.metadataendringer, gyldigFra)
+            laasbarMedOensketVersjonListe.addAll(grenseService.validerLaasbareForGrenseendringerFinnesOgLagListeMedLaasbarOgOensketVersjon(operasjoner.grenseendringer.endredeFeatures, gyldigFra))
+            laasbarMedOensketVersjonListe.addAll(validerLaasbarForMetadataEndringerFinnesOgLagListeMedLaasbarOgOensketVersjon(operasjoner.metadataendringer, gyldigFra))
+
+            operasjoner.kretsDelingEndringer.forEach {
+                laasbarMedOensketVersjonListe.add(when (it.flatetype) {
+                    Flatetype.STEMMEKRETS -> stemmekretsService.validerStemmekretsForDelingFinnesOgLagPairMedStemmekretsOgOensketVersjon(it, gyldigFra)
+                    Flatetype.GRUNNKRETS -> grunnkretsService.validerGrunnkretsForDelingFinnesOgLagPairMedGrunnkretsOgOensketVersjon(it, gyldigFra)
+                    else -> throw ResponseException.BadRequestException("Støtter kun deling av grunnkrets eller stemmekrets, ikke ${it.flatetype}")
+                }
+                )
+            }
+
         }
+        return laasbarMedOensketVersjonListe
     }
 
-    private fun validerOptimistiskLaasForMetadataEndringer(metadataendringer: Metadataendringer, gyldigFra: LocalDate) {
-        metadataendringer.nasjonsendringer.forEach { (lokalId, nasjonRequest) ->
-            nasjonService.hentNasjon(Identifikator(Lokalid(lokalId), gyldigFra))
-                ?.verifiserOptimistiskLaas(nasjonRequest.version)
-        }
+    private fun validerLaasbarForMetadataEndringerFinnesOgLagListeMedLaasbarOgOensketVersjon(metadataendringer: Metadataendringer, gyldigFra: LocalDate)
+        : List<Pair<Laasbar, Int>> {
+        val laasbarMedOensketVersjonListe = mutableListOf<Pair<Laasbar, Int>>()
+        laasbarMedOensketVersjonListe.addAll(metadataendringer.nasjonsendringer.mapNotNull {
+            val nasjon = nasjonService.hentNasjon(Identifikator(Lokalid(it.value.lokalid), gyldigFra))
+                ?: throw ResponseException.NotFoundException("Fant ikke nasjon med id ${it.value.lokalid} som er gyldig ${gyldigFra.toNorskFormat()}")
+            Pair(nasjon, it.value.version)
+        })
 
-        metadataendringer.fylkesendringer.forEach { (lokalId, fylkeRequest) ->
-            fylkeService.hentFylke(Identifikator(Lokalid(lokalId), gyldigFra))
-                ?.verifiserOptimistiskLaas(fylkeRequest.version)
-        }
+        laasbarMedOensketVersjonListe.addAll(metadataendringer.fylkesendringer.mapNotNull {
+            val fylke = fylkeService.hentFylke(Identifikator(Lokalid(it.value.lokalid), gyldigFra))
+                ?: throw ResponseException.NotFoundException("Fant ikke fylke med id ${it.value.lokalid} som er gyldig ${gyldigFra.toNorskFormat()}")
+            Pair(fylke, it.value.version)
+        })
 
-        metadataendringer.kommuneendringer.forEach { (lokalId, kommuneRequest) ->
-            kommuneService.hentKommune(Identifikator(Lokalid(lokalId), gyldigFra))
-                ?.verifiserOptimistiskLaas(kommuneRequest.version)
-        }
+        laasbarMedOensketVersjonListe.addAll(metadataendringer.kommuneendringer.mapNotNull {
+            val kommune = kommuneService.hentKommune(Identifikator(Lokalid(it.value.lokalid), gyldigFra))
+                ?: throw ResponseException.NotFoundException("Fant ikke kommune med id ${it.value.lokalid} som er gyldig ${gyldigFra.toNorskFormat()}")
+            Pair(kommune, it.value.version)
+        })
 
-        metadataendringer.stemmekretsendringer.forEach { (lokalId, stemmekretsRequest) ->
-            stemmekretsService.hentStemmekrets(Identifikator(Lokalid(lokalId), gyldigFra))
-                ?.verifiserOptimistiskLaas(stemmekretsRequest.version)
-        }
+        laasbarMedOensketVersjonListe.addAll(metadataendringer.stemmekretsendringer.mapNotNull {
+            val stemmekrets = (stemmekretsService.hentStemmekrets(Identifikator(Lokalid(it.value.identifikasjon.lokalid), gyldigFra))
+                ?: throw ResponseException.NotFoundException("Fant ikke stemmekrets med id ${it.value.identifikasjon.lokalid} som er gyldig ${gyldigFra.toNorskFormat()}"))
+            Pair(stemmekrets, it.value.version)
+        })
 
-        metadataendringer.grunnkretsendringer.forEach { (lokalId, grunnkretsRequest) ->
-            grunnkretsService.hentGrunnkrets(Identifikator(Lokalid(lokalId), gyldigFra))
-                ?.verifiserOptimistiskLaas(grunnkretsRequest.version)
-        }
-    }
+        laasbarMedOensketVersjonListe.addAll(metadataendringer.grunnkretsendringer.mapNotNull {
+            val stemmekrets = (grunnkretsService.hentGrunnkrets(Identifikator(Lokalid(it.value.identifikasjon.lokalid), gyldigFra))
+                ?: throw ResponseException.NotFoundException("Fant ikke stemmekrets med id ${it.value.identifikasjon.lokalid} som er gyldig ${gyldigFra.toNorskFormat()}"))
+            Pair(stemmekrets, it.value.version)
+        })
 
-    private fun Laasbar.verifiserOptimistiskLaas(versjonFraRequest: Int) {
-        verifiserOptimistiskLaas(versjonFraRequest, this)?.throwException()
+        return laasbarMedOensketVersjonListe
     }
 
     private fun publiserMetadataEndringer(
@@ -255,7 +306,7 @@ class UtkastService(
         return alleEndringer.map { it.toEventRad(EventType.MODIFIED) }
     }
 
-    private fun publiserGrenseendringer(grenseendringer: Grenseendringer, utkast: Utkast, gyldigFra: LocalDate) : List<EventRad> {
+    private fun publiserGrenseendringer(grenseendringer: Grenseendringer, utkast: Utkast, gyldigFra: LocalDate): List<EventRad> {
         val endredeFeatures = grenseendringer.endredeFeatures
         var eventer: List<EventRad> = emptyList()
 
@@ -298,11 +349,13 @@ class UtkastService(
                     gyldigFra,
                     utkast.auditInfo.typeEndring
                 )
+
                 Flatetype.GRUNNKRETS -> grunnkretsService.delGrunnkrets(
                     unikKretsDelingEndring,
                     gyldigFra,
                     utkast.auditInfo.typeEndring
                 )
+
                 else -> throw ResponseException.BadRequestException("Støtter kun deling av grunnkrets eller stemmekrets, ikke ${unikKretsDelingEndring.flatetype}")
             }
             listOf(

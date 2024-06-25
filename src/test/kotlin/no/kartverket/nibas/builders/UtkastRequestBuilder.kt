@@ -53,6 +53,11 @@ class UtkastRequestBuilder {
         return this
     }
 
+    fun withVersjon(versjon: Int): UtkastRequestBuilder {
+        this.version = versjon
+        return this
+    }
+
 }
 
 class OpprettUtkastRequestBuilder {

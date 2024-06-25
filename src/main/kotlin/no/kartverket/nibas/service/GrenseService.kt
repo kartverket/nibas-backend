@@ -31,11 +31,10 @@ import no.kartverket.nibas.extensions.geometry.toLineString
 import no.kartverket.nibas.repository.DokrefGrenseKoblingRepository
 import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.GrunnkretsRepository
-import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.repository.findAllGyldigeObjekterForIdentifikatorer
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
-import no.kartverket.nibas.repository.verifiserOptimistiskLaas
+import no.kartverket.nibas.sporing.Laasbar
 import org.locationtech.jts.geom.LineString
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -65,7 +64,6 @@ class GrenseService(
 
     @Transactional(readOnly = false)
     fun lagreGrenser(grenser: FeatureCollection, gyldighetsdato: LocalDate = LocalDate.now(), endringstype: Endringstype): Set<Flate> {
-        sjekkAtGrenseendringerErGyldige(grenser.features, gyldighetsdato)
         val (featuresMedArkivering, featuresMedEndringer) = grenser.features.partition { it.properties.shouldArchive }
         val stemmekretserForTilhorigheter = createStemmekretserVersjonerForTilhorigheterIFeatures(grenser.features, gyldighetsdato, endringstype)
         val grunnkretserForTilhorigheter = createGrunnkretsVersjonerForTilhorigheterIFeatures(grenser.features, gyldighetsdato, endringstype)
@@ -172,7 +170,7 @@ class GrenseService(
         lagNyVersjonAvGrenseOgKnyttTilKretser(grenserSomSkalHaNyGrensetype, gyldigFra, endringstype)
     }
 
-    fun sjekkAtGrenseendringerErGyldige(features: Collection<Feature>, gyldighetsdato: LocalDate) {
+    fun validerGrenserFinnesOgHentGrenser(features: Collection<Feature>, gyldighetsdato: LocalDate): List<Grense> {
         // Henter eksisterende grenser på identifikator (kun allerede eksisterende grenser). Sorterer på lokalid for testens skyld.
         val featuresForEksisterendeGrenser = features.filter { it.id != null }
         val grenseIdentifikatorer = featuresForEksisterendeGrenser.map { featureIdToIdentifikator(it.id, gyldighetsdato) }.sortedBy { it.lokalid.value }
@@ -186,16 +184,17 @@ class GrenseService(
                 msg = "En eller flere grenser du har endret på eksisterer ikke lengre. For å sørge for at du endrer på en gjeldende grense må du dessverre opprette et nytt utkast og gjennomføre endringene dine på nytt.",
                 additionalInfo = "Feilen gjelder følgende grenser: ${identifikatorDiffs.joinToString(",") { "(lokalid: ${it.lokalid.value}), gyldig fra: ${it.gyldighetsdato})" }}")
         }
+
+        return identifikatorToGrenseMap.values.toList()
     }
 
-    fun validerOptimistiskLaasKonflikter(features: Collection<Feature>, gyldighetsdato: LocalDate) {
-        val featuresForEksisterendeGrenser = features.filter { it.id != null }
-        val grenseIdentifikatorer = featuresForEksisterendeGrenser.map { featureIdToIdentifikator(it.id, gyldighetsdato) }.sortedBy { it.lokalid.value }
-        val identifikatorToGrenseMap = grenseRepository.findAllGyldigeObjekterForIdentifikatorer(grenseIdentifikatorer)
-        val eksisterendeGrenser: List<Grense> = identifikatorToGrenseMap.values.toList()
+    fun validerLaasbareForGrenseendringerFinnesOgLagListeMedLaasbarOgOensketVersjon(features: Collection<Feature>, gyldighetsdato: LocalDate)
+        : List<Pair<Laasbar, Int>> {
+        val eksisterendeGrenser: List<Grense> = validerGrenserFinnesOgHentGrenser(features, gyldighetsdato)
 
-        sjekkForKonflikterForGrenser(features, eksisterendeGrenser, gyldighetsdato)
-        sjekkKonflikterITilhorendeKretser(features, gyldighetsdato)
+        val laasbarMedOensketVersjonListe = lagListeMedLaasbareOgOensketVersjonForGrenser(features, eksisterendeGrenser, gyldighetsdato)
+            .plus(validerTilhorendeKretserFinnesOgLagListeMedLaasbarOgOensketVersjon(features, gyldighetsdato))
+        return laasbarMedOensketVersjonListe
     }
 
     private fun beregnNyGrensetype(kommunenumre: List<String>): Grensetype? {
@@ -395,11 +394,12 @@ class GrenseService(
                     throw BadRequestException("Kretsnummer må være satt når man setter tilhørighet til en ny grunnkrets.")
                 }
                 grunnkretsService.hentGrunnkretsForGrunnkretsNummer(it.kretsNummer, gyldighetsdato)
-                    ?: throw RuntimeException("Feil ved tilhørighet for grense. Fant ikke den nye grunnkrets med kretsnummer ${it.kretsNummer} på gyldighetsdato ${gyldighetsdato.toNorskFormat()}.")
+                    ?: throw RuntimeException("Feil ved tilhørighet for grense. Fant ikke den nye grunnkretsen med kretsnummer ${it.kretsNummer} på gyldighetsdato ${gyldighetsdato.toNorskFormat()}.")
             }.toSet()
     }
 
-    private fun getNyeVersjonerAvEksisterendeGrunnkretserForFeatures(features: Collection<Feature>, gyldighetsdato: LocalDate, endringstype: Endringstype): Set<Grunnkrets> {
+    private fun getNyeVersjonerAvEksisterendeGrunnkretserForFeatures(features: Collection<Feature>, gyldighetsdato: LocalDate, endringstype: Endringstype)
+        : Set<Grunnkrets> {
         val unikeGrunnkretsLokalIder = features
             .flatMap { it.properties.kontekstEgenskaper }
             .filter { it.type == KontekstEnhetType.GRUNNKRETS }
@@ -424,40 +424,35 @@ class GrenseService(
         return grense
     }
 
-    private fun sjekkForKonflikterForGrenser(features: Collection<Feature>, eksisterendeGrenser: List<Grense>, gyldighetsdato: LocalDate) {
-        val konflikterIGrenser = features.filter { it.id != null }.mapNotNull { feature ->
+    private fun lagListeMedLaasbareOgOensketVersjonForGrenser(features: Collection<Feature>, eksisterendeGrenser: List<Grense>, gyldighetsdato: LocalDate)
+        : List<Pair<Laasbar, Int>> {
+        return features.filter { it.id != null }.map { feature ->
             val featureIdentifikator = featureIdToIdentifikator(feature.id, gyldighetsdato)
-            verifiserOptimistiskLaas(feature.properties.version, findGrenseForIdentifikator(eksisterendeGrenser, featureIdentifikator))
-        }
-        if (konflikterIGrenser.isNotEmpty()) {
-            throw OptimistiskLaasException(*konflikterIGrenser.toTypedArray())
+            Pair(findGrenseForIdentifikator(eksisterendeGrenser, featureIdentifikator), feature.properties.version)
         }
     }
 
-    private fun sjekkKonflikterITilhorendeKretser(features: Collection<Feature>, gyldighetsdato: LocalDate) {
-        val konflikterIKretserForGrenser = features.flatMap { feature ->
+    private fun validerTilhorendeKretserFinnesOgLagListeMedLaasbarOgOensketVersjon(features: Collection<Feature>, gyldighetsdato: LocalDate)
+        : List<Pair<Laasbar, Int>> {
+        val laasbarMedOensketVersjonListe = features.flatMap { feature ->
             feature.properties.kontekstEgenskaper
                 .filter { kontekst -> !(kontekst.id == null && kontekst.kretsNummer != null) } // vi skal ikke trenge å sjekke versjon på nyopprettet krets
-                .mapNotNull { kontekstEgenskaper ->
+                .map { kontekstEgenskaper ->
                     if (kontekstEgenskaper.id == null) {
                         throw BadRequestException("KontekstEgenskaper for feature med id: ${feature.id} er null")
                     }
                     val identifikator = Identifikator(kontekstEgenskaper.id.lokalid, gyldighetsdato)
-                    verifiserOptimistiskLaas(
-                        kontekstEgenskaper.version,
-                        when (kontekstEgenskaper.type) {
-                            KontekstEnhetType.GRUNNKRETS -> grunnkretsRepository.findGyldigObjektForIdentifikator(identifikator)
-                                ?: throw NotFoundException("Fant ikke Grunnkrets med lokalid: ${identifikator.lokalid}")
+                    val laasbar: Laasbar = when (kontekstEgenskaper.type) {
+                        KontekstEnhetType.GRUNNKRETS -> grunnkretsRepository.findGyldigObjektForIdentifikator(identifikator)
+                            ?: throw NotFoundException("Fant ikke Grunnkrets med lokalid: ${identifikator.lokalid}")
 
-                            KontekstEnhetType.STEMMEKRETS -> stemmekretsRepository.findGyldigObjektForIdentifikator(identifikator)
-                                ?: throw NotFoundException("Fant ikke Stemmekrets med lokalid: ${identifikator.lokalid}")
-                        }
-                    )
+                        KontekstEnhetType.STEMMEKRETS -> stemmekretsRepository.findGyldigObjektForIdentifikator(identifikator)
+                            ?: throw NotFoundException("Fant ikke Stemmekrets med lokalid: ${identifikator.lokalid}")
+                    }
+                    Pair(laasbar, kontekstEgenskaper.version)
                 }
         }
-        if (konflikterIKretserForGrenser.isNotEmpty()) {
-            throw OptimistiskLaasException(*konflikterIKretserForGrenser.toTypedArray())
-        }
+        return laasbarMedOensketVersjonListe
     }
 
     private fun Grense.applyChangesFromRequest(feature: Feature, gyldighetsdato: LocalDate, endringstype: Endringstype): Grense =

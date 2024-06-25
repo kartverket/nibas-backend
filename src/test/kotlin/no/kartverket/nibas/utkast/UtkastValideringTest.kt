@@ -29,9 +29,7 @@ import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.service.GrenseService
 import no.kartverket.nibas.service.GrunnkretsService
 import no.kartverket.nibas.service.StemmekretsService
-import no.kartverket.nibas.service.utkast.OperasjonerValidering
 import no.kartverket.nibas.service.utkast.UtkastValidatorService
-import no.kartverket.nibas.service.utkast.UtkastValidering
 import no.kartverket.nibas.utkast.UtkastServiceTest.Companion.operasjonerMedIkkeEditerbareGrenser
 import no.kartverket.nibas.utkast.UtkastServiceTest.Companion.operasjonerMedKunEditerbareGrenser
 import org.assertj.core.api.Assertions.assertThat
@@ -82,7 +80,7 @@ class UtkastValideringTest {
             .build()
 
         val validateUtkastKlartForPublisering = utkastValidatorService.validateUtkastKlartForPublisering(publisertUtkast, june2024)
-        assertThat(validateUtkastKlartForPublisering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
+        assertThat(validateUtkastKlartForPublisering).contains("Kan ikke publisere et utkast uten endringer.")
     }
 
     @Test
@@ -91,7 +89,7 @@ class UtkastValideringTest {
             .build()
 
         val validateUtkastKlartForPublisering = utkastValidatorService.validateUtkastKlartForPublisering(utkastUtenOperasjoner, june2024)
-        assertThat(validateUtkastKlartForPublisering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
+        assertThat(validateUtkastKlartForPublisering).contains("Kan ikke publisere et utkast uten endringer.")
     }
 
     @Test
@@ -99,7 +97,7 @@ class UtkastValideringTest {
         val operasjoner = operasjonerMedIkkeEditerbareGrenser()
 
         val validateGyldigeOperasjoner = utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
-        assertThat(validateGyldigeOperasjoner).isInstanceOf(OperasjonerValidering.UgyldigeOperasjoner::class.java)
+        assertThat(validateGyldigeOperasjoner).contains("Utkastet inneholder 4 ikke-redigerbare grenser.")
     }
 
     @Test
@@ -116,10 +114,8 @@ class UtkastValideringTest {
                 )
             )
 
-        val validateGyldigeOperasjoner =
-            utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
-        assertThat(validateGyldigeOperasjoner)
-            .isInstanceOf(OperasjonerValidering.UgyldigeOperasjoner::class.java)
+        val validateGyldigeOperasjoner = utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
+        assertThat(validateGyldigeOperasjoner).contains("Kretsnavn kan ikke være tomt.")
     }
 
     @Test
@@ -133,10 +129,8 @@ class UtkastValideringTest {
                 )
             )
 
-        val validateGyldigeOperasjoner =
-            utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
-        assertThat(validateGyldigeOperasjoner)
-            .isInstanceOf(OperasjonerValidering.UgyldigeOperasjoner::class.java)
+        val validateGyldigeOperasjoner = utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
+        assertThat(validateGyldigeOperasjoner).contains("Kretsnavn kan ikke være tomt.")
     }
 
     @Test
@@ -152,10 +146,10 @@ class UtkastValideringTest {
                 )
             )
 
-        val validateGyldigeOperasjoner =
-            utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
+        val validateGyldigeOperasjoner = utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
         assertThat(validateGyldigeOperasjoner)
-            .isInstanceOf(OperasjonerValidering.UgyldigeOperasjoner::class.java)
+            .contains("Stemmekretsnummer (1234567) kan ikke være på flere enn fire tegn.")
+            .contains("Kretsnavn kan ikke være tomt.")
     }
 
     @Test
@@ -169,10 +163,8 @@ class UtkastValideringTest {
                 )
             )
 
-        val validateGyldigeOperasjoner =
-            utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
-        assertThat(validateGyldigeOperasjoner)
-            .isInstanceOf(OperasjonerValidering.UgyldigeOperasjoner::class.java)
+        val validateGyldigeOperasjoner = utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
+        assertThat(validateGyldigeOperasjoner).contains("Kretsnummer kan ikke være tomt.")
     }
 
     @Test
@@ -186,10 +178,8 @@ class UtkastValideringTest {
                 )
             )
 
-        val validateGyldigeOperasjoner =
-            utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
-        assertThat(validateGyldigeOperasjoner)
-            .isInstanceOf(OperasjonerValidering.UgyldigeOperasjoner::class.java)
+        val validateGyldigeOperasjoner = utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
+        assertThat(validateGyldigeOperasjoner).contains("Kretsnummer (0) kan ikke være 0.")
     }
 
     @Test
@@ -205,10 +195,8 @@ class UtkastValideringTest {
                 )
             )
 
-        val validateGyldigeOperasjoner =
-            utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
-        assertThat(validateGyldigeOperasjoner)
-            .isInstanceOf(OperasjonerValidering.UgyldigeOperasjoner::class.java)
+        val validateGyldigeOperasjoner = utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
+        assertThat(validateGyldigeOperasjoner).contains("Kretsnummer (ugyldigNummer) kan bare inneholde sifre.")
     }
 
     @Test
@@ -222,10 +210,8 @@ class UtkastValideringTest {
                 )
             )
 
-        val validateGyldigeOperasjoner =
-            utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
-        assertThat(validateGyldigeOperasjoner)
-            .isInstanceOf(OperasjonerValidering.UgyldigeOperasjoner::class.java)
+        val validateGyldigeOperasjoner = utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
+        assertThat(validateGyldigeOperasjoner).contains("Grunnkretsnummer (1234567) må være på åtte tegn.")
     }
 
     @Test
@@ -239,10 +225,8 @@ class UtkastValideringTest {
                 )
             )
 
-        val validateGyldigeOperasjoner =
-            utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
-        assertThat(validateGyldigeOperasjoner)
-            .isInstanceOf(OperasjonerValidering.UgyldigeOperasjoner::class.java)
+        val validateGyldigeOperasjoner = utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
+        assertThat(validateGyldigeOperasjoner).isNotNull.contains("Grunnkretsnummer (123456789) må være på åtte tegn.")
     }
 
     @Test
@@ -256,10 +240,8 @@ class UtkastValideringTest {
                 )
             )
 
-        val validateGyldigeOperasjoner =
-            utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
-        assertThat(validateGyldigeOperasjoner)
-            .isInstanceOf(OperasjonerValidering.UgyldigeOperasjoner::class.java)
+        val validateGyldigeOperasjoner = utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
+        assertThat(validateGyldigeOperasjoner).contains("Kretsnummer (-12345678) kan ikke være negativt.")
     }
 
     @Test
@@ -273,10 +255,8 @@ class UtkastValideringTest {
                 )
             )
 
-        val validateGyldigeOperasjoner =
-            utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
-        assertThat(validateGyldigeOperasjoner)
-            .isInstanceOf(OperasjonerValidering.UgyldigeOperasjoner::class.java)
+        val validateGyldigeOperasjoner = utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
+        assertThat(validateGyldigeOperasjoner).contains("Stemmekretsnummer (12345) kan ikke være på flere enn fire tegn.")
     }
 
     @Test
@@ -290,10 +270,8 @@ class UtkastValideringTest {
                 )
             )
 
-        val validateGyldigeOperasjoner =
-            utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
-        assertThat(validateGyldigeOperasjoner)
-            .isInstanceOf(OperasjonerValidering.UgyldigeOperasjoner::class.java)
+        val validateGyldigeOperasjoner = utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
+        assertThat(validateGyldigeOperasjoner).contains("Kretsnummer (-123) kan ikke være negativt.")
     }
 
     @Test
@@ -306,11 +284,8 @@ class UtkastValideringTest {
                     mapOf("1" to GrunnkretsRequestBuilder(grunnkretsnummer = "12345678").build())
                 )
             )
-
-        val validateGyldigeOperasjoner =
-            utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
-        assertThat(validateGyldigeOperasjoner)
-            .isInstanceOf(OperasjonerValidering.UgyldigeOperasjoner::class.java)
+        val validateGyldigeOperasjoner = utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
+        assertThat(validateGyldigeOperasjoner).contains("De fire første sifrene i grunnkretsnummer (12345678) må være kommunenummer (0301).")
     }
 
     @Test
@@ -337,13 +312,11 @@ class UtkastValideringTest {
                 grenseendringer = operasjonerMedKunEditerbareGrenser().grenseendringer
             )
 
-        val validateGyldigeOperasjoner =
-            utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
-        assertThat(validateGyldigeOperasjoner)
-            .isInstanceOf(OperasjonerValidering.GyldigeOperasjoner::class.java)
+        val validateGyldigeOperasjoner = utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
+        assertThat(validateGyldigeOperasjoner).isEmpty()
     }
 
-    private fun testValiderKretsDelingIUtkast(gyldighetsdato: LocalDate, kretsnummer: String, flatetype: Flatetype, grenseendringer: Grenseendringer): Pair<Utkast, UtkastValidering> {
+    private fun testValiderKretsDelingIUtkast(gyldighetsdato: LocalDate, kretsnummer: String, flatetype: Flatetype, grenseendringer: Grenseendringer): Pair<Utkast, List<String>> {
         val utkast = Utkast(navn = "test", operasjoner = Operasjoner(
             // disse featurene har kontekst til to grunnkretser som IKKE har kretsnummer 25
             grenseendringer = grenseendringer,
@@ -367,13 +340,17 @@ class UtkastValideringTest {
 
         val (utkast, utkastValidering) = testValiderKretsDelingIUtkast(gyldighetsdato, kretsnummer, Flatetype.GRUNNKRETS, operasjonerMedKunEditerbareGrenser().grenseendringer)
 
-        assertThat(utkastValidering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
-
-        assertThat((utkastValidering as UtkastValidering.UgyldigUtkast).feil.message)
-            .isEqualTo("Krets(er) med navn: " +
+        assertThat(utkastValidering).isNotEmpty
+            .contains("Grunnkretsnummer (25) må være på åtte tegn.")
+            .contains("Krets(er) med navn: " +
                 "${utkast.operasjoner?.kretsDelingEndringer?.first()?.nyeKretser?.first()?.kretsNavn} " +
                 "har ikke fått noen grenser tildelt. Dette er en feil, og den kan rettes opp ved å sette tilhørighet på de relevante grensene som skal høre til enten: " +
                 "${utkast.operasjoner?.kretsDelingEndringer?.first()?.nyeKretser?.first()?.kretsNavn}")
+            .contains("Grense med id: 4 har ugyldig tilhørighet. Årsak(er):")
+            .contains("	- Grensen har 2 tilhørighet(er) satt, men må ha 4.")
+            .contains("	- Grensen har 1 tilhørighetstyper satt, men må ha 2.")
+            .contains("	- Grensen er kommune-/fylkesgrense og har tilhørighet til to kretser i samme kommune.")
+
     }
 
     @Test
@@ -383,11 +360,11 @@ class UtkastValideringTest {
 
         val (utkast, utkastValidering) = testValiderKretsDelingIUtkast(gyldighetsdato, kretsnummer, Flatetype.GRUNNKRETS, Grenseendringer())
 
-        assertThat(utkastValidering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
-        assertThat((utkastValidering as UtkastValidering.UgyldigUtkast).feil.message).isEqualTo("Krets(er) med navn: " +
-            "${utkast.operasjoner?.kretsDelingEndringer?.first()?.nyeKretser?.first()?.kretsNavn} " +
-            "har ikke fått noen grenser tildelt. Dette er en feil, og den kan rettes opp ved å sette tilhørighet på de relevante grensene som skal høre til enten: " +
-            "${utkast.operasjoner?.kretsDelingEndringer?.first()?.nyeKretser?.first()?.kretsNavn}")
+        assertThat(utkastValidering).isNotEmpty
+            .contains("Krets(er) med navn: " +
+                "${utkast.operasjoner?.kretsDelingEndringer?.first()?.nyeKretser?.first()?.kretsNavn} " +
+                "har ikke fått noen grenser tildelt. Dette er en feil, og den kan rettes opp ved å sette tilhørighet på de relevante grensene som skal høre til enten: " +
+                "${utkast.operasjoner?.kretsDelingEndringer?.first()?.nyeKretser?.first()?.kretsNavn}")
     }
 
     @Test
@@ -419,8 +396,7 @@ class UtkastValideringTest {
         every { grenseServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns listOf()
 
         val res = testValiderKretsDelingIUtkast(gyldighetsdato, kretsnummer, Flatetype.STEMMEKRETS, grenseendringer)
-
-        assertThat(res.second).isInstanceOf(UtkastValidering.KlartForPublisering::class.java)
+        assertThat(res.second).isEmpty()
     }
 
     @Test
@@ -452,8 +428,7 @@ class UtkastValideringTest {
         every { grenseServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns listOf()
 
         val res = testValiderKretsDelingIUtkast(gyldighetsdato, kretsnummer, Flatetype.GRUNNKRETS, grenseendringer)
-
-        assertThat(res.second).isInstanceOf(UtkastValidering.KlartForPublisering::class.java)
+        assertThat(res.second).isEmpty()
     }
 
     @Test
@@ -472,7 +447,7 @@ class UtkastValideringTest {
         every { grunnkretsServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns listOf()
 
         val utkastValidering = utkastValidatorService.validateUtkastKlartForPublisering(utkast, june2024)
-        assertThat(utkastValidering).isInstanceOf(UtkastValidering.KlartForPublisering::class.java)
+        assertThat(utkastValidering).isEmpty()
     }
 
     @Test
@@ -483,9 +458,8 @@ class UtkastValideringTest {
         val validateGyldigeOperasjoner = utkastValidatorService.validateGyldigeOperasjoner(Operasjoner(
             grenseendringer = Grenseendringer(endredeFeatures = listOf(grenseendringFeature1, grenseendringFeature1, grenseendringFeature2, grenseendringFeature2))
         ))
-        assertThat(validateGyldigeOperasjoner).isInstanceOf(OperasjonerValidering.UgyldigeOperasjoner::class.java)
-        assertThat((validateGyldigeOperasjoner as OperasjonerValidering.UgyldigeOperasjoner).feil.message).contains(
-            "Utkast inneholder grenseendringer for samme grense(r) flere ganger. Grensene (representert ved lokalid) det gjelder er: [1, 2]")
+        assertThat(validateGyldigeOperasjoner)
+            .contains("Utkastet inneholder grenseendringer for samme grense(r) flere ganger. Grensene (representert ved lokalid) det gjelder er: [1, 2].")
     }
 
     @Test
@@ -498,10 +472,10 @@ class UtkastValideringTest {
             .build()
         val utkast1 = Utkast(navn = "test",
             operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureUtenTilhorigheter))))
-        val utkast1Validering = utkastValidatorService.validerTilhorighetEndringer(utkast1)
-        assertThat(utkast1Validering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
-        assertThat((utkast1Validering as UtkastValidering.UgyldigUtkast).feil.message)
-            .contains("Grensen har 0 tilhørighet(er) satt")
+
+        assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast1).joinToString("\n"))
+            .contains("Grensen har 0 tilhørighet(er) satt, men må ha 2.")
+            .contains("Grensen har 0 tilhørighetstyper satt, men må ha 1.")
 
         val featureMedFeilAntallTilhorigheter = FeatureBuilder("1")
             .withGrensetype(Grensetype.Grunnkretsgrense)
@@ -513,9 +487,8 @@ class UtkastValideringTest {
             .build()
         val utkast1b = Utkast(navn = "test",
             operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedFeilAntallTilhorigheter))))
-        val utkast1bValidering = utkastValidatorService.validerTilhorighetEndringer(utkast1b)
-        assertThat(utkast1bValidering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
-        assertThat((utkast1bValidering as UtkastValidering.UgyldigUtkast).feil.message)
+
+        assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast1b).joinToString("\n"))
             .contains("Grensen har 1 tilhørighet(er) satt")
 
         val featureMedFeilToNyeTilhorigheter = FeatureBuilder("1")
@@ -532,7 +505,7 @@ class UtkastValideringTest {
             .build()
         val utkast1c = Utkast(navn = "test",
             operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedFeilToNyeTilhorigheter))))
-        assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast1c)).isNull()
+        assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast1c)).isEmpty()
 
         val featureMedToLikeTilhorigheter = FeatureBuilder("1")
             .withGrensetype(Grensetype.Grunnkretsgrense)
@@ -551,9 +524,8 @@ class UtkastValideringTest {
             ).build()
         val utkast2 = Utkast(navn = "test",
             operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedToLikeTilhorigheter))))
-        val utkast2Validering = utkastValidatorService.validerTilhorighetEndringer(utkast2)
-        assertThat(utkast2Validering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
-        assertThat((utkast2Validering as UtkastValidering.UgyldigUtkast).feil.message)
+
+        assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast2).joinToString("\n"))
             .contains("Grensen har flere tilhørigheter til samme krets. Gjelder kretsnr 12345678 med lokalid G3")
 
         val featureMedToTilhorigheterMedSammeLokalid = FeatureBuilder("1")
@@ -573,9 +545,8 @@ class UtkastValideringTest {
             ).build()
         val utkast2b = Utkast(navn = "test",
             operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedToTilhorigheterMedSammeLokalid))))
-        val utkast2bValidering = utkastValidatorService.validerTilhorighetEndringer(utkast2b)
-        assertThat(utkast2bValidering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
-        assertThat((utkast2bValidering as UtkastValidering.UgyldigUtkast).feil.message)
+
+        assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast2b).joinToString("\n"))
             .contains("Grensen har flere tilhørigheter til samme krets")
 
         val featureMedToTilhorigheterMedSammeData = FeatureBuilder("1")
@@ -594,10 +565,9 @@ class UtkastValideringTest {
             ).build()
         val utkast2c = Utkast(navn = "test",
             operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedToTilhorigheterMedSammeData))))
-        val utkast2cValidering = utkastValidatorService.validerTilhorighetEndringer(utkast2c)
-        assertThat(utkast2cValidering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
-        assertThat((utkast2cValidering as UtkastValidering.UgyldigUtkast).feil.message)
-            .contains("Grensen har flere tilhørigheter til samme krets")
+
+        assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast2c).joinToString("\n"))
+            .contains("Grensen har flere tilhørigheter til samme krets. Gjelder kretsnr 12345678")
 
         val kommuneGrenseFeatureMedTilhorigheterISammeKommune = FeatureBuilder("1")
             .withGrensetype(Grensetype.Kommunegrense)
@@ -617,9 +587,8 @@ class UtkastValideringTest {
             .build()
         val utkast3 = Utkast(navn = "test",
             operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(kommuneGrenseFeatureMedTilhorigheterISammeKommune))))
-        val utkast3Validering = utkastValidatorService.validerTilhorighetEndringer(utkast3)
-        assertThat(utkast3Validering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
-        assertThat((utkast3Validering as UtkastValidering.UgyldigUtkast).feil.message)
+
+        assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast3).joinToString("\n"))
             .contains("Grensen har 2 tilhørighet(er) satt, men må ha 4")
             .contains("Grensen har 1 tilhørighetstyper satt, men må ha 2")
             .contains("Grensen er kommune-/fylkesgrense og har tilhørighet til to kretser i samme kommune")
@@ -644,9 +613,8 @@ class UtkastValideringTest {
             .build()
         val utkast4 = Utkast(navn = "test",
             operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedToFeil))))
-        val utkast4Validering = utkastValidatorService.validerTilhorighetEndringer(utkast4)
-        assertThat(utkast4Validering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
-        assertThat((utkast4Validering as UtkastValidering.UgyldigUtkast).feil.message)
+
+        assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast4).joinToString("\n"))
             .contains("Grense med id: 1 har ugyldig tilhørighet. Årsak(er)")
             .contains("Grensen har 2 tilhørighet(er) satt, men må ha 4")
             .contains("Grensen har 1 tilhørighetstyper satt, men må ha 2")
@@ -672,9 +640,8 @@ class UtkastValideringTest {
             .build()
         val utkast5 = Utkast(navn = "test",
             operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedStemmekretsOgGrunnkrets))))
-        val utkast5Validering = utkastValidatorService.validerTilhorighetEndringer(utkast5)
-        assertThat(utkast5Validering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
-        assertThat((utkast5Validering as UtkastValidering.UgyldigUtkast).feil.message)
+
+        assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast5).joinToString("\n"))
             .contains("Grense med id: 1 har ugyldig tilhørighet. Årsak(er)")
             .contains("Grensen har 2 tilhørighet(er) satt, men må ha 4")
             .doesNotContain("Grensen har 1 tilhørighetstyper satt, men må ha 2")
@@ -705,9 +672,8 @@ class UtkastValideringTest {
             .build()
         val utkast6 = Utkast(navn = "test",
             operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedTreKontekstegenskaper))))
-        val utkast6Validering = utkastValidatorService.validerTilhorighetEndringer(utkast6)
-        assertThat(utkast6Validering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
-        assertThat((utkast6Validering as UtkastValidering.UgyldigUtkast).feil.message)
+
+        assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast6).joinToString("`n"))
             .contains("Grensen har 3 tilhørighet(er) satt, men må ha 4")
             .doesNotContain("Grensen har 1 tilhørighetstyper satt, men må ha 2")
             .doesNotContain("Grensen er kommune-/fylkesgrense og har tilhørighet til to kretser i samme kommune")
@@ -744,9 +710,8 @@ class UtkastValideringTest {
             .build()
         val utkast7 = Utkast(navn = "test",
             operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedFireKontekstegenskaper))))
-        val utkast7Validering = utkastValidatorService.validerTilhorighetEndringer(utkast7)
-        assertThat(utkast7Validering).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
-        assertThat((utkast7Validering as UtkastValidering.UgyldigUtkast).feil.message)
+
+        assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast7).joinToString("\n"))
             .contains("Grensen er kommune-/fylkesgrense og har tilhørighet til to kretser i samme kommune")
 
         val korrektKommunegrenseFeature = FeatureBuilder("1")
@@ -781,7 +746,7 @@ class UtkastValideringTest {
             .build()
         val utkastOk = Utkast(navn = "test",
             operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(korrektKommunegrenseFeature))))
-        assertThat(utkastValidatorService.validerTilhorighetEndringer(utkastOk)).isNull()
+        assertThat(utkastValidatorService.validerTilhorighetEndringer(utkastOk)).isEmpty()
     }
 
     @Test
@@ -818,8 +783,9 @@ class UtkastValideringTest {
             .withOperasjoner(operasjoner)
             .build()
 
-        val validateGyldigUtkastResult = utkastValidatorService.validateGyldigUtkast(gyldigUtkast, june2024)
-        assertThat(validateGyldigUtkastResult).isInstanceOf(UtkastValidering.GyldigUtkast::class.java)
+        val validateGyldigUtkastResult =
+            utkastValidatorService.validateGyldigUtkast(gyldigUtkast, gyldigUtkast.auditInfo.typeEndring.value, june2024)
+        assertThat(validateGyldigUtkastResult).isEmpty()
     }
 
     @Test
@@ -827,7 +793,8 @@ class UtkastValideringTest {
         val utkastUtenOperasjoner = UtkastBuilder.builder("Utkast for publisering")
             .build()
 
-        val validateGyldigUtkastResult = utkastValidatorService.validateGyldigUtkast(utkastUtenOperasjoner, june2024)
-        assertThat(validateGyldigUtkastResult).isInstanceOf(UtkastValidering.GyldigUtkast::class.java)
+        val validateGyldigUtkastResult =
+            utkastValidatorService.validateGyldigUtkast(utkastUtenOperasjoner, utkastUtenOperasjoner.auditInfo.typeEndring.value, june2024)
+        assertThat(validateGyldigUtkastResult).isEmpty()
     }
 }

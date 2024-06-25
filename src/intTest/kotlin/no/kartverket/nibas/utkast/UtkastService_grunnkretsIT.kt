@@ -16,7 +16,6 @@ import no.kartverket.nibas.sporing.Gyldighet
 import no.kartverket.nibas.sporing.UserFacade
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.catchThrowableOfType
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.test.context.ActiveProfiles
@@ -26,6 +25,7 @@ import java.time.LocalDateTime
 import java.time.Month
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import kotlin.test.assertFailsWith
 
 /**
  * Vil at testene skal være transaksjonelle for å rulle tilbake.
@@ -166,9 +166,9 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
         )
 
         // Kall til publiser skal feile.
-        val oppdateringException = catchThrowableOfType({
+        val oppdateringException = assertFailsWith<FeilVedOppdatering.OppdateringException> {
             publiser(utkastId, july1In2023)
-        }, FeilVedOppdatering.OppdateringException::class.java)
+        }
 
         assertThat(oppdateringException).isNotNull
         val oppdateringInfo = oppdateringException.oppdateringInfo

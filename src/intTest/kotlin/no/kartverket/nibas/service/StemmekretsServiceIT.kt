@@ -15,8 +15,10 @@ import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.api.v1.request.KretsNavnOgNummer
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
 import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
+import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.builders.MaalemetodeKodeEnum
 import no.kartverket.nibas.builders.StemmekretsRequestBuilder
+import no.kartverket.nibas.builders.UtkastRequestBuilder
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
@@ -25,6 +27,7 @@ import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Stemmekrets
+import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.extensions.geometry.geometryToDto
 import no.kartverket.nibas.extensions.geometry.grenseToFeature
 import no.kartverket.nibas.kodelister.KodelisteService
@@ -40,6 +43,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.Month
+import kotlin.test.assertFailsWith
 
 @ActiveProfiles("security-off")
 @Transactional
@@ -823,23 +827,36 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         val opprinneligStemmekrets = saveStemmekrets("opprinneligKrets", Lokalid("opprinneligKrets"))
 
         val kommune = saveKommune(stemmekretser = listOf(opprinneligStemmekrets), gyldigFra = jan1In2023)
-
         stemmekretsService.createNyVersjonAvStemmekrets(opprinneligStemmekrets, gyldigFra = jan1In2023, Endringstype.RETTING)
 
         val delingEndringRequest = KretsDelingEndringRequest(
-            IdentifikatorMedVersjon(opprinneligStemmekrets.lokalid, opprinneligStemmekrets.version),
+            IdentifikatorMedVersjon(opprinneligStemmekrets.lokalid, opprinneligStemmekrets.version - 1),
             ObjektIdentifikator(Lokalid(kommune.lokalid), jan1In2023),
             Flatetype.STEMMEKRETS,
             nyeKretser = listOf(KretsNavnOgNummer("nyStemmekrets", "1"))
         )
 
-        val unikKretsDelingEndring = getUnikeKretsDelingEndringRequests(delingEndringRequest).first()
+        val utkastRequestBuilder = UtkastRequestBuilder()
+            .withOperasjoner(Operasjoner(kretsDelingEndringer = listOf(delingEndringRequest)))
 
-        assertThatThrownBy {
-            stemmekretsService.delStemmekrets(unikKretsDelingEndring, jan1In2023, Endringstype.VEDTATT_DELING)
+        val utkast = UtkastBuilder.builder("test")
+            .withOperasjoner(Operasjoner(kretsDelingEndringer = listOf(delingEndringRequest)))
+            .build()
+        utkastRepository.save(utkast)
+
+        val oppdaterutkastexception = assertFailsWith<OptimistiskLaasException> {
+            utkastService.oppdaterUtkast(utkast.id, utkastRequestBuilder
+                .build())
         }
-            .isInstanceOf(OptimistiskLaasException::class.java)
-            .hasMessageContaining("Det er ikke samsvar med versjon")
+        assertThat(oppdaterutkastexception.konflikter.first().getMessage())
+            .contains("Det er ikke samsvar med versjon for stemmekrets 9 Øvre Singsaker. Ønsket versjon = 0, eksisterende versjon = 2")
+
+        val publiserutkastexception = assertFailsWith<OptimistiskLaasException> {
+            utkastService.publiserUtkast(utkast.id)
+        }
+        assertThat(publiserutkastexception.message).contains("Det er ikke samsvar med versjon")
+        assertThat(publiserutkastexception.konflikter.first().getMessage())
+            .contains("Det er ikke samsvar med versjon for stemmekrets 9 Øvre Singsaker. Ønsket versjon = 0, eksisterende versjon = 2")
     }
 
     private fun assertDelteGrenser(oensketGammelDato: LocalDate, oensketGammelKrets1: Stemmekrets, oensketGammelKrets2: Stemmekrets,

@@ -240,7 +240,7 @@ internal class UtkastControllerTest : NibasMvcTest() {
                             type = "Fylke",
                             gjeldendeVersjon = 4,
                             versjon = 3,
-                            melding = "Det er ikke samsvar med versjon. Ønsket versjon = 3, eksisterende versjon = 4 for objekt med id = $fylkeId"
+                            melding = "Det er ikke samsvar med versjon for fylke 89 Ukjent navn. Ønsket versjon = 3, eksisterende versjon = 4 for objekt med id = $fylkeId"
                         )
                     )),
                 resultMatchers = listOf(status().isConflict)

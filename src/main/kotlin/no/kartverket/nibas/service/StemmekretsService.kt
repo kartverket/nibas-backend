@@ -3,6 +3,7 @@ package no.kartverket.nibas.service
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.common.UnikKretsDelingEndring
+import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
 import no.kartverket.nibas.common.Identifikator
@@ -22,7 +23,6 @@ import no.kartverket.nibas.repository.findAllByLokalidSortedByGyldigFra
 import no.kartverket.nibas.repository.findAntallFramtidigeVersjonerForIdentifikator
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import no.kartverket.nibas.repository.findGyldigObjektPaaGyldighetsdato
-import no.kartverket.nibas.repository.verifiserOptimistiskLaas
 import org.locationtech.jts.geom.GeometryFactory
 import org.locationtech.jts.geom.MultiPolygon
 import org.springframework.stereotype.Service
@@ -95,11 +95,11 @@ class StemmekretsService(
         sammenslaaingsDato: LocalDate,
         endringstype: Endringstype
     ): Pair<Stemmekrets, List<Stemmekrets>> {
-        val identifikatorViderefoerStemmekrets =
+        val identifikatorViderefoertStemmekrets =
             Identifikator(lokalid = Lokalid(sammenslaaingsendringRequest.viderefoertStemmekrets.lokalId), gyldighetsdato = sammenslaaingsDato)
-        val viderefortStemmekrets = hentStemmekrets(identifikatorViderefoerStemmekrets)
+        val viderefortStemmekrets = hentStemmekrets(identifikatorViderefoertStemmekrets)
             ?: throw ResponseException.NotFoundException(title = "Stemmekrets ikke funnet",
-                msg = "Videreført stemmekrets med identifikator: $identifikatorViderefoerStemmekrets ble ikke funnet")
+                msg = "Videreført stemmekrets med identifikator: $identifikatorViderefoertStemmekrets ble ikke funnet")
 
         val stemmekretserSomUtgaar = sammenslaaingsendringRequest.stemmekretserTilSammenslaaing
             .map { Identifikator(lokalid = Lokalid(it.lokalId), gyldighetsdato = sammenslaaingsDato) }
@@ -110,7 +110,8 @@ class StemmekretsService(
 
         stemmekretserSomUtgaar.forEach { it.setGyldigTil(sammenslaaingsDato) }
 
-        val alleStemmekretsGrensekoblinger = viderefortStemmekrets.getGrensekoblinger(sammenslaaingsDato) + stemmekretserSomUtgaar.flatMap { it.getGrensekoblinger(sammenslaaingsDato) }
+        val alleStemmekretsGrensekoblinger = viderefortStemmekrets.getGrensekoblinger(sammenslaaingsDato) +
+            stemmekretserSomUtgaar.flatMap { it.getGrensekoblinger(sammenslaaingsDato) }
 
         val nyStemmekrets = createNyVersjonAvStemmekretsUtenGrenser(viderefortStemmekrets, sammenslaaingsDato, endringstype)
             .apply {
@@ -141,24 +142,37 @@ class StemmekretsService(
         return Pair(nyStemmekrets, stemmekretserSomUtgaar)
     }
 
-    fun validerOptimistiskLaasForStemmekretsSammenslaaing(sammenslaaingsendringRequest: StemmekretsSammenslaaingsendringRequest, gyldigFra: LocalDate) {
-        val identifikatorViderefoerStemmekrets =
+    fun validerStemmekretserForSammenslaaingFinnesOgLagListeMedStemmekretsOgOensketVersjon(sammenslaaingsendringRequest: StemmekretsSammenslaaingsendringRequest,
+                                                                                           gyldigFra: LocalDate)
+        : List<Pair<Stemmekrets, Int>> {
+        val identifikatorViderefoertStemmekrets =
             Identifikator(lokalid = Lokalid(sammenslaaingsendringRequest.viderefoertStemmekrets.lokalId), gyldighetsdato = gyldigFra)
-        val viderefortStemmekrets = hentStemmekrets(identifikatorViderefoerStemmekrets)
-            ?: throw ResponseException.BadRequestException("Fant ikke stemmekrets med id ${identifikatorViderefoerStemmekrets.lokalid.value} som er gyldig ${gyldigFra.toNorskFormat()}")
+        val viderefortStemmekrets = hentStemmekrets(identifikatorViderefoertStemmekrets)
+            ?: throw ResponseException.NotFoundException("Fant ikke stemmekrets med id ${identifikatorViderefoertStemmekrets.lokalid.value} som er gyldig ${gyldigFra.toNorskFormat()}")
 
         val stemmekretserSomUtgaar = sammenslaaingsendringRequest.stemmekretserTilSammenslaaing
             .map { Identifikator(lokalid = Lokalid(it.lokalId), gyldighetsdato = gyldigFra) }
-            .mapNotNull { hentStemmekrets(it) }
+            .map {
+                hentStemmekrets(it) ?: throw ResponseException.NotFoundException(title = "Stemmekrets ikke funnet",
+                    msg = "Stemmekrets til sammenslåing med identifikator: $it ble ikke funnet")
+            }
 
         val stemmekretserForSjekkeOptimistiskLaas = stemmekretserSomUtgaar.map { stemmekrets ->
             Pair(stemmekrets, sammenslaaingsendringRequest.stemmekretserTilSammenslaaing.find { it.lokalId == stemmekrets.lokalid }?.version!!)
         }.plus(Pair(viderefortStemmekrets, sammenslaaingsendringRequest.viderefoertStemmekrets.version))
 
-        stemmekretserForSjekkeOptimistiskLaas
-            .forEach { (stemmekrets, versjon) ->
-                verifiserOptimistiskLaas(versjon, stemmekrets)?.throwException()
-            }
+        return stemmekretserForSjekkeOptimistiskLaas
+    }
+
+    fun validerStemmekretsForDelingFinnesOgLagPairMedStemmekretsOgOensketVersjon(kretsDelingEndringRequest: KretsDelingEndringRequest, gyldigFra: LocalDate)
+        : Pair<Stemmekrets, Int> {
+        val stemmekretsForSjekkeOptimistiskLaas =
+            Identifikator(lokalid = Lokalid(kretsDelingEndringRequest.opprinneligKrets.lokalId), gyldighetsdato = gyldigFra)
+                .let {
+                    hentStemmekrets(it) ?: throw ResponseException.NotFoundException(title = "Stemmekrets ikke funnet",
+                        msg = "Fant ikke stemmekrets for deling med lokalid: ${it.lokalid.value} gyldig på $gyldigFra")
+                }.let { Pair(it, kretsDelingEndringRequest.opprinneligKrets.version) }
+        return stemmekretsForSjekkeOptimistiskLaas
     }
 
     fun delStemmekrets(
@@ -169,9 +183,7 @@ class StemmekretsService(
         }
         val identifikator = Identifikator(Lokalid(kretsDelingEndringRequest.opprinneligKrets.lokalId), delingsDato)
         val stemmekrets = hentStemmekrets(identifikator)
-            ?: throw ResponseException.NotFoundException("Fant ikke stemmekrets med lokalid: ${kretsDelingEndringRequest.opprinneligKrets.lokalId} gylidg på $delingsDato")
-
-        verifiserOptimistiskLaas(kretsDelingEndringRequest.opprinneligKrets.version, stemmekrets)?.throwException()
+            ?: throw ResponseException.NotFoundException("Fant ikke stemmekrets med lokalid: ${kretsDelingEndringRequest.opprinneligKrets.lokalId} gyldig på $delingsDato")
 
         val geometryFactory = GeometryFactory()
 

@@ -5,6 +5,7 @@ import io.mockk.every
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
+import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
@@ -19,12 +20,14 @@ import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.GrunnkretsRequestBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.builders.MaalemetodeKodeEnum
+import no.kartverket.nibas.builders.UtkastRequestBuilder
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
+import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.extensions.geometry.geometryToDto
 import no.kartverket.nibas.extensions.geometry.grenseToFeature
 import no.kartverket.nibas.kodelister.KodelisteService
@@ -41,6 +44,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.Month
+import kotlin.test.assertFailsWith
 
 @ActiveProfiles(profiles = ["security-off", "eventsDisabled"])
 @Transactional
@@ -973,19 +977,33 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         grunnkretsService.createNyVersjonAvGrunnkrets(opprinneligGrunnkrets, gyldigFra = jan1In2023, Endringstype.RETTING)
 
         val delingEndringRequest = KretsDelingEndringRequest(
-            IdentifikatorMedVersjon(opprinneligGrunnkrets.lokalid, opprinneligGrunnkrets.version),
+            IdentifikatorMedVersjon(opprinneligGrunnkrets.lokalid, opprinneligGrunnkrets.version - 1),
             ObjektIdentifikator(Lokalid(kommune.lokalid), jan1In2023),
             Flatetype.GRUNNKRETS,
             nyeKretser = listOf(KretsNavnOgNummer("nyGrunnkrets", "1"))
         )
 
-        val unikKretsDelingEndring = getUnikeKretsDelingEndringRequests(delingEndringRequest).first()
+        val utkastRequestBuilder = UtkastRequestBuilder()
+            .withOperasjoner(Operasjoner(kretsDelingEndringer = listOf(delingEndringRequest)))
 
-        Assertions.assertThatThrownBy {
-            grunnkretsService.delGrunnkrets(unikKretsDelingEndring, jan1In2023, Endringstype.VEDTATT_DELING)
+        val utkast = UtkastBuilder.builder("test")
+            .withOperasjoner(Operasjoner(kretsDelingEndringer = listOf(delingEndringRequest)))
+            .build()
+        utkastRepository.save(utkast)
+
+        val oppdaterutkastexception = assertFailsWith<OptimistiskLaasException> {
+            utkastService.oppdaterUtkast(utkast.id, utkastRequestBuilder
+                .build())
         }
-            .isInstanceOf(OptimistiskLaasException::class.java)
-            .hasMessageContaining("Det er ikke samsvar med versjon")
+        assertThat(oppdaterutkastexception.konflikter.first().getMessage())
+            .contains("Det er ikke samsvar med versjon for grunnkrets 42270304 Dåsvatn. Ønsket versjon = 0, eksisterende versjon = 2")
+
+        val publiserutkastexception = assertFailsWith<OptimistiskLaasException> {
+            utkastService.publiserUtkast(utkast.id)
+        }
+        assertThat(publiserutkastexception.message).contains("Det er ikke samsvar med versjon")
+        assertThat(publiserutkastexception.konflikter.first().getMessage())
+            .contains("Det er ikke samsvar med versjon for grunnkrets 42270304 Dåsvatn. Ønsket versjon = 0, eksisterende versjon = 2")
     }
 
     private fun assertDelteGrenser(oensketGammelDato: LocalDate, oensketGammelKrets1: Grunnkrets, oensketGammelKrets2: Grunnkrets,

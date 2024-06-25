@@ -85,7 +85,7 @@ internal class UtkastServiceTest {
     @BeforeEach
     fun beforeEach() {
         every { currentTime.asLocalDate() } returns (LocalDate.of(2022, 6, 1))
-        every { grenseServiceMock.validerOptimistiskLaasKonflikter(any(), any()) } returns Unit
+        every { grenseServiceMock.validerLaasbareForGrenseendringerFinnesOgLagListeMedLaasbarOgOensketVersjon(any(), any()) } returns emptyList()
         val utkastValidatorService = UtkastValidatorService(grunnkretsServiceMock, grenseServiceMock, stemmekretsServiceMock, kodelisteServiceMock, currentTime)
         utkastService = UtkastService(utkastRepositoryMock, nasjonServiceMock, fylkeServiceMock, kommuneServiceMock, grunnkretsServiceMock,
             stemmekretsServiceMock, grenseServiceMock, nibasEventPublisherMock, utkastValidatorService)
@@ -100,7 +100,7 @@ internal class UtkastServiceTest {
                     .build())
         }
             .isInstanceOf(BadRequestException::class.java)
-            .hasMessageContaining("Husk å fylle inn både navnet og endringstypen på utkastet.")
+            .hasMessageContaining("Utkastet mangler navn")
     }
 
     @Test
@@ -112,7 +112,20 @@ internal class UtkastServiceTest {
                     .build())
         }
             .isInstanceOf(BadRequestException::class.java)
-            .hasMessageContaining("Husk å fylle inn både navnet og endringstypen på utkastet.")
+            .hasMessageContaining("Utkastet mangler endringstype")
+    }
+
+    @Test
+    fun `opprett utkast med tomt navn og tom endringstype gir bad request`() {
+        assertThatThrownBy {
+            utkastService.opprettUtkast(
+                OpprettUtkastRequestBuilder()
+                    .withNavn("")
+                    .withEndringstype("")
+                    .build())
+        }
+            .isInstanceOf(BadRequestException::class.java)
+            .hasMessageContaining("Utkastet mangler navn og endringstype")
     }
 
     @Test
@@ -138,11 +151,64 @@ internal class UtkastServiceTest {
     }
 
     @Test
+    fun `forkast utkast med status Publisert gir BadRequest`() {
+        val utkastBuilder = UtkastBuilder.builder("Utkast 3")
+            .withKommuneRequests(mapOf("Kommune-UUID-1" to KommuneRequestBuilder.DEFAULT_REQUEST))
+            .withStatus(UtkastStatus.PUBLISERT)
+        val utkast = utkastBuilder.build()
+
+        every { utkastRepositoryMock.findById(any()) } returns Optional.of(utkast)
+        every { kommuneServiceMock.hentKommune(any()) } returns KommuneBuilder.DEFAULT_KOMMUNE
+
+        assertThatThrownBy {
+            utkastService.forkastUtkast(utkast.id)
+        }
+            .isInstanceOf(BadRequestException::class.java)
+            .hasMessageContaining("Kan ikke forkaste et utkast som er publisert")
+    }
+
+    @Test
+    fun `oppdater utkast med status Publisert gir BadRequest`() {
+        val utkastBuilder = UtkastBuilder.builder("Utkast 3")
+            .withKommuneRequests(mapOf("Kommune-UUID-1" to KommuneRequestBuilder.DEFAULT_REQUEST))
+            .withStatus(UtkastStatus.PUBLISERT)
+        val utkast = utkastBuilder.build()
+
+        every { utkastRepositoryMock.findById(any()) } returns Optional.of(utkast)
+        every { kommuneServiceMock.hentKommune(any()) } returns KommuneBuilder.DEFAULT_KOMMUNE
+
+        assertThatThrownBy {
+            utkastService.oppdaterUtkast(utkast.id, UtkastRequestBuilder().build())
+        }
+            .isInstanceOf(BadRequestException::class.java)
+            .hasMessageContaining("Kan ikke oppdatere et utkast med status PUBLISERT")
+    }
+
+    @Test
+    fun `oppdater utkast med status Forkastet gir BadRequest`() {
+        val utkastBuilder = UtkastBuilder.builder("Utkast 3")
+            .withKommuneRequests(mapOf("Kommune-UUID-1" to KommuneRequestBuilder.DEFAULT_REQUEST))
+            .withStatus(UtkastStatus.FORKASTET)
+        val utkast = utkastBuilder.build()
+
+        every { utkastRepositoryMock.findById(any()) } returns Optional.of(utkast)
+        every { kommuneServiceMock.hentKommune(any()) } returns KommuneBuilder.DEFAULT_KOMMUNE
+
+        assertThatThrownBy {
+            utkastService.oppdaterUtkast(utkast.id, UtkastRequestBuilder().build())
+        }
+            .isInstanceOf(BadRequestException::class.java)
+            .hasMessageContaining("Kan ikke oppdatere et utkast med status FORKASTET")
+    }
+
+    @Test
     fun `oppdater utkast med tomt navn gir bad request`() {
         val utkastBuilder = UtkastBuilder.builder("lovlig utkast")
-            .withFylkeRequests(mapOf("Fylke-UUID-1" to FylkeRequestBuilder.DEFAULT_REQUEST))
             .withKommuneRequests(mapOf("Kommune-UUID-1" to KommuneRequestBuilder.DEFAULT_REQUEST))
         val utkast = utkastBuilder.build()
+
+        every { utkastRepositoryMock.findById(any()) } returns Optional.of(utkast)
+        every { kommuneServiceMock.hentKommune(any()) } returns KommuneBuilder.DEFAULT_KOMMUNE
 
         assertThatThrownBy {
             utkastService.oppdaterUtkast(utkast.id, UtkastRequestBuilder()
@@ -150,7 +216,7 @@ internal class UtkastServiceTest {
                 .build())
         }
             .isInstanceOf(BadRequestException::class.java)
-            .hasMessageContaining("Husk å fylle inn både navnet og endringstypen på utkastet.")
+            .hasMessageContaining("Utkastet mangler navn")
     }
 
     @Test
@@ -159,31 +225,34 @@ internal class UtkastServiceTest {
             .withOperasjoner(
                 Operasjoner(
                     metadataendringer = Metadataendringer(
-                        stemmekretsendringer = mapOf("1" to StemmekretsRequestBuilder(stemmekretsnavn = "").build())
+                        stemmekretsendringer = mapOf("1" to StemmekretsRequestBuilder(stemmekretsnummer = "aa", stemmekretsnavn = "").build())
                     )
                 )
             )
             .build()
 
-        every { utkastRepositoryMock.findById(any()) } returns Optional.of(Utkast(navn="Gyldig"))
+        every { utkastRepositoryMock.findById(any()) } returns Optional.of(Utkast(navn = "Gyldig"))
+        every { stemmekretsServiceMock.hentStemmekrets(any()) } returns StemmekretsBuilder.DEFAULT_STEMMEKRETS
+        every { stemmekretsServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns listOf()
 
         assertThatThrownBy { utkastService.oppdaterUtkast("123", utkast) }
             .isInstanceOf(BadRequestException::class.java)
-            .hasMessageContaining("ugyldige metadataendringer på stemmekrets")
+            .hasMessageContaining("Kretsnavn kan ikke være tomt.")
     }
 
     @Test
     fun oppdaterUtkastMedIkkeEditerbareGrenserGirBadRequest() {
-
         val utkast = UtkastRequestBuilder()
             .withOperasjoner(operasjonerMedIkkeEditerbareGrenser())
             .build()
 
-        every { utkastRepositoryMock.findById(any()) } returns Optional.of(Utkast(navn="Gyldig"))
+        every { utkastRepositoryMock.findById(any()) } returns Optional.of(Utkast(navn = "Gyldig"))
+        every { grenseServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns listOf()
+        every { grunnkretsServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns listOf()
 
         assertThatThrownBy { utkastService.oppdaterUtkast("123", utkast) }
             .isInstanceOf(BadRequestException::class.java)
-            .hasMessageContaining("Utkast inneholder 4 ikke-redigerbare grenser")
+            .hasMessageContaining("Utkastet inneholder 4 ikke-redigerbare grenser")
     }
 
     @Test
@@ -197,11 +266,13 @@ internal class UtkastServiceTest {
             ))
             .build()
 
-        every { utkastRepositoryMock.findById(any()) } returns Optional.of(Utkast(navn="Gyldig"))
+        every { utkastRepositoryMock.findById(any()) } returns Optional.of(Utkast(navn = "Gyldig"))
+        every { grunnkretsServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns listOf()
+        every { grunnkretsServiceMock.hentGrunnkrets(any()) } returns GrunnkretsBuilder.DEFAULT_GRUNNKRETS
 
         assertThatThrownBy { utkastService.oppdaterUtkast("123", utkast) }
             .isInstanceOf(BadRequestException::class.java)
-            .hasMessageContaining("ugyldige metadataendringer")
+            .hasMessageContaining("Grunnkretsnummer (1234567) må være på åtte tegn.")
     }
 
     @Test
@@ -215,15 +286,17 @@ internal class UtkastServiceTest {
             ))
             .build()
 
-        every { utkastRepositoryMock.findById(any()) } returns Optional.of(Utkast(navn="Gyldig"))
+        every { utkastRepositoryMock.findById(any()) } returns Optional.of(Utkast(navn = "Gyldig"))
+        every { grunnkretsServiceMock.hentGrunnkrets(any()) } returns GrunnkretsBuilder.DEFAULT_GRUNNKRETS
+        every { grunnkretsServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns listOf()
 
         assertThatThrownBy { utkastService.oppdaterUtkast("123", utkastRequest) }
             .isInstanceOf(BadRequestException::class.java)
-            .hasMessageContaining("ugyldige metadataendringer")
+            .hasMessageContaining("Kretsnummer (grunnkretsnummer) kan bare inneholde sifre.")
     }
 
     @Test
-    fun publiserUtkastMedAnnenStatusEnnOpprettetGirBadRequestEx() {
+    fun `publiser utkast med status Publisert gir BadRequest`() {
         val publisertUtkast = UtkastBuilder.builder("Utkast for publisering")
             .withStatus(UtkastStatus.PUBLISERT)
             .build()
@@ -233,6 +306,21 @@ internal class UtkastServiceTest {
         assertThatThrownBy {
             utkastService.publiserUtkast(publisertUtkast.id)
         }.isInstanceOf(BadRequestException::class.java)
+            .hasMessageContaining("Kan ikke publisere et utkast med status PUBLISERT")
+    }
+
+    @Test
+    fun `publiser utkast med status Forkastet gir BadRequest`() {
+        val publisertUtkast = UtkastBuilder.builder("Utkast for publisering")
+            .withStatus(UtkastStatus.FORKASTET)
+            .build()
+
+        every { utkastRepositoryMock.findById(any()) } returns Optional.of(publisertUtkast)
+
+        assertThatThrownBy {
+            utkastService.publiserUtkast(publisertUtkast.id)
+        }.isInstanceOf(BadRequestException::class.java)
+            .hasMessageContaining("Kan ikke publisere et utkast med status FORKASTET")
     }
 
     @Test
@@ -289,7 +377,7 @@ internal class UtkastServiceTest {
         every { stemmekretsServiceMock.oppdaterStemmekrets(any(), any(), any(), any()) } returns Stemmekrets()
         every { grenseServiceMock.lagreGrenser(any(), any(), any()) } returns emptySet()
         every { nibasEventPublisherMock.publishNibasEvent(any(), any()) } returns NibasEvent(LocalDate.of(2024, Month.JANUARY, 1), emptySet())
-        every { grenseServiceMock.validerOptimistiskLaasKonflikter(any(), any()) } returns Unit
+        every { grenseServiceMock.validerLaasbareForGrenseendringerFinnesOgLagListeMedLaasbarOgOensketVersjon(any(), any()) } returns emptyList()
 
         utkastService.publiserUtkast(utkast.id)
 

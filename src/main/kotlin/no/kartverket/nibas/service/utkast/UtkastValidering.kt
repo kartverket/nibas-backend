@@ -13,10 +13,8 @@ import no.kartverket.nibas.common.CurrentTime
 import no.kartverket.nibas.common.FeilVedOppdatering
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
-import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.common.toNorskFormat
 import no.kartverket.nibas.domain.utkast.Utkast
-import no.kartverket.nibas.domain.utkast.UtkastStatus
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.service.GrenseService
 import no.kartverket.nibas.service.GrunnkretsService
@@ -33,109 +31,96 @@ class UtkastValidatorService(
     val currentTime: CurrentTime
 ) {
 
-    fun validateGyldigeOperasjoner(operasjoner: Operasjoner): OperasjonerValidering {
+    fun validateGyldigeOperasjoner(operasjoner: Operasjoner): List<String> {
+        val errorMessages = mutableListOf<String>()
         val endredeFeatures: List<Feature> = operasjoner.grenseendringer.endredeFeatures
+
         val featuresSomGjentas = endredeFeatures.filter { it.id != null }.groupBy { it.id }.filterValues { it.size > 1 }
         if (featuresSomGjentas.isNotEmpty()) {
-            return OperasjonerValidering.UgyldigeOperasjoner(operasjoner, ResponseException.BadRequestException("Utkast inneholder grenseendringer for samme grense(r) flere ganger. Grensene (representert ved lokalid) det gjelder er: ${featuresSomGjentas.map { it.key }.sortedBy { it }}"))
+            errorMessages.add("Utkastet inneholder grenseendringer for samme grense(r) flere ganger. Grensene (representert ved lokalid) det gjelder er: ${featuresSomGjentas.map { it.key }.sortedBy { it }}.")
         }
 
         val featuresSomIkkeErEditerbare = endredeFeatures.filterNot { Grensetype.fromValue(it.properties.type).editerbar }
         if (featuresSomIkkeErEditerbare.isNotEmpty()) {
-            return OperasjonerValidering.UgyldigeOperasjoner(operasjoner, ResponseException.BadRequestException("Utkast inneholder ${featuresSomIkkeErEditerbare.size} ikke-redigerbare grenser"))
+            errorMessages.add("Utkastet inneholder ${featuresSomIkkeErEditerbare.size} ikke-redigerbare grenser.")
         }
 
-        val kretsinfoValideringsfeil = validerKretsinfoEndringer(operasjoner)
-        if (kretsinfoValideringsfeil != null) return kretsinfoValideringsfeil
+        errorMessages.addAll(validerKretsinfoEndringer(operasjoner))
 
-        return OperasjonerValidering.GyldigeOperasjoner(operasjoner)
+        return errorMessages
     }
 
-    fun sjekkUgyldigUtkastNavnOgEndringstype(navn: String, endringstype: String): Boolean {
+    fun sjekkUgyldigUtkastNavnOgEndringstype(navn: String, endringstype: String): String? {
         //Sjekker om navn og endringstype er ugyldige
-        return (navn.isBlank() || endringstype.isBlank())
+        var errorMessage: String? = null
+        if (navn.isBlank()) {
+            errorMessage = "Utkastet mangler navn"
+        }
+        if (endringstype.isBlank()) {
+            if (errorMessage == null) {
+                errorMessage = "Utkastet mangler endringstype"
+            } else {
+                errorMessage += " og endringstype"
+            }
+        }
+
+        return errorMessage
     }
 
-    fun validateGyldigUtkast(utkast: Utkast, gyldighetDato: LocalDate): UtkastValidering {
-        if (sjekkUgyldigUtkastNavnOgEndringstype(utkast.navn, utkast.auditInfo.typeEndring.value)) {
-            return UtkastValidering.UgyldigUtkast(utkast, ResponseException.BadRequestException(
-                "Husk å fylle inn både navnet og endringstypen på utkastet."))
+    fun validateGyldigUtkast(utkast: Utkast, endringstype: String, gyldighetDato: LocalDate): List<String> {
+        val errorMessages = mutableListOf<String>()
+
+        val utkastNavnOgEndringstypeMessage = sjekkUgyldigUtkastNavnOgEndringstype(utkast.navn, endringstype)
+        if (utkastNavnOgEndringstypeMessage != null) {
+            errorMessages.add(utkastNavnOgEndringstypeMessage)
         }
 
-        if (utkast.status != UtkastStatus.OPPRETTET) {
-            return UtkastValidering.UgyldigUtkast(utkast, ResponseException.BadRequestException(
-                title = "Kan ikke oppdatere utkastet",
-                msg = "Kan ikke oppdatere et utkast med status ${utkast.status}"
-            ))
-        }
+        errorMessages.addAll(validateGyldigeOperasjoner(utkast.operasjoner!!))
 
-        val operasjonerValideringResult = validateGyldigeOperasjoner(utkast.operasjoner!!)
-        if (operasjonerValideringResult is OperasjonerValidering.UgyldigeOperasjoner) {
-            return UtkastValidering.UgyldigUtkast(utkast, operasjonerValideringResult.feil)
-        }
-
-        val grunnkretsValideringsFeil = validerGrunnkretsEndringerKonflikt(utkast, gyldighetDato)
-        if (grunnkretsValideringsFeil != null) {
-            return UtkastValidering.UgyldigUtkast(utkast, grunnkretsValideringsFeil)
-        }
-
-        val stemmekretsValideringsFeil = validerStemmekretsEndringerKonflikt(utkast, gyldighetDato)
-        if (stemmekretsValideringsFeil != null) {
-            return UtkastValidering.UgyldigUtkast(utkast, stemmekretsValideringsFeil)
-        }
-
-        val grenseeendringerValideringsFeil = validerGrenseEndringerKonflikt(utkast, gyldighetDato)
-        if (grenseeendringerValideringsFeil != null) {
-            return UtkastValidering.UgyldigUtkast(utkast, grenseeendringerValideringsFeil)
-        }
-
-        return UtkastValidering.GyldigUtkast(utkast)
+        return errorMessages
     }
 
-    fun validateUtkastKlartForPublisering(utkast: Utkast, gyldighetDato: LocalDate): UtkastValidering {
+    fun validerFremtidigeEndringer(utkast: Utkast, gyldighetDato: LocalDate): FeilVedOppdatering.OppdateringException? {
+        validerGrunnkretsEndringerKonflikt(utkast, gyldighetDato)?.let { return it }
+        validerStemmekretsEndringerKonflikt(utkast, gyldighetDato)?.let { return it }
+        validerGrenseEndringerKonflikt(utkast, gyldighetDato)?.let { return it }
+        validerStemmekretsSammenslaaingerKonflikt(utkast, gyldighetDato)?.let { return it }
+        validerStemmekretsDelingerKonflikt(utkast, gyldighetDato)?.let { return it }
+        validerGrunnkretsDelingerKonflikt(utkast, gyldighetDato)?.let { return it }
+
+        return null
+    }
+
+    fun validateUtkastKlartForPublisering(utkast: Utkast, gyldighetDato: LocalDate): List<String> {
+        val errorMessages = mutableListOf<String>()
+        errorMessages.addAll(validateGyldigUtkast(utkast, utkast.auditInfo.typeEndring.value, gyldighetDato))
+
         if (gyldighetDato.isBefore(currentTime.asLocalDate())) {
-            return UtkastValidering.UgyldigUtkast(utkast, ResponseException.BadRequestException(
-                title = "Kan ikke publisere utkastet",
-                msg = "Kan ikke publisere et utkast som trer i kraft før dagens dato. Utkastet er satt til å tre i kraft ${gyldighetDato.toNorskFormat()}"
-            ))
+            errorMessages.add("Kan ikke publisere et utkast som trer i kraft før dagens dato. Utkastet er satt til å tre i kraft ${gyldighetDato.toNorskFormat()}")
         }
 
-        val utkastIkkeHarEndringer = utkast.operasjoner?.harIkkeEndringer() ?: true
-        if (utkastIkkeHarEndringer) {
-            return UtkastValidering.UgyldigUtkast(utkast, ResponseException.BadRequestException(
-                title = "Kan ikke publisere utkastet",
-                msg = "Kan ikke publisere et utkast uten endringer."
-            ))
+        if (utkast.operasjoner!!.harIkkeEndringer()) {
+            errorMessages.add("Kan ikke publisere et utkast uten endringer.")
         }
 
         val ugyldigeNyeKretser = utkast.operasjoner?.kretsDelingEndringer?.flatMap { validerNyeKretserVilBliForsoektFlatedannet(utkast, it) } ?: emptyList()
         if (ugyldigeNyeKretser.isNotEmpty()) {
-            return UtkastValidering.UgyldigUtkast(utkast, ResponseException.BadRequestException(
-                title = "Kan ikke publisere utkastet",
-                msg = "Krets(er) med navn: ${ugyldigeNyeKretser.joinToString(", ")} har ikke fått noen grenser tildelt. " +
-                    "Dette er en feil, og den kan rettes opp ved å sette tilhørighet på de relevante grensene som skal høre til enten: ${ugyldigeNyeKretser.joinToString(", ")}"
-            ))
+            errorMessages.add("Krets(er) med navn: ${ugyldigeNyeKretser.joinToString(", ")} har ikke fått noen grenser tildelt. " +
+                "Dette er en feil, og den kan rettes opp ved å sette tilhørighet på de relevante grensene som skal høre til enten: ${ugyldigeNyeKretser.joinToString(", ")}")
         }
 
-        val tilhorighetEndringerValideringsFeil = validerTilhorighetEndringer(utkast)
-        if (tilhorighetEndringerValideringsFeil != null) {
-            return tilhorighetEndringerValideringsFeil
-        }
+        errorMessages.addAll(validerTilhorighetEndringer(utkast))
 
-        val valideringResult = validateGyldigUtkast(utkast, gyldighetDato)
-        if (valideringResult is UtkastValidering.UgyldigUtkast) {
-            return UtkastValidering.UgyldigUtkast(utkast, valideringResult.feil)
-        }
-
-        return UtkastValidering.KlartForPublisering(utkast)
+        return errorMessages
     }
 
     /**
-     * Sekker om kontekstegenskapene på endrede features gir mening å prøve å endre på i utkastet
+     * Sekker om kontekstegenskapene på endrede features gir mening å prøve å endre på i utkastet.
+     * Returnerer liste med eventuelle feilmeldinger
      */
-    fun validerTilhorighetEndringer(utkast: Utkast): UtkastValidering.UgyldigUtkast? {
-
-        return utkast.operasjoner?.grenseendringer?.endredeFeatures?.firstNotNullOfOrNull { feature ->
+    fun validerTilhorighetEndringer(utkast: Utkast): List<String> {
+        val errorMessages = mutableListOf<String>()
+        utkast.operasjoner?.grenseendringer?.endredeFeatures?.forEach { feature ->
             val innsendteTilhorigheter = feature.properties.kontekstEgenskaper
             //Kommunegrense og fylkesgrense skal ha 4 tilhørigheter (2 grunnkretser og 2 stemmekretser), andre skal bare ha 2
             val grensetype = Grensetype.fromValue(feature.properties.type)
@@ -162,32 +147,31 @@ class UtkastValidatorService(
                     val map = mutableMapOf<Pair<KontekstEnhetType, String>, Int>()
                     feature.properties.kontekstEgenskaper
                         .forEach {
-                            val pair = Pair(it.type, it.kommuneId?.lokalid?.value?: "")
+                            val pair = Pair(it.type, it.kommuneId?.lokalid?.value ?: "")
                             map[pair] = map.getOrDefault(pair, 0) + 1
                         }
                     map.values.any { it > 1 }
                 } else false
 
             if (harFeilAntallKontekstEgenskaper || duplisertKontekstEgenskaper != null || kommuneGrenseHarTilhorigheterISammeKommune || harFeilAntallTilhorighetstyper) {
-                var errorMessage = "Grense med id: ${feature.id ?: "Ny grense, ingen id - "} har ugyldig tilhørighet. Årsak(er): \n"
+                errorMessages.add("Grense med id: ${feature.id ?: "Ny grense, ingen id - "} har ugyldig tilhørighet. Årsak(er):")
                 if (harFeilAntallKontekstEgenskaper) {
-                    errorMessage += "\t- Grensen har ${feature.properties.kontekstEgenskaper.size} tilhørighet(er) satt, men må ha $krevdAntallKontekstEgenskaper.\n"
+                    errorMessages.add("\t- Grensen har ${feature.properties.kontekstEgenskaper.size} tilhørighet(er) satt, men må ha $krevdAntallKontekstEgenskaper.")
                 }
                 if (harFeilAntallTilhorighetstyper) {
-                    errorMessage += "\t- Grensen har ${tilhorighetstyper.size} tilhørighetstyper satt, men må ha $krevdAntallTilhorighetstyper.\n"
+                    errorMessages.add("\t- Grensen har ${tilhorighetstyper.size} tilhørighetstyper satt, men må ha $krevdAntallTilhorighetstyper.")
                 }
                 if (duplisertKontekstEgenskaper != null) {
-                    errorMessage += "\t- Grensen har flere tilhørigheter til samme krets. Gjelder kretsnr ${duplisertKontekstEgenskaper?.kretsNummer} med lokalid ${duplisertKontekstEgenskaper?.id?.lokalid?.value}.\n"
+                    errorMessages.add("\t- Grensen har flere tilhørigheter til samme krets. Gjelder kretsnr ${duplisertKontekstEgenskaper?.kretsNummer} med lokalid ${duplisertKontekstEgenskaper?.id?.lokalid?.value}.")
                 }
                 if (kommuneGrenseHarTilhorigheterISammeKommune) {
-                    errorMessage += "\t- Grensen er kommune-/fylkesgrense og har tilhørighet til to kretser i samme kommune.\n"
+                    errorMessages.add("\t- Grensen er kommune-/fylkesgrense og har tilhørighet til to kretser i samme kommune.")
                 }
-                return UtkastValidering.UgyldigUtkast(utkast = utkast, feil = ResponseException.BadRequestException(
-                    title = "Kan ikke publisere utkastet",
-                    msg = errorMessage
-                ))
-            } else return null
+
+            }
         }
+
+        return errorMessages
     }
 
     private fun erSammeTilhorighet(tilhorighet1: KontekstEgenskaper, tilhorighet2: KontekstEgenskaper): Boolean {
@@ -207,96 +191,55 @@ class UtkastValidatorService(
         return false
     }
 
+    fun validerKretsinfoEndringer(operasjoner: Operasjoner): List<String> {
+        val errorMessages = mutableListOf<String>()
 
-    fun validerKretsinfoEndringer(
-        operasjoner: Operasjoner
-    ): OperasjonerValidering.UgyldigeOperasjoner? {
-        val harUgyldigMetadataendringPaaGrunnkrets =
-            operasjoner.metadataendringer.grunnkretsendringer.values.any {
-                isMetadataendringUgyldig(
-                    Flatetype.GRUNNKRETS,
-                    it.navn,
-                    it.nummer,
-                    it.identifikasjon.lokalid
-                )
-            }
-        if (harUgyldigMetadataendringPaaGrunnkrets)
-            return OperasjonerValidering.UgyldigeOperasjoner(
-                operasjoner,
-                ResponseException.BadRequestException(
-                    "Utkast inneholder ugyldige metadataendringer på grunnkrets"
-                )
-            )
-        val harUgyldigMetadataendringPaaGrunnkretsSammenslaaing =
-            if (operasjoner.grunnkretsSammenslaaingsendring != null)
-                isMetadataendringUgyldig(
-                    Flatetype.GRUNNKRETS,
-                    operasjoner.grunnkretsSammenslaaingsendring.navn,
-                    operasjoner.grunnkretsSammenslaaingsendring.nummer,
-                    operasjoner.grunnkretsSammenslaaingsendring.viderefoertGrunnkrets.lokalId
-                )
-            else false
-        if (harUgyldigMetadataendringPaaGrunnkretsSammenslaaing)
-            return OperasjonerValidering.UgyldigeOperasjoner(
-                operasjoner,
-                ResponseException.BadRequestException(
-                    "Utkast inneholder ugyldige metadataendringer på sammenslåing"
-                )
-            )
+        operasjoner.metadataendringer.grunnkretsendringer.values.forEach {
+            errorMessages.addAll(validateMetadataendringUgyldig(
+                Flatetype.GRUNNKRETS,
+                it.navn,
+                it.nummer,
+                it.identifikasjon.lokalid
+            ))
+        }
 
-        val harUgyldigMetadataendringPaaStemmekrets =
-            operasjoner.metadataendringer.stemmekretsendringer.values.any {
-                isMetadataendringUgyldig(
-                    Flatetype.STEMMEKRETS,
-                    it.navn,
-                    it.nummer,
-                    it.identifikasjon.lokalid
-                )
-            }
-        if (harUgyldigMetadataendringPaaStemmekrets)
-            return OperasjonerValidering.UgyldigeOperasjoner(
-                operasjoner,
-                ResponseException.BadRequestException(
-                    "Utkast inneholder ugyldige metadataendringer på stemmekrets"
-                )
-            )
+        if (operasjoner.grunnkretsSammenslaaingsendring != null) {
+            errorMessages.addAll(validateMetadataendringUgyldig(
+                Flatetype.GRUNNKRETS,
+                operasjoner.grunnkretsSammenslaaingsendring.navn,
+                operasjoner.grunnkretsSammenslaaingsendring.nummer,
+                operasjoner.grunnkretsSammenslaaingsendring.viderefoertGrunnkrets.lokalId
+            ))
+        }
 
-        val harUgyldigMetadataendringPaaStemmekretsSammenslaaing =
-            if (operasjoner.stemmekretsSammenslaaingsendring != null)
-                isMetadataendringUgyldig(
-                    Flatetype.STEMMEKRETS,
-                    operasjoner.stemmekretsSammenslaaingsendring.navn,
-                    operasjoner.stemmekretsSammenslaaingsendring.nummer,
-                    operasjoner.stemmekretsSammenslaaingsendring.viderefoertStemmekrets.lokalId
-                )
-            else false
-        if (harUgyldigMetadataendringPaaStemmekretsSammenslaaing)
-            return OperasjonerValidering.UgyldigeOperasjoner(
-                operasjoner,
-                ResponseException.BadRequestException(
-                    "Utkast inneholder ugyldige metadataendringer på sammenslåing"
-                )
-            )
+        operasjoner.metadataendringer.stemmekretsendringer.values.forEach {
+            errorMessages.addAll(validateMetadataendringUgyldig(
+                Flatetype.STEMMEKRETS,
+                it.navn,
+                it.nummer,
+                it.identifikasjon.lokalid
+            ))
+        }
 
-        val harUgyldigMetadataendringPaaKretsDeling = getUnikeKretsDelingEndringRequests(operasjoner.kretsDelingEndringer)
-            .any {
-                isMetadataendringUgyldig(
+        if (operasjoner.stemmekretsSammenslaaingsendring != null)
+            errorMessages.addAll(validateMetadataendringUgyldig(
+                Flatetype.STEMMEKRETS,
+                operasjoner.stemmekretsSammenslaaingsendring.navn,
+                operasjoner.stemmekretsSammenslaaingsendring.nummer,
+                operasjoner.stemmekretsSammenslaaingsendring.viderefoertStemmekrets.lokalId
+            ))
+
+        getUnikeKretsDelingEndringRequests(operasjoner.kretsDelingEndringer)
+            .forEach {
+                errorMessages.addAll(validateMetadataendringUgyldig(
                     flatetype = it.flatetype,
                     navn = it.kretsNavn,
                     kretsnummer = it.kretsNummer,
                     lokalid = it.opprinneligKrets.lokalId
-                )
+                ))
             }
 
-        if (harUgyldigMetadataendringPaaKretsDeling) {
-            return OperasjonerValidering.UgyldigeOperasjoner(
-                operasjoner,
-                ResponseException.BadRequestException(
-                    "Utkast inneholder ugyldig metadataendringer på deling"
-                ))
-        }
-
-        return null
+        return errorMessages
     }
 
     private fun validerGrenseEndringerKonflikt(utkast: Utkast, gyldighetDato: LocalDate): FeilVedOppdatering.OppdateringException? {
@@ -308,54 +251,92 @@ class UtkastValidatorService(
             .filter { it.id != null }
             .map { it.id }
 
-        return endredeFeaturesIder.firstNotNullOfOrNull { id ->
+        val grenseOppdateringException = endredeFeaturesIder.firstNotNullOfOrNull { id ->
             if (id.isNullOrBlank()) return null
 
             val senerePubliserteGrenser = grenseService.hentAlleVersjonerMedGyldigFraEtterGittDato(id, gyldighetDato)
+                .map { Identifikator(Lokalid(it.lokalid), it.gyldighet.gyldigFra) }
+            lagEventueltOppdateringException(senerePubliserteGrenser, gyldighetDato, FeilVedOppdatering.Type.GRENSE)
+        }
+        if (grenseOppdateringException != null) {
+            return grenseOppdateringException
+        }
 
-            if (senerePubliserteGrenser.isNotEmpty()) {
-                FeilVedOppdatering.OppdateringException(FeilVedOppdatering.OppdateringInfo(
-                    id = Identifikator(Lokalid(id), gyldighetDato),
-                    type = FeilVedOppdatering.Type.GRENSE,
-                    affectedIds = senerePubliserteGrenser.map { Identifikator(Lokalid(it.lokalid), it.gyldighet.gyldigFra) }
-                ))
-            } else {
-                null
+        val unikeKontekstegenskaper = endredeFeatures.flatMap { it.properties.kontekstEgenskaper }.toSet()
+        return unikeKontekstegenskaper.firstNotNullOfOrNull {
+            if (it.id == null) return null
+            when (it.type) {
+                KontekstEnhetType.STEMMEKRETS -> finnEventueltSenerePubliserteStemmekretserOgLagOppdateringException(it.id.lokalid.value, gyldighetDato)
+                KontekstEnhetType.GRUNNKRETS -> finnEventueltSenerePubliserteGrunnkretserOgLagOppdateringException(it.id.lokalid.value, gyldighetDato)
             }
         }
     }
 
     private fun validerGrunnkretsEndringerKonflikt(utkast: Utkast, gyldighetDato: LocalDate): FeilVedOppdatering.OppdateringException? {
         return utkast.operasjoner?.metadataendringer?.grunnkretsendringer?.firstNotNullOfOrNull { grunnkretsendring ->
-            val senerePubliserteEndringer = grunnkretsService.hentAlleVersjonerMedGyldigFraEtterGittDato(lokalId = Lokalid(grunnkretsendring.key), dato = gyldighetDato)
-
-            if (senerePubliserteEndringer.isNotEmpty()) {
-                FeilVedOppdatering.OppdateringException(FeilVedOppdatering.OppdateringInfo(
-                    id = Identifikator(Lokalid(grunnkretsendring.key), gyldighetDato),
-                    type = FeilVedOppdatering.Type.GRUNNKRETS,
-                    affectedIds = senerePubliserteEndringer.map { Identifikator(Lokalid(it.lokalid), it.gyldighet.gyldigFra) }
-                ))
-            } else {
-                null
-            }
+            finnEventueltSenerePubliserteGrunnkretserOgLagOppdateringException(grunnkretsendring.key, gyldighetDato)
         }
     }
 
     private fun validerStemmekretsEndringerKonflikt(utkast: Utkast, gyldighetDato: LocalDate): FeilVedOppdatering.OppdateringException? {
         return utkast.operasjoner?.metadataendringer?.stemmekretsendringer?.firstNotNullOfOrNull { stemmekretsendring ->
-            val senerePubliserteEndringer = stemmekretsService.hentAlleVersjonerMedGyldigFraEtterGittDato(lokalId = Lokalid(stemmekretsendring.key), dato = gyldighetDato)
-
-            if (senerePubliserteEndringer.isNotEmpty()) {
-                FeilVedOppdatering.OppdateringException(FeilVedOppdatering.OppdateringInfo(
-                    id = Identifikator(Lokalid(stemmekretsendring.key), gyldighetDato),
-                    type = FeilVedOppdatering.Type.STEMMEKRETS,
-                    affectedIds = senerePubliserteEndringer.map { Identifikator(Lokalid(it.lokalid), it.gyldighet.gyldigFra) }
-                ))
-            } else {
-                null
-            }
+            finnEventueltSenerePubliserteStemmekretserOgLagOppdateringException(stemmekretsendring.key, gyldighetDato)
         }
     }
+
+    private fun validerStemmekretsDelingerKonflikt(utkast: Utkast, gyldighetDato: LocalDate): FeilVedOppdatering.OppdateringException? {
+        return utkast.operasjoner?.kretsDelingEndringer?.filter { it.flatetype == Flatetype.STEMMEKRETS }?.firstNotNullOfOrNull { request ->
+            finnEventueltSenerePubliserteStemmekretserOgLagOppdateringException(request.opprinneligKrets.lokalId, gyldighetDato)
+        }
+    }
+
+    private fun validerGrunnkretsDelingerKonflikt(utkast: Utkast, gyldighetDato: LocalDate): FeilVedOppdatering.OppdateringException? {
+        return utkast.operasjoner?.kretsDelingEndringer?.filter { it.flatetype == Flatetype.GRUNNKRETS }?.firstNotNullOfOrNull { request ->
+            finnEventueltSenerePubliserteGrunnkretserOgLagOppdateringException(request.opprinneligKrets.lokalId, gyldighetDato)
+        }
+    }
+
+    private fun validerStemmekretsSammenslaaingerKonflikt(utkast: Utkast, gyldighetDato: LocalDate): FeilVedOppdatering.OppdateringException? {
+        val stemmekretsLokalids = mutableListOf<String>()
+        utkast.operasjoner?.stemmekretsSammenslaaingsendring?.let { it ->
+            stemmekretsLokalids.add(it.viderefoertStemmekrets.lokalId)
+            stemmekretsLokalids.addAll(it.stemmekretserTilSammenslaaing.map { it.lokalId })
+        }
+
+        return stemmekretsLokalids.firstNotNullOfOrNull { stemmekretsLokalid ->
+            finnEventueltSenerePubliserteStemmekretserOgLagOppdateringException(stemmekretsLokalid, gyldighetDato)
+        }
+    }
+
+    private fun finnEventueltSenerePubliserteStemmekretserOgLagOppdateringException(stemmekretsLokalid: String, gyldighetDato: LocalDate)
+        : FeilVedOppdatering.OppdateringException? {
+        val senerePubliserteEndringer =
+            stemmekretsService.hentAlleVersjonerMedGyldigFraEtterGittDato(lokalId = Lokalid(stemmekretsLokalid), dato = gyldighetDato)
+                .map { Identifikator(Lokalid(it.lokalid), it.gyldighet.gyldigFra) }
+
+        return lagEventueltOppdateringException(senerePubliserteEndringer, gyldighetDato, FeilVedOppdatering.Type.STEMMEKRETS)
+    }
+
+    private fun finnEventueltSenerePubliserteGrunnkretserOgLagOppdateringException(grunnkretsLokalid: String, gyldighetDato: LocalDate)
+        : FeilVedOppdatering.OppdateringException? {
+        val senerePubliserteEndringer =
+            grunnkretsService.hentAlleVersjonerMedGyldigFraEtterGittDato(lokalId = Lokalid(grunnkretsLokalid), dato = gyldighetDato)
+                .map { Identifikator(Lokalid(it.lokalid), it.gyldighet.gyldigFra) }
+
+        return lagEventueltOppdateringException(senerePubliserteEndringer, gyldighetDato, FeilVedOppdatering.Type.GRUNNKRETS)
+    }
+
+    private fun lagEventueltOppdateringException(senerePubliserteEndringer: List<Identifikator>, gyldighetDato: LocalDate,
+                                                 feilVedOppdateringType: FeilVedOppdatering.Type) =
+        if (senerePubliserteEndringer.isNotEmpty()) {
+            FeilVedOppdatering.OppdateringException(FeilVedOppdatering.OppdateringInfo(
+                id = Identifikator(Lokalid(senerePubliserteEndringer.first().lokalid.value), gyldighetDato),
+                type = feilVedOppdateringType,
+                affectedIds = senerePubliserteEndringer.map { Identifikator(Lokalid(it.lokalid.value), it.gyldighetsdato) }
+            ))
+        } else {
+            null
+        }
 
     private fun validerNyeKretserVilBliForsoektFlatedannet(utkast: Utkast, kretsDelingEndringRequest: KretsDelingEndringRequest): List<String> {
         return getUnikeKretsDelingEndringRequests(kretsDelingEndringRequest)
@@ -366,7 +347,6 @@ class UtkastValidatorService(
     /** Validerer om vi kan gå videre med å forsøke å publisere en kretsdeling ved å se på grensejusteringene i utkastet.
      * Hvis det ikke er noen grensejusteringer som peker på den nyopprettede kretsen vil nyopprettet krets få null grenser, som skal kaste feil.
      **/
-
     private fun validerNyKretsVilBliForsoektFlatedannet(utkast: Utkast, kretsDelingEndringRequest: UnikKretsDelingEndring?): Boolean {
         if (kretsDelingEndringRequest == null) {
             return true
@@ -391,52 +371,51 @@ class UtkastValidatorService(
         } else return false
     }
 
+    fun validateMetadataendringUgyldig(flatetype: Flatetype, navn: String?, kretsnummer: String?, lokalid: String): List<String> {
+        val errorMessages = mutableListOf<String>()
 
-    /** Tenkt som generisk metadataendring-sjekker,
-     * men fungerer foreløpig kun for grunnkretser og stemmekretser **/
-    fun isMetadataendringUgyldig(flatetype: Flatetype, navn: String?, kretsnummer: String?, lokalid: String): Boolean {
-        if (navn == null || kretsnummer == null) {
-            return true
+        if (kretsnummer.isNullOrBlank()) {
+            errorMessages.add("Kretsnummer kan ikke være tomt.")
+        } else {
+            val numeriskKretsnummer = kretsnummer.toIntOrNull()
+            if (numeriskKretsnummer == null) {
+                errorMessages.add("Kretsnummer ($kretsnummer) kan bare inneholde sifre.")
+            } else if (numeriskKretsnummer == 0) {
+                errorMessages.add("Kretsnummer ($kretsnummer) kan ikke være 0.")
+            } else if (numeriskKretsnummer < 0) {
+                errorMessages.add("Kretsnummer ($kretsnummer) kan ikke være negativt.")
+            } else if (flatetype == Flatetype.STEMMEKRETS && kretsnummer.length > 4) {
+                errorMessages.add("Stemmekretsnummer ($kretsnummer) kan ikke være på flere enn fire tegn.")
+            } else if (flatetype == Flatetype.GRUNNKRETS) {
+                if (kretsnummer.length != 8) {
+                    errorMessages.add("Grunnkretsnummer ($kretsnummer) må være på åtte tegn.")
+                } else {
+                    sjekkUgyldigKommuneIGrunnkretsnummer(kretsnummer, lokalid)?.let {
+                        errorMessages.add("De fire første sifrene i grunnkretsnummer ($kretsnummer) må være kommunenummer ($it).")
+                    }
+                }
+            }
         }
 
-        if (isUgyldigKretsnummerEllerNavn(kretsnummer, navn)) {
-            return true
+        if (navn.isNullOrBlank()) {
+            errorMessages.add("Kretsnavn kan ikke være tomt.")
         }
 
-        if (flatetype == Flatetype.GRUNNKRETS && isUgyldigGrunnkretsnummer(kretsnummer, lokalid)) {
-            return true
-        }
-
-        if (flatetype == Flatetype.STEMMEKRETS && isUgyldigStemmekretsnummer(kretsnummer)) {
-            return true
-        }
-
-        return false
+        return errorMessages
     }
 
-    private fun isUgyldigKretsnummerEllerNavn(kretsnummer: String, kretsnavn: String): Boolean {
-        val numeriskKretsnummer = kretsnummer.toIntOrNull()
-        if (numeriskKretsnummer == null || numeriskKretsnummer <= 0) {
-            return true
-        }
-
-        return kretsnavn.isBlank()
-    }
-
-    private fun isUgyldigGrunnkretsnummer(nummer: String, lokalid: String): Boolean {
-        if (nummer.length != 8) return true
-
+    private fun sjekkUgyldigKommuneIGrunnkretsnummer(nummer: String, lokalid: String): String? {
         val grunnkrets = grunnkretsService.hentGrunnkrets(Identifikator(lokalid = Lokalid(lokalid), gyldighetsdato = LocalDate.now()))
 
         val kommunenummer = grunnkrets?.getKommune(grunnkrets.gyldighet.gyldigFra)?.kommunenummer
-        if (kommunenummer.isNullOrBlank()) return true
-
-        return nummer.take(4) != kommunenummer
+        if (kommunenummer.isNullOrBlank()) {
+            return ""
+        } else if (nummer.take(4) != kommunenummer) {
+            return kommunenummer
+        }
+        return null
     }
 
-    private fun isUgyldigStemmekretsnummer(nummer: String): Boolean {
-        return nummer.length > 4
-    }
 }
 
 private fun Operasjoner.harEndringer(): Boolean {
@@ -448,18 +427,9 @@ private fun Operasjoner.harEndringer(): Boolean {
         metadata.stemmekretsendringer.isNotEmpty() ||
         this.grenseendringer.endredeFeatures.isNotEmpty() ||
         this.stemmekretsSammenslaaingsendring != null ||
+        this.grunnkretsSammenslaaingsendring != null ||
         this.kretsDelingEndringer.isNotEmpty()
 }
 
 private fun Operasjoner.harIkkeEndringer(): Boolean = !this.harEndringer()
 
-sealed class UtkastValidering {
-    data class KlartForPublisering(val utkast: Utkast) : UtkastValidering()
-    data class GyldigUtkast(val utkast: Utkast) : UtkastValidering()
-    data class UgyldigUtkast(val utkast: Utkast, val feil: Exception) : UtkastValidering()
-}
-
-sealed class OperasjonerValidering {
-    data class GyldigeOperasjoner(val operasjoner: Operasjoner) : OperasjonerValidering()
-    data class UgyldigeOperasjoner(val operasjoner: Operasjoner, val feil: Exception) : OperasjonerValidering()
-}

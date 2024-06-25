@@ -4,7 +4,7 @@ import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.UnikKretsDelingEndring
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
 import no.kartverket.nibas.api.v1.request.GrunnkretsSammenslaaingsendringRequest
-import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
+import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
@@ -23,7 +23,6 @@ import no.kartverket.nibas.repository.findAllFramtidigeVersjonerByIdentifikator
 import no.kartverket.nibas.repository.findAntallFramtidigeVersjonerForIdentifikator
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import no.kartverket.nibas.repository.findGyldigObjektPaaGyldighetsdato
-import no.kartverket.nibas.repository.verifiserOptimistiskLaas
 import org.locationtech.jts.geom.GeometryFactory
 import org.locationtech.jts.geom.MultiPolygon
 import org.springframework.stereotype.Service
@@ -138,29 +137,30 @@ class GrunnkretsService(
         return nyGrunnkrets
             .copyInformasjonselementerFromExistingGrunnkrets(grunnkrets, gyldigFra)
     }
+
     @Transactional(readOnly = false)
     fun slaaSammenGrunnkretser(
         sammenslaaingsendringRequest: GrunnkretsSammenslaaingsendringRequest,
         sammenslaaingsDato: LocalDate,
         endringstype: Endringstype
     ): Pair<Grunnkrets, List<Grunnkrets>> {
-        val identifikatorViderefoerGrunnkrets =
+        val identifikatorViderefoertGrunnkrets =
             Identifikator(lokalid = Lokalid(sammenslaaingsendringRequest.viderefoertGrunnkrets.lokalId), gyldighetsdato = sammenslaaingsDato)
-        val viderefoertGrunnkrets = hentGrunnkrets(identifikatorViderefoerGrunnkrets)
-            ?: throw ResponseException.NotFoundException(title = "Grunnkrets ikke funnet",
-                msg = "Videreført grunnkrets med identifikator: $identifikatorViderefoerGrunnkrets ble ikke funnet")
+        val viderefoertGrunnkrets = hentGrunnkrets(identifikatorViderefoertGrunnkrets)
+            ?: throw NotFoundException(title = "Grunnkrets ikke funnet",
+                msg = "Videreført grunnkrets med identifikator: $identifikatorViderefoertGrunnkrets ble ikke funnet")
 
         val grunnkretserSomUtgaar = sammenslaaingsendringRequest.grunnkretserTilSammenslaaing
-            .map { Identifikator(lokalid = Lokalid(it.lokalId), gyldighetsdato = sammenslaaingsDato)}
+            .map { Identifikator(lokalid = Lokalid(it.lokalId), gyldighetsdato = sammenslaaingsDato) }
             .map {
-                hentGrunnkrets(it) ?: throw ResponseException.NotFoundException(title = "Grunnkrets ikke funnet",
+                hentGrunnkrets(it) ?: throw NotFoundException(title = "Grunnkrets ikke funnet",
                     msg = "Grunnkrets til sammenslåing med identifikator: $it ble ikke funnet")
             }
 
         grunnkretserSomUtgaar.forEach { it.setGyldigTil(sammenslaaingsDato) }
 
         val alleGrunnkretsGrenseKoblinger = viderefoertGrunnkrets.getGrensekoblinger(sammenslaaingsDato) +
-            grunnkretserSomUtgaar.flatMap {it.getGrensekoblinger(sammenslaaingsDato) }
+            grunnkretserSomUtgaar.flatMap { it.getGrensekoblinger(sammenslaaingsDato) }
 
         val nyGrunnkrets = createNyVersjonAvGrunnkretsUtenGrenser(viderefoertGrunnkrets, sammenslaaingsDato, endringstype)
             .apply {
@@ -189,24 +189,26 @@ class GrunnkretsService(
         return Pair(nyGrunnkrets, grunnkretserSomUtgaar)
     }
 
-    fun validerOptimistiskLaasForGrunnkretsSammenslaaing(sammenslaaingsendringRequest: GrunnkretsSammenslaaingsendringRequest, gyldigFra: LocalDate) {
-        val identifikatorViderefoergrunnkrets =
+    fun validerGrunnkretserForSammenslaaingFinnesOgLagListeMedGrunnkretsOgOensketVersjon(sammenslaaingsendringRequest: GrunnkretsSammenslaaingsendringRequest,
+                                                                                         gyldigFra: LocalDate)
+        : List<Pair<Grunnkrets, Int>> {
+        val identifikatorViderefoertGrunnkrets =
             Identifikator(lokalid = Lokalid(sammenslaaingsendringRequest.viderefoertGrunnkrets.lokalId), gyldighetsdato = gyldigFra)
-        val viderefortGrunnkrets = hentGrunnkrets(identifikatorViderefoergrunnkrets)
-            ?: throw ResponseException.BadRequestException("Fant ikke grunnkrets med id ${identifikatorViderefoergrunnkrets.lokalid.value} som er gyldig ${gyldigFra.toNorskFormat()}")
+        val viderefortGrunnkrets = hentGrunnkrets(identifikatorViderefoertGrunnkrets)
+            ?: throw NotFoundException("Fant ikke grunnkrets med id ${identifikatorViderefoertGrunnkrets.lokalid.value} som er gyldig ${gyldigFra.toNorskFormat()}")
 
         val grunnkretserSomUtgaar = sammenslaaingsendringRequest.grunnkretserTilSammenslaaing
             .map { Identifikator(lokalid = Lokalid(it.lokalId), gyldighetsdato = gyldigFra) }
-            .mapNotNull { hentGrunnkrets(it) }
+            .map {
+                hentGrunnkrets(it) ?: throw NotFoundException(title = "Grunnkrets ikke funnet",
+                    msg = "Grunnkrets til sammenslåing med identifikator: $it ble ikke funnet")
+            }
 
         val grunnkretserForSjekkeOptimistiskLaas = grunnkretserSomUtgaar.map { grunnkrets ->
             Pair(grunnkrets, sammenslaaingsendringRequest.grunnkretserTilSammenslaaing.find { it.lokalId == grunnkrets.lokalid }?.version!!)
         }.plus(Pair(viderefortGrunnkrets, sammenslaaingsendringRequest.viderefoertGrunnkrets.version))
 
-        grunnkretserForSjekkeOptimistiskLaas
-            .forEach { (grunnkrets, versjon) ->
-                verifiserOptimistiskLaas(versjon, grunnkrets)?.throwException()
-            }
+        return grunnkretserForSjekkeOptimistiskLaas
     }
 
     private fun grenseDelerIkke2GrunnkretserSomBlirSlaattSammen(grenseKobling: GrunnkretsGrenseKobling, alleGrensekoblinger: Collection<GrunnkretsGrenseKobling>) =
@@ -215,18 +217,26 @@ class GrunnkretsService(
     private fun grenseDeler2GrunnkretserSomBlirSlaattSammen(grenseKobling: GrunnkretsGrenseKobling, alleGrensekoblinger: Collection<GrunnkretsGrenseKobling>) =
         alleGrensekoblinger.count { grenseKobling.grense.id == it.grense.id } == 2
 
+    fun validerGrunnkretsForDelingFinnesOgLagPairMedGrunnkretsOgOensketVersjon(kretsDelingEndringRequest: KretsDelingEndringRequest, gyldigFra: LocalDate)
+        : Pair<Grunnkrets, Int> {
+        val grunnkretsForSjekkeOptimistiskLaas =
+            Identifikator(lokalid = Lokalid(kretsDelingEndringRequest.opprinneligKrets.lokalId), gyldighetsdato = gyldigFra)
+                .let {
+                    hentGrunnkrets(it) ?: throw NotFoundException(title = "Grunnkrets ikke funnet",
+                        msg = "Fant ikke grunnkrets for deling med lokalid: ${it.lokalid.value} gyldig på $gyldigFra")
+                }.let { Pair(it, kretsDelingEndringRequest.opprinneligKrets.version) }
+        return grunnkretsForSjekkeOptimistiskLaas
+    }
 
     fun delGrunnkrets(
         kretsDelingEndringRequest: UnikKretsDelingEndring, delingsDato: LocalDate, endringstype: Endringstype
     ): Grunnkrets {
-        if (kretsDelingEndringRequest.flatetype != Flatetype.GRUNNKRETS ){
+        if (kretsDelingEndringRequest.flatetype != Flatetype.GRUNNKRETS) {
             throw ResponseException.BadRequestException("Kan ikke dele og opprette en ny ${kretsDelingEndringRequest.flatetype} fra en grunnkrets")
         }
         val identifikator = Identifikator(Lokalid(kretsDelingEndringRequest.opprinneligKrets.lokalId), delingsDato)
         val grunnkrets = hentGrunnkrets(identifikator)
             ?: throw NotFoundException("Fant ikke grunnkrets med lokalid: ${kretsDelingEndringRequest.opprinneligKrets.lokalId} gylidg på $delingsDato")
-
-        verifiserOptimistiskLaas(kretsDelingEndringRequest.opprinneligKrets.version, grunnkrets)?.throwException()
 
         val geometryFactory = GeometryFactory()
 

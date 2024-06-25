@@ -5,18 +5,24 @@ import io.mockk.mockk
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grenseendringer
 import no.kartverket.nibas.api.v1.common.Grensetype
+import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
+import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
+import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
+import no.kartverket.nibas.api.v1.request.KretsNavnOgNummer
 import no.kartverket.nibas.api.v1.request.StemmekretsRequest
+import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
 import no.kartverket.nibas.builders.FeatureBuilder
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
+import no.kartverket.nibas.builders.LOKALID
 import no.kartverket.nibas.builders.StemmekretsBuilder
 import no.kartverket.nibas.common.CurrentTime
 import no.kartverket.nibas.common.FeilVedOppdatering
-import no.kartverket.nibas.common.ResponseException
+import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.UnikLokalid
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.kodelister.KodelisteService
@@ -93,14 +99,107 @@ class UtkastValidatorServiceTest {
             ))
             .build()
 
-        val result = utkastValidatorService.validateUtkastKlartForPublisering(utkast, datoSomVilGiFremtidEndringKonflikt)
-        assertThat(result).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
+        val result = utkastValidatorService.validerFremtidigeEndringer(utkast, datoSomVilGiFremtidEndringKonflikt)
+        assertThat(result).isInstanceOf(FeilVedOppdatering.OppdateringException::class.java)
 
-        val ugyldigUtkast = result as UtkastValidering.UgyldigUtkast
-        assertThat(ugyldigUtkast.feil).isInstanceOf(FeilVedOppdatering.OppdateringException::class.java)
-
-        val oppdateringFeil = result.feil as FeilVedOppdatering.OppdateringException
+        val oppdateringFeil = result as FeilVedOppdatering.OppdateringException
         assertThat(oppdateringFeil.oppdateringInfo.type).isEqualTo(FeilVedOppdatering.Type.GRUNNKRETS)
+    }
+
+    @Test
+    fun `skal gi feil om det finnes nyere endringer paa grunnkrets ved deling`() {
+        every { grunnkretsServiceMock.hentGrunnkrets(any()) } returns GrunnkretsBuilder.DEFAULT_GRUNNKRETS.apply {
+            kommuneLokalid = UnikLokalid(
+                lokalid = "lokalid",
+                flatetype = Flatetype.KOMMUNE
+            ).also {
+                it.kommuner = mutableSetOf(KommuneBuilder()
+                    .withGyldigFra(eksisterendeTingGyldigFra)
+                    .build()
+                )
+            }
+        }
+
+        val delingEndringRequest = KretsDelingEndringRequest(
+            opprinneligKrets = IdentifikatorMedVersjon(lokalId = LOKALID, version = 0),
+            kommuneId = ObjektIdentifikator(Lokalid("lokalid"), eksisterendeTingGyldigFra),
+            flatetype = Flatetype.GRUNNKRETS,
+            nyeKretser = listOf(KretsNavnOgNummer("nyGrunnkrets", "1"))
+        )
+
+        val utkast = UtkastBuilder.builder("test")
+            .withOperasjoner(Operasjoner(kretsDelingEndringer = listOf(delingEndringRequest)))
+            .build()
+
+        val result = utkastValidatorService.validerFremtidigeEndringer(utkast, datoSomVilGiFremtidEndringKonflikt)
+        assertThat(result).isInstanceOf(FeilVedOppdatering.OppdateringException::class.java)
+
+        val oppdateringFeil = result as FeilVedOppdatering.OppdateringException
+        assertThat(oppdateringFeil.oppdateringInfo.type).isEqualTo(FeilVedOppdatering.Type.GRUNNKRETS)
+    }
+
+    @Test
+    fun `skal gi feil om det finnes nyere endringer paa stemmekrets ved deling`() {
+        every { stemmekretsServiceMock.hentStemmekrets(any()) } returns StemmekretsBuilder.DEFAULT_STEMMEKRETS.apply {
+            kommuneLokalid = UnikLokalid(
+                lokalid = "lokalid",
+                flatetype = Flatetype.KOMMUNE
+            ).also {
+                it.kommuner = mutableSetOf(KommuneBuilder()
+                    .withGyldigFra(eksisterendeTingGyldigFra)
+                    .build()
+                )
+            }
+        }
+
+        val delingEndringRequest = KretsDelingEndringRequest(
+            opprinneligKrets = IdentifikatorMedVersjon(lokalId = LOKALID, version = 0),
+            kommuneId = ObjektIdentifikator(Lokalid("lokalid"), eksisterendeTingGyldigFra),
+            flatetype = Flatetype.STEMMEKRETS,
+            nyeKretser = listOf(KretsNavnOgNummer("nyStemmekrets", "1"))
+        )
+
+        val utkast = UtkastBuilder.builder("test")
+            .withOperasjoner(Operasjoner(kretsDelingEndringer = listOf(delingEndringRequest)))
+            .build()
+
+        val result = utkastValidatorService.validerFremtidigeEndringer(utkast, datoSomVilGiFremtidEndringKonflikt)
+        assertThat(result).isInstanceOf(FeilVedOppdatering.OppdateringException::class.java)
+
+        val oppdateringFeil = result as FeilVedOppdatering.OppdateringException
+        assertThat(oppdateringFeil.oppdateringInfo.type).isEqualTo(FeilVedOppdatering.Type.STEMMEKRETS)
+    }
+
+    @Test
+    fun `skal gi feil om det finnes nyere endringer paa stemmekrets ved sammenslaaing`() {
+        every { stemmekretsServiceMock.hentStemmekrets(any()) } returns StemmekretsBuilder.DEFAULT_STEMMEKRETS.apply {
+            kommuneLokalid = UnikLokalid(
+                lokalid = "lokalid",
+                flatetype = Flatetype.KOMMUNE
+            ).also {
+                it.kommuner = mutableSetOf(KommuneBuilder()
+                    .withGyldigFra(eksisterendeTingGyldigFra)
+                    .build()
+                )
+            }
+        }
+
+        val stemmekretsSammenslaaingsendringRequest = StemmekretsSammenslaaingsendringRequest(
+            viderefoertStemmekrets = IdentifikatorMedVersjon(lokalId = LOKALID, version = 1),
+            stemmekretserTilSammenslaaing = listOf(),
+            navn = "Navn etter endring",
+            nummer = "22"
+        )
+
+        val utkast = UtkastBuilder.builder("test")
+            .withOperasjoner(Operasjoner(stemmekretsSammenslaaingsendring = stemmekretsSammenslaaingsendringRequest))
+            .build()
+
+        val result = utkastValidatorService.validerFremtidigeEndringer(utkast, datoSomVilGiFremtidEndringKonflikt)
+        assertThat(result).isInstanceOf(FeilVedOppdatering.OppdateringException::class.java)
+
+        val oppdateringFeil = result as FeilVedOppdatering.OppdateringException
+        assertThat(oppdateringFeil.oppdateringInfo.type).isEqualTo(FeilVedOppdatering.Type.STEMMEKRETS)
     }
 
     @Test
@@ -125,10 +224,7 @@ class UtkastValidatorServiceTest {
             .build()
 
         val result = utkastValidatorService.validateUtkastKlartForPublisering(utkast, datoSomVilGiFremtidEndringKonflikt)
-        assertThat(result).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
-
-        val ugyldigUtkast = result as UtkastValidering.UgyldigUtkast
-        assertThat(ugyldigUtkast.feil).isInstanceOf(ResponseException.BadRequestException::class.java)
+        assertThat(result).contains("Utkastet inneholder grenseendringer for samme grense(r) flere ganger. Grensene (representert ved lokalid) det gjelder er: [123].")
     }
 
     @Test
@@ -153,7 +249,7 @@ class UtkastValidatorServiceTest {
             .build()
 
         val result = utkastValidatorService.validateUtkastKlartForPublisering(utkast, datoSomVilGiFremtidEndringKonflikt)
-        assertThat(result).isInstanceOf(UtkastValidering.KlartForPublisering::class.java)
+        assertThat(result).isEmpty()
     }
 
     @Test
@@ -172,13 +268,10 @@ class UtkastValidatorServiceTest {
             ))
             .build()
 
-        val result = utkastValidatorService.validateUtkastKlartForPublisering(utkast, datoSomVilGiFremtidEndringKonflikt)
-        assertThat(result).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
+        val result = utkastValidatorService.validerFremtidigeEndringer(utkast, datoSomVilGiFremtidEndringKonflikt)
+        assertThat(result).isInstanceOf(FeilVedOppdatering.OppdateringException::class.java)
 
-        val ugyldigUtkast = result as UtkastValidering.UgyldigUtkast
-        assertThat(ugyldigUtkast.feil).isInstanceOf(FeilVedOppdatering.OppdateringException::class.java)
-
-        val oppdateringFeil = result.feil as FeilVedOppdatering.OppdateringException
+        val oppdateringFeil = result as FeilVedOppdatering.OppdateringException
         assertThat(oppdateringFeil.oppdateringInfo.type).isEqualTo(FeilVedOppdatering.Type.STEMMEKRETS)
     }
 
@@ -198,13 +291,10 @@ class UtkastValidatorServiceTest {
             )
             .build()
 
-        val result = utkastValidatorService.validateUtkastKlartForPublisering(utkast, datoSomVilGiFremtidEndringKonflikt)
-        assertThat(result).isInstanceOf(UtkastValidering.UgyldigUtkast::class.java)
+        val result = utkastValidatorService.validerFremtidigeEndringer(utkast, datoSomVilGiFremtidEndringKonflikt)
+        assertThat(result).isInstanceOf(FeilVedOppdatering.OppdateringException::class.java)
 
-        val ugyldigUtkast = result as UtkastValidering.UgyldigUtkast
-        assertThat(ugyldigUtkast.feil).isInstanceOf(FeilVedOppdatering.OppdateringException::class.java)
-
-        val oppdateringFeil = result.feil as FeilVedOppdatering.OppdateringException
+        val oppdateringFeil = result as FeilVedOppdatering.OppdateringException
         assertThat(oppdateringFeil.oppdateringInfo.type).isEqualTo(FeilVedOppdatering.Type.GRENSE)
     }
 }

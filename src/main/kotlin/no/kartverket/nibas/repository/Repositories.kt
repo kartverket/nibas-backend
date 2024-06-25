@@ -4,6 +4,7 @@ import no.kartverket.nibas.domain.Administrativenhetnavn
 import no.kartverket.nibas.domain.DokrefGrenseKobling
 import no.kartverket.nibas.domain.Dokumentasjonsreferanse
 import no.kartverket.nibas.domain.DokumentasjonsreferanseDokumentlink
+import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.Fylke
 import no.kartverket.nibas.domain.FylkeInformasjon
 import no.kartverket.nibas.domain.Grense
@@ -100,8 +101,16 @@ fun verifiserOptimistiskLaas(nyVersion: Int, eksisterende: Laasbar): KonfliktVer
 
 data class KonfliktVersjon(val nyVersjon: Int, val eksisterende: Laasbar) {
     fun throwException(): Unit = throw OptimistiskLaasException(this)
-    fun getMessage(): String =
-        "Det er ikke samsvar med versjon. Ønsket versjon = ${nyVersjon}, eksisterende versjon = ${eksisterende.version} for objekt med id = ${eksisterende.id}"
+    fun getMessage(): String {
+        var ikkeSamsvar = "Det er ikke samsvar med versjon"
+        if (eksisterende is Flate) {
+            val flateInformasjon = (eksisterende as Flate).getFlateInformasjon()
+            ikkeSamsvar += " for ${flateInformasjon.flatetype.toString().lowercase()} ${flateInformasjon.lesbartNavn}"
+        } else if (eksisterende is Utkast) {
+            ikkeSamsvar += " for utkast ${eksisterende.navn}"
+        }
+        return "$ikkeSamsvar. Ønsket versjon = ${nyVersjon}, eksisterende versjon = ${eksisterende.version} for objekt med id = ${eksisterende.id}"
+    }
 }
 
 class OptimistiskLaasException(vararg val konflikter: KonfliktVersjon)
