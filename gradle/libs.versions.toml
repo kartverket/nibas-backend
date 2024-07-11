@@ -16,7 +16,7 @@ springDependencyManagementVersion = "1.1.6"
 springFrameworkVersion = "3.2.4"
 springdocOpenapiVersion2 = "2.5.0"
 springmockkVersion = "4.0.2"
-testContainerVersion = "1.19.7"
+testContainerVersion = "1.19.8"
 
 [libraries]
 flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flywayVersion" }
