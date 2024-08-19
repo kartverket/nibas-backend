@@ -12,6 +12,7 @@ import kotlin.system.exitProcess
 class NibasVedtak2025Application (val vedtak2025JobService: Vedtak2025JobService) : CommandLineRunner{
 
     override fun run(vararg args: String?) {
+        vedtak2025JobService.setupDummyUser()
         vedtak2025JobService.doVedtakt2025Job()
         exitProcess(0)
     }
