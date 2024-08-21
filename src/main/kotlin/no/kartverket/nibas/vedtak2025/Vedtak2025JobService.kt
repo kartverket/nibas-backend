@@ -45,7 +45,7 @@ class Vedtak2025JobService(
             ?: throw RuntimeException("Fant ikke Røysland")
 
         val endringstype = Endringstype.VEDTATT_GRENSEJUSTERING
-        val gyldigFra112025 = LocalDate.now()//LocalDate.of(2025,1,1)
+        val gyldigFra112025 = LocalDate.of(2025,1,1)
 
         val lokalidRisor = "f25a6be2-d809-4eb4-806b-d2fab4c9ca09"
         val lokalidTvedestrand = "8bbe531e-9251-425a-aff7-06395d4e3e52"
