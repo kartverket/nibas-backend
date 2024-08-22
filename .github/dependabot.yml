@@ -12,11 +12,16 @@ updates:
     schedule:
       interval: daily
 
+  - package-ecosystem: "gradle"
+    directory: "/gradle"
+    schedule:
+      interval: daily
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: daily
-    
+
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
