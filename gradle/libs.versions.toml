@@ -1,14 +1,14 @@
 [versions]
-flywayVersion = "10.15.2"
+flywayVersion = "10.17.1"
 hibernateVersion = "6.4.2.Final" # Siste versjon som fungerer med testene :(
 hypersistenceUtilsHibernate63Version = "3.8.2"
 jtsVersion = "1.19.0"
-kotlinMockitoVersion = "5.3.1"
+kotlinMockitoVersion = "5.4.0"
 kotlinPluginVersion = "1.9.22"
 kotlinxCoroutinesCoreVersion = "1.8.0"
 logstashVersion = "7.4"
 nimbusJwtVersion = "9.40"
-openTelemetryVersion = "1.40.0"
+openTelemetryVersion = "1.41.0"
 prometheusVersion = "1.13.3"
 spatial4jVersion = "0.8"
 springCloudStarterVaultConfigVersion = "4.1.2"
@@ -16,7 +16,7 @@ springDependencyManagementVersion = "1.1.6"
 springFrameworkVersion = "3.2.4"
 springdocOpenapiVersion2 = "2.6.0"
 springmockkVersion = "4.0.2"
-testContainerVersion = "1.19.8"
+testContainerVersion = "1.20.1"
 
 [libraries]
 flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flywayVersion" }
