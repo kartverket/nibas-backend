@@ -6,7 +6,9 @@ import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.Metadataendringer
 import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.common.Operasjoner
+import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
+import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
 import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.api.v1.request.KretsNavnOgNummer
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
@@ -14,6 +16,7 @@ import no.kartverket.nibas.builders.GrunnkretsRequestBuilder
 import no.kartverket.nibas.builders.OpprettUtkastRequestBuilder
 import no.kartverket.nibas.builders.StemmekretsRequestBuilder
 import no.kartverket.nibas.builders.UtkastRequestBuilder
+import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.events.NibasEventPublisher
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.Endringstype
@@ -86,7 +89,7 @@ class UtkastServiceIT : TestWithDbContainer() {
         val utkastRequestBuilder = UtkastRequestBuilder()
             .withOperasjoner(Operasjoner(grenseendringer = grenseendringer))
 
-        val utkast = UtkastBuilder.builder("test")
+        val utkast = UtkastBuilder.builder("test", gyldigFra = LocalDate.now())
             .withOperasjoner(Operasjoner(grenseendringer = grenseendringer))
             .build()
         utkastRepository.save(utkast)
@@ -134,7 +137,7 @@ class UtkastServiceIT : TestWithDbContainer() {
         val utkastRequestBuilder = UtkastRequestBuilder()
             .withOperasjoner(Operasjoner(grenseendringer = grenseendringer))
 
-        val utkast = UtkastBuilder.builder("test")
+        val utkast = UtkastBuilder.builder("test", gyldigFra = LocalDate.now())
             .withOperasjoner(Operasjoner(grenseendringer = grenseendringer))
             .build()
         utkastRepository.save(utkast)
@@ -182,7 +185,7 @@ class UtkastServiceIT : TestWithDbContainer() {
         val utkastRequestBuilder = UtkastRequestBuilder()
             .withOperasjoner(Operasjoner(grenseendringer = grenseendringer))
 
-        val utkast = UtkastBuilder.builder("test")
+        val utkast = UtkastBuilder.builder("test", gyldigFra = LocalDate.now())
             .withOperasjoner(Operasjoner(grenseendringer = grenseendringer))
             .build()
         utkastRepository.save(utkast)
@@ -222,7 +225,7 @@ class UtkastServiceIT : TestWithDbContainer() {
             .withVersion(0)
             .build()
 
-        val utkast = UtkastBuilder.builder("test")
+        val utkast = UtkastBuilder.builder("test", gyldigFra = LocalDate.now())
             .withOperasjoner(
                 Operasjoner(
                     metadataendringer = Metadataendringer(
@@ -253,7 +256,7 @@ class UtkastServiceIT : TestWithDbContainer() {
             .withVersion(0)
             .build()
 
-        val utkast = UtkastBuilder.builder("test")
+        val utkast = UtkastBuilder.builder("test", gyldigFra = LocalDate.now())
             .withOperasjoner(
                 Operasjoner(
                     metadataendringer = Metadataendringer(
@@ -275,7 +278,7 @@ class UtkastServiceIT : TestWithDbContainer() {
         saveStemmekrets(id = "test1", lokalid = Lokalid("test1"), stemmekretsnavn = "Gammelt navn1")
         saveStemmekrets(id = "test2", lokalid = Lokalid("test2"), stemmekretsnavn = "Gammelt navn2")
 
-        val utkast = UtkastBuilder.builder("test")
+        val utkast = UtkastBuilder.builder("test", gyldigFra = LocalDate.now())
             .withOperasjoner(
                 Operasjoner(
                     stemmekretsSammenslaaingsendring = StemmekretsSammenslaaingsendringRequest(
@@ -304,7 +307,7 @@ class UtkastServiceIT : TestWithDbContainer() {
         saveStemmekrets(id = "test1", lokalid = Lokalid("test1"), stemmekretsnavn = "gammelt navn1")
         saveStemmekrets(id = "test2", lokalid = Lokalid("test2"), stemmekretsnavn = "gammelt navn2")
 
-        val utkast = UtkastBuilder.builder("test")
+        val utkast = UtkastBuilder.builder("test", gyldigFra = LocalDate.now())
             .withOperasjoner(
                 Operasjoner(
                     stemmekretsSammenslaaingsendring = StemmekretsSammenslaaingsendringRequest(
@@ -328,7 +331,7 @@ class UtkastServiceIT : TestWithDbContainer() {
     fun `skal gi optimistisklaasexception om man deler stemmekretser som er utdatert`() {
         saveStemmekrets(id = "test1", lokalid = Lokalid("test1"), stemmekretsnavn = "Gammelt navn1")
 
-        val utkast = UtkastBuilder.builder("Testutkast").build()
+        val utkast = UtkastBuilder.builder("Testutkast", gyldigFra = LocalDate.now()).build()
         utkastRepository.save(utkast)
 
         val utkastRequestBuilder = UtkastRequestBuilder()
@@ -379,7 +382,7 @@ class UtkastServiceIT : TestWithDbContainer() {
             .withVersion(1)
             .build()
 
-        val utkast = UtkastBuilder.builder("test")
+        val utkast = UtkastBuilder.builder("test", gyldigFra = LocalDate.now())
             .withOperasjoner(
                 Operasjoner(
                     grenseendringer = grenseendringer,
@@ -404,5 +407,34 @@ class UtkastServiceIT : TestWithDbContainer() {
         }
             .isInstanceOf(PublishEventException::class.java)
             .hasMessageContaining("Event må inneholde minst 1 EventRad")
+    }
+
+    @Test
+    fun `publisering av utkast med passert gyldigFra-dato skal bruke dagens dato`(){
+        val iDag = LocalDate.now()
+        val iGår = iDag.minusDays(1)
+        // opprett utkast med passert gyldig fra
+        val utkast = UtkastBuilder.builder("test", gyldigFra = iGår).withOperasjoner(
+            Operasjoner(
+                metadataendringer = Metadataendringer(
+                    grunnkretsendringer = mapOf("c54fb55e-15d0-4528-8b88-f58d6c74bd87" to GrunnkretsRequest(
+                        "Moi2",
+                        "42190204",
+                        Identifikasjon("c54fb55e-15d0-4528-8b88-f58d6c74bd87"),
+                        1
+                    ))
+                )
+            )
+        ).build()
+        utkastRepository.save(utkast)
+
+        // publiser
+        utkastService.publiserUtkast(utkast.id)
+        // verifiser at det går fint og at utkast og endring har dagens dato på gyldigFra feltet
+        val publisertUtkast = utkastService.hentUtkast(utkast.id)
+        val oppdatertGrunnkrets = grunnkretsService.hentGrunnkrets(Identifikator(Lokalid("c54fb55e-15d0-4528-8b88-f58d6c74bd87")))
+
+        assertThat(publisertUtkast?.gyldigFra).isEqualTo(iDag)
+        assertThat(oppdatertGrunnkrets?.gyldighet?.gyldigFra).isEqualTo(iDag)
     }
 }

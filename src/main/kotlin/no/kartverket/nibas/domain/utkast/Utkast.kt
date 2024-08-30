@@ -13,6 +13,7 @@ import no.kartverket.nibas.sporing.Sporbar
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.annotations.Type
 import org.hibernate.type.SqlTypes
+import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.*
 import jakarta.persistence.Column
@@ -35,6 +36,9 @@ class Utkast(
     @Column(name = "navn")
     var navn: String,
 
+    @Column(name = "gyldig_fra", nullable = false)
+    var gyldigFra: LocalDate,
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Type(JsonBinaryType::class)
     @Column(columnDefinition = "jsonb", name = "utkast")
@@ -46,6 +50,7 @@ class Utkast(
 
     @Column(name = "opprettet_dato", updatable = false)
     val opprettetDato: ZonedDateTime = ZonedDateTime.now()
+
 
     @Embedded
     override var auditInfo: AuditInfo = AuditInfo()
@@ -59,15 +64,15 @@ class Utkast(
     }
 }
 
-class UtkastBuilder private constructor(val navn: String, private val endringstype: Endringstype = Endringstype.KVALITETSHEVING) {
+class UtkastBuilder private constructor(val navn: String, private val endringstype: Endringstype = Endringstype.KVALITETSHEVING, val gyldigFra: LocalDate) {
 
     private var status: UtkastStatus = UtkastStatus.OPPRETTET
     private var operasjoner: Operasjoner = Operasjoner()
     private var auditInfo: AuditInfo? = null
 
     companion object {
-        fun builder(navn: String, endringstype: Endringstype = Endringstype.KVALITETSHEVING): UtkastBuilder {
-            return UtkastBuilder(navn, endringstype)
+        fun builder(navn: String, endringstype: Endringstype = Endringstype.KVALITETSHEVING, gyldigFra: LocalDate): UtkastBuilder {
+            return UtkastBuilder(navn, endringstype, gyldigFra)
         }
     }
 
@@ -75,6 +80,7 @@ class UtkastBuilder private constructor(val navn: String, private val endringsty
         val utkast = Utkast(
             navn = navn,
             operasjoner = this.operasjoner,
+            gyldigFra = gyldigFra
         )
         utkast.auditInfo.typeEndring = this.endringstype
         auditInfo?.let { utkast.auditInfo = it }

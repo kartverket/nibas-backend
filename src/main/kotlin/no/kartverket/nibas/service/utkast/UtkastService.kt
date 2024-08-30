@@ -57,8 +57,8 @@ class UtkastService(
     private val logger: Logger = LoggerFactory.getLogger(UtkastService::class.java)
 
     fun opprettUtkast(opprettUtkastRequest: OpprettUtkastRequest): String {
-        utkastValidatorService.sjekkUgyldigUtkastNavnOgEndringstype(opprettUtkastRequest.navn, opprettUtkastRequest.endringstype)
-            ?.let { throw ResponseException.BadRequestException(title = "Kan ikke lagre utkastet", msg = it) }
+        utkastValidatorService.validateUtkastAttributter(opprettUtkastRequest.navn, opprettUtkastRequest.endringstype, opprettUtkastRequest.gyldigFra)
+            ?.let { throw ResponseException.BadRequestException(title = "Kan ikke opprette utkastet", msg = it) }
         return utkastRepository.saveAndFlush(opprettUtkastRequest.createUtkast()).id
     }
 
@@ -75,11 +75,13 @@ class UtkastService(
             ?: throw ResponseException.NotFoundException("Utkast ble ikke funnet for id: $id.")
         utkast.operasjoner = request.operasjoner
 
+        val gyldigFra = maxOf(utkast.gyldigFra, LocalDate.now())
+
         //Valideringer som brukeren ikke kan rette opp i
-        validateOptimistiskLaasOgFremtidigeEndringer(utkast, request.version, LocalDate.now())
+        validateOptimistiskLaasOgFremtidigeEndringer(utkast, request.version, gyldigFra)
 
         utkast.navn = request.navn
-        val utkastValideringResult = utkastValidatorService.validateGyldigUtkast(utkast, request.endringstype, LocalDate.now())
+        val utkastValideringResult = utkastValidatorService.validateUtkastMedOperasjoner(utkast, request.endringstype, gyldigFra)
 
         if (utkastValideringResult.isNotEmpty()) {
             throw ResponseException.BadRequestException(title = "Kan ikke lagre utkastet", msg = utkastValideringResult.joinToString("\n"))
@@ -134,25 +136,30 @@ class UtkastService(
             operasjoner = null
         }
 
+    // TODO gyldigFra parameter kan fjernes etter at frontend har fjernet valget om publiseringsdato fra publiseringsmodal
     @Transactional
-    fun publiserUtkast(utkastId: String, gyldigFra: LocalDate = LocalDate.now()): NibasEvent {
+    fun publiserUtkast(utkastId: String, gyldigFra: LocalDate? = null): NibasEvent {
         val eventsForPublisering: NibasEvent
         val utkast = hentUtkast(utkastId)
             ?: throw ResponseException.NotFoundException("Utkast ble ikke funnet for id: $utkastId.")
 
-        //Valideringer som brukeren ikke kan rette opp i
-        validateOptimistiskLaasOgFremtidigeEndringer(utkast = utkast, gyldigFra = gyldigFra)
+        if(utkast.gyldigFra.isBefore(LocalDate.now())) {
+            utkast.gyldigFra = LocalDate.now()
+        }
 
-        val utkastValideringResult = utkastValidatorService.validateUtkastKlartForPublisering(utkast, gyldigFra)
+        //Valideringer som brukeren ikke kan rette opp i
+        validateOptimistiskLaasOgFremtidigeEndringer(utkast = utkast, gyldigFra = gyldigFra ?: utkast.gyldigFra)
+
+        val utkastValideringResult = utkastValidatorService.validateUtkastKlartForPublisering(utkast, gyldigFra ?: utkast.gyldigFra)
         if (utkastValideringResult.isNotEmpty()) {
             throw ResponseException.BadRequestException(title = "Kan ikke publisere utkastet", msg = utkastValideringResult.joinToString("\n"))
         }
 
         logger.debug(utkast.publiseringsInfo())
-        val flateEndringer: List<EventRad> = publiserEndringer(utkast.operasjoner!!, utkast, gyldigFra)
+        val flateEndringer: List<EventRad> = publiserEndringer(utkast.operasjoner!!, utkast, gyldigFra ?: utkast.gyldigFra)
 
         utkast.settPublisert()
-        eventsForPublisering = nibasEventPublisher.publishNibasEvent(flateEndringer, gyldigFra)
+        eventsForPublisering = nibasEventPublisher.publishNibasEvent(flateEndringer, gyldigFra ?: utkast.gyldigFra)
 
         return eventsForPublisering
     }
@@ -366,6 +373,6 @@ class UtkastService(
 }
 
 private fun OpprettUtkastRequest.createUtkast(): Utkast =
-    UtkastBuilder.builder(this.navn, Endringstype.fromValue(this.endringstype))
+    UtkastBuilder.builder(this.navn, Endringstype.fromValue(this.endringstype), gyldigFra)
         .withOperasjoner(Operasjoner())
         .build()

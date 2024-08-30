@@ -4,7 +4,6 @@ import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.common.Flatetype
-import no.kartverket.nibas.api.v1.common.geojson.MultiPolygon
 import no.kartverket.nibas.api.v1.request.KommuneRequest
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.common.Identifikator
@@ -22,7 +21,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.locationtech.jts.geom.Coordinate
-import org.locationtech.jts.geom.CoordinateSequence
 import org.locationtech.jts.geom.GeometryFactory
 import org.locationtech.jts.geom.Point
 import org.locationtech.jts.geom.Polygon
@@ -55,7 +53,7 @@ class RepositoryTest : TestWithDbContainer() {
 
     @Test
     fun saveUtkast() {
-        val utkast = UtkastBuilder.builder("Utkast 1")
+        val utkast = UtkastBuilder.builder("Utkast 1", gyldigFra = currentDate)
             .withKommuneRequests(kommuneRequests())
             .build()
         utkastRepository.save(utkast)
@@ -66,9 +64,9 @@ class RepositoryTest : TestWithDbContainer() {
     // Altså ikke atomiske tester.
     @Test
     fun findAllUtkastByStatus() {
-        val utkast = UtkastBuilder.builder("Utkast 1").withStatus(UtkastStatus.OPPRETTET).build()
-        val utkast2 = UtkastBuilder.builder("Utkast 2").withStatus(UtkastStatus.OPPRETTET).build()
-        val utkast3 = UtkastBuilder.builder("Utkast 3").withStatus(UtkastStatus.FORKASTET).build()
+        val utkast = UtkastBuilder.builder("Utkast 1", gyldigFra = currentDate).withStatus(UtkastStatus.OPPRETTET).build()
+        val utkast2 = UtkastBuilder.builder("Utkast 2", gyldigFra = currentDate).withStatus(UtkastStatus.OPPRETTET).build()
+        val utkast3 = UtkastBuilder.builder("Utkast 3", gyldigFra = currentDate).withStatus(UtkastStatus.FORKASTET).build()
         utkastRepository.saveAll(listOf(utkast, utkast2, utkast3))
 
         val matchingUtkastIdsForStatusOpprettet = utkastRepository.findAllByStatus(UtkastStatus.OPPRETTET).map { it.id }.toSet()
@@ -188,24 +186,6 @@ class RepositoryTest : TestWithDbContainer() {
                 grunnkretsnummer = "1234"
                 grunnkretsnavn = "Basvatn"
                 gyldighet = Gyldighet(gyldigFra = gyldigFra, gyldigTil = gyldigTil)
-            }
-    }
-
-    private fun createStemmekrets(lokalid: Lokalid,
-                                  gyldigFra: LocalDate = LocalDate.of(2023, Month.JANUARY, 1),
-                                  gyldigTil: LocalDate? = null): Stemmekrets {
-        val coordinatesArray = arrayOf(
-            Coordinate(1.0, 2.0),
-            Coordinate(3.0, 4.0)
-        )
-        val coordinates = CoordinateArraySequence(coordinatesArray)
-        return Stemmekrets(lokalid = lokalid.value)
-            .apply {
-                stemmekretsnummer = "1234"
-                stemmekretsnavn = "Basvatn"
-                gyldighet = Gyldighet(gyldigFra = gyldigFra, gyldigTil = gyldigTil)
-                omraade = org.locationtech.jts.geom.MultiPolygon(arrayOf<Polygon>(), GeometryFactory())
-                posisjon = Point(coordinates, GeometryFactory())
             }
     }
 

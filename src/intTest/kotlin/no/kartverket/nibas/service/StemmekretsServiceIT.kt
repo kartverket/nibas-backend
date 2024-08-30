@@ -839,7 +839,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         val utkastRequestBuilder = UtkastRequestBuilder()
             .withOperasjoner(Operasjoner(kretsDelingEndringer = listOf(delingEndringRequest)))
 
-        val utkast = UtkastBuilder.builder("test")
+        val utkast = UtkastBuilder.builder("test", gyldigFra = LocalDate.now())
             .withOperasjoner(Operasjoner(kretsDelingEndringer = listOf(delingEndringRequest)))
             .build()
         utkastRepository.save(utkast)

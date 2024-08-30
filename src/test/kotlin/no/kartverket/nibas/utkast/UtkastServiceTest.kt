@@ -125,12 +125,13 @@ internal class UtkastServiceTest {
                     .build())
         }
             .isInstanceOf(BadRequestException::class.java)
-            .hasMessageContaining("Utkastet mangler navn og endringstype")
+            .hasMessageContaining("Utkastet mangler navn. Utkastet mangler endringstype.")
     }
 
     @Test
     fun oppdaterUtkast() {
-        val utkastBuilder = UtkastBuilder.builder("Utkast 3")
+        val feb3 = LocalDate.of(2025, Month.FEBRUARY, 3)
+        val utkastBuilder = UtkastBuilder.builder("Utkast 3", gyldigFra = feb3)
             .withFylkeRequests(mapOf("Fylke-UUID-1" to FylkeRequestBuilder.DEFAULT_REQUEST))
             .withKommuneRequests(mapOf("Kommune-UUID-1" to KommuneRequestBuilder.DEFAULT_REQUEST))
         val utkast = utkastBuilder.build()
@@ -139,7 +140,7 @@ internal class UtkastServiceTest {
         every { fylkeServiceMock.hentFylke(any()) } returns FylkeBuilder.DEFAULT_FYLKE
         every { kommuneServiceMock.hentKommune(any()) } returns KommuneBuilder.DEFAULT_KOMMUNE
 
-        val feb3 = LocalDate.of(2025, Month.FEBRUARY, 3)
+
         val utkastEtterSave = utkastBuilder.build()
 
         every { utkastRepositoryMock.save(any()) } returns utkastEtterSave
@@ -152,7 +153,7 @@ internal class UtkastServiceTest {
 
     @Test
     fun `forkast utkast med status Publisert gir BadRequest`() {
-        val utkastBuilder = UtkastBuilder.builder("Utkast 3")
+        val utkastBuilder = UtkastBuilder.builder("Utkast 3", gyldigFra = LocalDate.now())
             .withKommuneRequests(mapOf("Kommune-UUID-1" to KommuneRequestBuilder.DEFAULT_REQUEST))
             .withStatus(UtkastStatus.PUBLISERT)
         val utkast = utkastBuilder.build()
@@ -169,7 +170,7 @@ internal class UtkastServiceTest {
 
     @Test
     fun `oppdater utkast med status Publisert gir BadRequest`() {
-        val utkastBuilder = UtkastBuilder.builder("Utkast 3")
+        val utkastBuilder = UtkastBuilder.builder("Utkast 3", gyldigFra = LocalDate.now())
             .withKommuneRequests(mapOf("Kommune-UUID-1" to KommuneRequestBuilder.DEFAULT_REQUEST))
             .withStatus(UtkastStatus.PUBLISERT)
         val utkast = utkastBuilder.build()
@@ -186,7 +187,7 @@ internal class UtkastServiceTest {
 
     @Test
     fun `oppdater utkast med status Forkastet gir BadRequest`() {
-        val utkastBuilder = UtkastBuilder.builder("Utkast 3")
+        val utkastBuilder = UtkastBuilder.builder("Utkast 3", gyldigFra = LocalDate.now())
             .withKommuneRequests(mapOf("Kommune-UUID-1" to KommuneRequestBuilder.DEFAULT_REQUEST))
             .withStatus(UtkastStatus.FORKASTET)
         val utkast = utkastBuilder.build()
@@ -203,7 +204,7 @@ internal class UtkastServiceTest {
 
     @Test
     fun `oppdater utkast med tomt navn gir bad request`() {
-        val utkastBuilder = UtkastBuilder.builder("lovlig utkast")
+        val utkastBuilder = UtkastBuilder.builder("lovlig utkast", gyldigFra = LocalDate.now())
             .withKommuneRequests(mapOf("Kommune-UUID-1" to KommuneRequestBuilder.DEFAULT_REQUEST))
         val utkast = utkastBuilder.build()
 
@@ -231,7 +232,7 @@ internal class UtkastServiceTest {
             )
             .build()
 
-        every { utkastRepositoryMock.findById(any()) } returns Optional.of(Utkast(navn = "Gyldig"))
+        every { utkastRepositoryMock.findById(any()) } returns Optional.of(Utkast(navn = "Gyldig", gyldigFra = LocalDate.now()))
         every { stemmekretsServiceMock.hentStemmekrets(any()) } returns StemmekretsBuilder.DEFAULT_STEMMEKRETS
         every { stemmekretsServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns listOf()
 
@@ -246,7 +247,7 @@ internal class UtkastServiceTest {
             .withOperasjoner(operasjonerMedIkkeEditerbareGrenser())
             .build()
 
-        every { utkastRepositoryMock.findById(any()) } returns Optional.of(Utkast(navn = "Gyldig"))
+        every { utkastRepositoryMock.findById(any()) } returns Optional.of(Utkast(navn = "Gyldig", gyldigFra = LocalDate.now()))
         every { grenseServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns listOf()
         every { grunnkretsServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns listOf()
 
@@ -266,7 +267,7 @@ internal class UtkastServiceTest {
             ))
             .build()
 
-        every { utkastRepositoryMock.findById(any()) } returns Optional.of(Utkast(navn = "Gyldig"))
+        every { utkastRepositoryMock.findById(any()) } returns Optional.of(Utkast(navn = "Gyldig", gyldigFra = LocalDate.now()))
         every { grunnkretsServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns listOf()
         every { grunnkretsServiceMock.hentGrunnkrets(any()) } returns GrunnkretsBuilder.DEFAULT_GRUNNKRETS
 
@@ -286,7 +287,7 @@ internal class UtkastServiceTest {
             ))
             .build()
 
-        every { utkastRepositoryMock.findById(any()) } returns Optional.of(Utkast(navn = "Gyldig"))
+        every { utkastRepositoryMock.findById(any()) } returns Optional.of(Utkast(navn = "Gyldig", gyldigFra = LocalDate.now()))
         every { grunnkretsServiceMock.hentGrunnkrets(any()) } returns GrunnkretsBuilder.DEFAULT_GRUNNKRETS
         every { grunnkretsServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns listOf()
 
@@ -297,7 +298,7 @@ internal class UtkastServiceTest {
 
     @Test
     fun `publiser utkast med status Publisert gir BadRequest`() {
-        val publisertUtkast = UtkastBuilder.builder("Utkast for publisering")
+        val publisertUtkast = UtkastBuilder.builder("Utkast for publisering", gyldigFra = LocalDate.now())
             .withStatus(UtkastStatus.PUBLISERT)
             .build()
 
@@ -311,7 +312,7 @@ internal class UtkastServiceTest {
 
     @Test
     fun `publiser utkast med status Forkastet gir BadRequest`() {
-        val publisertUtkast = UtkastBuilder.builder("Utkast for publisering")
+        val publisertUtkast = UtkastBuilder.builder("Utkast for publisering", gyldigFra = LocalDate.now())
             .withStatus(UtkastStatus.FORKASTET)
             .build()
 
@@ -325,7 +326,7 @@ internal class UtkastServiceTest {
 
     @Test
     fun publiserUtkastUtenOperasjonerGirBadRequestEx() {
-        val utkastUtenOperasjoner = UtkastBuilder.builder("Utkast for publisering")
+        val utkastUtenOperasjoner = UtkastBuilder.builder("Utkast for publisering", gyldigFra = LocalDate.now())
             .build()
         every { utkastRepositoryMock.findById(any()) } returns Optional.of(utkastUtenOperasjoner)
 
@@ -336,7 +337,7 @@ internal class UtkastServiceTest {
 
     @Test
     fun publiserUtkastMedDatoIFortidenGirBadRequestEx() {
-        val utkastUtenOperasjoner = UtkastBuilder.builder("Utkast for publisering").build()
+        val utkastUtenOperasjoner = UtkastBuilder.builder("Utkast for publisering", gyldigFra = LocalDate.now()).build()
         every { utkastRepositoryMock.findById(any()) } returns Optional.of(utkastUtenOperasjoner)
 
         assertThatThrownBy {
@@ -346,7 +347,7 @@ internal class UtkastServiceTest {
 
     @Test
     fun publiserUtkast() {
-        val utkast = UtkastBuilder.builder("Utkast for publisering")
+        val utkast = UtkastBuilder.builder("Utkast for publisering", gyldigFra = LocalDate.now())
             .withOperasjoner(Operasjoner(
                 metadataendringer = Metadataendringer(
                     nasjonsendringer = mapOf("Nasjon-UUID-1" to NasjonRequestBuilder.DEFAULT_NASJON),
@@ -395,7 +396,7 @@ internal class UtkastServiceTest {
 
     @Test
     fun forkastUtkast() {
-        val utkast = UtkastBuilder.builder("Utkast for forkasting")
+        val utkast = UtkastBuilder.builder("Utkast for forkasting", gyldigFra = LocalDate.now())
             .withOperasjoner(Operasjoner(
                 metadataendringer = Metadataendringer(
                     nasjonsendringer = mapOf("Nasjon-UUID-1" to NasjonRequestBuilder.DEFAULT_NASJON),
@@ -421,7 +422,7 @@ internal class UtkastServiceTest {
     fun `lager like mange EventRader som det er av endringer`() {
 
         val utkast =
-            UtkastBuilder.builder("Utkast for publisering")
+            UtkastBuilder.builder("Utkast for publisering", gyldigFra = LocalDate.of(2024, Month.JANUARY, 1))
                 .withOperasjoner(
                     Operasjoner(
                         metadataendringer =

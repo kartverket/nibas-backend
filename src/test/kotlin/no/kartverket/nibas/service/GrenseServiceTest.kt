@@ -40,19 +40,7 @@ class GrenseServiceTest {
     lateinit var utkastService: UtkastService
 
     @MockkBean
-    private lateinit var stemmekretsServiceMock: StemmekretsService
-
-    @MockkBean
-    private lateinit var grunnkretsServiceMock: GrunnkretsService
-
-    @MockkBean
-    private lateinit var flateServiceMock: FlateService
-
-    @MockkBean
     private lateinit var grenseRepositoryKotlinMock: GrenseRepository
-
-    @MockkBean
-    private lateinit var stemmekretsRepositoryKotlinMock: StemmekretsRepository
 
     @MockkBean
     private lateinit var utkastRepositoryMock: UtkastRepository
@@ -84,7 +72,7 @@ class GrenseServiceTest {
 
         val grenseendringer = Grenseendringer(endredeFeatures = listOf(featureWithUnknownId))
 
-        val utkast = UtkastBuilder.builder("test")
+        val utkast = UtkastBuilder.builder("test", gyldigFra = gyldighetsdato)
             .build()
 
         every { utkastRepositoryMock.findById(any()) } returns Optional.of(utkast)

@@ -50,27 +50,24 @@ class UtkastValidatorService(
         return errorMessages
     }
 
-    fun sjekkUgyldigUtkastNavnOgEndringstype(navn: String, endringstype: String): String? {
-        //Sjekker om navn og endringstype er ugyldige
+    fun validateUtkastAttributter(navn: String, endringstype: String, gyldigFra: LocalDate): String? {
         var errorMessage: String? = null
         if (navn.isBlank()) {
-            errorMessage = "Utkastet mangler navn"
+            errorMessage = "Utkastet mangler navn."
         }
         if (endringstype.isBlank()) {
-            if (errorMessage == null) {
-                errorMessage = "Utkastet mangler endringstype"
-            } else {
-                errorMessage += " og endringstype"
-            }
+            errorMessage += " Utkastet mangler endringstype."
         }
-
+        if (gyldigFra.isBefore(currentTime.asLocalDate())) {
+            errorMessage += " Utkastet kan ikke være gyldig fra en tidligere dato."
+        }
         return errorMessage
     }
 
-    fun validateGyldigUtkast(utkast: Utkast, endringstype: String, gyldighetDato: LocalDate): List<String> {
+    fun validateUtkastMedOperasjoner(utkast: Utkast, endringstype: String, gyldighetDato: LocalDate): List<String> {
         val errorMessages = mutableListOf<String>()
 
-        val utkastNavnOgEndringstypeMessage = sjekkUgyldigUtkastNavnOgEndringstype(utkast.navn, endringstype)
+        val utkastNavnOgEndringstypeMessage = validateUtkastAttributter(utkast.navn, endringstype, gyldighetDato)
         if (utkastNavnOgEndringstypeMessage != null) {
             errorMessages.add(utkastNavnOgEndringstypeMessage)
         }
@@ -93,7 +90,7 @@ class UtkastValidatorService(
 
     fun validateUtkastKlartForPublisering(utkast: Utkast, gyldighetDato: LocalDate): List<String> {
         val errorMessages = mutableListOf<String>()
-        errorMessages.addAll(validateGyldigUtkast(utkast, utkast.auditInfo.typeEndring.value, gyldighetDato))
+        errorMessages.addAll(validateUtkastMedOperasjoner(utkast, utkast.auditInfo.typeEndring.value, gyldighetDato))
 
         if (gyldighetDato.isBefore(currentTime.asLocalDate())) {
             errorMessages.add("Kan ikke publisere et utkast som trer i kraft før dagens dato. Utkastet er satt til å tre i kraft ${gyldighetDato.toNorskFormat()}")

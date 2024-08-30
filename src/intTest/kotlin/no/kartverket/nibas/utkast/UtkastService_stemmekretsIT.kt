@@ -104,7 +104,8 @@ class UtkastService_stemmekretsIT : TestWithDbContainer() {
         val utkastId = saveStemmekretsUtkast(
             navn = "Jeg vil endre stemmekretsnr til 4589 fra 1.7.23",
             oppdateringsdato = october24In2022,
-            stemmekretsRequest
+            stemmekretsRequest,
+            gyldigFra = july1In2023
         )
 
         // Kall til publiser skal feile.
@@ -174,7 +175,7 @@ class UtkastService_stemmekretsIT : TestWithDbContainer() {
 
     private fun saveAndPubliserStemmekretsUtkast(navn: String, stemmekretsNr: String, stemmekretsNavn: String,
                                                  oppdateringsdato: ZonedDateTime, gyldigFra: LocalDate, version: Int) {
-        val utkastId = saveStemmekretsUtkast(navn, stemmekretsNavn, stemmekretsNr, version, oppdateringsdato)
+        val utkastId = saveStemmekretsUtkast(navn, stemmekretsNavn, stemmekretsNr, version, oppdateringsdato, gyldigFra)
         publiser(utkastId, gyldigFra)
     }
 
@@ -188,9 +189,10 @@ class UtkastService_stemmekretsIT : TestWithDbContainer() {
     private fun saveStemmekretsUtkast(
         navn: String,
         oppdateringsdato: ZonedDateTime,
-        stemmekretsRequest: StemmekretsRequest
+        stemmekretsRequest: StemmekretsRequest,
+        gyldigFra: LocalDate
     ): String {
-        val utkast = UtkastBuilder.builder(navn)
+        val utkast = UtkastBuilder.builder(navn, gyldigFra = gyldigFra)
             .withStemmekretsRequests(
                 mapOf(lokalidOfStemmekrets to stemmekretsRequest))
             .withAuditInfo(AuditInfo(oppdateringsdato, "DUMMY"))
@@ -205,7 +207,8 @@ class UtkastService_stemmekretsIT : TestWithDbContainer() {
         stemmekretsNr: String,
         version: Int,
         oppdateringsdato: ZonedDateTime,
-    ): String = saveStemmekretsUtkast(navn, oppdateringsdato, createStemmekretsRequest(stemmekretsNavn, stemmekretsNr, version))
+        gyldigFra: LocalDate
+    ): String = saveStemmekretsUtkast(navn, oppdateringsdato, createStemmekretsRequest(stemmekretsNavn, stemmekretsNr, version), gyldigFra)
 
 
     private fun createStemmekretsRequest(

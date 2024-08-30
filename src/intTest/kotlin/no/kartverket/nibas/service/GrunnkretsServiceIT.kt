@@ -986,7 +986,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         val utkastRequestBuilder = UtkastRequestBuilder()
             .withOperasjoner(Operasjoner(kretsDelingEndringer = listOf(delingEndringRequest)))
 
-        val utkast = UtkastBuilder.builder("test")
+        val utkast = UtkastBuilder.builder("test", gyldigFra = LocalDate.now())
             .withOperasjoner(Operasjoner(kretsDelingEndringer = listOf(delingEndringRequest)))
             .build()
         utkastRepository.save(utkast)
@@ -1097,70 +1097,5 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
             gyldigFra = jan1In2023,
         )
         saveKommuneOgUnikLokalid(grunnkretser = listOf(grunnkrets, grunnkretsFramtidigVersjon))
-    }
-
-    private fun saveNaboGrunnkretserIHverSinKommune(gyldigFra: LocalDate, medHull: Boolean = false, medToDelteGrenser: Boolean = false, kommunenummer1: String = "0301", kommunenummer2: String = "0302"): List<Grunnkrets> {
-
-        val fylkesnummer1 = kommunenummer1.slice(0..1)
-        val fylkesnummer2 = kommunenummer2.slice(0..1)
-
-        val grenseType = if(fylkesnummer1 == fylkesnummer2) Grensetype.Kommunegrense else Grensetype.Fylkesgrense
-
-        val grenserForVest = if (medHull) {
-            GrenseHelper.getGrenserForVestligKrets(gyldigFra, grenseType, medToDelteGrenser) +
-                GrenseHelper.getHullVestligKrets(gyldigFra, grenseType)
-        } else {
-            GrenseHelper.getGrenserForVestligKrets(gyldigFra, grenseType, medToDelteGrenser)
-        }
-
-        //Lagrer grensene først, for å være sikker på at de er tilgjengelige for å knyttes til kretsene
-        val lagredeGrenserForVest = grenseRepository.saveAll(grenserForVest)
-        val lagredeGrenserForOest = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(gyldigFra, grenseType, medToDelteGrenser))
-        grenseRepository.flush()
-
-        val kretsVest = saveGrunnkrets(
-            id = "1",
-            lokalid = Lokalid("123"),
-            grunnkretsnummer = kommunenummer1 + "0020",
-            grunnkretsnavn = "Vestre krets",
-            gyldigFra = gyldigFra,
-            grenser = lagredeGrenserForVest
-        )
-
-        val kretsOest = saveGrunnkrets(
-            id = "2",
-            lokalid = Lokalid("234"),
-            grunnkretsnummer = kommunenummer2 + "0021",
-            grunnkretsnavn = "Østre krets",
-            gyldigFra = gyldigFra,
-            grenser = lagredeGrenserForOest
-        )
-
-
-
-        val kommune1 = saveKommuneOgUnikLokalid(id = "idKommuneVest", lokalid = "kommuneVest", grunnkretser = listOf(kretsVest), gyldigFra = gyldigFra,
-            kommunenummerUuid = kommunenummer1, kommunenummer = kommunenummer1)
-        val kommune2 = saveKommuneOgUnikLokalid(id = "idKommuneOest", lokalid = "kommuneOest", grunnkretser = listOf(kretsOest), gyldigFra = gyldigFra,
-            kommunenummerUuid = kommunenummer2, kommunenummer = kommunenummer2)
-
-        val nasjon = saveNasjonOgUnikLokalid()
-        if (fylkesnummer1 != fylkesnummer2) {
-            val fylke1 = saveFylkeOgUnikLokalid(id = "fylke1", lokalid = "fylke1", fylkesnummer = fylkesnummer1)
-            val fylke2 = saveFylkeOgUnikLokalid(id = "fylke2", lokalid = "fylke2", fylkesnummer = fylkesnummer2)
-            fylke1.addKommune(kommune1)
-            fylke2.addKommune(kommune2)
-            nasjon.addFylke(fylke1)
-            nasjon.addFylke(fylke2)
-        } else {
-            val fylke = saveFylkeOgUnikLokalid()
-            fylke.addKommune(kommune1)
-            fylke.addKommune(kommune2)
-            nasjon.addFylke(fylke)
-        }
-
-
-
-        grenseRepository.flush()
-        return listOf(kretsVest, kretsOest)
     }
 }

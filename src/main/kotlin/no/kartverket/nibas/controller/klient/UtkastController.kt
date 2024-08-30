@@ -22,7 +22,6 @@ import org.springframework.web.server.ResponseStatusException
 class UtkastController(
     private val utkastService: UtkastService,
     private val hrefProvider: HrefProvider,
-    private val currentTime: CurrentTime
 ) : UtkastApi {
 
     override fun opprettUtkast(
@@ -46,7 +45,7 @@ class UtkastController(
     }
 
     override fun publiserUtkast(id: String, body: PubliserUtkastRequest?) {
-        utkastService.publiserUtkast(id, body?.publiseringsdato ?: currentTime.asLocalDate())
+        utkastService.publiserUtkast(id, body?.publiseringsdato)
     }
 
     override fun hentUtkastIStatusOpprettet(): List<UtkastRef> {
@@ -65,7 +64,8 @@ private fun Utkast.toUtkastResponse(): UtkastResponse =
         operasjoner = this.operasjoner ?: Operasjoner(),
         opprettetDato = this.opprettetDato,
         auditInfoResponse = this.auditInfo.toAuditInfoResponse(),
-        version = this.version
+        version = this.version,
+        gyldigFra = this.gyldigFra
     )
 
 private fun Utkast.toUtkastRef(hrefProvider: HrefProvider): UtkastRef =

@@ -88,7 +88,7 @@ class UtkastValidatorServiceTest {
             }
         }
 
-        val utkast = UtkastBuilder.builder("test")
+        val utkast = UtkastBuilder.builder("test", gyldigFra = datoSomVilGiFremtidEndringKonflikt)
             .withGrunnkretsRequests(mapOf(
                 "lokalId" to GrunnkretsRequest(
                     "navn",
@@ -99,7 +99,7 @@ class UtkastValidatorServiceTest {
             ))
             .build()
 
-        val result = utkastValidatorService.validerFremtidigeEndringer(utkast, datoSomVilGiFremtidEndringKonflikt)
+        val result = utkastValidatorService.validerFremtidigeEndringer(utkast, gyldighetDato = utkast.gyldigFra)
         assertThat(result).isInstanceOf(FeilVedOppdatering.OppdateringException::class.java)
 
         val oppdateringFeil = result as FeilVedOppdatering.OppdateringException
@@ -127,11 +127,11 @@ class UtkastValidatorServiceTest {
             nyeKretser = listOf(KretsNavnOgNummer("nyGrunnkrets", "1"))
         )
 
-        val utkast = UtkastBuilder.builder("test")
+        val utkast = UtkastBuilder.builder("test", gyldigFra = datoSomVilGiFremtidEndringKonflikt)
             .withOperasjoner(Operasjoner(kretsDelingEndringer = listOf(delingEndringRequest)))
             .build()
 
-        val result = utkastValidatorService.validerFremtidigeEndringer(utkast, datoSomVilGiFremtidEndringKonflikt)
+        val result = utkastValidatorService.validerFremtidigeEndringer(utkast, utkast.gyldigFra)
         assertThat(result).isInstanceOf(FeilVedOppdatering.OppdateringException::class.java)
 
         val oppdateringFeil = result as FeilVedOppdatering.OppdateringException
@@ -159,11 +159,11 @@ class UtkastValidatorServiceTest {
             nyeKretser = listOf(KretsNavnOgNummer("nyStemmekrets", "1"))
         )
 
-        val utkast = UtkastBuilder.builder("test")
+        val utkast = UtkastBuilder.builder("test", gyldigFra = datoSomVilGiFremtidEndringKonflikt)
             .withOperasjoner(Operasjoner(kretsDelingEndringer = listOf(delingEndringRequest)))
             .build()
 
-        val result = utkastValidatorService.validerFremtidigeEndringer(utkast, datoSomVilGiFremtidEndringKonflikt)
+        val result = utkastValidatorService.validerFremtidigeEndringer(utkast, utkast.gyldigFra)
         assertThat(result).isInstanceOf(FeilVedOppdatering.OppdateringException::class.java)
 
         val oppdateringFeil = result as FeilVedOppdatering.OppdateringException
@@ -191,11 +191,11 @@ class UtkastValidatorServiceTest {
             nummer = "22"
         )
 
-        val utkast = UtkastBuilder.builder("test")
+        val utkast = UtkastBuilder.builder("test", gyldigFra = datoSomVilGiFremtidEndringKonflikt)
             .withOperasjoner(Operasjoner(stemmekretsSammenslaaingsendring = stemmekretsSammenslaaingsendringRequest))
             .build()
 
-        val result = utkastValidatorService.validerFremtidigeEndringer(utkast, datoSomVilGiFremtidEndringKonflikt)
+        val result = utkastValidatorService.validerFremtidigeEndringer(utkast, utkast.gyldigFra)
         assertThat(result).isInstanceOf(FeilVedOppdatering.OppdateringException::class.java)
 
         val oppdateringFeil = result as FeilVedOppdatering.OppdateringException
@@ -204,7 +204,7 @@ class UtkastValidatorServiceTest {
 
     @Test
     fun `skal gi feil om det finnes flere endringer på grenser med samme ID`() {
-        val utkast = UtkastBuilder.builder("test")
+        val utkast = UtkastBuilder.builder("test", gyldigFra = datoSomVilGiFremtidEndringKonflikt)
             .withOperasjoner(
                 Operasjoner(
                     grenseendringer = Grenseendringer(
@@ -223,13 +223,13 @@ class UtkastValidatorServiceTest {
             )
             .build()
 
-        val result = utkastValidatorService.validateUtkastKlartForPublisering(utkast, datoSomVilGiFremtidEndringKonflikt)
+        val result = utkastValidatorService.validateUtkastKlartForPublisering(utkast, utkast.gyldigFra)
         assertThat(result).contains("Utkastet inneholder grenseendringer for samme grense(r) flere ganger. Grensene (representert ved lokalid) det gjelder er: [123].")
     }
 
     @Test
     fun `skal ikke gi feil om det er flere nye features i samme utkast`() {
-        val utkast = UtkastBuilder.builder("test")
+        val utkast = UtkastBuilder.builder("test", gyldigFra = LocalDate.now())
             .withOperasjoner(
                 Operasjoner(
                     grenseendringer = Grenseendringer(
@@ -248,13 +248,13 @@ class UtkastValidatorServiceTest {
             )
             .build()
 
-        val result = utkastValidatorService.validateUtkastKlartForPublisering(utkast, datoSomVilGiFremtidEndringKonflikt)
+        val result = utkastValidatorService.validateUtkastKlartForPublisering(utkast, utkast.gyldigFra)
         assertThat(result).isEmpty()
     }
 
     @Test
     fun `skal gi feil om det finnes nyere endringer paa stemmekrets`() {
-        val utkast = UtkastBuilder.builder("test")
+        val utkast = UtkastBuilder.builder("test", gyldigFra = datoSomVilGiFremtidEndringKonflikt)
             .withStemmekretsRequests(mapOf(
                 "lokalId" to StemmekretsRequest(
                     identifikasjon = Identifikasjon(lokalid = "lokalid"),
@@ -268,7 +268,7 @@ class UtkastValidatorServiceTest {
             ))
             .build()
 
-        val result = utkastValidatorService.validerFremtidigeEndringer(utkast, datoSomVilGiFremtidEndringKonflikt)
+        val result = utkastValidatorService.validerFremtidigeEndringer(utkast, utkast.gyldigFra)
         assertThat(result).isInstanceOf(FeilVedOppdatering.OppdateringException::class.java)
 
         val oppdateringFeil = result as FeilVedOppdatering.OppdateringException
@@ -277,7 +277,7 @@ class UtkastValidatorServiceTest {
 
     @Test
     fun `skal gi feil om det finnes nyere endringer paa grense`() {
-        val utkast = UtkastBuilder.builder("test")
+        val utkast = UtkastBuilder.builder("test", gyldigFra = datoSomVilGiFremtidEndringKonflikt)
             .withOperasjoner(
                 Operasjoner(
                     grenseendringer = Grenseendringer(
@@ -291,7 +291,7 @@ class UtkastValidatorServiceTest {
             )
             .build()
 
-        val result = utkastValidatorService.validerFremtidigeEndringer(utkast, datoSomVilGiFremtidEndringKonflikt)
+        val result = utkastValidatorService.validerFremtidigeEndringer(utkast, utkast.gyldigFra)
         assertThat(result).isInstanceOf(FeilVedOppdatering.OppdateringException::class.java)
 
         val oppdateringFeil = result as FeilVedOppdatering.OppdateringException

@@ -75,7 +75,7 @@ class UtkastValideringTest {
 
     @Test
     fun `valider utkast med annen status enn opprettet gir ugyldig utkast`() { //publiserUtkastMedAnnenStatusEnnOpprettetGirBadRequestEx
-        val publisertUtkast = UtkastBuilder.builder("Utkast for publisering")
+        val publisertUtkast = UtkastBuilder.builder("Utkast for publisering", gyldigFra = june2024)
             .withStatus(UtkastStatus.PUBLISERT)
             .build()
 
@@ -85,7 +85,7 @@ class UtkastValideringTest {
 
     @Test
     fun `valider utkast uten operasjoner gir ugyldig utkast`() {
-        val utkastUtenOperasjoner = UtkastBuilder.builder("Utkast for publisering")
+        val utkastUtenOperasjoner = UtkastBuilder.builder("Utkast for publisering", gyldigFra = june2024)
             .build()
 
         val validateUtkastKlartForPublisering = utkastValidatorService.validateUtkastKlartForPublisering(utkastUtenOperasjoner, june2024)
@@ -327,7 +327,7 @@ class UtkastValideringTest {
                 flatetype = flatetype,
                 nyeKretser = listOf(KretsNavnOgNummer(kretsNavn = "nyGrunnkrets", kretsNummer = kretsnummer)),
             ))
-        ))
+        ), gyldigFra = june2024)
 
         return Pair(utkast, utkastValidatorService.validateUtkastKlartForPublisering(utkast, june2024))
     }
@@ -442,7 +442,7 @@ class UtkastValideringTest {
                     "2" to GrunnkretsRequestBuilder(lokalId = "2").build(),
                 )
             ),
-        ))
+        ), gyldigFra = june2024)
 
         every { grunnkretsServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns listOf()
 
@@ -471,7 +471,7 @@ class UtkastValideringTest {
             .withKontekstEgenskaper(listOf())
             .build()
         val utkast1 = Utkast(navn = "test",
-            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureUtenTilhorigheter))))
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureUtenTilhorigheter))), gyldigFra = LocalDate.now())
 
         assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast1).joinToString("\n"))
             .contains("Grensen har 0 tilhørighet(er) satt, men må ha 2.")
@@ -486,7 +486,7 @@ class UtkastValideringTest {
             )))
             .build()
         val utkast1b = Utkast(navn = "test",
-            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedFeilAntallTilhorigheter))))
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedFeilAntallTilhorigheter))), gyldigFra = LocalDate.now())
 
         assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast1b).joinToString("\n"))
             .contains("Grensen har 1 tilhørighet(er) satt")
@@ -504,7 +504,7 @@ class UtkastValideringTest {
             )))
             .build()
         val utkast1c = Utkast(navn = "test",
-            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedFeilToNyeTilhorigheter))))
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedFeilToNyeTilhorigheter))), gyldigFra = LocalDate.now())
         assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast1c)).isEmpty()
 
         val featureMedToLikeTilhorigheter = FeatureBuilder("1")
@@ -523,7 +523,7 @@ class UtkastValideringTest {
                 ))
             ).build()
         val utkast2 = Utkast(navn = "test",
-            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedToLikeTilhorigheter))))
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedToLikeTilhorigheter))), gyldigFra = LocalDate.now())
 
         assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast2).joinToString("\n"))
             .contains("Grensen har flere tilhørigheter til samme krets. Gjelder kretsnr 12345678 med lokalid G3")
@@ -544,7 +544,7 @@ class UtkastValideringTest {
                 ))
             ).build()
         val utkast2b = Utkast(navn = "test",
-            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedToTilhorigheterMedSammeLokalid))))
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedToTilhorigheterMedSammeLokalid))), gyldigFra = LocalDate.now())
 
         assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast2b).joinToString("\n"))
             .contains("Grensen har flere tilhørigheter til samme krets")
@@ -564,7 +564,7 @@ class UtkastValideringTest {
                 ))
             ).build()
         val utkast2c = Utkast(navn = "test",
-            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedToTilhorigheterMedSammeData))))
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedToTilhorigheterMedSammeData))), gyldigFra = LocalDate.now())
 
         assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast2c).joinToString("\n"))
             .contains("Grensen har flere tilhørigheter til samme krets. Gjelder kretsnr 12345678")
@@ -586,7 +586,7 @@ class UtkastValideringTest {
             )
             .build()
         val utkast3 = Utkast(navn = "test",
-            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(kommuneGrenseFeatureMedTilhorigheterISammeKommune))))
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(kommuneGrenseFeatureMedTilhorigheterISammeKommune))), gyldigFra = LocalDate.now())
 
         assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast3).joinToString("\n"))
             .contains("Grensen har 2 tilhørighet(er) satt, men må ha 4")
@@ -612,7 +612,7 @@ class UtkastValideringTest {
             )
             .build()
         val utkast4 = Utkast(navn = "test",
-            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedToFeil))))
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedToFeil))), gyldigFra = LocalDate.now())
 
         assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast4).joinToString("\n"))
             .contains("Grense med id: 1 har ugyldig tilhørighet. Årsak(er)")
@@ -639,7 +639,7 @@ class UtkastValideringTest {
             )
             .build()
         val utkast5 = Utkast(navn = "test",
-            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedStemmekretsOgGrunnkrets))))
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedStemmekretsOgGrunnkrets))), gyldigFra = LocalDate.now())
 
         assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast5).joinToString("\n"))
             .contains("Grense med id: 1 har ugyldig tilhørighet. Årsak(er)")
@@ -671,7 +671,7 @@ class UtkastValideringTest {
             )
             .build()
         val utkast6 = Utkast(navn = "test",
-            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedTreKontekstegenskaper))))
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedTreKontekstegenskaper))), gyldigFra = LocalDate.now())
 
         assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast6).joinToString("`n"))
             .contains("Grensen har 3 tilhørighet(er) satt, men må ha 4")
@@ -709,7 +709,7 @@ class UtkastValideringTest {
             )
             .build()
         val utkast7 = Utkast(navn = "test",
-            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedFireKontekstegenskaper))))
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedFireKontekstegenskaper))), gyldigFra = LocalDate.now())
 
         assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast7).joinToString("\n"))
             .contains("Grensen er kommune-/fylkesgrense og har tilhørighet til to kretser i samme kommune")
@@ -745,7 +745,7 @@ class UtkastValideringTest {
             )
             .build()
         val utkastOk = Utkast(navn = "test",
-            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(korrektKommunegrenseFeature))))
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(korrektKommunegrenseFeature))), gyldigFra = LocalDate.now())
         assertThat(utkastValidatorService.validerTilhorighetEndringer(utkastOk)).isEmpty()
     }
 
@@ -779,22 +779,22 @@ class UtkastValideringTest {
                 ),
                 grenseendringer = operasjonerMedKunEditerbareGrenser().grenseendringer
             )
-        val gyldigUtkast = UtkastBuilder.builder("Gyldignavn")
+        val gyldigUtkast = UtkastBuilder.builder("Gyldignavn", gyldigFra = LocalDate.now())
             .withOperasjoner(operasjoner)
             .build()
 
         val validateGyldigUtkastResult =
-            utkastValidatorService.validateGyldigUtkast(gyldigUtkast, gyldigUtkast.auditInfo.typeEndring.value, june2024)
+            utkastValidatorService.validateUtkastMedOperasjoner(gyldigUtkast, gyldigUtkast.auditInfo.typeEndring.value, june2024)
         assertThat(validateGyldigUtkastResult).isEmpty()
     }
 
     @Test
     fun `validateGyldigUtkast utkast uten operasjoner gir gyldig utkast`() {
-        val utkastUtenOperasjoner = UtkastBuilder.builder("Utkast for publisering")
+        val utkastUtenOperasjoner = UtkastBuilder.builder("Utkast for publisering", gyldigFra = LocalDate.now())
             .build()
 
         val validateGyldigUtkastResult =
-            utkastValidatorService.validateGyldigUtkast(utkastUtenOperasjoner, utkastUtenOperasjoner.auditInfo.typeEndring.value, june2024)
+            utkastValidatorService.validateUtkastMedOperasjoner(utkastUtenOperasjoner, utkastUtenOperasjoner.auditInfo.typeEndring.value, june2024)
         assertThat(validateGyldigUtkastResult).isEmpty()
     }
 }

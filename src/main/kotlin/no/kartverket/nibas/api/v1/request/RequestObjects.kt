@@ -112,6 +112,9 @@ data class OpprettUtkastRequest(
     val navn: String,
     @Schema(description = "Typen endring utkastet representerer.")
     val endringstype: String,
+    // TODO Skal ikke ha default verdi etter at frontend har fått gyldigFra felt i "opprett utkast"-modalen
+    @Schema(description = "Gyldig fra-datoen til utkastet. Settes default til dagens dato om ikke satt", nullable = true, defaultValue = "Dagens dato")
+    val gyldigFra: LocalDate = LocalDate.now(),
 )
 
 @Schema(description = "Representasjon for oppdatering av utkast")
@@ -174,5 +177,5 @@ data class GrunnkretsSammenslaaingsendringRequest (
 @Schema(description = "Requestbody for publisering av utkast.")
 data class PubliserUtkastRequest (
     @Schema (description = "Datoen utkastet skal publiseres fra. Settes default til dagens dato om ikke satt.")
-    val publiseringsdato: LocalDate = LocalDate.now(),
+    val publiseringsdato: LocalDate?,
 )
