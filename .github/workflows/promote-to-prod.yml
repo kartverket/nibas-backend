@@ -8,8 +8,9 @@ env:
 
 jobs:
   deploy-argo:
-    uses: kartverket/smia-apps/.github/workflows/promote-app.yml@main
+    permissions:
+      id-token: write
+    uses: kartverket/smia-apps/.github/workflows/promote-app-octo-sts.yml@main
     with:
       application: nibas-backend
-    secrets:
-      PAT_TOKEN: ${{ secrets.PAT_ARGOCD }}
+      identity: nibas

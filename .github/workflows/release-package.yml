@@ -41,12 +41,13 @@ jobs:
           image_url: ${{ needs.build.outputs.image_url }}
 
   deploy-argo:
+    permissions:
+      id-token: write
     needs: [pharos, build]
-    uses: kartverket/smia-apps/.github/workflows/release-app.yml@main
+    uses: kartverket/smia-apps/.github/workflows/release-app-octo-sts.yml@main
     with:
       application: nibas-backend
       version: ${{ needs.build.outputs.version }}
       deploy_dev: true
       deploy_prod: false
-    secrets:
-      PAT_TOKEN: ${{ secrets.PAT_ARGOCD }}
+      identity: nibas
