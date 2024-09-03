@@ -48,9 +48,6 @@ class Dokumentasjonsreferanse(
     @Embedded
     override var gyldighet: Gyldighet = Gyldighet()
 
-    @Column(name = "objtype")
-    var objtype: String? = null
-
     @Version
     override var version: Int = 1
 

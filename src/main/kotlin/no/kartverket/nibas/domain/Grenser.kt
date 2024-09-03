@@ -49,8 +49,6 @@ class Grense(
     @Version
     override var version: Int = 1
 
-    var objtype: String? = grensetype.value
-
     @Column(name = "datafangstdato")
     override var datafangstdato: ZonedDateTime? = null
 
