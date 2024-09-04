@@ -10,6 +10,7 @@ import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.api.v1.request.OppdaterUtkastRequest
 import no.kartverket.nibas.api.v1.request.OpprettUtkastRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
+import no.kartverket.nibas.common.CurrentTime
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
@@ -52,6 +53,7 @@ class UtkastService(
     private val grenseService: GrenseService,
     private val nibasEventPublisher: NibasEventPublisher,
     private val utkastValidatorService: UtkastValidatorService,
+    private val currentTime: CurrentTime,
 ) {
 
     private val logger: Logger = LoggerFactory.getLogger(UtkastService::class.java)
@@ -75,7 +77,7 @@ class UtkastService(
             ?: throw ResponseException.NotFoundException("Utkast ble ikke funnet for id: $id.")
         utkast.operasjoner = request.operasjoner
 
-        val gyldigFra = maxOf(utkast.gyldigFra, LocalDate.now())
+        val gyldigFra = maxOf(utkast.gyldigFra, currentTime.asLocalDate())
 
         //Valideringer som brukeren ikke kan rette opp i
         validateOptimistiskLaasOgFremtidigeEndringer(utkast, request.version, gyldigFra)
@@ -136,30 +138,29 @@ class UtkastService(
             operasjoner = null
         }
 
-    // TODO gyldigFra parameter kan fjernes etter at frontend har fjernet valget om publiseringsdato fra publiseringsmodal
     @Transactional
-    fun publiserUtkast(utkastId: String, gyldigFra: LocalDate? = null): NibasEvent {
+    fun publiserUtkast(utkastId: String): NibasEvent {
         val eventsForPublisering: NibasEvent
         val utkast = hentUtkast(utkastId)
             ?: throw ResponseException.NotFoundException("Utkast ble ikke funnet for id: $utkastId.")
 
-        if(utkast.gyldigFra.isBefore(LocalDate.now())) {
-            utkast.gyldigFra = LocalDate.now()
+        if(utkast.gyldigFra.isBefore(currentTime.asLocalDate())) {
+            utkast.gyldigFra = currentTime.asLocalDate()
         }
 
         //Valideringer som brukeren ikke kan rette opp i
-        validateOptimistiskLaasOgFremtidigeEndringer(utkast = utkast, gyldigFra = gyldigFra ?: utkast.gyldigFra)
+        validateOptimistiskLaasOgFremtidigeEndringer(utkast = utkast, gyldigFra = utkast.gyldigFra)
 
-        val utkastValideringResult = utkastValidatorService.validateUtkastKlartForPublisering(utkast, gyldigFra ?: utkast.gyldigFra)
+        val utkastValideringResult = utkastValidatorService.validateUtkastKlartForPublisering(utkast, utkast.gyldigFra)
         if (utkastValideringResult.isNotEmpty()) {
             throw ResponseException.BadRequestException(title = "Kan ikke publisere utkastet", msg = utkastValideringResult.joinToString("\n"))
         }
 
         logger.debug(utkast.publiseringsInfo())
-        val flateEndringer: List<EventRad> = publiserEndringer(utkast.operasjoner!!, utkast, gyldigFra ?: utkast.gyldigFra)
+        val flateEndringer: List<EventRad> = publiserEndringer(utkast.operasjoner!!, utkast, utkast.gyldigFra)
 
         utkast.settPublisert()
-        eventsForPublisering = nibasEventPublisher.publishNibasEvent(flateEndringer, gyldigFra ?: utkast.gyldigFra)
+        eventsForPublisering = nibasEventPublisher.publishNibasEvent(flateEndringer, utkast.gyldigFra)
 
         return eventsForPublisering
     }

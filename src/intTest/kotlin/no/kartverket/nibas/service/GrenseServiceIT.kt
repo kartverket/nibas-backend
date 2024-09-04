@@ -1511,7 +1511,7 @@ class GrenseServiceIT : TestWithDbContainer() {
         val grenseSomSkalEndreDokref = kretsOpprinnelig.grenser.find { it.grense.lokalid == "grense3_2Lokalid" }!!.grense
         assertThat(grenseSomSkalEndreDokref).isNotNull()
 
-        grenseSomSkalEndreDokref?.dokrefGrensekobling?.first()?.dokumentasjonsreferanse?.addDokumentLenke()?.apply {
+        grenseSomSkalEndreDokref.dokrefGrensekobling.first().dokumentasjonsreferanse.addDokumentLenke().apply {
             dokumentlink = "https://3.no"
         }
         val grenseMedNyDokref = FeatureBuilder(id = grenseSomSkalEndreDokref.lokalid)

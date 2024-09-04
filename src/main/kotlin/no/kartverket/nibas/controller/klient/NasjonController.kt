@@ -16,7 +16,7 @@ class NasjonController(
         val nasjoner = nasjonService.hentAlleNasjoner(gyldighet)
         when (nasjoner.size) {
             1 -> {
-                return nasjoner.first.toNasjonResponse()
+                return nasjoner.first().toNasjonResponse()
             }
             else -> {
                 throw RuntimeException("Fant ikke nasjon gyldig på dato: $gyldighet")

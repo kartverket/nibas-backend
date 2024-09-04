@@ -168,7 +168,7 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
 
         // Kall til publiser skal feile.
         val oppdateringException = assertFailsWith<FeilVedOppdatering.OppdateringException> {
-            publiser(utkastId, july1In2023)
+            publiser(utkastId)
         }
 
         assertThat(oppdateringException).isNotNull
@@ -217,11 +217,11 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
     private fun saveAndPubliserGrunnkretsUtkast(navn: String, grkrNr: String, grkrNavn: String,
                                                 oppdateringsdato: ZonedDateTime, gyldigFra: LocalDate, version: Int) {
         val utkastId = saveGrunnkretsUtkast(navn, grkrNavn, grkrNr, version, oppdateringsdato, gyldigFra)
-        publiser(utkastId, gyldigFra)
+        publiser(utkastId)
     }
 
-    private fun publiser(utkastId: String, gyldigFra: LocalDate) {
-        utkastService.publiserUtkast(utkastId, gyldigFra)
+    private fun publiser(utkastId: String) {
+        utkastService.publiserUtkast(utkastId)
         assertUtkastIsPublisert(utkastId)
     }
 

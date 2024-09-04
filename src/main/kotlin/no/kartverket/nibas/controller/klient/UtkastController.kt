@@ -2,14 +2,12 @@ package no.kartverket.nibas.controller.klient
 
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.klient.UtkastApi
-import no.kartverket.nibas.api.v1.request.OppdaterUtkastRequest
-import no.kartverket.nibas.api.v1.request.OpprettUtkastRequest
-import no.kartverket.nibas.api.v1.request.PubliserUtkastRequest
 import no.kartverket.nibas.api.v1.klient.response.AuditInfoResponse
 import no.kartverket.nibas.api.v1.klient.response.UtkastOpprettetResponse
 import no.kartverket.nibas.api.v1.klient.response.UtkastRef
 import no.kartverket.nibas.api.v1.klient.response.UtkastResponse
-import no.kartverket.nibas.common.CurrentTime
+import no.kartverket.nibas.api.v1.request.OppdaterUtkastRequest
+import no.kartverket.nibas.api.v1.request.OpprettUtkastRequest
 import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.domain.utkast.Utkast
 import no.kartverket.nibas.service.utkast.UtkastService
@@ -44,8 +42,8 @@ class UtkastController(
         utkastService.forkastUtkast(id) ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
     }
 
-    override fun publiserUtkast(id: String, body: PubliserUtkastRequest?) {
-        utkastService.publiserUtkast(id, body?.publiseringsdato)
+    override fun publiserUtkast(id: String) {
+        utkastService.publiserUtkast(id)
     }
 
     override fun hentUtkastIStatusOpprettet(): List<UtkastRef> {

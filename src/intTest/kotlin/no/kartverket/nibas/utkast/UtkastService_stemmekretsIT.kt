@@ -110,7 +110,7 @@ class UtkastService_stemmekretsIT : TestWithDbContainer() {
 
         // Kall til publiser skal feile.
         val oppdateringException = Assertions.catchThrowableOfType({
-            publiser(utkastId, july1In2023)
+            publiser(utkastId)
         }, FeilVedOppdatering.OppdateringException::class.java)
 
         Assertions.assertThat(oppdateringException).isNotNull
@@ -176,13 +176,13 @@ class UtkastService_stemmekretsIT : TestWithDbContainer() {
     private fun saveAndPubliserStemmekretsUtkast(navn: String, stemmekretsNr: String, stemmekretsNavn: String,
                                                  oppdateringsdato: ZonedDateTime, gyldigFra: LocalDate, version: Int) {
         val utkastId = saveStemmekretsUtkast(navn, stemmekretsNavn, stemmekretsNr, version, oppdateringsdato, gyldigFra)
-        publiser(utkastId, gyldigFra)
+        publiser(utkastId)
     }
 
     private fun findAllStemmekretserSortedByVersion(): List<Stemmekrets> = stemmekretsRepository.findAllByLokalid(lokalidOfStemmekrets).sortedBy { it.version }
 
-    private fun publiser(utkastId: String, gyldigFra: LocalDate) {
-        utkastService.publiserUtkast(utkastId, gyldigFra)
+    private fun publiser(utkastId: String) {
+        utkastService.publiserUtkast(utkastId)
         assertUtkastIsPublisert(utkastId)
     }
 

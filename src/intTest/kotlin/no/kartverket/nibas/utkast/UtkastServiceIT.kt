@@ -51,6 +51,7 @@ class UtkastServiceIT : TestWithDbContainer() {
 
         val utkastRequest = OpprettUtkastRequestBuilder()
             .withNavn(navn)
+            .withGyldigFra(timeAtTestStart.toLocalDate())
             .withEndringstype(Endringstype.KVALITETSHEVING.value)
             .build()
 

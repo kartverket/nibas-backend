@@ -10,7 +10,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import no.kartverket.nibas.api.v1.request.OppdaterUtkastRequest
 import no.kartverket.nibas.api.v1.request.OpprettUtkastRequest
-import no.kartverket.nibas.api.v1.request.PubliserUtkastRequest
 import no.kartverket.nibas.api.v1.klient.response.ApiErrorResponse
 import no.kartverket.nibas.api.v1.klient.response.OptimistiskLaasWrapper
 import no.kartverket.nibas.api.v1.klient.response.UtkastOpprettetResponse
@@ -79,7 +78,7 @@ interface UtkastApi {
     @Response404NotFound
     @Response409Conflict
     @PostMapping("/{id}/publiser", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun publiserUtkast(@Parameter(description = "ID-en til utkastet man vil publisere") @PathVariable id: String, @RequestBody body: PubliserUtkastRequest?)
+    fun publiserUtkast(@Parameter(description = "ID-en til utkastet man vil publisere") @PathVariable id: String)
 
     @Operation(summary = "Henter alle utkast i status Opprettet sortert på navn.", description = "Henter alle utkast i status Opprettet sortert på navn.")
     @ApiResponses(

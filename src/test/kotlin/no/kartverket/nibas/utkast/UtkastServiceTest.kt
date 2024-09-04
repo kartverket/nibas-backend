@@ -88,7 +88,7 @@ internal class UtkastServiceTest {
         every { grenseServiceMock.validerLaasbareForGrenseendringerFinnesOgLagListeMedLaasbarOgOensketVersjon(any(), any()) } returns emptyList()
         val utkastValidatorService = UtkastValidatorService(grunnkretsServiceMock, grenseServiceMock, stemmekretsServiceMock, kodelisteServiceMock, currentTime)
         utkastService = UtkastService(utkastRepositoryMock, nasjonServiceMock, fylkeServiceMock, kommuneServiceMock, grunnkretsServiceMock,
-            stemmekretsServiceMock, grenseServiceMock, nibasEventPublisherMock, utkastValidatorService)
+            stemmekretsServiceMock, grenseServiceMock, nibasEventPublisherMock, utkastValidatorService, currentTime)
     }
 
     @Test
