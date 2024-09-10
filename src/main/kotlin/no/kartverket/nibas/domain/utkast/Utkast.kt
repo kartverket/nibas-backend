@@ -1,6 +1,7 @@
 package no.kartverket.nibas.domain.utkast
 
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
+import no.kartverket.nibas.api.v1.common.Metadataendringer
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.request.FylkeRequest
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
@@ -22,6 +23,7 @@ import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import jakarta.persistence.Version
+import kotlin.reflect.full.memberProperties
 
 /**
  * Navn og endringstype settes i konstruktør da de er påkrevd ved opprettelse av utkastet.
@@ -51,6 +53,11 @@ class Utkast(
     @Column(name = "opprettet_dato", updatable = false)
     val opprettetDato: ZonedDateTime = ZonedDateTime.now()
 
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Type(JsonBinaryType::class)
+    @Column(columnDefinition = "jsonb", name = "endrede_inndelinger")
+    var endredeInndelinger: List<String>? = null
+
 
     @Embedded
     override var auditInfo: AuditInfo = AuditInfo()
@@ -59,6 +66,7 @@ class Utkast(
     var status: UtkastStatus = UtkastStatus.OPPRETTET
 
     fun settPublisert() {
+        endredeInndelinger = operasjoner?.toEndredeInndelinger()
         operasjoner = null
         status = UtkastStatus.PUBLISERT
     }
@@ -127,4 +135,31 @@ class UtkastBuilder private constructor(val navn: String, private val endringsty
         this.status = status
         return this
     }
+}
+
+fun Operasjoner.toEndredeInndelinger(): List<String> {
+    val allKeys = mutableSetOf<String>()
+
+    for (property in Metadataendringer::class.memberProperties) {
+        val value = property.get(metadataendringer)
+        if (value is Map<*, *>) {
+            allKeys.addAll(value.keys.filterIsInstance<String>())
+        }
+    }
+
+    for (feature in grenseendringer.endredeFeatures){
+        feature.properties.kontekstEgenskaper.forEach {
+            it.id?.lokalid?.value?.let { id -> allKeys.add(id) }
+        }
+    }
+
+    stemmekretsSammenslaaingsendring?.viderefoertStemmekrets?.lokalId?.let { allKeys.add(it) }
+    stemmekretsSammenslaaingsendring?.stemmekretserTilSammenslaaing?.map { it.lokalId }?.let { allKeys.addAll(it) }
+
+    grunnkretsSammenslaaingsendring?.viderefoertGrunnkrets?.lokalId?.let { allKeys.add(it) }
+    grunnkretsSammenslaaingsendring?.grunnkretserTilSammenslaaing?.map { it.lokalId }?.let { allKeys.addAll(it) }
+
+    allKeys.addAll(kretsDelingEndringer.map { it.opprinneligKrets.lokalId })
+
+    return allKeys.toList()
 }

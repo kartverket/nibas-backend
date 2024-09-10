@@ -438,4 +438,27 @@ class UtkastServiceIT : TestWithDbContainer() {
         assertThat(publisertUtkast?.gyldigFra).isEqualTo(iDag)
         assertThat(oppdatertGrunnkrets?.gyldighet?.gyldigFra).isEqualTo(iDag)
     }
+
+    @Test
+    fun `publisering av utkast med grenseendring skal legge to inndelinger på endrede_inndelinger kolonnen`(){
+        val utkast = UtkastBuilder.builder("test", gyldigFra =  LocalDate.now()).withOperasjoner(
+            Operasjoner(
+                metadataendringer = Metadataendringer(
+                    grunnkretsendringer = mapOf("c54fb55e-15d0-4528-8b88-f58d6c74bd87" to GrunnkretsRequest(
+                        "Moi2",
+                        "42190204",
+                        Identifikasjon("c54fb55e-15d0-4528-8b88-f58d6c74bd87"),
+                        1
+                    ))
+                )
+            )
+        ).build()
+        utkastRepository.save(utkast)
+
+        // publiser
+        utkastService.publiserUtkast(utkast.id)
+        val publisertUtkast = utkastService.hentUtkast(utkast.id)
+
+        assertThat(publisertUtkast?.endredeInndelinger).contains("c54fb55e-15d0-4528-8b88-f58d6c74bd87")
+    }
 }

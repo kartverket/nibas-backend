@@ -16,17 +16,6 @@ import org.springframework.http.HttpStatus
 import java.time.LocalDate
 import java.time.ZonedDateTime
 
-@Schema(description = "En referanse til et utkast")
-data class UtkastRef(
-    @Schema(description = "ID-en til utkastet")
-    val id: String,
-    @Schema(description = "Navnet på utkastet")
-    val navn: String,
-    @Schema(description = "URL til full representasjon av utkastet.")
-    val href: String,
-    @Schema(description = "Tidspunktet utkastet ble opprettet.")
-    val opprettetDato: ZonedDateTime,
-)
 @Schema(description = "Representasjon av nasjon")
 data class NasjonResponse(
     @Schema(description = "ID-en til nasjonen")
@@ -214,7 +203,9 @@ data class UtkastResponse(
     @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
     val version: Int,
     @Schema(description = "Gyldig fra-datoen til utkastet")
-    val gyldigFra: LocalDate
+    val gyldigFra: LocalDate,
+    @Schema(description = "Liste med lokalider for inndelinger som har blitt endret i utkastet. Kun satt hvis status er PUBLISERT")
+    val endredeInndelinger: List<String>
 )
 
 data class InndelingSearchResponse(

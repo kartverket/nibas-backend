@@ -68,8 +68,8 @@ class UtkastService(
     fun hentUtkast(id: String): Utkast? = utkastRepository.findById(id).unwrap()
 
     @Transactional(readOnly = true)
-    fun hentUtkastIStatusOpprettet(): List<Utkast> {
-        return utkastRepository.findAllByStatus(UtkastStatus.OPPRETTET)
+    fun hentUtkast(utkastStatus: List<UtkastStatus>, gyldigFra: LocalDate?): List<Utkast> {
+        return utkastRepository.findByStatusAndGyldigFra(statuses = utkastStatus.map { it.dbKey }, gyldigFra = gyldigFra)
     }
 
     fun oppdaterUtkast(id: String, request: OppdaterUtkastRequest): Utkast? {

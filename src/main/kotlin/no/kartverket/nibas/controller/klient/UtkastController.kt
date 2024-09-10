@@ -4,23 +4,22 @@ import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.klient.UtkastApi
 import no.kartverket.nibas.api.v1.klient.response.AuditInfoResponse
 import no.kartverket.nibas.api.v1.klient.response.UtkastOpprettetResponse
-import no.kartverket.nibas.api.v1.klient.response.UtkastRef
 import no.kartverket.nibas.api.v1.klient.response.UtkastResponse
 import no.kartverket.nibas.api.v1.request.OppdaterUtkastRequest
 import no.kartverket.nibas.api.v1.request.OpprettUtkastRequest
-import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.domain.utkast.Utkast
+import no.kartverket.nibas.domain.utkast.UtkastStatus
 import no.kartverket.nibas.service.utkast.UtkastService
 import no.kartverket.nibas.sporing.AuditInfo
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
+import java.time.LocalDate
 
 @RestController
 class UtkastController(
     private val utkastService: UtkastService,
-    private val hrefProvider: HrefProvider,
-) : UtkastApi {
+    ) : UtkastApi {
 
     override fun opprettUtkast(
         opprettUtkastRequest: OpprettUtkastRequest
@@ -31,6 +30,10 @@ class UtkastController(
     override fun hentUtkast(id: String): UtkastResponse {
         return utkastService.hentUtkast(id)?.toUtkastResponse()
             ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
+    }
+
+    override fun hentUtkast(utkastStatus: List<UtkastStatus>, gyldigFra: LocalDate?): List<UtkastResponse> {
+        return utkastService.hentUtkast(utkastStatus, gyldigFra).map { it.toUtkastResponse() }
     }
 
     override fun oppdaterUtkast(id: String, utkast: OppdaterUtkastRequest): UtkastResponse {
@@ -45,15 +48,9 @@ class UtkastController(
     override fun publiserUtkast(id: String) {
         utkastService.publiserUtkast(id)
     }
-
-    override fun hentUtkastIStatusOpprettet(): List<UtkastRef> {
-        return utkastService
-            .hentUtkastIStatusOpprettet()
-            .map { it.toUtkastRef(hrefProvider) }
-    }
 }
 
-private fun Utkast.toUtkastResponse(): UtkastResponse =
+fun Utkast.toUtkastResponse(): UtkastResponse =
     UtkastResponse(
         id = this.id,
         navn = this.navn,
@@ -63,15 +60,8 @@ private fun Utkast.toUtkastResponse(): UtkastResponse =
         opprettetDato = this.opprettetDato,
         auditInfoResponse = this.auditInfo.toAuditInfoResponse(),
         version = this.version,
-        gyldigFra = this.gyldigFra
-    )
-
-private fun Utkast.toUtkastRef(hrefProvider: HrefProvider): UtkastRef =
-    UtkastRef(
-        id = id,
-        navn = navn,
-        href = hrefProvider.getHref(id),
-        opprettetDato = opprettetDato
+        gyldigFra = this.gyldigFra,
+        endredeInndelinger = this.endredeInndelinger ?: emptyList(),
     )
 
 fun AuditInfo.toAuditInfoResponse(): AuditInfoResponse = AuditInfoResponse(this.endretdato)

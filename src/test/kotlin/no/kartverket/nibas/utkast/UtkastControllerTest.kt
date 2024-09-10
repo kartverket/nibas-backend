@@ -10,7 +10,6 @@ import no.kartverket.nibas.api.v1.klient.response.ErrorDescription
 import no.kartverket.nibas.api.v1.klient.response.OptimistiskLaasResponse
 import no.kartverket.nibas.api.v1.klient.response.OptimistiskLaasWrapper
 import no.kartverket.nibas.api.v1.klient.response.UtkastOpprettetResponse
-import no.kartverket.nibas.api.v1.klient.response.UtkastRef
 import no.kartverket.nibas.api.v1.klient.response.UtkastResponse
 import no.kartverket.nibas.api.v1.request.OppdaterUtkastRequest
 import no.kartverket.nibas.api.v1.request.OpprettUtkastRequest
@@ -27,6 +26,7 @@ import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.common.geometry.UgyldigGeometriException
 import no.kartverket.nibas.common.geometry.UgyldigeFlaterException
 import no.kartverket.nibas.controller.klient.UtkastController
+import no.kartverket.nibas.controller.klient.toUtkastResponse
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
@@ -119,7 +119,8 @@ internal class UtkastControllerTest : NibasMvcTest() {
             opprettetDato = opprettetTidspunkt,
             operasjoner = operasjoner!!,
             version = 1,
-            gyldigFra = LocalDate.of(2022, Month.JULY, 7)
+            gyldigFra = LocalDate.of(2022, Month.JULY, 7),
+            endredeInndelinger = emptyList()
         )
         get("/v1/utkast/$utkastId", responseAsserts = MockResponseAsserts(
             expectedResponseObject = expectedUtkastResponse,
@@ -167,7 +168,8 @@ internal class UtkastControllerTest : NibasMvcTest() {
             opprettetDato = opprettetDato,
             operasjoner = operasjoner,
             version = 1,
-            gyldigFra = gyldigFra
+            gyldigFra = gyldigFra,
+            endredeInndelinger = emptyList()
         )
 
         put(
@@ -303,29 +305,15 @@ internal class UtkastControllerTest : NibasMvcTest() {
             .withStatus(UtkastStatus.OPPRETTET)
             .withKommuneRequests(kommuneRequests)
             .build()
-        whenever(utkastServiceMock.hentUtkastIStatusOpprettet()).thenReturn(listOf(utkast2, utkast))
-        val href = "http://localhost:8080/v1/utkast/UUID-TIL_UTKAST"
-        whenever(hrefProviderMock.getHref(anyString())).thenReturn(href)
 
-        val utkastRefs = listOf(
-            UtkastRef(
-                id = utkast2.id,
-                navn = navn2,
-                href = href,
-                opprettetDato = idag
-            ),
-            UtkastRef(
-                id = utkast.id,
-                navn = navn,
-                href = href,
-                opprettetDato = idag
-            )
-        )
+        whenever(utkastServiceMock.hentUtkast(utkastStatus = listOf(UtkastStatus.OPPRETTET), gyldigFra = idag.toLocalDate())).thenReturn(listOf(utkast, utkast2))
+
+        val utkastResponses = listOf(utkast, utkast2).map { it.toUtkastResponse() }
 
         get(
-            url = "/v1/utkast",
+            url = "/v1/utkast?utkastStatus=${UtkastStatus.OPPRETTET}&gyldigFra=${idag.toLocalDate()}",
             responseAsserts = MockResponseAsserts(
-                expectedResponseObject = utkastRefs,
+                expectedResponseObject = utkastResponses,
                 resultMatchers = listOf(status().isOk)
             )
         )

@@ -3,20 +3,16 @@ package no.kartverket.nibas.repository
 import no.kartverket.nibas.domain.Administrativenhetnavn
 import no.kartverket.nibas.domain.DokrefGrenseKobling
 import no.kartverket.nibas.domain.Dokumentasjonsreferanse
-import no.kartverket.nibas.domain.DokumentasjonsreferanseDokumentlink
 import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.Fylke
-import no.kartverket.nibas.domain.FylkeInformasjon
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
-import no.kartverket.nibas.domain.KommuneInformasjon
 import no.kartverket.nibas.domain.Landkode
 import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.domain.Spraakkode
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.StemmekretsGrenseKobling
-import no.kartverket.nibas.domain.Typeendring
 import no.kartverket.nibas.domain.UnikLokalid
 import no.kartverket.nibas.domain.utkast.Utkast
 import no.kartverket.nibas.domain.utkast.UtkastStatus
@@ -44,21 +40,16 @@ interface JpaRepositoryWithLokalIdFinder<T, ID> : JpaRepository<T, ID> {
 }
 
 interface LandKodeRepository : CrudRepository<Landkode, String>
-interface TypeendringRepository : CrudRepository<Typeendring, String>
 interface DokumentasjonsreferanseRepository : JpaRepositoryWithLokalIdFinder<Dokumentasjonsreferanse, String>
-interface DokumentasjonsreferanseDokumentlinkRepository : CrudRepository<DokumentasjonsreferanseDokumentlink, String>
 interface SpraakkodeRepository : CrudRepository<Spraakkode, String>
 interface AdministrativenhetnavnRepository : CrudRepository<Administrativenhetnavn, String>
 interface UnikLokalidRepository : JpaRepositoryWithLokalIdFinder<UnikLokalid, String>
 interface NasjonRepository : CrudRepositoryWithLokalIdFinder<Nasjon, String>
 interface DokrefGrenseKoblingRepository : JpaRepository<DokrefGrenseKobling, String>
-interface FylkeInformasjonRepository : CrudRepository<FylkeInformasjon, String>
 interface FylkeRepository : CrudRepositoryWithLokalIdFinder<Fylke, String> {
 
     fun findAllByFylkesnummer(fylkesnummer: String): List<Fylke>
 }
-
-interface KommuneInformasjonRepository : CrudRepository<KommuneInformasjon, String>
 
 interface GrunnkretsRepository : CrudRepositoryWithLokalIdFinder<Grunnkrets, String> {
     /**
@@ -94,13 +85,19 @@ interface StemmekretsGrenseKoblingRepository : JpaRepository<StemmekretsGrenseKo
 
 interface UtkastRepository : CrudRepository<Utkast, String>, JpaRepository<Utkast, String> {
     fun findAllByStatus(status: UtkastStatus): List<Utkast>
+
+    @Query("SELECT u FROM Utkast u WHERE u.status IN :statuses " +
+        "AND (CAST(:gyldigFra as DATE) IS NULL OR u.gyldigFra >= :gyldigFra)")
+    fun findByStatusAndGyldigFra(
+        statuses: List<String>,
+        gyldigFra: LocalDate?
+    ): List<Utkast>
 }
 
 fun verifiserOptimistiskLaas(nyVersion: Int, eksisterende: Laasbar): KonfliktVersjon? =
     if (nyVersion == eksisterende.version) null else KonfliktVersjon(nyVersion, eksisterende)
 
 data class KonfliktVersjon(val nyVersjon: Int, val eksisterende: Laasbar) {
-    fun throwException(): Unit = throw OptimistiskLaasException(this)
     fun getMessage(): String {
         var ikkeSamsvar = "Det er ikke samsvar med versjon"
         if (eksisterende is Flate) {
