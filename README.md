@@ -1,6 +1,6 @@
 # nibas-backend
 
-Spring Boot applikasjon som serverer informasjon om administrative grenser.
+Spring Boot applikasjon som serverer informasjon om, og tilbyr forvaltning av, Norges administrative og statistiske grenser.
 
 ## Innholdsfortegnelse
 
