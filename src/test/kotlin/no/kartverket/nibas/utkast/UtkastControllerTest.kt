@@ -28,6 +28,7 @@ import no.kartverket.nibas.common.geometry.UgyldigeFlaterException
 import no.kartverket.nibas.controller.klient.UtkastController
 import no.kartverket.nibas.controller.klient.toUtkastResponse
 import no.kartverket.nibas.domain.Endringstype
+import no.kartverket.nibas.domain.utkast.EndredeInndelinger
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
 import no.kartverket.nibas.repository.KonfliktVersjon
@@ -120,7 +121,7 @@ internal class UtkastControllerTest : NibasMvcTest() {
             operasjoner = operasjoner!!,
             version = 1,
             gyldigFra = LocalDate.of(2022, Month.JULY, 7),
-            endredeInndelinger = emptyList()
+            endredeInndelinger = EndredeInndelinger()
         )
         get("/v1/utkast/$utkastId", responseAsserts = MockResponseAsserts(
             expectedResponseObject = expectedUtkastResponse,
@@ -169,7 +170,7 @@ internal class UtkastControllerTest : NibasMvcTest() {
             operasjoner = operasjoner,
             version = 1,
             gyldigFra = gyldigFra,
-            endredeInndelinger = emptyList()
+            endredeInndelinger = EndredeInndelinger()
         )
 
         put(

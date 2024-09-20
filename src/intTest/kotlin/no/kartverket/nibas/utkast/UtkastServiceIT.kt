@@ -440,7 +440,7 @@ class UtkastServiceIT : TestWithDbContainer() {
     }
 
     @Test
-    fun `publisering av utkast med grenseendring skal legge to inndelinger på endrede_inndelinger kolonnen`(){
+    fun `publisering av utkast med grunnkretsendring skal legge en grunnkretslokalid på endrede_inndelinger`(){
         val utkast = UtkastBuilder.builder("test", gyldigFra =  LocalDate.now()).withOperasjoner(
             Operasjoner(
                 metadataendringer = Metadataendringer(
@@ -459,6 +459,6 @@ class UtkastServiceIT : TestWithDbContainer() {
         utkastService.publiserUtkast(utkast.id)
         val publisertUtkast = utkastService.hentUtkast(utkast.id)
 
-        assertThat(publisertUtkast?.endredeInndelinger).contains("c54fb55e-15d0-4528-8b88-f58d6c74bd87")
+        assertThat(publisertUtkast?.endredeInndelinger?.endredeGrunnkretser).contains("c54fb55e-15d0-4528-8b88-f58d6c74bd87")
     }
 }

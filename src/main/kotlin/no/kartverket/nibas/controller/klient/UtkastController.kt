@@ -7,6 +7,7 @@ import no.kartverket.nibas.api.v1.klient.response.UtkastOpprettetResponse
 import no.kartverket.nibas.api.v1.klient.response.UtkastResponse
 import no.kartverket.nibas.api.v1.request.OppdaterUtkastRequest
 import no.kartverket.nibas.api.v1.request.OpprettUtkastRequest
+import no.kartverket.nibas.domain.utkast.EndredeInndelinger
 import no.kartverket.nibas.domain.utkast.Utkast
 import no.kartverket.nibas.domain.utkast.UtkastStatus
 import no.kartverket.nibas.service.utkast.UtkastService
@@ -61,7 +62,7 @@ fun Utkast.toUtkastResponse(): UtkastResponse =
         auditInfoResponse = this.auditInfo.toAuditInfoResponse(),
         version = this.version,
         gyldigFra = this.gyldigFra,
-        endredeInndelinger = this.endredeInndelinger ?: emptyList(),
+        endredeInndelinger = this.endredeInndelinger ?: EndredeInndelinger(),
     )
 
 fun AuditInfo.toAuditInfoResponse(): AuditInfoResponse = AuditInfoResponse(this.endretdato)

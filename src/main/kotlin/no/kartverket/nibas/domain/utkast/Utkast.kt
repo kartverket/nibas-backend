@@ -1,7 +1,8 @@
 package no.kartverket.nibas.domain.utkast
 
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
-import no.kartverket.nibas.api.v1.common.Metadataendringer
+import no.kartverket.nibas.api.v1.common.Flatetype
+import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.request.FylkeRequest
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
@@ -23,7 +24,6 @@ import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import jakarta.persistence.Version
-import kotlin.reflect.full.memberProperties
 
 /**
  * Navn og endringstype settes i konstruktør da de er påkrevd ved opprettelse av utkastet.
@@ -56,7 +56,7 @@ class Utkast(
     @JdbcTypeCode(SqlTypes.JSON)
     @Type(JsonBinaryType::class)
     @Column(columnDefinition = "jsonb", name = "endrede_inndelinger")
-    var endredeInndelinger: List<String>? = null
+    var endredeInndelinger: EndredeInndelinger? = null
 
 
     @Embedded
@@ -137,29 +137,46 @@ class UtkastBuilder private constructor(val navn: String, private val endringsty
     }
 }
 
-fun Operasjoner.toEndredeInndelinger(): List<String> {
-    val allKeys = mutableSetOf<String>()
+data class EndredeInndelinger (
+    val endredeStemmekretser: MutableSet<String> = mutableSetOf(),
+    val endredeGrunnkretser: MutableSet<String> = mutableSetOf()
+)
 
-    for (property in Metadataendringer::class.memberProperties) {
-        val value = property.get(metadataendringer)
-        if (value is Map<*, *>) {
-            allKeys.addAll(value.keys.filterIsInstance<String>())
-        }
+fun Operasjoner.toEndredeInndelinger(): EndredeInndelinger {
+    val endredeInndelinger = EndredeInndelinger()
+
+    metadataendringer.grunnkretsendringer.values.map {
+        endredeInndelinger.endredeGrunnkretser.add(it.identifikasjon.lokalid)
+    }
+    metadataendringer.stemmekretsendringer.values.map {
+        endredeInndelinger.endredeStemmekretser.add(it.identifikasjon.lokalid)
     }
 
     for (feature in grenseendringer.endredeFeatures){
         feature.properties.kontekstEgenskaper.forEach {
-            it.id?.lokalid?.value?.let { id -> allKeys.add(id) }
+            it.id?.lokalid?.value?.let { id ->
+                when(it.type){
+                    KontekstEnhetType.GRUNNKRETS -> endredeInndelinger.endredeGrunnkretser.add(id)
+                    KontekstEnhetType.STEMMEKRETS -> endredeInndelinger.endredeStemmekretser.add(id)
+                }
+            }
         }
     }
 
-    stemmekretsSammenslaaingsendring?.viderefoertStemmekrets?.lokalId?.let { allKeys.add(it) }
-    stemmekretsSammenslaaingsendring?.stemmekretserTilSammenslaaing?.map { it.lokalId }?.let { allKeys.addAll(it) }
+    stemmekretsSammenslaaingsendring?.viderefoertStemmekrets?.lokalId?.let { endredeInndelinger.endredeStemmekretser.add(it) }
+    stemmekretsSammenslaaingsendring?.stemmekretserTilSammenslaaing?.map { it.lokalId }?.let { endredeInndelinger.endredeStemmekretser.addAll(it) }
 
-    grunnkretsSammenslaaingsendring?.viderefoertGrunnkrets?.lokalId?.let { allKeys.add(it) }
-    grunnkretsSammenslaaingsendring?.grunnkretserTilSammenslaaing?.map { it.lokalId }?.let { allKeys.addAll(it) }
+    grunnkretsSammenslaaingsendring?.viderefoertGrunnkrets?.lokalId?.let { endredeInndelinger.endredeGrunnkretser.add(it) }
+    grunnkretsSammenslaaingsendring?.grunnkretserTilSammenslaaing?.map { it.lokalId }?.let { endredeInndelinger.endredeGrunnkretser.addAll(it) }
 
-    allKeys.addAll(kretsDelingEndringer.map { it.opprinneligKrets.lokalId })
+    kretsDelingEndringer.forEach {
+        if(it.flatetype === Flatetype.GRUNNKRETS){
+            endredeInndelinger.endredeGrunnkretser.add(it.opprinneligKrets.lokalId)
+        }
+        else if ( it.flatetype === Flatetype.STEMMEKRETS){
+            endredeInndelinger.endredeStemmekretser.add(it.opprinneligKrets.lokalId)
+        }
+    }
 
-    return allKeys.toList()
+    return endredeInndelinger
 }

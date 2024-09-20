@@ -10,6 +10,7 @@ import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.MultiPolygon
 import no.kartverket.nibas.common.Identifikator
+import no.kartverket.nibas.domain.utkast.EndredeInndelinger
 import no.kartverket.nibas.sporing.Gyldighet
 import org.locationtech.jts.geom.Coordinate
 import org.springframework.http.HttpStatus
@@ -205,7 +206,7 @@ data class UtkastResponse(
     @Schema(description = "Gyldig fra-datoen til utkastet")
     val gyldigFra: LocalDate,
     @Schema(description = "Liste med lokalider for inndelinger som har blitt endret i utkastet. Kun satt hvis status er PUBLISERT")
-    val endredeInndelinger: List<String>
+    val endredeInndelinger: EndredeInndelinger
 )
 
 data class InndelingSearchResponse(
