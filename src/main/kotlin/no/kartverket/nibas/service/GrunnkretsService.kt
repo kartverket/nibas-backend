@@ -45,7 +45,7 @@ class GrunnkretsService(
 
     @Transactional(readOnly = true)
     fun hentGrunnkretsForGrunnkretsNummer(grunnkretsNummer: String, gyldighetsdato: LocalDate): Grunnkrets? {
-        return findGyldigObjektPaaGyldighetsdato(grunnkretsRepository.findAllByGrunnkretsnummer(grunnkretsNummer))
+        return findGyldigObjektPaaGyldighetsdato(grunnkretsRepository.findAllByGrunnkretsnummer(grunnkretsNummer), gyldighetsdato)
     }
 
     @Transactional(readOnly = true)

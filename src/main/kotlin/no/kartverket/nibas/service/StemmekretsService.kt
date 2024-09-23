@@ -43,7 +43,7 @@ class StemmekretsService(
 
     @Transactional(readOnly = true)
     fun hentStemmekretsForStemmekretsNummerIKommune(kommuneIdentifikator: ObjektIdentifikator, stemmekretsnummer: String, gyldighetsdato: LocalDate): Stemmekrets? {
-        return findGyldigObjektPaaGyldighetsdato(stemmekretsRepository.findAllByStemmekretsnummerAndKommuneLokalid(stemmekretsnummer, UnikLokalid(kommuneIdentifikator.lokalid.value, Flatetype.KOMMUNE)))
+        return findGyldigObjektPaaGyldighetsdato(stemmekretsRepository.findAllByStemmekretsnummerAndKommuneLokalid(stemmekretsnummer, UnikLokalid(kommuneIdentifikator.lokalid.value, Flatetype.KOMMUNE)), gyldighetsdato)
     }
 
     fun hentStemmekretserForIds(ids: Set<String>, gyldighetsdato: LocalDate): List<Stemmekrets> {

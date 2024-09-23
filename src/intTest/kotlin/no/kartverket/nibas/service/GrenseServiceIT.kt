@@ -770,7 +770,7 @@ class GrenseServiceIT : TestWithDbContainer() {
             getTilhorighetTilNyopprettetKretsTestSetup(Grensetype.Stemmekretsgrense, gyldighetsdato, ::saveStemmekrets, ::saveGrunnkrets)
 
         // når kretsen er ny vil den ligget i databasen på det tidspunktet lagreGrenser blir kjørt.
-        val nyStemmekrets = saveStemmekrets("nyStemmekrets", Lokalid("nyStemmekrets"), stemmekretsnummer = "420", stemmekretsnavn = "nyStemmekrets")
+        val nyStemmekrets = saveStemmekrets("nyStemmekrets", Lokalid("nyStemmekrets"), stemmekretsnummer = "420", stemmekretsnavn = "nyStemmekrets", gyldigFra = gyldighetsdato)
 
         val kommune = saveKommuneOgUnikLokalid(gyldigFra = gyldighetsdato,
             stemmekretser = listOf(kretsOpprinnelig as Stemmekrets, kretsOest as Stemmekrets, kretsNordVest as Stemmekrets, nyStemmekrets))
@@ -885,7 +885,7 @@ class GrenseServiceIT : TestWithDbContainer() {
             getTilhorighetTilNyopprettetKretsTestSetup(Grensetype.Stemmekretsgrense, gyldighetsdato, ::saveStemmekrets, ::saveStemmekrets)
 
         // når kretsen er ny vil den ligget i databasen på det tidspunktet lagreGrenser blir kjørt.
-        val nyStemmekrets = saveStemmekrets("nyStemmekrets", Lokalid("nyStemmekrets"), stemmekretsnummer = "420", stemmekretsnavn = "nyStemmekrets")
+        val nyStemmekrets = saveStemmekrets("nyStemmekrets", Lokalid("nyStemmekrets"), stemmekretsnummer = "420", stemmekretsnavn = "nyStemmekrets", gyldigFra = gyldighetsdato)
 
         val kommune = saveKommuneOgUnikLokalid(stemmekretser = listOf(kretsOpprinnelig, kretsOest, kretsNordVest, nyStemmekrets), gyldigFra = gyldighetsdato)
 
