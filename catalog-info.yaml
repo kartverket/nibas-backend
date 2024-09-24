@@ -4,14 +4,14 @@ kind: "Component"
 metadata:
   name: "nibas-backend"
   tags:
-    - "internal"
+  - "internal"
 spec:
   type: "service"
   lifecycle: "production"
   owner: "smia"
   system: "nibas"
   providesApis:
-    - "nibas-backend-api"
+  - "nibas-backend-api"
 ---
 apiVersion: "backstage.io/v1alpha1"
 kind: "Group"
@@ -22,35 +22,33 @@ spec:
   type: "security_champion"
   parent: "eiendom_security_champions"
   members:
-    - "etse"
+  - "AleksanderWK"
   children:
-    - "resource:nibas-backend"
+  - "resource:nibas-backend"
 ---
 apiVersion: "backstage.io/v1alpha1"
 kind: "Resource"
 metadata:
   name: "nibas-backend"
   links:
-    - url: "https://github.com/kartverket/nibas-backend"
-      title: "nibas-backend på GitHub"
+  - url: "https://github.com/kartverket/nibas-backend"
+    title: "nibas-backend på GitHub"
 spec:
   type: "repo"
   owner: "security_champion_nibas-backend"
-  system: "nibas"
   dependencyOf:
-    - "component:nibas-backend"
+  - "component:nibas-backend"
 ---
 apiVersion: "backstage.io/v1alpha1"
 kind: "API"
 metadata:
   name: "nibas-backend-api"
   tags:
-    - "internal"
+  - "internal"
 spec:
   type: "openapi"
   lifecycle: "production"
   owner: "smia"
-  system: "nibas"
   definition: |
     openapi: "3.0.0"
     info:
