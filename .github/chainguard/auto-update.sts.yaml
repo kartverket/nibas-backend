@@ -1,0 +1,6 @@
+issuer: https://token.actions.githubusercontent.com
+subject: repo:kartverket/nibas-backend:pull_request
+
+permissions:
+  contents: write
+  pull_requests: write
