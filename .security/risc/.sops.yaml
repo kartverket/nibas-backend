@@ -1,6 +1,5 @@
 creation_rules:
-- path_regex: \.risc\.yaml$
-  shamir_threshold: 2
+- shamir_threshold: 2
   key_groups:
   - age:
     - age145s860ux96jvx6d7nwvzar588qjmgv5p47sp6nmmt2jnmhqh4scqcuk0mg
