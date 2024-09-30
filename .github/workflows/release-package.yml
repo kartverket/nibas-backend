@@ -50,5 +50,5 @@ jobs:
       version: ${{ needs.build.outputs.version }}
       deploy_dev: true
       deploy_prod: false
-      extra-namespace: nibas-e2e
+      extra_namespace: nibas-e2e
       identity: nibas
