@@ -7,6 +7,12 @@
   },
   {
     "match": {
+      "dependency_name": "org.flywaydb:flyway-core",
+      "update_type": "semver:patch"
+    }
+  },
+  {
+    "match": {
       "dependency_name": "flywayVersion",
       "update_type": "semver:minor"
     }
