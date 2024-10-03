@@ -44,7 +44,7 @@ jobs:
         if: ${{fromJSON(steps.semver-merge-check.outputs.result)}}
         run: |
           gh pr review --approve -b "Dependency update type ${UPDATE_TYPE} matches auto-merge configuration, merging" "$PR_URL"
-          gh pr merge --merge --admin "$PR_URL"
+          gh pr merge --squash --admin "$PR_URL"
         env:
           PR_URL: ${{github.event.pull_request.html_url}}
           GH_TOKEN: ${{ steps.octo-sts.outputs.token }}
