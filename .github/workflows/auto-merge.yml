@@ -40,45 +40,11 @@ jobs:
             console.log({ shouldMerge });
             return shouldMerge;
 
-      - name: Wait for Build Workflow to Complete
-        run: |
-          PR_NUMBER="${{ github.event.pull_request.number }}"
-          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
-
-          # Get the workflow ID for the 'Build' workflow
-          WORKFLOW_ID=$(gh api -X GET "/repos/${{ github.repository }}/actions/workflows" | jq '.workflows[] | select(.name=="Build") | .id')
-
-          # Poll for the build workflow associated with the current PR
-          STATUS="in_progress"
-          while [ "$STATUS" == "in_progress" ]; do
-            echo "Waiting for build to complete..."
-            sleep 60
-
-            # Check the workflow runs for the current PR
-            WORKFLOW_RUN=$(gh api -X GET "/repos/${{ github.repository }}/actions/runs" \
-              -F event="pull_request" \
-              -F head_sha="${HEAD_SHA}" \
-              -F workflow_id="${WORKFLOW_ID}" | jq '.workflow_runs[0]')
-
-            STATUS=$(echo "$WORKFLOW_RUN" | jq -r '.status')
-
-            if [ "$STATUS" == "completed" ]; then
-              CONCLUSION=$(echo "$WORKFLOW_RUN" | jq -r '.conclusion')
-
-              if [ "$CONCLUSION" != "success" ]; then
-                echo "Build failed or did not succeed. Aborting."
-                exit 1
-              else
-                echo "Build succeeded!"
-              fi
-            fi
-          done
-
       - name: Enable auto-merge for Dependabot PRs
         if: ${{fromJSON(steps.semver-merge-check.outputs.result)}}
         run: |
           gh pr review --approve -b "Dependency update type ${UPDATE_TYPE} matches auto-merge configuration, merging" "$PR_URL"
-          gh pr merge --squash --admin "$PR_URL"
+          gh pr merge --merge --admin "$PR_URL"
         env:
           PR_URL: ${{github.event.pull_request.html_url}}
           GH_TOKEN: ${{ steps.octo-sts.outputs.token }}
