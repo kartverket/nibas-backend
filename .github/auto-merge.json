@@ -1,6 +1,14 @@
-[{
-  "match": {
-    "dependency_name": "*",
-    "update_type": "semver:minor"
+[
+  {
+    "match": {
+      "dependency_name": "*",
+      "update_type": "semver:patch"
+    }
+  },
+  {
+    "match": {
+      "dependency_name": "flywayVersion",
+      "update_type": "semver:minor"
+    }
   }
-}]
+]
