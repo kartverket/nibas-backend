@@ -52,3 +52,11 @@ jobs:
       deploy_prod: false
       extra-namespace: nibas-e2e
       identity: nibas
+
+  run-cypress:
+    permissions:
+      id-token: write
+    needs: [deploy-argo]
+    uses: kartverket/smia-apps/.github/workflows/run-nibas-cypress-job.yml@main
+    with:
+      identity: nibas
