@@ -30,7 +30,7 @@ jobs:
       contents: write
       packages: write
       security-events: write
-      actions: read
+      actions: write
       issues: read
       checks: write
       pull-requests: write
