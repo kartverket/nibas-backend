@@ -14,32 +14,6 @@ spec:
   - "nibas-backend-api"
 ---
 apiVersion: "backstage.io/v1alpha1"
-kind: "Group"
-metadata:
-  name: "security_champion_nibas-backend"
-  title: "Security Champion nibas-backend"
-spec:
-  type: "security_champion"
-  parent: "eiendom_security_champions"
-  members:
-  - "AleksanderWK"
-  children:
-  - "resource:nibas-backend"
----
-apiVersion: "backstage.io/v1alpha1"
-kind: "Resource"
-metadata:
-  name: "nibas-backend"
-  links:
-  - url: "https://github.com/kartverket/nibas-backend"
-    title: "nibas-backend på GitHub"
-spec:
-  type: "repo"
-  owner: "security_champion_nibas-backend"
-  dependencyOf:
-  - "component:nibas-backend"
----
-apiVersion: "backstage.io/v1alpha1"
 kind: "API"
 metadata:
   name: "nibas-backend-api"
