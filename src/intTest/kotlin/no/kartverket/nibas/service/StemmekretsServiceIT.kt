@@ -750,8 +750,10 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         val gyldighetsdato = jan1In2023
 
         val opprinneligStemmekrets = saveStemmekrets("opprinneligKrets", Lokalid("opprinneligKrets"))
-
         val kommune = saveKommune(stemmekretser = listOf(opprinneligStemmekrets), gyldigFra = gyldighetsdato)
+        assertThat(opprinneligStemmekrets.valgdistriktsnummer).isNotNull()
+        assertThat(opprinneligStemmekrets.tellekretsnummer).isNotNull()
+        assertThat(opprinneligStemmekrets.tellekretsnavn).isNotNull()
 
         val delingEndringRequest = KretsDelingEndringRequest(
             IdentifikatorMedVersjon(opprinneligStemmekrets.lokalid, opprinneligStemmekrets.version),
@@ -761,7 +763,6 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         )
 
         val unikKretsDelingEndring = getUnikeKretsDelingEndringRequests(delingEndringRequest).first()
-
         val nyStemmekrets = stemmekretsService.delStemmekrets(unikKretsDelingEndring, gyldighetsdato, Endringstype.VEDTATT_DELING)
 
         assertThat(nyStemmekrets).isNotNull
@@ -770,6 +771,48 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         assertThat(nyStemmekrets.stemmekretsnummer).isEqualTo(unikKretsDelingEndring.kretsNummer)
         assertThat(nyStemmekrets.stemmekretsnavn).isEqualTo(unikKretsDelingEndring.kretsNavn)
         assertThat(nyStemmekrets.version).isEqualTo(1)
+        assertThat(nyStemmekrets.valgdistriktsnummer).isNotNull().isEqualTo(opprinneligStemmekrets.valgdistriktsnummer)
+        assertThat(nyStemmekrets.tellekretsnummer).isEqualTo(opprinneligStemmekrets.tellekretsnummer)
+        assertThat(nyStemmekrets.tellekretsnavn).isEqualTo(opprinneligStemmekrets.tellekretsnavn)
+    }
+
+    @Test
+    fun `delStemmekrets uten tellekrets klarer å opprette en ny stemmekrets`(){
+        val gyldighetsdato = jan1In2023
+
+        val opprinneligStemmekrets = saveStemmekrets("opprinneligKrets", Lokalid("opprinneligKrets"))
+            .apply {
+                tellekretsnummer = null
+                tellekretsnavn = null
+                setInfo("Info fra en test")
+            }
+
+        val kommune = saveKommune(stemmekretser = listOf(opprinneligStemmekrets), gyldigFra = gyldighetsdato)
+        assertThat(opprinneligStemmekrets.valgdistriktsnummer).isNotNull()
+        assertThat(opprinneligStemmekrets.tellekretsnummer).isNull()
+        assertThat(opprinneligStemmekrets.tellekretsnavn).isNull()
+        assertThat(opprinneligStemmekrets.getInfo()).isNotNull()
+
+        val delingEndringRequest = KretsDelingEndringRequest(
+            IdentifikatorMedVersjon(opprinneligStemmekrets.lokalid, opprinneligStemmekrets.version),
+            ObjektIdentifikator(Lokalid(kommune.lokalid), gyldighetsdato),
+            Flatetype.STEMMEKRETS,
+            nyeKretser = listOf(KretsNavnOgNummer("nyStemmekrets", "1"))
+        )
+
+        val unikKretsDelingEndring = getUnikeKretsDelingEndringRequests(delingEndringRequest).first()
+        val nyStemmekrets = stemmekretsService.delStemmekrets(unikKretsDelingEndring, gyldighetsdato, Endringstype.VEDTATT_DELING)
+
+        assertThat(nyStemmekrets).isNotNull
+        assertThat(nyStemmekrets.utledetFra?.lokalid).isEqualTo(opprinneligStemmekrets.lokalid)
+        assertThat(nyStemmekrets.grenser.size).isEqualTo(0)
+        assertThat(nyStemmekrets.stemmekretsnummer).isEqualTo(unikKretsDelingEndring.kretsNummer)
+        assertThat(nyStemmekrets.stemmekretsnavn).isEqualTo(unikKretsDelingEndring.kretsNavn)
+        assertThat(nyStemmekrets.version).isEqualTo(1)
+        assertThat(nyStemmekrets.valgdistriktsnummer).isNotNull().isEqualTo(opprinneligStemmekrets.valgdistriktsnummer)
+        assertThat(nyStemmekrets.tellekretsnummer).isNull()
+        assertThat(nyStemmekrets.tellekretsnavn).isNull()
+        assertThat(nyStemmekrets.getInfo()).isNotNull().isEqualTo(opprinneligStemmekrets.getInfo())
     }
 
     @Test

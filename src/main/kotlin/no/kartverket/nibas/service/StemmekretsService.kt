@@ -187,20 +187,23 @@ class StemmekretsService(
 
         val geometryFactory = GeometryFactory()
 
-        val nyStemmekrets = Stemmekrets().apply {
-            stemmekretsnavn = kretsDelingEndringRequest.kretsNavn
-            stemmekretsnummer = kretsDelingEndringRequest.kretsNummer
-            kommuneLokalid = stemmekrets.kommuneLokalid
-            utledetFra = stemmekrets
-            omraade = MultiPolygon(arrayOfNulls(0), geometryFactory)
-            posisjon = geometryFactory.createPoint()
-            setGyldigFra(delingsDato)
-        }
+        val nyStemmekrets = Stemmekrets()
+            .applyMappingFromExistingStemmekrets(stemmekrets)
+            .apply {
+                stemmekretsnavn = kretsDelingEndringRequest.kretsNavn
+                stemmekretsnummer = kretsDelingEndringRequest.kretsNummer
+                kommuneLokalid = stemmekrets.kommuneLokalid
+                utledetFra = stemmekrets
+                omraade = MultiPolygon(arrayOfNulls(0), geometryFactory)
+                posisjon = geometryFactory.createPoint()
+                setGyldigFra(delingsDato)
+            }
 
         if (finnesAnnenStemmekretsMedSammeKommuneOgStemmekretsnummer(nyStemmekrets)) {
             throw createDuplikatStemmekretsnummerException(nyStemmekrets)
         } else {
             return stemmekretsRepository.save(nyStemmekrets)
+                .copyInformasjonselementerFromExistingStemmekrets(stemmekrets, delingsDato)
         }
     }
 

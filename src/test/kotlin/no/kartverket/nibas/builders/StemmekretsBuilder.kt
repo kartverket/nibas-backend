@@ -17,8 +17,9 @@ class StemmekretsBuilder(
     private var lokalId: Lokalid = Lokalid(LOKALID),
     private var stemmekretsnavn: String = "Nordre Follo",
     private var stemmekretsnummer: String = "9",
-    private var tellekretsnavn: String = "Nordre Follo Tellekrets",
-    private var tellekretsnummer: String = "98",
+    private var tellekretsnavn: String? = "Nordre Follo Tellekrets",
+    private var tellekretsnummer: String? = "98",
+    private var valgdistriktnummer: String = "19",
     private var endretdato: ZonedDateTime = ZonedDateTime.now(),
     private var datafangstdato: ZonedDateTime = ZonedDateTime.now(),
     private var gyldigFra: LocalDate = LocalDate.now(),
@@ -40,6 +41,7 @@ class StemmekretsBuilder(
         stemmekrets.stemmekretsnummer = stemmekretsnummer
         stemmekrets.tellekretsnavn = tellekretsnavn
         stemmekrets.tellekretsnummer = tellekretsnummer
+        stemmekrets.valgdistriktsnummer = valgdistriktnummer
 
         stemmekrets.auditInfo.endretdato = endretdato
 
