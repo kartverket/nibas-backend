@@ -107,7 +107,41 @@ class UtkastValidatorService(
         }
 
         errorMessages.addAll(validerTilhorighetEndringer(utkast))
+        errorMessages.addAll(validateTellekretserOgValgdistrikt(utkast.operasjoner!!))
 
+        return errorMessages
+    }
+
+    fun validateTellekretserOgValgdistrikt(operasjoner: Operasjoner): List<String> {
+        val errorMessages = mutableListOf<String>()
+
+        operasjoner.metadataendringer.stemmekretsendringer.values.forEach {
+            val tellekretsnummer = it.tellekretsnummer
+            val stemmekretstekst = if (it.nummer.isNullOrBlank()) "" else " (stemmekrets ${it.nummer})"
+
+            if (!tellekretsnummer.isNullOrBlank()) {
+                val numeriskTellekretsnummer = tellekretsnummer.toIntOrNull()
+
+                if (numeriskTellekretsnummer == null) {
+                    errorMessages.add("Tellekretsnummer ($tellekretsnummer) kan bare inneholde sifre$stemmekretstekst.")
+                } else if (numeriskTellekretsnummer == 0) {
+                    errorMessages.add("Tellekretsnummer ($tellekretsnummer) kan ikke være 0$stemmekretstekst.")
+                } else if (numeriskTellekretsnummer < 0) {
+                    errorMessages.add("Tellekretsnummer ($tellekretsnummer) kan ikke være negativt$stemmekretstekst.")
+                } else if (tellekretsnummer.length > 4) {
+                    errorMessages.add("Tellekretsnummer ($tellekretsnummer) kan ikke være på flere enn fire tegn$stemmekretstekst.")
+                }
+                if (it.tellekretsnavn.isNullOrBlank()) {
+                    errorMessages.add("Tellekretsnavn må gis når tellekretsnummer er gitt ($tellekretsnummer)$stemmekretstekst.")
+                }
+            }
+            if (tellekretsnummer.isNullOrBlank() && !it.tellekretsnavn.isNullOrBlank()) {
+                errorMessages.add("Tellekretsnummer må gis når tellekretsnavn er gitt (${it.tellekretsnavn})$stemmekretstekst.")
+            }
+            if (it.valgdistriktsnummer.isNullOrBlank()) {
+                errorMessages.add("Valgdistriktsnummer må gis$stemmekretstekst.")
+            }
+        }
         return errorMessages
     }
 

@@ -8,9 +8,9 @@ class StemmekretsRequestBuilder(
     private var stemmekretsnavn: String = "Mosekollen øst 2",
     private var lokalId: String = "00c5ecde-145c-4757-8bea-6290f0b513db",
     private var stemmekretsnummer: String = "138",
-    private var tellekretsnummer: String = "13",
-    private var tellekretsnavn: String = "Mosekollen minikrets 3",
-    private var valgdistriktsnummer: String = "89",
+    private var tellekretsnummer: String? = "13",
+    private var tellekretsnavn: String? = "Mosekollen minikrets 3",
+    private var valgdistriktsnummer: String? = "89",
     private var kommunenummer: String = "0301",
     private var version: Int = 1
 ) {

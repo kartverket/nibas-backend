@@ -210,7 +210,6 @@ class UtkastService_stemmekretsIT : TestWithDbContainer() {
         gyldigFra: LocalDate
     ): String = saveStemmekretsUtkast(navn, oppdateringsdato, createStemmekretsRequest(stemmekretsNavn, stemmekretsNr, version), gyldigFra)
 
-
     private fun createStemmekretsRequest(
         stemmekretsNavn: String,
         stemmekretsNr: String,
@@ -219,11 +218,13 @@ class UtkastService_stemmekretsIT : TestWithDbContainer() {
         StemmekretsRequest(
             navn = stemmekretsNavn,
             nummer = stemmekretsNr,
+            valgdistriktsnummer = "03",
             identifikasjon = Identifikasjon(
                 lokalid = lokalidOfStemmekrets,
             ),
             version = version,
         )
+
     private fun assertStemmekrets(stemmekrets: Stemmekrets,
                                   stemmekretssnummer: String,
                                   stemmekretssnavn: String,

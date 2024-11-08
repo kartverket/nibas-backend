@@ -797,4 +797,156 @@ class UtkastValideringTest {
             utkastValidatorService.validateUtkastMedOperasjoner(utkastUtenOperasjoner, utkastUtenOperasjoner.auditInfo.typeEndring.value, june2024)
         assertThat(validateGyldigUtkastResult).isEmpty()
     }
+
+    @Test
+    fun `valider at metadataoperasjoner med 0 som tellekretsnummer gir feilmelding`() {
+        val operasjoner =
+            Operasjoner(
+                metadataendringer =
+                Metadataendringer(
+                    stemmekretsendringer =
+                    mapOf("1" to StemmekretsRequestBuilder(tellekretsnummer = "0").build())
+                )
+            )
+
+        val valideringsmelding = utkastValidatorService.validateTellekretserOgValgdistrikt(operasjoner)
+        assertThat(valideringsmelding).contains("Tellekretsnummer (0) kan ikke være 0 (stemmekrets 138).")
+    }
+
+    @Test
+    fun `valider at metadataoperasjoner med negativt tellekretsnummer gir feilmelding`() {
+        val operasjoner =
+            Operasjoner(
+                metadataendringer =
+                Metadataendringer(
+                    stemmekretsendringer =
+                    mapOf("1" to StemmekretsRequestBuilder(tellekretsnummer = "-1").build())
+                )
+            )
+
+        val valideringsmelding = utkastValidatorService.validateTellekretserOgValgdistrikt(operasjoner)
+        assertThat(valideringsmelding).contains("Tellekretsnummer (-1) kan ikke være negativt (stemmekrets 138).")
+    }
+
+    @Test
+    fun `valider at metadataoperasjoner med tekstlig tellekretsnummer gir feilmelding`() {
+        val operasjoner =
+            Operasjoner(
+                metadataendringer =
+                Metadataendringer(
+                    stemmekretsendringer =
+                    mapOf("1" to StemmekretsRequestBuilder(tellekretsnummer = "xx").build())
+                )
+            )
+
+        val valideringsmelding = utkastValidatorService.validateTellekretserOgValgdistrikt(operasjoner)
+        assertThat(valideringsmelding).contains("Tellekretsnummer (xx) kan bare inneholde sifre (stemmekrets 138).")
+    }
+
+    @Test
+    fun `valider at metadataoperasjoner med flere enn 4 tegn i tellekretsnummer gir feilmelding`() {
+        val operasjoner =
+            Operasjoner(
+                metadataendringer =
+                Metadataendringer(
+                    stemmekretsendringer =
+                    mapOf("1" to StemmekretsRequestBuilder(tellekretsnummer = "00005").build())
+                )
+            )
+
+        val valideringsmelding = utkastValidatorService.validateTellekretserOgValgdistrikt(operasjoner)
+        assertThat(valideringsmelding).contains("Tellekretsnummer (00005) kan ikke være på flere enn fire tegn (stemmekrets 138).")
+    }
+
+    @Test
+    fun `valider at metadataoperasjoner med blankt tellekretsnummer med tellekretsnavn gir feilmelding`() {
+        val operasjoner =
+            Operasjoner(
+                metadataendringer =
+                Metadataendringer(
+                    stemmekretsendringer =
+                    mapOf("1" to StemmekretsRequestBuilder(tellekretsnummer = "").build())
+                )
+            )
+
+        val valideringsmelding = utkastValidatorService.validateTellekretserOgValgdistrikt(operasjoner)
+        assertThat(valideringsmelding).contains("Tellekretsnummer må gis når tellekretsnavn er gitt (Mosekollen minikrets 3) (stemmekrets 138).")
+    }
+
+    @Test
+    fun `valider at metadataoperasjoner med null tellekretsnummer med tellekretsnavn gir feilmelding`() {
+        val operasjoner =
+            Operasjoner(
+                metadataendringer =
+                Metadataendringer(
+                    stemmekretsendringer =
+                    mapOf("1" to StemmekretsRequestBuilder(tellekretsnummer = null).build())
+                )
+            )
+
+        val valideringsmelding = utkastValidatorService.validateTellekretserOgValgdistrikt(operasjoner)
+        assertThat(valideringsmelding).contains("Tellekretsnummer må gis når tellekretsnavn er gitt (Mosekollen minikrets 3) (stemmekrets 138).")
+    }
+
+    @Test
+    fun `valider at metadataoperasjoner med tellekretsnummer med blankt tellekretsnavn gir feilmelding`() {
+        val operasjoner =
+            Operasjoner(
+                metadataendringer =
+                Metadataendringer(
+                    stemmekretsendringer =
+                    mapOf("1" to StemmekretsRequestBuilder(tellekretsnavn = "").build())
+                )
+            )
+
+        val valideringsmelding = utkastValidatorService.validateTellekretserOgValgdistrikt(operasjoner)
+        assertThat(valideringsmelding).contains("Tellekretsnavn må gis når tellekretsnummer er gitt (13) (stemmekrets 138).")
+    }
+
+    @Test
+    fun `valider at metadataoperasjoner med tellekretsnummer med null tellekretsnavn gir feilmelding`() {
+        val operasjoner =
+            Operasjoner(
+                metadataendringer =
+                Metadataendringer(
+                    stemmekretsendringer =
+                    mapOf("1" to StemmekretsRequestBuilder(tellekretsnavn = null).build())
+                )
+            )
+
+        val valideringsmelding = utkastValidatorService.validateTellekretserOgValgdistrikt(operasjoner)
+        assertThat(valideringsmelding).contains("Tellekretsnavn må gis når tellekretsnummer er gitt (13) (stemmekrets 138).")
+    }
+
+    @Test
+    fun `valider at metadataoperasjoner med null valgdistriktsnummer gir feilmelding`() {
+        val operasjoner =
+            Operasjoner(
+                metadataendringer =
+                Metadataendringer(
+                    stemmekretsendringer =
+                    mapOf("1" to StemmekretsRequestBuilder(valgdistriktsnummer = null).build())
+                )
+            )
+
+        val valideringsmelding = utkastValidatorService.validateTellekretserOgValgdistrikt(operasjoner)
+        assertThat(valideringsmelding).contains("Valgdistriktsnummer må gis (stemmekrets 138).")
+    }
+
+    @Test
+    fun `valider at metadataoperasjoner med blankt valgdistriktsnummer gir feilmelding`() {
+        val operasjoner =
+            Operasjoner(
+                metadataendringer =
+                Metadataendringer(
+                    stemmekretsendringer =
+                    mapOf("1" to StemmekretsRequestBuilder(valgdistriktsnummer = " ").build())
+                )
+            )
+
+        val valideringsmelding = utkastValidatorService.validateTellekretserOgValgdistrikt(operasjoner)
+        assertThat(valideringsmelding).contains("Valgdistriktsnummer må gis (stemmekrets 138).")
+    }
+
+
 }
