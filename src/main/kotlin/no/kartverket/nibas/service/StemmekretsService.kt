@@ -300,9 +300,10 @@ fun Stemmekrets.applyChangesFromRequest(stemmekretsRequest: StemmekretsRequest):
     this.apply {
         stemmekretsRequest.navn?.let { this.stemmekretsnavn = it }
         stemmekretsRequest.nummer?.let { this.stemmekretsnummer = it }
-        stemmekretsRequest.tellekretsnummer?.let { this.tellekretsnummer = it }
-        stemmekretsRequest.tellekretsnavn?.let { this.tellekretsnavn = it }
         stemmekretsRequest.valgdistriktsnummer?.let { this.valgdistriktsnummer = it }
+        //Tellekrets kan nullstilles, mens navn, nummer og valgdistrikt må være gitt
+        this.tellekretsnummer = stemmekretsRequest.tellekretsnummer
+        this.tellekretsnavn = stemmekretsRequest.tellekretsnavn
     }
 
 

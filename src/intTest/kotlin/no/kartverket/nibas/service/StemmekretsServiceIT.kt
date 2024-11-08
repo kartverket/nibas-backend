@@ -153,6 +153,8 @@ class StemmekretsServiceIT : TestWithDbContainer() {
     @Test
     fun `oppdaterStemmekrets skal lage ny stemmekrets og sette gyldigtil for gammel krets`() {
         val stemmekretsRequest = StemmekretsRequestBuilder.DEFAULT_REQUEST
+        assertThat(stemmekretsRequest.tellekretsnummer).isNotNull()
+        assertThat(stemmekretsRequest.tellekretsnavn).isNotNull()
 
         val identifikator = Identifikator(Lokalid(stemmekretsRequest.identifikasjon.lokalid), october1In2022)
         val lagredeGrenserForKrets = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(october1In2022, Grensetype.Stemmekretsgrense))
@@ -187,6 +189,8 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         assertThat(stemmekretsEtter.omraade).isEqualTo(stemmekrets.omraade)
         assertThat(stemmekretsEtter.posisjon).isEqualTo(stemmekrets.posisjon)
         assertThat(stemmekretsEtter.gyldighet.gyldigFra).isEqualTo(now)
+        assertThat(stemmekretsEtter.tellekretsnummer).isNotNull().isNotEqualTo(stemmekrets.tellekretsnummer).isEqualTo(stemmekretsRequest.tellekretsnummer)
+        assertThat(stemmekretsEtter.tellekretsnavn).isNotNull().isNotEqualTo(stemmekrets.tellekretsnavn).isEqualTo(stemmekretsRequest.tellekretsnavn)
 
         assertThat(opprinneligStemmekretsEtter.gyldighet.gyldigFra).isEqualTo(october1In2022)
         assertThat(opprinneligStemmekretsEtter.gyldighet.gyldigTil).isEqualTo(now)
@@ -206,6 +210,71 @@ class StemmekretsServiceIT : TestWithDbContainer() {
             assertThat(grense.stemmekretser.map { it.stemmekrets.id }).hasSize(2).containsExactlyInAnyOrder(opprinneligStemmekrets.id, stemmekretsEtter.id)
         }
     }
+
+
+    @Test
+    fun `oppdaterStemmekrets skal kunne blanke ut tellekrets`() {
+        val stemmekretsRequest = StemmekretsRequestBuilder.DEFAULT_REQUEST.copy(tellekretsnummer = null, tellekretsnavn = null)
+
+        val identifikator = Identifikator(Lokalid(stemmekretsRequest.identifikasjon.lokalid), october1In2022)
+        val lagredeGrenserForKrets = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(october1In2022, Grensetype.Stemmekretsgrense))
+        grenseRepository.flush()
+
+        val stemmekrets = saveStemmekrets(
+            id = "2",
+            lokalid = identifikator.lokalid,
+            gyldigFra = october1In2022,
+            grenser = lagredeGrenserForKrets
+        )
+        assertThat(stemmekrets.tellekretsnummer).isNotNull()
+        assertThat(stemmekrets.tellekretsnavn).isNotNull()
+
+        saveKommuneOgUnikLokalid(kommunenummerUuid = "4227", stemmekretser = listOf(stemmekrets))
+
+        val now = LocalDate.now()
+        val opprinneligStemmekrets = stemmekretsService.hentStemmekrets(identifikator)!!
+
+        stemmekretsService.oppdaterStemmekrets(
+            lokalId = identifikator.lokalid,
+            oppdatertStemmekrets = stemmekretsRequest,
+            gyldigFra = now,
+            endringstype = Endringstype.RETTING
+        )
+
+        val opprinneligStemmekretsEtter = stemmekretsService.hentStemmekrets(identifikator)!!
+        val stemmekretsEtter = stemmekretsService.hentStemmekrets(Identifikator(identifikator.lokalid))!!
+
+        assertThat(stemmekretsEtter.stemmekretsnummer).isNotEqualTo(stemmekrets.stemmekretsnummer)
+            .isEqualTo(stemmekretsRequest.nummer)
+        assertThat(stemmekretsEtter.stemmekretsnavn).isNotEqualTo(stemmekrets.stemmekretsnavn)
+            .isEqualTo(stemmekretsRequest.navn)
+        assertThat(stemmekretsEtter.omraade).isEqualTo(stemmekrets.omraade)
+        assertThat(stemmekretsEtter.posisjon).isEqualTo(stemmekrets.posisjon)
+        assertThat(stemmekretsEtter.gyldighet.gyldigFra).isEqualTo(now)
+        assertThat(stemmekretsEtter.tellekretsnummer).isNull()
+        assertThat(stemmekretsEtter.tellekretsnavn).isNull()
+
+        assertThat(opprinneligStemmekretsEtter.gyldighet.gyldigFra).isEqualTo(october1In2022)
+        assertThat(opprinneligStemmekretsEtter.gyldighet.gyldigTil).isEqualTo(now)
+        assertThat(opprinneligStemmekretsEtter.tellekretsnummer).isNotNull()
+        assertThat(opprinneligStemmekretsEtter.tellekretsnavn).isNotNull()
+
+        val grenseObjIdsForOpprinneligStemmekrets = opprinneligStemmekrets.grenser.map { it.grense.id }
+        val grenseObjIdsForOpprinneligStemmekretsEtter = opprinneligStemmekretsEtter.grenser.map { it.grense.id }
+        val grenseObjIdsForNyStemmekrets = stemmekretsEtter.grenser.map { it.grense.id }
+
+        assertThat(grenseObjIdsForOpprinneligStemmekrets).containsAll(grenseObjIdsForOpprinneligStemmekretsEtter)
+        assertThat(grenseObjIdsForOpprinneligStemmekrets).containsAll(grenseObjIdsForNyStemmekrets)
+        assertThat(grenseObjIdsForNyStemmekrets).containsAll(grenseObjIdsForOpprinneligStemmekrets)
+        assertThat(grenseObjIdsForNyStemmekrets).containsAll(grenseObjIdsForOpprinneligStemmekretsEtter)
+
+        val grenser = grenseRepository.findAllById(grenseObjIdsForOpprinneligStemmekrets)
+        assertThat(grenser).hasSize(4)
+        grenser.forEach { grense ->
+            assertThat(grense.stemmekretser.map { it.stemmekrets.id }).hasSize(2).containsExactlyInAnyOrder(opprinneligStemmekrets.id, stemmekretsEtter.id)
+        }
+    }
+
     @Test
     fun `oppdaterStemmekrets skal kaste exception ved ugyldig kommune for stemmekretsen`() {
         val stemmekretsRequest = StemmekretsRequestBuilder.DEFAULT_REQUEST
