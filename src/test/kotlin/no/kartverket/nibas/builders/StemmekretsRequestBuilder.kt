@@ -1,6 +1,7 @@
 package no.kartverket.nibas.builders
 
 
+import no.kartverket.nibas.api.v1.common.Kommunenummer
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.request.StemmekretsRequest
 
@@ -11,7 +12,7 @@ class StemmekretsRequestBuilder(
     private var tellekretsnummer: String? = "13",
     private var tellekretsnavn: String? = "Mosekollen minikrets 3",
     private var valgdistriktsnummer: String? = "89",
-    private var kommunenummer: String = "0301",
+    private var kommunenummer: Kommunenummer = Kommunenummer("0301", "0301"),
     private var version: Int = 1
 ) {
     companion object {

@@ -3,6 +3,7 @@ package no.kartverket.nibas.api.v1.request
 import io.swagger.v3.oas.annotations.media.Schema
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.common.Flatetype
+import no.kartverket.nibas.api.v1.common.Kommunenummer
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
@@ -99,7 +100,7 @@ data class StemmekretsRequest(
     var valgdistriktsnummer: String? = null,
 
     @Schema(description = "Kommunenummeret stemmekretsen tilhører til")
-    var kommunenummer: String? = null,
+    var kommunenummer: Kommunenummer? = null,
 
     @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
     @NotNull

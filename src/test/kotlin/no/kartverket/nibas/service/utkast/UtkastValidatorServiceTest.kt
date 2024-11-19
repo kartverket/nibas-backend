@@ -5,6 +5,7 @@ import io.mockk.mockk
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grenseendringer
 import no.kartverket.nibas.api.v1.common.Grensetype
+import no.kartverket.nibas.api.v1.common.Kommunenummer
 import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
@@ -263,7 +264,11 @@ class UtkastValidatorServiceTest {
                     version = 0,
                     valgdistriktsnummer = "01",
                     tellekretsnavn = "tellekrets",
-                    tellekretsnummer = "01"
+                    tellekretsnummer = "01",
+                    kommunenummer = Kommunenummer(
+                        "1",
+                        "1"
+                    )
                 )
             ))
             .build()

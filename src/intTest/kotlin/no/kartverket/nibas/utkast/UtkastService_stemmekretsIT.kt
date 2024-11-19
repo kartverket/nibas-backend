@@ -2,6 +2,7 @@ package no.kartverket.nibas.utkast
 
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
+import no.kartverket.nibas.api.v1.common.Kommunenummer
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.request.StemmekretsRequest
 import no.kartverket.nibas.common.CurrentTime
@@ -223,6 +224,7 @@ class UtkastService_stemmekretsIT : TestWithDbContainer() {
                 lokalid = lokalidOfStemmekrets,
             ),
             version = version,
+            kommunenummer = Kommunenummer("1", "1")
         )
 
     private fun assertStemmekrets(stemmekrets: Stemmekrets,
