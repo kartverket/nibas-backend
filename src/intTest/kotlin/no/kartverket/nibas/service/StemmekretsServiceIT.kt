@@ -1121,7 +1121,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         val lagredeGrenserForOest = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(gyldigFra, Grensetype.Stemmekretsgrense, medToDelteGrenser))
         grenseRepository.flush()
 
-        val kretsVest = saveStemmekretsMedHull(
+        val kretsVest = saveStemmekrets(
             id = "1",
             lokalid = Lokalid("123"),
             stemmekretsnummer = "20",

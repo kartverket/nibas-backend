@@ -1095,6 +1095,9 @@ class GrenseServiceIT : TestWithDbContainer() {
         val vestreStemmekrets = vestreKommune.getStemmekretser(opprinneligDato).first()
         val oestreStemmekrets = oestreKommune.getStemmekretser(opprinneligDato).first()
         grenseRepository.flush()
+        val deltGrenseFoer = grenseRepository.findById("grenseDelt").get()
+        //Sjekker at det går an å lage feature
+        deltGrenseFoer.grenseToFeature(opprinneligDato)
 
         val oestreGrunnkretsEtterOppdatering = utfoerMetadataoppdatering(kretsSomSkalOppdateres = oestreKrets, datoForOppdatering = datoForOppdatering)!!
         grenseRepository.flush()
@@ -1105,6 +1108,8 @@ class GrenseServiceIT : TestWithDbContainer() {
         assertThat(deltGrense.grunnkretser).hasSize(3)
         assertThat(deltGrense.grunnkretser.map { it.grunnkrets.id })
             .containsExactlyInAnyOrder(vestreKrets.id, oestreKrets.id, oestreGrunnkretsEtterOppdatering.id)
+        assertThat(deltGrense.grunnkretser(datoForOppdatering).map { it.id })
+            .containsExactlyInAnyOrder(vestreKrets.id, oestreGrunnkretsEtterOppdatering.id)
 
         val flaterSomErEndret = utfoerGrenseendring(kretsSomSkalHaGrenseendring = vestreKrets, opprinneligDato = datoForOppdatering,
             endringsdato = datoForGrenseendring)
@@ -1235,7 +1240,7 @@ class GrenseServiceIT : TestWithDbContainer() {
         saveKrets: (String, Lokalid, String, String, LocalDate, LocalDate?, List<Grense>) -> T,
         saveKrets2: (String, Lokalid, String, String, LocalDate, LocalDate?, List<Grense>) -> T
     ): List<T> {
-        val grense1_1 = Grense(id = "grense1_1", lokalid = "grense1_1Lokalid", grensetype = grensetype)
+        val grense1_1 = grenseRepository.save(Grense(id = "grense1_1", lokalid = "grense1_1Lokalid", grensetype = grensetype)
             .apply {
                 setGyldigFra(gyldigFra)
                 grense = GrenseHelper.geometryFactory.createLineString(
@@ -1244,9 +1249,9 @@ class GrenseServiceIT : TestWithDbContainer() {
                         Coordinate(0.0, 0.0)
                     )
                 )
-            }
+            })
 
-        val grense1_2 = Grense(id = "grense1_2", lokalid = "grense1_2Lokalid", grensetype = grensetype)
+        val grense1_2 = grenseRepository.save(Grense(id = "grense1_2", lokalid = "grense1_2Lokalid", grensetype = grensetype)
             .apply {
                 setGyldigFra(gyldigFra)
                 grense = GrenseHelper.geometryFactory.createLineString(
@@ -1255,9 +1260,9 @@ class GrenseServiceIT : TestWithDbContainer() {
                         Coordinate(0.0, 5.0)
                     )
                 )
-            }
+            })
 
-        val grense2 = Grense(id = "grense2", lokalid = "grense2Lokalid", grensetype = grensetype)
+        val grense2 = grenseRepository.save(Grense(id = "grense2", lokalid = "grense2Lokalid", grensetype = grensetype)
             .apply {
                 setGyldigFra(gyldigFra)
                 grense = GrenseHelper.geometryFactory.createLineString(
@@ -1266,8 +1271,8 @@ class GrenseServiceIT : TestWithDbContainer() {
                         Coordinate(0.0, 5.0),
                     )
                 )
-            }
-        val grense3_1 = Grense(id = "grense3_1", lokalid = "grense3_1Lokalid", grensetype = grensetype)
+            })
+        val grense3_1 = grenseRepository.save(Grense(id = "grense3_1", lokalid = "grense3_1Lokalid", grensetype = grensetype)
             .apply {
                 setGyldigFra(gyldigFra)
                 grense = GrenseHelper.geometryFactory.createLineString(
@@ -1276,8 +1281,8 @@ class GrenseServiceIT : TestWithDbContainer() {
                         Coordinate(5.0, 2.5),
                     )
                 )
-            }
-        val grense3_2 = Grense(id = "grense3_2", lokalid = "grense3_2Lokalid", grensetype = grensetype)
+            })
+        val grense3_2 = grenseRepository.save(Grense(id = "grense3_2", lokalid = "grense3_2Lokalid", grensetype = grensetype)
             .apply {
                 setGyldigFra(gyldigFra)
                 grense = GrenseHelper.geometryFactory.createLineString(
@@ -1286,8 +1291,8 @@ class GrenseServiceIT : TestWithDbContainer() {
                         Coordinate(5.0, 2.5),
                     )
                 )
-            }
-        val grense4 = Grense(id = "grense4", lokalid = "grense4Lokalid", grensetype = grensetype)
+            })
+        val grense4 = grenseRepository.save(Grense(id = "grense4", lokalid = "grense4Lokalid", grensetype = grensetype)
             .apply {
                 setGyldigFra(gyldigFra)
                 grense = GrenseHelper.geometryFactory.createLineString(
@@ -1296,8 +1301,8 @@ class GrenseServiceIT : TestWithDbContainer() {
                         Coordinate(0.0, 0.0)
                     )
                 )
-            }
-        val grense5 = Grense(id = "grense5", lokalid = "grense5Lokalid", grensetype = grensetype)
+            })
+        val grense5 = grenseRepository.save(Grense(id = "grense5", lokalid = "grense5Lokalid", grensetype = grensetype)
             .apply {
                 setGyldigFra(gyldigFra)
                 grense = GrenseHelper.geometryFactory.createLineString(
@@ -1306,8 +1311,8 @@ class GrenseServiceIT : TestWithDbContainer() {
                         Coordinate(7.0, 5.0)
                     )
                 )
-            }
-        val grense6 = Grense(id = "grense6", lokalid = "grense6Lokalid", grensetype = grensetype)
+            })
+        val grense6 = grenseRepository.save(Grense(id = "grense6", lokalid = "grense6Lokalid", grensetype = grensetype)
             .apply {
                 setGyldigFra(gyldigFra)
                 grense = GrenseHelper.geometryFactory.createLineString(
@@ -1316,8 +1321,8 @@ class GrenseServiceIT : TestWithDbContainer() {
                         Coordinate(7.0, 5.0)
                     )
                 )
-            }
-        val grense7 = Grense(id = "grense7", lokalid = "grense7Lokalid", grensetype = grensetype)
+            })
+        val grense7 = grenseRepository.save(Grense(id = "grense7", lokalid = "grense7Lokalid", grensetype = grensetype)
             .apply {
                 setGyldigFra(gyldigFra)
                 grense = GrenseHelper.geometryFactory.createLineString(
@@ -1326,8 +1331,8 @@ class GrenseServiceIT : TestWithDbContainer() {
                         Coordinate(5.0, 0.0)
                     )
                 )
-            }
-        val grense8 = Grense(id = "grense8", lokalid = "grense8Lokalid", grensetype = grensetype)
+            })
+        val grense8 = grenseRepository.save(Grense(id = "grense8", lokalid = "grense8Lokalid", grensetype = grensetype)
             .apply {
                 setGyldigFra(gyldigFra)
                 grense = GrenseHelper.geometryFactory.createLineString(
@@ -1336,8 +1341,8 @@ class GrenseServiceIT : TestWithDbContainer() {
                         Coordinate(-1.0, 10.0)
                     )
                 )
-            }
-        val grense9 = Grense(id = "grense9", lokalid = "grense9Lokalid", grensetype = grensetype)
+            })
+        val grense9 = grenseRepository.save(Grense(id = "grense9", lokalid = "grense9Lokalid", grensetype = grensetype)
             .apply {
                 setGyldigFra(gyldigFra)
                 grense = GrenseHelper.geometryFactory.createLineString(
@@ -1346,27 +1351,24 @@ class GrenseServiceIT : TestWithDbContainer() {
                         Coordinate(5.0, 5.0)
                     )
                 )
-            }
+            })
 
-        val dokumentasjonsreferanse = DokumentasjonsreferanseBuilder()
+        val dokumentasjonsreferanse = dokumentasjonsreferanseRepository.save(DokumentasjonsreferanseBuilder()
             .fastSettingAt(LocalDate.now())
             .addLenker(dokLink("http://1.no"), dokLink("https://2.no"))
             .addInternRefs(internReferanse("ref1"))
-            .build()
-        dokumentasjonsreferanseRepository.save(dokumentasjonsreferanse)
+            .build())
 
         val dokrefGrensekobling = DokrefGrenseKobling().apply {
             this.dokumentasjonsreferanse = dokumentasjonsreferanse
             this.grense = grense3_2
         }
-        dokumentasjonsreferanse.dokrefGrenseKobling.add(
-            dokrefGrensekobling
-        )
+        dokumentasjonsreferanse.dokrefGrenseKobling.add(dokrefGrensekobling)
         grense3_2.dokrefGrensekobling.add(dokrefGrensekobling)
 
-        val lagredeGrenserForOpprinneligKrets = grenseRepository.saveAll(listOf(grense1_1, grense1_2, grense2, grense3_1, grense3_2, grense4))
-        val lagredeGrenserForOestreKrets = grenseRepository.saveAll(listOf(grense3_2, grense3_1, grense5, grense6, grense7))
-        val lagredeGrenserForNordVestKrets = grenseRepository.saveAll(listOf(grense8, grense9, grense2, grense1_2))
+        val lagredeGrenserForOpprinneligKrets = listOf(grense1_1, grense1_2, grense2, grense3_1, grense3_2, grense4)
+        val lagredeGrenserForOestreKrets = listOf(grense3_2, grense3_1, grense5, grense6, grense7)
+        val lagredeGrenserForNordVestKrets = listOf(grense8, grense9, grense2, grense1_2)
 
         val kretsOpprinnelig = saveKrets("1", Lokalid("Opprinnelig"), "1", "Opprinnelig", gyldigFra, null, lagredeGrenserForOpprinneligKrets)
         val kretsOest = saveKrets("2", Lokalid("Oestre"), "2", "Oestre", gyldigFra, null, lagredeGrenserForOestreKrets)

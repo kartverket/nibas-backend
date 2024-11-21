@@ -1,6 +1,7 @@
 package no.kartverket.nibas.builders
 
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Stemmekrets
@@ -25,7 +26,8 @@ class StemmekretsBuilder(
     private var gyldigFra: LocalDate = LocalDate.now(),
     private var gyldigTil: LocalDate? = null,
     private var informasjonstekst: String = INFORMASJONTEKST,
-    private var opphav: String = OPPHAV
+    private var opphav: String = OPPHAV,
+    private var typeEndring: Endringstype = Endringstype.KVALITETSHEVING
 ) {
 
     companion object {
@@ -33,9 +35,23 @@ class StemmekretsBuilder(
     }
 
     fun build(): Stemmekrets {
-        val stemmekrets = Stemmekrets(id = this.id, lokalid = lokalId.value)
+        val stemmekrets = buildUtenKommuneOgGrenser()
 
-        stemmekrets.datafangstdato = datafangstdato
+        kommune?.addStemmekrets(stemmekrets)
+
+        grenser.forEach { stemmekrets.addGrensekobling(it) }
+        if (grenser.isNotEmpty() && grenser.none { it.grense.isEmpty }) {
+            stemmekrets.oppdaterOmraadeOgPosisjon()
+            if (!stemmekrets.omraade!!.isEmpty) {
+                stemmekrets.posisjon = stemmekrets.omraade?.interiorPoint
+            }
+        }
+
+        return stemmekrets
+    }
+
+    fun buildUtenKommuneOgGrenser(): Stemmekrets {
+        val stemmekrets = Stemmekrets(id = this.id, lokalid = lokalId.value)
 
         stemmekrets.stemmekretsnavn = stemmekretsnavn
         stemmekrets.stemmekretsnummer = stemmekretsnummer
@@ -44,24 +60,14 @@ class StemmekretsBuilder(
         stemmekrets.valgdistriktsnummer = valgdistriktnummer
 
         stemmekrets.auditInfo.endretdato = endretdato
-
-        kommune?.addStemmekrets(stemmekrets)
-
-        stemmekrets.auditInfo.endretdato = endretdato
+        stemmekrets.auditInfo.typeEndring = typeEndring
         stemmekrets.gyldighet = Gyldighet(gyldigFra, gyldigTil)
         stemmekrets.setInfo(informasjonstekst)
         stemmekrets.opphav = opphav
+        stemmekrets.datafangstdato = datafangstdato
 
-        grenser.forEach { stemmekrets.addGrensekobling(it) }
         stemmekrets.posisjon = GeometryFactory().createPoint(Coordinate(1.0, 1.0))
-        if (grenser.isNotEmpty() && grenser.none { it.grense.isEmpty }) {
-            stemmekrets.oppdaterOmraadeOgPosisjon()
-            if (!stemmekrets.omraade!!.isEmpty) {
-                stemmekrets.posisjon = stemmekrets.omraade?.interiorPoint
-            }
-        } else {
-            stemmekrets.omraade = GeometryFactory().createMultiPolygon(arrayOf(GeometryFactory().createPolygon()))
-        }
+        stemmekrets.omraade = GeometryFactory().createMultiPolygon(arrayOf(GeometryFactory().createPolygon()))
 
         return stemmekrets
     }

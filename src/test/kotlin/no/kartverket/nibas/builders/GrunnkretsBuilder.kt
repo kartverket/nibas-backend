@@ -34,33 +34,10 @@ class GrunnkretsBuilder(
     }
 
     fun build(): Grunnkrets {
-        val grunnkrets = buildUtenKommune()
-
-        kommune?.addGrunnkrets(grunnkrets)
-
-        return grunnkrets
-    }
-
-    fun buildUtenKommune(): Grunnkrets {
-        val grunnkrets = Grunnkrets(id = this.id, lokalid = lokalId.value)
-
-        grunnkrets.datafangstdato = datafangstdato
-
-        grunnkrets.grunnkretsnavn = grunnkretsnavn
-        grunnkrets.grunnkretsnummer = grunnkretsnummer
-        grunnkrets.gyldighet = Gyldighet(gyldigFra, gyldigTil, slettet)
-        grunnkrets.setInfo(informasjonstekst)
-        grunnkrets.opphav = opphav
-        grunnkrets.auditInfo.endretdato = endretdato
-        grunnkrets.auditInfo.typeEndring = typeEndring
-
+        val grunnkrets = buildUtenKommuneOgGrenser()
         grenser.forEach { grense ->
             grunnkrets.addGrensekobling(grense)
         }
-
-        grunnkrets.posisjon = GeometryFactory().createPoint(Coordinate(1.0, 1.0))
-        grunnkrets.omraade = GeometryFactory().createMultiPolygon(arrayOf(GeometryFactory().createPolygon()))
-
         //Hack fordi noen tester lager grenser uten linestring
         try {
             if (grenser.isNotEmpty() && grenser.all { !it.grense.isEmpty }) {
@@ -72,11 +49,31 @@ class GrunnkretsBuilder(
         } catch (_: UninitializedPropertyAccessException) {
         }
 
+        kommune?.addGrunnkrets(grunnkrets)
+
+        return grunnkrets
+    }
+
+    fun buildUtenKommuneOgGrenser(): Grunnkrets {
+        val grunnkrets = Grunnkrets(id = this.id, lokalid = lokalId.value)
+
+        grunnkrets.grunnkretsnavn = grunnkretsnavn
+        grunnkrets.grunnkretsnummer = grunnkretsnummer
+        grunnkrets.gyldighet = Gyldighet(gyldigFra, gyldigTil, slettet)
+        grunnkrets.setInfo(informasjonstekst)
+        grunnkrets.opphav = opphav
+        grunnkrets.auditInfo.endretdato = endretdato
+        grunnkrets.auditInfo.typeEndring = typeEndring
+        grunnkrets.datafangstdato = datafangstdato
+
+        grunnkrets.posisjon = GeometryFactory().createPoint(Coordinate(1.0, 1.0))
+        grunnkrets.omraade = GeometryFactory().createMultiPolygon(arrayOf(GeometryFactory().createPolygon()))
+
         return grunnkrets
     }
 
     fun withLokalId(lokalId: String): GrunnkretsBuilder {
-        this.lokalId = Lokalid((lokalId))
+        this.lokalId = Lokalid(lokalId)
         return this
     }
 

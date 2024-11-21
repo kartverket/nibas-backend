@@ -47,7 +47,7 @@ class KommuneBuilder(
     }
 
     fun build(): Kommune {
-        val kommune = buildUtenUnikLokalidOgTilkntninger()
+        val kommune = buildUtenUnikLokalidOgTilknytninger()
         kommune.addKommuneTilUnikLokalid(unikLokalid)
         kommune.fylkeLokalid = fylkeUnikLokalid
 
@@ -58,7 +58,7 @@ class KommuneBuilder(
         return kommune
     }
 
-    fun buildUtenUnikLokalidOgTilkntninger(): Kommune {
+    fun buildUtenUnikLokalidOgTilknytninger(): Kommune {
         val kommune = Kommune(id = this.id, lokalid = unikLokalid.lokalid)
 
         if (navn != null) {

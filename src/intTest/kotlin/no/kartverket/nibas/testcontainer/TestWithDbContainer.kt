@@ -324,7 +324,7 @@ class TestWithDbContainer {
             gyldigTil = gyldigTil,
             kommunenummerUuid = kommunenummerUuid,
             kommunenummer = kommunenummer
-        ).buildUtenUnikLokalidOgTilkntninger()
+        ).buildUtenUnikLokalidOgTilknytninger()
 
         val save = kommuneRepository.save(kommune)
         save.addKommuneTilUnikLokalid(unikLokalid)
@@ -381,9 +381,24 @@ class TestWithDbContainer {
             grunnkretsnavn = grunnkretsnavn,
             kommune = null,
             grenser = grenser
-        ).buildUtenKommune()
+        ).buildUtenKommuneOgGrenser()
 
-        return grunnkretsRepository.save(grunnkrets)
+        val save = grunnkretsRepository.save(grunnkrets)
+        grenser.forEach { grense ->
+            save.addGrensekobling(grense)
+        }
+        //Hack fordi noen tester lager grenser uten linestring
+        try {
+            if (grenser.isNotEmpty() && grenser.all { !it.grense.isEmpty }) {
+                save.oppdaterOmraadeOgPosisjon()
+                if (!save.omraade!!.isEmpty) {
+                    save.posisjon = save.omraade?.interiorPoint
+                }
+            }
+        } catch (_: UninitializedPropertyAccessException) {
+        }
+
+        return save
     }
 
     fun saveStemmekrets(
@@ -405,33 +420,19 @@ class TestWithDbContainer {
             stemmekretsnavn = stemmekretsnavn,
             kommune = null,
             grenser = grenser
-        ).build()
+        ).buildUtenKommuneOgGrenser()
 
-        return stemmekretsRepository.save(stemmekrets)
-    }
+        val save = stemmekretsRepository.save(stemmekrets)
 
-    fun saveStemmekretsMedHull(
-        id: String = "stemmekrets-9000",
-        lokalid: Lokalid,
-        stemmekretsnummer: String = "9",
-        stemmekretsnavn: String = "Øvre Singsaker",
-        gyldigFra: LocalDate = LocalDate.of(2022, Month.OCTOBER, 1),
-        gyldigTil: LocalDate? = null,
-        grenser: List<Grense> = emptyList()
-    ): Stemmekrets {
+        grenser.forEach { save.addGrensekobling(it) }
+        if (grenser.isNotEmpty() && grenser.none { it.grense.isEmpty }) {
+            save.oppdaterOmraadeOgPosisjon()
+            if (!save.omraade!!.isEmpty) {
+                save.posisjon = save.omraade?.interiorPoint
+            }
+        }
 
-        val stemmekrets = StemmekretsBuilder(
-            id = id,
-            lokalId = lokalid,
-            gyldigFra = gyldigFra,
-            gyldigTil = gyldigTil,
-            stemmekretsnummer = stemmekretsnummer,
-            stemmekretsnavn = stemmekretsnavn,
-            kommune = null,
-            grenser = grenser)
-            .build()
-
-        return stemmekretsRepository.save(stemmekrets)
+        return save
     }
 
     fun saveGrenseAvTypeKommunegrense(id: String = "kommunegrense-id",

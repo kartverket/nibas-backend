@@ -29,6 +29,7 @@ import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.extensions.geometry.geometryToDto
+import no.kartverket.nibas.extensions.geometry.grenseKoblingToFeature
 import no.kartverket.nibas.extensions.geometry.grenseToFeature
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.OptimistiskLaasException
@@ -71,6 +72,11 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
     fun hentEksisterendeGrunnkretsMedDagensDato() {
         val grunnkrets = grunnkretsService.hentGrunnkrets(Identifikator(lokalidOfGrunnkretsInDataset, november28In2022))
         assertThat(grunnkrets).isNotNull
+        val grensekoblinger = grunnkretsService.hentGrensekoblingerForGrunnkrets(Identifikator(lokalidOfGrunnkretsInDataset, november28In2022))
+        assertThat(grensekoblinger).isNotEmpty
+
+        val features = grensekoblinger.map { it.grenseKoblingToFeature(november28In2022) }
+        assertThat(features).isNotEmpty
     }
 
     @Test

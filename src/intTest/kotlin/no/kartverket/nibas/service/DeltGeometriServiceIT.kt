@@ -790,7 +790,7 @@ class DeltGeometriServiceIT : TestWithDbContainer() {
             assertNyVersjonMotGammelVersjonAvFlate(flateList, lokalid, eventRad, gyldighetsDato)
         }
 
-        val alleGyldigeAdmgrenser = grenseRepository.findAll().filter { it.gyldigPaaDato(gyldighetsDato) && it.erAdministrativGrense() }
+        val alleGyldigeAdmgrenser = grenseRepository.findAllById((administrativeGrenserFor4527+administrativeGrenserFor4528).map { it.id })
         alleGyldigeAdmgrenser.forEach {
             assertThat(it.gyldighet.gyldigFra).isEqualTo(october1In2022)
             assertThat(it.stemmekretser(gyldighetsDato)).isNotEmpty()
@@ -832,7 +832,7 @@ class DeltGeometriServiceIT : TestWithDbContainer() {
             assertNyVersjonMotGammelVersjonAvFlate(flateList, lokalid, eventRad, gyldighetsDato)
         }
 
-        val alleGyldigeAdmgrenser = grenseRepository.findAll().filter { it.gyldigPaaDato(gyldighetsDato) && it.erAdministrativGrense() }
+        val alleGyldigeAdmgrenser = grenseRepository.findAllById((administrativeGrenserFor4527+administrativeGrenserFor4528).map { it.id })
         alleGyldigeAdmgrenser.forEach {
             assertThat(it.stemmekretser(gyldighetsDato)).isNotEmpty()
             assertThat(it.grunnkretser(gyldighetsDato)).isNotEmpty()
@@ -873,7 +873,7 @@ class DeltGeometriServiceIT : TestWithDbContainer() {
             assertNyVersjonMotGammelVersjonAvFlate(flateList, lokalid, eventRad, gyldighetsDato)
         }
 
-        val alleGyldigeAdmgrenser = grenseRepository.findAll().filter { it.gyldigPaaDato(gyldighetsDato) && it.erAdministrativGrense() }
+        val alleGyldigeAdmgrenser = grenseRepository.findAllById((administrativeGrenserFor4527+administrativeGrenserFor4528).map { it.id })
         alleGyldigeAdmgrenser.forEach {
             assertThat(it.stemmekretser(gyldighetsDato)).isNotEmpty()
             assertThat(it.grunnkretser(gyldighetsDato)).isNotEmpty()
@@ -1001,7 +1001,7 @@ class DeltGeometriServiceIT : TestWithDbContainer() {
         assertOpprinneligGrenseMotNyGrense(onsketGrenseLokalid = "LI", gyldighetsDato = gyldighetsDato,
             nyeAdministrativeGrenser = administrativeGrenser, onsketStartpunkt = punktL, onsketEndpunkt = punktI, uendret = true)
 
-        val alleGyldigeAdmgrenser = grenseRepository.findAll().filter { it.gyldigPaaDato(gyldighetsDato) && it.erAdministrativGrense() }
+        val alleGyldigeAdmgrenser = grenseRepository.findAllById(administrativeGrenser.map { it.id })
         alleGyldigeAdmgrenser.forEach {
             assertThat(it.stemmekretser(gyldighetsDato)).isNotEmpty()
             assertThat(it.grunnkretser(gyldighetsDato)).isNotEmpty()
@@ -1037,7 +1037,7 @@ class DeltGeometriServiceIT : TestWithDbContainer() {
         assertOpprinneligGrenseMotNyGrense(onsketGrenseLokalid = "KLIHGD", gyldighetsDato = gyldighetsDato,
             nyeAdministrativeGrenser = administrativeGrenser, onsketStartpunkt = punktH, onsketEndpunkt = punktD)
 
-        val alleGyldigeAdmgrenser = grenseRepository.findAll().filter { it.gyldigPaaDato(gyldighetsDato) && it.erAdministrativGrense() }
+        val alleGyldigeAdmgrenser = grenseRepository.findAllById(administrativeGrenser.map { it.id })
         alleGyldigeAdmgrenser.forEach {
             assertThat(it.stemmekretser(gyldighetsDato)).isNotEmpty()
             assertThat(it.grunnkretser(gyldighetsDato)).isNotEmpty()
@@ -1068,7 +1068,7 @@ class DeltGeometriServiceIT : TestWithDbContainer() {
         assertOpprinneligGrenseMotNyGrense(onsketGrenseLokalid = "FIHGD", gyldighetsDato = gyldighetsDato,
             nyeAdministrativeGrenser = administrativeGrenser, onsketStartpunkt = punktH, onsketEndpunkt = punktD)
 
-        val alleGyldigeAdmgrenser = grenseRepository.findAll().filter { it.gyldigPaaDato(gyldighetsDato) && it.erAdministrativGrense() }
+        val alleGyldigeAdmgrenser = grenseRepository.findAllById(administrativeGrenser.map { it.id })
         alleGyldigeAdmgrenser.forEach {
             assertThat(it.stemmekretser(gyldighetsDato)).isNotEmpty()
             assertThat(it.grunnkretser(gyldighetsDato)).isNotEmpty()
@@ -1103,7 +1103,7 @@ class DeltGeometriServiceIT : TestWithDbContainer() {
         assertOpprinneligGrenseMotNyGrense(onsketGrenseLokalid = "FIHGD", gyldighetsDato = gyldighetsDato,
             nyeAdministrativeGrenser = administrativeGrenser, onsketStartpunkt = punktG, onsketEndpunkt = punktD)
 
-        val alleGyldigeAdmgrenser = grenseRepository.findAll().filter { it.gyldigPaaDato(gyldighetsDato) && it.erAdministrativGrense() }
+        val alleGyldigeAdmgrenser = grenseRepository.findAllById(administrativeGrenser.map { it.id })
         alleGyldigeAdmgrenser.forEach {
             assertThat(it.stemmekretser(gyldighetsDato)).isNotEmpty()
             assertThat(it.grunnkretser(gyldighetsDato)).isNotEmpty()

@@ -47,6 +47,7 @@ spring:
   datasource:
     driver-class-name: org.postgresql.Driver
 
+
   jpa:
     # Dersom man vil vises hibernate-spørringene i loggen
     # show-sql: true
@@ -55,6 +56,10 @@ spring:
     # format_sql: true
     properties:
       hibernate:
+        ddl-auto: none
+        max_fetch_depth: 6
+        cache:
+          query_cache_layout: FULL
         integration:
           envers:
             enabled: false

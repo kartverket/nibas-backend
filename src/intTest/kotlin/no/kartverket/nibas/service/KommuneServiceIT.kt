@@ -8,6 +8,7 @@ import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.UgyldigTilstandException
 import no.kartverket.nibas.domain.*
+import no.kartverket.nibas.extensions.geometry.grenseKoblingToFeature
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import org.assertj.core.api.Assertions
@@ -27,6 +28,7 @@ class KommuneServiceIT : TestWithDbContainer() {
     private lateinit var kodelisteServiceMock: KodelisteService
 
     private val lokalidOfKommuneInDataSet = "ac7e05cd-fb07-4270-ad95-e3c32c1370d0"
+    private val lokalidOfKommuneMedGrunnkretsInDataSet = "8b023c74-4db4-48f9-8a5c-a3124c75da14"
     private val october1In2022 = LocalDate.of(2022, Month.OCTOBER, 1)
     private val november28In2022 = LocalDate.of(2022, Month.NOVEMBER, 28) // Dagens dato
     private val december1In2022 = LocalDate.of(2022, Month.DECEMBER, 1)
@@ -39,8 +41,16 @@ class KommuneServiceIT : TestWithDbContainer() {
 
     @Test
     fun hentEksisterendeKommuneMedDagensDato() {
-        assertThat(kommuneService.hentKommune(Identifikator(Lokalid(lokalidOfKommuneInDataSet), november28In2022))).isNotNull
-        assertThat(kommuneService.hentKommune(Identifikator(Lokalid(lokalidOfKommuneInDataSet)))).isNotNull
+        val identifikatorKommuneLokalidMedDato = Identifikator(Lokalid(lokalidOfKommuneMedGrunnkretsInDataSet), november28In2022)
+        val kommune = kommuneService.hentKommune(identifikatorKommuneLokalidMedDato)
+        assertThat(kommune).isNotNull
+        assertThat(kommuneService.hentKommune(Identifikator(Lokalid(lokalidOfKommuneMedGrunnkretsInDataSet)))).isNotNull
+
+        val grensekoblinger = kommuneService.hentGrensekoblingerForKommune(identifikatorKommuneLokalidMedDato)
+        assertThat(grensekoblinger).isNotEmpty
+
+        val features = grensekoblinger.map { it.grenseKoblingToFeature(november28In2022) }
+        assertThat(features).isNotEmpty
     }
 
     @Test

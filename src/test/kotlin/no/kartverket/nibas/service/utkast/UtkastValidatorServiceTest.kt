@@ -59,7 +59,7 @@ class UtkastValidatorServiceTest {
         every { grunnkretsServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns listOf(
             GrunnkretsBuilder()
                 .withGyldigFra(eksisterendeTingGyldigFra)
-                .buildUtenKommune()
+                .buildUtenKommuneOgGrenser()
         )
 
         every { stemmekretsServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns listOf(

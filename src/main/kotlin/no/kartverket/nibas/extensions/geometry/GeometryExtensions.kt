@@ -149,9 +149,6 @@ fun Flate.flateToFeature(version: Int): Feature {
 }
 
 /**
- * Default angitt kontekst er Grunnkrets.
- * Kontekstegenskapene retning, rekkefoelge, flateIndeks, hullIndeks gir nå kun mening for
- * Grunnkrets/Stemmekrets.
  * Metoden tar inn gyldighetsdato, defaulter til dagens dato. Dette for å kunne velge rett versjon av Grense-objektet dersom det finnes framtidige versjoner.
  */
 fun GrenseKobling.grenseKoblingToFeature(
