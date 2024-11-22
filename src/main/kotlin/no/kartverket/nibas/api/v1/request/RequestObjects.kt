@@ -75,7 +75,10 @@ data class GrunnkretsRequest(
 
     @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
     @NotNull
-    val version: Int
+    val version: Int,
+
+    @Schema(description = "informasjon om grunnkretsen")
+    val informasjon: String? = null
 )
 
 @Schema(description = "Representasjon av en stemmekrets")
@@ -104,7 +107,10 @@ data class StemmekretsRequest(
 
     @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
     @NotNull
-    val version: Int
+    val version: Int,
+
+    @Schema(description = "informasjon om stemmekretsen")
+    val informasjon: String? = null
 )
 
 @Schema(description = "Representasjon for opprettelse av utkast")

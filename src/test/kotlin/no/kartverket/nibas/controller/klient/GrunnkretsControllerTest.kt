@@ -9,6 +9,7 @@ import no.kartverket.nibas.api.v1.common.Kommunenummer
 import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.klient.response.GrunnkretsResponse
 import no.kartverket.nibas.builders.GrunnkretsBuilder
+import no.kartverket.nibas.builders.INFORMASJONTEKST
 import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.extensions.geometry.posisjonToFeature
@@ -92,7 +93,8 @@ internal class GrunnkretsControllerTest : NibasMvcTest() {
                 datafangstdato = oppdateringstidspunkt,
                 version = 1,
                 representasjonspunkt = grunnkrets2.posisjon.posisjonToFeature(1),
-                kommuneIdentifikator = ObjektIdentifikator(Lokalid(kommune.lokalid), kommune.gyldighet.gyldigFra)
+                kommuneIdentifikator = ObjektIdentifikator(Lokalid(kommune.lokalid), kommune.gyldighet.gyldigFra),
+                informasjon = INFORMASJONTEKST
             ),
             GrunnkretsResponse(
                 id = ObjektIdentifikator(lokalId, gyldighetsdato = jan1In2024),
@@ -107,7 +109,8 @@ internal class GrunnkretsControllerTest : NibasMvcTest() {
                 representasjonspunkt = grunnkrets2.posisjon.posisjonToFeature(1),
                 datafangstdato = oppdateringstidspunkt,
                 version = 1,
-                kommuneIdentifikator = ObjektIdentifikator(Lokalid(kommune.lokalid), kommune.gyldighet.gyldigFra)
+                kommuneIdentifikator = ObjektIdentifikator(Lokalid(kommune.lokalid), kommune.gyldighet.gyldigFra),
+                informasjon = INFORMASJONTEKST
             )
         )
 

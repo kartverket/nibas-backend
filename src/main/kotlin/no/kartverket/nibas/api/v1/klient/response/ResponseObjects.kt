@@ -131,7 +131,10 @@ data class GrunnkretsResponse(
     val representasjonspunkt: Feature,
 
     @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
-    val version: Int
+    val version: Int,
+
+    @Schema(description = "Informasjon om grunnkretsen")
+    val informasjon: String? = null,
 )
 
 @Schema(description = "Representasjon av en stemmekrets")
@@ -176,7 +179,10 @@ data class StemmekretsResponse(
     val representasjonspunkt: Feature,
 
     @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
-    val version: Int
+    val version: Int,
+
+    @Schema(description = "Informasjon om stemmekretsen")
+    val informasjon: String? = null,
 )
 
 @Schema(description = "Returtype for opprettelse av utkast")

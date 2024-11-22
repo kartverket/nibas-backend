@@ -304,6 +304,7 @@ fun Stemmekrets.applyChangesFromRequest(stemmekretsRequest: StemmekretsRequest):
         //Tellekrets kan nullstilles, mens navn, nummer og valgdistrikt må være gitt
         this.tellekretsnummer = stemmekretsRequest.tellekretsnummer
         this.tellekretsnavn = stemmekretsRequest.tellekretsnavn
+        stemmekretsRequest.informasjon?.let { this.setInfo(it) }
     }
 
 

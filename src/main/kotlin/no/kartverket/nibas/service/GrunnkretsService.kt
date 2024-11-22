@@ -311,6 +311,7 @@ private fun Grunnkrets.applyChangesFromRequest(request: GrunnkretsRequest): Grun
     return this.apply {
         grunnkretsnavn = request.navn
         grunnkretsnummer = request.nummer
+        request.informasjon?.let { this.setInfo(it) }
     }
 }
 
