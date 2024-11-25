@@ -1,5 +1,5 @@
 [versions]
-flywayVersion = "10.21.0"
+flywayVersion = "11.0.0"
 hibernateVersion = "6.6.2.Final"
 hypersistenceUtilsHibernate63Version = "3.9.0"
 jtsVersion = "1.20.0"
