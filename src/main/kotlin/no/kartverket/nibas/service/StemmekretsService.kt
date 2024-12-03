@@ -203,7 +203,6 @@ class StemmekretsService(
             throw createDuplikatStemmekretsnummerException(nyStemmekrets)
         } else {
             return stemmekretsRepository.save(nyStemmekrets)
-                .copyInformasjonselementerFromExistingStemmekrets(stemmekrets, delingsDato)
         }
     }
 
@@ -219,7 +218,6 @@ class StemmekretsService(
             msg = "Fant ikke kommune for stemmekrets med id ${stemmekrets.id} og gyldig fra $gyldigFra")
         kommune.addStemmekrets(nyStemmekrets)
         return nyStemmekrets
-            .copyInformasjonselementerFromExistingStemmekrets(stemmekrets, gyldigFra)
     }
 
     private fun kopierOgSaveStemmekrets(stemmekrets: Stemmekrets, gyldigFra: LocalDate, endringstype: Endringstype): Stemmekrets {
@@ -240,7 +238,6 @@ class StemmekretsService(
 
     fun createNyVersjonAvStemmekretsIAnnenKommune(stemmekrets: Stemmekrets, kommune: Kommune, gyldigFra: LocalDate, endringstype: Endringstype): Stemmekrets {
         val nyStemmekrets = kopierOgSaveStemmekrets(stemmekrets, gyldigFra, endringstype)
-            .copyInformasjonselementerFromExistingStemmekrets(stemmekrets)
             .copyGrenserFromExistingStemmekrets(stemmekrets)
 
         kommune.addStemmekrets(nyStemmekrets)

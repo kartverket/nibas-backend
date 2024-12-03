@@ -43,8 +43,9 @@ class Stemmekrets(
     @Column(name = "valgdistriktsnummer")
     var valgdistriktsnummer: String? = null
 
-    @OneToMany(mappedBy = "stemmekretsFk", cascade = [CascadeType.ALL])
-    var informasjonselementer: MutableSet<StemmekretsInformasjon> = mutableSetOf()
+    // Nytt felt informasjon
+    @Column(name = "informasjon")
+    var informasjon: String? = null
 
     @OneToMany(mappedBy = "stemmekrets", cascade = [CascadeType.ALL])
     var grenser: MutableSet<StemmekretsGrenseKobling> = Collections.synchronizedSet(mutableSetOf())
@@ -89,9 +90,10 @@ class Stemmekrets(
         }
     }
 
-    override fun getInfo(): String? = doGetInfoFromSingletonCollection(informasjonselementer)
+    override fun getInfo(): String? = informasjon
+
     override fun setInfo(updatedInfo: String?) {
-        doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { StemmekretsInformasjon(this) }
+        informasjon = updatedInfo
     }
 
     override fun addGrensekobling(grense: Grense) {
@@ -143,15 +145,8 @@ class Stemmekrets(
             foerstedigitaliseringsdato = gammelStemmekrets.foerstedigitaliseringsdato
             posisjon = gammelStemmekrets.posisjon
             opphav = gammelStemmekrets.opphav
+            informasjon = gammelStemmekrets.informasjon
         }
-
-    fun copyInformasjonselementerFromExistingStemmekrets(gammelStemmekrets: Stemmekrets, gyldigFra: LocalDate = LocalDate.now()): Stemmekrets {
-        informasjonselementer = gammelStemmekrets.informasjonselementer.map { stemmekretsInformasjon ->
-            StemmekretsInformasjon(stemmekrets = this).also { it.informasjon = stemmekretsInformasjon.informasjon }
-        }.toMutableSet()
-
-        return this
-    }
 
     fun copyGrenserFromExistingStemmekrets(gammelStemmekrets: Stemmekrets, gyldigFra: LocalDate = LocalDate.now()): Stemmekrets {
         gammelStemmekrets.getGrensekoblinger(gyldigFra).forEach { gammelGrenseKobling ->
@@ -196,21 +191,6 @@ class StemmekretsGrenseKobling(
     override fun getLokalIdForKrets(): String {
         return stemmekrets.lokalid
     }
-}
-
-@Table(name = "stemmekrets_informasjon")
-@Entity
-class StemmekretsInformasjon(stemmekrets: Stemmekrets) : Info {
-    @Id
-    @Column(name = "objid", nullable = false, updatable = false)
-    override val id: String = UUID.randomUUID().toString()
-
-    @ManyToOne
-    @JoinColumn(name = "stemmekrets_fk")
-    var stemmekretsFk: Stemmekrets? = stemmekrets
-
-    @Column(name = "informasjon")
-    override var informasjon: String? = null
 }
 
 data class StemmekretsGrenseId(val stemmekrets: String = "", val grense: String = "") : Serializable
