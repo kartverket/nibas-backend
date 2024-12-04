@@ -38,6 +38,9 @@ class Grunnkrets(
     @Column(name = "grunnkretsnavn")
     var grunnkretsnavn: String? = null
 
+    @Column(name = "informasjon")
+    var informasjon: String? = null
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "delomraadeinndeling_fk")
     var delomraadeinndelingFk: Delomraade? = null
@@ -52,15 +55,12 @@ class Grunnkrets(
     var utledetFra: Grunnkrets? = null
 
     @OneToMany(mappedBy = "grunnkrets", cascade = [CascadeType.ALL])
-    var informasjonselementer: MutableSet<GrunnkretsInformasjon> = mutableSetOf()
-
-    @OneToMany(mappedBy = "grunnkrets", cascade = [CascadeType.ALL])
     var grenser: MutableSet<GrunnkretsGrenseKobling> = Collections.synchronizedSet(mutableSetOf())
 
-    override fun getInfo(): String? = doGetInfoFromSingletonCollection(informasjonselementer)
+    override fun getInfo(): String? = informasjon
 
     override fun setInfo(updatedInfo: String?) {
-        doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { GrunnkretsInformasjon(this) }
+        informasjon = updatedInfo
     }
 
     /**
@@ -134,24 +134,11 @@ class Grunnkrets(
         }
     }
 
-    fun addInformasjonselementerFrom(informasjonselementer: Set<GrunnkretsInformasjon>) {
-        informasjonselementer.forEach { grunnkretsInformasjon ->
-            setInfo(grunnkretsInformasjon.informasjon)
-        }
-    }
-
     fun copyGrenserFromExistingGrunnkrets(gammelGrunnkrets: Grunnkrets, gyldigFra: LocalDate = LocalDate.now()): Grunnkrets {
         gammelGrunnkrets.getGrensekoblinger(gyldigFra).forEach { gammelGrenseKobling ->
             addGrensekobling(grense = gammelGrenseKobling.grense)
         }
         return this
-    }
-
-    fun copyInformasjonselementerFromExistingGrunnkrets(gammelGrunnkrets: Grunnkrets, gyldigFra: LocalDate = LocalDate.now()): Grunnkrets {
-        return this.apply {
-            // For eksisterende Grunnkrets sine informasjonselementer (1 i tallet)
-            addInformasjonselementerFrom(gammelGrunnkrets.informasjonselementer)
-        }
     }
 
     fun applyMappingFromExistingGrunnkrets(gammelGrunnkrets: Grunnkrets): Grunnkrets {
@@ -164,6 +151,7 @@ class Grunnkrets(
             posisjon = gammelGrunnkrets.posisjon
             omraade = gammelGrunnkrets.omraade
             utledetFra = gammelGrunnkrets.utledetFra
+            informasjon = gammelGrunnkrets.informasjon
         }
     }
 
@@ -178,21 +166,6 @@ class Grunnkrets(
             Grensetype.Riksgrense
         )
     }
-}
-
-@Table(name = "grunnkrets_informasjon")
-@Entity
-class GrunnkretsInformasjon(grunnkrets: Grunnkrets) : Info {
-    @Id
-    @Column(name = "objid", nullable = false, updatable = false)
-    override val id: String = UUID.randomUUID().toString()
-
-    @ManyToOne
-    @JoinColumn(name = "grunnkrets_fk")
-    var grunnkrets: Grunnkrets? = grunnkrets
-
-    @Column(name = "informasjon")
-    override var informasjon: String? = null
 }
 
 /**

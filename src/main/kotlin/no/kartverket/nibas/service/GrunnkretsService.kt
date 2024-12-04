@@ -135,7 +135,6 @@ class GrunnkretsService(
             msg = "Fant ikke kommune for grunnkrets med id ${grunnkrets.id}, grunnkretsnummer ${grunnkrets.grunnkretsnummer} og gyldig fra $gyldigFra")
         kommune.addGrunnkrets(nyGrunnkrets)
         return nyGrunnkrets
-            .copyInformasjonselementerFromExistingGrunnkrets(grunnkrets, gyldigFra)
     }
 
     @Transactional(readOnly = false)
@@ -248,6 +247,7 @@ class GrunnkretsService(
             omraade = MultiPolygon(arrayOfNulls(0), geometryFactory)
             posisjon = geometryFactory.createPoint()
             setGyldigFra(delingsDato)
+            informasjon = grunnkrets.informasjon
         }
 
         if (finnesAnnenGrunnkretsMedSammeGrunnkretsnummer(nyGrunnkrets)) {
@@ -261,7 +261,6 @@ class GrunnkretsService(
                                                  gyldigFra: LocalDate, endringstype: Endringstype): Grunnkrets {
         //Antar at kommune sitt kommunenummer stemmer med angitt nytt grunnkretsnummer, for å slippe å søke opp kommunen for hver grunnkrets som skal flyttes
         val nyGrunnkrets = kopierOgSaveGrunnkrets(grunnkrets, gyldigFra, endringstype)
-            .copyInformasjonselementerFromExistingGrunnkrets(grunnkrets, gyldigFra)
             .copyGrenserFromExistingGrunnkrets(grunnkrets, gyldigFra)
         nyGrunnkrets.grunnkretsnummer = nyttGrunnkretsNummer
         kommune.addGrunnkrets(nyGrunnkrets)
