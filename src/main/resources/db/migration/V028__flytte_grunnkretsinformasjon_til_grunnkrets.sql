@@ -7,12 +7,7 @@ SET informasjon = (
     SELECT si.informasjon 
     FROM grunnkrets_informasjon si 
     WHERE si.grunnkrets_fk = s.objid 
-    LIMIT 1
-)
-WHERE EXISTS (
-    SELECT 1 
-    FROM grunnkrets_informasjon si 
-    WHERE si.grunnkrets_fk = s.objid
+    AND si.informasjon IS NOT NULL 
 );
 
 DROP TABLE IF EXISTS grunnkrets_informasjon;
