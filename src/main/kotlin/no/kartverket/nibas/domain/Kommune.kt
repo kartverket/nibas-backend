@@ -37,6 +37,9 @@ class Kommune(
     @Column(name = "samiskforvaltningsomraade", nullable = false)
     var samiskforvaltningsomraade: Boolean? = false
 
+    @Column(name = "informasjon")
+    var informasjon: String? = null
+
     @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     @JoinColumn(name = "lokalid", referencedColumnName = "lokalid", insertable = false, updatable = false)
     @SQLRestriction("flatetype='KOMMUNE'")
@@ -47,17 +50,14 @@ class Kommune(
     @SQLRestriction("flatetype='FYLKE'")
     lateinit var fylkeLokalid : UnikLokalid
 
-    @OneToMany(mappedBy = "kommuneFk", cascade = [CascadeType.ALL])
-    var informasjonselementer: MutableSet<KommuneInformasjon> = mutableSetOf()
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "utledetfra")
     var utledetFra: Kommune? = null
 
-    override fun getInfo(): String? = doGetInfoFromSingletonCollection(informasjonselementer)
+    override fun getInfo(): String? = informasjon
 
     override fun setInfo(updatedInfo: String?) {
-        doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { KommuneInformasjon(this) }
+        informasjon = updatedInfo
     }
 
     override fun getGrensekoblinger(gyldighetsdato: LocalDate): Set<GrunnkretsGrenseKobling> {
@@ -132,6 +132,7 @@ class Kommune(
             posisjon = gammelKommune.posisjon
             omraade = gammelKommune.omraade
             utledetFra = gammelKommune.utledetFra
+            informasjon = gammelKommune.informasjon
         }
     }
 
@@ -141,18 +142,9 @@ class Kommune(
 
             // Må legge til denne Kommunen på eksisterende kommune sitt fylke
             gammelKommune.getFylke(gyldighetsdato = gyldigFra)!!.addKommune(this)
-            // For eksisterende Kommune sine informasjonselementer (1 i tallet), lag nye koblinger med denne Kommunen
-            addInformasjonselementerFrom(gammelKommune.informasjonselementer)
-
-            //Trenger ikke å knytte stemmekretser, grunnkretser og navn til den nye kommuneversjonen, siden de er knyttet vha lokalid
         }
     }
 
-    fun addInformasjonselementerFrom(informasjonselementer: Set<KommuneInformasjon>) {
-        informasjonselementer.forEach { kommuneInformasjon ->
-            setInfo(kommuneInformasjon.informasjon)
-        }
-    }
     companion object {
         fun tillatteGrensetyper(): Set<Grensetype> = setOf(
             Grensetype.Kommunegrense,
@@ -162,19 +154,4 @@ class Kommune(
             Grensetype.Riksgrense
         )
     }
-}
-
-@Table(name = "kommune_informasjon")
-@Entity
-class KommuneInformasjon(kommune: Kommune) : Info {
-    @Id
-    @Column(name = "objid", nullable = false, updatable = false)
-    override val id: String = UUID.randomUUID().toString()
-
-    @ManyToOne
-    @JoinColumn(name = "kommune_fk")
-    var kommuneFk: Kommune? = kommune
-
-    @Column(name = "informasjon")
-    override var informasjon: String? = null
 }

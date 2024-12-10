@@ -1,5 +1,5 @@
 INSERT INTO nibas.grense (objid, lokalid, gyldigfra, gyldigtil, datafangstdato, foerstedigitaliseringsdato, maalemetode, noeyaktighet, opphav, endretdato,
-                          endretav, typeendring, grense, avgrensningstype, version, info, slettet)
+                          endretav, typeendring, grense, avgrensningstype, version, informasjon, slettet)
 VALUES ('030b9c79-4428-4e7d-81d9-83f6db647af5', 'f21b9ce1-dfe0-355a-9815-263384e5e879', '2022-11-24 23:00:00.000000 +00:00', null,
         '2005-03-18 00:00:00.000 +0100', '2023-11-07 21:36:02.432 +0100', 'bc54000f-a3b4-4ba1-80fc-70be6640996c',
         200, null, '2022-11-24 23:00:00.000000 +00:00',

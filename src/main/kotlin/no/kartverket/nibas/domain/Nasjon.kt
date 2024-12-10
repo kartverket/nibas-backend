@@ -28,18 +28,18 @@ class Nasjon(
     override val lokalid: String = UUID.randomUUID().toString()
 ) : AdministrativEnhet(Flatetype.NASJON) {
 
-    @OneToMany(mappedBy = "nasjon", cascade = [CascadeType.ALL])
-    var informasjonselementer: MutableSet<NasjonInformasjon> = mutableSetOf()
+    @Column(name = "informasjon")
+    var informasjon: String? = null
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     @JoinColumn(name = "lokalid", referencedColumnName = "lokalid", insertable = false, updatable = false)
     @SQLRestriction("flatetype='NASJON'")
     lateinit var nasjonLokalid : UnikLokalid
 
-    override fun getInfo(): String? = doGetInfoFromSingletonCollection(informasjonselementer)
+    override fun getInfo(): String? = informasjon
 
     override fun setInfo(updatedInfo: String?) {
-        doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { NasjonInformasjon(this) }
+        informasjon = updatedInfo
     }
 
     override fun getGrensekoblinger(gyldighetsdato: LocalDate): Set<GrunnkretsGrenseKobling> {
@@ -97,23 +97,13 @@ class Nasjon(
             opphav = gammelNasjon.opphav
             posisjon = gammelNasjon.posisjon
             omraade = gammelNasjon.omraade
+            informasjon = gammelNasjon.informasjon
         }
     }
 
-    fun applyCascadingOperationsBasedOnExistingNasjon(gammelNasjon: Nasjon, gyldigFra: LocalDate = LocalDate.now()): Nasjon {
+    fun applyCascadingOperationsBasedOnExistingNasjon(gammelNasjon: Nasjon): Nasjon {
         return this.apply {
             addNasjonTilUnikLokalid(gammelNasjon.nasjonLokalid)
-
-            // For eksisterende nasjon sine informasjonselementer (1 i tallet), lag nye koblinger med denne nasjonen
-            addInformasjonselementerFrom(gammelNasjon.informasjonselementer)
-
-            //Trenger ikke å knytte fylker og navn til den nye nasjonversjonen, siden de er knyttet vha lokalid
-        }
-    }
-
-    fun addInformasjonselementerFrom(informasjonselementer: Set<NasjonInformasjon>) {
-        informasjonselementer.forEach { fylkenasjonInformasjonnformasjon ->
-            setInfo(fylkenasjonInformasjonnformasjon.informasjon)
         }
     }
 
@@ -124,19 +114,4 @@ class Nasjon(
             Grensetype.Riksgrense
         )
     }
-}
-
-@Table(name = "nasjon_informasjon")
-@Entity
-class NasjonInformasjon(nasjon: Nasjon) : Info {
-    @Id
-    @Column(name = "objid", nullable = false, updatable = false)
-    override val id: String = UUID.randomUUID().toString()
-
-    @ManyToOne
-    @JoinColumn(name = "nasjon_fk")
-    var nasjon: Nasjon? = nasjon
-
-    @Column(name = "informasjon")
-    override var informasjon: String? = null
 }

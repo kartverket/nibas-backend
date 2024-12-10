@@ -61,8 +61,8 @@ class Grense(
     @Column(name = "grense", nullable = false)
     lateinit var grense: LineString
 
-    @Column(name = "info")
-    var informasjonstekst: String? = null
+    @Column(name = "informasjon")
+    var informasjon: String? = null
 
     // Relasjon oppover i treet til Grunnkrets
     @OneToMany(mappedBy = "grense")
@@ -109,11 +109,11 @@ class Grense(
     }
 
     override fun getInfo(): String? {
-        return informasjonstekst
+        return informasjon
     }
 
     override fun setInfo(updatedInfo: String?) {
-        this.informasjonstekst = updatedInfo
+        this.informasjon = updatedInfo
     }
 
     fun harGrenseTypeContainedInSet(grensetyper: Set<Grensetype>): Boolean = grensetyper.contains(this.grensetype)
@@ -125,7 +125,7 @@ class Grense(
             opphav = gammelGrense.opphav
             grensetype = gammelGrense.grensetype
             kvalitet = gammelGrense.kvalitet
-            setInfo(gammelGrense.informasjonstekst)
+            informasjon = gammelGrense.informasjon
             grense = gammelGrense.grense
         }
     }

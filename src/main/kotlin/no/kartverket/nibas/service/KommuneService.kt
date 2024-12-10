@@ -164,7 +164,6 @@ class KommuneService(
             admEnhet = nyKommune
         )
 
-        nyKommune.addInformasjonselementerFrom(kopierFraKommune.informasjonselementer)
         return nyKommune
     }
 

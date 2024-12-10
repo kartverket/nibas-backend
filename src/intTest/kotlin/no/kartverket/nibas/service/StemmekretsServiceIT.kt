@@ -673,7 +673,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         val nyGrense = grenseService.hentGrense(Identifikator(Lokalid("grenseDeltLokalid"), endringsdato))!!
         assertThat(nyGrense.kvalitet!!.noeyaktighet).isEqualTo(100)
         assertThat(nyGrense.kvalitet!!.maalemetode).isEqualTo(MaalemetodeKodeEnum.TERRENGMAALT.uuid)
-        assertThat(nyGrense.informasjonstekst).isEqualTo("En eller annen informasjon")
+        assertThat(nyGrense.informasjon).isEqualTo("En eller annen informasjon")
         assertThat(nyGrense.auditInfo.typeEndring).isEqualTo(Endringstype.FASTSETTING)
     }
 

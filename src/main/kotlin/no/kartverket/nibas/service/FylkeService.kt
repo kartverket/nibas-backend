@@ -125,7 +125,6 @@ class FylkeService(
             admEnhet = nyttFylke
         )
 
-        nyttFylke.addInformasjonselementerFrom(kopierFraFylke.informasjonselementer)
         return nyttFylke
     }
 

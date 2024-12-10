@@ -37,6 +37,9 @@ class Fylke(
     @Column(name = "samiskforvaltningsomraade")
     var samiskforvaltningsomraade: Boolean? = null
 
+    @Column(name = "informasjon")
+    var informasjon: String? = null
+
     @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     @JoinColumn(name = "nasjonlokalid", referencedColumnName = "lokalid")
     @SQLRestriction("flatetype='NASJON'")
@@ -51,13 +54,10 @@ class Fylke(
     @SQLRestriction("flatetype='FYLKE'")
     lateinit var fylkeLokalid : UnikLokalid
 
-    @OneToMany(mappedBy = "fylkeFk", cascade = [CascadeType.ALL])
-    var informasjonselementer: MutableSet<FylkeInformasjon> = mutableSetOf()
-
-    override fun getInfo(): String? = doGetInfoFromSingletonCollection(informasjonselementer)
+    override fun getInfo(): String? = informasjon
 
     override fun setInfo(updatedInfo: String?) {
-        doSetInfoInSingletonCollection(updatedInfo, informasjonselementer) { FylkeInformasjon(this) }
+        informasjon = updatedInfo
     }
 
     override fun getGrensekoblinger(gyldighetsdato: LocalDate): Set<GrunnkretsGrenseKobling> {
@@ -116,6 +116,7 @@ class Fylke(
             posisjon = gammeltFylke.posisjon
             omraade = gammeltFylke.omraade
             utledetFra = gammeltFylke.utledetFra
+            informasjon = gammeltFylke.informasjon
         }
     }
 
@@ -125,16 +126,6 @@ class Fylke(
 
             // Må legge til dette fylket på eksisterende fylke sin nasjon
             gammeltFylke.getNasjon(gyldighetsdato = gyldigFra)!!.addFylke(this)
-            // For eksisterende fylke sine informasjonselementer (1 i tallet), lag nye koblinger med denntte fylket
-            addInformasjonselementerFrom(gammeltFylke.informasjonselementer)
-
-            //Trenger ikke å knytte kommuner og navn til den nye fylkeversjonen, siden de er knyttet vha lokalid
-        }
-    }
-
-    fun addInformasjonselementerFrom(informasjonselementer: Set<FylkeInformasjon>) {
-        informasjonselementer.forEach { fylkeInformasjon ->
-            setInfo(fylkeInformasjon.informasjon)
         }
     }
 
@@ -154,19 +145,4 @@ class Fylke(
             Grensetype.Riksgrense
         )
     }
-}
-
-@Table(name = "fylke_informasjon")
-@Entity
-class FylkeInformasjon(fylke: Fylke) : Info {
-    @Id
-    @Column(name = "objid", nullable = false, updatable = false)
-    override val id: String = UUID.randomUUID().toString()
-
-    @ManyToOne
-    @JoinColumn(name = "fylke_fk")
-    var fylkeFk: Fylke? = fylke
-
-    @Column(name = "informasjon")
-    override var informasjon: String? = null
 }
