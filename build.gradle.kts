@@ -148,6 +148,7 @@ tasks.check { dependsOn(integrationTest) }
 tasks.withType<Test> {
     useJUnitPlatform()
     exclude("**/**IntegrationTest.class")
+    jvmArgs = listOf("--add-opens=java.base/java.time=ALL-UNNAMED")
 }
 
 flyway {

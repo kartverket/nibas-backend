@@ -2,6 +2,7 @@ package no.kartverket.nibas.domain.utkast
 
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import no.kartverket.nibas.api.v1.common.Flatetype
+import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.request.FylkeRequest
@@ -137,9 +138,11 @@ class UtkastBuilder private constructor(val navn: String, private val endringsty
     }
 }
 
-data class EndredeInndelinger (
+data class EndredeInndelinger(
     val endredeStemmekretser: MutableSet<String> = mutableSetOf(),
-    val endredeGrunnkretser: MutableSet<String> = mutableSetOf()
+    val endredeGrunnkretser: MutableSet<String> = mutableSetOf(),
+    val endredeKommuner: MutableSet<String> = mutableSetOf(),
+    val endredeFylker: MutableSet<String> = mutableSetOf()
 )
 
 fun Operasjoner.toEndredeInndelinger(): EndredeInndelinger {
@@ -152,10 +155,26 @@ fun Operasjoner.toEndredeInndelinger(): EndredeInndelinger {
         endredeInndelinger.endredeStemmekretser.add(it.identifikasjon.lokalid)
     }
 
-    for (feature in grenseendringer.endredeFeatures){
+    metadataendringer.kommuneendringer.values.map {
+        endredeInndelinger.endredeKommuner.add(it.lokalid)
+    }
+
+    metadataendringer.fylkesendringer.values.map {
+        endredeInndelinger.endredeFylker.add(it.lokalid)
+    }
+
+    for (feature in grenseendringer.endredeFeatures) {
+        if (feature.properties.type == Grensetype.Kommunegrense.dbKey) {
+            feature.properties.kontekstEgenskaper.forEach {
+                it.kommuneId?.lokalid?.value?.let { kommuneId ->
+                    endredeInndelinger.endredeKommuner.add(kommuneId)
+                }
+            }
+        }
+
         feature.properties.kontekstEgenskaper.forEach {
             it.id?.lokalid?.value?.let { id ->
-                when(it.type){
+                when (it.type) {
                     KontekstEnhetType.GRUNNKRETS -> endredeInndelinger.endredeGrunnkretser.add(id)
                     KontekstEnhetType.STEMMEKRETS -> endredeInndelinger.endredeStemmekretser.add(id)
                 }
@@ -170,11 +189,10 @@ fun Operasjoner.toEndredeInndelinger(): EndredeInndelinger {
     grunnkretsSammenslaaingsendring?.grunnkretserTilSammenslaaing?.map { it.lokalId }?.let { endredeInndelinger.endredeGrunnkretser.addAll(it) }
 
     kretsDelingEndringer.forEach {
-        if(it.flatetype === Flatetype.GRUNNKRETS){
-            endredeInndelinger.endredeGrunnkretser.add(it.opprinneligKrets.lokalId)
-        }
-        else if ( it.flatetype === Flatetype.STEMMEKRETS){
-            endredeInndelinger.endredeStemmekretser.add(it.opprinneligKrets.lokalId)
+        when (it.flatetype) {
+            Flatetype.GRUNNKRETS -> endredeInndelinger.endredeGrunnkretser.add(it.opprinneligKrets.lokalId)
+            Flatetype.STEMMEKRETS -> endredeInndelinger.endredeStemmekretser.add(it.opprinneligKrets.lokalId)
+            else -> throw IllegalArgumentException("Ukjent flatetype: ${it.flatetype}")
         }
     }
 

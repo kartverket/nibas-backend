@@ -57,6 +57,8 @@ jobs:
 
       - name: Build with Gradle
         run: ./gradlew build --info
+        env:
+          JAVA_TOOL_OPTIONS: "-Duser.timezone=Europe/Oslo"
 
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2
