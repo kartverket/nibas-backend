@@ -58,9 +58,7 @@ abstract class AdministrativEnhet(
 
     fun oppdaterOmraadeOgPosisjon(grenserForFlate: List<Grense>) {
         omraade = getGrenserIRiktigRekkefoelge(grenserForFlate.map { it.grense }).toMultiPolygon()
-        if (omraade != null && (posisjon == null || !omraade!!.contains(posisjon))) {
-            posisjon = omraade?.interiorPoint
-        }
+        posisjon = omraade?.interiorPoint
     }
 
     abstract fun addAdministrativenhetNavn(navn: Administrativenhetnavn)

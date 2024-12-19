@@ -48,7 +48,7 @@ class Grunnkrets(
     @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     @JoinColumn(name = "kommunelokalid", referencedColumnName = "lokalid")
     @SQLRestriction("flatetype='KOMMUNE'")
-    lateinit var kommuneLokalid : UnikLokalid
+    lateinit var kommuneLokalid: UnikLokalid
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "utledetfra")
@@ -73,9 +73,7 @@ class Grunnkrets(
     override fun oppdaterOmraadeOgPosisjon() {
         val grenserForFlate = getGrensekoblinger(gyldighetsdato = gyldighet.gyldigFra)
         omraade = getGrenserIRiktigRekkefoelge(grenserForFlate.map { it.grense.grense }).toMultiPolygon()
-        if (omraade != null && (posisjon == null || !omraade!!.contains(posisjon))) {
-            posisjon = omraade?.interiorPoint
-        }
+        posisjon = omraade?.interiorPoint
     }
 
     fun getGrensekoblingerAvTyper(grensetyper: Set<Grensetype>, gyldighetsdato: LocalDate = LocalDate.now()): List<GrunnkretsGrenseKobling> {
@@ -121,7 +119,7 @@ class Grunnkrets(
         if (grenser.removeIf { it.grense.id == gammelGrense.id }) {
             //Grensa ble tatt vekk fra grunnkretsen. Fjerner grunnkretsen også fra grensa (koblingen fra den andre veien), ellers feiler tester
             gammelGrense.grunnkretser.removeIf { it.grunnkrets.id == this.id }
-            if(grense != null) {
+            if (grense != null) {
                 addGrensekobling(grense)
             }
         }

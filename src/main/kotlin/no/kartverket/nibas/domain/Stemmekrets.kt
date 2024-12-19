@@ -53,7 +53,7 @@ class Stemmekrets(
     @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     @JoinColumn(name = "kommunelokalid", referencedColumnName = "lokalid")
     @SQLRestriction("flatetype='KOMMUNE'")
-    lateinit var kommuneLokalid : UnikLokalid
+    lateinit var kommuneLokalid: UnikLokalid
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "utledetfra")
@@ -85,9 +85,7 @@ class Stemmekrets(
     override fun oppdaterOmraadeOgPosisjon() {
         val grenserForFlate = getGrensekoblinger(gyldighetsdato = gyldighet.gyldigFra)
         omraade = getGrenserIRiktigRekkefoelge(grenserForFlate.map { it.grense.grense }).toMultiPolygon()
-        if (omraade != null && (posisjon == null || !omraade!!.contains(posisjon))) {
-            posisjon = omraade?.interiorPoint
-        }
+        posisjon = omraade?.interiorPoint
     }
 
     override fun getInfo(): String? = informasjon
@@ -114,7 +112,7 @@ class Stemmekrets(
             //Grensa ble tatt vekk fra stemmekretsen. Fjerner stemmekretsen også fra grensa (koblingen fra den andre veien), ellers feiler tester
             gammelGrense.stemmekretser.removeIf { it.stemmekrets.id == this.id }
             //skal bare adde om det grense != null
-            if(grense != null) {
+            if (grense != null) {
                 addGrensekobling(grense)
             }
         }
@@ -156,7 +154,7 @@ class Stemmekrets(
     }
 
     companion object {
-         fun tillatteGrensetyper(): Set<Grensetype> = setOf(
+        fun tillatteGrensetyper(): Set<Grensetype> = setOf(
             Grensetype.Stemmekretsgrense,
             Grensetype.Kommunegrense,
             Grensetype.Fylkesgrense,

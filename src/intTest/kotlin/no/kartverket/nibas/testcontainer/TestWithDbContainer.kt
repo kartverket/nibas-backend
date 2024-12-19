@@ -529,6 +529,7 @@ class TestWithDbContainer {
         assertThat(nyFlate.id).isNotEqualTo(gammelFlate.id)
         assertThat(nyFlate.omraade).isNotEqualTo(gammelFlate.omraade)
         assertThat(endringstype).isEqualTo(nyFlate.auditInfo.typeEndring)
+        assertThat(nyFlate.posisjon).isNotEqualTo(gammelFlate.posisjon)
 
         assertThat((nyFlate as Laasbar).version).isGreaterThan((gammelFlate as Laasbar).version)
     }
