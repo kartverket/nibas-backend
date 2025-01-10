@@ -31,11 +31,11 @@ fun TopologyValidationError.toCustomText(): String =
 
 fun topologyValidationErrorToCustomText(errorCode: Int): String  {
     return when(errorCode) {
-        TopologyValidationError.SELF_INTERSECTION -> "En grense kan ikke krysse en annen grense."
-        TopologyValidationError.RING_SELF_INTERSECTION -> "En grense kan ikke krysse en annen grense."
-        TopologyValidationError.INVALID_COORDINATE -> "Grensen inneholder ett eller flere punkter med ugyldig koordinat."
-        TopologyValidationError.TOO_FEW_POINTS -> "For få grensepunkter i flaten."
-        TopologyValidationError.RING_NOT_CLOSED -> "Flaten er ikke lukket."
+        TopologyValidationError.SELF_INTERSECTION -> "En grense kan ikke krysse en annen grense"
+        TopologyValidationError.RING_SELF_INTERSECTION -> "En grense kan ikke krysse en annen grense"
+        TopologyValidationError.INVALID_COORDINATE -> "Grensen inneholder ett eller flere punkter med ugyldig koordinat"
+        TopologyValidationError.TOO_FEW_POINTS -> "For få grensepunkter i flaten"
+        TopologyValidationError.RING_NOT_CLOSED -> "Flaten er ikke lukket"
         else -> "Ukjent feil med feilkode [$errorCode: ${TopologyValidationError(errorCode).message}]"
     }
 }

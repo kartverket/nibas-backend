@@ -131,24 +131,28 @@ class CustomRestExceptionHandler {
         val antallGrupper = gruppertPaaKoordinat.size
 
         val stringBuilder = StringBuilder()
-        stringBuilder.appendLine("Geometrien er ugyldig. Dette kan bety at alle grensene ikke er lukket eller at tilhørighet er satt feil. Sjekk over endringene du har gjort, og prøv å publiser utkastet på nytt.")
-        stringBuilder.appendLine()
-        stringBuilder.appendLine("$antallGrupper feil ble oppdaget på følgende koordinater og inndelinger:")
 
         gruppertPaaKoordinat.entries.forEachIndexed { index, entry ->
-            stringBuilder.appendLine("${index + 1}. koordinat: [${entry.key.y.round(2)}]N [${entry.key.x.round(2)}]Ø")
             entry.value.forEach{
-                stringBuilder.appendLine("- ${it.flateInformasjon.flatetype} ${it.flateInformasjon.lesbartNavn}")
+                stringBuilder.appendLine("${index + 1}. ${it.flateInformasjon.flatetype} ${it.flateInformasjon.lesbartNavn}: ")
             }
-            stringBuilder.appendLine("- Feilen som ble oppdaget er: ${entry.value[0].topologifeil}")
+            stringBuilder.append("${entry.value[0].topologifeil}")
+            stringBuilder.appendLine()
+
+            stringBuilder.appendLine("Feilen ble først oppdaget på ${entry.key.y.round(2)}N ${entry.key.x.round(2)}Ø")
 
             if (index + 1 < antallGrupper) {
                 stringBuilder.appendLine()
             }
         }
+        stringBuilder.appendLine()
+        stringBuilder.appendLine("Dobbeltsjekk endringene dine:")
+        stringBuilder.appendLine("- Er tilhørigheten satt riktig?")
+        stringBuilder.appendLine("- Har du glemt å arkivere en utgående grense?")
+        stringBuilder.appendLine("- Gå inn og ut av utkastet før du prøver å publisere. Det kan ha skjedd en oppdateringsfeil.")
 
         val errorDescription = ErrorDescription(
-            title = "Flatedanning feilet",
+            title = "Det ble funnet $antallGrupper feil på utkastet",
             description = stringBuilder.toString()
         )
         return handleException(ex, errorDescription, HttpHeaders(), HttpStatus.BAD_REQUEST)
