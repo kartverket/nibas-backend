@@ -1,7 +1,7 @@
 version: "3.9"
 services:
   database:
-    image: postgis/postgis
+    image: postgis/postgis:16-3.5
     ports:
       - "5432:5432"
     environment:

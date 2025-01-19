@@ -14,7 +14,7 @@ Spring Boot applikasjon som serverer informasjon om, og tilbyr forvaltning av, N
 For å sette opp applikasjonen trenger du følgende:
 
 - Java, versjon 17 skal fungere, men nyere versjoner kan få byggefeil
-- PostgreSQL, versjon 16 er den nyligste versjonen vi har testet
+- PostgreSQL, versjon 16 er det som brukes on-prem, og det anbefales å bruke det samme lokalt.
 - Docker, versjon 24 er den nyligste versjonen vi har testet
 
 
