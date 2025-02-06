@@ -54,7 +54,7 @@ class InndelingerServiceIT: TestWithDbContainer() {
         val searchString = "os"
         val limit = 15
 
-        val inndelinger = inndelingerService.finnInndelinger(searchString, gyldighetsdato, limit)
+        val inndelinger = inndelingerService.finnInndelinger(searchString, gyldighetsdato, limit, listOf(Flatetype.GRUNNKRETS, Flatetype.KOMMUNE, Flatetype.STEMMEKRETS, Flatetype.FYLKE))
 
         assertThat(inndelinger.size).isEqualTo(5)
         inndelinger.forEach { inndelingResponse ->
@@ -66,5 +66,13 @@ class InndelingerServiceIT: TestWithDbContainer() {
         assertThat(inndelinger.filter { it.type === Flatetype.STEMMEKRETS }.size).isEqualTo(1)
         assertThat(inndelinger.filter { it.type === Flatetype.KOMMUNE }.size).isEqualTo(1)
         assertThat(inndelinger.filter { it.type === Flatetype.FYLKE }.size).isEqualTo(2)
+
+        val inndelingerFiltrert = inndelingerService.finnInndelinger(searchString, gyldighetsdato, limit, listOf(Flatetype.STEMMEKRETS, Flatetype.FYLKE))
+
+        // Hvis dette feiler har det blitt lagt til noen nye kretser i testdatabasen i ettertid som matcher i søket
+        assertThat(inndelingerFiltrert.filter { it.type === Flatetype.GRUNNKRETS }.size).isEqualTo(0)
+        assertThat(inndelingerFiltrert.filter { it.type === Flatetype.STEMMEKRETS }.size).isEqualTo(1)
+        assertThat(inndelingerFiltrert.filter { it.type === Flatetype.KOMMUNE }.size).isEqualTo(0)
+        assertThat(inndelingerFiltrert.filter { it.type === Flatetype.FYLKE }.size).isEqualTo(2)
     }
 }

@@ -1,5 +1,6 @@
 package no.kartverket.nibas.controller.klient
 
+import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.klient.InndelingerApi
 import no.kartverket.nibas.api.v1.klient.response.InndelingSearchResponse
 import no.kartverket.nibas.service.InndelingerService
@@ -10,8 +11,8 @@ import java.time.LocalDate
 class InndelingerController(
     val inndelingerService: InndelingerService
 ): InndelingerApi {
-    override fun finnInndelinger(searchString: String, gyldighetsdato: LocalDate, limit: Int): List<InndelingSearchResponse> {
-        return inndelingerService.finnInndelinger(searchString = searchString, gyldighetsdato = gyldighetsdato, limit = limit)
+    override fun finnInndelinger(searchString: String, gyldighetsdato: LocalDate, limit: Int, filter: List<Flatetype>): List<InndelingSearchResponse> {
+        return inndelingerService.finnInndelinger(searchString = searchString, gyldighetsdato = gyldighetsdato, limit = limit, filter = filter)
             .map { InndelingSearchResponse(
                     id = it.id,
                     type = it.type,

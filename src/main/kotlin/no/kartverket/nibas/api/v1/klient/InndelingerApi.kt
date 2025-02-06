@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.klient.response.InndelingSearchResponse
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.MediaType
@@ -42,6 +43,8 @@ interface InndelingerApi {
         @Parameter(description = "Eventuell gyldighetsdato for inndelingene (default = dagens dato)") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
         @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate = LocalDate.now(),
         @Parameter(description = "Maksgrense for antall treff man ønsker seg")
-        @RequestParam(required = false, defaultValue = "15", name = "limit") limit: Int = 15
+        @RequestParam(required = false, defaultValue = "15", name = "limit") limit: Int = 15,
+        @Parameter(description = "Hvilke typer inndelinger man ønsker å søke etter")
+        @RequestParam(required = false, name = "filter") filter: List<Flatetype> = listOf(Flatetype.GRUNNKRETS, Flatetype.STEMMEKRETS, Flatetype.KOMMUNE, Flatetype.FYLKE)
     ): List<InndelingSearchResponse>
 }
