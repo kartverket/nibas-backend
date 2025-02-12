@@ -12,15 +12,15 @@ import java.time.LocalDate
 
 @ActiveProfiles(profiles = ["security-off", "eventsDisabled"])
 @Transactional
-class InndelingerServiceIT: TestWithDbContainer() {
+class InndelingerServiceIT : TestWithDbContainer() {
 
     @Test
-    fun `finnInndelinger gir korrekt soekeresultater`(){
+    fun `finnInndelinger gir korrekt soekeresultater`() {
         val gyldighetsdato = LocalDate.now()
 
         val gk1 = saveGrunnkrets(id = "1", lokalid = Lokalid("1"), grunnkretsnavn = "Oslo (løkka)")
-        val gk2 =saveGrunnkrets(id = "2", lokalid = Lokalid("2"), grunnkretsnavn = "Singsaker")
-        val sk1 =saveStemmekrets(id = "3", lokalid = Lokalid("3"), stemmekretsnavn = "Oslo rådhus")
+        val gk2 = saveGrunnkrets(id = "2", lokalid = Lokalid("2"), grunnkretsnavn = "Singsaker")
+        val sk1 = saveStemmekrets(id = "3", lokalid = Lokalid("3"), stemmekretsnavn = "Oslo rådhus")
         val sk2 = saveStemmekrets(id = "4", lokalid = Lokalid("4"), stemmekretsnavn = "Nidelva")
         val k1 = saveKommune(
             unikLokalid = UnikLokalid("5", Flatetype.KOMMUNE),
@@ -74,5 +74,46 @@ class InndelingerServiceIT: TestWithDbContainer() {
         assertThat(inndelingerFiltrert.filter { it.type === Flatetype.STEMMEKRETS }.size).isEqualTo(1)
         assertThat(inndelingerFiltrert.filter { it.type === Flatetype.KOMMUNE }.size).isEqualTo(0)
         assertThat(inndelingerFiltrert.filter { it.type === Flatetype.FYLKE }.size).isEqualTo(2)
+    }
+
+    @Test
+    fun `finnInndelinger skal ikke returnere duplikate stemmekretser`() {
+        val gyldighetsdato = LocalDate.now()
+
+        val sk1 = saveStemmekrets(
+            id = "1",
+            lokalid = Lokalid("1"),
+            stemmekretsnavn = "Egersund",
+            stemmekretsnummer = "0001"
+        )
+        val sk2 = saveStemmekrets(
+            id = "2",
+            lokalid = Lokalid("2"),
+            stemmekretsnavn = "Egersund",
+            stemmekretsnummer = "0001"
+        )
+
+        saveKommune(
+            unikLokalid = UnikLokalid("3", Flatetype.KOMMUNE),
+            id = "3",
+            administrativenhetnavn = listOf(saveAdministrativenhetnavn(lokalid = "3", navn = "Egersund", spraakid = "nor", rekkefoelge = 1)),
+            stemmekretser = listOf(sk1, sk2)
+        )
+
+        grenseRepository.flush()
+
+        val searchString = "Egersund"
+        val limit = 10
+
+        val inndelinger = inndelingerService.finnInndelinger(
+            searchString,
+            gyldighetsdato,
+            limit,
+            listOf(Flatetype.STEMMEKRETS)
+        )
+
+        assertThat(inndelinger.size).isEqualTo(1)
+        assertThat(inndelinger[0].type).isEqualTo(Flatetype.STEMMEKRETS)
+        assertThat(inndelinger[0].navn).isEqualTo("Egersund")
     }
 }

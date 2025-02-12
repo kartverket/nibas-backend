@@ -38,7 +38,8 @@ class InndelingSearchRepository(val jdbcTemplate: NamedParameterJdbcTemplate) {
 
     fun finnStemmekretser(gyldighetsdato: LocalDate, searchString: String, limit: Int): List<Inndeling> {
         val query = """
-                SELECT s.lokalid,
+                SELECT DISTINCT ON (s.stemmekretsnavn, s.stemmekretsnummer, k.kommunenummer)
+                        s.lokalid,
                         s.stemmekretsnavn AS navn,
                         concat(k.kommunenummer, s.stemmekretsnummer) AS nummer,
                         s.posisjon AS representasjonspunkt
@@ -47,7 +48,11 @@ class InndelingSearchRepository(val jdbcTemplate: NamedParameterJdbcTemplate) {
                 WHERE s.gyldigfra <= :gyldighetsdato
                   AND (s.gyldigtil > :gyldighetsdato OR s.gyldigtil IS NULL)
                   AND s.slettet = FALSE 
+                  AND k.gyldigfra <= :gyldighetsdato
+                  AND (k.gyldigtil > :gyldighetsdato OR k.gyldigtil IS NULL)
+                  AND k.slettet = FALSE
                   AND CONCAT(k.kommunenummer, s.stemmekretsnummer, ' ', s.stemmekretsnavn) ILIKE CONCAT('%', :searchString, '%')
+                ORDER BY s.stemmekretsnavn, s.stemmekretsnummer, k.kommunenummer, s.gyldigfra DESC
                 LIMIT :limit
             """.trimIndent()
 
@@ -98,7 +103,7 @@ class InndelingSearchRepository(val jdbcTemplate: NamedParameterJdbcTemplate) {
         return jdbcTemplate.query(query, mapOf("gyldighetsdato" to gyldighetsdato, "searchString" to searchString, "limit" to limit), InndelingRowMapper(Flatetype.FYLKE))
     }
 
-    data class Inndeling (
+    data class Inndeling(
         val id: String,
         val type: Flatetype,
         val navn: String,
@@ -119,6 +124,7 @@ class InndelingSearchRepository(val jdbcTemplate: NamedParameterJdbcTemplate) {
                     ?: throw ParseException("Klarte ikke parse $representasjonspunktWKBString til JTS Point")
             )
         }
+
         fun parseJtsPointFromWKBString(wkbString: String): Point? {
             return try {
                 val wkbBytes = hexStringToByteArray(wkbString)
@@ -147,5 +153,3 @@ class InndelingSearchRepository(val jdbcTemplate: NamedParameterJdbcTemplate) {
         }
     }
 }
-
-
