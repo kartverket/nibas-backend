@@ -1,7 +1,7 @@
 [versions]
 flywayVersion = "11.3.1"
 hibernateVersion = "6.6.7.Final"
-hypersistenceUtilsHibernate63Version = "3.9.1"
+hypersistenceUtilsHibernate63Version = "3.9.2"
 jtsVersion = "1.20.0"
 kotlinMockitoVersion = "5.4.0"
 kotlinPluginVersion = "1.9.22"
