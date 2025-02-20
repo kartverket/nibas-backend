@@ -88,8 +88,8 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
     fun hentVersjonAvGrunnkretsFramITid() {
         val grunnkretsLokalid = Lokalid("ac7e05cd-fb07-4270-ad95-e3c32c137ba6")
         saveGrunnkretsMed1FramtidigVersjon(grunnkretsLokalid)
-        assertThat(grunnkretsRepository.findAllByLokalid(grunnkretsLokalid.value).size).isEqualTo(2)
-        assertThat(grunnkretsRepository.findAllByLokalidSortedByGyldigFra(grunnkretsLokalid).size).isEqualTo(2)
+        assertThat(grunnkretsRepository.findAllByLokalid(grunnkretsLokalid.value)).hasSize(2)
+        assertThat(grunnkretsRepository.findAllByLokalidSortedByGyldigFra(grunnkretsLokalid)).hasSize(2)
 
         val framtidigGrunnkrets = grunnkretsService.hentGrunnkrets(Identifikator(grunnkretsLokalid, jan1In2023))!!
         assertThat(framtidigGrunnkrets).isNotNull
@@ -310,27 +310,6 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         }
     }
 
-    @Test
-    fun `oppdatering av grunnkrets til et allerede brukt grunnkretsnummer skal gi feil`() {
-        val opprinneligDato = LocalDate.parse("2022-01-01")
-        val datoForOppdatering = october1In2022
-        val (vestreKrets, oestreKrets) = saveNaboGrunnkretser(gyldigFra = opprinneligDato)
-
-        val grunnkretsRequest = GrunnkretsRequestBuilder().withLokalId(oestreKrets.lokalid).withGrunnkretsnummer(vestreKrets.grunnkretsnummer!!).build()
-        val identifikator = Identifikator(Lokalid(grunnkretsRequest.identifikasjon.lokalid), datoForOppdatering)
-
-        Assertions.assertThatThrownBy {
-            grunnkretsService.oppdaterGrunnkrets(
-                lokalId = identifikator.lokalid,
-                oppdatertGrunnkrets = grunnkretsRequest,
-                gyldigFra = datoForOppdatering,
-                endringstype = Endringstype.RETTING
-            )
-        }.isInstanceOf(ResponseException.BadRequestException::class.java)
-            .hasMessageContaining("Kretsnummer ${vestreKrets.grunnkretsnummer} er brukt på flere grunnkretser innenfor kommunen")
-
-    }
-
     private fun utfoerSammenslaaing(vestreKrets: Grunnkrets, oestreKrets: Grunnkrets): Grunnkrets? {
         val sammenslaaingsendringRequest = GrunnkretsSammenslaaingsendringRequest(
             viderefoertGrunnkrets = IdentifikatorMedVersjon(vestreKrets.lokalid, 1),
@@ -408,28 +387,6 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
                 .extracting("lokalid")
                 .containsExactlyInAnyOrder(sammenslattGrunnkrets.lokalid, grunnkretsRundt.lokalid)
         }
-    }
-
-    @Test
-    fun `slaa sammen Vestre og Oestre grunnkretser med gjenbruk av nummer fra Tredje skal gi feil`() {
-        val (vestreKrets, oestreKrets, tredjeKrets) = saveNaboGrunnkretser(gyldigFra = LocalDate.parse("2022-01-01"), medTredjeKrets = true)
-
-        val sammenslaaingsendringRequest = GrunnkretsSammenslaaingsendringRequest(
-            viderefoertGrunnkrets = IdentifikatorMedVersjon(vestreKrets.lokalid, 1),
-            grunnkretserTilSammenslaaing = listOf(IdentifikatorMedVersjon(oestreKrets.lokalid, 1)),
-            navn = "Sammenslått krets",
-            nummer = tredjeKrets.grunnkretsnummer!!
-        )
-
-        val sammenslaingsdato = LocalDate.parse("2022-02-01")
-        Assertions.assertThatThrownBy {
-            grunnkretsService.slaaSammenGrunnkretser(
-                sammenslaaingsendringRequest = sammenslaaingsendringRequest,
-                sammenslaaingsDato = sammenslaingsdato,
-                endringstype = Endringstype.VEDTATT_SAMMENSLAAING
-            )
-        }.isInstanceOf(ResponseException.BadRequestException::class.java)
-            .hasMessageContaining("Kretsnummer 03010022 er brukt på flere grunnkretser innenfor kommunen")
     }
 
     @Test
@@ -902,7 +859,6 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         val gyldighetsdato = jan1In2023
 
         val opprinneligGrunnkrets = saveGrunnkrets("opprinneligKrets", Lokalid("opprinneligKrets"))
-
         val kommune = saveKommune(grunnkretser = listOf(opprinneligGrunnkrets), gyldigFra = gyldighetsdato)
 
         val delingEndringRequest = KretsDelingEndringRequest(
@@ -910,15 +866,13 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
             ObjektIdentifikator(Lokalid(kommune.lokalid), gyldighetsdato),
             Flatetype.GRUNNKRETS,
             nyeKretser = listOf(KretsNavnOgNummer("nyGrunnkrets", "1"))
-
         )
 
         val unikKretsDelingEndring = getUnikeKretsDelingEndringRequests(delingEndringRequest).first()
-
         val nyGrunnkrets = grunnkretsService.delGrunnkrets(unikKretsDelingEndring, gyldighetsdato, Endringstype.VEDTATT_DELING)
 
         assertThat(nyGrunnkrets).isNotNull
-        assertThat(nyGrunnkrets.grenser.size).isEqualTo(0)
+        assertThat(nyGrunnkrets.grenser).isEmpty()
         assertThat(nyGrunnkrets.utledetFra?.lokalid).isEqualTo(opprinneligGrunnkrets.lokalid)
         assertThat(nyGrunnkrets.grunnkretsnummer).isEqualTo(unikKretsDelingEndring.kretsNummer)
         assertThat(nyGrunnkrets.grunnkretsnavn).isEqualTo(unikKretsDelingEndring.kretsNavn)
@@ -926,7 +880,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
     }
 
     @Test
-    fun `delGrunnkrets kaster hvis feil flatetype er satt i request`() {
+    fun `delGrunnkrets kaster exception hvis feil flatetype er satt i request`() {
         val opprinneligGrunnkrets = saveGrunnkrets("opprinneligKrets", Lokalid("opprinneligKrets"))
 
         val kommune = saveKommune(grunnkretser = listOf(opprinneligGrunnkrets), gyldigFra = jan1In2023)
@@ -945,33 +899,6 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         }
             .isInstanceOf(ResponseException.BadRequestException::class.java)
             .hasMessageContaining("Kan ikke dele og opprette en ny ${delingEndringRequest.flatetype} fra en grunnkrets")
-    }
-
-    @Test
-    fun `delGrunnkrets kaster exception hvis ny grunnkrets skaper duplikat`() {
-        val gyldighetsdato = jan1In2023
-
-        val opprinneligGrunnkrets = saveGrunnkrets("opprinneligKrets", Lokalid("opprinneligKrets"))
-
-        val kommune = saveKommune(grunnkretser = listOf(opprinneligGrunnkrets), gyldigFra = jan1In2023)
-
-        val delingEndringRequest = KretsDelingEndringRequest(
-            IdentifikatorMedVersjon(opprinneligGrunnkrets.lokalid, opprinneligGrunnkrets.version),
-            ObjektIdentifikator(Lokalid(kommune.lokalid), gyldighetsdato),
-            Flatetype.GRUNNKRETS,
-            nyeKretser = listOf(KretsNavnOgNummer("nyStemmekrets", "1"))
-        )
-
-        val unikKretsDelingEndring = getUnikeKretsDelingEndringRequests(delingEndringRequest).first()
-        val eksiterendeGrunnkretsSomTriggerDuplikat = saveGrunnkrets("eksisterende", Lokalid("eksisterende"), grunnkretsnummer = unikKretsDelingEndring.kretsNummer)
-
-        saveKommune(grunnkretser = listOf(opprinneligGrunnkrets, eksiterendeGrunnkretsSomTriggerDuplikat), gyldigFra = gyldighetsdato)
-
-        Assertions.assertThatThrownBy {
-            grunnkretsService.delGrunnkrets(unikKretsDelingEndring, gyldighetsdato, Endringstype.VEDTATT_DELING)
-        }
-            .isInstanceOf(ResponseException.BadRequestException::class.java)
-            .hasMessageContaining("Kretsnummer 1 er brukt på flere grunnkretser innenfor kommunen (0301 UKJENT KOMMUNE) med gyldighet som overlapper med 01.01.2023 og fremover. Vennligst gi grunnkretsene unike kretsnumre før du fortsetter.")
     }
 
     @Test

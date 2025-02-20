@@ -95,10 +95,6 @@ class GrunnkretsService(
         val nyGrunnkrets = createNyVersjonAvGrunnkrets(gammelGrunnkrets, gyldigFra, endringstype)
             .applyChangesFromRequest(oppdatertGrunnkrets)
 
-        if (finnesAnnenGrunnkretsMedSammeGrunnkretsnummer(nyGrunnkrets)) {
-            throw createDuplikatGrunnkretsnummerException(nyGrunnkrets)
-        }
-
         return nyGrunnkrets
             .apply {
                 if (grunnkretsHelper.existsRowsWithLaterGyldigFraDato(relevantGrunnkrets)) {
@@ -108,7 +104,7 @@ class GrunnkretsService(
             }
     }
 
-    private fun createDuplikatGrunnkretsnummerException(grunnkrets: Grunnkrets): ResponseException.BadRequestException {
+    fun createDuplikatGrunnkretsnummerException(grunnkrets: Grunnkrets): ResponseException.BadRequestException {
         val kommune = grunnkrets.getKommune(grunnkrets.gyldighet.gyldigFra)
         val kommunenavn = kommune?.getAdministrativenhetNavn(grunnkrets.gyldighet.gyldigFra)?.getInSpraak("nor") ?: "UKJENT KOMMUNE"
         val kommunenummer = kommune?.kommunenummer
@@ -166,10 +162,6 @@ class GrunnkretsService(
                 grunnkretsnavn = sammenslaaingsendringRequest.navn
                 grunnkretsnummer = sammenslaaingsendringRequest.nummer
             }
-
-        if (finnesAnnenGrunnkretsMedSammeGrunnkretsnummer(nyGrunnkrets)) {
-            throw createDuplikatGrunnkretsnummerException(nyGrunnkrets)
-        }
 
         val viderefoerteGrensekoblinger = alleGrunnkretsGrenseKoblinger
             .filter { grenseDelerIkke2GrunnkretserSomBlirSlaattSammen(it, alleGrunnkretsGrenseKoblinger) }
@@ -250,11 +242,7 @@ class GrunnkretsService(
             informasjon = grunnkrets.informasjon
         }
 
-        if (finnesAnnenGrunnkretsMedSammeGrunnkretsnummer(nyGrunnkrets)) {
-            throw createDuplikatGrunnkretsnummerException(nyGrunnkrets)
-        } else {
-            return grunnkretsRepository.save(nyGrunnkrets)
-        }
+        return grunnkretsRepository.save(nyGrunnkrets)
     }
 
     fun createNyVersjonAvGrunnkretsIAnnenKommune(grunnkrets: Grunnkrets, kommune: Kommune, nyttGrunnkretsNummer: String,

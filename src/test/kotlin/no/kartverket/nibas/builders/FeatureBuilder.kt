@@ -94,7 +94,7 @@ class FeatureBuilder(private var id: String? = "1") {
         this.kontekstEgenskaper = feature.properties.kontekstEgenskaper
         this.grenseVersjon = feature.properties.version
         this.metadata = feature.properties.metadata
-        this.lokalid = feature.id ?: throw RuntimeException("Mangler lokalid")
+        this.lokalid = feature.id
         this.geometry = feature.geometry.toLineString(this.srid)
         return this
     }

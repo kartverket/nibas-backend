@@ -3,9 +3,18 @@ package no.kartverket.nibas.testcontainer
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import no.kartverket.nibas.api.v1.common.Flatetype
+import no.kartverket.nibas.api.v1.common.Grenseendringer
 import no.kartverket.nibas.api.v1.common.Grensetype
+import no.kartverket.nibas.api.v1.common.KontekstEnhetType
+import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
+import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
+import no.kartverket.nibas.api.v1.common.geojson.KontekstEgenskaper
+import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
+import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
+import no.kartverket.nibas.api.v1.request.KretsNavnOgNummer
+import no.kartverket.nibas.builders.FeatureBuilder
 import no.kartverket.nibas.builders.FylkeBuilder
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
@@ -27,6 +36,8 @@ import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.domain.Spraakkode
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.UnikLokalid
+import no.kartverket.nibas.domain.utkast.Utkast
+import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.extensions.geometry.geometryToDto
 import no.kartverket.nibas.extensions.geometry.grenseToFeature
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
@@ -475,14 +486,15 @@ class TestWithDbContainer {
 
     fun saveNaboGrunnkretser(gyldigFra: LocalDate, medHull: Boolean = false, medTredjeKrets: Boolean = false, medToDelteGrenser: Boolean = false, medKommunegrense: Boolean = false)
         : List<Grunnkrets> {
-        val grenserForVest = if (medHull) {
-            GrenseHelper.getGrenserForVestligKrets(gyldigFra, Grensetype.Grunnkretsgrense, medToDelteGrenser) +
-                GrenseHelper.getHullVestligKrets(gyldigFra, Grensetype.Grunnkretsgrense)
+        val grenserForHull = if (medHull) {
+            GrenseHelper.getHullVestligKrets(gyldigFra, Grensetype.Grunnkretsgrense)
         } else {
-            GrenseHelper.getGrenserForVestligKrets(gyldigFra, Grensetype.Grunnkretsgrense, medToDelteGrenser)
+            emptyList()
         }
+        val grenserForVest = GrenseHelper.getGrenserForVestligKrets(gyldigFra, Grensetype.Grunnkretsgrense, medToDelteGrenser)
 
         //Lagrer grensene først, for å være sikker på at de er tilgjengelige for å knyttes til kretsene
+        val lagredeGrenserForHull = if (medHull) grenseRepository.saveAll(grenserForHull) else emptyList()
         val lagredeGrenserForVest = grenseRepository.saveAll(grenserForVest)
         val lagredeGrenserForOest = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(gyldigFra, Grensetype.Grunnkretsgrense, medToDelteGrenser, medKommunegrense))
         grenseRepository.flush()
@@ -493,7 +505,7 @@ class TestWithDbContainer {
             grunnkretsnummer = "03010020",
             grunnkretsnavn = "Vestre krets",
             gyldigFra = gyldigFra,
-            grenser = lagredeGrenserForVest
+            grenser = lagredeGrenserForVest + lagredeGrenserForHull
         )
 
         val kretsOest = saveGrunnkrets(
@@ -512,7 +524,8 @@ class TestWithDbContainer {
                 lokalid = Lokalid("345"),
                 grunnkretsnummer = "03010022",
                 grunnkretsnavn = "Tredje krets",
-                gyldigFra = gyldigFra
+                gyldigFra = gyldigFra,
+                grenser = lagredeGrenserForHull
             )
             grunnkretsMutableList.add(tredjeKrets)
         }
@@ -522,6 +535,7 @@ class TestWithDbContainer {
         grenseRepository.flush()
         return grunnkretser
     }
+
     fun assertOmradeGyldighetVersjon(nyFlate: Flate, gammelFlate: Flate, endringsdato: LocalDate?, endringstype: Endringstype) {
         assertThat(gammelFlate.gyldighet.gyldigTil).isEqualTo(endringsdato)
         assertThat(nyFlate.gyldighet.gyldigFra).isEqualTo(endringsdato)
@@ -669,6 +683,222 @@ class TestWithDbContainer {
         assertThat(oestreKretsEtterLagring.grenser.map { it.grense.lokalid }).contains(deltGrenseLokalid)
 
         return deltGrenseEtterGrenseendring
+    }
+
+    fun saveNaboStemmekretser(gyldigFra: LocalDate, medHull: Boolean = false, medTredjeKrets: Boolean = false, medToDelteGrenser: Boolean = false)
+    : List<Stemmekrets> {
+        val grenserForHull = if (medHull) {
+            GrenseHelper.getHullVestligKrets(gyldigFra, Grensetype.Grunnkretsgrense)
+        } else {
+            emptyList()
+        }
+        val grenserForVest = GrenseHelper.getGrenserForVestligKrets(gyldigFra, Grensetype.Stemmekretsgrense, medToDelteGrenser)
+
+        //Lagrer grensene først, for å være sikker på at de er tilgjengelige for å knyttes til kretsene
+        val lagredeGrenserForHull = if (medHull) grenseRepository.saveAll(grenserForHull) else emptyList()
+        val lagredeGrenserForVest = grenseRepository.saveAll(grenserForVest)
+        val lagredeGrenserForOest = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(gyldigFra, Grensetype.Stemmekretsgrense, medToDelteGrenser))
+        grenseRepository.flush()
+
+        val kretsVest = saveStemmekrets(
+            id = "1",
+            lokalid = Lokalid("123"),
+            stemmekretsnummer = "20",
+            stemmekretsnavn = "Vestre krets",
+            gyldigFra = gyldigFra,
+            grenser = lagredeGrenserForVest + lagredeGrenserForHull
+        )
+
+        val kretsOest = saveStemmekrets(
+            id = "2",
+            lokalid = Lokalid("234"),
+            stemmekretsnummer = "21",
+            stemmekretsnavn = "Østre krets",
+            gyldigFra = gyldigFra,
+            grenser = lagredeGrenserForOest
+        )
+
+        val stemmekretsMutableList = mutableListOf(kretsVest, kretsOest)
+        if (medTredjeKrets) {
+            val tredjeKrets = saveStemmekrets(
+                id = "3",
+                lokalid = Lokalid("345"),
+                stemmekretsnummer = "22",
+                stemmekretsnavn = "Tredje krets",
+                gyldigFra = gyldigFra,
+                grenser = lagredeGrenserForHull
+            )
+            stemmekretsMutableList.add(tredjeKrets)
+        }
+
+        val stemmekretser = stemmekretsMutableList.toList()
+        saveKommuneOgUnikLokalid(stemmekretser = stemmekretser, gyldigFra = gyldigFra)
+        grenseRepository.flush()
+        return stemmekretser
+    }
+
+    fun lagNyGrense(id: String, grensetype: Grensetype, lokalId: String, gyldigFra: LocalDate, coordinates: List<Coordinate>): Grense {
+        return Grense(id = id, lokalid = lokalId, grensetype = grensetype)
+            .apply {
+                setGyldigFra(gyldigFra)
+                grense = GrenseHelper.geometryFactory.createLineString(
+                    coordinates.toTypedArray()
+                )
+            }
+    }
+
+    fun lagUtkastMedDelingAvGrunnkretsOgGrenseendringer(
+        tredjeKrets: Grunnkrets,
+        vestreKrets: Grunnkrets,
+        kretsNummer: String,
+        kretsNavn: String,
+        gyldighetsdato: LocalDate,
+        flatetype: Flatetype,
+        kontekstEnhetType: KontekstEnhetType,
+        grensetype: Grensetype
+    ): Utkast {
+        val kommuneLokalid = vestreKrets.kommuneLokalid.lokalid
+        val omkringliggendeKretsLokalid = vestreKrets.lokalid
+        val omkringliggendeKretsVersion = vestreKrets.version
+        val omkringliggendeKretsKretsnummer = vestreKrets.grunnkretsnummer!!
+        val kretsSomDelesLokalid = tredjeKrets.lokalid
+        val kretsSomDelesKretsnummer = tredjeKrets.grunnkretsnummer!!
+        val kretsSomDelesVersion = tredjeKrets.version
+        val grense0SomSkalEndreTilhoerighet = tredjeKrets.grenser.find { it.grense.lokalid == "hullGrense0lokalid" }!!.grense
+        val grense1SomSkalEndreTilhoerighet = tredjeKrets.grenser.find { it.grense.lokalid == "hullGrense1lokalid" }!!.grense
+
+        val utkast = lagUtkastMedDelingAvKretsOgNyGrense(omkringliggendeKretsLokalid, omkringliggendeKretsVersion, omkringliggendeKretsKretsnummer,
+            kommuneLokalid, gyldighetsdato, kretsNavn, kretsNummer, kretsSomDelesLokalid, kretsSomDelesKretsnummer, kretsSomDelesVersion,
+            grense0SomSkalEndreTilhoerighet, grense1SomSkalEndreTilhoerighet, kontekstEnhetType, flatetype, grensetype)
+        return utkast
+    }
+
+    fun lagUtkastMedDelingAvStemmekretsOgGrenseendringer(
+        tredjeKrets: Stemmekrets,
+        vestreKrets: Stemmekrets,
+        kretsNummer: String,
+        kretsNavn: String,
+        gyldighetsdato: LocalDate,
+        flatetype: Flatetype,
+        kontekstEnhetType: KontekstEnhetType,
+        grensetype: Grensetype
+    ): Utkast {
+        val kommuneLokalid = vestreKrets.kommuneLokalid.lokalid
+        val omkringliggendeKretsLokalid = vestreKrets.lokalid
+        val omkringliggendeKretsVersion = vestreKrets.version
+        val omkringliggendeKretsKretsnummer = vestreKrets.stemmekretsnummer!!
+        val kretsSomDelesLokalid = tredjeKrets.lokalid
+        val kretsSomDelesKretsnummer = tredjeKrets.stemmekretsnummer!!
+        val kretsSomDelesVersion = tredjeKrets.version
+        val grense0SomSkalEndreTilhoerighet = tredjeKrets.grenser.find { it.grense.lokalid == "hullGrense0lokalid" }!!.grense
+        val grense1SomSkalEndreTilhoerighet = tredjeKrets.grenser.find { it.grense.lokalid == "hullGrense1lokalid" }!!.grense
+
+        val utkast = lagUtkastMedDelingAvKretsOgNyGrense(omkringliggendeKretsLokalid, omkringliggendeKretsVersion, omkringliggendeKretsKretsnummer,
+            kommuneLokalid, gyldighetsdato, kretsNavn, kretsNummer, kretsSomDelesLokalid, kretsSomDelesKretsnummer, kretsSomDelesVersion,
+            grense0SomSkalEndreTilhoerighet, grense1SomSkalEndreTilhoerighet, kontekstEnhetType, flatetype, grensetype)
+        return utkast
+    }
+
+    fun lagUtkastMedDelingAvKretsOgNyGrense(
+        omkringliggendeKretsLokalid: String,
+        omkringliggendeKretsVersion: Int,
+        omkringliggendeKretsKretsnummer: String,
+        kommuneLokalid: String,
+        gyldighetsdato: LocalDate,
+        kretsNavn: String,
+        kretsNummer: String,
+        kretsSomDelesLokalid: String,
+        kretsSomDelesKretsnummer: String,
+        kretsSomDelesVersion: Int,
+        grense0SomSkalEndreTilhoerighet: Grense,
+        grense1SomSkalEndreTilhoerighet: Grense,
+        kontekstEnhetType: KontekstEnhetType,
+        flatetype: Flatetype,
+        grensetype: Grensetype
+    ): Utkast {
+        val delingEndringRequest = KretsDelingEndringRequest(
+            IdentifikatorMedVersjon(omkringliggendeKretsLokalid, omkringliggendeKretsVersion),
+            ObjektIdentifikator(Lokalid(kommuneLokalid), gyldighetsdato),
+            flatetype,
+            nyeKretser = listOf(KretsNavnOgNummer(kretsNavn, kretsNummer))
+        )
+        val tilhorighetTilGrense0 = listOf(
+            KontekstEgenskaper(
+                id = null,
+                kommuneId = ObjektIdentifikator(Lokalid(kommuneLokalid), gyldighetsdato),
+                kretsNummer = kretsNummer,
+                type = kontekstEnhetType,
+                version = 0
+            ),
+            KontekstEgenskaper(
+                id = ObjektIdentifikator(Lokalid(omkringliggendeKretsLokalid), gyldighetsdato),
+                kommuneId = ObjektIdentifikator(Lokalid(kommuneLokalid), gyldighetsdato),
+                kretsNummer = omkringliggendeKretsKretsnummer,
+                type = kontekstEnhetType,
+                version = omkringliggendeKretsVersion
+            )
+        )
+        val tilhorighetTilGrense1 = listOf(
+            KontekstEgenskaper(
+                id = null,
+                kommuneId = ObjektIdentifikator(Lokalid(kommuneLokalid), gyldighetsdato),
+                kretsNummer = kretsNummer,
+                type = kontekstEnhetType,
+                version = 0
+            ),
+            KontekstEgenskaper(
+                id = ObjektIdentifikator(Lokalid(omkringliggendeKretsLokalid), gyldighetsdato),
+                kommuneId = ObjektIdentifikator(Lokalid(kommuneLokalid), gyldighetsdato),
+                kretsNummer = omkringliggendeKretsKretsnummer,
+                type = kontekstEnhetType,
+                version = omkringliggendeKretsVersion
+            )
+        )
+        val tilhorighetTilNyGrense = listOf(
+            KontekstEgenskaper(
+                id = null,
+                kommuneId = ObjektIdentifikator(Lokalid(kommuneLokalid), gyldighetsdato),
+                kretsNummer = kretsNummer,
+                type = kontekstEnhetType,
+                version = 0
+            ),
+            KontekstEgenskaper(
+                id = ObjektIdentifikator(Lokalid(kretsSomDelesLokalid), gyldighetsdato),
+                kommuneId = ObjektIdentifikator(Lokalid(kommuneLokalid), gyldighetsdato),
+                kretsNummer = kretsSomDelesKretsnummer,
+                type = kontekstEnhetType,
+                version = kretsSomDelesVersion
+            )
+        )
+        val grense0MedEndretTilhorighet = FeatureBuilder(id = grense0SomSkalEndreTilhoerighet.lokalid).copy(grense0SomSkalEndreTilhoerighet.grenseToFeature())
+            .withKontekstEgenskaper(tilhorighetTilGrense0)
+            .withVersion(grense0SomSkalEndreTilhoerighet.version)
+            .build()
+        val grense1MedEndretTilhorighet = FeatureBuilder(id = grense1SomSkalEndreTilhoerighet.lokalid).copy(grense1SomSkalEndreTilhoerighet.grenseToFeature())
+            .withKontekstEgenskaper(tilhorighetTilGrense1)
+            .withVersion(grense1SomSkalEndreTilhoerighet.version)
+            .build()
+
+        val gyldigNyGrense = lagNyGrense(
+            "NotARealID",
+            grensetype,
+            "NotARealID",
+            gyldighetsdato,
+            listOf(Coordinate(7.0, 7.0), Coordinate(2.0, 2.0)))
+
+        val feature = gyldigNyGrense.grenseToFeature(gyldighetsdato, nyGrense = true)
+
+        val nyGrense = FeatureBuilder(id = null).copy(feature)
+            .withKontekstEgenskaper(tilhorighetTilNyGrense)
+            .withVersion(1)
+            .build()
+
+        val utkast = UtkastBuilder.builder("Test av deling", gyldigFra = gyldighetsdato, endringstype = Endringstype.VEDTATT_DELING)
+            .withOperasjoner(Operasjoner(kretsDelingEndringer = listOf(delingEndringRequest),
+                grenseendringer = Grenseendringer(listOf(grense0MedEndretTilhorighet, grense1MedEndretTilhorighet, nyGrense))))
+            .build()
+
+        return utkastRepository.save(utkast)
     }
 
 }

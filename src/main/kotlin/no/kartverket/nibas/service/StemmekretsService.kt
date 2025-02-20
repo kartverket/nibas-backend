@@ -71,10 +71,6 @@ class StemmekretsService(
         val nyStemmekrets = createNyVersjonAvStemmekrets(gammelStemmekrets, gyldigFra, endringstype)
             .applyChangesFromRequest(oppdatertStemmekrets)
 
-        if (finnesAnnenStemmekretsMedSammeKommuneOgStemmekretsnummer(nyStemmekrets)) {
-            throw createDuplikatStemmekretsnummerException(nyStemmekrets)
-        }
-
         return nyStemmekrets
     }
 
@@ -118,10 +114,6 @@ class StemmekretsService(
                 stemmekretsnavn = sammenslaaingsendringRequest.navn
                 stemmekretsnummer = sammenslaaingsendringRequest.nummer
             }
-
-        if (finnesAnnenStemmekretsMedSammeKommuneOgStemmekretsnummer(nyStemmekrets)) {
-            throw createDuplikatStemmekretsnummerException(nyStemmekrets)
-        }
 
         // Hvis en grense deler 2 stemmekretser som er med i sammenslåingen så er den ikke en del
         // av et skall eller hull i den nye stemmekretsen
@@ -199,11 +191,7 @@ class StemmekretsService(
                 setGyldigFra(delingsDato)
             }
 
-        if (finnesAnnenStemmekretsMedSammeKommuneOgStemmekretsnummer(nyStemmekrets)) {
-            throw createDuplikatStemmekretsnummerException(nyStemmekrets)
-        } else {
-            return stemmekretsRepository.save(nyStemmekrets)
-        }
+        return stemmekretsRepository.save(nyStemmekrets)
     }
 
     fun createNyVersjonAvStemmekrets(stemmekrets: Stemmekrets, gyldigFra: LocalDate, endringstype: Endringstype): Stemmekrets {
@@ -244,7 +232,7 @@ class StemmekretsService(
         return nyStemmekrets
     }
 
-    private fun createDuplikatStemmekretsnummerException(stemmekrets: Stemmekrets): ResponseException.BadRequestException {
+    fun createDuplikatStemmekretsnummerException(stemmekrets: Stemmekrets): ResponseException.BadRequestException {
         val kommune = stemmekrets.getKommune(stemmekrets.gyldighet.gyldigFra)
         val kommunenavn = kommune?.getAdministrativenhetNavn(stemmekrets.gyldighet.gyldigFra)?.getInSpraak("nor") ?: "UKJENT KOMMUNE"
         val kommunenummer = kommune?.kommunenummer

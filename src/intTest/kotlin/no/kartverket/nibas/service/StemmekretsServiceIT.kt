@@ -69,7 +69,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         val stemmekrets = saveStemmekrets(lokalid = stemmekretsLokalid)
         saveKommuneOgUnikLokalid(stemmekretser = listOf(stemmekrets))
 
-        assertThat(stemmekretsRepository.findAllByLokalid(stemmekretsLokalid.value).size).isEqualTo(1)
+        assertThat(stemmekretsRepository.findAllByLokalid(stemmekretsLokalid.value)).hasSize(1)
 
         // Later som 28.11.22 er dagens dato. Det fungerer så lenge den er senere enn 1.10.22
         assertThat(stemmekretsService.hentStemmekrets(Identifikator(stemmekretsLokalid, november28In2022))).isNotNull
@@ -78,7 +78,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
     @Test
     fun `hent versjon av stemmekrets fram i tid`() {
         saveStemmekretsMed1FramtidigVersjon(stemmekretsLokalid)
-        assertThat(stemmekretsRepository.findAllByLokalid(stemmekretsLokalid.value).size).isEqualTo(2)
+        assertThat(stemmekretsRepository.findAllByLokalid(stemmekretsLokalid.value)).hasSize(2)
 
         val framtidigStemmekrets = stemmekretsService.hentStemmekrets(Identifikator(stemmekretsLokalid, jan1In2023))!!
         assertThat(framtidigStemmekrets.stemmekretsnavn).isEqualTo("Nedre Singsaker")
@@ -678,48 +678,6 @@ class StemmekretsServiceIT : TestWithDbContainer() {
     }
 
     @Test
-    fun `oppdatering av stemmekrets til et allerede brukt stemmekretsnummer skal gi feil`() {
-        val opprinneligDato = LocalDate.parse("2022-01-01")
-        val datoForOppdatering = october1In2022
-        val (vestreKrets, oestreKrets) = saveNaboStemmekretser(gyldigFra = opprinneligDato)
-
-        val stemmekretsRequest = StemmekretsRequestBuilder().withLokalId(vestreKrets.lokalid).withStemmekretsnummer(oestreKrets.stemmekretsnummer!!).build()
-        val identifikator = Identifikator(Lokalid(stemmekretsRequest.identifikasjon.lokalid), datoForOppdatering)
-
-        assertThatThrownBy {
-            stemmekretsService.oppdaterStemmekrets(
-                lokalId = identifikator.lokalid,
-                oppdatertStemmekrets = stemmekretsRequest,
-                gyldigFra = datoForOppdatering,
-                endringstype = Endringstype.RETTING
-            )
-        }.isInstanceOf(ResponseException.BadRequestException::class.java)
-            .hasMessageContaining("Kretsnummer ${oestreKrets.stemmekretsnummer} er brukt på flere stemmekretser innenfor kommunen")
-    }
-
-    @Test
-    fun `slaa sammen Vestre og Oestre stemmekretser med gjenbruk av nummer fra Tredje skal gi feil`() {
-        val (vestreKrets, oestreKrets, tredjeKrets) = saveNaboStemmekretser(gyldigFra = LocalDate.parse("2022-01-01"), medTredjeKrets = true)
-
-        val sammenslaaingsendringRequest = StemmekretsSammenslaaingsendringRequest(
-            viderefoertStemmekrets = IdentifikatorMedVersjon(vestreKrets.lokalid, 1),
-            stemmekretserTilSammenslaaing = listOf(IdentifikatorMedVersjon(oestreKrets.lokalid, 1)),
-            navn = "Sammenslått krets",
-            nummer = tredjeKrets.stemmekretsnummer!!
-        )
-
-        val sammenslaingsdato = LocalDate.parse("2022-02-01")
-        assertThatThrownBy {
-            stemmekretsService.slaaSammenStemmekretser(
-                sammenslaaingsendringRequest = sammenslaaingsendringRequest,
-                sammenslaaingsDato = sammenslaingsdato,
-                endringstype = Endringstype.VEDTATT_SAMMENSLAAING
-            )
-        }.isInstanceOf(ResponseException.BadRequestException::class.java)
-            .hasMessageContaining("Kretsnummer 22 er brukt på flere stemmekretser innenfor kommunen")
-    }
-
-    @Test
     fun `to nabostemmekretser i hver sin kommune i samme fylke som splittes til to fylker`() {
         every { kodelisteServiceMock.getFylkesnummerIdByCodeValue("39") } returns "583a2846-e90c-4911-b8bb-b2537fd896a0"
         every { kodelisteServiceMock.getFylkesnummerIdByCodeValue("40") } returns "f26cc714-7289-4026-a076-35f83f9f2332"
@@ -836,7 +794,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
 
         assertThat(nyStemmekrets).isNotNull
         assertThat(nyStemmekrets.utledetFra?.lokalid).isEqualTo(opprinneligStemmekrets.lokalid)
-        assertThat(nyStemmekrets.grenser.size).isEqualTo(0)
+        assertThat(nyStemmekrets.grenser).isEmpty()
         assertThat(nyStemmekrets.stemmekretsnummer).isEqualTo(unikKretsDelingEndring.kretsNummer)
         assertThat(nyStemmekrets.stemmekretsnavn).isEqualTo(unikKretsDelingEndring.kretsNavn)
         assertThat(nyStemmekrets.version).isEqualTo(1)
@@ -874,7 +832,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
 
         assertThat(nyStemmekrets).isNotNull
         assertThat(nyStemmekrets.utledetFra?.lokalid).isEqualTo(opprinneligStemmekrets.lokalid)
-        assertThat(nyStemmekrets.grenser.size).isEqualTo(0)
+        assertThat(nyStemmekrets.grenser).isEmpty()
         assertThat(nyStemmekrets.stemmekretsnummer).isEqualTo(unikKretsDelingEndring.kretsNummer)
         assertThat(nyStemmekrets.stemmekretsnavn).isEqualTo(unikKretsDelingEndring.kretsNavn)
         assertThat(nyStemmekrets.version).isEqualTo(1)
@@ -885,7 +843,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
     }
 
     @Test
-    fun `delStemmekrets kaster hvis feil flatetype er satt i request`(){
+    fun `delStemmekrets kaster exception hvis feil flatetype er satt i request`(){
         val opprinneligStemmekrets = saveStemmekrets("opprinneligKrets", Lokalid("opprinneligKrets"))
 
         val kommune = saveKommune(stemmekretser = listOf(opprinneligStemmekrets), gyldigFra = jan1In2023)
@@ -904,34 +862,6 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         }
             .isInstanceOf(ResponseException.BadRequestException::class.java)
             .hasMessageContaining("Kan ikke dele og opprette en ny ${delingEndringRequest.flatetype} fra en stemmekrets")
-    }
-
-    @Test
-    fun `delStemmekrets kaster exception hvis ny stemmekrets skaper duplikat`(){
-        val gyldighetsdato = jan1In2023
-
-        val opprinneligStemmekrets = saveStemmekrets("opprinneligKrets", Lokalid("opprinneligKrets"))
-
-        val kommune = saveKommune(stemmekretser = listOf(opprinneligStemmekrets), gyldigFra = gyldighetsdato)
-
-        val delingEndringRequest = KretsDelingEndringRequest(
-            IdentifikatorMedVersjon(opprinneligStemmekrets.lokalid, opprinneligStemmekrets.version),
-            ObjektIdentifikator(Lokalid(kommune.lokalid), gyldighetsdato),
-            Flatetype.STEMMEKRETS,
-            nyeKretser = listOf(KretsNavnOgNummer("nyStemmekrets", "1"))
-        )
-
-        val unikKretsDelingEndring = getUnikeKretsDelingEndringRequests(delingEndringRequest).first()
-
-        val eksiterendeStemmekretsSomTriggerDuplikat = saveStemmekrets("eksisterende", Lokalid("eksisterende"), stemmekretsnummer = unikKretsDelingEndring.kretsNummer)
-
-        saveKommune(stemmekretser = listOf(opprinneligStemmekrets, eksiterendeStemmekretsSomTriggerDuplikat), gyldigFra = gyldighetsdato)
-
-        assertThatThrownBy {
-            stemmekretsService.delStemmekrets(unikKretsDelingEndring, gyldighetsdato, Endringstype.VEDTATT_DELING)
-        }
-            .isInstanceOf(ResponseException.BadRequestException::class.java)
-            .hasMessageContaining("Kretsnummer 1 er brukt på flere stemmekretser innenfor kommunen (0301 UKJENT KOMMUNE) med gyldighet som overlapper med 01.01.2023 og fremover. Vennligst gi stemmekretsene unike kretsnumre før du fortsetter.")
     }
 
     @Test
@@ -957,8 +887,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         utkastRepository.save(utkast)
 
         val oppdaterutkastexception = assertFailsWith<OptimistiskLaasException> {
-            utkastService.oppdaterUtkast(utkast.id, utkastRequestBuilder
-                .build())
+            utkastService.oppdaterUtkast(utkast.id, utkastRequestBuilder.build())
         }
         assertThat(oppdaterutkastexception.konflikter.first().getMessage())
             .contains("Det er ikke samsvar med versjon for stemmekrets 9 Øvre Singsaker. Ønsket versjon = 0, eksisterende versjon = 2")
@@ -1105,56 +1034,6 @@ class StemmekretsServiceIT : TestWithDbContainer() {
     fun settGrensetypeForGrenserSomIkkeErDelt(vestreKrets: Stemmekrets, oestreKrets: Stemmekrets, grensetype: Grensetype) {
         vestreKrets.grenser.stream().forEach { if (it.grense.id != "grenseDelt" && it.grense.id != "grenseDelt2") it.grense.grensetype = grensetype }
         oestreKrets.grenser.stream().forEach { if (it.grense.id != "grenseDelt" && it.grense.id != "grenseDelt2") it.grense.grensetype = grensetype }
-    }
-
-    private fun saveNaboStemmekretser(gyldigFra: LocalDate, medHull: Boolean = false, medTredjeKrets: Boolean = false, medToDelteGrenser: Boolean = false)
-    : List<Stemmekrets> {
-        val grenserForVest = if (medHull) {
-            GrenseHelper.getGrenserForVestligKrets(gyldigFra, Grensetype.Stemmekretsgrense, medToDelteGrenser) +
-                GrenseHelper.getHullVestligKrets(gyldigFra, Grensetype.Stemmekretsgrense)
-        } else {
-            GrenseHelper.getGrenserForVestligKrets(gyldigFra, Grensetype.Stemmekretsgrense, medToDelteGrenser)
-        }
-
-        //Lagrer grensene først, for å være sikker på at de er tilgjengelige for å knyttes til kretsene
-        val lagredeGrenserForVest = grenseRepository.saveAll(grenserForVest)
-        val lagredeGrenserForOest = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(gyldigFra, Grensetype.Stemmekretsgrense, medToDelteGrenser))
-        grenseRepository.flush()
-
-        val kretsVest = saveStemmekrets(
-            id = "1",
-            lokalid = Lokalid("123"),
-            stemmekretsnummer = "20",
-            stemmekretsnavn = "Vestre krets",
-            gyldigFra = gyldigFra,
-            grenser = lagredeGrenserForVest
-        )
-
-        val kretsOest = saveStemmekrets(
-            id = "2",
-            lokalid = Lokalid("234"),
-            stemmekretsnummer = "21",
-            stemmekretsnavn = "Østre krets",
-            gyldigFra = gyldigFra,
-            grenser = lagredeGrenserForOest
-        )
-
-        val stemmekretsMutableList = mutableListOf(kretsVest, kretsOest)
-        if (medTredjeKrets) {
-            val tredjeKrets = saveStemmekrets(
-                id = "3",
-                lokalid = Lokalid("345"),
-                stemmekretsnummer = "22",
-                stemmekretsnavn = "Tredje krets",
-                gyldigFra = gyldigFra
-            )
-            stemmekretsMutableList.add(tredjeKrets)
-        }
-
-        val stemmekretser = stemmekretsMutableList.toList()
-        saveKommuneOgUnikLokalid(stemmekretser = stemmekretser, gyldigFra = gyldigFra)
-        grenseRepository.flush()
-        return stemmekretser
     }
 
     private fun saveNaboStemmekretserIHverSinKommune(gyldigFra: LocalDate, medHull: Boolean = false, medToDelteGrenser: Boolean = false,

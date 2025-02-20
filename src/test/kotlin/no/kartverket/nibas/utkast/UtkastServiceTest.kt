@@ -40,6 +40,8 @@ import no.kartverket.nibas.domain.utkast.UtkastStatus
 import no.kartverket.nibas.events.NibasEvent
 import no.kartverket.nibas.events.NibasEventPublisher
 import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.repository.GrunnkretsRepository
+import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.repository.UtkastRepository
 import no.kartverket.nibas.service.FylkeService
 import no.kartverket.nibas.service.GrenseService
@@ -69,8 +71,10 @@ internal class UtkastServiceTest {
     private val kommuneServiceMock = mockk<KommuneService>()
 
     private val grunnkretsServiceMock = mockk<GrunnkretsService>()
+    private val grunnkretsRepositoryMock = mockk<GrunnkretsRepository>()
 
     private val stemmekretsServiceMock = mockk<StemmekretsService>()
+    private val stemmekretsRepositoryMock = mockk<StemmekretsRepository>()
 
     private val kodelisteServiceMock = mockk<KodelisteService>()
 
@@ -88,7 +92,8 @@ internal class UtkastServiceTest {
         every { grenseServiceMock.validerLaasbareForGrenseendringerFinnesOgLagListeMedLaasbarOgOensketVersjon(any(), any()) } returns emptyList()
         val utkastValidatorService = UtkastValidatorService(grunnkretsServiceMock, grenseServiceMock, stemmekretsServiceMock, kodelisteServiceMock, currentTime)
         utkastService = UtkastService(utkastRepositoryMock, nasjonServiceMock, fylkeServiceMock, kommuneServiceMock, grunnkretsServiceMock,
-            stemmekretsServiceMock, grenseServiceMock, nibasEventPublisherMock, utkastValidatorService, currentTime)
+            stemmekretsServiceMock, grenseServiceMock, nibasEventPublisherMock, utkastValidatorService, currentTime,
+            stemmekretsRepositoryMock, grunnkretsRepositoryMock)
     }
 
     @Test
@@ -380,6 +385,11 @@ internal class UtkastServiceTest {
         every { nibasEventPublisherMock.publishNibasEvent(any(), any()) } returns NibasEvent(LocalDate.of(2024, Month.JANUARY, 1), emptySet())
         every { grenseServiceMock.validerLaasbareForGrenseendringerFinnesOgLagListeMedLaasbarOgOensketVersjon(any(), any()) } returns emptyList()
 
+        every { stemmekretsRepositoryMock.findById(any()) } returns Optional.of(StemmekretsBuilder.DEFAULT_STEMMEKRETS)
+        every { grunnkretsRepositoryMock.findById(any()) } returns Optional.of(GrunnkretsBuilder.DEFAULT_GRUNNKRETS)
+        every { grunnkretsServiceMock.finnesAnnenGrunnkretsMedSammeGrunnkretsnummer(any()) } returns false
+        every { stemmekretsServiceMock.finnesAnnenStemmekretsMedSammeKommuneOgStemmekretsnummer(any()) } returns false
+
         utkastService.publiserUtkast(utkast.id)
 
         assertThat(utkast.status).isEqualTo(UtkastStatus.PUBLISERT)
@@ -516,7 +526,12 @@ internal class UtkastServiceTest {
                 any())
         } returns Grunnkrets()
 
-        val redigerteFlater = utkastService.publiserEndringer(utkast.operasjoner!!, utkast, LocalDate.of(2024, Month.JANUARY, 1))
+        every { stemmekretsRepositoryMock.findById(any()) } returns Optional.of(StemmekretsBuilder.DEFAULT_STEMMEKRETS)
+        every { grunnkretsRepositoryMock.findById(any()) } returns Optional.of(GrunnkretsBuilder.DEFAULT_GRUNNKRETS)
+        every { grunnkretsServiceMock.finnesAnnenGrunnkretsMedSammeGrunnkretsnummer(any()) } returns false
+        every { stemmekretsServiceMock.finnesAnnenStemmekretsMedSammeKommuneOgStemmekretsnummer(any()) } returns false
+
+        val redigerteFlater = utkastService.publiserEndringerOgValiderUnikeKretsnumre(utkast.operasjoner!!, utkast, LocalDate.of(2024, Month.JANUARY, 1))
         assertThat(redigerteFlater).hasSize(10)
     }
 

@@ -6,6 +6,7 @@ import no.kartverket.nibas.api.v1.common.Metadataendringer
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.getUnikeKretsDelingEndringRequests
+import no.kartverket.nibas.api.v1.request.GrunnkretsSammenslaaingsendringRequest
 import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.api.v1.request.OppdaterUtkastRequest
 import no.kartverket.nibas.api.v1.request.OpprettUtkastRequest
@@ -23,7 +24,9 @@ import no.kartverket.nibas.events.EventRad
 import no.kartverket.nibas.events.EventType
 import no.kartverket.nibas.events.NibasEvent
 import no.kartverket.nibas.events.NibasEventPublisher
+import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.OptimistiskLaasException
+import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.repository.UtkastRepository
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
 import no.kartverket.nibas.service.FylkeService
@@ -54,6 +57,8 @@ class UtkastService(
     private val nibasEventPublisher: NibasEventPublisher,
     private val utkastValidatorService: UtkastValidatorService,
     private val currentTime: CurrentTime,
+    private val stemmekretsRepository: StemmekretsRepository,
+    private val grunnkretsRepository: GrunnkretsRepository,
 ) {
 
     private val logger: Logger = LoggerFactory.getLogger(UtkastService::class.java)
@@ -157,7 +162,7 @@ class UtkastService(
         }
 
         logger.debug(utkast.publiseringsInfo())
-        val flateEndringer: List<EventRad> = publiserEndringer(utkast.operasjoner!!, utkast, utkast.gyldigFra)
+        val flateEndringer: List<EventRad> = publiserEndringerOgValiderUnikeKretsnumre(utkast.operasjoner!!, utkast, utkast.gyldigFra)
 
         utkast.settPublisert()
         eventsForPublisering = nibasEventPublisher.publishNibasEvent(flateEndringer, utkast.gyldigFra)
@@ -165,11 +170,30 @@ class UtkastService(
         return eventsForPublisering
     }
 
-    internal fun publiserEndringer(operasjoner: Operasjoner, utkast: Utkast, gyldigFra: LocalDate): List<EventRad> {
+    private fun validerUnikeKretsnumre(flateEndringer: List<EventRad>) {
+        flateEndringer.filter { it.flateType == Flatetype.STEMMEKRETS && it.eventType != EventType.EXPIRED }
+            .forEach { eventRad ->
+                stemmekretsRepository.findById(eventRad.uuid).get().let { stemmekrets ->
+                    if (stemmekretsService.finnesAnnenStemmekretsMedSammeKommuneOgStemmekretsnummer(stemmekrets))
+                        throw stemmekretsService.createDuplikatStemmekretsnummerException(stemmekrets)
+                }
+            }
+
+        flateEndringer.filter { it.flateType == Flatetype.GRUNNKRETS && it.eventType != EventType.EXPIRED }
+            .forEach { eventRad ->
+                grunnkretsRepository.findById(eventRad.uuid).get().let { grunnkrets ->
+                    if (grunnkretsService.finnesAnnenGrunnkretsMedSammeGrunnkretsnummer(grunnkrets))
+                        throw grunnkretsService.createDuplikatGrunnkretsnummerException(grunnkrets)
+                }
+            }
+    }
+
+    internal fun publiserEndringerOgValiderUnikeKretsnumre(operasjoner: Operasjoner, utkast: Utkast, gyldigFra: LocalDate): List<EventRad> {
         val kretsDelingEndringer = publiserKretsDelingEndringer(operasjoner.kretsDelingEndringer, utkast, gyldigFra)
 
         val sammenslaaingsendringer =
-            publiserSammenslaaingsendringer(operasjoner.stemmekretsSammenslaaingsendring, utkast, gyldigFra)
+            publiserSammenslaaingsendringer(operasjoner.stemmekretsSammenslaaingsendring, utkast, gyldigFra) +
+            publiserSammenslaaingsendringer(operasjoner.grunnkretsSammenslaaingsendring, utkast, gyldigFra)
 
         val metadataendringer =
             publiserMetadataEndringer(
@@ -178,6 +202,7 @@ class UtkastService(
                 gyldigFra
             )
 
+        validerUnikeKretsnumre(kretsDelingEndringer + sammenslaaingsendringer + metadataendringer)
         val grenseendringer = publiserGrenseendringer(operasjoner.grenseendringer, utkast, gyldigFra)
 
         return metadataendringer + sammenslaaingsendringer + grenseendringer + kretsDelingEndringer
@@ -343,6 +368,21 @@ class UtkastService(
             )
             expiredStemmekretser.map { it.toEventRad(EventType.EXPIRED) } +
                 modifiedStemmekrets.toEventRad(EventType.MODIFIED)
+        } ?: emptyList()
+
+    private fun publiserSammenslaaingsendringer(
+        grunnkretsSammenslaaingsendring: GrunnkretsSammenslaaingsendringRequest?,
+        utkast: Utkast,
+        gyldigFra: LocalDate
+    ): List<EventRad> =
+        grunnkretsSammenslaaingsendring?.let { grunnkretsendring ->
+            val (modifiedGrunnkrets, expiredGrunnkretser) = grunnkretsService.slaaSammenGrunnkretser(
+                sammenslaaingsendringRequest = grunnkretsendring,
+                sammenslaaingsDato = gyldigFra,
+                endringstype = utkast.auditInfo.typeEndring
+            )
+            expiredGrunnkretser.map { it.toEventRad(EventType.EXPIRED) } +
+                modifiedGrunnkrets.toEventRad(EventType.MODIFIED)
         } ?: emptyList()
 
     private fun publiserKretsDelingEndringer(

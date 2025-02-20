@@ -2,12 +2,21 @@ package no.kartverket.nibas.utkast
 
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
+import no.kartverket.nibas.api.v1.common.Flatetype
+import no.kartverket.nibas.api.v1.common.Grensetype
+import no.kartverket.nibas.api.v1.common.KontekstEnhetType
+import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
+import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
+import no.kartverket.nibas.api.v1.request.GrunnkretsSammenslaaingsendringRequest
+import no.kartverket.nibas.builders.GrunnkretsRequestBuilder
 import no.kartverket.nibas.common.CurrentTime
 import no.kartverket.nibas.common.FeilVedOppdatering
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.common.ResponseException
+import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
@@ -16,6 +25,7 @@ import no.kartverket.nibas.sporing.Gyldighet
 import no.kartverket.nibas.sporing.UserFacade
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.test.context.ActiveProfiles
@@ -145,15 +155,101 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
         nyttGrunnkretsNummerFraJuli23SkalGiFeil()
     }
 
-    private fun assert1GrunnkretsPresent() {
-        assertThat(findAllGrunnkretserSortedByVersion().size).isEqualTo(1)
+    @Test
+    fun `oppdatering av grunnkrets til et allerede brukt grunnkretsnummer skal gi feil`() {
+        val opprinneligDato = LocalDate.parse("2022-01-01")
+        val (vestreKrets, oestreKrets) = saveNaboGrunnkretser(gyldigFra = opprinneligDato)
+        val grunnkretsRequest = GrunnkretsRequestBuilder().withLokalId(oestreKrets.lokalid).withGrunnkretsnummer(vestreKrets.grunnkretsnummer!!).build()
+
+        val utkastId = saveGrunnkretsUtkast(
+            navn = "Jeg vil endre grunnkretsnr",
+            oppdateringsdato = october24In2022,
+            grunnkretsRequest,
+            gyldigFra = july1In2023
+        )
+
+        // Kall til publiser skal feile.
+        assertThatThrownBy {
+            publiser(utkastId)
+        }.isInstanceOf(ResponseException.BadRequestException::class.java)
+            .hasMessageContaining("Kretsnummer ${vestreKrets.grunnkretsnummer} er brukt på flere grunnkretser innenfor kommunen")
     }
 
-    data class ResultatFraForsoekPaaPublisering(
-        val idForUtkastSomBleOpprettet: String,
-    )
+    @Test
+    fun `slaa sammen Vestre og Oestre grunnkretser med gjenbruk av nummer fra Tredje skal gi feil`() {
+        val (vestreKrets, oestreKrets, tredjeKrets) = saveNaboGrunnkretser(gyldigFra = LocalDate.parse("2022-01-01"), medTredjeKrets = true)
 
-    private fun nyttGrunnkretsNummerFraJuli23SkalGiFeil(): ResultatFraForsoekPaaPublisering {
+        val sammenslaaingsendringRequest = GrunnkretsSammenslaaingsendringRequest(
+            viderefoertGrunnkrets = IdentifikatorMedVersjon(vestreKrets.lokalid, 1),
+            grunnkretserTilSammenslaaing = listOf(IdentifikatorMedVersjon(oestreKrets.lokalid, 1)),
+            navn = "Sammenslått krets",
+            nummer = tredjeKrets.grunnkretsnummer!!
+        )
+        val utkast = UtkastBuilder.builder("Sammenslåingtest", gyldigFra = july1In2023, endringstype = Endringstype.VEDTATT_SAMMENSLAAING)
+            .withOperasjoner(Operasjoner(grunnkretsSammenslaaingsendring = sammenslaaingsendringRequest))
+            .build()
+        utkastRepository.save(utkast)
+
+        assertThatThrownBy {
+            publiser(utkast.id)
+        }.isInstanceOf(ResponseException.BadRequestException::class.java)
+            .hasMessageContaining("Kretsnummer 03010022 er brukt på flere grunnkretser innenfor kommunen")
+    }
+
+    @Test
+    fun `delGrunnkrets kaster exception hvis ny grunnkrets skaper duplikat`() {
+        //Tredje krets er et hull i Vestre krets
+        val (vestreKrets, oestreKrets, tredjeKrets) =
+            saveNaboGrunnkretser(gyldigFra = LocalDate.parse("2022-01-01"), medTredjeKrets = true, medHull = true)
+
+        val gyldighetsdato = january1In2023
+        val kretsNavn = "Ny Grunnkrets"
+        val kretsNummer = oestreKrets.grunnkretsnummer!!
+
+        val utkast = lagUtkastMedDelingAvGrunnkretsOgGrenseendringer(tredjeKrets, vestreKrets, kretsNummer, kretsNavn, gyldighetsdato,
+            Flatetype.GRUNNKRETS, KontekstEnhetType.GRUNNKRETS, Grensetype.Grunnkretsgrense)
+
+        assertThatThrownBy {
+            publiser(utkast.id)
+        }
+            .isInstanceOf(ResponseException.BadRequestException::class.java)
+            .hasMessageContaining("Kretsnummer 03010021 er brukt på flere grunnkretser innenfor kommunen (0301 UKJENT KOMMUNE) med gyldighet som overlapper med 01.01.2023 og fremover. Vennligst gi grunnkretsene unike kretsnumre før du fortsetter.")
+    }
+
+    @Test
+    fun `delGrunnkrets happy case`() {
+        //Tredje krets er et hull i Vestre krets
+        val (vestreKrets, _, tredjeKrets) =
+            saveNaboGrunnkretser(gyldigFra = LocalDate.parse("2022-01-01"), medTredjeKrets = true, medHull = true)
+
+        val gyldighetsdato = january1In2023
+        val kretsNavn = "Ny Grunnkrets"
+        val kretsNummer = "03010029"
+
+        val utkast = lagUtkastMedDelingAvGrunnkretsOgGrenseendringer(tredjeKrets, vestreKrets, kretsNummer, kretsNavn, gyldighetsdato,
+            Flatetype.GRUNNKRETS, KontekstEnhetType.GRUNNKRETS, Grensetype.Grunnkretsgrense)
+
+        publiser(utkast.id)
+
+        val nyGrunnkrets = grunnkretsService.hentGrunnkretsForGrunnkretsNummer(kretsNummer, LocalDate.now())!!
+        val oppdatertVestreKrets = grunnkretsService.hentGrunnkretsForGrunnkretsNummer(vestreKrets.grunnkretsnummer!!, LocalDate.now())!!
+        val oppdatertTredjeKrets = grunnkretsService.hentGrunnkretsForGrunnkretsNummer(tredjeKrets.grunnkretsnummer!!, LocalDate.now())!!
+
+        assertThat(nyGrunnkrets.grunnkretsnavn).isEqualTo(kretsNavn)
+        assertThat(nyGrunnkrets.gyldighet.gyldigFra).isEqualTo(gyldighetsdato)
+        assertThat(oppdatertVestreKrets.gyldighet.gyldigFra).isEqualTo(gyldighetsdato)
+        assertThat(oppdatertTredjeKrets.gyldighet.gyldigFra).isEqualTo(gyldighetsdato)
+        assertThat(vestreKrets.gyldighet.gyldigTil).isEqualTo(gyldighetsdato)
+        assertThat(tredjeKrets.gyldighet.gyldigTil).isEqualTo(gyldighetsdato)
+        assertThat(oppdatertVestreKrets.version).isGreaterThan(vestreKrets.version)
+        assertThat(oppdatertTredjeKrets.version).isGreaterThan(tredjeKrets.version)
+    }
+
+    private fun assert1GrunnkretsPresent() {
+        assertThat(findAllGrunnkretserSortedByVersion()).hasSize(1)
+    }
+
+    private fun nyttGrunnkretsNummerFraJuli23SkalGiFeil() {
         val grunnkretsRequest = createGrunnkretsRequest(
             grkrNavn = moi,
             grkrNr = grunnkretsnr0123,
@@ -177,8 +273,6 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
         assertThat(oppdateringInfo.id).isEqualTo(Identifikator(lokalid, july1In2023))
         assertThat(oppdateringInfo.type).isEqualTo(FeilVedOppdatering.Type.GRUNNKRETS)
         assertThat(oppdateringInfo.affectedIds.toSet()).isEqualTo(setOf(Identifikator(lokalid, january1In2024)))
-
-        return ResultatFraForsoekPaaPublisering(utkastId)
     }
 
     private fun nyttGrunnkretsnavnJan24(): List<Grunnkrets> {
@@ -191,7 +285,7 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
             version = 2)
 
         val grunnkretsList = findAllGrunnkretserSortedByVersion()
-        assertThat(grunnkretsList.size).isEqualTo(3)
+        assertThat(grunnkretsList).hasSize(3)
         assertGrunnkrets(grunnkretsList[0], opprinneligGrunnkretsnr, moi, Gyldighet(gyldigFra = november25In2022, gyldigTil = january1In2023), 1)
         assertGrunnkrets(grunnkretsList[1], grunnkretsnr6789, moi, Gyldighet(gyldigFra = january1In2023, gyldigTil = january1In2024), 2)
         assertGrunnkrets(grunnkretsList[2], grunnkretsnr6789, voi, Gyldighet(gyldigFra = january1In2024), 3)
@@ -209,7 +303,7 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
         )
 
         val grunnkretsList = findAllGrunnkretserSortedByVersion()
-        assertThat(grunnkretsList.size).isEqualTo(2)
+        assertThat(grunnkretsList).hasSize(2)
         assertGrunnkrets(grunnkretsList[0], opprinneligGrunnkretsnr, moi, Gyldighet(gyldigFra = november25In2022, gyldigTil = january1In2023), 1)
         assertGrunnkrets(grunnkretsList[1], grunnkretsnr6789, moi, Gyldighet(gyldigFra = january1In2023), 2)
     }
@@ -229,11 +323,12 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
         navn: String,
         oppdateringsdato: ZonedDateTime,
         grunnkretsRequest: GrunnkretsRequest,
-        gyldigFra: LocalDate
+        gyldigFra: LocalDate,
+        lokalid: String = lokalidOfGrunnkrets
     ): String {
         val utkast = UtkastBuilder.builder(navn, gyldigFra = gyldigFra)
             .withGrunnkretsRequests(
-                mapOf(lokalidOfGrunnkrets to grunnkretsRequest))
+                mapOf(lokalid to grunnkretsRequest))
             .withAuditInfo(AuditInfo(oppdateringsdato, "DUMMY"))
             .build()
         utkastRepository.save(utkast)
@@ -279,6 +374,7 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
     }
 
     private fun assertUtkastIsPublisert(utkastId: String) = assertStatusEr(utkastId, UtkastStatus.PUBLISERT)
-    private fun assertStatusEr(utkastId: String, status: UtkastStatus) = assertThat(utkastRepository.findById(utkastId).get().status).isEqualTo(status)
+    private fun assertStatusEr(utkastId: String, @Suppress("SameParameterValue") status: UtkastStatus) =
+        assertThat(utkastRepository.findById(utkastId).get().status).isEqualTo(status)
 
 }

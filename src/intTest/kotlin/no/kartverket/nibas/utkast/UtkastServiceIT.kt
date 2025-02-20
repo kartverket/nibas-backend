@@ -56,15 +56,14 @@ class UtkastServiceIT : TestWithDbContainer() {
             .build()
 
         val utkastId = utkastService.opprettUtkast(utkastRequest)
-
-        val utkast = utkastService.hentUtkast(utkastId)
+        val utkast = utkastService.hentUtkast(utkastId)!!
 
         assertThat(utkast).isNotNull
-        assertThat(utkast?.navn).isEqualTo(navn)
-        assertThat(utkast?.auditInfo?.typeEndring).isEqualTo(Endringstype.KVALITETSHEVING)
-        assertThat(utkast?.opprettetDato).isAfterOrEqualTo(timeAtTestStart)
-        assertThat(utkast?.opprettetDato).isBeforeOrEqualTo(ZonedDateTime.now())
-        assertThat(utkast?.auditInfo?.endretAv).isEqualTo("DUMMY")
+        assertThat(utkast.navn).isEqualTo(navn)
+        assertThat(utkast.auditInfo.typeEndring).isEqualTo(Endringstype.KVALITETSHEVING)
+        assertThat(utkast.opprettetDato).isAfterOrEqualTo(timeAtTestStart)
+        assertThat(utkast.opprettetDato).isBeforeOrEqualTo(ZonedDateTime.now())
+        assertThat(utkast.auditInfo.endretAv).isEqualTo("DUMMY")
     }
 
     @Test
@@ -395,10 +394,9 @@ class UtkastServiceIT : TestWithDbContainer() {
         utkastRepository.save(utkast)
 
         val eventsForPublisering = utkastService.publiserUtkast(utkast.id)
-        assertThat(eventsForPublisering.eventRader).extracting("lokalid").contains(grunnkrets.lokalid)
-        assertThat(eventsForPublisering.eventRader).extracting("flateType").contains(Flatetype.GRUNNKRETS)
-        assertThat(eventsForPublisering.eventRader).extracting("eventType").contains(EventType.MODIFIED)
-        assertThat(eventsForPublisering.eventRader).extracting("lokalid").contains(grunnkrets2.lokalid)
+        assertThat(eventsForPublisering.eventRader).extracting("lokalid").containsExactlyInAnyOrder(grunnkrets.lokalid, grunnkrets2.lokalid)
+        assertThat(eventsForPublisering.eventRader).extracting("flateType").containsOnly(Flatetype.GRUNNKRETS)
+        assertThat(eventsForPublisering.eventRader).extracting("eventType").containsOnly(EventType.MODIFIED)
     }
 
     @Test
@@ -432,11 +430,11 @@ class UtkastServiceIT : TestWithDbContainer() {
         // publiser
         utkastService.publiserUtkast(utkast.id)
         // verifiser at det går fint og at utkast og endring har dagens dato på gyldigFra feltet
-        val publisertUtkast = utkastService.hentUtkast(utkast.id)
-        val oppdatertGrunnkrets = grunnkretsService.hentGrunnkrets(Identifikator(Lokalid("c54fb55e-15d0-4528-8b88-f58d6c74bd87")))
+        val publisertUtkast = utkastService.hentUtkast(utkast.id)!!
+        val oppdatertGrunnkrets = grunnkretsService.hentGrunnkrets(Identifikator(Lokalid("c54fb55e-15d0-4528-8b88-f58d6c74bd87")))!!
 
-        assertThat(publisertUtkast?.gyldigFra).isEqualTo(iDag)
-        assertThat(oppdatertGrunnkrets?.gyldighet?.gyldigFra).isEqualTo(iDag)
+        assertThat(publisertUtkast.gyldigFra).isEqualTo(iDag)
+        assertThat(oppdatertGrunnkrets.gyldighet.gyldigFra).isEqualTo(iDag)
     }
 
     @Test
@@ -457,8 +455,8 @@ class UtkastServiceIT : TestWithDbContainer() {
 
         // publiser
         utkastService.publiserUtkast(utkast.id)
-        val publisertUtkast = utkastService.hentUtkast(utkast.id)
+        val publisertUtkast = utkastService.hentUtkast(utkast.id)!!
 
-        assertThat(publisertUtkast?.endredeInndelinger?.endredeGrunnkretser).contains("c54fb55e-15d0-4528-8b88-f58d6c74bd87")
+        assertThat(publisertUtkast.endredeInndelinger!!.endredeGrunnkretser).contains("c54fb55e-15d0-4528-8b88-f58d6c74bd87")
     }
 }

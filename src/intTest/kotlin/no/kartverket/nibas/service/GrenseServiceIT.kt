@@ -752,16 +752,6 @@ class GrenseServiceIT : TestWithDbContainer() {
 
     }
 
-    private fun lagNyGrense(id: String, grensetype: Grensetype, lokalId: String, gyldigFra: LocalDate, coordinates: List<Coordinate>): Grense {
-        return Grense(id = id, lokalid = lokalId, grensetype = grensetype)
-            .apply {
-                setGyldigFra(gyldigFra)
-                grense = GrenseHelper.geometryFactory.createLineString(
-                    coordinates.toTypedArray()
-                )
-            }
-    }
-
     @Test
     fun `lagreGrenser klarer å endre tilhørighet på stemmekretsgrense til nyopprettet stemmekrets`() {
         val gyldighetsdato = LocalDate.parse("2022-01-01")
