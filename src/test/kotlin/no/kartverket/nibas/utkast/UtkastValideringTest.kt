@@ -97,7 +97,7 @@ class UtkastValideringTest {
         val operasjoner = operasjonerMedIkkeEditerbareGrenser()
 
         val validateGyldigeOperasjoner = utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
-        assertThat(validateGyldigeOperasjoner).contains("Utkastet inneholder 4 ikke-redigerbare grenser.")
+        assertThat(validateGyldigeOperasjoner).contains("Utkastet inneholder 3 ikke-redigerbare grenser.")
     }
 
     @Test
