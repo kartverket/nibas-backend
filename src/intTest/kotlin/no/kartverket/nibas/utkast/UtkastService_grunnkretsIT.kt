@@ -183,7 +183,8 @@ class UtkastService_grunnkretsIT : TestWithDbContainer() {
             viderefoertGrunnkrets = IdentifikatorMedVersjon(vestreKrets.lokalid, 1),
             grunnkretserTilSammenslaaing = listOf(IdentifikatorMedVersjon(oestreKrets.lokalid, 1)),
             navn = "Sammenslått krets",
-            nummer = tredjeKrets.grunnkretsnummer!!
+            nummer = tredjeKrets.grunnkretsnummer!!,
+            informasjon = "Informasjon om sammenslaaingsendring",
         )
         val utkast = UtkastBuilder.builder("Sammenslåingtest", gyldigFra = july1In2023, endringstype = Endringstype.VEDTATT_SAMMENSLAAING)
             .withOperasjoner(Operasjoner(grunnkretsSammenslaaingsendring = sammenslaaingsendringRequest))

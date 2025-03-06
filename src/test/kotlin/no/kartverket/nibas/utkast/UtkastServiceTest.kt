@@ -541,7 +541,8 @@ internal class UtkastServiceTest {
             stemmekretserTilSammenslaaing =
             listOf(IdentifikatorMedVersjon("Stemmekrets-UUID-2", 1)),
             navn = "Sammenslått krets",
-            nummer = "nytt nummer"
+            nummer = "nytt nummer",
+            informasjon = "Informasjon om sammenslaaingsendring",
         )
 
     companion object {

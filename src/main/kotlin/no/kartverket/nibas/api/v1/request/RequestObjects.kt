@@ -145,7 +145,9 @@ data class StemmekretsSammenslaaingsendringRequest (
     @Schema (description = "Navnet til den sammenslåtte stemmekretsen")
     val navn: String,
     @Schema (description = "Stemmekretsnummeret til den sammenslåtte stemmekretsen")
-    val nummer: String
+    val nummer: String,
+    @Schema (description = "Informasjon om sammenslåingen som videreføres til den nye stemmekretsen og de gamle")
+    val informasjon: String?
 )
 
 @Schema(description = "Representasjon av deling av en krets som ender i to kretser der én er videreført og én er ny")
@@ -177,5 +179,7 @@ data class GrunnkretsSammenslaaingsendringRequest (
     @Schema (description = "Navnet til den sammenslåtte grunnkretsen")
     val navn: String,
     @Schema (description = "Grunnkretsnummeret til den sammenslåtte grunnkretsen")
-    val nummer: String
+    val nummer: String,
+    @Schema (description = "Informasjon om sammenslåingen som videreføres til den nye grunnkretsen og de gamle")
+    val informasjon: String?
 )

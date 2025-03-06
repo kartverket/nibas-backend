@@ -142,7 +142,8 @@ class UtkastValideringTest {
                     viderefoertStemmekrets = IdentifikatorMedVersjon("1", 5),
                     stemmekretserTilSammenslaaing = listOf(IdentifikatorMedVersjon("2", 1)),
                     navn = "",
-                    nummer = "1234567"
+                    nummer = "1234567",
+                    informasjon = "Informasjon om sammenslaaingsendring",
                 )
             )
 
@@ -191,7 +192,8 @@ class UtkastValideringTest {
                     viderefoertStemmekrets = IdentifikatorMedVersjon("1", 5),
                     stemmekretserTilSammenslaaing = listOf(IdentifikatorMedVersjon("2", 1)),
                     navn = "gyldigNavn",
-                    nummer = "ugyldigNummer"
+                    nummer = "ugyldigNummer",
+                    informasjon = "Informasjon om sammenslaaingsendring",
                 )
             )
 
@@ -307,7 +309,8 @@ class UtkastValideringTest {
                     viderefoertStemmekrets = IdentifikatorMedVersjon("1", 5),
                     stemmekretserTilSammenslaaing = listOf(IdentifikatorMedVersjon("2", 1)),
                     navn = "gyldigNavn",
-                    nummer = "4"
+                    nummer = "4",
+                    informasjon = "Informasjon om sammenslaaingsendring",
                 ),
                 grenseendringer = operasjonerMedKunEditerbareGrenser().grenseendringer
             )
@@ -768,14 +771,16 @@ class UtkastValideringTest {
                     viderefoertStemmekrets = IdentifikatorMedVersjon("1", 5),
                     stemmekretserTilSammenslaaing = listOf(IdentifikatorMedVersjon("2", 1)),
                     navn = "gyldigNavn",
-                    nummer = "4"
+                    nummer = "4",
+                    informasjon = "Informasjon om sammenslaaingsendring",
                 ),
                 grunnkretsSammenslaaingsendring =
                 GrunnkretsSammenslaaingsendringRequest(
                     viderefoertGrunnkrets = IdentifikatorMedVersjon("1", 5),
                     grunnkretserTilSammenslaaing = listOf(IdentifikatorMedVersjon("2", 1)),
                     navn = "gyldigNavn",
-                    nummer = "03010567"
+                    nummer = "03010567",
+                    informasjon = "Informasjon om sammenslaaingsendring",
                 ),
                 grenseendringer = operasjonerMedKunEditerbareGrenser().grenseendringer
             )

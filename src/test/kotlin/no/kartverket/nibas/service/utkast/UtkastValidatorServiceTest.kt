@@ -189,7 +189,8 @@ class UtkastValidatorServiceTest {
             viderefoertStemmekrets = IdentifikatorMedVersjon(lokalId = LOKALID, version = 1),
             stemmekretserTilSammenslaaing = listOf(),
             navn = "Navn etter endring",
-            nummer = "22"
+            nummer = "22",
+            informasjon = "Informasjon om sammenslaaingsendring",
         )
 
         val utkast = UtkastBuilder.builder("test", gyldigFra = datoSomVilGiFremtidEndringKonflikt)

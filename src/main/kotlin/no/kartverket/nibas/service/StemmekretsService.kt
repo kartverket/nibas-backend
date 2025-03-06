@@ -104,7 +104,12 @@ class StemmekretsService(
                     msg = "Stemmekrets til sammenslåing med identifikator: $it ble ikke funnet")
             }
 
-        stemmekretserSomUtgaar.forEach { it.setGyldigTil(sammenslaaingsDato) }
+        val sammenslaaingsInformasjon = sammenslaaingsendringRequest.informasjon.let { if (it.isNullOrBlank()) null else it  }
+
+        stemmekretserSomUtgaar.forEach {
+            it.setGyldigTil(sammenslaaingsDato)
+            it.setInfo(sammenslaaingsInformasjon)
+        }
 
         val alleStemmekretsGrensekoblinger = viderefortStemmekrets.getGrensekoblinger(sammenslaaingsDato) +
             stemmekretserSomUtgaar.flatMap { it.getGrensekoblinger(sammenslaaingsDato) }
@@ -113,6 +118,7 @@ class StemmekretsService(
             .apply {
                 stemmekretsnavn = sammenslaaingsendringRequest.navn
                 stemmekretsnummer = sammenslaaingsendringRequest.nummer
+                informasjon = sammenslaaingsInformasjon
             }
 
         // Hvis en grense deler 2 stemmekretser som er med i sammenslåingen så er den ikke en del
@@ -123,7 +129,10 @@ class StemmekretsService(
         val grensekoblingerSomUtgaar = alleStemmekretsGrensekoblinger
             .filter { grenseDeler2StemmekretserSomBlirSlaattSammen(it, alleStemmekretsGrensekoblinger) }
 
-        grensekoblingerSomUtgaar.forEach { it.grense.setGyldigTil(sammenslaaingsDato) }
+        grensekoblingerSomUtgaar.forEach {
+            it.grense.setGyldigTil(sammenslaaingsDato)
+            it.grense.setInfo(sammenslaaingsInformasjon)
+        }
 
         viderefoerteGrensekoblinger.forEach {
             nyStemmekrets.addGrensekobling(it.grense)

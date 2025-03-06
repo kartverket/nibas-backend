@@ -285,7 +285,8 @@ class UtkastServiceIT : TestWithDbContainer() {
                         viderefoertStemmekrets = IdentifikatorMedVersjon(lokalId = "test1", version = 0),
                         stemmekretserTilSammenslaaing = listOf(IdentifikatorMedVersjon(lokalId = "test2", version = 1)),
                         navn = "Navn etter endring",
-                        nummer = "22"
+                        nummer = "22",
+                        informasjon = "Informasjon om sammenslaaingsendring",
                     )
                 )
             )
@@ -314,7 +315,8 @@ class UtkastServiceIT : TestWithDbContainer() {
                         viderefoertStemmekrets = IdentifikatorMedVersjon(lokalId = "test1", version = 1),
                         stemmekretserTilSammenslaaing = listOf(IdentifikatorMedVersjon(lokalId = "test2", version = 0)),
                         navn = "navn etter endring",
-                        nummer = "22"
+                        nummer = "22",
+                        informasjon = "Informasjon om sammenslaaingsendring",
                     )
                 )
             )

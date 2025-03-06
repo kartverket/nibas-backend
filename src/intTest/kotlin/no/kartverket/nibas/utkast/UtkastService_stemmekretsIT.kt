@@ -135,7 +135,8 @@ class UtkastService_stemmekretsIT : TestWithDbContainer() {
             viderefoertStemmekrets = IdentifikatorMedVersjon(vestreKrets.lokalid, 1),
             stemmekretserTilSammenslaaing = listOf(IdentifikatorMedVersjon(oestreKrets.lokalid, 1)),
             navn = "Sammenslått krets",
-            nummer = tredjeKrets.stemmekretsnummer!!
+            nummer = tredjeKrets.stemmekretsnummer!!,
+            informasjon = "Informasjon om sammenslaaingsendring",
         )
         val utkast = UtkastBuilder.builder("Sammenslåingtest", gyldigFra = july1In2023, endringstype = Endringstype.VEDTATT_SAMMENSLAAING)
             .withOperasjoner(Operasjoner(stemmekretsSammenslaaingsendring = sammenslaaingsendringRequest))

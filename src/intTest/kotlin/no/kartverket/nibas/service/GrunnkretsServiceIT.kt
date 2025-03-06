@@ -310,12 +310,13 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         }
     }
 
-    private fun utfoerSammenslaaing(vestreKrets: Grunnkrets, oestreKrets: Grunnkrets): Grunnkrets? {
+    private fun utfoerSammenslaaing(vestreKrets: Grunnkrets, oestreKrets: Grunnkrets, informasjon: String = "Informasjon om sammenslåing"): Grunnkrets? {
         val sammenslaaingsendringRequest = GrunnkretsSammenslaaingsendringRequest(
             viderefoertGrunnkrets = IdentifikatorMedVersjon(vestreKrets.lokalid, 1),
             grunnkretserTilSammenslaaing = listOf(IdentifikatorMedVersjon(oestreKrets.lokalid, 1)),
             navn = "Sammenslått krets",
-            nummer = "999"
+            nummer = "999",
+            informasjon = informasjon,
         )
 
         grunnkretsService.slaaSammenGrunnkretser(
@@ -328,13 +329,19 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
     }
 
     @Test
-    fun `slaaSammenGrunnkretser ny krets skal bruke viderefoert navn og nummer`() {
-        val (vestreKrets, oestreKrets) = saveNaboGrunnkretser(gyldigFra = LocalDate.parse("2022-01-01"))
+    fun `slaaSammenGrunnkretser ny krets skal bruke viderefoert navn, nummer, og informasjon`() {
+        val gyldigFra = LocalDate.parse("2022-01-01")
+        val (vestreKrets, oestreKrets) = saveNaboGrunnkretser(gyldigFra = gyldigFra)
+        val sammmenslaaingInfo = "SAMMENSLAAING INFO"
+        val sammenslattGrunnkrets = utfoerSammenslaaing(vestreKrets, oestreKrets, informasjon = sammmenslaaingInfo)!!
 
-        val sammenslattGrunnkrets = utfoerSammenslaaing(vestreKrets, oestreKrets)
+        assertThat(sammenslattGrunnkrets.grunnkretsnavn).isEqualTo("Sammenslått krets")
+        assertThat(sammenslattGrunnkrets.grunnkretsnummer).isEqualTo("999")
+        assertThat(sammenslattGrunnkrets.informasjon).isEqualTo(sammmenslaaingInfo)
 
-        assertThat(sammenslattGrunnkrets?.grunnkretsnavn).isEqualTo("Sammenslått krets")
-        assertThat(sammenslattGrunnkrets?.grunnkretsnummer).isEqualTo("999")
+        assertThat(oestreKrets.getGrensekoblinger()
+            .filter { listOf("grenseDelt2Lokalid", "grenseDeltLokalid").contains(it.grense.lokalid) }
+            .all { it.grense.informasjon == sammmenslaaingInfo }).isTrue()
     }
 
     @Test

@@ -419,7 +419,8 @@ class TestWithDbContainer {
         stemmekretsnavn: String = "Øvre Singsaker",
         gyldigFra: LocalDate = LocalDate.of(2022, Month.OCTOBER, 1),
         gyldigTil: LocalDate? = null,
-        grenser: List<Grense> = emptyList()
+        grenser: List<Grense> = emptyList(),
+        informasjon: String = "Informasjon opprinnelig"
     ): Stemmekrets {
 
         val stemmekrets = StemmekretsBuilder(
@@ -430,7 +431,8 @@ class TestWithDbContainer {
             stemmekretsnummer = stemmekretsnummer,
             stemmekretsnavn = stemmekretsnavn,
             kommune = null,
-            grenser = grenser
+            grenser = grenser,
+            informasjonstekst = informasjon
         ).buildUtenKommuneOgGrenser()
 
         val save = stemmekretsRepository.save(stemmekrets)
@@ -587,9 +589,9 @@ class TestWithDbContainer {
         )
 
         val stemmekrets1 = saveStemmekrets(id = "S1", lokalid = Lokalid("S1"),
-            stemmekretsnummer = "20", stemmekretsnavn = "Vestre stemmekrets", gyldigFra = gyldigFra, grenser = lagredeGrenserForVest)
+            stemmekretsnummer = "20", stemmekretsnavn = "Vestre stemmekrets", gyldigFra = gyldigFra, grenser = lagredeGrenserForVest, informasjon = "Informasjon")
         val stemmekrets2 = saveStemmekrets(id = "S2", lokalid = Lokalid("S2"),
-            stemmekretsnummer = "21", stemmekretsnavn = "Østre stemmekrets", gyldigFra = gyldigFra, grenser = lagredeGrenserForOest)
+            stemmekretsnummer = "21", stemmekretsnavn = "Østre stemmekrets", gyldigFra = gyldigFra, grenser = lagredeGrenserForOest, informasjon = "Informasjon")
 
         val kommune1 = saveKommuneOgUnikLokalid(
             id = "idKommuneVest", lokalid = "kommuneVest", gyldigFra = gyldigFra,
@@ -706,7 +708,8 @@ class TestWithDbContainer {
             stemmekretsnummer = "20",
             stemmekretsnavn = "Vestre krets",
             gyldigFra = gyldigFra,
-            grenser = lagredeGrenserForVest + lagredeGrenserForHull
+            grenser = lagredeGrenserForVest + lagredeGrenserForHull,
+            informasjon = "Informasjon opprinnelig"
         )
 
         val kretsOest = saveStemmekrets(
@@ -715,7 +718,8 @@ class TestWithDbContainer {
             stemmekretsnummer = "21",
             stemmekretsnavn = "Østre krets",
             gyldigFra = gyldigFra,
-            grenser = lagredeGrenserForOest
+            grenser = lagredeGrenserForOest,
+            informasjon = "Informasjon opprinnelig"
         )
 
         val stemmekretsMutableList = mutableListOf(kretsVest, kretsOest)
@@ -726,7 +730,8 @@ class TestWithDbContainer {
                 stemmekretsnummer = "22",
                 stemmekretsnavn = "Tredje krets",
                 gyldigFra = gyldigFra,
-                grenser = lagredeGrenserForHull
+                grenser = lagredeGrenserForHull,
+                informasjon = "Informasjon opprinnelig"
             )
             stemmekretsMutableList.add(tredjeKrets)
         }

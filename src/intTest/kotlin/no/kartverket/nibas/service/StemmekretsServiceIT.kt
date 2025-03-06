@@ -378,13 +378,30 @@ class StemmekretsServiceIT : TestWithDbContainer() {
     }
 
     @Test
-    fun `slaaSammenStemmekretser ny krets skal bruke viderefoert navn og nummer`() {
+    fun `slaaSammenStemmekretser ny krets skal bruke viderefoert navn, nummer, og satt informasjon`() {
+        val utgaattKretsGyldigFra = LocalDate.parse("2022-01-01")
+        val (vestreKrets, oestreKrets) = saveNaboStemmekretser(gyldigFra = utgaattKretsGyldigFra)
+        val sammmenslaaingInfo = "SAMMENSLAAING INFO"
+        val sammenslattStemmekrets = utfoerSammenslaaing(vestreKrets, oestreKrets, informasjon = sammmenslaaingInfo)!!
+
+        assertThat(sammenslattStemmekrets.stemmekretsnavn).isEqualTo("Sammenslått krets")
+        assertThat(sammenslattStemmekrets.stemmekretsnummer).isEqualTo("999")
+        assertThat(sammenslattStemmekrets.informasjon).isEqualTo(sammmenslaaingInfo)
+
+        assertThat(oestreKrets.getGrensekoblinger()
+            .filter { listOf("grenseDelt2Lokalid", "grenseDeltLokalid").contains(it.grense.lokalid) }
+            .all { it.grense.informasjon == sammmenslaaingInfo }).isTrue()
+    }
+
+    @Test
+    fun `slaaSammenStemmekretser med blank info skal nulle ut informasjon`() {
         val (vestreKrets, oestreKrets) = saveNaboStemmekretser(gyldigFra = LocalDate.parse("2022-01-01"))
 
-        val sammenslattStemmekrets = utfoerSammenslaaing(vestreKrets, oestreKrets)
+        val sammenslattStemmekrets = utfoerSammenslaaing(vestreKrets, oestreKrets, informasjon = "       ")
 
         assertThat(sammenslattStemmekrets?.stemmekretsnavn).isEqualTo("Sammenslått krets")
         assertThat(sammenslattStemmekrets?.stemmekretsnummer).isEqualTo("999")
+        assertThat(sammenslattStemmekrets?.informasjon).isEqualTo(null)
     }
 
     @Test
@@ -439,12 +456,13 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         }
     }
 
-    private fun utfoerSammenslaaing(vestreKrets: Stemmekrets, oestreKrets: Stemmekrets): Stemmekrets? {
+    private fun utfoerSammenslaaing(vestreKrets: Stemmekrets, oestreKrets: Stemmekrets, informasjon: String = "Informasjon om sammenslaaingsendring"): Stemmekrets? {
         val sammenslaaingsendringRequest = StemmekretsSammenslaaingsendringRequest(
             viderefoertStemmekrets = IdentifikatorMedVersjon(vestreKrets.lokalid, 1),
             stemmekretserTilSammenslaaing = listOf(IdentifikatorMedVersjon(oestreKrets.lokalid, 1)),
             navn = "Sammenslått krets",
-            nummer = "999"
+            nummer = "999",
+            informasjon = informasjon,
         )
 
         stemmekretsService.slaaSammenStemmekretser(

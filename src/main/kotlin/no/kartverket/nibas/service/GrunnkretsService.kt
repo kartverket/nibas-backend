@@ -152,7 +152,12 @@ class GrunnkretsService(
                     msg = "Grunnkrets til sammenslåing med identifikator: $it ble ikke funnet")
             }
 
-        grunnkretserSomUtgaar.forEach { it.setGyldigTil(sammenslaaingsDato) }
+        val sammenslaaingsInformasjon = sammenslaaingsendringRequest.informasjon.let { if (it.isNullOrBlank()) null else it  }
+
+        grunnkretserSomUtgaar.forEach {
+            it.setGyldigTil(sammenslaaingsDato)
+            it.setInfo(sammenslaaingsendringRequest.informasjon)
+        }
 
         val alleGrunnkretsGrenseKoblinger = viderefoertGrunnkrets.getGrensekoblinger(sammenslaaingsDato) +
             grunnkretserSomUtgaar.flatMap { it.getGrensekoblinger(sammenslaaingsDato) }
@@ -161,6 +166,7 @@ class GrunnkretsService(
             .apply {
                 grunnkretsnavn = sammenslaaingsendringRequest.navn
                 grunnkretsnummer = sammenslaaingsendringRequest.nummer
+                informasjon = sammenslaaingsInformasjon
             }
 
         val viderefoerteGrensekoblinger = alleGrunnkretsGrenseKoblinger
@@ -169,7 +175,10 @@ class GrunnkretsService(
         val grensekoblingerSomUtgaar = alleGrunnkretsGrenseKoblinger
             .filter { grenseDeler2GrunnkretserSomBlirSlaattSammen(it, alleGrunnkretsGrenseKoblinger) }
 
-        grensekoblingerSomUtgaar.forEach { it.grense.setGyldigTil(sammenslaaingsDato) }
+        grensekoblingerSomUtgaar.forEach {
+            it.grense.setGyldigTil(sammenslaaingsDato)
+            it.grense.setInfo(sammenslaaingsInformasjon)
+        }
 
         viderefoerteGrensekoblinger.forEach {
             nyGrunnkrets.addGrensekobling(it.grense)
