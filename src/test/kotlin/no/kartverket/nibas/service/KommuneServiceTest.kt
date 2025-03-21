@@ -227,6 +227,91 @@ class KommuneServiceTest {
         val grunnkretser = kommuneService.hentAlleGrunnkretserForKommune(kommunenummer, gyldighetsdato)
         assertEquals(grunnkretser, listOf(gk1, gk2))
     }
+    @Test
+    fun `hentGrensekoblingerForAlleGrunnkretserIKommuneHistoriske returnerer kun grunnkretser som ikke er gyldig gyldighetsdato`() {
+        val gk1 =
+            GrunnkretsBuilder(id = "1", lokalId = Lokalid("87"))
+                .withGyldigFra(LocalDate.of(2020, Month.JANUARY, 1))
+                .build()
+        val gk2 =
+            GrunnkretsBuilder(id = "2", lokalId = Lokalid("88"))
+                .withGyldigFra(LocalDate.of(2019, Month.JANUARY, 1))
+                .withGyldigTil(LocalDate.of(2020, Month.JANUARY, 1))
+                .build()
+
+        val kommune =
+            KommuneBuilder()
+                .withNavn("Oslo")
+                .build()
+
+        val unikGrenseGK1 = GrenseBuilder().withGyldigFra(LocalDate.of(2020, Month.JANUARY, 1)).withLokalId("unikGrenseGK1").build()
+        val unikGrenseGK2 = GrenseBuilder().withGyldigFra(LocalDate.of(2020, Month.JANUARY, 1)).withLokalId("unikGrenseGK2").build()
+        val arkivertGrense = GrenseBuilder()
+            .withGyldigFra(LocalDate.of(2019, Month.JANUARY, 1))
+            .withGyldigTil(LocalDate.of(2020, Month.JANUARY, 1))
+            .withLokalId("arkivertGrense").build()
+
+        val grensekoblingerGK1 = listOf(
+            GrunnkretsGrenseKobling(grunnkrets = gk1, grense = unikGrenseGK1),
+            GrunnkretsGrenseKobling(grunnkrets = gk1, grense = arkivertGrense)
+        )
+
+        val grensekoblingerGK2 = listOf(
+            GrunnkretsGrenseKobling(grunnkrets = gk2, grense = unikGrenseGK2),
+            GrunnkretsGrenseKobling(grunnkrets = gk2, grense = arkivertGrense)
+        )
+
+        every { kommuneRepositoryMock.findGyldigObjektForIdentifikator(any()) } returns kommune
+        every { grunnkretsGrenseKoblingRepositoryMock.findByGrunnkretsKommuneLokalid(any()) } returns grensekoblingerGK1 + grensekoblingerGK2
+        val gyldigTilDate: LocalDate = LocalDate.of(2020, Month.JANUARY, 1)
+        val identifikator = Identifikator(Lokalid(kommune.lokalid), gyldigTilDate)
+        val grunnkretsGrenser = kommuneService.hentGrensekoblingerForAlleGrunnkretserIKommuneHistoriske((identifikator))
+            .sortedBy { it.grense.lokalid }
+        assertThat(grunnkretsGrenser).hasSize(1)
+        assertThat(grunnkretsGrenser[0].grense.lokalid).isEqualTo("arkivertGrense")
+    }
+    @Test
+    fun `hentGrensekoblingerForAlleStemmekretserIKommuneHistoriske returnerer kun stemmekretser for gyldighetsdato`() {
+        val sk1 =
+            StemmekretsBuilder(id = "1", lokalId = Lokalid("87"))
+                .withGyldigFra(LocalDate.of(2020, Month.JANUARY, 1))
+                .build()
+        val sk2 =
+            StemmekretsBuilder(id = "2", lokalId = Lokalid("88"))
+                .withGyldigFra(LocalDate.of(2019, Month.JANUARY, 1))
+                .withGyldigTil(LocalDate.of(2020, Month.JANUARY, 1))
+                .build()
+
+        val kommune =
+            KommuneBuilder()
+                .withNavn("Oslo")
+                .build()
+
+        val unikGrenseSK1 = GrenseBuilder().withGyldigFra(LocalDate.of(2020, Month.JANUARY, 1)).withLokalId("unikGrenseSK1").build()
+        val unikGrenseSK2 = GrenseBuilder().withGyldigFra(LocalDate.of(2020, Month.JANUARY, 1)).withLokalId("unikGrenseSK2").build()
+        val arkivertGrense = GrenseBuilder().withGyldigFra(LocalDate.of(2019, Month.JANUARY, 1))
+            .withGyldigTil(LocalDate.of(2020, Month.JANUARY, 1))
+            .withLokalId("arkivertGrense").build()
+
+        val grensekoblingerSK1 = listOf(
+            StemmekretsGrenseKobling(stemmekrets = sk1, grense = unikGrenseSK1),
+            StemmekretsGrenseKobling(stemmekrets = sk1, grense = arkivertGrense)
+        )
+
+        val grensekoblingerSK2 = listOf(
+            StemmekretsGrenseKobling(stemmekrets = sk2, grense = unikGrenseSK2),
+            StemmekretsGrenseKobling(stemmekrets = sk2, grense = arkivertGrense)
+        )
+
+        every { kommuneRepositoryMock.findGyldigObjektForIdentifikator(any()) } returns kommune
+        every { stemmekretsGrenseKoblingRepositoryMock.findByStemmekretsKommuneLokalid(any()) } returns grensekoblingerSK1 + grensekoblingerSK2
+        val gyldigTilDate: LocalDate = LocalDate.of(2020, Month.JANUARY, 1)
+        val identifikator = Identifikator(Lokalid(kommune.lokalid), gyldigTilDate)
+        val stemmekretsGrenser = kommuneService.hentGrensekoblingerForAlleStemmekretserIKommuneHistoriske((identifikator))
+            .sortedBy { it.grense.lokalid }
+        assertThat(stemmekretsGrenser).hasSize(1)
+        assertThat(stemmekretsGrenser[0].grense.lokalid).isEqualTo("arkivertGrense")
+    }
 
     @Test
     fun `hentGrensekoblingerForAlleStemmekretserIKommune skal returnere korrekte grenser`() {

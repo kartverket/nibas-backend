@@ -91,6 +91,11 @@ class GrenseBuilder(private val id: String = "1",
         return this
     }
 
+    fun withGyldigTil(dato: LocalDate): GrenseBuilder {
+        this.gyldigTil = dato
+        return this
+    }
+
 }
 
 const val LOKALID = "lokalId1"

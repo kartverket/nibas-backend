@@ -67,6 +67,18 @@ class KommuneService(
             ?.toSet() ?: emptySet()
     }
 
+    fun hentGrensekoblingerForAlleGrunnkretserIKommuneHistoriske (
+        identifikator: Identifikator
+    ): Set<GrunnkretsGrenseKobling> {
+        val dagenFoer = identifikator.gyldighetsdato.minusDays(1)
+        return hentKommune(identifikator)
+            ?.let { grunnkretsGrenseKoblingRepository.findByGrunnkretsKommuneLokalid(it.kommuneLokalid) }
+            ?.filter { it.grense.gyldigPaaDato(dagenFoer) && it.grunnkrets.gyldigPaaDato(dagenFoer) }
+            ?.filter { !it.grense.gyldigPaaDato(identifikator.gyldighetsdato) && !it.grunnkrets.gyldigPaaDato((identifikator.gyldighetsdato)) }
+            ?.distinctBy { it.grense.lokalid }
+            ?.toSet() ?: emptySet()
+    }
+
     fun hentGrensekoblingerForAlleStemmekretserIKommune(identifikator: Identifikator): Set<StemmekretsGrenseKobling> {
         return hentKommune(identifikator)
             ?.let { stemmekretsGrenseKoblingRepository.findByStemmekretsKommuneLokalid(it.kommuneLokalid) }
@@ -74,6 +86,18 @@ class KommuneService(
             ?.distinctBy { it.grense.lokalid }
             ?.toSet() ?: emptySet()
     }
+    fun hentGrensekoblingerForAlleStemmekretserIKommuneHistoriske (
+        identifikator: Identifikator
+    ): Set<StemmekretsGrenseKobling> {
+        val dagenFoer = identifikator.gyldighetsdato.minusDays(1)
+        return hentKommune(identifikator)
+            ?.let { stemmekretsGrenseKoblingRepository.findByStemmekretsKommuneLokalid(it.kommuneLokalid) }
+            ?.filter { it.grense.gyldigPaaDato(dagenFoer) && it.stemmekrets.gyldigPaaDato(dagenFoer) }
+            ?.filter { !it.grense.gyldigPaaDato(identifikator.gyldighetsdato) && !it.stemmekrets.gyldigPaaDato(identifikator.gyldighetsdato) }
+            ?.distinctBy { it.grense.lokalid }
+            ?.toSet() ?: emptySet()
+    }
+
 
     fun hentKommunesInndelingerMedDeltGeometriGrenser(identifikator: Identifikator): List<GrenseKobling> {
         val stemmekretsKoblinger = hentGrensekoblingerForAlleStemmekretserIKommune(identifikator)

@@ -104,6 +104,16 @@ interface KommuneApi {
         @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?
     ): FeatureCollection
 
+    @Operation(summary = "Henter grunnkretsgrenser som ble historiske på gitt gyldigTil-dato, knyttet til gitt kommune")
+    @DefaultFeatureCollectionApiResponses
+    @GetMapping("/{id}/grunnkretsgrenserHistoriske", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun hentKommunesGrunnkretsgrenserHistoriske(
+        @Parameter(description = "ID til kommunen man vil hente grunnkretsgrensene til") @PathVariable(name = "id") lokalid: String,
+        @Parameter(description = "gyldigTilDate for da grunnkretsgrensene ble historiske") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        @RequestParam(required = true, name = "gyldigTilDate") gyldigTilDate: LocalDate
+    ): FeatureCollection
+
+
     @Operation(summary = "Hent kommunes stemmekretser", description = "Henter alle stemmekretser som tilhører en kommune.")
     @ApiResponses(
         ApiResponse(
@@ -129,6 +139,15 @@ interface KommuneApi {
         @Parameter(description = "ID til kommunen man vil hente stemmekretsgrensene til") @PathVariable(name = "id") lokalid: String,
         @Parameter(description = "Eventuell gyldighetsdato for kommune (default = dagens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
         @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?
+    ): FeatureCollection
+
+    @Operation(summary = "Henter stemmekretsgrenser som ble historiske på gitt gyldigTil-dato, knyttet til gitt kommune")
+    @DefaultFeatureCollectionApiResponses
+    @GetMapping("/{id}/stemmekretsgrenserHistoriske", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun hentKommunesStemmekretsgrenserHistoriske(
+        @Parameter(description = "ID til kommunen man vil hente stemmekretsgrensene til") @PathVariable(name = "id") lokalid: String,
+        @Parameter(description = "gyldigTilDate for da stemmekretsgrensene ble historiske") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        @RequestParam(required = true, name = "gyldigTilDate") gyldigTilDate: LocalDate
     ): FeatureCollection
 
     @Operation(summary = "Henter alle grenser til inndelinger med delt geometri til kommunegrensa i en gitt kommune")

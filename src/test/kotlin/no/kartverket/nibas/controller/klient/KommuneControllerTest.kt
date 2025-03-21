@@ -8,24 +8,21 @@ import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
+import no.kartverket.nibas.builders.StemmekretsBuilder
 import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
-import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
+import no.kartverket.nibas.domain.StemmekretsGrenseKobling
 import no.kartverket.nibas.extensions.flate.toGrunnkretsResponse
-import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import no.kartverket.nibas.service.GrunnkretsService
 import no.kartverket.nibas.service.KommuneService
 import no.kartverket.nibas.service.StemmekretsService
-import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.time.LocalDate
-import java.time.Month
 import java.time.format.DateTimeFormatter
 
 @WebMvcTest(KommuneController::class)
@@ -131,6 +128,23 @@ class KommuneControllerTest : NibasMvcTest() {
                 expectedResponseObject = listOf(grunnkrets.toGrunnkretsResponse()),
                 resultMatchers = listOf(status().isOk)
             ))
+    }
+
+    @Test
+    fun hentGrunnkretserForKommuneHistoriskeGir200_OK() {
+        val kommune = KommuneBuilder().build()
+        val grense = GrenseBuilder().withGrensetype(Grensetype.Grunnkretsgrense).build()
+        val grunnkrets = GrunnkretsBuilder().withKommune(kommune).build()
+        every { kommuneService.hentGrensekoblingerForAlleGrunnkretserIKommuneHistoriske(any()) } returns setOf(GrunnkretsGrenseKobling(grunnkrets, grense))
+        get("/v1/kommuner/1/grunnkretsgrenserHistoriske?gyldigTilDate=${formattedDateString(LocalDate.now())}",status().isOk)
+    }
+
+    @Test
+    fun hentStemmekretserForKommuneHistoriskeGir200_OK() {
+        val grense = GrenseBuilder().withGrensetype(Grensetype.Stemmekretsgrense).build()
+        val stemmekrets = StemmekretsBuilder().build()
+        every { kommuneService.hentGrensekoblingerForAlleStemmekretserIKommuneHistoriske(any()) } returns setOf(StemmekretsGrenseKobling(stemmekrets, grense))
+        get("/v1/kommuner/1/stemmekretsgrenserHistoriske?gyldigTilDate=${formattedDateString(LocalDate.now())}",status().isOk)
     }
 
     @Test

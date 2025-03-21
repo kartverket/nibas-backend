@@ -4,7 +4,6 @@ import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.klient.KommuneApi
 import no.kartverket.nibas.api.v1.klient.response.GrunnkretsResponse
 import no.kartverket.nibas.api.v1.klient.response.InndelingResponse
-import no.kartverket.nibas.api.v1.klient.response.InndelingSearchResponse
 import no.kartverket.nibas.api.v1.klient.response.KommuneResponse
 import no.kartverket.nibas.api.v1.klient.response.StemmekretsResponse
 import no.kartverket.nibas.api.v1.klient.response.toInndelingResponse
@@ -112,5 +111,35 @@ class KommuneController(
         }
 
         return (stemmekretser.map { it.toInndelingResponse() } + grunnkretser.map { it.toInndelingResponse() })
+    }
+
+    override fun hentKommunesStemmekretsgrenserHistoriske(
+        lokalid: String,
+        gyldigTilDate: LocalDate
+    ): FeatureCollection {
+        val identifikator = Identifikator(Lokalid(lokalid), gyldigTilDate)
+
+        val grensekoblinger = kommuneService.hentGrensekoblingerForAlleStemmekretserIKommuneHistoriske(
+            identifikator = identifikator
+        )
+        return FeatureCollection(
+            features = grensekoblinger
+                .map { it.grenseKoblingToFeature(gyldigTilDate) } // Tar ikke med utgåtte/gamle versjoner av kontekstegenskaper i returen, derfor gyldigTilDate her
+        )
+    }
+
+    override fun hentKommunesGrunnkretsgrenserHistoriske(
+        lokalid: String,
+        gyldigTilDate: LocalDate
+    ): FeatureCollection {
+        val identifikator = Identifikator(Lokalid(lokalid), gyldigTilDate)
+
+        val grensekoblinger = kommuneService.hentGrensekoblingerForAlleGrunnkretserIKommuneHistoriske(
+            identifikator = identifikator
+        )
+        return FeatureCollection(
+            features = grensekoblinger
+                .map { it.grenseKoblingToFeature(gyldigTilDate) }
+        )
     }
 }
