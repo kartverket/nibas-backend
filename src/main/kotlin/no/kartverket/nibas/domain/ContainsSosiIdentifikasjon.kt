@@ -1,6 +1,5 @@
 package no.kartverket.nibas.domain
 
-import java.io.Serializable
 
 /**
  * Datatype Identifikasjon er beskrevet her:

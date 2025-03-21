@@ -28,6 +28,23 @@ dependencyManagement {
 repositories {
     mavenLocal()
     mavenCentral()
+    maven {
+        url = uri("https://maven.pkg.github.com/kartverket/matrikkelapi-v1-wsclient")
+        val matrikkelRepoToken = project.findProperty("GH_PACKAGES_PAT") as String?
+            ?: System.getenv("GH_PACKAGES_PAT")
+        if (!matrikkelRepoToken.isNullOrBlank()) {
+            credentials(HttpHeaderCredentials::class) {
+                name = "Authorization"
+                value = "Bearer $matrikkelRepoToken"
+            }
+            authentication {
+                create("header", HttpHeaderAuthentication::class)
+            }
+        } else {
+            logger.warn("GH_PACKAGES_PAT er ikke satt: Kan ikke hente avhengigheter fra GitHub Packages")
+        }
+    }
+
 }
 
 
@@ -85,6 +102,11 @@ dependencies {
     implementation(libs.opentelemetry.api)
     // This library provides Hibernate 5.5+ Json column support, which is not natively supported by Hibernate
     implementation(libs.hypersistence.utils.hibernate)
+
+    //WS
+    implementation(libs.matrikkelapi.wsclient)
+    implementation(libs.org.apache.cxf.frontend)
+    implementation(libs.org.apache.cxf.transports)
 
     runtimeOnly(libs.flyway.core)
     runtimeOnly(libs.flyway.postgres)

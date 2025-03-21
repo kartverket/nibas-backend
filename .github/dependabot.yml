@@ -3,12 +3,19 @@ registries:
   maven-github:
     type: maven-repository
     url: https://maven.pkg.github.com/kartverket
+  maven-matrikkel:
+    type: maven-repository
+    url: https://maven.pkg.github.com/kartverket/matrikkelapi-v1-wsclient
+    username: ${{ secrets.GH_USERNAME }}
+    password: ${{ secrets.GH_PACKAGES_PAT }}
+
 updates:
   # Sjekker også oppdateringer på GitHub Maven Package aut-lib
   - package-ecosystem: "gradle"
     directory: "/"
     registries:
       - maven-github
+      - maven-matrikkel
     schedule:
       interval: daily
 

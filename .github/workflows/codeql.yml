@@ -43,6 +43,8 @@ jobs:
 
       - name: Build
         run: ./gradlew build -x test -x intTest --info
+        env:
+          GH_PACKAGES_PAT: ${{ secrets.GH_PACKAGES_PAT }}
 
 
       - name: Perform CodeQL Analysis

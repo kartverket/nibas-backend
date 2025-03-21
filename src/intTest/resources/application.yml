@@ -17,3 +17,11 @@ nibas:
       invalidate: 0 0 3 * * *
   idporten:
     url: https://test.idporten.no
+---
+# Hver dag kl 04
+nibas:
+  idporten:
+    url: https://idporten.no
+  cron:
+    matrikkelkodeliste:
+      invalidate: 0 0 4 * * *

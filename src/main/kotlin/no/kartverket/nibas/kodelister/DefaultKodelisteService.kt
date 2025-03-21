@@ -21,6 +21,8 @@ class DefaultKodelisteService(private val kodelisteFetcher: KodelisteFetcher) : 
     override fun clearCachedeKodelister() {
         logger.info("Invalidating cachede kodelister.")
         kodelisteByTypeMap.clear()
+        //Henter kodelista på nytt, for å spare tid ved første hent av kodeliste
+        getMaalemetodeKoderMap()
     }
 
     override fun getKommunenummerIdByCodeValue(codeValue: String): String {

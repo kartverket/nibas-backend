@@ -7,8 +7,10 @@ kotlinMockitoVersion = "5.4.0"
 kotlinPluginVersion = "1.9.22"
 kotlinxCoroutinesCoreVersion = "1.10.1"
 logstashVersion = "8.0"
+matrikkelVersion = "4.18.1.0"
 nimbusJwtVersion = "10.0.2"
 openTelemetryVersion = "1.48.0"
+orgApacheCfxVersion = "4.1.1"
 prometheusVersion = "1.14.5"
 spatial4jVersion = "0.8"
 springCloudStarterVaultConfigVersion = "4.2.1"
@@ -38,10 +40,13 @@ locationtech-jts-io-common = { module = "org.locationtech.jts.io:jts-io-common",
 locationtech-jts-modules = { module = "org.locationtech.jts:jts-modules", version.ref = "jtsVersion" }
 locationtech-spatial4j = { module = "org.locationtech.spatial4j:spatial4j", version.ref = "spatial4jVersion" }
 logstash-logback-encoder = { module = "net.logstash.logback:logstash-logback-encoder", version.ref = "logstashVersion" }
+matrikkelapi-wsclient = { module = "no.kartverket.matrikkelapi-v1:matrikkelapi-v1-wsclient", version.ref = "matrikkelVersion" }
 micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "prometheusVersion" }
 nimbus-jose-jwt = { module = "com.nimbusds:nimbus-jose-jwt", version.ref = "nimbusJwtVersion" }
 opentelemetry-api = { module = "io.opentelemetry:opentelemetry-api", version.ref = "openTelemetryVersion" }
 opentelemetry-bom = { module = "io.opentelemetry:opentelemetry-bom", version.ref = "openTelemetryVersion" }
+org-apache-cxf-frontend ={module = "org.apache.cxf:cxf-rt-frontend-jaxws", version.ref = "orgApacheCfxVersion" }
+org-apache-cxf-transports ={module = "org.apache.cxf:cxf-rt-transports-http", version.ref = "orgApacheCfxVersion" }
 postgres = { module = "org.postgresql:postgresql" }
 spring-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator" }
 spring-batch-test = { module = "org.springframework.batch:spring-batch-test" }

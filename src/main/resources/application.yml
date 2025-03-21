@@ -84,6 +84,14 @@ nibas:
     kodeliste:
       invalidate: 0 0 3 * * *
 ---
+# Hver dag kl 04
+nibas:
+  idporten:
+    url: https://idporten.no
+  cron:
+    matrikkelkodeliste:
+      invalidate: 0 0 4 * * *
+---
 spring:
   config:
     activate:
