@@ -29,9 +29,9 @@ class MatrikkelKodelisteService @Autowired constructor(
     fun hentKodelisterFraMatrikkelen() {
         logger.info("Oppfrisker cachede matrikkel-kodelister.")
 
-        val matrikkelenUrl = environment.getRequiredProperty("matrikkelen.wfs.url")
-        val matrikkelenUsername = environment.getRequiredProperty("matrikkelen.username")
-        val matrikkelenPassword = environment.getRequiredProperty("matrikkelen.password")
+        val matrikkelenUrl = environment.getRequiredProperty("MATRIKKELEN_WFS_URL")
+        val matrikkelenUsername = environment.getRequiredProperty("MATRIKKELEN_USERNAME")
+        val matrikkelenPassword = environment.getRequiredProperty("MATRIKKELEN_PASSWORD")
 
         val matrikkelApi = MatrikkelApi(
             URI(matrikkelenUrl),

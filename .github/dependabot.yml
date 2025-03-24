@@ -6,7 +6,6 @@ registries:
   maven-matrikkel:
     type: maven-repository
     url: https://maven.pkg.github.com/kartverket/matrikkelapi-v1-wsclient
-    username: ${{ secrets.GH_USERNAME }}
     password: ${{ secrets.GH_PACKAGES_PAT }}
 
 updates:
