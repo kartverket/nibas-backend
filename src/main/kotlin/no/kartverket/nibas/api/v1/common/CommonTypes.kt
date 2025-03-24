@@ -37,9 +37,9 @@ enum class KontekstEnhetType {
 enum class Grensetype(val value: String, val dbKey: String, val editerbar: Boolean) {
     Kommunegrense("Kommunegrense", "Kommunegrense", true),
     Fylkesgrense("Fylkesgrense", "Fylkesgrense", true),
-    Riksgrense("Riksgrense", "Riksgrense", false),
-    AvtaltAvgrensningslinje("AvtaltAvgrensningslinje", "AvtaltAvgrensningslinje", false),
-    Territorialgrense("Territorialgrense", "Territorialgrense", false),
+    Riksgrense("Riksgrense", "Riksgrense", true),
+    AvtaltAvgrensningslinje("AvtaltAvgrensningslinje", "AvtaltAvgrensningslinje", true),
+    Territorialgrense("Territorialgrense", "Territorialgrense", true),
     Grunnlinje("Grunnlinje", "Grunnlinje", false),
     Lovvirkeomraadegrense("LovVirkeområdeGrense", "LovVirkeområdeGrense", false),
     Grunnkretsgrense("Grunnkretsgrense", "Grunnkretsgrense", true),

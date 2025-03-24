@@ -10,6 +10,7 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.AdministrativGrenseMet
 import no.kartverket.nibas.api.v1.common.geojson.metadata.AvtaltAvgrensningslinjeMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.CommonMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.DokumentasjonsreferanseDTO
+import no.kartverket.nibas.api.v1.common.geojson.metadata.GrunnlinjeMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.KommunalKretsgrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Metadata
@@ -67,6 +68,7 @@ class FeatureBuilder(private var id: String? = "1") {
                 Grensetype.Stemmekretsgrense -> KommunalKretsgrenseMetadata(common = commonMetadata)
                 Grensetype.Grunnkretsgrense -> StatistiskgrenseMetadata(common = commonMetadata)
                 Grensetype.Delomraadegrense -> StatistiskgrenseMetadata(common = commonMetadata)
+                Grensetype.Grunnlinje -> GrunnlinjeMetadata(common = commonMetadata)
                 else -> throw RuntimeException("Not implemented yet.")
             }
         }

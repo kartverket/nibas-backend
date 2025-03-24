@@ -258,7 +258,7 @@ internal class UtkastServiceTest {
 
         assertThatThrownBy { utkastService.oppdaterUtkast("123", utkast) }
             .isInstanceOf(BadRequestException::class.java)
-            .hasMessageContaining("Utkastet inneholder 3 ikke-redigerbare grenser")
+            .hasMessageContaining("Utkastet inneholder 1 ikke-redigerbare grenser")
     }
 
     @Test
@@ -556,7 +556,8 @@ internal class UtkastServiceTest {
                     FeatureBuilder("5").withGrensetype(Grensetype.Territorialgrense).build(),
                     FeatureBuilder("6").withGrensetype(Grensetype.Grunnkretsgrense).build(),
                     FeatureBuilder("7").withGrensetype(Grensetype.Delomraadegrense).build(),
-                    FeatureBuilder("8").withGrensetype(Grensetype.Stemmekretsgrense).build()
+                    FeatureBuilder("8").withGrensetype(Grensetype.Stemmekretsgrense).build(),
+                    FeatureBuilder("9").withGrensetype(Grensetype.Grunnlinje).build()
                 )
             )
         )
@@ -567,7 +568,11 @@ internal class UtkastServiceTest {
                     FeatureBuilder("1").withGrensetype(Grensetype.Grunnkretsgrense).build(),
                     FeatureBuilder("2").withGrensetype(Grensetype.Delomraadegrense).build(),
                     FeatureBuilder("3").withGrensetype(Grensetype.Stemmekretsgrense).build(),
-                    FeatureBuilder("4").withGrensetype(Grensetype.Kommunegrense).build()
+                    FeatureBuilder("4").withGrensetype(Grensetype.Kommunegrense).build(),
+                    FeatureBuilder("5").withGrensetype(Grensetype.Fylkesgrense).build(),
+                    FeatureBuilder("6").withGrensetype(Grensetype.AvtaltAvgrensningslinje).build(),
+                    FeatureBuilder("7").withGrensetype(Grensetype.Riksgrense).build(),
+                    FeatureBuilder("8").withGrensetype(Grensetype.Territorialgrense).build()
                 )
             )
         )
