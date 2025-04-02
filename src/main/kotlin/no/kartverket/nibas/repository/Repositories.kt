@@ -17,6 +17,8 @@ import no.kartverket.nibas.domain.UnikLokalid
 import no.kartverket.nibas.domain.utkast.Utkast
 import no.kartverket.nibas.domain.utkast.UtkastStatus
 import no.kartverket.nibas.sporing.Laasbar
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
@@ -73,7 +75,27 @@ interface StemmekretsRepository : CrudRepositoryWithLokalIdFinder<Stemmekrets, S
     fun findAllByStemmekretsnummerAndKommuneLokalid(stemmekretsnummer: String, kommuneLokalid: UnikLokalid): List<Stemmekrets>
 }
 
-interface GrenseRepository : JpaRepositoryWithLokalIdFinder<Grense, String>
+interface GrenseRepository : JpaRepositoryWithLokalIdFinder<Grense, String> {
+
+    /**
+     * Finner alle gyldige administrative grenser på en gitt dato.
+     * Returnerer kun Kommunegrense, Fylkesgrense, Riksgrense og Territorialgrense.
+     * Returnerer en paginert liste basert på pageable-parameteren.
+     *
+     * @param gyldighetsdato Dato for gyldighet
+     * @param pageable Paginering (side, størrelse, sortering)
+     * @return Side med administrative grenser som er gyldige på gitt dato
+     */
+    @Query("SELECT g FROM Grense g WHERE " +
+        "g.gyldighet.gyldigFra <= :gyldighetsdato " +
+        "AND (g.gyldighet.gyldigTil > :gyldighetsdato OR g.gyldighet.gyldigTil IS NULL) " +
+        "AND g.gyldighet.slettet = false " +
+        "AND g.grensetype IN ('Kommunegrense', 'Fylkesgrense', 'Riksgrense', 'Territorialgrense', 'AvtaltAvgrensningslinje')")
+    fun findAllGyldigeGrenser(
+        gyldighetsdato: LocalDate,
+        pageable: Pageable
+    ): Page<Grense>
+}
 
 interface GrunnkretsGrenseKoblingRepository : JpaRepository<GrunnkretsGrenseKobling, Long> {
     fun findByGrunnkretsKommuneLokalid(kommuneLokalid: UnikLokalid): List<GrunnkretsGrenseKobling>

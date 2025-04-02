@@ -28,7 +28,6 @@ import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.StemmekretsGrenseKobling
 import no.kartverket.nibas.extensions.geometry.toLineString
-import no.kartverket.nibas.repository.DokrefGrenseKoblingRepository
 import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.StemmekretsRepository
@@ -36,6 +35,8 @@ import no.kartverket.nibas.repository.findAllGyldigeObjekterForIdentifikatorer
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import no.kartverket.nibas.sporing.Laasbar
 import org.locationtech.jts.geom.LineString
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -53,13 +54,23 @@ class GrenseService(
     private val fylkeService: FylkeService,
     private val nasjonService: NasjonService,
     private val dokumentasjonsreferanseService: DokumentasjonsreferanseService,
-    private val grenseKoblingRepository: DokrefGrenseKoblingRepository
 ) {
     fun hentGrense(identifikator: Identifikator): Grense? = grenseRepository.findGyldigObjektForIdentifikator(identifikator)
 
     fun hentAlleVersjonerMedGyldigFraEtterGittDato(lokalid: String, gyldigFra: LocalDate): List<Grense> =
         grenseRepository.findAllByLokalid(lokalid)
             .filter { it.gyldighet.gyldigFra.isAfter(gyldigFra) }
+
+    /**
+     * Henter alle gyldige grenser på en gitt dato med paginering.
+     * Returnerer kun Kommunegrense, Fylkesgrense, Riksgrense og Territorialgrense.
+     *
+     * @param gyldighetsdato Dato for gyldighet
+     * @param pageable Paginering
+     * @return Side med Kommunegrense, Fylkesgrense, Riksgrense og Territorialgrense som er gyldige på gitt dato
+     */
+    fun hentAlleGrenser(gyldighetsdato: LocalDate, pageable: Pageable): Page<Grense> =
+        grenseRepository.findAllGyldigeGrenser(gyldighetsdato, pageable)
 
 
     @Transactional(readOnly = false)
