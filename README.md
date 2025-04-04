@@ -17,6 +17,23 @@ For å sette opp applikasjonen trenger du følgende:
 - PostgreSQL, versjon 16 er det som brukes on-prem, og det anbefales å bruke det samme lokalt.
 - Docker, versjon 24 er den nyligste versjonen vi har testet
 
+## Personlig access token (PAT)
+For å kunne sjekke ut kode fra Nibas, må du ha satt opp en pat
+
+### Generere PAT
+[`Personal Access Token (classic)`](https://github.com/settings/tokens) er personlig og legges til GitHub profil.
+Det skal holde å ha scope `read:packages`
+
+Konfigurer **SSO for Kartverket** til PAT.
+PS: Det er lurt å kopiere tokenet før man gjør SSO og stegene under, for å kunne bruke tokenet i gradle.properties
+- For mer informasjon, se [GitHub dokumentasjon](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token).
+
+### Legg inn i gradle.properties
+gh_username=<din github-bruker>
+pat=<ditt genererte token>
+GH_PACKAGES_PAT=<ditt genererte token>
+
+GH_PACKAGES_PAT er for henting av matrikkelkode via maven. Bruk samme token som for nibas.
 
 ## Kjøre databasen lokalt
 
