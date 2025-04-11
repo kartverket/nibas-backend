@@ -1,14 +1,10 @@
 package no.kartverket.nibas.utkast
 
-import no.kartverket.nibas.api.v1.common.Metadataendringer
-import no.kartverket.nibas.api.v1.common.Operasjoner
-import no.kartverket.nibas.builders.FylkeRequestBuilder
-import no.kartverket.nibas.builders.GrunnkretsRequestBuilder
-import no.kartverket.nibas.builders.KommuneRequestBuilder
-import no.kartverket.nibas.builders.StemmekretsRequestBuilder
+import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.domain.utkast.toEndredeInndelinger
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
+import no.kartverket.nibas.events.EventRad
+import no.kartverket.nibas.events.EventType
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class UtkastEndredeInndelingerTest {
@@ -16,94 +12,65 @@ class UtkastEndredeInndelingerTest {
     @Test
     fun `toEndredeInndelinger skal registrere kommune metadata endringer`() {
         val kommuneId = "5001"
-        val kommuneEndring = KommuneRequestBuilder()
-            .withLokalId(kommuneId)
-            .build()
-        val operasjoner = Operasjoner(
-            metadataendringer = Metadataendringer(
-                kommuneendringer = mapOf(kommuneId to kommuneEndring)
-            )
-        )
+        val kommuneEvent = EventRad(kommuneId, EventType.ADDED, Flatetype.KOMMUNE, kommuneId)
 
-        val endredeInndelinger = operasjoner.toEndredeInndelinger()
+        val endredeInndelinger = listOf(kommuneEvent).toEndredeInndelinger()
 
-        assertEquals(1, endredeInndelinger.endredeKommuner.size)
-        assertTrue(endredeInndelinger.endredeKommuner.contains(kommuneId))
-        assertTrue(endredeInndelinger.endredeStemmekretser.isEmpty())
-        assertTrue(endredeInndelinger.endredeGrunnkretser.isEmpty())
-        assertTrue(endredeInndelinger.endredeFylker.isEmpty())
+        assertThat(endredeInndelinger.endredeKommuner).hasSize(1)
+        assertThat(endredeInndelinger.endredeKommuner).contains(kommuneId)
+        assertThat(endredeInndelinger.endredeStemmekretser).isEmpty()
+        assertThat(endredeInndelinger.endredeGrunnkretser).isEmpty()
+        assertThat(endredeInndelinger.endredeFylker).isEmpty()
+        assertThat(endredeInndelinger.endredeNasjoner).isEmpty()
     }
 
     @Test
     fun `toEndredeInndelinger skal registrere fylke metadata endringer`() {
         val fylkeId1 = "30"
         val fylkeId2 = "31"
-        val fylkeEndring1 = FylkeRequestBuilder()
-            .withLokalId(fylkeId1)
-            .build()
-        val fylkeEndring2 = FylkeRequestBuilder()
-            .withLokalId(fylkeId2)
-            .build()
-        val operasjoner = Operasjoner(
-            metadataendringer = Metadataendringer(
-                fylkesendringer = mapOf(
-                    fylkeId1 to fylkeEndring1,
-                    fylkeId2 to fylkeEndring2
-                )
-            )
-        )
+        val fylkeEvent1 = EventRad(fylkeId1, EventType.ADDED, Flatetype.FYLKE, fylkeId1)
+        val fylkeEvent2 = EventRad(fylkeId2, EventType.EXPIRED, Flatetype.FYLKE, fylkeId2)
 
-        val endredeInndelinger = operasjoner.toEndredeInndelinger()
+        val endredeInndelinger = listOf(fylkeEvent1, fylkeEvent2).toEndredeInndelinger()
 
-        assertEquals(2, endredeInndelinger.endredeFylker.size)
-        assertTrue(endredeInndelinger.endredeFylker.contains(fylkeId1))
-        assertTrue(endredeInndelinger.endredeFylker.contains(fylkeId2))
-        assertTrue(endredeInndelinger.endredeStemmekretser.isEmpty())
-        assertTrue(endredeInndelinger.endredeGrunnkretser.isEmpty())
-        assertTrue(endredeInndelinger.endredeKommuner.isEmpty())
+        assertThat(endredeInndelinger.endredeFylker).hasSize(2)
+        assertThat(endredeInndelinger.endredeFylker).containsExactlyInAnyOrder(fylkeId1, fylkeId2)
+        assertThat(endredeInndelinger.endredeStemmekretser).isEmpty()
+        assertThat(endredeInndelinger.endredeGrunnkretser).isEmpty()
+        assertThat(endredeInndelinger.endredeKommuner).isEmpty()
+        assertThat(endredeInndelinger.endredeNasjoner).isEmpty()
     }
 
     @Test
     fun `toEndredeInndelinger skal registrere alle typer metadata endringer`() {
+        val nasjonId = "Norge"
         val kommuneId = "5001"
         val fylkeId = "30"
         val grunnkretsId = "grunnkrets1"
         val stemmekretsId = "stemmekrets1"
 
-        val kommuneEndring = KommuneRequestBuilder()
-            .withLokalId(kommuneId)
-            .build()
-        val fylkeEndring = FylkeRequestBuilder()
-            .withLokalId(fylkeId)
-            .build()
-        val grunnkretsEndring = GrunnkretsRequestBuilder()
-            .withLokalId(grunnkretsId)
-            .build()
-        val stemmekretsEndring = StemmekretsRequestBuilder()
-            .withLokalId(stemmekretsId)
-            .build()
+        val nasjonEvent = EventRad(nasjonId, EventType.MODIFIED, Flatetype.NASJON, nasjonId)
+        val kommuneEvent = EventRad(kommuneId, EventType.MODIFIED, Flatetype.KOMMUNE, kommuneId)
+        val fylkeEvent = EventRad(fylkeId, EventType.MODIFIED, Flatetype.FYLKE, fylkeId)
+        val grunnkretsEvent = EventRad(grunnkretsId, EventType.MODIFIED, Flatetype.GRUNNKRETS, grunnkretsId)
+        val stemmekretsEvent = EventRad(stemmekretsId, EventType.MODIFIED, Flatetype.STEMMEKRETS, stemmekretsId)
 
-        val operasjoner = Operasjoner(
-            metadataendringer = Metadataendringer(
-                kommuneendringer = mapOf(kommuneId to kommuneEndring),
-                fylkesendringer = mapOf(fylkeId to fylkeEndring),
-                grunnkretsendringer = mapOf(grunnkretsId to grunnkretsEndring),
-                stemmekretsendringer = mapOf(stemmekretsId to stemmekretsEndring)
-            )
-        )
+        val eventrader: List<EventRad> = listOf(kommuneEvent, fylkeEvent, grunnkretsEvent, stemmekretsEvent, nasjonEvent)
+        val endredeInndelinger = eventrader.toEndredeInndelinger()
 
-        val endredeInndelinger = operasjoner.toEndredeInndelinger()
+        assertThat(endredeInndelinger.endredeKommuner).hasSize(1)
+        assertThat(endredeInndelinger.endredeKommuner).containsExactly(kommuneId)
 
-        assertEquals(1, endredeInndelinger.endredeKommuner.size)
-        assertTrue(endredeInndelinger.endredeKommuner.contains(kommuneId))
+        assertThat(endredeInndelinger.endredeFylker).hasSize(1)
+        assertThat(endredeInndelinger.endredeFylker).containsExactly(fylkeId)
 
-        assertEquals(1, endredeInndelinger.endredeFylker.size)
-        assertTrue(endredeInndelinger.endredeFylker.contains(fylkeId))
+        assertThat(endredeInndelinger.endredeGrunnkretser).hasSize(1)
+        assertThat(endredeInndelinger.endredeGrunnkretser).containsExactly(grunnkretsId)
 
-        assertEquals(1, endredeInndelinger.endredeGrunnkretser.size)
-        assertTrue(endredeInndelinger.endredeGrunnkretser.contains(grunnkretsId))
+        assertThat(endredeInndelinger.endredeStemmekretser).hasSize(1)
+        assertThat(endredeInndelinger.endredeStemmekretser).containsExactly(stemmekretsId)
 
-        assertEquals(1, endredeInndelinger.endredeStemmekretser.size)
-        assertTrue(endredeInndelinger.endredeStemmekretser.contains(stemmekretsId))
+        assertThat(endredeInndelinger.endredeNasjoner).hasSize(1)
+        assertThat(endredeInndelinger.endredeNasjoner).containsExactly(nasjonId)
     }
 }

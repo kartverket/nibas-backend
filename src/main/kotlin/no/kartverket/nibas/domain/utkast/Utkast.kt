@@ -2,14 +2,13 @@ package no.kartverket.nibas.domain.utkast
 
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import no.kartverket.nibas.api.v1.common.Flatetype
-import no.kartverket.nibas.api.v1.common.Grensetype
-import no.kartverket.nibas.api.v1.common.KontekstEnhetType
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.request.FylkeRequest
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
 import no.kartverket.nibas.api.v1.request.KommuneRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsRequest
 import no.kartverket.nibas.domain.Endringstype
+import no.kartverket.nibas.events.EventRad
 import no.kartverket.nibas.sporing.AuditInfo
 import no.kartverket.nibas.sporing.Laasbar
 import no.kartverket.nibas.sporing.Sporbar
@@ -66,8 +65,8 @@ class Utkast(
     // Blir mappet av Converter
     var status: UtkastStatus = UtkastStatus.OPPRETTET
 
-    fun settPublisert() {
-        endredeInndelinger = operasjoner?.toEndredeInndelinger()
+    fun settPublisert(flateEndringer: List<EventRad>) {
+        endredeInndelinger = flateEndringer.toEndredeInndelinger()
         operasjoner = null
         status = UtkastStatus.PUBLISERT
     }
@@ -142,59 +141,18 @@ data class EndredeInndelinger(
     val endredeStemmekretser: MutableSet<String> = mutableSetOf(),
     val endredeGrunnkretser: MutableSet<String> = mutableSetOf(),
     val endredeKommuner: MutableSet<String> = mutableSetOf(),
-    val endredeFylker: MutableSet<String> = mutableSetOf()
+    val endredeFylker: MutableSet<String> = mutableSetOf(),
+    val endredeNasjoner: MutableSet<String> = mutableSetOf()
 )
 
-fun Operasjoner.toEndredeInndelinger(): EndredeInndelinger {
+fun List<EventRad>.toEndredeInndelinger(): EndredeInndelinger {
     val endredeInndelinger = EndredeInndelinger()
 
-    metadataendringer.grunnkretsendringer.values.map {
-        endredeInndelinger.endredeGrunnkretser.add(it.identifikasjon.lokalid)
-    }
-    metadataendringer.stemmekretsendringer.values.map {
-        endredeInndelinger.endredeStemmekretser.add(it.identifikasjon.lokalid)
-    }
-
-    metadataendringer.kommuneendringer.values.map {
-        endredeInndelinger.endredeKommuner.add(it.lokalid)
-    }
-
-    metadataendringer.fylkesendringer.values.map {
-        endredeInndelinger.endredeFylker.add(it.lokalid)
-    }
-
-    for (feature in grenseendringer.endredeFeatures) {
-        if (feature.properties.type == Grensetype.Kommunegrense.dbKey) {
-            feature.properties.kontekstEgenskaper.forEach {
-                it.kommuneId?.lokalid?.value?.let { kommuneId ->
-                    endredeInndelinger.endredeKommuner.add(kommuneId)
-                }
-            }
-        }
-
-        feature.properties.kontekstEgenskaper.forEach {
-            it.id?.lokalid?.value?.let { id ->
-                when (it.type) {
-                    KontekstEnhetType.GRUNNKRETS -> endredeInndelinger.endredeGrunnkretser.add(id)
-                    KontekstEnhetType.STEMMEKRETS -> endredeInndelinger.endredeStemmekretser.add(id)
-                }
-            }
-        }
-    }
-
-    stemmekretsSammenslaaingsendring?.viderefoertStemmekrets?.lokalId?.let { endredeInndelinger.endredeStemmekretser.add(it) }
-    stemmekretsSammenslaaingsendring?.stemmekretserTilSammenslaaing?.map { it.lokalId }?.let { endredeInndelinger.endredeStemmekretser.addAll(it) }
-
-    grunnkretsSammenslaaingsendring?.viderefoertGrunnkrets?.lokalId?.let { endredeInndelinger.endredeGrunnkretser.add(it) }
-    grunnkretsSammenslaaingsendring?.grunnkretserTilSammenslaaing?.map { it.lokalId }?.let { endredeInndelinger.endredeGrunnkretser.addAll(it) }
-
-    kretsDelingEndringer.forEach {
-        when (it.flatetype) {
-            Flatetype.GRUNNKRETS -> endredeInndelinger.endredeGrunnkretser.add(it.opprinneligKrets.lokalId)
-            Flatetype.STEMMEKRETS -> endredeInndelinger.endredeStemmekretser.add(it.opprinneligKrets.lokalId)
-            else -> throw IllegalArgumentException("Ukjent flatetype: ${it.flatetype}")
-        }
-    }
+    filter { Flatetype.GRUNNKRETS == it.flateType }.forEach { endredeInndelinger.endredeGrunnkretser.add(it.lokalid) }
+    filter { Flatetype.STEMMEKRETS == it.flateType }.forEach { endredeInndelinger.endredeStemmekretser.add(it.lokalid) }
+    filter { Flatetype.KOMMUNE == it.flateType }.forEach { endredeInndelinger.endredeKommuner.add(it.lokalid) }
+    filter { Flatetype.FYLKE == it.flateType }.forEach { endredeInndelinger.endredeFylker.add(it.lokalid) }
+    filter { Flatetype.NASJON == it.flateType }.forEach { endredeInndelinger.endredeNasjoner.add(it.lokalid) }
 
     return endredeInndelinger
 }

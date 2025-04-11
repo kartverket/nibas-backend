@@ -164,7 +164,7 @@ class UtkastService(
         logger.debug(utkast.publiseringsInfo())
         val flateEndringer: List<EventRad> = publiserEndringerOgValiderUnikeKretsnumre(utkast.operasjoner!!, utkast, utkast.gyldigFra)
 
-        utkast.settPublisert()
+        utkast.settPublisert(flateEndringer)
         eventsForPublisering = nibasEventPublisher.publishNibasEvent(flateEndringer, utkast.gyldigFra)
 
         return eventsForPublisering
