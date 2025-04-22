@@ -12,7 +12,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
 
 @Configuration
-class WebConfig (
+class WebConfig(
     val configProps: NibasBackendConfigProps,
     val mdcInterceptor: MdcInterceptor
 ) : WebMvcConfigurer {

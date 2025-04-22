@@ -49,11 +49,6 @@ spring:
 
 
   jpa:
-    # Dersom man vil vises hibernate-spørringene i loggen
-    # show-sql: true
-      # properties:
-      # hibernate:
-    # format_sql: true
     properties:
       hibernate:
         ddl-auto: none
@@ -76,6 +71,7 @@ spring:
   jmx:
     enabled: true
 
+---
 # Hver dag kl 03
 nibas:
   idporten:
@@ -107,9 +103,13 @@ nibas:
     users: bd23d991ffd8b950373470ed4b27e965
   idporten:
     url: https://test.idporten.no
+  arbeidsliste:
+    host: http://localhost:8082
+    api-key: 'super-secret-api-key'
 ---
 spring:
   config:
     activate:
       on-profile:
         - deltgeometri
+---

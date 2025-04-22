@@ -25,3 +25,9 @@ nibas:
   cron:
     matrikkelkodeliste:
       invalidate: 0 0 4 * * *
+
+---
+nibas:
+  arbeidsliste:
+    host: http://localhost:8082
+    api-key: 'super-secret-api-key'
