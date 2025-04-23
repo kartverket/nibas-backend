@@ -7,7 +7,11 @@ data class MatrikkelKodelisterRespons(
     @Schema(description = "Liste av målemetodekoder fra Matrikkelen.")
     val maalemetodeKodeliste: List<KodelisteEntryDTO> = listOf(),
     @Schema(description = "Liste av hjelpelinjetyper fra Matrikkelen.")
-    val hjelpelinjetypeKodeliste: List<KodelisteEntryDTO> = listOf()
+    val hjelpelinjetypeKodeliste: List<KodelisteEntryDTO> = listOf(),
+    @Schema(description = "Liste av administrativ grensekoder fra Matrikkelen.")
+    val administrativGrenseKodeliste: List<KodelisteEntryDTO> = listOf(),
+    @Schema(description = "Liste av terrengdetaljkoder fra Matrikkelen.")
+    val terrengdetaljKodeliste: List<KodelisteEntryDTO> = listOf()
 )
 
 data class KodelisteEntryDTO(
