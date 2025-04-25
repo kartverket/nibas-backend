@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21-alpine
+FROM eclipse-temurin:21-alpine@sha256:2f2f553ce09d25e2d2f0f521ab94cd73f70c9b21327a29149c23a2b63b8e29a0
 ARG project_version_arg
 
 ENV PROJECT_VERSION=$project_version_arg
