@@ -1,0 +1,113 @@
+name: Release PR
+on:
+  workflow_dispatch:
+    inputs:
+      branch-name:
+        description: "The name of the environemt the branch will be deployed to. Must be a valid hostname label."
+        required: true
+  pull_request:
+    types: [opened, ready_for_review, synchronize, reopened]
+    branches:
+      - main
+
+concurrency:
+  group: feature-env-${{ github.head_ref }}
+  cancel-in-progress: true
+
+env:
+  image_name: nibas-backend
+  registry: ghcr.io
+  registry_path: kartverket
+
+jobs:
+  determine-branch-name:
+    if: ${{ github.event.pull_request.draft == false }}
+    name: Determine Branch Name
+    runs-on: ubuntu-latest
+    outputs:
+      BRANCH_NAME: ${{ steps.determine-branch.outputs.branch_name_output }}
+    steps:
+      - name: Determine branch name
+        id: determine-branch
+        run: |
+          if [ "${{ inputs.branch-name }}" != "" ]; then
+            echo "branch_name_output=${{ inputs.branch-name }}" >> $GITHUB_OUTPUT
+          else
+            echo "branch_name_output=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
+          fi
+
+  validate-branch-name:
+    if: ${{ github.event.pull_request.draft == false }}
+    runs-on: ubuntu-latest
+    name: Validate branch-name input
+    needs: [determine-branch-name]
+    steps:
+      - name: Validate branch-name is valid hostname label
+        run: |
+          DETERMINED_BRANCH_NAME="${{ needs.determine-branch-name.outputs.BRANCH_NAME }}"
+          if [[ ! "$DETERMINED_BRANCH_NAME" =~ ^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$ ]]; then
+            echo "❌ Branchname is invalid as hostname label: $DETERMINED_BRANCH_NAME"
+            exit 1
+          fi
+          echo "✅ Branchname is valid as hostname label: $DETERMINED_BRANCH_NAME"
+
+  build:
+    if: ${{ github.event.pull_request.draft == false }}
+    permissions:
+      contents: write
+      packages: write
+      security-events: write
+      actions: read
+      issues: read
+      checks: write
+      pull-requests: write
+    uses: kartverket/nibas-backend/.github/workflows/build-app.yml@main
+    with:
+      deploy_ghcr: true
+    secrets: inherit
+
+  pharos:
+    if: ${{ github.event.pull_request.draft == false }}
+    name: Run Pharos security scan
+    needs: build
+    permissions:
+      actions: read
+      packages: read
+      contents: read
+      security-events: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Run Pharos"
+        uses: kartverket/pharos@v0.3.1
+        with:
+          allow_severity_level: critical
+          image_url: ${{ needs.build.outputs.image_url }}
+
+  deploy-pull-request:
+    if: ${{ github.event.pull_request.draft == false }}
+    name: Deploy Pull Request
+    needs: [validate-branch-name, determine-branch-name, build, pharos]
+    permissions:
+      id-token: write
+    uses: kartverket/smia-apps/.github/workflows/release-feature-branch.yml@main
+    with:
+      branch-name: ${{ needs.determine-branch-name.outputs.BRANCH_NAME }}
+      application: nibas-backend
+      version: ${{ needs.build.outputs.version }}
+      digest: ${{ needs.build.outputs.digest }}
+      identity: nibas
+
+  post-deployed-message:
+    if: ${{ github.event.pull_request.draft == false }} && ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    needs: [validate-branch-name, determine-branch-name, deploy-pull-request]
+    steps:
+      - name: Post deployment comment
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            🚀 Feature branch was successfully deployed!
+
+            🌐 Preview it at: [https://nibas-${{ needs.determine-branch-name.outputs.BRANCH_NAME }}.atkv3-dev.kartverket-intern.cloud](https://nibas-${{ needs.determine-branch-name.outputs.BRANCH_NAME }}.atkv3-dev.kartverket-intern.cloud)

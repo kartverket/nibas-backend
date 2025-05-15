@@ -1,38 +1,12 @@
-management:
-  server:
-    port: 8081
-  endpoints:
-    web:
-      exposure:
-        include: 'health, prometheus'
-    jmx:
-      exposure:
-        include: '*'
-  endpoint:
-    health:
-      enabled: true
-      probes:
-        enabled: true
-      show-details: always
-  info:
-    env:
-      enabled: true
-
-info:
-  application:
-    version: ${PROJECT_VERSION}
-
-springdoc:
-  api-docs:
-    path: /api-docs
-
 spring:
   profiles:
-    active: prod
     group:
       localhost:
         - "humanReadableLog"
         - "eventsDisabled"
+      dev:
+        - "security-off"
+
   main:
     banner-mode: "OFF"
 
@@ -46,7 +20,6 @@ spring:
 
   datasource:
     driver-class-name: org.postgresql.Driver
-
 
   jpa:
     properties:
@@ -71,28 +44,40 @@ spring:
   jmx:
     enabled: true
 
+management:
+  server:
+    port: 8081
+  endpoints:
+    web:
+      exposure:
+        include: 'health, prometheus'
+    jmx:
+      exposure:
+        include: '*'
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
+      access: unrestricted
+  info:
+    env:
+      enabled: true
+
+info:
+  application:
+    version: ${PROJECT_VERSION}
+
+springdoc:
+  api-docs:
+    path: /api-docs
+
 ---
-# Hver dag kl 03
-nibas:
-  idporten:
-    url: https://idporten.no
-  cron:
-    kodeliste:
-      invalidate: 0 0 3 * * *
----
-# Hver dag kl 04
-nibas:
-  idporten:
-    url: https://idporten.no
-  cron:
-    matrikkelkodeliste:
-      invalidate: 0 0 4 * * *
----
+# Profile-specific: localhost
 spring:
   config:
     activate:
-      on-profile:
-        - localhost
+      on-profile: localhost
   datasource:
     url: jdbc:postgresql://localhost:5432/nibas
     username: nibas
@@ -106,10 +91,30 @@ nibas:
   arbeidsliste:
     host: http://localhost:8082
     api-key: 'super-secret-api-key'
+
 ---
+# Custom cron jobs
+# Hver dag kl 03
+nibas:
+  idporten:
+    url: https://idporten.no
+  cron:
+    kodeliste:
+      invalidate: 0 0 3 * * *
+
+---
+# Hver dag kl 04
+nibas:
+  idporten:
+    url: https://idporten.no
+  cron:
+    matrikkelkodeliste:
+      invalidate: 0 0 4 * * *
+
+---
+# Optional: deltgeometri profile
 spring:
   config:
     activate:
-      on-profile:
-        - deltgeometri
----
+      on-profile: deltgeometri
+
