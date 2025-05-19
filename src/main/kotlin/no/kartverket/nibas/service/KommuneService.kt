@@ -55,6 +55,15 @@ class KommuneService(
     fun hentKommunerForFylke(fylkeIdentifikator: Identifikator): List<Kommune> =
         fylkeRepository.findGyldigObjektForIdentifikator(fylkeIdentifikator)?.getKommuner(fylkeIdentifikator.gyldighetsdato) ?: emptyList()
 
+    fun hentKommunerForFylker(fylkeIdentifikatorer: List<Identifikator>): List<Kommune> =
+        fylkeIdentifikatorer
+            .mapNotNull { fylkeIdentifikator ->
+                fylkeRepository
+                    .findGyldigObjektForIdentifikator(fylkeIdentifikator)
+                    ?.getKommuner(fylkeIdentifikator.gyldighetsdato)
+            }
+            .flatten()
+
     fun hentGrensekoblingerForKommune(identifikator: Identifikator): Set<GrunnkretsGrenseKobling> {
         return hentKommune(identifikator)?.getGrensekoblinger(identifikator.gyldighetsdato) ?: emptySet()
     }
