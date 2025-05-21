@@ -107,7 +107,7 @@ jobs:
     uses: kartverket/smia-apps/.github/workflows/release-feature-branch.yml@main
     with:
       branch-name: ${{ needs.determine-branch-name.outputs.BRANCH_NAME }}
-      application: nibas-frontend
+      application: nibas-backend
       version: ${{ needs.build.outputs.version }}
       digest: ${{ needs.build.outputs.digest }}
       identity: nibas
