@@ -1,0 +1,59 @@
+# Denne workflowen sjekker om det er endringer utover paths definert i ignore-paths.
+# Kan brukes av andre workflows for å sjekke om de skal kjøre eller ikke.
+# Hvis det er endringer utover filene under ignore-paths, vil den returnere true
+# NB! Fungerer kun i workflows som kjører på pull_request
+name: Check Changes
+
+on:
+  workflow_call:
+    inputs:
+      ignore-paths:
+        type: string
+        description: "Comma-separated list of paths to ignore (e.g., .github/,.vscode/)"
+        required: true
+    outputs:
+      has-relevant-changes:
+        description: "True if files outside ignore list were changed"
+        value: ${{ jobs.check-changes.outputs.has-relevant-changes }}
+
+jobs:
+  check-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      has-relevant-changes: ${{ steps.set-output.outputs.has-relevant-changes }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changed files
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          git diff --name-only origin/${{ github.event.pull_request.base.ref }}...HEAD > changed.txt
+
+      - name: Check for relevant changes
+        id: set-output
+        run: |
+          IGNORE_PATHS="${{ inputs.ignore-paths }}"
+          IFS=',' read -ra IGNORES <<< "$IGNORE_PATHS"
+
+          HAS_RELEVANT_CHANGES=false
+
+          while read -r FILE; do
+            IGNORED=false
+            for PREFIX in "${IGNORES[@]}"; do
+              if [[ "$FILE" == "$PREFIX"* ]]; then
+                IGNORED=true
+                break
+              fi
+            done
+
+            if [[ "$IGNORED" == "false" ]]; then
+              HAS_RELEVANT_CHANGES=true
+              break
+            fi
+          done < changed.txt
+
+          echo "has-relevant-changes=$HAS_RELEVANT_CHANGES"
+          echo "has-relevant-changes=$HAS_RELEVANT_CHANGES" >> $GITHUB_OUTPUT

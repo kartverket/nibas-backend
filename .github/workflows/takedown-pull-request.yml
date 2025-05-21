@@ -10,7 +10,15 @@ on:
       - closed
 
 jobs:
+  should-takedown-feature-env:
+    if: ${{ github.event_name != 'workflow_dispatch' }}
+    uses: kartverket/nibas-backend/.github/workflows/check-changes.yml@main
+    with:
+      ignore-paths: "README.md,.github/,.vscode/,.security/"
+
   determine-branch-name:
+    needs: should-takedown-feature-env
+    if: ${{ github.event.pull_request.draft == false && (needs.should-takedown-feature-env.outputs.has-relevant-changes == 'true' || github.event_name == 'workflow_dispatch') }}
     name: Determine Branch Name
     runs-on: ubuntu-latest
     outputs:
@@ -20,16 +28,18 @@ jobs:
         id: determine-branch
         run: |
           if [ "${{ inputs.branch-name }}" != "" ]; then
-            echo "branch_name_output=${{ inputs.branch-name }}" >> $GITHUB_OUTPUT
+            BRANCH_NAME="${{ inputs.branch-name }}"
           else
-            echo "branch_name_output=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
+            BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
           fi
+          BRANCH_NAME=$(echo "$BRANCH_NAME" | tr '[:upper:]' '[:lower:]')
+          echo "branch_name_output=$BRANCH_NAME" >> $GITHUB_OUTPUT
 
   takedown-pull-request:
-    needs: [determine-branch-name]
+    needs: [should-takedown-feature-env, determine-branch-name]
+    if: ${{ needs.should-takedown-feature-env.outputs.has-relevant-changes == 'true' || github.event_name == 'workflow_dispatch' }}
     permissions:
       id-token: write
-    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main') }}
     uses: kartverket/smia-apps/.github/workflows/delete-feature-branch.yml@main
     with:
       branch-name: ${{ needs.determine-branch-name.outputs.BRANCH_NAME }}
