@@ -112,17 +112,17 @@ jobs:
       digest: ${{ needs.build.outputs.digest }}
       identity: nibas
 
-post-deployed-message:
-  if: ${{ github.event.pull_request.draft == false && needs.should-create-feature-env.outputs.has-relevant-changes == 'true' && needs.validate-branch-name.outputs.valid == 'true'}}
-  runs-on: ubuntu-latest
-  needs: [should-create-feature-env, validate-branch-name, determine-branch-name, deploy-pull-request]
-  steps:
-    - name: Post deployment comment
-      uses: peter-evans/create-or-update-comment@v4
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        issue-number: ${{ github.event.pull_request.number }}
-        body: |
-          🚀 Feature branch was successfully deployed!
-          
-          🌐 Preview it at: [https://nibas-${{ needs.determine-branch-name.outputs.BRANCH_NAME }}.atkv3-dev.kartverket-intern.cloud](https://nibas-${{ needs.determine-branch-name.outputs.BRANCH_NAME }}.atkv3-dev.kartverket-intern.cloud)
+  post-deployed-message:
+    if: ${{ github.event.pull_request.draft == false && needs.should-create-feature-env.outputs.has-relevant-changes == 'true' && needs.validate-branch-name.outputs.valid == 'true'}}
+    runs-on: ubuntu-latest
+    needs: [should-create-feature-env, validate-branch-name, determine-branch-name, deploy-pull-request]
+    steps:
+      - name: Post deployment comment
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            🚀 Feature branch was successfully deployed!
+            
+            🌐 Preview it at: [https://nibas-${{ needs.determine-branch-name.outputs.BRANCH_NAME }}.atkv3-dev.kartverket-intern.cloud](https://nibas-${{ needs.determine-branch-name.outputs.BRANCH_NAME }}.atkv3-dev.kartverket-intern.cloud)
