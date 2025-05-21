@@ -1,7 +1,7 @@
 #------------------------------------------------------------------------------
 #
 # Denne koden forvaltes av:   Team Smia
-# Dokumentasjon:              https://kartverket.atlassian.net/wiki/spaces/TNIBAS/overview
+# Dokumentasjon:              https://kartverket.atlassian.net/wiki/spaces/NIBAS/overview
 
-* @kartverket/nibas
-/.security/ @AleksanderWK
+* @kartverket/smia
+/.security/ @kristmh
