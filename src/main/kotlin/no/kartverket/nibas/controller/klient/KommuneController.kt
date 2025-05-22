@@ -33,6 +33,18 @@ class KommuneController(
         }
     }
 
+    override fun hentKommunerForFylker(
+        fylkeIder: List<String>,
+        gyldighetsdato: LocalDate?
+    ): List<KommuneResponse> {
+        val datoToUse = gyldighetsdato ?: LocalDate.now()
+        return kommuneService
+            .hentKommunerForFylker(
+                fylkeIder.map { id -> Identifikator(Lokalid(id), datoToUse) }
+            )
+            .map { it.toKommuneResponse() }
+    }
+
     override fun hentKommune(lokalid: String, gyldighetsdato: LocalDate?): KommuneResponse {
         val identifikator = createIdentifikator(lokalid, gyldighetsdato)
         return kommuneService.hentKommune(identifikator)?.toKommuneResponse() ?: throw NotFoundException("Kommune $identifikator ble ikke funnet.")

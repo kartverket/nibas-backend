@@ -138,12 +138,12 @@ class KommuneServiceIT : TestWithDbContainer() {
     @Test
     fun hentKommunerForFylke() {
         val fylkeLokalid = Lokalid("ac7e05cd-fb07-4270-ad95-73c32c137054")
-        val kommuneLokalid = Lokalid("ac7e05cd-eb08-4270-ad95-73c32c137054")
+        val kommuneLokalid = Lokalid("dc43454d-eb08-4270-ad95-73c32c137054")
         val unikLokalidFylke = saveUnikLokalid(fylkeLokalid.value, Flatetype.FYLKE)
 
         val kommune = saveKommuneOgUnikLokalid(id = "9000", lokalid = kommuneLokalid.value, gyldigFra = october1In2022, gyldigTil = jan1In2023)
         val kommuneFramITid = saveKommune(id = "9001", unikLokalid = kommune.kommuneLokalid, gyldigFra = jan1In2023)
-        val kommuneMedAnnenLokalid = saveKommuneOgUnikLokalid(id = "9002", lokalid = "ac7e05cd-eb08-4270-ad99-73c32c137054", gyldigFra = jan1In2023)
+        val kommuneMedAnnenLokalid = saveKommuneOgUnikLokalid(id = "9002", lokalid = "br7e05cd-eb08-4270-ad99-73c32c137054", gyldigFra = jan1In2023)
 
         saveFylke(id = "11000", unikLokalid = unikLokalidFylke, gyldigFra = october1In2022, gyldigTil = jan1In2023, kommuner = listOf(kommune, kommuneFramITid))
         saveFylke(id = "11001", unikLokalid = unikLokalidFylke, gyldigFra = jan1In2023, kommuner = listOf(kommune, kommuneFramITid, kommuneMedAnnenLokalid))
@@ -152,6 +152,35 @@ class KommuneServiceIT : TestWithDbContainer() {
         assertThat(kommunerForFylke.map { it.id }).isEqualTo(listOf("9000"))
     }
 
+    @Test
+    fun hentKommunerForFylker() {
+        val fylkeLokalid1 = Lokalid("ac7e05cd-fb07-4270-ad95-73c32c137054")
+        val fylkeLokalid2 = Lokalid("e70c69ba-5bea-48a8-952c-b4860ada5afa")
+
+        val unikLokalidFylke1 = saveUnikLokalid(fylkeLokalid1.value, Flatetype.FYLKE)
+        val unikLokalidFylke2 = saveUnikLokalid(fylkeLokalid2.value, Flatetype.FYLKE)
+
+        val kommuneLokalid1 = Lokalid("b495e6ec-f1c2-4b57-974d-b1cae1207c33")
+        val kommuneLokalid2 = Lokalid("ab9f3402-23fb-48b4-a4fd-dbe4e3cc323b")
+        val kommuneLokalid3 = Lokalid("c395e6ec-f1c2-4b57-974d-b1cae1207c3e")
+        val kommuneLokalid4 = Lokalid("i39f3402-23fb-48b4-a4fd-dbe4e3cc329e")
+        val kommuneLokalid5 = Lokalid("i39f3402-23fb-48b4-a4fd-dbe4e3cc329e")
+
+        val kommune1 = saveKommuneOgUnikLokalid(id = "9000", lokalid = kommuneLokalid1.value, gyldigFra = october1In2022)
+        val kommune2 = saveKommuneOgUnikLokalid(id = "9001", lokalid = kommuneLokalid2.value, gyldigFra = october1In2022)
+        val kommune3 = saveKommuneOgUnikLokalid(id = "9002", lokalid = kommuneLokalid3.value, gyldigFra = october1In2022)
+        val kommune4 = saveKommuneOgUnikLokalid(id = "9003", lokalid = kommuneLokalid4.value, gyldigFra = october1In2022)
+        val kommune5utgaatt = saveKommuneOgUnikLokalid(id = "9004", lokalid = kommuneLokalid5.value, gyldigFra = october1In2022, gyldigTil = jan1In2023)
+
+        saveFylke(id = "11000", unikLokalid = unikLokalidFylke1, gyldigFra = october1In2022,  kommuner = listOf(kommune1,kommune2))
+        saveFylke(id = "11001", unikLokalid = unikLokalidFylke2, gyldigFra = october1In2022, kommuner = listOf(kommune3,kommune4,kommune5utgaatt))
+
+        val fylkeLokalids = listOf(Identifikator(fylkeLokalid1), Identifikator(fylkeLokalid2))
+        val kommunerForFylker = kommuneService.hentKommunerForFylker(fylkeLokalids)
+        val kommuneIds = kommunerForFylker.map { it.id }
+
+        assertThat(kommuneIds.sorted()).isEqualTo(listOf("9000", "9001", "9002", "9003"))
+    }
     @Test
     fun hentKommunesGrunnkretser() {
         val grunnkretsLokalid = Lokalid("ac7e05cd-eb08-4270-ab95-73c32c137057")
