@@ -10,16 +10,8 @@ on:
       - closed
 
 jobs:
-  should-takedown-feature-env:
-    if: ${{ github.event_name == 'pull_request' }}
-    uses: kartverket/nibas-backend/.github/workflows/check-changes.yml@main
-    with:
-      ignore-paths: "README.md,.github/,.vscode/,.security/"
-
-  determine-branch-name-pr:
-    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft == false && needs.should-takedown-feature-env.outputs.has-relevant-changes == 'true' }}
-    needs: [should-takedown-feature-env]
-    name: Determine Branch Name (PR)
+  determine-branch-name:
+    name: Determine Branch Name
     runs-on: ubuntu-latest
     outputs:
       BRANCH_NAME: ${{ steps.determine-branch.outputs.branch_name_output }}
@@ -27,40 +19,19 @@ jobs:
       - name: Determine branch name
         id: determine-branch
         run: |
-          BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
-          BRANCH_NAME=$(echo "$BRANCH_NAME" | tr '[:upper:]' '[:lower:]')
-          echo "branch_name_output=$BRANCH_NAME" >> $GITHUB_OUTPUT
-
-  determine-branch-name-manual:
-    if: ${{ github.event_name == 'workflow_dispatch' }}
-    name: Determine Branch Name (Manual)
-    runs-on: ubuntu-latest
-    outputs:
-      BRANCH_NAME: ${{ steps.determine-branch.outputs.branch_name_output }}
-    steps:
-      - name: Determine branch name
-        id: determine-branch
-        run: |
-          BRANCH_NAME="${{ inputs.branch-name }}"
+          if [ "${{ inputs.branch-name }}" != "" ]; then
+            BRANCH_NAME="${{ inputs.branch-name }}"
+          else
+            BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
+          fi
           BRANCH_NAME=$(echo "$BRANCH_NAME" | tr '[:upper:]' '[:lower:]')
           echo "branch_name_output=$BRANCH_NAME" >> $GITHUB_OUTPUT
 
   takedown-pull-request:
-    needs: [determine-branch-name-pr]
-    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft == false && needs.should-takedown-feature-env.outputs.has-relevant-changes == 'true' }}
+    needs: [determine-branch-name]
     permissions:
       id-token: write
     uses: kartverket/smia-apps/.github/workflows/delete-feature-branch.yml@main
     with:
-      branch-name: ${{ needs.determine-branch-name-pr.outputs.BRANCH_NAME }}
-      identity: nibas
-
-  takedown-manual:
-    needs: [determine-branch-name-manual]
-    if: ${{ github.event_name == 'workflow_dispatch' }}
-    permissions:
-      id-token: write
-    uses: kartverket/smia-apps/.github/workflows/delete-feature-branch.yml@main
-    with:
-      branch-name: ${{ needs.determine-branch-name-manual.outputs.BRANCH_NAME }}
+      branch-name: ${{ needs.determine-branch-name.outputs.BRANCH_NAME }}
       identity: nibas
