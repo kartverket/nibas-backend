@@ -233,11 +233,13 @@ class ArbeidslisteProxyController(
         private val PATH_METHOD_ALLOWLIST: Map<Any, Set<String>> = mapOf(
             "/api/v1/avvik" to setOf("GET", "POST"),
             "/api/v1/avvik/kommuner" to setOf("GET"),
+            "/api/v1/matrikkel/grenselinjer" to setOf("GET"),
+            "/api/v1/matrikkel/grenselinjer/kommuner" to setOf("GET"),
             Regex("^/api/v1/avvik/kommune/[^/]+$") to setOf("GET")
         )
 
         private val ALLOWED_QUERY_PARAMETERS: Set<String> = setOf(
-            "side", "antall", "grensetyper"
+            "side", "antall", "grensetyper", "kommunenummer"
         )
 
         private val IGNORED_REQUEST_HEADERS = setOf(
