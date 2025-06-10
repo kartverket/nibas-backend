@@ -1,0 +1,36 @@
+name: 'Dependency Review and Graph'
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  dependency-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout Repository'
+        uses: actions/checkout@v4
+
+      - name: 'Setup Java'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Generate and submit dependency graph
+        uses: gradle/actions/dependency-submission@v4
+
+      - name: 'Dependency Review'
+        uses: actions/dependency-review-action@v4.6.0
+        if: github.event_name == 'pull_request'
+        with:
+          comment-summary-in-pr: always
+          fail-on-severity: high
+          fail-on-scopes: runtime
+          deny-licenses: GPL-2.0, GPL-3.0, AGPL-3.0, GPL-2.0-only, GPL-3.0-only, AGPL-3.0-only, SSPL-1.0
+          allow-dependencies-licenses: pkg:maven/org.eclipse.angus/angus-mail@2.0.3
