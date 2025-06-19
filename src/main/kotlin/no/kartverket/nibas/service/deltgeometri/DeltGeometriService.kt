@@ -85,7 +85,7 @@ class DeltGeometriService(
         nibasEventPublisher.publishNibasEvent(inntreffer = gyldighetsdato, redigerteFlater = eventRaderForOppdaterteFlater.values.toList())
     }
 
-    private fun skrivLoggmelding(eventer: Map<String, EventRad>, kommunenr: String) {
+    fun skrivLoggmelding(eventer: Map<String, EventRad>, kommunenr: String) {
         val antallGrunnkretser = eventer.values.count { it.flateType == Flatetype.GRUNNKRETS }
         val antallStemmekretser = eventer.values.count { it.flateType == Flatetype.STEMMEKRETS }
         val antallKommuner = eventer.values.count { it.flateType == Flatetype.KOMMUNE }

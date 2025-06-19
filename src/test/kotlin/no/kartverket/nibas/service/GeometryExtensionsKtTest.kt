@@ -21,10 +21,10 @@ internal class GeometryExtensionsKtTest {
             Pair(1.0, 1.0)
         ))
         val polygon2 = polygonFromPairsOfCoordinates(listOf(
-            Pair(3.0, 1.0),
+            Pair(3.0123456789, 1.0),
             Pair(4.0, 1.0),
             Pair(4.0, 2.0),
-            Pair(3.0, 1.0)
+            Pair(3.0123456789, 1.0)
         ))
         val multiPolygon = factory.createMultiPolygon(arrayOf(polygon, polygon2))
         val resultDto = multiPolygon.multiPolygonToDto()
@@ -42,10 +42,10 @@ internal class GeometryExtensionsKtTest {
                 ),
                 listOf(
                     listOf(
-                        listOf(3.0, 1.0),
+                        listOf(3.0123456789, 1.0),
                         listOf(4.0, 1.0),
                         listOf(4.0, 2.0),
-                        listOf(3.0, 1.0)
+                        listOf(3.0123456789, 1.0)
                     )
                 )
             )

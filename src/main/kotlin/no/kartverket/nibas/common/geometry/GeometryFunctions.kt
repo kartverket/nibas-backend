@@ -10,6 +10,7 @@ import org.locationtech.jts.geom.Polygon
 import org.locationtech.jts.geom.PrecisionModel
 import org.locationtech.jts.operation.valid.IsValidOp
 import org.locationtech.jts.operation.valid.TopologyValidationError
+import kotlin.math.roundToLong
 
 const val defaultSrid = 25833
 
@@ -23,10 +24,10 @@ fun getGeometryFactory(koordsys: String? = null): GeometryFactory {
 }
 
 /**
- * Denne funkksjonen tar inn en liste med LineStrings som representerer alle grensene for en krets, og returnerer
+ * Denne funksjonen tar inn en liste med LineStrings som representerer alle grensene for en krets, og returnerer
  * en liste med lister av grenser for hvert polygon.
  *
- * Den ytterse listen har ett element for hver flate i denne kretsen, og den indre listen er liste med alle grensene for denne flaten.
+ * Den ytterste listen har ett element for hver flate i denne kretsen, og den indre listen er liste med alle grensene for denne flaten.
  * Den indre listen har grensene i sortert rekkefølge - slik at grensene kommer i sammenhengende rekkefølge. Med andre ord at sluttpunktet
  * på et grensestykke vil være startpoint for neste grensestykke i listen.
  */
@@ -134,7 +135,7 @@ fun konverterLineStringsTilPolygon(lineStrings: List<LineString>): Polygon {
 }
 
 /**
- * Konverterer en liste av linestrings til in linear ring
+ * Konverterer en liste av linestrings til en linear ring
  */
 fun konverterLineStringsTilLinearRing(lineStrings: List<LineString>): LinearRing {
     val geometryFactory = getGeometryFactory()
@@ -145,6 +146,18 @@ fun konverterLineStringsTilLinearRing(lineStrings: List<LineString>): LinearRing
     // polygon må vi ikke fjerne det absolutt siste endepunktet.
     val coordinates = lineStrings.flatMap { it.coordinates.toList().dropLast(1) } + lineStrings.last().endPoint.coordinate
     return geometryFactory.createLinearRing(coordinates.toTypedArray())
+}
+
+/**
+ * Avrunder koordinater til halve cm
+ */
+fun avrundLineString(originaleKoordinater: Array<Coordinate>): Array<Coordinate> {
+    val scale = 200.0
+    val koordinater = originaleKoordinater.map {
+        Coordinate((it.x * scale).roundToLong() / scale, (it.y * scale).roundToLong() / scale)
+    }.toTypedArray()
+
+    return koordinater
 }
 
 /**
@@ -169,8 +182,7 @@ fun validateGeometry(geometry: Geometry) {
 }
 
 /**
- * Tar inn en liste med grenser og validerer at de er sammenhengende, i riktig rekkefølge og
- * har riktig retning
+ * Tar inn en liste med grenser og validerer at de er sammenhengende
  */
 fun validerSammenhengendeGrenser(lineStrings: List<LineString>) {
     val forsteGrense = lineStrings[0]

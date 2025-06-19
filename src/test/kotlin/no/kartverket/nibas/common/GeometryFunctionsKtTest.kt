@@ -1,5 +1,6 @@
 package no.kartverket.nibas.common
 
+import no.kartverket.nibas.common.geometry.avrundLineString
 import no.kartverket.nibas.common.geometry.getGrenserIRiktigRekkefoelge
 import no.kartverket.nibas.common.geometry.toMultiPolygon
 import org.assertj.core.api.Assertions.assertThat
@@ -7,10 +8,11 @@ import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
 import org.locationtech.jts.geom.LineString
 import org.locationtech.jts.geom.Polygon
-import java.util.Random
+import java.util.*
 import kotlin.test.Test
 
 internal class GeometryFunctionsKtTest {
+
     @Test
     fun `getGrenserIRiktigRekkefoelge skal returere en sortert liste med grenser`() {
         val grenser = listOf(
@@ -256,6 +258,28 @@ internal class GeometryFunctionsKtTest {
 
         val hull = polygon.getInteriorRingN(0)
         assertThat(hull.coordinates).containsAll(listOf(Coordinate(50.0, 50.0), Coordinate(100.0, 50.0), Coordinate(75.0, 100.0)))
+    }
+
+    @Test
+    fun `test avrund koordinater`() {
+        val coordinates = arrayOf(Coordinate(3.0123456789, 0.0))
+        val result = avrundLineString(coordinates)
+        assertThat(result).isEqualTo(arrayOf(Coordinate(3.01, 0.0)))
+            .isNotEqualTo(coordinates)
+
+        val koordinatSomIkkeSkalAvrundes = Coordinate(7867303.31, 1121940.59)
+        assertThat(avrundLineString(arrayOf(koordinatSomIkkeSkalAvrundes))).isEqualTo(arrayOf(koordinatSomIkkeSkalAvrundes))
+
+        val negativKoordinatSomSkalAvrundes = Coordinate(6496929.842403338, -24600.90321480068)
+        assertThat(avrundLineString(arrayOf(negativKoordinatSomSkalAvrundes))).isEqualTo(arrayOf(Coordinate(6496929.84, -24600.905)))
+
+        val koordinaterSomSkalAvrundes = arrayOf(Coordinate(6549092.035, 269445.332588278),
+            Coordinate(6548349.2081234, 272351.3374123),
+            Coordinate(6548787.587500001, 273395.99912121))
+        assertThat(avrundLineString(koordinaterSomSkalAvrundes))
+            .isEqualTo(arrayOf(Coordinate(6549092.035, 269445.335),
+                Coordinate(6548349.21, 272351.335),
+                Coordinate(6548787.59, 273396.0)))
     }
 
     private fun lagLineString(vararg koordinater: Coordinate): LineString =
