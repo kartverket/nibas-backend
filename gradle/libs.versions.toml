@@ -1,6 +1,5 @@
 [versions]
 flywayVersion = "11.9.1"
-hibernateVersion = "6.6.15.Final"
 hypersistenceUtilsHibernate63Version = "3.10.1"
 jtsVersion = "1.20.0"
 kotlinMockitoVersion = "5.4.0"
@@ -13,7 +12,6 @@ openTelemetryVersion = "1.51.0"
 orgApacheCfxVersion = "4.1.2"
 prometheusVersion = "1.15.1"
 spatial4jVersion = "0.8"
-springCloudStarterVaultConfigVersion = "4.3.0"
 springDependencyManagementVersion = "1.1.7"
 springFrameworkVersion = "3.5.0"
 springdocOpenapiVersion2 = "2.8.9"
@@ -24,8 +22,7 @@ testContainerVersion = "1.21.1"
 flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flywayVersion" }
 flyway-postgres = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flywayVersion" }
 h2-db = { module = "com.h2database:h2" }
-hibernate-core = { module = "org.hibernate.orm:hibernate-core", version.ref = "hibernateVersion" }
-hibernate-spatial = { module = "org.hibernate.orm:hibernate-spatial", version.ref = "hibernateVersion" }
+hibernate-spatial = { module = "org.hibernate.orm:hibernate-spatial" }
 hypersistence-utils-hibernate = { module = "io.hypersistence:hypersistence-utils-hibernate-63", version.ref = "hypersistenceUtilsHibernate63Version" }
 jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin" }
 kotlin-mockito = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "kotlinMockitoVersion" }
@@ -50,8 +47,6 @@ org-apache-cxf-transports ={module = "org.apache.cxf:cxf-rt-transports-http", ve
 postgres = { module = "org.postgresql:postgresql" }
 spring-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator" }
 spring-batch-test = { module = "org.springframework.batch:spring-batch-test" }
-spring-cloud-starter = { module = "org.springframework.cloud:spring-cloud-starter" }
-spring-cloud-vault-configuration = { module = "org.springframework.cloud:spring-cloud-starter-vault-config", version.ref = "springCloudStarterVaultConfigVersion" }
 spring-integration-core = { module = "org.springframework.integration:spring-integration-core" }
 spring-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa" }
 spring-mockk = { module = "com.ninja-squad:springmockk", version.ref = "springmockkVersion" }
@@ -68,6 +63,5 @@ testcontainers-postgres = { module = "org.testcontainers:postgresql", version.re
 
 [plugins]
 flyway = { id = "org.flywaydb.flyway", version.ref = "flywayVersion" }
-kotlin-jvm = { id = "jvm", version.ref = "kotlinPluginVersion" }
 spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "springDependencyManagementVersion" }
 spring-framework = { id = "org.springframework.boot", version.ref = "springFrameworkVersion" }

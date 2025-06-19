@@ -93,7 +93,6 @@ dependencies {
     implementation(libs.kotlinx.coroutines)
     implementation(libs.locationtech.spatial4j)
     implementation(libs.hibernate.spatial)
-    implementation(libs.hibernate.core)
     implementation(libs.logstash.logback.encoder)
     implementation(libs.micrometer.registry.prometheus)
     implementation(libs.spring.integration.core)
