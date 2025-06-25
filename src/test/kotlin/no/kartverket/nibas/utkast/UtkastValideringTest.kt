@@ -30,11 +30,13 @@ import no.kartverket.nibas.service.GrenseService
 import no.kartverket.nibas.service.GrunnkretsService
 import no.kartverket.nibas.service.StemmekretsService
 import no.kartverket.nibas.service.utkast.UtkastValidatorService
+import no.kartverket.nibas.utils.GrenseHelper
 import no.kartverket.nibas.utkast.UtkastServiceTest.Companion.operasjonerMedIkkeEditerbareGrenser
 import no.kartverket.nibas.utkast.UtkastServiceTest.Companion.operasjonerMedKunEditerbareGrenser
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.locationtech.jts.geom.Coordinate
 import java.time.LocalDate
 
 
@@ -466,8 +468,7 @@ class UtkastValideringTest {
     }
 
     @Test
-    fun `utkast er ugyldig hvis tilhørighet for endrede features er ugyldig`() {
-        val gyldighetsdato = LocalDate.now()
+    fun `utkast uten kontekstegenskaper er ugyldig`() {
 
         val featureUtenTilhorigheter = FeatureBuilder("1")
             .withGrensetype(Grensetype.Grunnkretsgrense)
@@ -479,7 +480,11 @@ class UtkastValideringTest {
         assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast1).joinToString("\n"))
             .contains("Grensen har 0 tilhørighet(er) satt, men må ha 2.")
             .contains("Grensen har 0 tilhørighetstyper satt, men må ha 1.")
+    }
 
+    @Test
+    fun `utkast med grunnkretsgrensefeature med kun en tilhørighet er ugyldig`() {
+        val gyldighetsdato = LocalDate.now()
         val featureMedFeilAntallTilhorigheter = FeatureBuilder("1")
             .withGrensetype(Grensetype.Grunnkretsgrense)
             .withKontekstEgenskaper(listOf(KontekstEgenskaper(
@@ -489,11 +494,14 @@ class UtkastValideringTest {
             )))
             .build()
         val utkast1b = Utkast(navn = "test",
-            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedFeilAntallTilhorigheter))), gyldigFra = LocalDate.now())
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedFeilAntallTilhorigheter))), gyldigFra = gyldighetsdato)
 
         assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast1b).joinToString("\n"))
             .contains("Grensen har 1 tilhørighet(er) satt")
+    }
 
+    @Test
+    fun `utkast med grunnkretsgrensefeature med to nye tilhørigheter er gyldig`() {
         val featureMedFeilToNyeTilhorigheter = FeatureBuilder("1")
             .withGrensetype(Grensetype.Grunnkretsgrense)
             .withKontekstEgenskaper(listOf(KontekstEgenskaper(
@@ -509,7 +517,11 @@ class UtkastValideringTest {
         val utkast1c = Utkast(navn = "test",
             operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedFeilToNyeTilhorigheter))), gyldigFra = LocalDate.now())
         assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast1c)).isEmpty()
+    }
 
+    @Test
+    fun `utkast med grunnkretsgrensefeature med tilhørigheter med samme lokalid og likt kretsnr er ugyldig`() {
+        val gyldighetsdato = LocalDate.now()
         val featureMedToLikeTilhorigheter = FeatureBuilder("1")
             .withGrensetype(Grensetype.Grunnkretsgrense)
             .withKontekstEgenskaper(
@@ -526,11 +538,15 @@ class UtkastValideringTest {
                 ))
             ).build()
         val utkast2 = Utkast(navn = "test",
-            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedToLikeTilhorigheter))), gyldigFra = LocalDate.now())
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedToLikeTilhorigheter))), gyldigFra = gyldighetsdato)
 
         assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast2).joinToString("\n"))
             .contains("Grensen har flere tilhørigheter til samme krets. Gjelder kretsnr 12345678 med lokalid G3")
+    }
 
+    @Test
+    fun `utkast med grunnkretsgrensefeature med tilhørigheter med samme lokalid og ulikt kretsnr er ugyldig`() {
+        val gyldighetsdato = LocalDate.now()
         val featureMedToTilhorigheterMedSammeLokalid = FeatureBuilder("1")
             .withGrensetype(Grensetype.Grunnkretsgrense)
             .withKontekstEgenskaper(
@@ -547,11 +563,15 @@ class UtkastValideringTest {
                 ))
             ).build()
         val utkast2b = Utkast(navn = "test",
-            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedToTilhorigheterMedSammeLokalid))), gyldigFra = LocalDate.now())
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedToTilhorigheterMedSammeLokalid))), gyldigFra = gyldighetsdato)
 
         assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast2b).joinToString("\n"))
             .contains("Grensen har flere tilhørigheter til samme krets")
+    }
 
+    @Test
+    fun `utkast med grunnkretsgrensefeature med tilhørigheter til samme grunnkrets er ugyldig`() {
+        val gyldighetsdato = LocalDate.now()
         val featureMedToTilhorigheterMedSammeData = FeatureBuilder("1")
             .withGrensetype(Grensetype.Grunnkretsgrense)
             .withKontekstEgenskaper(
@@ -567,11 +587,15 @@ class UtkastValideringTest {
                 ))
             ).build()
         val utkast2c = Utkast(navn = "test",
-            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedToTilhorigheterMedSammeData))), gyldigFra = LocalDate.now())
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedToTilhorigheterMedSammeData))), gyldigFra = gyldighetsdato)
 
         assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast2c).joinToString("\n"))
             .contains("Grensen har flere tilhørigheter til samme krets. Gjelder kretsnr 12345678")
+    }
 
+    @Test
+    fun `utkast med kommunegrensefeature med kun to grunnkretstilhørigheter i samme kommune er ugyldig`() {
+        val gyldighetsdato = LocalDate.now()
         val kommuneGrenseFeatureMedTilhorigheterISammeKommune = FeatureBuilder("1")
             .withGrensetype(Grensetype.Kommunegrense)
             .withKontekstEgenskaper(
@@ -589,15 +613,20 @@ class UtkastValideringTest {
             )
             .build()
         val utkast3 = Utkast(navn = "test",
-            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(kommuneGrenseFeatureMedTilhorigheterISammeKommune))), gyldigFra = LocalDate.now())
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(kommuneGrenseFeatureMedTilhorigheterISammeKommune))),
+            gyldigFra = gyldighetsdato)
 
         assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast3).joinToString("\n"))
             .contains("Grensen har 2 tilhørighet(er) satt, men må ha 4")
             .contains("Grensen har 1 tilhørighetstyper satt, men må ha 2")
             .contains("Grensen er kommune-/fylkesgrense og har tilhørighet til to kretser i samme kommune")
+    }
 
+    @Test
+    fun `utkast med fylkegrensefeature med to tilhørigheter til samme grunnkrets er ugyldig`() {
+        val gyldighetsdato = LocalDate.now()
         val featureMedToFeil = FeatureBuilder("1")
-            .withGrensetype(Grensetype.Kommunegrense)
+            .withGrensetype(Grensetype.Fylkesgrense)
             .withKontekstEgenskaper(
                 listOf(KontekstEgenskaper(
                     id = ObjektIdentifikator(Lokalid("G3"), gyldighetsdato),
@@ -615,14 +644,18 @@ class UtkastValideringTest {
             )
             .build()
         val utkast4 = Utkast(navn = "test",
-            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedToFeil))), gyldigFra = LocalDate.now())
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedToFeil))), gyldigFra = gyldighetsdato)
 
         assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast4).joinToString("\n"))
             .contains("Grense med id: 1 har ugyldig tilhørighet. Årsak(er)")
             .contains("Grensen har 2 tilhørighet(er) satt, men må ha 4")
             .contains("Grensen har 1 tilhørighetstyper satt, men må ha 2")
             .contains("Grensen har flere tilhørigheter til samme krets. Gjelder kretsnr 12345678 med lokalid G3")
+    }
 
+    @Test
+    fun `utkast med kommunegrensefeature med to tilhørigheter er ugyldig`() {
+        val gyldighetsdato = LocalDate.now()
         val featureMedStemmekretsOgGrunnkrets = FeatureBuilder("1")
             .withGrensetype(Grensetype.Kommunegrense)
             .withKontekstEgenskaper(
@@ -642,13 +675,17 @@ class UtkastValideringTest {
             )
             .build()
         val utkast5 = Utkast(navn = "test",
-            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedStemmekretsOgGrunnkrets))), gyldigFra = LocalDate.now())
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedStemmekretsOgGrunnkrets))), gyldigFra = gyldighetsdato)
 
         assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast5).joinToString("\n"))
             .contains("Grense med id: 1 har ugyldig tilhørighet. Årsak(er)")
             .contains("Grensen har 2 tilhørighet(er) satt, men må ha 4")
             .doesNotContain("Grensen har 1 tilhørighetstyper satt, men må ha 2")
+    }
 
+    @Test
+    fun `utkast med kommunegrensefeature med tre tilhørigheter er ugyldig`() {
+        val gyldighetsdato = LocalDate.now()
         val featureMedTreKontekstegenskaper = FeatureBuilder("1")
             .withGrensetype(Grensetype.Kommunegrense)
             .withKontekstEgenskaper(
@@ -674,13 +711,17 @@ class UtkastValideringTest {
             )
             .build()
         val utkast6 = Utkast(navn = "test",
-            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedTreKontekstegenskaper))), gyldigFra = LocalDate.now())
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedTreKontekstegenskaper))), gyldigFra = gyldighetsdato)
 
         assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast6).joinToString("`n"))
             .contains("Grensen har 3 tilhørighet(er) satt, men må ha 4")
             .doesNotContain("Grensen har 1 tilhørighetstyper satt, men må ha 2")
             .doesNotContain("Grensen er kommune-/fylkesgrense og har tilhørighet til to kretser i samme kommune")
+    }
 
+    @Test
+    fun `utkast med kommunegrensefeature med tilhørigheterer til samme kommune er ugyldig`() {
+        val gyldighetsdato = LocalDate.now()
         val featureMedFireKontekstegenskaper = FeatureBuilder("1")
             .withGrensetype(Grensetype.Kommunegrense)
             .withKontekstEgenskaper(
@@ -712,11 +753,15 @@ class UtkastValideringTest {
             )
             .build()
         val utkast7 = Utkast(navn = "test",
-            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedFireKontekstegenskaper))), gyldigFra = LocalDate.now())
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedFireKontekstegenskaper))), gyldigFra = gyldighetsdato)
 
         assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast7).joinToString("\n"))
             .contains("Grensen er kommune-/fylkesgrense og har tilhørighet til to kretser i samme kommune")
+    }
 
+    @Test
+    fun `utkast med kommunegrensefeature med gyldige tilhørigheter er gyldig`() {
+        val gyldighetsdato = LocalDate.now()
         val korrektKommunegrenseFeature = FeatureBuilder("1")
             .withGrensetype(Grensetype.Kommunegrense)
             .withKontekstEgenskaper(
@@ -748,7 +793,7 @@ class UtkastValideringTest {
             )
             .build()
         val utkastOk = Utkast(navn = "test",
-            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(korrektKommunegrenseFeature))), gyldigFra = LocalDate.now())
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(korrektKommunegrenseFeature))), gyldigFra = gyldighetsdato)
         assertThat(utkastValidatorService.validerTilhorighetEndringer(utkastOk)).isEmpty()
     }
 
@@ -794,8 +839,8 @@ class UtkastValideringTest {
     }
 
     @Test
-    fun `validateGyldigUtkast utkast uten operasjoner gir gyldig utkast`() {
-        val utkastUtenOperasjoner = UtkastBuilder.builder("Utkast for publisering", gyldigFra = LocalDate.now())
+    fun `valider utkast uten operasjoner gir gyldig utkast`() {
+        val utkastUtenOperasjoner = UtkastBuilder.builder("Utkast uten operasjoner", gyldigFra = LocalDate.now())
             .build()
 
         val validateGyldigUtkastResult =
@@ -953,11 +998,8 @@ class UtkastValideringTest {
         assertThat(valideringsmelding).contains("Valgdistriktsnummer må gis (stemmekrets 138).")
     }
 
-
-    // Test av grunnkretesgrense
-    // Grunnkretsgrense: kommune og delområde må være lik på begge sider av grensen
     @Test
-    fun `valider grunnkretsgrense med ulik kommune og delområde`() {
+    fun `valider grunnkretsgrense med ulik kommune er ugyldig`() {
         val feature = FeatureBuilder("1")
             .withGrensetype(Grensetype.Grunnkretsgrense)
             .withKontekstEgenskaper(listOf(
@@ -1012,9 +1054,8 @@ class UtkastValideringTest {
     }
 
 
-    // Delområdegrense: sammen kommune og ulik delområde.
     @Test
-    fun `valider delområdegrense med ulik kommune og ulik delområde er ugyldig`() {
+    fun `valider delområdegrense med ulik kommune er ugyldig`() {
         val feature = FeatureBuilder("1")
             .withGrensetype(Grensetype.Delomraadegrense)
             .withKontekstEgenskaper(listOf(
@@ -1037,7 +1078,6 @@ class UtkastValideringTest {
 
         val errors = utkastValidatorService.validerTilhorighetEndringer(utkast)
 
-        
         assertThat(errors).hasSize(4)
         assertThat(errors).anyMatch { it.contains("Grense er av type Delomraadegrense, men har ulik kommune på hver side:") }
     }
@@ -1076,13 +1116,13 @@ class UtkastValideringTest {
                 KontekstEgenskaper(
                     type = KontekstEnhetType.STEMMEKRETS,
                     kommuneId = ObjektIdentifikator(Lokalid("3301"), june2024),
-                    kretsNummer= "12",
+                    kretsNummer = "12",
                     version = 1
                 ),
                 KontekstEgenskaper(
                     type = KontekstEnhetType.STEMMEKRETS,
                     kommuneId = ObjektIdentifikator(Lokalid("3302"), june2024),
-                    kretsNummer= "13",
+                    kretsNummer = "13",
                     version = 1
                 )
             ))
@@ -1214,6 +1254,94 @@ class UtkastValideringTest {
 
         val errors = utkastValidatorService.validerTilhorighetEndringer(utkast)
         assertThat(errors).isEmpty()
+    }
+
+    @Test
+    fun `utkast med grunnkretsgrensefeature med avrundede koordinater er gyldig`() {
+        val featureMedFeilToNyeTilhorigheter = FeatureBuilder("1")
+            .withGrensetype(Grensetype.Grunnkretsgrense)
+            .withGeometry(GrenseHelper.geometryFactory.createLineString(
+                arrayOf(
+                    Coordinate(0.005, 0.0),
+                    Coordinate(10.0, 5.005)
+                )
+            ))
+            .withKontekstEgenskaper(listOf(KontekstEgenskaper(
+                type = KontekstEnhetType.GRUNNKRETS,
+                kretsNummer = "12345678",
+                version = 1,
+            ), KontekstEgenskaper(
+                type = KontekstEnhetType.GRUNNKRETS,
+                kretsNummer = "12345679",
+                version = 1,
+            )))
+            .build()
+        val gyldighetsdato = LocalDate.now()
+        val utkast1c = Utkast(navn = "test",
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedFeilToNyeTilhorigheter))), gyldigFra = gyldighetsdato)
+        assertThat(utkastValidatorService.validateAvrundedeKoordinater(utkast1c.operasjoner!!).isEmpty())
+    }
+
+    @Test
+    fun `utkast med grunnkretsgrensefeature med uavrundede koordinater er ugyldig`() {
+        val featureMedFeilToNyeTilhorigheter = FeatureBuilder("1")
+            .withGrensetype(Grensetype.Grunnkretsgrense)
+            .withGeometry(GrenseHelper.geometryFactory.createLineString(
+                arrayOf(
+                    Coordinate(0.001, 0.0),
+                    Coordinate(10.004, 5.008)
+                )
+            ))
+            .withKontekstEgenskaper(listOf(KontekstEgenskaper(
+                type = KontekstEnhetType.GRUNNKRETS,
+                kretsNummer = "12345678",
+                version = 1,
+            ), KontekstEgenskaper(
+                type = KontekstEnhetType.GRUNNKRETS,
+                kretsNummer = "12345679",
+                version = 1,
+            )))
+            .build()
+        val gyldighetsdato = LocalDate.now()
+        val utkast1c = Utkast(navn = "test",
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedFeilToNyeTilhorigheter))), gyldigFra = gyldighetsdato)
+        val errors = utkastValidatorService.validateAvrundedeKoordinater(utkast1c.operasjoner!!).joinToString("\n")
+
+        assertThat(errors).isNotEmpty()
+            .contains("Utkastet inneholder 2 koordinater med for mange desimaler")
+            .contains("Nord: 0.0 Øst: 0.001")
+            .contains("Nord: 5.008 Øst: 10.004")
+    }
+
+    @Test
+    fun `utkast med grunnkretsgrensefeature med uavrundedet kurvepunkt er ugyldig`() {
+        val featureMedFeilToNyeTilhorigheter = FeatureBuilder("1")
+            .withGrensetype(Grensetype.Grunnkretsgrense)
+            .withGeometry(GrenseHelper.geometryFactory.createLineString(
+                arrayOf(
+                    Coordinate(0.005, 0.0),
+                    Coordinate(5.0055, 0.0),
+                    Coordinate(10.005, 5.005)
+                )
+            ))
+            .withKontekstEgenskaper(listOf(KontekstEgenskaper(
+                type = KontekstEnhetType.GRUNNKRETS,
+                kretsNummer = "12345678",
+                version = 1,
+            ), KontekstEgenskaper(
+                type = KontekstEnhetType.GRUNNKRETS,
+                kretsNummer = "12345679",
+                version = 1,
+            )))
+            .build()
+        val gyldighetsdato = LocalDate.now()
+        val utkast1c = Utkast(navn = "test",
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedFeilToNyeTilhorigheter))), gyldigFra = gyldighetsdato)
+        val errors = utkastValidatorService.validateAvrundedeKoordinater(utkast1c.operasjoner!!).joinToString("\n")
+
+        assertThat(errors).isNotEmpty()
+            .contains("Utkastet inneholder 1 koordinat med for mange desimaler")
+            .contains("Nord: 0.0 Øst: 5.0055")
     }
 
 }

@@ -13,12 +13,15 @@ import no.kartverket.nibas.common.CurrentTime
 import no.kartverket.nibas.common.FeilVedOppdatering
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.common.geometry.avrundLineString
 import no.kartverket.nibas.common.toNorskFormat
 import no.kartverket.nibas.domain.utkast.Utkast
+import no.kartverket.nibas.extensions.geometry.toLineString
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.service.GrenseService
 import no.kartverket.nibas.service.GrunnkretsService
 import no.kartverket.nibas.service.StemmekretsService
+import org.locationtech.jts.geom.Coordinate
 import org.springframework.stereotype.Service
 import java.time.LocalDate
 
@@ -46,6 +49,31 @@ class UtkastValidatorService(
         }
 
         errorMessages.addAll(validerKretsinfoEndringer(operasjoner))
+
+        return errorMessages
+    }
+
+    fun validateAvrundedeKoordinater(operasjoner: Operasjoner): List<String> {
+        val errorMessages = mutableListOf<String>()
+        val endredeFeatures: List<Feature> = operasjoner.grenseendringer.endredeFeatures
+
+        val uavrundedeKoordinater = mutableListOf<Coordinate>()
+        endredeFeatures.map { feature ->
+            val originaleKoordinater = feature.geometry.toLineString(feature.properties.srid).coordinates
+            val avrundetLineString = avrundLineString(originaleKoordinater)
+            if (!avrundetLineString.contentEquals(originaleKoordinater)) {
+                uavrundedeKoordinater.addAll(originaleKoordinater.filterIndexed { index, coordinate -> avrundetLineString[index] != coordinate })
+            }
+        }
+        if (uavrundedeKoordinater.isNotEmpty()) {
+            val string = if (uavrundedeKoordinater.size > 1) "koordinater" else "koordinat"
+            errorMessages.add("Utkastet inneholder ${uavrundedeKoordinater.size} $string med for mange desimaler:")
+            uavrundedeKoordinater.forEachIndexed { index, uavrundetKoordinat ->
+                if (index < 5) {
+                    errorMessages.add("\t- Nord: ${uavrundetKoordinat.y} Øst: ${uavrundetKoordinat.x}")
+                }
+            }
+        }
 
         return errorMessages
     }
@@ -91,6 +119,7 @@ class UtkastValidatorService(
     fun validateUtkastKlartForPublisering(utkast: Utkast, gyldighetDato: LocalDate): List<String> {
         val errorMessages = mutableListOf<String>()
         errorMessages.addAll(validateUtkastMedOperasjoner(utkast, utkast.auditInfo.typeEndring.value, gyldighetDato))
+        errorMessages.addAll(validateAvrundedeKoordinater(utkast.operasjoner!!))
 
         if (gyldighetDato.isBefore(currentTime.asLocalDate())) {
             errorMessages.add("Kan ikke publisere et utkast som trer i kraft før dagens dato. Utkastet er satt til å tre i kraft ${gyldighetDato.toNorskFormat()}")
@@ -213,8 +242,7 @@ class UtkastValidatorService(
                                 errorMessages.add("Grense er av type ${grensetype.name}, men har ulik kommune på hver side:")
                                 errorMessages.add("\t- Grunnkrets 1: $grunnkrets1, Kommune: $kommune1")
                                 errorMessages.add("\t- Grunnkrets 2: $grunnkrets2, Kommune: $kommune2")
-                            } 
-                            else {
+                            } else {
 
                                 when (grensetype) {
                                     // Grenser av grensetype Grunnkretsgrense skal ha samme kommune og delområde for grunnkretsene på hver side av grensa (bruk grunnkretsnummer)
@@ -233,6 +261,7 @@ class UtkastValidatorService(
                                             errorMessages.add("\t- Grunnkrets 2: $grunnkrets2, Delområde: $delomrade2")
                                         }
                                     }
+
                                     else -> {}
                                 }
                             }
