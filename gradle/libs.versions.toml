@@ -42,8 +42,8 @@ micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-p
 nimbus-jose-jwt = { module = "com.nimbusds:nimbus-jose-jwt", version.ref = "nimbusJwtVersion" }
 opentelemetry-api = { module = "io.opentelemetry:opentelemetry-api", version.ref = "openTelemetryVersion" }
 opentelemetry-bom = { module = "io.opentelemetry:opentelemetry-bom", version.ref = "openTelemetryVersion" }
-org-apache-cxf-frontend ={module = "org.apache.cxf:cxf-rt-frontend-jaxws", version.ref = "orgApacheCfxVersion" }
-org-apache-cxf-transports ={module = "org.apache.cxf:cxf-rt-transports-http", version.ref = "orgApacheCfxVersion" }
+org-apache-cxf-frontend ={ module = "org.apache.cxf:cxf-rt-frontend-jaxws", version.ref = "orgApacheCfxVersion" }
+org-apache-cxf-transports ={ module = "org.apache.cxf:cxf-rt-transports-http", version.ref = "orgApacheCfxVersion" }
 postgres = { module = "org.postgresql:postgresql" }
 spring-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator" }
 spring-batch-test = { module = "org.springframework.batch:spring-batch-test" }
