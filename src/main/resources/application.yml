@@ -4,8 +4,6 @@ spring:
       localhost:
         - "humanReadableLog"
         - "eventsDisabled"
-      dev:
-        - "security-off"
 
   main:
     banner-mode: "OFF"
@@ -88,16 +86,41 @@ nibas:
     users: bd23d991ffd8b950373470ed4b27e965
   idporten:
     url: https://test.idporten.no
+    jwks-path: /jwks.json
   arbeidsliste:
     host: http://localhost:8082
     api-key: 'super-secret-api-key'
 
 ---
-# Custom cron jobs
-# Hver dag kl 03
+# Profile-specific: dev
+
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+nibas:
+  authorized:
+    users: bd23d991ffd8b950373470ed4b27e965
+  idporten:
+    url: http://mock-oauth2-server:8080/idporten
+    jwks-path: /jwks
+
+---
+# ID-porten URL for non-localhost and non-dev environments
+spring:
+  config:
+    activate:
+      on-profile: "!localhost & !dev"
 nibas:
   idporten:
     url: https://idporten.no
+    jwks-path: /jwks.json
+
+---
+# Custom cron jobs
+# Hver dag kl 03
+nibas:
   cron:
     kodeliste:
       invalidate: 0 0 3 * * *
@@ -105,8 +128,6 @@ nibas:
 ---
 # Hver dag kl 04
 nibas:
-  idporten:
-    url: https://idporten.no
   cron:
     matrikkelkodeliste:
       invalidate: 0 0 4 * * *

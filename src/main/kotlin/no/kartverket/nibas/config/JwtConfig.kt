@@ -12,6 +12,8 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.core.env.Environment
 import java.net.URI
 import java.util.concurrent.TimeUnit
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 @Configuration
 class JwtConfig(
@@ -21,14 +23,24 @@ class JwtConfig(
     private val outageTtl = TimeUnit.HOURS.toMillis(24)
     private val timeout = TimeUnit.SECONDS.toMillis(10)
     private val url = environment.getRequiredProperty("nibas.idporten.url")
+    private val jwksPath = environment.getProperty("nibas.idporten.jwks-path", "/jwks.json")
+    private val logger: Logger = LoggerFactory.getLogger(JwtConfig::class.java)
 
     @Bean
-    fun jwkSource(): JWKSource<SecurityContext> =
-        JWKSourceBuilder
-            .create<SecurityContext>(URI.create("$url/jwks.json").toURL())
+    fun jwkSource(): JWKSource<SecurityContext> {
+        val jwkUrl = "$url$jwksPath"
+        logger.info("===============================================")
+        logger.info("*** CONFIGURING JWT VERIFIER ***")
+        logger.info("ID-porten URL: $url")
+        logger.info("JWK path: $jwksPath")
+        logger.info("Full JWK URL: $jwkUrl")
+        logger.info("===============================================")
+        return JWKSourceBuilder
+            .create<SecurityContext>(URI.create(jwkUrl).toURL())
             .cache(ttl, timeout)
             .outageTolerant(outageTtl)
             .build()
+    }
 
     @Bean
     fun jwkSelector(): JWKSelector =
