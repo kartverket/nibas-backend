@@ -107,11 +107,25 @@ nibas:
     jwks-path: /jwks
 
 ---
+# ID-porten URL for main dev environment (prod-like)
+spring:
+  config:
+    activate:
+      on-profile: dev-main
+
+nibas:
+  authorized:
+    users: bd23d991ffd8b950373470ed4b27e965
+  idporten:
+    url: https://test.idporten.no
+    jwks-path: /jwks.json
+
+---
 # ID-porten URL for non-localhost and non-dev environments
 spring:
   config:
     activate:
-      on-profile: "!localhost & !dev"
+      on-profile: prod
 nibas:
   idporten:
     url: https://idporten.no
