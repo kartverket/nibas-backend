@@ -214,7 +214,7 @@ class UtkastService(
      * Returnerer liste med alle låsbare og hvilken versjon utkastet mener de skal ha
      * Den kallende tjenesten validerer at de låsbare har ønsket versjon
      */
-    private fun validerLaasbarForEndringerFinnesOgLagListeMedLaasbarOgOensketVersjon(utkast: Utkast, gyldigFra: LocalDate): List<Pair<Laasbar, Int>> {
+    private fun validerLaasbarForEndringerFinnesOgLagListeMedLaasbarOgOensketVersjon(utkast: Utkast, gyldigFra: LocalDate): MutableList<Pair<Laasbar, Int>> {
         val laasbarMedOensketVersjonListe = mutableListOf<Pair<Laasbar, Int>>()
         utkast.operasjoner?.let { operasjoner ->
             operasjoner.stemmekretsSammenslaaingsendring?.let {
