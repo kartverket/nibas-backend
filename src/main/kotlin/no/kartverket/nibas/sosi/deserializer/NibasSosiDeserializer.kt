@@ -3,12 +3,14 @@ package no.kartverket.nibas.sosi.deserializer
 import no.kartverket.nibas.sosi.common.SosiLinje
 import no.kartverket.nibas.sosi.model.SosiObjekt
 import no.kartverket.nibas.sosi.model.SosiObjektFactory
+import org.springframework.stereotype.Service
 import java.io.*
 import java.nio.charset.Charset
 import java.util.logging.Logger
 import java.util.regex.Pattern
 import kotlin.collections.ArrayList
 
+@Service
 class NibasSosiDeserializer {
 
     val logger = Logger.getLogger(this::class.java.name)

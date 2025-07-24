@@ -1,5 +1,6 @@
 name: 'Dependency Review and Graph'
 on:
+  merge_group:
   pull_request:
     branches: [ main ]
   push:

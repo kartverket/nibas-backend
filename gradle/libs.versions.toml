@@ -17,6 +17,7 @@ springFrameworkVersion = "3.5.3"
 springdocOpenapiVersion2 = "2.8.9"
 springmockkVersion = "4.0.2"
 testContainerVersion = "1.21.3"
+proj4jVersion = "1.1.0"
 
 [libraries]
 flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flywayVersion" }
@@ -36,6 +37,7 @@ locationtech-jts-io = { module = "org.locationtech.jts:jts-io", version.ref = "j
 locationtech-jts-io-common = { module = "org.locationtech.jts.io:jts-io-common", version.ref = "jtsVersion" }
 locationtech-jts-modules = { module = "org.locationtech.jts:jts-modules", version.ref = "jtsVersion" }
 locationtech-spatial4j = { module = "org.locationtech.spatial4j:spatial4j", version.ref = "spatial4jVersion" }
+locationtech-proj4j = {module = "org.locationtech.proj4j:proj4j", version.ref = "proj4jVersion"}
 logstash-logback-encoder = { module = "net.logstash.logback:logstash-logback-encoder", version.ref = "logstashVersion" }
 matrikkelapi-wsclient = { module = "no.kartverket.matrikkelapi-v1:matrikkelapi-v1-wsclient", version.ref = "matrikkelVersion" }
 micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "prometheusVersion" }
