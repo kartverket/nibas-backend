@@ -8,6 +8,7 @@ import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.LineString
 import java.time.LocalDate
 import java.time.ZonedDateTime
+import kotlin.collections.find
 
 open class SosiGeometri(type: String, niva: Int, verdier: MutableList<SosiVerdi>) :
     SosiObjekt(type = type, niva, verdier = verdier) {
@@ -22,6 +23,7 @@ open class SosiGeometri(type: String, niva: Int, verdier: MutableList<SosiVerdi>
         "JA" -> true
         else -> false
     }
+    fun getAvgrensingstype(): String? = getVerdiAvBarn(SosiKoder.AVGRENSNINGSTYPE)
 
     fun getOpphav(): String? = getVerdiAvBarn(SosiKoder.OPPHAV)
     fun getOppdateringsdato(): LocalDate? = stringAsDate(getVerdiAvBarn(SosiKoder.OPPDATERINGSDATO))

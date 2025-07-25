@@ -39,6 +39,7 @@ class SosiGeometryService {
     }
     // OBS! Støtter kun å hente ut linestrings (kurver) fra sosiobjektet. (TS-2004)
     fun getGeoJsonForSosiObjekt(sosiObjekt: SosiObjekt, inProjection: String): FeatureCollection {
+        val sosiVersjon = sosiObjekt.getHode()?.getSosiVersjon() ?: throw RuntimeException("SosiVersjon ble ikke funnet i filen")
         val features = mutableListOf<Feature>()
 
         val koordsys = getEPSGCodeForSosiKode(sosiObjekt.getKurver()[0].koordsys)
@@ -54,14 +55,15 @@ class SosiGeometryService {
             val lineString = convertSosiKurveToLineString(
                 sosiKurve = kurve, geometryFactory = geometryFactory, sourceCRS = sourceCRS, targetCRS = targetCRS, transformer = transformer
             )
+            val grenseType = getGrenseTypeForKurve(kurve = kurve, sosiVersjon = sosiVersjon) ?: "Ukjent grensetype"
             if (lineString != null) {
                 // Her blir en del verdier kun defaultverdier
                 val feature = Feature(
                     id = kurve.getId(),
                     properties = FeatureProperties(
-                        type = "SOSI-${kurve.getObjType() ?: "Ukjent"}" ,
+                        type = "SOSI-$grenseType",
                         srid = lineString.srid,
-                        version = 1 // Dummyversjon
+                        version = 1
                     ),
                     geometry = lineString.geometryToDto()
                 )
@@ -70,6 +72,14 @@ class SosiGeometryService {
         }
 
         return FeatureCollection(features = features)
+    }
+
+    fun getGrenseTypeForKurve(kurve: SosiKurve, sosiVersjon: String): String? {
+        return when (sosiVersjon) {
+            "4.5" -> kurve.getObjType()
+            "5.0" -> kurve.getAvgrensingstype()
+            else -> "Ukjent grensetype"
+        }
     }
 
     fun convertSosiKurveToLineString(

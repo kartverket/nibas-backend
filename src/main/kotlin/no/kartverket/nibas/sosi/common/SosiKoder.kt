@@ -78,4 +78,6 @@ object SosiKoder {
     const val TELLEKRETSNAVN = "TELLEKRETSNAVN"
     const val VALGDISTRIKTSNUMMER = "VALGDISTRIKTSNUMMER"
     const val STEMMEKRETSGRENSE = "Stemmekretsgrense"
+
+    const val AVGRENSNINGSTYPE = "AVGRENSNINGSTYPE"
 }
