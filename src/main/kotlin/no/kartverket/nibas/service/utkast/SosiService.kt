@@ -61,7 +61,7 @@ class SosiGeometryService {
                 val feature = Feature(
                     id = kurve.getId(),
                     properties = FeatureProperties(
-                        type = "SOSI-$grenseType",
+                        type = grenseType,
                         srid = lineString.srid,
                         version = 1
                     ),
