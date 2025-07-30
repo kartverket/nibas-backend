@@ -1,10 +1,17 @@
 package no.kartverket.nibas.service.utkast
 
+import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.FeatureProperties
+import no.kartverket.nibas.api.v1.common.geojson.metadata.CommonGrenseMetadata
+import no.kartverket.nibas.api.v1.common.geojson.metadata.CommonMetadata
+import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
+import no.kartverket.nibas.api.v1.common.geojson.metadata.Sporingsinformasjon
+import no.kartverket.nibas.api.v1.common.geojson.metadata.getMetadataForGrensetype
 import no.kartverket.nibas.common.geometry.getGeometryFactory
 import no.kartverket.nibas.extensions.geometry.geometryToDto
+import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.sosi.model.SosiKurve
 import no.kartverket.nibas.sosi.model.SosiObjekt
 import org.locationtech.jts.geom.Coordinate
@@ -19,7 +26,9 @@ import org.springframework.stereotype.Service
 import java.util.logging.Logger
 
 @Service
-class SosiGeometryService {
+class SosiGeometryService(
+    val kodelisteService: KodelisteService
+) {
     val logger = Logger.getLogger(this::class.java.name)
 
     fun getEPSGCodeForSosiKode(sosiKode: String?): String {
@@ -56,14 +65,27 @@ class SosiGeometryService {
                 sosiKurve = kurve, geometryFactory = geometryFactory, sourceCRS = sourceCRS, targetCRS = targetCRS, transformer = transformer
             )
             val grenseType = getGrenseTypeForKurve(kurve = kurve, sosiVersjon = sosiVersjon) ?: "Ukjent grensetype"
-            if (lineString != null) {
-                // Her blir en del verdier kun defaultverdier
+            val id = kurve.getIdent()?.getVerdiAvBarn("LOKALID") ?: kurve.getId()
+            val posisjonskvalitet = kurve.getPosisjonskvalitet(kodelisteService = kodelisteService, sosiVersjon = sosiVersjon)?.toKvalitet()
+
+            if (lineString != null && id != null) {
                 val feature = Feature(
-                    id = kurve.getId(),
+                    id = id,
                     properties = FeatureProperties(
                         type = grenseType,
                         srid = lineString.srid,
-                        version = 1
+                        version = 1,
+                        metadata = getMetadataForGrensetype(grensetype = Grensetype.fromValue(grenseType), CommonMetadata(
+                            identifikasjon = Identifikasjon(lokalid = id),
+                            datafangstdato = kurve.getDatafangstDato(),
+                            gyldigFra = kurve.getGyldigFra(),
+                            gyldigTil = kurve.getGyldigTil(),
+                            informasjon = kurve.getInformasjon(),
+                            sporingsinformasjon = Sporingsinformasjon(),
+                            opphav = kurve.getOpphav(),
+                        ), CommonGrenseMetadata(
+                            posisjonskvalitet = posisjonskvalitet
+                        ))
                     ),
                     geometry = lineString.geometryToDto()
                 )
@@ -73,7 +95,7 @@ class SosiGeometryService {
 
         return FeatureCollection(features = features)
     }
-
+    
     fun getGrenseTypeForKurve(kurve: SosiKurve, sosiVersjon: String): String? {
         return when (sosiVersjon) {
             "4.5" -> kurve.getObjType()

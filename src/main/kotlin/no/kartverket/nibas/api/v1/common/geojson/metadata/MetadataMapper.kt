@@ -2,6 +2,7 @@ package no.kartverket.nibas.api.v1.common.geojson.metadata
 
 import no.kartverket.nibas.api.v1.KODELISTE_BASE_URL
 import no.kartverket.nibas.api.v1.MAALEMETODE_KODE_PATH
+import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.domain.CommonMetadataProperties
 import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.Grense
@@ -75,6 +76,21 @@ class MetadataMapper(private val kodelisteHrefProvider: KodelisteHrefProviderI =
         sporingsinformasjon = this.auditInfo.toSporingsinformasjon(),
         opphav = this.opphav,
     )
+}
+
+fun getMetadataForGrensetype(grensetype: Grensetype, commonMetadata: CommonMetadata, commonGrenseMetadata: CommonGrenseMetadata): Metadata {
+    return when (grensetype) {
+        Grensetype.Kommunegrense -> AdministrativGrenseMetadata(commonMetadata, commonGrenseMetadata)
+        Grensetype.Fylkesgrense -> AdministrativGrenseMetadata(commonMetadata, commonGrenseMetadata)
+        Grensetype.Riksgrense -> RiksgrenseMetadata(commonMetadata, commonGrenseMetadata)
+        Grensetype.AvtaltAvgrensningslinje -> AvtaltAvgrensningslinjeMetadata(commonMetadata, commonGrenseMetadata)
+        Grensetype.Territorialgrense -> TerritorialgrenseMetadata(commonMetadata, commonGrenseMetadata)
+        Grensetype.Grunnlinje -> GrunnlinjeMetadata(commonMetadata, commonGrenseMetadata)
+        Grensetype.Lovvirkeomraadegrense -> AdministrativGrenseMetadata(commonMetadata, commonGrenseMetadata)
+        Grensetype.Grunnkretsgrense -> StatistiskgrenseMetadata(commonMetadata, commonGrenseMetadata)
+        Grensetype.Delomraadegrense -> StatistiskgrenseMetadata(commonMetadata, commonGrenseMetadata)
+        Grensetype.Stemmekretsgrense -> KommunalKretsgrenseMetadata(commonMetadata, commonGrenseMetadata)
+    }
 }
 
 /**

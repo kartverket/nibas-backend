@@ -60,16 +60,26 @@ open class SosiGeometri(type: String, niva: Int, verdier: MutableList<SosiVerdi>
     fun getKommunenummer(): String = getVerdiAvBarn(SosiKoder.KOMMUNENUMMER)!!
     fun getStemmekretsId(): SosiStemmekretsId? = barn.find { it is SosiStemmekretsId } as? SosiStemmekretsId
 
-    fun getPosisjonskvalitet(kodelisteService: KodelisteService): PosisjonskvalitetEmbeddable? {
+    fun getPosisjonskvalitet(kodelisteService: KodelisteService, sosiVersjon: String): PosisjonskvalitetEmbeddable? {
         val sosiKvalitet = this.getKvalitet()
+        var maalemetode: String? = null
+        var noyaktighet: Int? = null
+        if(sosiVersjon == "5.0"){
+            val data = sosiKvalitet?.getMalemetode()?.split(" ")
+            maalemetode = data?.get(0)
+            noyaktighet = data?.get(1)?.toInt()
+        } else{
+            maalemetode = sosiKvalitet?.getMalemetode()
+            noyaktighet = sosiKvalitet?.getNoyaktighet()
+        }
         if (sosiKvalitet != null) {
             return PosisjonskvalitetEmbeddable(
                 //Hvis kvalitet er satt må målemetode være angitt
-                maalemetode = when (val maalemetode = sosiKvalitet.getMalemetode()) {
+                maalemetode = when (maalemetode) {
                     null -> throw RuntimeException("Maalemetode er påkrevd")
                     else -> kodelisteService.getMalemetodeIdByCodeValue(maalemetode)
                 },
-                noeyaktighet = sosiKvalitet.getNoyaktighet()
+                noeyaktighet = noyaktighet
             )
         }
         return null
