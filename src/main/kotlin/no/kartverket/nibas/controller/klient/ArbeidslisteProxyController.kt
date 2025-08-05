@@ -40,8 +40,8 @@ class ArbeidslisteProxyController(
      */
     @RequestMapping("/**")
     fun proxyRequest(request: HttpServletRequest, response: HttpServletResponse) {
-        // Fjern /proxy/arbeidsliste fra request path
-        val downstreamPath = request.servletPath.removePrefix("/v1/proxy/arbeidsliste")
+        // Fjern /proxy/arbeidsliste fra request path og legg til /internal-api prefix
+        val downstreamPath = "/internal-api" + request.servletPath.removePrefix("/v1/proxy/arbeidsliste")
         val method = request.method
 
         if (!isPathMethodAllowed(downstreamPath, method)) {
@@ -231,11 +231,11 @@ class ArbeidslisteProxyController(
     companion object {
 
         private val PATH_METHOD_ALLOWLIST: Map<Any, Set<String>> = mapOf(
-            "/api/v1/avvik" to setOf("GET", "POST"),
-            "/api/v1/avvik/kommuner" to setOf("GET"),
-            "/api/v1/matrikkel/grenselinjer" to setOf("GET"),
-            "/api/v1/matrikkel/grenselinjer/kommuner" to setOf("GET"),
-            Regex("^/api/v1/avvik/kommune/[^/]+$") to setOf("GET")
+            "/internal-api/v1/avvik" to setOf("GET", "POST"),
+            "/internal-api/v1/avvik/kommuner" to setOf("GET"),
+            "/internal-api/v1/matrikkel/grenselinjer" to setOf("GET"),
+            "/internal-api/v1/matrikkel/grenselinjer/kommuner" to setOf("GET"),
+            Regex("^/internal-api/v1/avvik/kommune/[^/]+$") to setOf("GET")
         )
 
         private val ALLOWED_QUERY_PARAMETERS: Set<String> = setOf(
