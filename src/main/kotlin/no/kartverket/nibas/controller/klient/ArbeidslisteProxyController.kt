@@ -231,11 +231,11 @@ class ArbeidslisteProxyController(
     companion object {
 
         private val PATH_METHOD_ALLOWLIST: Map<Any, Set<String>> = mapOf(
-            "/internal-api/v1/avvik" to setOf("GET", "POST"),
-            "/internal-api/v1/avvik/kommuner" to setOf("GET"),
-            "/internal-api/v1/matrikkel/grenselinjer" to setOf("GET"),
-            "/internal-api/v1/matrikkel/grenselinjer/kommuner" to setOf("GET"),
-            Regex("^/internal-api/v1/avvik/kommune/[^/]+$") to setOf("GET")
+            "/internal-api/api/v1/avvik" to setOf("GET", "POST"),
+            "/internal-api/api/v1/avvik/kommuner" to setOf("GET"),
+            "/internal-api/api/v1/matrikkel/grenselinjer" to setOf("GET"),
+            "/internal-api/api/v1/matrikkel/grenselinjer/kommuner" to setOf("GET"),
+            Regex("^/internal-api/api/v1/avvik/kommune/[^/]+$") to setOf("GET")
         )
 
         private val ALLOWED_QUERY_PARAMETERS: Set<String> = setOf(
