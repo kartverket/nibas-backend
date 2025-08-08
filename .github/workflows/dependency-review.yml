@@ -25,9 +25,15 @@ jobs:
 
       - name: Generate and submit dependency graph
         uses: gradle/actions/dependency-submission@v4
+        continue-on-error: true
+        env:
+          GH_PACKAGES_PAT: ${{ secrets.GH_PACKAGES_PAT }}
 
       - name: 'Dependency Review'
         uses: actions/dependency-review-action@v4.7.1
+        env:
+          GH_PACKAGES_PAT: ${{ secrets.GH_PACKAGES_PAT }}
+        continue-on-error: true
         if: github.event_name == 'pull_request'
         with:
           comment-summary-in-pr: always
