@@ -35,16 +35,18 @@ enum class KontekstEnhetType {
  * NB: dbKey brukes som konstant i database-tabellen for grenser (disse må da endres med omhu).
  */
 enum class Grensetype(val value: String, val dbKey: String, val editerbar: Boolean) {
-    Kommunegrense("Kommunegrense", "Kommunegrense", true),
-    Fylkesgrense("Fylkesgrense", "Fylkesgrense", true),
-    Riksgrense("Riksgrense", "Riksgrense", true),
-    AvtaltAvgrensningslinje("AvtaltAvgrensningslinje", "AvtaltAvgrensningslinje", true),
-    Territorialgrense("Territorialgrense", "Territorialgrense", true),
-    Grunnlinje("Grunnlinje", "Grunnlinje", false),
-    Lovvirkeomraadegrense("LovVirkeområdeGrense", "LovVirkeområdeGrense", false),
-    Grunnkretsgrense("Grunnkretsgrense", "Grunnkretsgrense", true),
-    Delomraadegrense("Delområdegrense", "Delområdegrense", true),
-    Stemmekretsgrense("Stemmekretsgrense", "Stemmekretsgrense", true);
+    Kommunegrense(value = "Kommunegrense", dbKey =  "Kommunegrense", editerbar = true),
+    Fylkesgrense(value = "Fylkesgrense", dbKey = "Fylkesgrense", editerbar = true),
+    Riksgrense(value = "Riksgrense", dbKey = "Riksgrense", editerbar = true),
+    AvtaltAvgrensningslinje(value = "AvtaltAvgrensningslinje", dbKey =  "AvtaltAvgrensningslinje", editerbar = true),
+    Territorialgrense(value = "Territorialgrense", dbKey = "Territorialgrense", editerbar = true),
+    Grunnlinje(value = "Grunnlinje", dbKey = "Grunnlinje", editerbar = false),
+    Lovvirkeomraadegrense(value = "LovVirkeområdeGrense", dbKey =  "LovVirkeområdeGrense", editerbar = false),
+    Grunnkretsgrense(value = "Grunnkretsgrense", dbKey = "Grunnkretsgrense", editerbar = true),
+    Delomraadegrense(value = "Delområdegrense", dbKey = "Delområdegrense", editerbar = true),
+    Stemmekretsgrense(value = "Stemmekretsgrense", dbKey = "Stemmekretsgrense", editerbar = true),
+    Soknegrense(value = "Soknegrense", dbKey = "Soknegrense", editerbar = false),
+    Skolekretsgrense(value = "Skolekretsgrense", dbKey = "Skolekretsgrense", editerbar = false);
 
     companion object {
         fun fromValue(valueIn: String): Grensetype {

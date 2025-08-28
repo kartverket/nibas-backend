@@ -46,9 +46,17 @@ class SosiGeometryService(
             else -> throw IllegalArgumentException("Ukjent SOSI koordinatsystemkode: '$sosiKode'")
         }
     }
+
+    fun parseSosiVersjon(sosiString: String): String {
+        return sosiString.take(3)
+    }
+
     // OBS! Støtter kun å hente ut linestrings (kurver) fra sosiobjektet. (TS-2004)
     fun getGeoJsonForSosiObjekt(sosiObjekt: SosiObjekt, inProjection: String): FeatureCollection {
-        val sosiVersjon = sosiObjekt.getHode()?.getSosiVersjon() ?: throw RuntimeException("SosiVersjon ble ikke funnet i filen")
+        val sosiVersjonString = sosiObjekt.getHode()?.getSosiVersjon() ?: throw RuntimeException("SosiVersjon ble ikke funnet i filen")
+        val sosiVersjon = parseSosiVersjon(sosiVersjonString)
+        val illegalSOSIversionMessage = "Du kan kun laste opp sosifiler med versjon 4.5 eller 5.0, ikke $sosiVersjon"
+        if(sosiVersjon != "4.5" && sosiVersjon != "5.0") throw IllegalArgumentException(illegalSOSIversionMessage)
         val features = mutableListOf<Feature>()
 
         val koordsys = getEPSGCodeForSosiKode(sosiObjekt.getKurver()[0].koordsys)
@@ -64,7 +72,12 @@ class SosiGeometryService(
             val lineString = convertSosiKurveToLineString(
                 sosiKurve = kurve, geometryFactory = geometryFactory, sourceCRS = sourceCRS, targetCRS = targetCRS, transformer = transformer
             )
-            val grenseType = getGrenseTypeForKurve(kurve = kurve, sosiVersjon = sosiVersjon) ?: "Ukjent grensetype"
+            val grenseTypeString = getGrenseTypeForKurve(kurve = kurve, sosiVersjon = sosiVersjon) ?: throw IllegalArgumentException(illegalSOSIversionMessage)
+            val grenseType = try {
+                Grensetype.fromValue(grenseTypeString)
+            } catch(e: IllegalArgumentException){
+                throw IllegalArgumentException("Filen inneholder en eller flere grenser med grensetype som ikke støttes: '$grenseTypeString'")
+            }
             val id = kurve.getIdent()?.getVerdiAvBarn("LOKALID") ?: kurve.getId()
             val posisjonskvalitet = kurve.getPosisjonskvalitet(kodelisteService = kodelisteService, sosiVersjon = sosiVersjon)?.toKvalitet()
 
@@ -72,10 +85,10 @@ class SosiGeometryService(
                 val feature = Feature(
                     id = id,
                     properties = FeatureProperties(
-                        type = grenseType,
+                        type = grenseType.toString(),
                         srid = lineString.srid,
                         version = 1,
-                        metadata = getMetadataForGrensetype(grensetype = Grensetype.fromValue(grenseType), CommonMetadata(
+                        metadata = getMetadataForGrensetype(grensetype = grenseType, CommonMetadata(
                             identifikasjon = Identifikasjon(lokalid = id),
                             datafangstdato = kurve.getDatafangstDato(),
                             gyldigFra = kurve.getGyldigFra(),
@@ -100,7 +113,7 @@ class SosiGeometryService(
         return when (sosiVersjon) {
             "4.5" -> kurve.getObjType()
             "5.0" -> kurve.getAvgrensingstype()
-            else -> "Ukjent grensetype"
+            else -> null
         }
     }
 
