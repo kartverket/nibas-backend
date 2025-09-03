@@ -49,6 +49,6 @@ jobs:
       application: nibas-backend
       version: ${{ needs.build.outputs.version }}
       deploy_dev: true
-      deploy_prod: false
+      deploy_prod: true
       extra_namespace: nibas-e2e
       identity: nibas
