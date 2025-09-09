@@ -184,14 +184,15 @@ class KommuneService(
         nyKommune.addKommuneTilUnikLokalid(unikLokalid)
 
         // Fylkesnummer er de to første sifrene i kommunenummeret
-        val fylkesnummer = nyttKommunenummer.substring(0, 2)
+        val fylkesnummer = nyttKommunenummer.take(2)
         val fylke = fylkeRepository.findGyldigFylkeForFylkesnummer(fylkesnummer, gyldigFra)
             ?: throw RuntimeException("Fant ikke fylke med fylkesnummer $fylkesnummer og gyldig fra $gyldigFra")
 
         fylke.addKommune(nyKommune)
 
-        administrativenhetnavnService.createNyeAdmEnhetNavnOgKnyttTilEnhet(
-            admenhetnavnList = admenhetnavnList.ifEmpty { kopierFraKommune.getAdministrativenhetNavn(gyldigFra) },
+        administrativenhetnavnService.saveNyeAdmEnhetNavnOgKnyttTilEnhet(
+            admenhetnavnList = admenhetnavnList.ifEmpty { kopierFraKommune.getAdministrativenhetNavn(gyldigFra)
+                .map { administrativenhetnavnService.createNyttAdmEnhetNavn(it.navn, it.spraak?.id, it.rekkefoelge) } },
             gyldigFra = gyldigFra,
             endringstype = endringstype,
             admEnhet = nyKommune

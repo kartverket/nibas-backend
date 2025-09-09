@@ -60,7 +60,7 @@ class Administrativenhetnavn(
      * Hvis man kaller denne for en nasjon eller kommune, returneres også null.
      */
     fun getFylke(gyldighetsdato: LocalDate = LocalDate.now()): Fylke? {
-        return administrativenhetLokalid.fylker.filter { it.gyldigPaaDato(gyldighetsdato) }.firstOrNull()
+        return administrativenhetLokalid.fylker.firstOrNull { it.gyldigPaaDato(gyldighetsdato) }
     }
 
     /**
@@ -68,7 +68,7 @@ class Administrativenhetnavn(
      * Hvis man kaller denne for en nasjon eller fylke, returneres også null.
      */
     fun getKommune(gyldighetsdato: LocalDate = LocalDate.now()): Kommune? {
-        return administrativenhetLokalid.kommuner.filter { it.gyldigPaaDato(gyldighetsdato) }.firstOrNull()
+        return administrativenhetLokalid.kommuner.firstOrNull { it.gyldigPaaDato(gyldighetsdato) }
     }
     
     /**
@@ -76,7 +76,17 @@ class Administrativenhetnavn(
      * Hvis man kaller denne for et fylke eller kommune, returneres også null.
      */
     fun getNasjon(gyldighetsdato: LocalDate = LocalDate.now()): Nasjon? {
-        return administrativenhetLokalid.nasjoner.filter { it.gyldigPaaDato(gyldighetsdato) }.firstOrNull()
+        return administrativenhetLokalid.nasjoner.firstOrNull { it.gyldigPaaDato(gyldighetsdato) }
+    }
+
+    fun applyMappingFromExistingAdministrativenhetnavn(gammeltAdmEnhetNavn: Administrativenhetnavn): Administrativenhetnavn {
+        return this.apply {
+            foerstedigitaliseringsdato = gammeltAdmEnhetNavn.foerstedigitaliseringsdato
+            navn = gammeltAdmEnhetNavn.navn
+            spraak = gammeltAdmEnhetNavn.spraak
+            rekkefoelge = gammeltAdmEnhetNavn.rekkefoelge
+            version = gammeltAdmEnhetNavn.version
+        }
     }
 
 }

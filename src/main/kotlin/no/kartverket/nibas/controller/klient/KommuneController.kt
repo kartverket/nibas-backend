@@ -27,9 +27,10 @@ class KommuneController(
     override fun hentKommuner(fylkeId: String?, gyldighetsdato: LocalDate?): List<KommuneResponse> {
         val datoToUse: LocalDate = gyldighetsdato ?: LocalDate.now()
         return if (fylkeId == null) {
-            kommuneService.hentAlleKommuner(datoToUse).map { it.toKommuneResponse() }
+            kommuneService.hentAlleKommuner(datoToUse).map { it.toKommuneResponse(datoToUse) }
         } else {
-            kommuneService.hentKommunerForFylke(Identifikator(Lokalid(fylkeId), datoToUse)).map { it.toKommuneResponse() }
+            kommuneService.hentKommunerForFylke(Identifikator(Lokalid(fylkeId), datoToUse))
+                .map { it.toKommuneResponse(datoToUse) }
         }
     }
 
@@ -42,12 +43,13 @@ class KommuneController(
             .hentKommunerForFylker(
                 fylkeIder.map { id -> Identifikator(Lokalid(id), datoToUse) }
             )
-            .map { it.toKommuneResponse() }
+            .map { it.toKommuneResponse(datoToUse) }
     }
 
     override fun hentKommune(lokalid: String, gyldighetsdato: LocalDate?): KommuneResponse {
         val identifikator = createIdentifikator(lokalid, gyldighetsdato)
-        return kommuneService.hentKommune(identifikator)?.toKommuneResponse() ?: throw NotFoundException("Kommune $identifikator ble ikke funnet.")
+        return kommuneService.hentKommune(identifikator)?.toKommuneResponse(identifikator.gyldighetsdato)
+            ?: throw NotFoundException("Kommune $identifikator ble ikke funnet.")
     }
 
     override fun hentGrenserForKommune(lokalid: String, gyldighetsdato: LocalDate?): FeatureCollection {

@@ -22,12 +22,12 @@ class FylkeController(
 
     override fun hentFylker(gyldighetsdato: LocalDate?): List<FylkeResponse> {
         val datoToUse: LocalDate = gyldighetsdato ?: LocalDate.now()
-        return fylkeService.hentAlleFylker(datoToUse).map { it.toFylkeResponse() }
+        return fylkeService.hentAlleFylker(datoToUse).map { it.toFylkeResponse(datoToUse) }
     }
 
     override fun hentFylke(lokalid: String, gyldighetsdato: LocalDate?): FylkeResponse {
         val identifikator = createIdentifikator(lokalid, gyldighetsdato)
-        return fylkeService.hentFylke(identifikator)?.toFylkeResponse()
+        return fylkeService.hentFylke(identifikator)?.toFylkeResponse(identifikator.gyldighetsdato)
             ?: throw NotFoundException("Fylke $identifikator ble ikke funnet.")
     }
 

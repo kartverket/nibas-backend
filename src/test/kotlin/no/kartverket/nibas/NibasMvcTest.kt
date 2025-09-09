@@ -24,6 +24,8 @@ import org.springframework.test.web.servlet.ResultMatcher
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import java.nio.charset.Charset
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 
 @ActiveProfiles("humanReadableLog", "security-off")
@@ -172,6 +174,8 @@ open class NibasMvcTest {
             assertThat(contentAsString).isEqualTo(asJson(expectedResponseObject))
         }
     }
+
+    fun formattedDateString(date: LocalDate): String? = DateTimeFormatter.ISO_DATE.format(date)
 }
 
 data class MockResponseAsserts(

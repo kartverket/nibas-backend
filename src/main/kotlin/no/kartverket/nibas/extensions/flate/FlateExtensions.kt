@@ -19,6 +19,7 @@ import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.extensions.geometry.multiPolygonToDto
 import no.kartverket.nibas.extensions.geometry.posisjonToFeature
+import java.time.LocalDate
 
 fun Grunnkrets.toGrunnkretsResponse(): GrunnkretsResponse {
     val kommune = this.getKommune(gyldighet.gyldigFra) ?: throw RuntimeException("Fant ikke kommune for grunnkrets")
@@ -38,11 +39,11 @@ fun Grunnkrets.toGrunnkretsResponse(): GrunnkretsResponse {
     )
 }
 
-fun Fylke.toFylkeResponse(): FylkeResponse {
+fun Fylke.toFylkeResponse(gyldighetsdato: LocalDate): FylkeResponse {
     val identifikator = createIdentifikator(lokalid, gyldighet.gyldigFra)
     return FylkeResponse(
         id = identifikator.toObjektIdentifikator(),
-        navn = getAdministrativenhetNavn(identifikator.gyldighetsdato)
+        navn = getAdministrativenhetNavn(gyldighetsdato)
             .map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version, it.rekkefoelge) },
         nummer = fylkesnummer,
         samiskforvaltningsomraade = samiskforvaltningsomraade!!,
@@ -53,11 +54,11 @@ fun Fylke.toFylkeResponse(): FylkeResponse {
     )
 }
 
-fun Kommune.toKommuneResponse(): KommuneResponse {
+fun Kommune.toKommuneResponse(gyldighetsdato: LocalDate): KommuneResponse {
     val identifikator = createIdentifikator(lokalid, gyldighet.gyldigFra)
     return KommuneResponse(
-        id = ObjektIdentifikator(Lokalid(lokalid), gyldighet.gyldigFra),
-        navn = getAdministrativenhetNavn(identifikator.gyldighetsdato)
+        id = identifikator.toObjektIdentifikator(),
+        navn = getAdministrativenhetNavn(gyldighetsdato)
             .map { AdministrativEnhetNavn(it.navn!!, it.spraak?.id!!, it.version, it.rekkefoelge) },
         nummer = this.kommunenummer,
         samiskforvaltningsomraade = samiskforvaltningsomraade!!,

@@ -1,5 +1,6 @@
 package no.kartverket.nibas.controller.klient
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import no.kartverket.nibas.NibasMvcTest
@@ -9,12 +10,18 @@ import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
+import no.kartverket.nibas.domain.Administrativenhetnavn
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
+import no.kartverket.nibas.domain.Spraakkode
 import no.kartverket.nibas.service.FylkeService
+import no.kartverket.nibas.sporing.Gyldighet
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import java.time.LocalDate
+import java.time.Month
 
 @WebMvcTest(FylkeController::class)
 class FylkeControllerTest : NibasMvcTest() {
@@ -52,8 +59,55 @@ class FylkeControllerTest : NibasMvcTest() {
                 .withFylkesnummer("1")
                 .build()
 
-
         get("/v1/fylker/1", status().isOk)
+    }
+
+    @Test
+    fun thatHentAdmnistrativtnavnIsOk() {
+        val jan1In2023 = LocalDate.of(2023, Month.JANUARY, 1)
+        val historiskNavn = Administrativenhetnavn().apply {
+            navn = "Vestlandet"
+            spraak = Spraakkode().apply { id = "nor" }
+            gyldighet = Gyldighet(gyldigFra = jan1In2023, gyldigTil = LocalDate.now())
+        }
+        val navn1 = Administrativenhetnavn().apply {
+            navn = "Innlandet"
+            rekkefoelge = 1
+            spraak = Spraakkode().apply { id = "nor" }
+        }
+        val navn2 = Administrativenhetnavn().apply {
+            navn = "Sisdajve"
+            rekkefoelge = 2
+            spraak = Spraakkode().apply { id = "sma" }
+        }
+
+        val fylke = FylkeBuilder(administrativenhetnavn = listOf(historiskNavn, navn1, navn2), gyldigFra = jan1In2023)
+            .withFylkesnummerUuid("UUID-123")
+            .withFylkesnummer("1")
+            .build()
+        every { fylkeService.hentFylke(any()) } returns fylke
+
+        val mapper = ObjectMapper()
+        val responsTidligereDato = mapper.readTree(get("/v1/fylker/1?gyldighetsdato=${formattedDateString(jan1In2023)}").response.contentAsString)
+        val tidligereNavn = responsTidligereDato.get("navn")
+        assertThat(tidligereNavn).hasSize(1)
+        assertThat(tidligereNavn[0].get("spraak").asText()).isEqualTo("nor")
+        assertThat(tidligereNavn[0].get("navn").asText()).isEqualTo("Vestlandet")
+        assertThat(tidligereNavn[0].get("rekkefoelge").isNull).isTrue
+
+        val responsDagensDato = mapper.readTree(get("/v1/fylker/1").response.contentAsString)
+        val dagensNavn = responsDagensDato.get("navn")
+        assertThat(dagensNavn).hasSize(2)
+
+        val foersteNavn = dagensNavn[0]
+        assertThat(foersteNavn.get("spraak").asText()).isEqualTo("nor")
+        assertThat(foersteNavn.get("navn").asText()).isEqualTo("Innlandet")
+        assertThat(foersteNavn.get("rekkefoelge").asInt()).isEqualTo(1)
+
+        val andreNavn = dagensNavn[1]
+        assertThat(andreNavn.get("spraak").asText()).isEqualTo("sma")
+        assertThat(andreNavn.get("navn").asText()).isEqualTo("Sisdajve")
+        assertThat(andreNavn.get("rekkefoelge").asInt()).isEqualTo(2)
     }
 
     @Test

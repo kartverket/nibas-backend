@@ -16,20 +16,29 @@ class AdministrativenhetnavnService @Autowired constructor(
     private val spraakkodeRepository: SpraakkodeRepository
 ) {
 
-    fun createNyeAdmEnhetNavnOgKnyttTilEnhet(admenhetnavnList: List<Administrativenhetnavn>, gyldigFra: LocalDate, endringstype: Endringstype, admEnhet: AdministrativEnhet) {
+    fun saveNyeAdmEnhetNavnOgKnyttTilEnhet(
+        admenhetnavnList: List<Administrativenhetnavn>,
+        gyldigFra: LocalDate,
+        endringstype: Endringstype,
+        admEnhet: AdministrativEnhet
+    ) {
         admenhetnavnList.forEach { admenhetNavn ->
-            var nyttNavn = Administrativenhetnavn()
-                .apply {
-                    navn = admenhetNavn.navn
-                    spraak = admenhetNavn.spraak
-                    rekkefoelge = admenhetNavn.rekkefoelge
-                    setGyldigFra(gyldigFra)
-                    auditInfo.typeEndring = endringstype
-                }
-            nyttNavn = administrativenhetnavnRepository.save(nyttNavn)
+            admenhetNavn.apply {
+                setGyldigFra(gyldigFra)
+                auditInfo.typeEndring = endringstype
+            }
+            val nyttNavn = administrativenhetnavnRepository.save(admenhetNavn)
 
             admEnhet.addAdministrativenhetNavn(nyttNavn)
         }
+    }
+
+    fun createNyVersjonAvAdministrativenhetnavn(gammeltAdmEnhetNavn: Administrativenhetnavn): Administrativenhetnavn {
+        return Administrativenhetnavn(lokalid = gammeltAdmEnhetNavn.lokalid)
+            .applyMappingFromExistingAdministrativenhetnavn(gammeltAdmEnhetNavn)
+            .apply {
+                version = gammeltAdmEnhetNavn.version + 1
+            }
     }
 
     fun createNyttAdmEnhetNavn(oppgittNavn: String?, spraakForkortelse: String?, oppgittRekkefoelge: Int? = null): Administrativenhetnavn {

@@ -118,7 +118,7 @@ class FylkeService(
             ?: throw RuntimeException("Fant ikke nasjon med gyldig fra $gyldigFra")
         nasjon.addFylke(nyttFylke)
 
-        administrativenhetnavnService.createNyeAdmEnhetNavnOgKnyttTilEnhet(
+        administrativenhetnavnService.saveNyeAdmEnhetNavnOgKnyttTilEnhet(
             admenhetnavnList = admenhetnavnList,
             gyldigFra = gyldigFra,
             endringstype = endringstype,

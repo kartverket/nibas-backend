@@ -1,5 +1,6 @@
 package no.kartverket.nibas.controller.klient
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import no.kartverket.nibas.MockResponseAsserts
@@ -12,18 +13,21 @@ import no.kartverket.nibas.builders.StemmekretsBuilder
 import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.domain.Administrativenhetnavn
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
+import no.kartverket.nibas.domain.Spraakkode
 import no.kartverket.nibas.domain.StemmekretsGrenseKobling
 import no.kartverket.nibas.extensions.flate.toGrunnkretsResponse
 import no.kartverket.nibas.service.GrunnkretsService
 import no.kartverket.nibas.service.KommuneService
-import no.kartverket.nibas.service.StemmekretsService
+import no.kartverket.nibas.sporing.Gyldighet
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
+import java.time.Month
 
 @WebMvcTest(KommuneController::class)
 class KommuneControllerTest : NibasMvcTest() {
@@ -34,8 +38,6 @@ class KommuneControllerTest : NibasMvcTest() {
     @MockkBean
     private lateinit var grunnkretsService: GrunnkretsService
 
-    @MockkBean
-    private lateinit var stemmekretsService: StemmekretsService
 
     @MockkBean
     private lateinit var hrefProviderMock: HrefProvider
@@ -162,6 +164,58 @@ class KommuneControllerTest : NibasMvcTest() {
         get("/v1/kommuner/1/inndelingerdeltgeometri", status().isNotFound)
     }
 
-    private fun formattedDateString(date: LocalDate): String? = DateTimeFormatter.ISO_DATE.format(date)
+
+    @Test
+    fun thatHentAdmnistrativtnavnIsOk() {
+        val jan1In2023 = LocalDate.of(2023, Month.JANUARY, 1)
+        val navn0 = Administrativenhetnavn().apply {
+            navn = "Gáivuotna"
+            spraak = Spraakkode().apply { id = "sme" }
+            rekkefoelge = 1
+            gyldighet = Gyldighet(gyldigFra = jan1In2023)
+        }
+        val navn1 = Administrativenhetnavn().apply {
+            navn = "Kåfjord"
+            rekkefoelge = 2
+            spraak = Spraakkode().apply { id = "nor" }
+        }
+        val navn2 = Administrativenhetnavn().apply {
+            navn = "Kaivuono"
+            rekkefoelge = 3
+            spraak = Spraakkode().apply { id = "fkv" }
+        }
+
+        val kommune = KommuneBuilder(administrativenhetnavn = listOf(navn0, navn1, navn2), gyldigFra = jan1In2023)
+            .withKommunenummer("5540")
+            .build()
+        every { kommuneService.hentKommune(any()) } returns kommune
+
+        val mapper = ObjectMapper()
+        val responsTidligereDato = mapper.readTree(get("/v1/kommuner/1?gyldighetsdato=${formattedDateString(jan1In2023)}").response.contentAsString)
+        val opprinneligNavn = responsTidligereDato.get("navn")
+        assertThat(opprinneligNavn).hasSize(1)
+        assertThat(opprinneligNavn[0].get("spraak").asText()).isEqualTo("sme")
+        assertThat(opprinneligNavn[0].get("navn").asText()).isEqualTo("Gáivuotna")
+        assertThat(opprinneligNavn[0].get("rekkefoelge").asInt()).isEqualTo(1)
+
+        val responsDagensDato = mapper.readTree(get("/v1/kommuner/1").response.contentAsString)
+        val dagensNavn = responsDagensDato.get("navn")
+        assertThat(dagensNavn).hasSize(3)
+
+        val foersteNavn = dagensNavn[0]
+        assertThat(foersteNavn.get("spraak").asText()).isEqualTo("sme")
+        assertThat(foersteNavn.get("navn").asText()).isEqualTo("Gáivuotna")
+        assertThat(foersteNavn.get("rekkefoelge").asInt()).isEqualTo(1)
+
+        val andreNavn = dagensNavn[1]
+        assertThat(andreNavn.get("spraak").asText()).isEqualTo("nor")
+        assertThat(andreNavn.get("navn").asText()).isEqualTo("Kåfjord")
+        assertThat(andreNavn.get("rekkefoelge").asInt()).isEqualTo(2)
+
+        val tredjeNavn = dagensNavn[2]
+        assertThat(tredjeNavn.get("spraak").asText()).isEqualTo("fkv")
+        assertThat(tredjeNavn.get("navn").asText()).isEqualTo("Kaivuono")
+        assertThat(tredjeNavn.get("rekkefoelge").asInt()).isEqualTo(3)
+    }
 
 }
