@@ -15,7 +15,6 @@ import no.kartverket.nibas.common.ResponseException.BadRequestException
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.REPOSITORY_EXTENSIONS_FILEPATH
-import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.repository.UtkastRepository
 import no.kartverket.nibas.repository.findAllGyldigeObjekterForIdentifikatorer
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
@@ -78,6 +77,12 @@ class GrenseServiceTest {
         every { utkastRepositoryMock.findById(any()) } returns Optional.of(utkast)
 
         assertThatThrownBy { utkastService.oppdaterUtkast(utkast.id, UtkastRequestBuilder()
+            .withOperasjoner(Operasjoner(grenseendringer = grenseendringer)).build())
+        }
+            .isInstanceOf(BadRequestException::class.java)
+            .hasMessageContaining("En eller flere grenser du har endret på eksisterer ikke lengre. For å sørge for at du endrer på en gjeldende grense må du dessverre opprette et nytt utkast og gjennomføre endringene dine på nytt.")
+
+        assertThatThrownBy { utkastService.validerUtkast(utkast.id, UtkastRequestBuilder()
             .withOperasjoner(Operasjoner(grenseendringer = grenseendringer)).build())
         }
             .isInstanceOf(BadRequestException::class.java)

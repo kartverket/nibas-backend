@@ -77,17 +77,21 @@ class UtkastService(
         return utkastRepository.findByStatusAndGyldigFra(statuses = utkastStatus.map { it.dbKey }, gyldigFra = gyldigFra)
     }
 
-    fun oppdaterUtkast(id: String, request: OppdaterUtkastRequest): Utkast? {
-        val utkast = hentUtkast(id)
-            ?: throw ResponseException.NotFoundException("Utkast ble ikke funnet for id: $id.")
-        utkast.operasjoner = request.operasjoner
+    @Transactional(readOnly = true)
+    fun validerUtkast(utkastId: String, request: OppdaterUtkastRequest): Boolean {
+        val (utkast, gyldigFra) = hentUtkastOppdaterEvtFraRequestValiderEndret(utkastId, request)
 
-        val gyldigFra = maxOf(utkast.gyldigFra, currentTime.asLocalDate())
+        val utkastValideringResult = utkastValidatorService.validateUtkastKlartForPublisering(utkast, gyldigFra)
+        if (utkastValideringResult.isNotEmpty()) {
+            throw ResponseException.BadRequestException(title = "Det ble funnet ${utkastValideringResult.size} feil på utkastet",
+                msg = utkastValideringResult.joinToString("\n"))
+        }
+        return true
+    }
 
-        //Valideringer som brukeren ikke kan rette opp i
-        validateOptimistiskLaasOgFremtidigeEndringer(utkast, request.version, gyldigFra)
+    fun oppdaterUtkast(utkastId: String, request: OppdaterUtkastRequest): Utkast? {
+        val (utkast, gyldigFra) = hentUtkastOppdaterEvtFraRequestValiderEndret(utkastId, request)
 
-        utkast.navn = request.navn
         val utkastValideringResult = utkastValidatorService.validateUtkastMedOperasjoner(utkast, request.endringstype, gyldigFra)
 
         if (utkastValideringResult.isNotEmpty()) {
@@ -95,6 +99,25 @@ class UtkastService(
         }
         utkast.auditInfo.typeEndring = Endringstype.fromValue(request.endringstype)
         return utkastRepository.save(utkast)
+    }
+
+    private fun hentUtkastOppdaterEvtFraRequestValiderEndret(
+        utkastId: String,
+        request: OppdaterUtkastRequest? = null
+    ): Pair<Utkast, LocalDate> {
+        val utkast = hentUtkast(utkastId)
+            ?: throw ResponseException.NotFoundException("Utkast ble ikke funnet for id: $utkastId.")
+
+        if (request != null) {
+            utkast.operasjoner = request.operasjoner
+            utkast.navn = request.navn
+        }
+
+        val gyldigFra = maxOf(utkast.gyldigFra, currentTime.asLocalDate())
+
+        //Valideringer som brukeren ikke kan rette opp i
+        validateOptimistiskLaasOgFremtidigeEndringer(utkast, request?.version, gyldigFra)
+        return Pair(utkast, gyldigFra)
     }
 
     /**
@@ -146,17 +169,10 @@ class UtkastService(
     @Transactional
     fun publiserUtkast(utkastId: String): NibasEvent {
         val eventsForPublisering: NibasEvent
-        val utkast = hentUtkast(utkastId)
-            ?: throw ResponseException.NotFoundException("Utkast ble ikke funnet for id: $utkastId.")
+        val (utkast, gyldigFra) = hentUtkastOppdaterEvtFraRequestValiderEndret(utkastId)
 
-        if(utkast.gyldigFra.isBefore(currentTime.asLocalDate())) {
-            utkast.gyldigFra = currentTime.asLocalDate()
-        }
-
-        //Valideringer som brukeren ikke kan rette opp i
-        validateOptimistiskLaasOgFremtidigeEndringer(utkast = utkast, gyldigFra = utkast.gyldigFra)
-
-        val utkastValideringResult = utkastValidatorService.validateUtkastKlartForPublisering(utkast, utkast.gyldigFra)
+        utkast.gyldigFra = gyldigFra
+        val utkastValideringResult = utkastValidatorService.validateUtkastKlartForPublisering(utkast, gyldigFra)
         if (utkastValideringResult.isNotEmpty()) {
             throw ResponseException.BadRequestException(title = "Kan ikke publisere utkastet", msg = utkastValideringResult.joinToString("\n"))
         }

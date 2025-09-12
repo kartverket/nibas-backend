@@ -64,6 +64,20 @@ interface UtkastApi {
     ): UtkastResponse
 
     @Operation(
+        summary = "Forhåndsvalidering av angitt utkast.",
+        description = "Validerer angitt utkast, inkludert evt ulagrede endringer i OppdaterUtkastRequest"
+    )
+    @Response200OK
+    @Response400BadRequest
+    @Response404NotFound
+    @Response409Conflict
+    @PostMapping("/{id}/valider", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun validerUtkast(
+        @Parameter(description = "ID til utkastet man vil validere") @PathVariable id: String,
+        @RequestBody utkast: OppdaterUtkastRequest
+    )
+
+    @Operation(
         summary = "Forkast angitt utkast.",
         description = "Forkast angitt utkast."
     )

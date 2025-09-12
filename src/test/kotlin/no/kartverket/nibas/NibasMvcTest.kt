@@ -14,7 +14,6 @@ import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
-import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.core.io.DefaultResourceLoader
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
@@ -41,7 +40,7 @@ open class NibasMvcTest {
     @Autowired
     lateinit var mapper: ObjectMapper
 
-    @MockBean
+    @MockkBean
     lateinit var kodelisteServiceMock: KodelisteService
 
     @BeforeEach

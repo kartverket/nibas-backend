@@ -923,8 +923,10 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
             nyeKretser = listOf(KretsNavnOgNummer("nyGrunnkrets", "1"))
         )
 
-        val utkastRequestBuilder = UtkastRequestBuilder()
+        val utkastRequest = UtkastRequestBuilder()
             .withOperasjoner(Operasjoner(kretsDelingEndringer = listOf(delingEndringRequest)))
+            .withVersjon(2)
+            .build()
 
         val utkast = UtkastBuilder.builder("test", gyldigFra = LocalDate.now())
             .withOperasjoner(Operasjoner(kretsDelingEndringer = listOf(delingEndringRequest)))
@@ -932,10 +934,16 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         utkastRepository.save(utkast)
 
         val oppdaterutkastexception = assertFailsWith<OptimistiskLaasException> {
-            utkastService.oppdaterUtkast(utkast.id, utkastRequestBuilder
-                .build())
+            utkastService.oppdaterUtkast(utkast.id, utkastRequest)
         }
         assertThat(oppdaterutkastexception.konflikter.first().getMessage())
+            .contains("Det er ikke samsvar med versjon for grunnkrets 42270304 Dåsvatn. Ønsket versjon = 0, eksisterende versjon = 2")
+
+        val validerutkastexception = assertFailsWith<OptimistiskLaasException> {
+            utkastService.validerUtkast(utkast.id, utkastRequest)
+        }
+        assertThat(validerutkastexception.message).contains("Det er ikke samsvar med versjon")
+        assertThat(validerutkastexception.konflikter.first().getMessage())
             .contains("Det er ikke samsvar med versjon for grunnkrets 42270304 Dåsvatn. Ønsket versjon = 0, eksisterende versjon = 2")
 
         val publiserutkastexception = assertFailsWith<OptimistiskLaasException> {

@@ -42,6 +42,10 @@ class UtkastController(
             ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
     }
 
+    override fun validerUtkast(id: String, utkast: OppdaterUtkastRequest) {
+        utkastService.validerUtkast(id, utkast)
+    }
+
     override fun forkastUtkast(id: String) {
         utkastService.forkastUtkast(id) ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
     }

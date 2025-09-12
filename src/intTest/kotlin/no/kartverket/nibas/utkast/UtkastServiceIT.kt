@@ -104,6 +104,16 @@ class UtkastServiceIT : TestWithDbContainer() {
         assertThat(oppdaterutkastexception.konflikter.first().getMessage())
             .contains("Det er ikke samsvar med versjon. Ønsket versjon = 0, eksisterende versjon = 1 for objekt med id = grenseVest")
 
+        val validerutkastexception = assertFailsWith<OptimistiskLaasException> {
+            utkastService.validerUtkast(utkast.id, utkastRequestBuilder
+                .withOperasjoner(Operasjoner(grenseendringer = grenseendringer))
+                .withVersjon(2)
+                .build())
+        }
+        assertThat(validerutkastexception.message).contains("Det er ikke samsvar med versjon")
+        assertThat(validerutkastexception.konflikter.first().getMessage())
+            .contains("Det er ikke samsvar med versjon. Ønsket versjon = 0, eksisterende versjon = 1 for objekt med id = grenseVest")
+
         val publiserutkastexception = assertFailsWith<OptimistiskLaasException> {
             utkastService.publiserUtkast(utkast.id)
         }
@@ -149,6 +159,15 @@ class UtkastServiceIT : TestWithDbContainer() {
         }
         assertThat(oppdaterutkastexception.message).contains("Det er ikke samsvar med versjon")
         assertThat(oppdaterutkastexception.konflikter.first().getMessage())
+            .contains("Det er ikke samsvar med versjon for grunnkrets 42270304 Gammelt navn. Ønsket versjon = 5, eksisterende versjon = 1 for objekt med id = grunnkrets-9000")
+
+        val validerutkastexception = assertFailsWith<OptimistiskLaasException> {
+            utkastService.validerUtkast(utkast.id, utkastRequestBuilder
+                .withVersjon(2)
+                .build())
+        }
+        assertThat(validerutkastexception.message).contains("Det er ikke samsvar med versjon")
+        assertThat(validerutkastexception.konflikter.first().getMessage())
             .contains("Det er ikke samsvar med versjon for grunnkrets 42270304 Gammelt navn. Ønsket versjon = 5, eksisterende versjon = 1 for objekt med id = grunnkrets-9000")
 
         val publiserutkastexception = assertFailsWith<OptimistiskLaasException> {
@@ -202,13 +221,25 @@ class UtkastServiceIT : TestWithDbContainer() {
             .contains("Det er ikke samsvar med versjon for grunnkrets 42270304 Gammelt navn. Ønsket versjon = 5, eksisterende versjon = 1 for objekt med id = grunnkrets-9000")
             .contains("Det er ikke samsvar med versjon. Ønsket versjon = 0, eksisterende versjon = 1 for objekt med id = grenseVest")
 
+        val validerutkastexception = assertFailsWith<OptimistiskLaasException> {
+            utkastService.validerUtkast(utkast.id, utkastRequestBuilder
+                .withVersjon(2)
+                .build())
+        }
+        assertThat(validerutkastexception.message).contains("Det er ikke samsvar med versjon")
+        assertThat(validerutkastexception.konflikter).hasSize(2)
+        validerutkastexception.konflikter.toList().map { it.getMessage() }
+        assertThat(validerutkastexception.konflikter.toList().map { it.getMessage() })
+            .contains("Det er ikke samsvar med versjon for grunnkrets 42270304 Gammelt navn. Ønsket versjon = 5, eksisterende versjon = 1 for objekt med id = grunnkrets-9000")
+            .contains("Det er ikke samsvar med versjon. Ønsket versjon = 0, eksisterende versjon = 1 for objekt med id = grenseVest")
+
         val publiserutkastexception = assertFailsWith<OptimistiskLaasException> {
             utkastService.publiserUtkast(utkast.id)
         }
         assertThat(publiserutkastexception.message).contains("Det er ikke samsvar med versjon")
-        assertThat(oppdaterutkastexception.konflikter).hasSize(2)
-        oppdaterutkastexception.konflikter.toList().map { it.getMessage() }
-        assertThat(oppdaterutkastexception.konflikter.toList().map { it.getMessage() })
+        assertThat(publiserutkastexception.konflikter).hasSize(2)
+        publiserutkastexception.konflikter.toList().map { it.getMessage() }
+        assertThat(publiserutkastexception.konflikter.toList().map { it.getMessage() })
             .contains("Det er ikke samsvar med versjon. Ønsket versjon = 0, eksisterende versjon = 1 for objekt med id = grenseVest")
             .contains("Det er ikke samsvar med versjon for grunnkrets 42270304 Gammelt navn. Ønsket versjon = 5, eksisterende versjon = 1 for objekt med id = grunnkrets-9000")
     }
@@ -337,6 +368,7 @@ class UtkastServiceIT : TestWithDbContainer() {
         utkastRepository.save(utkast)
 
         val utkastRequestBuilder = UtkastRequestBuilder()
+            .withNavn(utkast.navn)
             .withOperasjoner(Operasjoner(kretsDelingEndringer = listOf(KretsDelingEndringRequest(
                 IdentifikatorMedVersjon("test1", 0),
                 ObjektIdentifikator(Lokalid("1"), LocalDate.now()),
@@ -351,11 +383,28 @@ class UtkastServiceIT : TestWithDbContainer() {
         assertThat(utkastexception.konflikter.first().getMessage())
             .contains("Det er ikke samsvar med versjon for utkast Testutkast. Ønsket versjon = 1, eksisterende versjon = 2")
 
+        //valider skal gi samme feilmelding
+        val validerutkastexception = assertFailsWith<OptimistiskLaasException> {
+            utkastService.validerUtkast(utkast.id, utkastRequestBuilder.build())
+        }
+        assertThat(validerutkastexception.message).contains("Det er ikke samsvar med versjon")
+        assertThat(validerutkastexception.konflikter.first().getMessage())
+            .contains("Det er ikke samsvar med versjon for utkast Testutkast. Ønsket versjon = 1, eksisterende versjon = 2")
+
+        //Retter utkastversjon, skal få annen feil
         val exception = assertFailsWith<OptimistiskLaasException> {
             utkastService.oppdaterUtkast(utkast.id, utkastRequestBuilder.withVersjon(2).build())
         }
         assertThat(exception.message).contains("Det er ikke samsvar med versjon")
         assertThat(exception.konflikter.first().getMessage())
+            .contains("Det er ikke samsvar med versjon for stemmekrets 9 Gammelt navn1. Ønsket versjon = 0, eksisterende versjon = 1 for objekt med id = test1")
+
+        //valider skal gi samme feilmelding
+        val validerutkastexception2 = assertFailsWith<OptimistiskLaasException> {
+            utkastService.validerUtkast(utkast.id, utkastRequestBuilder.withVersjon(2).build())
+        }
+        assertThat(validerutkastexception2.message).contains("Det er ikke samsvar med versjon")
+        assertThat(validerutkastexception2.konflikter.first().getMessage())
             .contains("Det er ikke samsvar med versjon for stemmekrets 9 Gammelt navn1. Ønsket versjon = 0, eksisterende versjon = 1 for objekt med id = test1")
     }
 
