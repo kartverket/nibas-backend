@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 @RequestMapping("/v1/authz")
 @Tag(
     name = "v1/authz",
-    description = "Endepunkter for å hente informasjon om autorisering"
+    description = "Halla"
 )
 interface AuthZApi {
     @Operation(description = "Henter status for autorisering")
