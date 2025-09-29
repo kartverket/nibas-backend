@@ -1,4 +1,4 @@
-FROM eclipse-temurin:24-jdk-alpine@sha256:8fdbcb6bc6b846640cea7058e6eeb56c311fae4efaa506a213789134065c6b90
+FROM eclipse-temurin:25-jdk-alpine@sha256:f4c0b771cfed29902e1dd2e5c183b9feca633c7686fb85e278a0486b03d27369
 ARG project_version_arg
 
 ENV PROJECT_VERSION=$project_version_arg
