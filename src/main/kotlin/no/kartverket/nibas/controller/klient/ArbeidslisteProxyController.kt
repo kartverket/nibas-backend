@@ -143,7 +143,7 @@ class ArbeidslisteProxyController(
     private fun processResponse(response: HttpServletResponse, responseEntity: ResponseEntity<ByteArray>) {
         response.status = responseEntity.statusCode.value()
 
-        responseEntity.headers.forEach { name, values ->
+        responseEntity.headers.forEach { (name, values) ->
             if (!IGNORED_RESPONSE_HEADERS.contains(name.lowercase(Locale.getDefault()))) {
                 values.forEach { value ->
                     response.addHeader(name, value)
@@ -233,9 +233,11 @@ class ArbeidslisteProxyController(
         private val PATH_METHOD_ALLOWLIST: Map<Any, Set<String>> = mapOf(
             "/internal-api/api/v1/avvik" to setOf("GET", "POST"),
             "/internal-api/api/v1/avvik/kommuner" to setOf("GET"),
+            "/internal-api/api/v1/avvik/kommunepar" to setOf("GET"),
             "/internal-api/api/v1/matrikkel/grenselinjer" to setOf("GET"),
             "/internal-api/api/v1/matrikkel/grenselinjer/kommuner" to setOf("GET"),
-            Regex("^/internal-api/api/v1/avvik/kommune/[^/]+$") to setOf("GET")
+            Regex("^/internal-api/api/v1/avvik/kommune/[^/]+$") to setOf("GET"),
+            Regex("^/internal-api/api/v1/avvik/kommunepar/[^/]+/[^/]+$") to setOf("GET")
         )
 
         private val ALLOWED_QUERY_PARAMETERS: Set<String> = setOf(
