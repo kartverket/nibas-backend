@@ -542,7 +542,7 @@ class CreateRettetUtkastService(
                     common = CommonMetadata(
                         identifikasjon = Identifikasjon(lokalid = "NotARealID"),
                         gyldigFra = gyldigFra,
-                        informasjon = "13.10.2025 - Kvalitetsheving av kommunegrense, jf. Arken 25/29245"
+                        informasjon = "14.10.2025 - Kvalitetsheving av kommunegrense, jf. Arken 25/29245"
                     ),
                     commonGrense = CommonGrenseMetadata(
                         posisjonskvalitet = Posisjonskvalitet(
@@ -694,9 +694,9 @@ class CreateRettetUtkastService(
         // Will change this after we have fixed the easy avvik.
         val problematicPairs = listOf(
             // Fails for other reasons.
-            "Surnadal" to "Rindal",
+//            "Surnadal" to "Rindal",
 //            "Ullensaker" to "Eidsvoll",
-            "Rennebu" to "Orkland",
+//            "Rennebu" to "Orkland",
             // Has knutepuntk
             "Nord-Aurdal" to "Vestre Slidre", "Moss" to "Vestby", "Nes" to "Sør-Odal",
             "Hamar" to "Løten", "Indre Østfold" to "Nordre Follo", "Ålesund" to "Haram",
