@@ -43,6 +43,7 @@ import java.time.LocalDate
 import java.time.Month
 import kotlin.test.assertFailsWith
 
+
 @ActiveProfiles("security-off")
 @Transactional
 class GrenseServiceIT : TestWithDbContainer() {
@@ -562,6 +563,43 @@ class GrenseServiceIT : TestWithDbContainer() {
     }
 
     @Test
+    fun `lagreGrenser klarer å endre grensetype`() {
+        val gyldighetsdato = LocalDate.parse("2022-01-01")
+
+        // oppretter tre kretser som deler grenser der én grense har feil grensekoblinger grunnet at en annen grense har fått endret geometrien sin.
+        val (kretsG1, kretsG2, kretsG3) = setupTilhorighetTest(gyldighetsdato, Grensetype.Grunnkretsgrense, ::saveGrunnkrets, ::saveGrunnkrets)
+
+        saveKommuneOgUnikLokalid(grunnkretser = listOf(kretsG1, kretsG2, kretsG3), gyldigFra = gyldighetsdato)
+
+        // Fra krets finner vi fram til de to grensene som har endringer i dette fiktive utkastet
+        val grenseSomSkalEndreTilhorighet = kretsG1.grenser.map { it.grense }.first { it.lokalid == "grenseSørVestLokalid" }
+        assertThat(grenseSomSkalEndreTilhorighet.grensetype).isEqualTo(Grensetype.Grunnkretsgrense)
+        val grenseSomEndreGeometrien = kretsG1.grenser.map { it.grense }.first { it.lokalid == "grenseDelt2Lokalid" }
+
+        val nyeTilhorigheter = listOf(KontekstEgenskaper(
+            id = ObjektIdentifikator(Lokalid("G2"), gyldighetsdato),
+            type = KontekstEnhetType.GRUNNKRETS,
+            version = 1
+        ), KontekstEgenskaper(
+            id = ObjektIdentifikator(Lokalid("G3"), gyldighetsdato),
+            type = KontekstEnhetType.GRUNNKRETS,
+            version = 1
+        ))
+        val featureMedEndretTilhorighet = utfoerGrenseTilhorighetEndring(grenseSomSkalEndreTilhorighet, nyeTilhorigheter, Grensetype.Delomraadegrense)
+        val featureMedEndretGeometri = utfoerGeometriEndring(grenseSomEndreGeometrien, grenseSomEndreGeometrien.grunnkretser.map { it.grunnkrets }, gyldighetsdato, KontekstEnhetType.GRUNNKRETS)
+
+        grenseService.lagreGrenser(
+            grenser = FeatureCollection(features = listOf(featureMedEndretTilhorighet, featureMedEndretGeometri)),
+            gyldighetsdato = gyldighetsdato,
+            endringstype = Endringstype.KVALITETSHEVING
+        )
+
+        val oppdatertGrense = grenseService.hentGrense(Identifikator(Lokalid("grenseSørVestLokalid"), gyldighetsdato))!!
+        assertThat(oppdatertGrense.id).isNotEqualTo(grenseSomSkalEndreTilhorighet.id)
+        assertThat(oppdatertGrense.grensetype).isEqualTo(Grensetype.Delomraadegrense)
+    }
+
+    @Test
     fun `lagreGrenser klarer å endre tilhørighet på kommunegrense med grensekoblinger til grunnkrets og stemmekrets`() {
         val gyldighetsdato = LocalDate.now()
         val (kretsG1, kretsG2, kretsG3, kretsS1, kretsS2) =
@@ -1015,6 +1053,7 @@ class GrenseServiceIT : TestWithDbContainer() {
         assertOmradeGyldighetVersjon(vestreStemmekretsEtterLagring, vestreStemmekrets, november28In2022, Endringstype.KVALITETSHEVING)
         assertOmradeGyldighetVersjon(vestreKommuneEtterLagring, kommuneVest, november28In2022, Endringstype.KVALITETSHEVING)
     }
+
     @Test
     fun `endre fylkegrense for grunnkrets skal opprette ny versjon for grensa og dens stemmekrets og grunnkrets og kommune og fylke`() {
         val (vestreGrunnkrets, oestreGrunnkrets) = saveNaboGrunnkretserOgStemmekretserIHverSinKommune(gyldigFra = october1In2022,
@@ -1181,13 +1220,13 @@ class GrenseServiceIT : TestWithDbContainer() {
     }
 
     private fun utfoerGrenseTilhorighetEndring(
-        grense: Grense, nyeTilhorigheter: List<KontekstEgenskaper>
+        grense: Grense, nyeTilhorigheter: List<KontekstEgenskaper>, evtNyGrensetype: Grensetype? = null
     ): Feature {
         return FeatureBuilder(id = grense.lokalid)
             .withLokalid(grense.lokalid)
             .withGeometry(grense.grense)
             .withGrenseversjon(2)
-            .withGrensetype(grense.grensetype)
+            .withGrensetype(evtNyGrensetype ?: grense.grensetype)
             .withKontekstEgenskaper(nyeTilhorigheter)
             .build()
     }

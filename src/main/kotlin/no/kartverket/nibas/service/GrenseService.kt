@@ -466,9 +466,11 @@ class GrenseService(
         return laasbarMedOensketVersjonListe
     }
 
+
     private fun Grense.applyChangesFromRequest(feature: Feature, gyldighetsdato: LocalDate, endringstype: Endringstype): Grense =
         this.apply {
             grense = feature.geometry.toLineString(feature.properties.srid)
+            grensetype = Grensetype.fromValue(feature.properties.type)
             updateMetadataOnGrense(feature, this, gyldighetsdato, endringstype)
         }
 
