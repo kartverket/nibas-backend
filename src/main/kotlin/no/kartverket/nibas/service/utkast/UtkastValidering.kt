@@ -239,7 +239,7 @@ class UtkastValidatorService(
                             val (delomrade1, delomrade2) = grunnkrets1.substring(4, 6) to grunnkrets2.substring(4, 6)
 
                             if (kommune1 != kommune2) {
-                                errorMessages.add("Grense er av type ${grensetype.name}, men har ulik kommune på hver side:")
+                                errorMessages.add("Grensen er av type ${grensetype.name}, men har ulik kommune på hver side:")
                                 errorMessages.add("\t- Grunnkrets 1: $grunnkrets1, Kommune: $kommune1")
                                 errorMessages.add("\t- Grunnkrets 2: $grunnkrets2, Kommune: $kommune2")
                             } else {
@@ -248,7 +248,7 @@ class UtkastValidatorService(
                                     // Grenser av grensetype Grunnkretsgrense skal ha samme kommune og delområde for grunnkretsene på hver side av grensa (bruk grunnkretsnummer)
                                     Grensetype.Grunnkretsgrense -> {
                                         if (delomrade1 != delomrade2) {
-                                            errorMessages.add("Grense er av type Grunnkretsgrense, men har ulikt delområde på hver side:")
+                                            errorMessages.add("Grensen er av type Grunnkretsgrense, men har ulikt delområde på hver side:")
                                             errorMessages.add("\t- Grunnkrets 1: $grunnkrets1, Delområde: $delomrade1")
                                             errorMessages.add("\t- Grunnkrets 2: $grunnkrets2, Delområde: $delomrade2")
                                         }
@@ -256,7 +256,7 @@ class UtkastValidatorService(
                                     // Grenser av grensetype Delområdegrense skal ha ulikt delområde (men samme kommune) for grunnkretsene på hver side av grensa (bruk grunnkretsnummer)
                                     Grensetype.Delomraadegrense -> {
                                         if (delomrade1 == delomrade2) {
-                                            errorMessages.add("Grense er av type Delområdegrense, men har samme delområde på hver side:")
+                                            errorMessages.add("Grensen er av type Delområdegrense, men har samme delområde på hver side:")
                                             errorMessages.add("\t- Grunnkrets 1: $grunnkrets1, Delområde: $delomrade1")
                                             errorMessages.add("\t- Grunnkrets 2: $grunnkrets2, Delområde: $delomrade2")
                                         }
@@ -275,21 +275,36 @@ class UtkastValidatorService(
                     if (stemmekretser.size == 2) {
                         val (kommune1, kommune2) = stemmekretser[0].kommuneId to stemmekretser[1].kommuneId
                         if (kommune1 != null && kommune2 != null && kommune1.lokalid.value != kommune2.lokalid.value) {
-                            errorMessages.add("Grense med er av type Stemmekretsgrense, men har ulik kommune på hver side:")
+                            errorMessages.add("Grensen er av type Stemmekretsgrense, men har ulik kommune på hver side:")
                             errorMessages.add("\t- Stemmekrets 1: ${stemmekretser[0].kretsNummer}")
                             errorMessages.add("\t- Stemmekrets 2: ${stemmekretser[1].kretsNummer}")
                         }
                     }
                 }
 
-                // Fylkesgrense skal ikke ha samme fylke på begge sidene av grensa (bruk kommune med kommuneid sin fylkeid)
+                // Fylkesgrense skal ikke ha samme fylke på begge sidene av grensa (bruk grunnkretsnummer)
                 Grensetype.Fylkesgrense -> {
                     if (grunnkretser.size == 2) {
                         val (grunnkrets1, grunnkrets2) = grunnkretser.map { it.kretsNummer }
                         if (grunnkrets1 != null && grunnkrets2 != null) {
                             val (fylke1, fylke2) = grunnkrets1.substring(0, 2) to grunnkrets2.substring(0, 2)
                             if (fylke1 == fylke2) {
-                                errorMessages.add("Grense er av type Fylkesgrense, men har samme fylke på hver side:")
+                                errorMessages.add("Grensen er av type Fylkesgrense, men har samme fylke på hver side:")
+                                errorMessages.add("\t- Grunnkrets 1: $grunnkrets1, Fylke: $fylke1")
+                                errorMessages.add("\t- Grunnkrets 2: $grunnkrets2, Fylke: $fylke2")
+                            }
+                        }
+                    }
+                }
+
+                // Kommunegrense skal ha samme fylke på begge sidene av grensa (bruk grunnkretsnummer)
+                Grensetype.Kommunegrense -> {
+                    if (grunnkretser.size == 2) {
+                        val (grunnkrets1, grunnkrets2) = grunnkretser.map { it.kretsNummer }
+                        if (grunnkrets1 != null && grunnkrets2 != null) {
+                            val (fylke1, fylke2) = grunnkrets1.substring(0, 2) to grunnkrets2.substring(0, 2)
+                            if (fylke1 != fylke2) {
+                                errorMessages.add("Grensen er av type Kommunegrense, men har ulikt fylke på hver side:")
                                 errorMessages.add("\t- Grunnkrets 1: $grunnkrets1, Fylke: $fylke1")
                                 errorMessages.add("\t- Grunnkrets 2: $grunnkrets2, Fylke: $fylke2")
                             }

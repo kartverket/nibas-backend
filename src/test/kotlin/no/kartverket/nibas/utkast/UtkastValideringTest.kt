@@ -136,7 +136,7 @@ class UtkastValideringTest {
     }
 
     @Test
-    fun `valider at sammenslaaingsoperasjoner med blankt stemmekretsnavn gir ugyldige operasjoner`() {
+    fun `valider at sammenslaaingsoperasjoner med blankt stemmekretsnavn og for langt stemmekretsnummer gir ugyldige operasjoner`() {
         val operasjoner =
             Operasjoner(
                 stemmekretsSammenslaaingsendring =
@@ -735,7 +735,7 @@ class UtkastValideringTest {
                     id = ObjektIdentifikator(Lokalid("G3"), gyldighetsdato),
                     kommuneId = ObjektIdentifikator(Lokalid("1"), gyldighetsdato),
                     type = KontekstEnhetType.GRUNNKRETS,
-                    kretsNummer = "87654321",
+                    kretsNummer = "12344321",
                     version = 1,
                 ), KontekstEgenskaper(
                     id = ObjektIdentifikator(Lokalid("S3"), gyldighetsdato),
@@ -775,7 +775,7 @@ class UtkastValideringTest {
                     id = ObjektIdentifikator(Lokalid("G4"), gyldighetsdato),
                     kommuneId = ObjektIdentifikator(Lokalid("2"), gyldighetsdato),
                     type = KontekstEnhetType.GRUNNKRETS,
-                    kretsNummer = "87654321",
+                    kretsNummer = "12654321",
                     version = 1,
                 ), KontekstEgenskaper(
                     id = ObjektIdentifikator(Lokalid("S3"), gyldighetsdato),
@@ -795,6 +795,45 @@ class UtkastValideringTest {
         val utkastOk = Utkast(navn = "test",
             operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(korrektKommunegrenseFeature))), gyldigFra = gyldighetsdato)
         assertThat(utkastValidatorService.validerTilhorighetEndringer(utkastOk)).isEmpty()
+    }
+
+    @Test
+    fun `utkast med kommunegrensefeature med ulike fylker er ugyldig`() {
+        val gyldighetsdato = LocalDate.now()
+        val kommunegrenseFeature = FeatureBuilder("1")
+            .withGrensetype(Grensetype.Kommunegrense)
+            .withKontekstEgenskaper(
+                listOf(KontekstEgenskaper(
+                    id = ObjektIdentifikator(Lokalid("G3"), gyldighetsdato),
+                    kommuneId = ObjektIdentifikator(Lokalid("1"), gyldighetsdato),
+                    type = KontekstEnhetType.GRUNNKRETS,
+                    kretsNummer = "12345678",
+                    version = 1,
+                ), KontekstEgenskaper(
+                    id = ObjektIdentifikator(Lokalid("G4"), gyldighetsdato),
+                    kommuneId = ObjektIdentifikator(Lokalid("2"), gyldighetsdato),
+                    type = KontekstEnhetType.GRUNNKRETS,
+                    kretsNummer = "87654321",
+                    version = 1,
+                ), KontekstEgenskaper(
+                    id = ObjektIdentifikator(Lokalid("S3"), gyldighetsdato),
+                    kommuneId = ObjektIdentifikator(Lokalid("1"), gyldighetsdato),
+                    type = KontekstEnhetType.STEMMEKRETS,
+                    kretsNummer = "1234",
+                    version = 1
+                ), KontekstEgenskaper(
+                    id = ObjektIdentifikator(Lokalid("S4"), gyldighetsdato),
+                    kommuneId = ObjektIdentifikator(Lokalid("2"), gyldighetsdato),
+                    type = KontekstEnhetType.STEMMEKRETS,
+                    kretsNummer = "1234",
+                    version = 1
+                ))
+            )
+            .build()
+        val utkast = Utkast(navn = "test",
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(kommunegrenseFeature))), gyldigFra = gyldighetsdato)
+        assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast).joinToString("`n"))
+            .contains("Grensen er av type Kommunegrense, men har ulikt fylke på hver side")
     }
 
     @Test
@@ -1079,7 +1118,7 @@ class UtkastValideringTest {
         val errors = utkastValidatorService.validerTilhorighetEndringer(utkast)
 
         assertThat(errors).hasSize(4)
-        assertThat(errors).anyMatch { it.contains("Grense er av type Delomraadegrense, men har ulik kommune på hver side:") }
+        assertThat(errors).anyMatch { it.contains("Grensen er av type Delomraadegrense, men har ulik kommune på hver side:") }
     }
 
     @Test
@@ -1187,14 +1226,14 @@ class UtkastValideringTest {
                 ),
                 KontekstEgenskaper(
                     type = KontekstEnhetType.STEMMEKRETS,
-                    kretsNummer = "33010001",
+                    kretsNummer = "0001",
                     id = ObjektIdentifikator(Lokalid("stemmekrets1"), june2024),
                     kommuneId = ObjektIdentifikator(Lokalid("3301"), june2024),
                     version = 1
                 ),
                 KontekstEgenskaper(
                     type = KontekstEnhetType.STEMMEKRETS,
-                    kretsNummer = "33020001",
+                    kretsNummer = "0001",
                     id = ObjektIdentifikator(Lokalid("stemmekrets2"), june2024),
                     kommuneId = ObjektIdentifikator(Lokalid("3302"), june2024),
                     version = 1
@@ -1233,14 +1272,14 @@ class UtkastValideringTest {
                 ),
                 KontekstEgenskaper(
                     type = KontekstEnhetType.STEMMEKRETS,
-                    kretsNummer = "33010001",
+                    kretsNummer = "0001",
                     id = ObjektIdentifikator(Lokalid("stemmekrets1"), june2024),
                     kommuneId = ObjektIdentifikator(Lokalid("3301"), june2024),
                     version = 1
                 ),
                 KontekstEgenskaper(
                     type = KontekstEnhetType.STEMMEKRETS,
-                    kretsNummer = "34010001",
+                    kretsNummer = "0001",
                     id = ObjektIdentifikator(Lokalid("stemmekrets2"), june2024),
                     kommuneId = ObjektIdentifikator(Lokalid("3401"), june2024),
                     version = 1
