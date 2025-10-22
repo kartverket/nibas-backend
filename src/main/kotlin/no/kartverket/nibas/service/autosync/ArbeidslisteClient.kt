@@ -142,12 +142,17 @@ class ArbeidslisteClient(
             apiCall()
         } catch (e: HttpClientErrorException) {
             log.error("Client error calling arbeidsliste: {} - {}", e.statusCode, e.message)
+            log.error("Response body: {}", e.responseBodyAsString)
             fallback
         } catch (e: HttpServerErrorException) {
             log.error("Server error from arbeidsliste: {} - {}", e.statusCode, e.message)
+            log.error("Response body: {}", e.responseBodyAsString)
             fallback
         } catch (e: ResourceAccessException) {
             log.error("Cannot reach arbeidsliste (timeout or network error): {}", e.message)
+            fallback
+        } catch (e: Exception) {
+            log.error("Unexpected error calling arbeidsliste: {}", e.message, e)
             fallback
         }
     }

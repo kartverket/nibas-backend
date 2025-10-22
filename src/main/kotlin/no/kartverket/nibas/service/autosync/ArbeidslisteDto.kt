@@ -33,6 +33,7 @@ data class KommuneInfo(
 data class AvvikDto(
     val id: Long,
     val grenseId: String,
+    val status: String,
     val lokalId: String,
     val grensetype: String,
     val geometri: GeometriDto,

@@ -2,60 +2,30 @@ package no.kartverket.nibas.service.autosync
 
 import no.kartverket.nibas.api.v1.common.*
 import no.kartverket.nibas.api.v1.common.geojson.*
-import no.kartverket.nibas.api.v1.common.geojson.metadata.*
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
-import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.repository.UtkastRepository
-import org.locationtech.jts.geom.Coordinate
-import org.locationtech.jts.geom.GeometryFactory
-import org.locationtech.jts.geom.Point as JtsPoint
-import org.locationtech.jts.index.strtree.STRtree
+import no.kartverket.nibas.service.KommuneService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 
-/**
- * Main flow:
- * 1. Find grenselinjer with avvik
- * 2. Archive them
- * 3. Fill gap with Matrikkel data
- * 4. Create utkast
- */
+
+
 @Service
 class CreateRettetUtkastService(
     private val arbeidslisteClient: ArbeidslisteClient,
     private val utkastRepository: UtkastRepository,
-    private val kommuneService: no.kartverket.nibas.service.KommuneService
+    private val kommuneService: KommuneService,
+    private val coordinateService: CoordinateService,
+    private val grenseArchiveService: GrenseArchiveService,
+    private val matrikkelNetworkService: MatrikkelNetworkService,
+    private val grenseTopologyService: GrenseTopologyService,
+    private val spatialNetworkPathfinder: SpatialNetworkPathfinder
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
-    private val coordinateTolerance = 0.1 // meters
-    private val geometryFactory = GeometryFactory()
-
-    private data class GrenseToArchive(val grense: Grense, val coords: List<List<Double>>)
-    private data class ConnectionPoint(val point: List<Double>, val grenseLokalid: String)
-    private data class Candidate(
-        val feature: M22Feature,
-        val coords: List<List<Double>>,
-        val startMatches: Boolean,
-        val distanceToGoal: Double
-    )
-    private data class WorstM22Posisjonskvalitet(
-        val maalemetodeId: Int,
-        val noeyaktighet: Int
-    )
-    private data class MatrikkelPathResult(
-        val coordinates: MutableList<List<Double>>,
-        val worstQuality: WorstM22Posisjonskvalitet
-    )
-
-    private data class IndexedM22Feature(
-        val feature: M22Feature,
-        val startPoint: JtsPoint,
-        val endPoint: JtsPoint
-    )
 
     private enum class ProcessResult {
         CREATED,
@@ -65,12 +35,12 @@ class CreateRettetUtkastService(
 
     @Transactional
     fun autoFixAvvik(antall: Int = 5) {
-        log.info("=== START: Generating {} utkasts ===", antall)
+        val actualAntall = 1
+        log.info("=== START: Generating {} utkasts ===", actualAntall)
 
         val kommuneParPage = arbeidslisteClient.getKommunePar(
             grensetyper = listOf("Kommunegrense", "Fylkesgrense"),
             side = 0,
-            // Currently 115 Kommunepar with avvik.
             antall = 150
         )
 
@@ -86,8 +56,8 @@ class CreateRettetUtkastService(
         val skippedOther = mutableListOf<String>()
 
         for (kommunePar in kommuneParPage.content) {
-            if (createdCount >= antall) {
-                log.info("Reached target of {} utkasts, stopping", antall)
+            if (createdCount >= actualAntall) {
+                log.info("Reached target of {} utkasts, stopping", actualAntall)
                 break
             }
 
@@ -96,11 +66,22 @@ class CreateRettetUtkastService(
                 kommunePar.kommune1.kommunenavn, kommunePar.kommune2.kommunenavn)
 
             val kommuneParName = "${kommunePar.kommune1.kommunenavn} - ${kommunePar.kommune2.kommunenavn}"
-            val result = processKommunePar(kommunePar)
-            when (result) {
-                ProcessResult.CREATED -> createdCount++
-                ProcessResult.SKIPPED_HJELPEPUNKT -> skippedHjelpepunkt.add(kommuneParName)
-                ProcessResult.SKIPPED_OTHER -> skippedOther.add(kommuneParName)
+
+            if (shouldSkipKommunePar(kommunePar)) {
+                skippedOther.add(kommuneParName)
+                continue
+            }
+
+            try {
+                val result = processKommunePar(kommunePar)
+                when (result) {
+                    ProcessResult.CREATED -> createdCount++
+                    ProcessResult.SKIPPED_HJELPEPUNKT -> skippedHjelpepunkt.add(kommuneParName)
+                    ProcessResult.SKIPPED_OTHER -> skippedOther.add(kommuneParName)
+                }
+            } catch (e: Exception) {
+                log.error("  Failed to process $kommuneParName: ${e.message}")
+                skippedOther.add(kommuneParName)
             }
         }
 
@@ -110,32 +91,14 @@ class CreateRettetUtkastService(
         log.info("  Skipped other ({}): {}", skippedOther.size, skippedOther)
     }
 
-
-    /**
-     * Process one kommune pair.
-     *
-     * Main flow - reads like a story:
-     * 1. Get data avvik og grensekoblinger.
-     * 2. Identify what to archive
-     * 3. Check if contains  hjelpepunkt / knutepunkt
-     * 4. Build archive features
-     * 5. Find gap connection points
-     * 6. Fill gap with Matrikkel data
-     * 7. Create and save utkast
-     */
     private fun processKommunePar(kommunePar: KommunePar): ProcessResult {
-        if (shouldSkipKommunePar(kommunePar)) {
-            log.warn("  Skipping (known problems, will handle later)")
-            return ProcessResult.SKIPPED_OTHER
-        }
-
         val gyldigFra = LocalDate.now()
 
         val avvikList = arbeidslisteClient.getAvvikForKommunePar(
             kommuneId1 = kommunePar.kommune1.kommuneLokalID,
             kommuneId2 = kommunePar.kommune2.kommuneLokalID,
             grensetyper = listOf("Kommunegrense", "Fylkesgrense")
-        )
+        ).filter { it.status == "NY" }
 
         if (avvikList.isEmpty()) {
             log.info("  No avvik found")
@@ -149,14 +112,16 @@ class CreateRettetUtkastService(
         }
 
         val avvikEndpoints = avvikList.flatMap {
-            listOf(it.geometri.coordinates.first(), it.geometri.coordinates.last())
+            listOf(
+                Point.fromList(it.geometri.coordinates.first()),
+                Point.fromList(it.geometri.coordinates.last())
+            )
         }
 
         val toArchive = identifyGrenslinjerToArchive(
             grensekoblinger = grensekoblinger,
             avvikList = avvikList,
             avvikEndpoints = avvikEndpoints,
-            gyldigFra = gyldigFra
         )
 
         if (toArchive.isEmpty()) {
@@ -164,68 +129,180 @@ class CreateRettetUtkastService(
             return ProcessResult.SKIPPED_OTHER
         }
 
-        if (hasHjelpepunkt(toArchive, kommunePar, gyldigFra)) {
-            log.warn("  Skipping - has hjelpepunkt (too complex)")
-            return ProcessResult.SKIPPED_HJELPEPUNKT
-        }
+        val kommune1 = kommuneService.hentKommune(
+            Identifikator(Lokalid(kommunePar.kommune1.kommuneLokalID), gyldigFra)
+        ) ?: return ProcessResult.SKIPPED_OTHER
 
-        log.info("  Safe to proceed (no hjelpepunkt)")
+        val kommune2 = kommuneService.hentKommune(
+            Identifikator(Lokalid(kommunePar.kommune2.kommuneLokalID), gyldigFra)
+        ) ?: return ProcessResult.SKIPPED_OTHER
 
-        val archiveFeatures = buildArchiveFeatures(toArchive, gyldigFra)
-
-        val connectionPoints = findGapConnectionPoints(
-            toArchive = toArchive,
-            grensekoblinger = grensekoblinger,
-            archiveFeatures = archiveFeatures,
-            gyldigFra = gyldigFra
+        val affectedGrenser = grenseTopologyService.findGrenseSharingEndpoints(
+            toArchive, kommune1, kommune2, gyldigFra
         )
 
-        if (connectionPoints.size != 2) {
-            log.warn("  Expected 2 connection points, found: {}. Cannot fill gap", connectionPoints.size)
+        if (affectedGrenser.isNotEmpty()) {
+            log.info("  Has hjelpepunkt - will also fix {} affected grenser", affectedGrenser.size)
+        }
+
+        val allNeighborGrenser = fetchAllNeighborGrenser(kommunePar, gyldigFra)
+        var connectionPoints = findGapConnectionPoints(toArchive, allNeighborGrenser)
+
+        if (connectionPoints.size < 2) {
+            log.warn("  Expected at least 2 connection points, found: {}. Cannot fill gap", connectionPoints.size)
             return ProcessResult.SKIPPED_OTHER
+        }
+
+        if (connectionPoints.size > 2) {
+            log.warn("  Found {} connection points. Will attempt to find outermost points.", connectionPoints.size)
+            connectionPoints = findOutermostPoints(connectionPoints)
         }
 
         val gapStart = connectionPoints[0].point
         val gapEnd = connectionPoints[1].point
+
+
+        val finalToArchive = spatialNetworkPathfinder.ensureCompleteChain(
+            toArchive = toArchive,
+            gapStart = gapStart,
+            gapEnd = gapEnd,
+            allGrensekoblinger = allNeighborGrenser,
+            gyldigFra = gyldigFra
+        )
+
+        val sortedToArchive = sortGrenserAlongBorder(finalToArchive, gapStart, gapEnd)
+            ?: throw PathfindingException("Cannot sort grenser along border - chain is not continuous")
+
+        val archiveFeatures = grenseArchiveService.buildArchiveFeatures(sortedToArchive, gyldigFra)
+
         log.info("=== GAP: [{}, {}] to [{}, {}] ===",
-            gapStart[0], gapStart[1], gapEnd[0], gapEnd[1])
+            gapStart.x, gapStart.y, gapEnd.x, gapEnd.y)
+        log.info("  GAP START decimals: {}", if (coordinateService.hasTooManyDecimals(gapStart)) "BAD!" else "OK")
+        log.info("  GAP END decimals: {}", if (coordinateService.hasTooManyDecimals(gapEnd)) "BAD!" else "OK")
 
-        val matrikkelFeatures = fetchMatrikkelGrenslinjerForKommunePar(kommunePar)
+        val matrikkelFeatures = matrikkelNetworkService.fetchMatrikkelGrenslinjerForKommunePar(kommunePar)
 
-        val pathResult = walkMatrikkelNetwork(
+        val pathResult = matrikkelNetworkService.walkMatrikkelNetwork(
             gapStart = gapStart,
             gapEnd = gapEnd,
             matrikkelFeatures = matrikkelFeatures
-        )
+        ) ?: throw PathfindingException("Failed to build complete path through Matrikkel network")
 
-        if (pathResult == null) {
-            log.error("  Failed to build complete path through Matrikkel network")
-            return ProcessResult.SKIPPED_OTHER
+        matrikkelNetworkService.snapEndpointsToNibas(pathResult.coordinates, gapStart, gapEnd)
+
+        val hjelpepunkt = grenseTopologyService.findHjelpepunkt(sortedToArchive, gapStart, gapEnd)
+        val grenseType = sortedToArchive.firstOrNull()?.grense?.grensetype?.toString() ?: "Kommunegrense"
+
+        val (archiveAndCreateFeatures, newGrenseFeatures) = if (hjelpepunkt.isNotEmpty()) {
+            handleHjelpepunktCase(hjelpepunkt, pathResult, archiveFeatures, gapStart, gapEnd, gyldigFra, grenseType)
+        } else {
+            handleSimpleCase(pathResult, archiveFeatures, gyldigFra, grenseType)
         }
 
-        snapEndpointsToNibas(pathResult.coordinates, gapStart, gapEnd)
+        val affectedUpdateFeatures = if (affectedGrenser.isNotEmpty()) {
+            handleAffectedGrenser(affectedGrenser, hjelpepunkt, pathResult.coordinates, gyldigFra)
+        } else {
+            emptyList()
+        }
 
-        val sharedKontekstEgenskaper = archiveFeatures.firstOrNull()?.properties?.kontekstEgenskaper ?: emptyList()
-        val newGrenseFeature = buildNewGrenseFeature(
-            pathResult.coordinates,
-            sharedKontekstEgenskaper,
-            pathResult.worstQuality,
-            gyldigFra
-        )
+        val allCreateFeatures = newGrenseFeatures + affectedUpdateFeatures
 
         val utkast = createAndSaveUtkast(
-            archiveFeatures = archiveFeatures,
-            createFeatures = listOf(newGrenseFeature),
+            archiveFeatures = archiveAndCreateFeatures,
+            createFeatures = allCreateFeatures,
             kommunePar = kommunePar,
             avvikList = avvikList,
             gyldigFra = gyldigFra
         )
 
         log.info("  Created Utkast: {}", utkast.id)
-
         arbeidslisteClient.markAvvikAsFikset(avvikList.map { it.id })
 
         return ProcessResult.CREATED
+    }
+
+    private fun handleHjelpepunktCase(
+        hjelpepunkt: List<Point>,
+        pathResult: MatrikkelNetworkService.MatrikkelPathResult,
+        archiveFeatures: List<Feature>,
+        gapStart: Point,
+        gapEnd: Point,
+        gyldigFra: LocalDate,
+        grenseType: String
+    ): Pair<List<Feature>, List<Feature>> {
+        log.info("  Found {} hjelpepunkt - will split new kommunegrense", hjelpepunkt.size)
+
+        val hjelpepunktInfos = hjelpepunkt.map {
+            grenseTopologyService.projectPointOntoPath(it, pathResult.coordinates)
+        }
+
+        val (deduplicatedHjelpepunkt, _) = grenseTopologyService.deduplicateHjelpepunkt(hjelpepunktInfos)
+        val segments = grenseTopologyService.splitPathAtHjelpepunkt(pathResult.coordinates, deduplicatedHjelpepunkt)
+
+        log.info("  Creating {} new segments (using archive kontekstEgenskaper)", segments.size)
+
+        val newFeatures = segments.mapIndexed { index, segmentCoords ->
+            val segmentStart = segmentCoords.first()
+            val segmentEnd = segmentCoords.last()
+
+            val kontekstEgenskaper = grenseArchiveService.findMatchingArchiveKontekst(
+                segmentStart = segmentStart,
+                segmentEnd = segmentEnd,
+                gapStart = gapStart,
+                gapEnd = gapEnd,
+                hjelpepunktInfos = deduplicatedHjelpepunkt,
+                archiveFeatures = archiveFeatures
+            )
+
+            log.info("  Segment {}: using {} kontekstEgenskaper from archive", index + 1, kontekstEgenskaper.size)
+
+            grenseArchiveService.buildNewGrenseFeature(
+                segmentCoords, kontekstEgenskaper, pathResult.worstQuality, gyldigFra, grenseType
+            )
+        }
+
+        return Pair(archiveFeatures, newFeatures)
+    }
+
+    private fun handleSimpleCase(
+        pathResult: MatrikkelNetworkService.MatrikkelPathResult,
+        archiveFeatures: List<Feature>,
+        gyldigFra: LocalDate,
+        grenseType: String
+    ): Pair<List<Feature>, List<Feature>> {
+        log.info("  No hjelpepunkt - single segment from gapStart to gapEnd")
+
+        val kontekstEgenskaper = archiveFeatures.flatMap { it.properties.kontekstEgenskaper }
+            .distinctBy { it.id?.lokalid }
+
+        log.info("  Using {} kontekstEgenskaper from archive", kontekstEgenskaper.size)
+
+        val newFeature = listOf(
+            grenseArchiveService.buildNewGrenseFeature(
+                pathResult.coordinates, kontekstEgenskaper, pathResult.worstQuality, gyldigFra, grenseType
+            )
+        )
+
+        return Pair(archiveFeatures, newFeature)
+    }
+
+    private fun handleAffectedGrenser(
+        affectedGrenser: List<no.kartverket.nibas.domain.Grense>,
+        hjelpepunkt: List<Point>,
+        pathCoordinates: List<Point>,
+        gyldigFra: LocalDate
+    ): List<Feature> {
+        val hjelpepunktInfos = hjelpepunkt.map { hp ->
+            grenseTopologyService.projectPointOntoPath(hp, pathCoordinates)
+        }
+
+        val endpointMapping = grenseTopologyService.buildEndpointMapping(hjelpepunktInfos)
+        log.info("  Built endpoint mapping with {} hjelpepunkt", endpointMapping.size)
+
+        return affectedGrenser.map { grense ->
+            val coords = coordinateService.extractCoordinates(grense)
+            grenseArchiveService.buildAffectedGrenseUpdateFeature(grense, coords, endpointMapping, gyldigFra)
+        }
     }
 
     private fun fetchGrensekoblingerForKommunePar(
@@ -238,45 +315,54 @@ class CreateRettetUtkastService(
         )
 
         val allGrensekoblinger = kommuneService.hentGrensekoblingerForKommune(kommune1Identifikator)
+        log.info("  Got {} total grensekoblinger for kommune1", allGrensekoblinger.size)
 
         val kommune2LokalId = kommunePar.kommune2.kommuneLokalID
-        return allGrensekoblinger.filter { grensekobling ->
+        val filtered = allGrensekoblinger.filter { grensekobling ->
             val kommuner = grensekobling.grense.kommuner(gyldigFra).map { it.lokalid }
             kommuner.contains(kommune2LokalId)
         }
+        log.info("  After filtering for kommune2 ({}): {} grensekoblinger", kommune2LokalId, filtered.size)
+        return filtered
     }
 
-    /**
-     * Identify which grenselinjer to archive.
-     *
-     * Archive if:
-     * 1. Grense has avvik, OR
-     * 2. Both endpoints are inside avvik region (connecting segments)
-     */
+    private fun fetchAllNeighborGrenser(
+        kommunePar: KommunePar,
+        gyldigFra: LocalDate
+    ): List<no.kartverket.nibas.domain.GrunnkretsGrenseKobling> {
+        val kommune1Identifikator = Identifikator(Lokalid(kommunePar.kommune1.kommuneLokalID), gyldigFra)
+        val kommune2Identifikator = Identifikator(Lokalid(kommunePar.kommune2.kommuneLokalID), gyldigFra)
+
+        val grenser1 = kommuneService.hentGrensekoblingerForKommune(kommune1Identifikator)
+        val grenser2 = kommuneService.hentGrensekoblingerForKommune(kommune2Identifikator)
+
+        return (grenser1 + grenser2).distinctBy { it.grense.id }
+    }
+
     private fun identifyGrenslinjerToArchive(
         grensekoblinger: List<no.kartverket.nibas.domain.GrunnkretsGrenseKobling>,
         avvikList: List<AvvikDto>,
-        avvikEndpoints: List<List<Double>>,
-        gyldigFra: LocalDate
-    ): List<GrenseToArchive> {
-        val toArchive = mutableListOf<GrenseToArchive>()
+        avvikEndpoints: List<Point>,
+    ): List<GrenseArchiveService.GrenseToArchive> {
+        val toArchive = mutableListOf<GrenseArchiveService.GrenseToArchive>()
         val avvikByGrenseId = avvikList.associateBy { it.grenseId }
 
         for (grensekobling in grensekoblinger) {
             val grense = grensekobling.grense
             val hasAvvik = avvikByGrenseId.containsKey(grense.id)
 
-            val coords = extractCoordinates(grense)
-            val finalCoords = avvikByGrenseId[grense.id]?.geometri?.coordinates ?: coords
+            val coords = coordinateService.extractCoordinates(grense)
+            val finalCoords = avvikByGrenseId[grense.id]?.geometri?.coordinates?.map { Point.fromList(it) }
+                ?: coords
 
             val start = finalCoords.first()
             val end = finalCoords.last()
 
-            val startInRegion = avvikEndpoints.any { pointsMatch(it, start) }
-            val endInRegion = avvikEndpoints.any { pointsMatch(it, end) }
+            val startInRegion = avvikEndpoints.any { coordinateService.pointsMatch(it, start) }
+            val endInRegion = avvikEndpoints.any { coordinateService.pointsMatch(it, end) }
 
             if (hasAvvik || (startInRegion && endInRegion)) {
-                toArchive.add(GrenseToArchive(grense, finalCoords))
+                toArchive.add(GrenseArchiveService.GrenseToArchive(grense, finalCoords))
                 val reason = if (hasAvvik) "has avvik" else "connects avvik segments"
                 log.info("  Will archive {}: {}", grense.lokalid, reason)
             }
@@ -285,276 +371,136 @@ class CreateRettetUtkastService(
         return toArchive
     }
 
-    private fun hasHjelpepunkt(
-        toArchive: List<GrenseToArchive>,
-        kommunePar: KommunePar,
-        gyldigFra: LocalDate
-    ): Boolean {
-        val archivedEndpoints = toArchive.flatMap {
-            listOf(it.coords.first(), it.coords.last())
-        }
-
-        val kommune1 = kommuneService.hentKommune(
-            Identifikator(Lokalid(kommunePar.kommune1.kommuneLokalID), gyldigFra)
-        ) ?: return false
-
-        val kommune2 = kommuneService.hentKommune(
-            Identifikator(Lokalid(kommunePar.kommune2.kommuneLokalID), gyldigFra)
-        ) ?: return false
-
-        val problematicGrenser = mutableSetOf<Grense>()
-        collectProblematicGrenser(kommune1, gyldigFra, problematicGrenser)
-        collectProblematicGrenser(kommune2, gyldigFra, problematicGrenser)
-
-        for (grense in problematicGrenser) {
-            val geom = grense.grense
-            if (geom.coordinates.isEmpty()) continue
-
-            val start = listOf(geom.coordinates.first().x, geom.coordinates.first().y)
-            val end = listOf(geom.coordinates.last().x, geom.coordinates.last().y)
-
-            for (archivedEndpoint in archivedEndpoints) {
-                if (pointsMatch(start, archivedEndpoint) || pointsMatch(end, archivedEndpoint)) {
-                    log.warn("  HJELPEPUNKT! {} {} touches archived grenselinje",
-                        grense.grensetype, grense.lokalid)
-                    return true
-                }
-            }
-        }
-
-        return false
-    }
-
-    private fun buildArchiveFeatures(
-        toArchive: List<GrenseToArchive>,
-        gyldigFra: LocalDate
-    ): List<Feature> {
-        val features = toArchive.map { gta ->
-            val grense = gta.grense
-            val kontekstEgenskaper = buildKontekstEgenskaper(grense, gyldigFra)
-
-            Feature(
-                id = grense.lokalid,
-                type = "Feature",
-                geometry = LineString(coordinates = gta.coords),
-                properties = FeatureProperties(
-                    type = "Kommunegrense",
-                    srid = 25833,
-                    version = grense.version,
-                    metadata = AdministrativGrenseMetadata(
-                        common = CommonMetadata(
-                            identifikasjon = Identifikasjon(lokalid = grense.lokalid),
-                            gyldigFra = gyldigFra
-                        ),
-                        commonGrense = CommonGrenseMetadata(
-                            posisjonskvalitet = Posisjonskvalitet(
-                                maalemetode = KodelisteEntry(id = grense.kvalitet?.maalemetode ?: ""),
-                                noeyaktighet = grense.kvalitet?.noeyaktighet ?: 0
-                            )
-                        )
-                    ),
-                    kontekstEgenskaper = kontekstEgenskaper,
-                    shouldArchive = true
-                )
-            )
-        }
-
-        return features
-    }
-
-    /**
-     * Find gap connection points.
-     * Gap = where archived grenselinjer touch non-archived grenselinjer.
-     * Need exactly 2 connection points, gap start and gap end.
-     */
     private fun findGapConnectionPoints(
-        toArchive: List<GrenseToArchive>,
-        grensekoblinger: List<no.kartverket.nibas.domain.GrunnkretsGrenseKobling>,
-        archiveFeatures: List<Feature>,
-        gyldigFra: LocalDate
+        toArchive: List<GrenseArchiveService.GrenseToArchive>,
+        grensekoblinger: List<no.kartverket.nibas.domain.GrunnkretsGrenseKobling>
     ): List<ConnectionPoint> {
         val archivedEndpoints = toArchive.flatMap {
             listOf(it.coords.first(), it.coords.last())
-        }
-
-        val archivedLokalids = archiveFeatures.map {
-            (it.properties.metadata as AdministrativGrenseMetadata).common.identifikasjon.lokalid
         }.toSet()
 
-        val connectionPoints = mutableListOf<ConnectionPoint>()
+        val archivedLokalids = toArchive.map { it.grense.lokalid }.toSet()
+
+        val connectionPoints = mutableSetOf<ConnectionPoint>()
 
         for (grensekobling in grensekoblinger) {
             val grense = grensekobling.grense
+            if (grense.lokalid in archivedLokalids) continue
 
-            if (archivedLokalids.contains(grense.lokalid)) continue
-
-            val nibasCoords = extractCoordinates(grense)
+            val nibasCoords = coordinateService.extractCoordinates(grense)
             val start = nibasCoords.first()
             val end = nibasCoords.last()
 
-            for (archivedEndpoint in archivedEndpoints) {
-                if (pointsMatch(start, archivedEndpoint) && !connectionPoints.any { pointsMatch(it.point, start) }) {
-                    connectionPoints.add(ConnectionPoint(start, grense.lokalid))
-                }
-                if (pointsMatch(end, archivedEndpoint) && !connectionPoints.any { pointsMatch(it.point, end) }) {
-                    connectionPoints.add(ConnectionPoint(end, grense.lokalid))
+            if (archivedEndpoints.any { coordinateService.pointsMatch(it, start) }) {
+                connectionPoints.add(ConnectionPoint(start, grense.lokalid))
+            }
+            if (archivedEndpoints.any { coordinateService.pointsMatch(it, end) }) {
+                connectionPoints.add(ConnectionPoint(end, grense.lokalid))
+            }
+        }
+
+        return connectionPoints.toList()
+    }
+
+    private fun findOutermostPoints(points: List<ConnectionPoint>): List<ConnectionPoint> {
+        if (points.size <= 2) return points
+
+        log.info("  All {} connection points:", points.size)
+        points.forEachIndexed { index, cp ->
+            log.info("    [{}] [{}, {}] from grense {}", index, cp.point.x, cp.point.y, cp.grenseLokalid)
+        }
+
+        // Deduplicate by coordinate
+        val uniquePoints = points.groupBy { it.point }
+            .map { (_, group) -> group.first() }
+
+        if (uniquePoints.size < points.size) {
+            log.warn("  Deduplicated {} connection points down to {} unique coordinates",
+                points.size, uniquePoints.size)
+            log.warn("  This indicates multiple grenser connect at the same coordinate (fork/branch in border)")
+        }
+
+        if (uniquePoints.size <= 2) {
+            log.info("  After deduplication, only {} unique coordinates - using all of them", uniquePoints.size)
+            return uniquePoints
+        }
+
+        var maxDistance = -1.0
+        var bestPair = Pair(uniquePoints[0], uniquePoints[1])
+
+        for (i in uniquePoints.indices) {
+            for (j in i + 1 until uniquePoints.size) {
+                val p1 = uniquePoints[i]
+                val p2 = uniquePoints[j]
+                val dist = p1.point.distanceTo(p2.point)
+                if (dist > maxDistance) {
+                    maxDistance = dist
+                    bestPair = Pair(p1, p2)
                 }
             }
         }
 
-        return connectionPoints
+        log.info("  Selected outermost points: [{}, {}] to [{}, {}] (distance: {}m)",
+            bestPair.first.point.x, bestPair.first.point.y,
+            bestPair.second.point.x, bestPair.second.point.y,
+            String.format(java.util.Locale.US, "%.2f", maxDistance))
+
+        return listOf(bestPair.first, bestPair.second)
     }
 
-    private fun fetchMatrikkelGrenslinjerForKommunePar(
-        kommunePar: KommunePar
-    ): List<M22Feature> {
-        val response = arbeidslisteClient.getMatrikkelGrenselinjer(
-            kommunenummer = kommunePar.kommune1.kommunenummer
-        )
+    private fun sortGrenserAlongBorder(
+        toArchive: List<GrenseArchiveService.GrenseToArchive>,
+        gapStart: Point,
+        gapEnd: Point
+    ): List<GrenseArchiveService.GrenseToArchive>? {
+        if (toArchive.isEmpty()) return emptyList()
+        if (toArchive.size == 1) return toArchive
 
-        val filtered = response.features.filter { feature ->
-            val k1 = kommunePar.kommune1.kommunenummer
-            val k2 = kommunePar.kommune2.kommunenummer
-            val m1 = feature.properties.kommunenr1
-            val m2 = feature.properties.kommunenr2
+        val sorted = mutableListOf<GrenseArchiveService.GrenseToArchive>()
+        val remaining = toArchive.toMutableList()
+        var currentPoint = gapStart
 
-            m1 != null && m2 != null && ((k1 == m1 && k2 == m2) || (k1 == m2 && k2 == m1))
-        }
+        while (remaining.isNotEmpty()) {
+            val nextSegment = remaining.find { segment ->
+                coordinateService.pointsMatch(segment.coords.first(), currentPoint) ||
+                coordinateService.pointsMatch(segment.coords.last(), currentPoint)
+            }
 
-        return filtered
-    }
+            if (nextSegment == null) {
+                log.warn("Could not find next segment in chain at [{}, {}]", currentPoint.x, currentPoint.y)
+                log.warn("  Remaining segments: {}", remaining.map { it.grense.lokalid })
 
-    private fun walkMatrikkelNetwork(
-        gapStart: List<Double>,
-        gapEnd: List<Double>,
-        matrikkelFeatures: List<M22Feature>
-    ): MatrikkelPathResult? {
-        val spatialIndex = buildSpatialIndex(matrikkelFeatures)
-        val allCoordinates = mutableListOf<List<Double>>()
-        val processedIds = mutableSetOf<String>()
-        var currentEndpoint = gapStart
-        var worstNoeyaktighet = 0
-        var worstMaalemetodeId = 0
-        val jtsGoal = toJtsPoint(gapEnd)
+                for (segment in remaining) {
+                    val start = segment.coords.first()
+                    val end = segment.coords.last()
+                    val distToStart = currentPoint.distanceTo(start)
+                    val distToEnd = currentPoint.distanceTo(end)
+                    log.warn("    Segment {}: start=[{}, {}] dist={}m, end=[{}, {}] dist={}m",
+                        segment.grense.lokalid,
+                        start.x, start.y, String.format(java.util.Locale.US, "%.2f", distToStart),
+                        end.x, end.y, String.format(java.util.Locale.US, "%.2f", distToEnd))
+                }
 
-        while (!pointsMatch(currentEndpoint, gapEnd)) {
-            val candidates = findCandidateSegmentsJTS(
-                currentEndpoint = currentEndpoint,
-                goalPoint = jtsGoal,
-                spatialIndex = spatialIndex,
-                processedIds = processedIds
-            )
-
-            if (candidates.isEmpty()) {
-                log.warn("  Dead end! Could not reach goal")
                 return null
             }
 
-            val best = candidates.minByOrNull { it.distanceToGoal }!!
-            processedIds.add(best.feature.id)
+            sorted.add(nextSegment)
+            remaining.remove(nextSegment)
 
-            val segmentNoeyaktighet = best.feature.properties.noyaktighet ?: 0
-            val segmentMaalemetodeId = best.feature.properties.malemetodeId ?: 0
-            if (segmentNoeyaktighet > worstNoeyaktighet) {
-                worstNoeyaktighet = segmentNoeyaktighet
-                worstMaalemetodeId = segmentMaalemetodeId
+            currentPoint = if (coordinateService.pointsMatch(nextSegment.coords.first(), currentPoint)) {
+                nextSegment.coords.last()
+            } else {
+                nextSegment.coords.first()
             }
 
-            addCoordinatesToPath(allCoordinates, best.coords, best.startMatches)
-            currentEndpoint = if (best.startMatches) best.coords.last() else best.coords.first()
-        }
-
-        log.info("  Path complete! {} coordinates, quality: {}cm",
-            allCoordinates.size, worstNoeyaktighet)
-        return MatrikkelPathResult(
-            allCoordinates,
-            WorstM22Posisjonskvalitet(worstMaalemetodeId, worstNoeyaktighet)
-        )
-    }
-
-    private fun findCandidateSegmentsJTS(
-        currentEndpoint: List<Double>,
-        goalPoint: JtsPoint,
-        spatialIndex: STRtree,
-        processedIds: Set<String>
-    ): List<Candidate> {
-        val currentPoint = toJtsPoint(currentEndpoint)
-        val nearbyFeatures = findFeaturesNearPoint(currentPoint, spatialIndex)
-        val candidates = mutableListOf<Candidate>()
-
-        for (indexed in nearbyFeatures) {
-            if (processedIds.contains(indexed.feature.id)) continue
-
-            val coords = indexed.feature.geometry.coordinates
-
-            val startMatches = indexed.startPoint.distance(currentPoint) < coordinateTolerance
-            val endMatches = indexed.endPoint.distance(currentPoint) < coordinateTolerance
-
-            if (startMatches || endMatches) {
-                val nextEndpoint = if (startMatches) indexed.endPoint else indexed.startPoint
-                val distanceToGoal = nextEndpoint.distance(goalPoint)
-                candidates.add(Candidate(indexed.feature, coords, startMatches, distanceToGoal))
+            if (coordinateService.pointsMatch(currentPoint, gapEnd) && remaining.isNotEmpty()) {
+                log.warn("Reached gapEnd but {} segments remain unsorted", remaining.size)
+                return null
             }
         }
-        return candidates
-    }
 
-    private fun addCoordinatesToPath(
-        path: MutableList<List<Double>>,
-        coords: List<List<Double>>,
-        startMatches: Boolean
-    ) {
-        val coordsToAdd = if (startMatches) coords else coords.reversed()
-        if (path.isEmpty()) {
-            path.addAll(coordsToAdd)
-        } else {
-            path.addAll(coordsToAdd.drop(1))
-        }
-    }
-
-    private fun snapEndpointsToNibas(
-        coordinates: MutableList<List<Double>>,
-        nibasStart: List<Double>,
-        nibasEnd: List<Double>
-    ) {
-        coordinates[0] = nibasStart
-        coordinates[coordinates.size - 1] = nibasEnd
-    }
-
-    private fun buildNewGrenseFeature(
-        coordinates: List<List<Double>>,
-        kontekstEgenskaper: List<KontekstEgenskaper>,
-        worstQuality: WorstM22Posisjonskvalitet,
-        gyldigFra: LocalDate
-    ): Feature {
-        log.info("Creating new grense: {} coords, quality: {}cm",
-            coordinates.size, worstQuality.noeyaktighet)
-
-        return Feature(
-            id = null,
-            type = "Feature",
-            geometry = LineString(coordinates = coordinates),
-            properties = FeatureProperties(
-                type = "Kommunegrense",
-                srid = 25833,
-                version = 1,
-                metadata = AdministrativGrenseMetadata(
-                    common = CommonMetadata(
-                        identifikasjon = Identifikasjon(lokalid = "NotARealID"),
-                        gyldigFra = gyldigFra,
-                        informasjon = "14.10.2025 - Kvalitetsheving av kommunegrense, jf. Arken 25/29245"
-                    ),
-                    commonGrense = CommonGrenseMetadata(
-                        posisjonskvalitet = Posisjonskvalitet(
-                            maalemetode = KodelisteEntry(id = worstQuality.maalemetodeId.toString()),
-                            noeyaktighet = worstQuality.noeyaktighet
-                        )
-                    )
-                ),
-                kontekstEgenskaper = kontekstEgenskaper,
-                shouldArchive = false
-            )
-        )
+        log.info("  Sorted {} grenser along border from gapStart to gapEnd", sorted.size)
+        return sorted
     }
 
     private fun createAndSaveUtkast(
@@ -579,159 +525,56 @@ class CreateRettetUtkastService(
                 " ${kommunePar.kommune2.kommunenavn} - $avvikGrenselinjer grenser med $avvikPunkter avvikspunkter",
             gyldigFra = gyldigFra
         )
-        .withOperasjoner(operasjoner)
-        .build()
+            .withOperasjoner(operasjoner)
+            .build()
 
         return utkastRepository.save(utkast)
     }
 
-    private fun pointsMatch(p1: List<Double>, p2: List<Double>): Boolean {
-        val jtsP1 = toJtsPoint(p1)
-        val jtsP2 = toJtsPoint(p2)
-        return jtsP1.distance(jtsP2) < coordinateTolerance
-    }
+    private data class ConnectionPoint(val point: Point, val grenseLokalid: String)
 
-    private fun extractCoordinates(grense: Grense): List<List<Double>> {
-        return grense.grense.coordinates.map { listOf(it.x, it.y) }
-    }
-
-    private fun collectProblematicGrenser(
-        kommune: no.kartverket.nibas.domain.Kommune,
-        gyldigFra: LocalDate,
-        targetSet: MutableSet<Grense>
-    ) {
-        val grunnkretser = kommune.getGrunnkretser(gyldigFra)
-
-        for (grunnkrets in grunnkretser) {
-            val grensekoblinger = grunnkrets.getGrensekoblinger(gyldigFra)
-            for (kobling in grensekoblinger) {
-                if (kobling.grense.grensetype == Grensetype.Grunnkretsgrense ||
-                    kobling.grense.grensetype == Grensetype.Delomraadegrense) {
-                    targetSet.add(kobling.grense)
-                }
-            }
-        }
-    }
-
-    private fun buildKontekstEgenskaper(grense: Grense, gyldigFra: LocalDate): List<KontekstEgenskaper> {
-        return buildList {
-            grense.grunnkretser(gyldigFra).forEach { grunnkrets ->
-                add(KontekstEgenskaper(
-                    id = ObjektIdentifikator(
-                        lokalid = Lokalid(grunnkrets.lokalid),
-                        gyldighetsdato = grunnkrets.gyldighet.gyldigFra
-                    ),
-                    type = KontekstEnhetType.GRUNNKRETS,
-                    version = grunnkrets.version,
-                    kommuneId = ObjektIdentifikator(
-                        lokalid = Lokalid(grunnkrets.getKommune(gyldigFra)!!.lokalid),
-                        gyldighetsdato = grunnkrets.getKommune(gyldigFra)!!.gyldighet.gyldigFra
-                    ),
-                    kretsNummer = grunnkrets.grunnkretsnummer!!
-                ))
-            }
-
-            grense.stemmekretser(gyldigFra).forEach { stemmekrets ->
-                add(KontekstEgenskaper(
-                    id = ObjektIdentifikator(
-                        lokalid = Lokalid(stemmekrets.lokalid),
-                        gyldighetsdato = stemmekrets.gyldighet.gyldigFra
-                    ),
-                    type = KontekstEnhetType.STEMMEKRETS,
-                    version = stemmekrets.version,
-                    kommuneId = ObjektIdentifikator(
-                        lokalid = Lokalid(stemmekrets.getKommune(gyldigFra)!!.lokalid),
-                        gyldighetsdato = stemmekrets.getKommune(gyldigFra)!!.gyldighet.gyldigFra
-                    ),
-                    kretsNummer = stemmekrets.stemmekretsnummer!!
-                ))
-            }
-        }
-    }
-
-    private fun toJtsPoint(coords: List<Double>): JtsPoint {
-        return geometryFactory.createPoint(Coordinate(coords[0], coords[1]))
-    }
-
-    private fun buildSpatialIndex(matrikkelFeatures: List<M22Feature>): STRtree {
-        val index = STRtree()
-
-        matrikkelFeatures.forEach { feature ->
-            val coords = feature.geometry.coordinates.map {
-                Coordinate(it[0], it[1])
-            }.toTypedArray()
-
-            val jtsLine = geometryFactory.createLineString(coords)
-            val startPoint = geometryFactory.createPoint(coords.first())
-            val endPoint = geometryFactory.createPoint(coords.last())
-
-            val indexed = IndexedM22Feature(feature, startPoint, endPoint)
-            index.insert(jtsLine.envelopeInternal, indexed)
-        }
-
-        index.build()
-        return index
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun findFeaturesNearPoint(
-        point: JtsPoint,
-        spatialIndex: STRtree,
-        searchRadius: Double = coordinateTolerance
-    ): List<IndexedM22Feature> {
-        val searchEnvelope = point.buffer(searchRadius).envelopeInternal
-        return spatialIndex.query(searchEnvelope) as List<IndexedM22Feature>
-    }
-
-    /**
-     * Temp skip kommunepar that have known problems.
-     */
     private fun shouldSkipKommunePar(kommunePar: KommunePar): Boolean {
         val navn1 = kommunePar.kommune1.kommunenavn
         val navn2 = kommunePar.kommune2.kommunenavn
 
-        // Saving some time then generating new utkast.
-        // Will change this after we have fixed the easy avvik.
+
         val problematicPairs = listOf(
-            // Fails for other reasons.
-//            "Surnadal" to "Rindal",
-//            "Ullensaker" to "Eidsvoll",
-//            "Rennebu" to "Orkland",
-            // Has knutepuntk
-            "Nord-Aurdal" to "Vestre Slidre", "Moss" to "Vestby", "Nes" to "Sør-Odal",
-            "Hamar" to "Løten", "Indre Østfold" to "Nordre Follo", "Ålesund" to "Haram",
-            "Lindesnes" to "Lyngdal", "Kristiansand" to "Lillesand", "Oslo" to "Nittedal",
-            "Bodø" to "Beiarn", "Kongsberg" to "Notodden", "Søndre Land" to "Nordre Land",
-            "Vegårshei" to "Åmli", "Austevoll" to "Øygarden", "Smøla" to "Frøya",
-            "Flekkefjord" to "Kvinesdal", "Horten" to "Holmestrand", "Larvik" to "Porsgrunn",
-            "Farsund" to "Lyngdal", "Måsøy" to "Nordkapp", "Froland" to "Åmli",
-            "Vestby" to "Ås", "Indre Østfold" to "Enebakk", "Kinn" to "Stad",
-            "Solund" to "Askvoll", "Vanylven" to "Volda", "Nissedal" to "Åmli",
-            "Sandefjord" to "Larvik", "Røros" to "Tydal", "Etnedal" to "Nord-Aurdal",
-            "Os" to "Røros", "Sande" to "Herøy", "Kristiansund" to "Averøy",
-            "Grimstad" to "Lillesand", "Ålesund" to "Aukra", "Gjerdrum" to "Nittedal",
-            "Sandefjord" to "Færder", "Bærum" to "Hole", "Sokndal" to "Flekkefjord",
-            "Eigersund" to "Bjerkreim", "Lierne" to "Røyrvik", "Engerdal" to "Røros",
-            "Farsund" to "Flekkefjord", "Frøya" to "Osen", "Kristiansand" to "Lindesnes",
-            "Krødsherad" to "Sigdal", "Sarpsborg" to "Våler", "Træna" to "Rødøy",
-            "Kinn" to "Bremanger", "Gamvik" to "Berlevåg", "Ringerike" to "Hole",
-            "Fredrikstad" to "Råde", "Snåsa" to "Grong", "Lillestrøm" to "Ullensaker",
-            "Trondheim" to "Selbu", "Birkenes" to "Evje og Hornnes", "Lillestrøm" to "Nittedal",
-            "Sør-Aurdal" to "Etnedal", "Krødsherad" to "Flå", "Flekkefjord" to "Sirdal",
-            "Risør" to "Tvedestrand", "Båtsfjord" to "Vardø", "Halden" to "Aremark",
-            "Bømlo" to "Austevoll", "Øygarden" to "Fedje",
-            "Eigersund" to "Sokndal", "Osen" to "Flatanger", "Sør-Aurdal" to "Nord-Aurdal",
-            "Kristiansund" to "Smøla", "Grimstad" to "Arendal",
-            "Averøy" to "Hustadvika", "Kragerø" to "Risør", "Birkenes" to "Iveland",
-            "Flå" to "Sigdal", "Hå" to "Klepp",
-            "Lillestrøm" to "Gjerdrum", "Herøy" to "Træna", "Halden" to "Hvaler",
-            "Iveland" to "Evje og Hornnes", "Berlevåg" to "Båtsfjord", "Bindal" to "Leka",
-            "Karasjok" to "Kautokeino", "Andøy" to "Senja", "Herøy" to "Giske",
-            "Sande" to "Stad"
+            "Nes" to "Sør-Odal",
+            "Indre Østfold" to "Nordre Follo",
+            "Hamar" to "Løten",
+            "Larvik" to "Porsgrunn",
+            "Sande" to "Stad",
+            "Ålesund" to "Haram",
+            "Birkenes" to "Evje og Hornnes",
+            "Austevoll" to "Øygarden",
+            "Horten" to "Holmestrand",
+            "Farsund" to "Lyngdal",
+            "Kristiansand" to "Lillesand",
+            "Solund" to "Askvoll",
+            "Oslo" to "Nittedal",
+            "Kinn" to "Stad",
+            "Engerdal" to "Røros",
+            "Flå" to "Sigdal",
+            "Birkenes" to "Iveland",
+            "Grimstad" to "Lillesand",
+            "Iveland" to "Evje og Hornnes",
+            "Farsund" to "Flekkefjord",
+            "Sande" to "Herøy",
+            "Kristiansund" to "Averøy",
+            "Sandefjord" to "Færder",
+            "Sokndal" to "Flekkefjord",
+            "Bindal" to "Leka"
         )
 
         return problematicPairs.any { (k1, k2) ->
             (navn1 == k1 && navn2 == k2) || (navn1 == k2 && navn2 == k1)
         }
     }
+}
+object SpatialConstants {
+    const val COORDINATE_TOLERANCE = 0.1
+    const val NIBAS_M22_SNAP_TOLERANCE = 10.0
+    const val KNUTEPUNKT_MARGIN = 15.0
+    const val COORDINATE_SCALE = 200.0
+    const val MAX_COORDINATE_DECIMALS = 3
 }
