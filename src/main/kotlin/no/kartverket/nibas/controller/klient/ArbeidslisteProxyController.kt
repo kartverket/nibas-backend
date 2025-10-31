@@ -41,7 +41,7 @@ class ArbeidslisteProxyController(
     @RequestMapping("/**")
     fun proxyRequest(request: HttpServletRequest, response: HttpServletResponse) {
         // Fjern /proxy/arbeidsliste fra request path og legg til /internal-api prefix
-        val downstreamPath = "/internal-api" + request.servletPath.removePrefix("/v1/proxy/arbeidsliste")
+        val downstreamPath = request.servletPath.removePrefix("/v1/proxy/arbeidsliste")
         val method = request.method
 
         if (!isPathMethodAllowed(downstreamPath, method)) {
