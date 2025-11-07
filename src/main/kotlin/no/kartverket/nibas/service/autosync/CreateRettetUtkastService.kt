@@ -563,7 +563,20 @@ class CreateRettetUtkastService(
             "Kristiansund" to "Averøy",
             "Sandefjord" to "Færder",
             "Sokndal" to "Flekkefjord",
-            "Bindal" to "Leka"
+            "Bindal" to "Leka",
+            "Herøy" to "Giske",
+            "Smøla" to "Frøya",
+            "Kristiansund" to "Smøla",
+            "Ålesund" to "Aukra",
+            "Averøy" to "Hustadvika",
+            "Kragerø" to "Risør",
+            "Hå" to "Klepp",
+            "Grimstad" to "Arendal",
+            "Kristiansand" to "Lindesnes",
+            "Risør" to "Tvedestrand",
+            "Halden" to "Hvaler",
+            "Kinn" to "Bremanger",
+            "Bømlo" to "Austevoll"
         )
 
         return problematicPairs.any { (k1, k2) ->
