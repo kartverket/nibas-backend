@@ -10,5 +10,5 @@ object SecurityConstants {
     const val ORDER_OF_API_KEY_FILTER_CHAIN: Int = SecurityProperties.BASIC_AUTH_ORDER - 2
 
     //Lavere pri
-    const val ORDER_OF_JWT_FILTER_CHAIN: Int = SecurityProperties.BASIC_AUTH_ORDER - 1
+    const val ORDER_OF_FORWARDED_AUTH_FILTER_CHAIN: Int = SecurityProperties.BASIC_AUTH_ORDER - 1
 }

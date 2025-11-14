@@ -4,52 +4,55 @@ Spring Boot applikasjon som serverer informasjon om, og tilbyr forvaltning av, N
 
 ## Innholdsfortegnelse
 
-- [Oppsett Lokalt](#oppsett)
-- [Autentisering](#autentisering)
-- [Diverse tilleggskommandoer](#kommandoer)
-- [Ressurser](#ressurser)
+-   [Oppsett Lokalt](#oppsett)
+-   [Autentisering](#autentisering)
+-   [Diverse tilleggskommandoer](#kommandoer)
+-   [Ressurser](#ressurser)
 
 # Oppsett Lokalt <a name="oppsett"></a>
 
 For å sette opp applikasjonen lokalt trenger du følgende:
 
-- JDK 21
-- Docker
-- PostgreSQL (versjon 14 anbefales)
+-   JDK 21
+-   Docker
+-   PostgreSQL (versjon 14 anbefales)
 
 ## Miljøvariabler
 
-
 ### Generere PAT
+
 For å kunne sjekke ut kode fra Nibas, må du ha satt opp en PAT
-* [Personal Access Token (classic)](https://github.com/settings/tokens) er personlig og legges til GitHub profil.
-* Generer nytt classic token.
-* Sett scope til: `read:packages`.
-* Husk å kopiere tokenet før man setter SSO og stegene under
-* Sett SSO til Kartverket
+
+-   [Personal Access Token (classic)](https://github.com/settings/tokens) er personlig og legges til GitHub profil.
+-   Generer nytt classic token.
+-   Sett scope til: `read:packages`.
+-   Husk å kopiere tokenet før man setter SSO og stegene under
+-   Sett SSO til Kartverket
 
 For mer informasjon, se [GitHub dokumentasjon](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token).
 
 ### Legg inn i gradle.properties
+
 Rename `gradle.properties.template` til `gradle.properties` og legg inn tokenet du genererte i stedet for `<genererte token>`.
 
 ```
 GH_PACKAGES_PAT=<genererte token>
 ```
+
 `gradle.properties` er gitignored så den vil ikke bli committet.
 `GH_PACKAGES_PAT` er for henting av matrikkelkode via maven.
 
 ### Matrikkel WFS
 
-For at applikasjonen skal kunne koble til Matrikkelens WFS-tjeneste, må den konfigureres med riktig URL og påloggingsinformasjon. 
+For at applikasjonen skal kunne koble til Matrikkelens WFS-tjeneste, må den konfigureres med riktig URL og påloggingsinformasjon.
 Dette gjøres ved å sette de følgende miljøvariablene.
 Verdiene finner du i Google Secret Manager (se [hvordan](#secrets) lenger ned).
 
 For lokal kjøring i IntelliJ er den enkleste metoden å legge dem til i din "Run/Debug Configuration" under feltet for "Environment variables":
 
-*   `MATRIKKELEN_WFS_URL`=`<url-fra-secret-manager>`
-*   `MATRIKKELEN_USERNAME`=`<brukernavn-fra-secret-manager>`
-*   `MATRIKKELEN_PASSWORD`=`<passord-fra-secret-manager>`
+-   `MATRIKKELEN_WFS_URL`=`<url-fra-secret-manager>`
+-   `MATRIKKELEN_USERNAME`=`<brukernavn-fra-secret-manager>`
+-   `MATRIKKELEN_PASSWORD`=`<passord-fra-secret-manager>`
 
 Hvis du heller starter applikasjonen fra terminalen, kan du eksportere variablene før du kjører `bootRun`-kommandoen.
 
@@ -60,7 +63,7 @@ Man kan enten kjøre database med docker eller bare lokalt.
 ### Kjør med docker
 
 Den letteste måten å kjøre det opp lokalt på egen maskin er ved å starte opp databasen via docker-compose.
-Om man kjører docker-compose med filen `docker-compose-local.yml` vil den starte database i egen container. 
+Om man kjører docker-compose med filen `docker-compose-local.yml` vil den starte database i egen container.
 Dette kan gjøres enten ved å høyreklikke og velge "Run" i IntelliJ eller kjøre følgende kommando i kommandolinjen.
 
 ```bash
@@ -78,6 +81,7 @@ sudo -u postgres psql
 
 Lag bruker og database.
 Dette må matche det som er satt i 'application.yml'
+
 ```sql
 CREATE ROLE nibas WITH LOGIN PASSWORD 'nibas';
 create database nibas with owner = nibas;
@@ -85,10 +89,11 @@ create database nibas with owner = nibas;
 
 ### Importere data
 
-Om dette er første gangen du setter opp applikasjonen vil databasen være tom. 
+Om dette er første gangen du setter opp applikasjonen vil databasen være tom.
 Du kan da importere en av database-dumpene som ligger i [google-cloud-bucketen](https://storage.cloud.google.com/utvikler-filer)
 
 For å importere en databasedump kan du bruke psql med kommandoen:
+
 ```bash
 psql -f {DB_DUMP_FILENAME} -h localhost -U nibas -d nibas
 ```
@@ -97,12 +102,11 @@ psql -f {DB_DUMP_FILENAME} -h localhost -U nibas -d nibas
 
 ### IntelliJ
 
-I IntelliJ kan man starte main-metoden i `NibasBackendApplication.kt`. 
-Husk å sette aktiv spring-profil til `localhost`. 
+I IntelliJ kan man starte main-metoden i `NibasBackendApplication.kt`.
+Husk å sette aktiv spring-profil til `localhost`.
 Dette gjøres under "Run/Debug Configurations" og vil se slik ut i IntelliJ:
 
 ![image](https://github.com/kartverket/nibas-backend/assets/39772759/6f6f8156-70d7-4d34-87df-8535d47980b7)
-
 
 ### Terminal
 
@@ -122,8 +126,8 @@ Nå skal applikasjonen være klar til bruk og du kan sette opp [nibas-frontend](
 
 Om integrasjonen mot nibas-events skal fungere, må du gjøre følgende:
 
-- Miljøvariabel `nibas-events.host` må settes til aktuell nibas-events applikasjon. Denne skal inneholde host:port.
-- Dersom du kjører nibas-events, må det også finnes en miljøvariabel `api.key.publisher`. Den samme som nibas-events autentiserer mot.
+-   Miljøvariabel `nibas-events.host` må settes til aktuell nibas-events applikasjon. Denne skal inneholde host:port.
+-   Dersom du kjører nibas-events, må det også finnes en miljøvariabel `api.key.publisher`. Den samme som nibas-events autentiserer mot.
 
 ## Finne fram secrets i Google Secret Manager <a name="secrets"></a>
 
@@ -140,41 +144,25 @@ Disse kan settes i IntelliJ under "Run/Debug Configurations" eller ved å bruke 
 
 # Autentisering <a name="autentisering"></a>
 
-Applikasjonen starter default med autentisering påskrudd.
-Dette betyr at alle API-endepunkt er sikret og trenger en Authorization-header for å kunne aksesseres.
-Med default-oppsett så vil man kun kunne logge inn med brukeren `05865396092` lokalt.
-Men kan fint legge til flere brukere om man ønsker det ved å legge de til i miljøvariabelen `nibas.authorized.users`. 
-Her legger man en kommeseparert liste med MD5-hashen av fødselsnummer man ønsker at skal være autoriserte for tjenesten.
-
-## Disable autentisering ved lokal kjøring
-
-Man kan disable sikkerhet ved lokal kjøring ved å bruke spring-profilen security-off. 
-Man kan kjøre med flere profiler samtidig, så det er bare å legge den til (komma-separert) til der du vanligvis spesifiserer spring-profilen (om det er på kommandolinja eller i intellij run config). 
-Alle kall uten denne headeren resulterer i en 401 Unauthorized.
-
-Eksempel med `security-off` profil
-
-```bash
-./gradlew bootRun --args='--spring.profiles.active=localhost,security-off'
-```
+Applikasjonen benytter seg av sikkerhet på plattformnivå. Dette betyr at det ikke behandles noen tokens for å autentisere eller autorisere brukere.
 
 ## Test av API utenfor klienten
 
-For å teste et endepunkt (med autentisering påskrudd) uten å kalle det via nibas-frontend trenger man å legge på en Authorization-header på kallet. 
+For å teste et endepunkt (med autentisering påskrudd) uten å kalle det via nibas-frontend trenger man å legge på en Authorization-header på kallet.
 Man henter dette enklest ved å gjøre følgende:
 
-* gå til dev: https://nibas-main.atkv3-dev.kartverket-intern.cloud/
-* logg inn med en av brukerne definert på Testbrukere-siden (https://kartverket.atlassian.net/wiki/spaces/TNIBAS/pages/534282277/Testbrukere)
-* inspiser det initielle kallet for å hente fylker (chrome dev tools eller lignende) og finn Authorization-headeren.
-* kopier med verdien av denne headeren og legg det på som en ny header med nøkkel "Authorization" i det verktøyet du bruker for å teste API-et (eksempelvis
-  postman)
-* utfør rest-kallet
+-   gå til dev: https://nibas-main.atkv3-dev.kartverket-intern.cloud/
+-   logg inn med en av brukerne definert på Testbrukere-siden (https://kartverket.atlassian.net/wiki/spaces/TNIBAS/pages/534282277/Testbrukere)
+-   inspiser det initielle kallet for å hente fylker (chrome dev tools eller lignende) og finn Authorization-headeren.
+-   kopier med verdien av denne headeren og legg det på som en ny header med nøkkel "Authorization" i det verktøyet du bruker for å teste API-et (eksempelvis
+    postman)
+-   utfør rest-kallet
 
 Voila! Du får tak i data fra API-et
 
 ## Testing av sikrede kontrollere fra kode
 
-Alle tester som arver fra [NibasMvcTest](src/test/kotlin/no/kartverket/nibas/NibasMvcTest.kt) har skrudd av sikkerhet (med profilen security-off).
+Alle tester som arver fra [NibasMvcTest](src/test/kotlin/no/kartverket/nibas/NibasMvcTest.kt) har skrudd av sikkerhet (med profilen localhost).
 Ønsker man å bruke NibasMvcTest, men allikevel skru på sikkerhet kan man override profilene som er satt opp i NibasMvcTest (se for
 eksempel [WebSecurityConfigTest](src/test/kotlin/no/kartverket/nibas/config/WebSecurityConfigTest.kt)):
 
@@ -207,5 +195,5 @@ docker run -d --name nibas-backend -p 8080:8080 \
 
 Gitt at <adresse-til-nibas> = localhost:8080
 
-* Open API Specification: [http://<adresse-til-nibas>/api-docs](http://localhost:8080/api-docs)
-* Swagger UI: [http://<adresse-til-nibas>/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+-   Open API Specification: [http://<adresse-til-nibas>/api-docs](http://localhost:8080/api-docs)
+-   Swagger UI: [http://<adresse-til-nibas>/swagger-ui.html](http://localhost:8080/swagger-ui.html)

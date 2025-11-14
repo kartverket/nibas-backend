@@ -293,12 +293,12 @@ data class ApiErrorResponse(
     val errorDescription: ErrorDescription,
 )
 
-fun Identifikator.toObjektIdentifikator(): ObjektIdentifikator = ObjektIdentifikator(this.lokalid, this.gyldighetsdato)
-
-data class AuthZStatusResponse(
-    @Schema(description = "Status for autorisering")
-    val authorized: Boolean = true
+data class User(
+    @Schema(description = "Fullt navn til innlogget bruker.")
+    val username: String?,
 )
+
+fun Identifikator.toObjektIdentifikator(): ObjektIdentifikator = ObjektIdentifikator(this.lokalid, this.gyldighetsdato)
 
 fun Gyldighet.toGyldighetResponse(): GyldighetResponse = GyldighetResponse(this.gyldigFra, this.gyldigTil)
 

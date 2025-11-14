@@ -1,37 +1,36 @@
 package no.kartverket.nibas.api.v1.klient
 
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
-import no.kartverket.nibas.api.v1.klient.response.AuthZStatusResponse
+import no.kartverket.nibas.api.v1.klient.response.User
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 
-@RequestMapping("/v1/authz")
+@RequestMapping("/v1/auth")
 @Tag(
-    name = "v1/authz",
-    description = "Endepunkter for å hente informasjon om autorisering"
+    name = "v1/auth",
+    description = "Endepunkter for å hente informasjon om autentisering og autorisering"
 )
-interface AuthZApi {
-    @Operation(description = "Henter status for autorisering")
+interface AuthApi {
+
+    @Operation(summary = "Hent innlogget bruker", description = "Henter informasjon om innlogget bruker. Dette hentes fra headere satt av ztoperator")
     @ApiResponses(
         ApiResponse(
             responseCode = "200",
-            description = "Bruker er autorisert",
+            description = "Successful operation",
             content = [Content(
                 mediaType = "application/json",
-                schema = Schema(implementation = AuthZStatusResponse::class)
+                schema = Schema(implementation = User::class)
             )]
-        ),
-        ApiResponse(
-            responseCode = "403",
-            description = "Bruker er ikke autorisert"
         )
     )
-    @GetMapping("/status", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getStatus(): AuthZStatusResponse
+    @GetMapping("/user", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getUser(): User
+
 }

@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.Month
 
-@ActiveProfiles("security-off")
+@ActiveProfiles("localhost")
 @Transactional
 class KommuneServiceIT : TestWithDbContainer() {
 

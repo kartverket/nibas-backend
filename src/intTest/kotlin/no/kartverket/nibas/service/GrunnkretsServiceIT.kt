@@ -47,7 +47,7 @@ import java.time.LocalDate
 import java.time.Month
 import kotlin.test.assertFailsWith
 
-@ActiveProfiles(profiles = ["security-off", "eventsDisabled"])
+@ActiveProfiles(profiles = ["localhost", "eventsDisabled"])
 @Transactional
 class GrunnkretsServiceIT : TestWithDbContainer() {
 

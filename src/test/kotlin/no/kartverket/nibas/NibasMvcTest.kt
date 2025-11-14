@@ -2,14 +2,11 @@ package no.kartverket.nibas
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.ninjasquad.springmockk.MockkBean
-import io.mockk.every
 import no.kartverket.nibas.config.WebSecurityConfig
 import no.kartverket.nibas.kodelister.KodelisteService
-import no.kartverket.nibas.service.JWTVerifier
 import no.kartverket.nibas.utils.IdType
 import no.kartverket.nibas.utils.sammenlignJsonFeltnavn
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.BeforeEach
 import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
@@ -27,12 +24,10 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 
-@ActiveProfiles("humanReadableLog", "security-off")
+@ActiveProfiles("humanReadableLog", "localhost")
 @ImportAutoConfiguration(WebSecurityConfig::class)
 @WebMvcTest
 open class NibasMvcTest {
-    @MockkBean
-    lateinit var jwtVerifier: JWTVerifier
 
     @Autowired
     lateinit var mvc: MockMvc
@@ -42,11 +37,6 @@ open class NibasMvcTest {
 
     @MockkBean
     lateinit var kodelisteServiceMock: KodelisteService
-
-    @BeforeEach
-    fun setupJwtSignastureVerifierMock() {
-        every { jwtVerifier.verifyJwt(any()) } returns true
-    }
 
     fun get(url: String): MvcResult {
         return perform(MockMvcRequestBuilders.get(url), emptyList())

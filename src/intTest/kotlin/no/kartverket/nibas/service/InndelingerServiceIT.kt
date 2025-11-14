@@ -10,7 +10,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 
-@ActiveProfiles(profiles = ["security-off", "eventsDisabled"])
+@ActiveProfiles(profiles = ["localhost", "eventsDisabled"])
 @Transactional
 class InndelingerServiceIT : TestWithDbContainer() {
 

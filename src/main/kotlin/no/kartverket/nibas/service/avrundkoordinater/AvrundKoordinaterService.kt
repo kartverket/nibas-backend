@@ -1,6 +1,6 @@
 package no.kartverket.nibas.service.avrundkoordinater
 
-import no.kartverket.nibas.config.SimpleAuthenticationToken
+import no.kartverket.nibas.config.DummyAuthenticationToken
 import no.kartverket.nibas.events.EventRad
 import no.kartverket.nibas.events.NibasEventPublisher
 import no.kartverket.nibas.repository.FylkeRepository
@@ -55,7 +55,7 @@ class AvrundKoordinaterService(
 ) {
 
     fun avrundKoordinaterForAlleGrenser() {
-        SecurityContextHolder.getContext().authentication = SimpleAuthenticationToken(
+        SecurityContextHolder.getContext().authentication = DummyAuthenticationToken(
             user = "avrundKoordinater",
             credentials = "DUMMY",
             authorities = listOf(SimpleGrantedAuthority("NIBAS"))

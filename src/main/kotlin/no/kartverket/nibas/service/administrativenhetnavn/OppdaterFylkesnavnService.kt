@@ -1,6 +1,6 @@
 package no.kartverket.nibas.service.administrativenhetnavn
 
-import no.kartverket.nibas.config.SimpleAuthenticationToken
+import no.kartverket.nibas.config.DummyAuthenticationToken
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
 import no.kartverket.nibas.repository.FylkeRepository
@@ -23,7 +23,7 @@ class OppdaterFylkesnavnService(
 
     @Transactional
     fun samiskeNavnForInnlandetOgNordland() {
-        SecurityContextHolder.getContext().authentication = SimpleAuthenticationToken(
+        SecurityContextHolder.getContext().authentication = DummyAuthenticationToken(
             user = "oppdaterFylkesnavn",
             credentials = "DUMMY",
             authorities = listOf(SimpleGrantedAuthority("NIBAS"))

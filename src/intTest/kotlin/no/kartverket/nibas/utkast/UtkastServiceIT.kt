@@ -36,7 +36,7 @@ import java.time.LocalDate
 import java.time.ZonedDateTime
 import kotlin.test.assertFailsWith
 
-@ActiveProfiles(profiles = ["security-off", "eventsDisabled"])
+@ActiveProfiles(profiles = ["localhost", "eventsDisabled"])
 @Transactional
 class UtkastServiceIT : TestWithDbContainer() {
 

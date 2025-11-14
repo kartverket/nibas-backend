@@ -1,7 +1,6 @@
 package no.kartverket.nibas.sporing
 
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Sporingsinformasjon
-import no.kartverket.nibas.auth.PidMaskerer
 import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.domain.Endringstype
 import org.hibernate.event.service.spi.EventListenerRegistry
@@ -27,17 +26,20 @@ interface UserFacade {
 }
 
 @Component
-class DefaultUserFacade : UserFacade {
+class DefaultUserFacade(
+) : UserFacade {
 
     override fun getAuthenticatedUser(): String {
         val authentication = SecurityContextHolder.getContext().authentication
         if (authentication == null || !authentication.isAuthenticated) {
-            throw RuntimeException("Ugyldig tilstand. Har ingen innlogget bruker.")
+            throw IllegalStateException("No authenticated user found")
         }
-        // Vi burde nok hente navn fra altinn, men enn så lenge bruker vi maskert fødselsnummer
-        return PidMaskerer.getMaskedName(authentication.name)
+
+        return authentication.principal as? String
+            ?: throw IllegalStateException("Authenticated principal is not a String")
     }
 }
+
 
 @Component
 class AuditComponent(private val jpaEntityManagerFactory: EntityManagerFactory,

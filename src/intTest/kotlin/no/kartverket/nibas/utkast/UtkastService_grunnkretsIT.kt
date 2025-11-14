@@ -42,7 +42,7 @@ import kotlin.test.assertFailsWith
  *
  * OBS: Hvis fila slutter på IntegrationTest blir den ignorert.
  */
-@ActiveProfiles(profiles = ["security-off", "eventsDisabled"])
+@ActiveProfiles(profiles = ["localhost", "eventsDisabled"])
 @Transactional
 class UtkastService_grunnkretsIT : TestWithDbContainer() {
 

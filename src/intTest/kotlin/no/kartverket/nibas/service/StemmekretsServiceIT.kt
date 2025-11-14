@@ -45,7 +45,7 @@ import java.time.LocalDate
 import java.time.Month
 import kotlin.test.assertFailsWith
 
-@ActiveProfiles("security-off")
+@ActiveProfiles("localhost")
 @Transactional
 class StemmekretsServiceIT : TestWithDbContainer() {
 

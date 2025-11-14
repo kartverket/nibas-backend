@@ -1,7 +1,7 @@
 package no.kartverket.nibas.service.deltgeometri
 
 import no.kartverket.nibas.api.v1.common.Flatetype
-import no.kartverket.nibas.config.SimpleAuthenticationToken
+import no.kartverket.nibas.config.DummyAuthenticationToken
 import no.kartverket.nibas.events.EventRad
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.service.KommuneService
@@ -63,7 +63,7 @@ class DeltGeometriService(
     private val logger = LoggerFactory.getLogger(this.javaClass)
 
     fun dannDeltGeometriForAdministrativeGrenser() {
-        SecurityContextHolder.getContext().authentication = SimpleAuthenticationToken(
+        SecurityContextHolder.getContext().authentication = DummyAuthenticationToken(
             user = "deltgeometri",
             credentials = "DUMMY",
             authorities = listOf(SimpleGrantedAuthority("NIBAS"))
