@@ -59,7 +59,7 @@ jobs:
         run: ./gradlew build --info
         env:
           JAVA_TOOL_OPTIONS: "-Duser.timezone=Europe/Oslo"
-          GH_PACKAGES_PAT: ${{ secrets.GH_PACKAGES_PAT }}
+          GH_PACKAGES_PAT: ${{ secrets.SHARED_PACKAGES_READ_TOKEN }}
 
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2
