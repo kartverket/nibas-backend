@@ -11,7 +11,8 @@ class AuthController(
 ) : AuthApi {
 
     override fun getUser(): User {
-        val username = request.getHeader("X-Auth-Name")
+        val rawUsername = request.getHeader("X-Auth-Name")
+        val username = String(rawUsername.toByteArray(Charsets.ISO_8859_1), Charsets.UTF_8)
         return User(username = username)
     }
 }
