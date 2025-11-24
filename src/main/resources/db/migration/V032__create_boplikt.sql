@@ -1,0 +1,21 @@
+CREATE TABLE bopliktomraade (
+     objid                         text PRIMARY KEY,
+     lokalid                       text NOT NULL,
+     gyldigfra                     timestamptz NOT NULL,
+     gyldigtil                     timestamptz NULL,
+     datafangstdato                timestamptz NULL,
+     foerstedigitaliseringsdato    timestamptz NOT NULL,
+     opphav                        text NULL,
+     endretdato                    timestamptz NOT NULL,
+     endretav                      text NOT NULL,
+     typeendring                   text NOT NULL,
+     omraade                       geometry(multipolygon, 25833) NOT NULL,
+     posisjon                      geometry(point, 25833) NOT NULL,
+     kommunelokalid                text NULL,
+     delvis_boplikt                bool DEFAULT false NOT NULL,
+     version                       int2 NOT NULL,
+     slettet                       bool DEFAULT false NOT NULL,
+     forskriftsreferanse           text NULL,
+     informasjon                   text NULL,
+     url                           text NULL
+)
