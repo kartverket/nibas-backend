@@ -30,7 +30,7 @@ jobs:
           GH_PACKAGES_PAT: ${{ secrets.GH_PACKAGES_PAT }}
 
       - name: 'Dependency Review'
-        uses: actions/dependency-review-action@v4.8.1
+        uses: actions/dependency-review-action@v4.8.2
         env:
           GH_PACKAGES_PAT: ${{ secrets.GH_PACKAGES_PAT }}
         continue-on-error: true
