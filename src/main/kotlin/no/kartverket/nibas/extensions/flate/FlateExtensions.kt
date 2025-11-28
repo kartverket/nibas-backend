@@ -3,6 +3,8 @@ package no.kartverket.nibas.extensions.flate
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.common.Kommunenummer
 import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
+import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
+import no.kartverket.nibas.api.v1.klient.response.BopliktomraadeResponse
 import no.kartverket.nibas.api.v1.klient.response.FylkeResponse
 import no.kartverket.nibas.api.v1.klient.response.GrunnkretsResponse
 import no.kartverket.nibas.api.v1.klient.response.KommuneResponse
@@ -12,11 +14,13 @@ import no.kartverket.nibas.api.v1.klient.response.toGyldighetResponse
 import no.kartverket.nibas.api.v1.klient.response.toObjektIdentifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.createIdentifikator
+import no.kartverket.nibas.domain.Bopliktomraade
 import no.kartverket.nibas.domain.Fylke
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.domain.Stemmekrets
+import no.kartverket.nibas.extensions.geometry.flateToFeature
 import no.kartverket.nibas.extensions.geometry.multiPolygonToDto
 import no.kartverket.nibas.extensions.geometry.posisjonToFeature
 import java.time.LocalDate
@@ -104,3 +108,29 @@ fun Nasjon.toNasjonResponse(): NasjonResponse {
         gyldighet = gyldighet.toGyldighetResponse()
     )
 }
+
+fun Bopliktomraade.toBopliktomraadeResponse(gyldighetsdato: LocalDate): BopliktomraadeResponse {
+    val kommune = this.getKommune(gyldighetsdato) ?: throw RuntimeException("Fant ikke kommune for bopliktområde")
+
+    return BopliktomraadeResponse(
+        id = ObjektIdentifikator(Lokalid(lokalid), gyldighet.gyldigFra),
+        gyldighet = gyldighet.toGyldighetResponse(),
+        datafangstdato = datafangstdato,
+        kommunenummer = Kommunenummer(kommune.kommunenummerUuid, kommune.kommunenummer),
+        kommuneIdentifikator = ObjektIdentifikator(Lokalid(kommune.lokalid), kommune.gyldighet.gyldigFra),
+        endringstype = auditInfo.typeEndring.value,
+        oppdateringsdato = auditInfo.endretdato,
+        representasjonspunkt = posisjon.posisjonToFeature(version),
+        version = version,
+        informasjon = informasjon,
+        delvisBoplikt = delvisBoplikt,
+        forskriftsreferanse = forskriftsreferanse,
+        url = url,
+        features = FeatureCollection(features = listOf(
+            posisjon.posisjonToFeature(version),
+            flateToFeature(version)
+        )),
+
+    )
+}
+

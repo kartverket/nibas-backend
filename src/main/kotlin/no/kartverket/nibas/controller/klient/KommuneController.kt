@@ -2,6 +2,7 @@ package no.kartverket.nibas.controller.klient
 
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.klient.KommuneApi
+import no.kartverket.nibas.api.v1.klient.response.BopliktomraadeResponse
 import no.kartverket.nibas.api.v1.klient.response.GrunnkretsResponse
 import no.kartverket.nibas.api.v1.klient.response.InndelingResponse
 import no.kartverket.nibas.api.v1.klient.response.KommuneResponse
@@ -11,6 +12,7 @@ import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.common.createIdentifikator
+import no.kartverket.nibas.extensions.flate.toBopliktomraadeResponse
 import no.kartverket.nibas.extensions.flate.toGrunnkretsResponse
 import no.kartverket.nibas.extensions.flate.toKommuneResponse
 import no.kartverket.nibas.extensions.flate.toStemmekretsResponse
@@ -155,5 +157,15 @@ class KommuneController(
             features = grensekoblinger
                 .map { it.grenseKoblingToFeature(gyldigTilDate) }
         )
+    }
+
+    override fun hentKommunesBopliktomraade(
+        lokalid: String,
+        gyldighetsdato: LocalDate?
+    ): List<BopliktomraadeResponse> {
+        val identifikator = createIdentifikator(lokalid, gyldighetsdato)
+        val bopliktomraade = kommuneService.hentKommunesBopliktomraade(identifikator)
+
+        return bopliktomraade.map { it.toBopliktomraadeResponse(identifikator.gyldighetsdato) }
     }
 }

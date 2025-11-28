@@ -8,6 +8,7 @@ import no.kartverket.nibas.api.v1.common.Kommunenummer
 import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.Feature
+import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.MultiPolygon
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.domain.utkast.EndredeInndelinger
@@ -183,6 +184,51 @@ data class StemmekretsResponse(
 
     @Schema(description = "Informasjon om stemmekretsen")
     val informasjon: String? = null,
+)
+@Schema(description = "Representasjon av et bopliktområde")
+data class BopliktomraadeResponse(
+
+    @Schema(description = "ID-en til bopliktområdet")
+    val id: ObjektIdentifikator,
+
+    @Schema(description = "Gyldighetsintervall for objektet")
+    val gyldighet: GyldighetResponse,
+
+    @Schema(description = "Siste oppdateringstidspunkt for objektet")
+    val oppdateringsdato: ZonedDateTime,
+
+    @Schema(description = "Datafangstdato for objektet")
+    val datafangstdato: ZonedDateTime?,
+
+    @Schema(description = "Kommunenummeret til bopliktområdet")
+    val kommunenummer: Kommunenummer,
+
+    @Schema(description = "ID-en til kommunen bopliktområdet tilhører")
+    val kommuneIdentifikator: ObjektIdentifikator,
+
+    @Schema(description = "Typen endring som ble gjort på objektet")
+    val endringstype: String?,
+
+    @Schema(description = "Representasjonspunktet for bopliktområdet")
+    val representasjonspunkt: Feature,
+
+    @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
+    val version: Int,
+
+    @Schema(description = "Tilleggsinformasjon om bopliktområdet")
+    val informasjon: String? = null,
+
+    @Schema(description = "Om boplikten gjelder delvis innenfor området")
+    val delvisBoplikt: Boolean,
+
+    @Schema(description = "Forskriftsreferansen for bopliktområdet")
+    val forskriftsreferanse: String?,
+
+    @Schema(description = "Lenke til mer informasjon")
+    val url: String?,
+
+    @Schema(description = "Geometrien til bopliktområdet, dvs representasjonspunkt og flaten")
+    val features: FeatureCollection
 )
 
 @Schema(description = "Returtype for opprettelse av utkast")

@@ -97,6 +97,10 @@ class Kommune(
         return kommuneLokalid.stemmekretser.filter { it.gyldigPaaDato(gyldighetsdato) }
     }
 
+    fun getBopliktomraade(gyldighetsdato: LocalDate = LocalDate.now()): List<Bopliktomraade> {
+        return kommuneLokalid.bopliktomraade.filter { it.gyldigPaaDato(gyldighetsdato) }
+    }
+
     /**
      * Henter kommunen sitt fylke på en gitt dato. Hvis man gir en dato hvor fylket med gitt lokalid ikke er gyldig, returneres null
      */

@@ -3,7 +3,9 @@ package no.kartverket.nibas.api.v1.ekstern.extensions.flate
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.common.Fylkesnummer
 import no.kartverket.nibas.api.v1.common.Kommunenummer
+import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
+import no.kartverket.nibas.api.v1.ekstern.response.EksternBopliktomraadeRespons
 import no.kartverket.nibas.api.v1.ekstern.response.EksternFylkeRef
 import no.kartverket.nibas.api.v1.ekstern.response.EksternFylkeResponse
 import no.kartverket.nibas.api.v1.ekstern.response.EksternGrunnkretsResponse
@@ -16,6 +18,7 @@ import no.kartverket.nibas.api.v1.klient.response.toObjektIdentifikator
 import no.kartverket.nibas.common.HrefProvider
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.domain.Bopliktomraade
 import no.kartverket.nibas.domain.Fylke
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
@@ -150,3 +153,24 @@ fun Stemmekrets.toEksternStemmekretsResponse(identifikator: Identifikator): Ekst
     version = version
 )
 
+fun Bopliktomraade.toEksternBopliktomraadeResponse(gyldighetsdato: LocalDate): EksternBopliktomraadeRespons {
+    val kommune = this.getKommune(gyldighetsdato) ?: throw RuntimeException("Fant ikke kommune for bopliktområde")
+
+    return EksternBopliktomraadeRespons(
+        id = ObjektIdentifikator(Lokalid(lokalid), gyldighet.gyldigFra),
+        gyldighet = gyldighet.toGyldighetResponse(),
+        endringstype = auditInfo.typeEndring.value,
+        oppdateringsdato = auditInfo.endretdato,
+        datafangstdato = datafangstdato,
+        kommunenummer = Kommunenummer(kommune.kommunenummerUuid, kommune.kommunenummer),
+        delvisBoplikt = delvisBoplikt,
+        informasjon = informasjon,
+        forskriftsreferanse = forskriftsreferanse,
+        url = url,
+        features = FeatureCollection(features = listOf(
+            posisjon.posisjonToFeature(version),
+            flateToFeature(version)
+        )),
+        version = version
+    )
+}

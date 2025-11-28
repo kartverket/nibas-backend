@@ -50,4 +50,8 @@ class UnikLokalid(
     @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     @JoinColumn(name = "kommunelokalid", referencedColumnName = "lokalid")
     var grunnkretser: MutableSet<Grunnkrets> = mutableSetOf()
+
+    @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    @JoinColumn(name = "kommunelokalid", referencedColumnName = "lokalid")
+    var bopliktomraade: MutableSet<Bopliktomraade> = mutableSetOf()
 }

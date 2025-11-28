@@ -20,7 +20,7 @@ import jakarta.validation.constraints.NotNull
  * Definerer flatene/enhetene i domenet.
  */
 enum class Flatetype {
-    FYLKE, KOMMUNE, NASJON, GRUNNKRETS, STEMMEKRETS, SKOLEKRETS
+    FYLKE, KOMMUNE, NASJON, GRUNNKRETS, STEMMEKRETS, SKOLEKRETS, BOPLIKTOMRAADE
 }
 
 /**

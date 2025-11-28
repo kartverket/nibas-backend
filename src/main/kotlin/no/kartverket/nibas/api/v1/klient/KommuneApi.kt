@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import no.kartverket.nibas.api.v1.DefaultFeatureCollectionApiResponses
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
+import no.kartverket.nibas.api.v1.klient.response.BopliktomraadeResponse
 import no.kartverket.nibas.api.v1.klient.response.GrunnkretsResponse
 import no.kartverket.nibas.api.v1.klient.response.InndelingResponse
 import no.kartverket.nibas.api.v1.klient.response.KommuneResponse
@@ -186,4 +187,23 @@ interface KommuneApi {
         @Parameter(description = "Eventuell gyldighetsdato for kommune (default = dagens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
         @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?
     ): List<InndelingResponse>
+
+    @Operation(summary = "Hent kommunes bopliktområde", description = "Henter bopliktområdet som tilhører en kommune.")
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            description = "Successful operation",
+            content = [Content(
+                mediaType = "application/json",
+                array = ArraySchema(schema = Schema(implementation = BopliktomraadeResponse::class))
+            )]
+        )
+    )
+    @GetMapping("/{id}/bopliktomraader", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun hentKommunesBopliktomraade(
+        @Parameter(description = "ID til kommunen man vil hente bopliktområdet til") @PathVariable(name = "id") lokalid: String,
+        @Parameter(description = "Eventuell gyldighetsdato for kommune (default = dagens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?
+    ): List<BopliktomraadeResponse>
+
 }

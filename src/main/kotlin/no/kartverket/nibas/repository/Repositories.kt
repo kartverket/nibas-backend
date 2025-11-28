@@ -1,6 +1,7 @@
 package no.kartverket.nibas.repository
 
 import no.kartverket.nibas.domain.Administrativenhetnavn
+import no.kartverket.nibas.domain.Bopliktomraade
 import no.kartverket.nibas.domain.DokrefGrenseKobling
 import no.kartverket.nibas.domain.Dokumentasjonsreferanse
 import no.kartverket.nibas.domain.Flate
@@ -74,6 +75,7 @@ interface StemmekretsRepository : CrudRepositoryWithLokalIdFinder<Stemmekrets, S
 
     fun findAllByStemmekretsnummerAndKommuneLokalid(stemmekretsnummer: String, kommuneLokalid: UnikLokalid): List<Stemmekrets>
 }
+interface BopliktomraadeRepository : CrudRepositoryWithLokalIdFinder<Bopliktomraade, String>
 
 interface GrenseRepository : JpaRepositoryWithLokalIdFinder<Grense, String> {
 

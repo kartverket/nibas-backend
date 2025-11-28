@@ -171,6 +171,47 @@ data class EksternStemmekretsResponse(
     val version: Int
 )
 
+@Schema(description = "Representasjon av et bopliktområde")
+data class EksternBopliktomraadeRespons(
+
+    @Schema(description = "ID-en til bopliktområdet")
+    val id: ObjektIdentifikator,
+
+    @Schema(description = "Gyldighetsintervall for objektet")
+    val gyldighet: GyldighetResponse,
+
+    @Schema(description = "Typen endring som ble gjort på objektet")
+    val endringstype: String?,
+
+    @Schema(description = "Siste oppdateringstidspunkt for objektet")
+    val oppdateringsdato: ZonedDateTime,
+
+    @Schema(description = "Datafangstdato for objektet")
+    val datafangstdato: ZonedDateTime?,
+
+    @Schema(description = "Kommunenummeret til bopliktområdet")
+    val kommunenummer: Kommunenummer,
+
+    @Schema(description = "Om boplikten gjelder delvis for området")
+    val delvisBoplikt: Boolean,
+
+    @Schema(description = "Tilleggsinformasjon om bopliktområdet")
+    val informasjon: String?,
+
+    @Schema(description = "Forskriftsreferanse til boplikten")
+    val forskriftsreferanse: String?,
+
+    @Schema(description = "URL til informasjon om boplikten")
+    val url: String?,
+
+    @Schema(description = "Geometrien til bopliktområdet, dvs representasjonspunkt og flaten")
+    val features: FeatureCollection,
+
+    @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
+    val version: Int
+)
+
+
 @Schema(description = "Representasjon av en krets. Response-type kun for Matrikkelen. Kan være grunnkrets, stemmekrets etc.")
 data class EksternKretsResponse(
     @Schema(description = "Lokalid-en til kretsen.")
