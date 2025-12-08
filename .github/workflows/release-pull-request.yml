@@ -24,7 +24,7 @@ jobs:
     if: ${{ github.event_name == 'pull_request' }}
     uses: kartverket/nibas-backend/.github/workflows/check-changes.yml@main
     with:
-      ignore-paths: "README.md,.github/,.vscode/,.security/"
+      ignore-paths: "README.md,.github/,.vscode/,.security/,docs/"
 
   determine-branch-name-pr:
     if: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft == false && needs.should-create-feature-env.outputs.has-relevant-changes == 'true' }}
