@@ -29,23 +29,23 @@ class BopliktImportService(
 
     @EventListener(ApplicationReadyEvent::class)
     fun runImportOnStartup() {
-        logger.info("Starting boplikt import job from resource '{}'", resourcePath)
-
-        if (!repository.isEmpty()) {
-            logger.info("Table 'bopliktomraade' not empty, skipping import")
-            return
-        }
-
         val imported = importFromLocalResource()
         logger.info("Completed boplikt import job — {} rows imported", imported)
     }
 
     fun importFromLocalResource(): Int {
         val featureCollection = geoJsonReader.readFeatureCollectionFromClasspath(resourcePath)
-
+        repository.truncate()
         var count = 0
+        val nextNrPerKommune = mutableMapOf<String, Int>()
         featureCollection.features.forEach { feature ->
-            val row = mapFeatureToRow(feature)
+            val kommunenummer = feature.properties["kommunenummer"]?.toString()?.trim()
+                ?: error("Manglende 'kommunenummer' i : $feature")
+            val next = (nextNrPerKommune[kommunenummer] ?: 0) + 1
+            nextNrPerKommune[kommunenummer] = next
+            val nummerStr = String.format("%02d", next)
+            val navnStr = "Bopliktområde $nummerStr"
+            val row = mapFeatureToRow(feature, nummerStr, navnStr)
             repository.insert(row)
             count++
         }
@@ -53,7 +53,7 @@ class BopliktImportService(
         return count
     }
 
-    private fun mapFeatureToRow(feature: GeoJsonFeature): BopliktOmraadeRow {
+    private fun mapFeatureToRow(feature: GeoJsonFeature, nummer: String, navn: String): BopliktOmraadeRow {
         val p = feature.properties
 
         fun prop(name: String): Any? = p[name]
@@ -112,7 +112,9 @@ class BopliktImportService(
             slettet = false,
             forskriftsreferanse = forskriftsreferanse,
             informasjon = informasjon,
-            url = url
+            url = url,
+            nummer = nummer,
+            navn = navn
         )
     }
 

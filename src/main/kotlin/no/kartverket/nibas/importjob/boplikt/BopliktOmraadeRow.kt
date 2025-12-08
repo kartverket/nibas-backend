@@ -19,5 +19,7 @@ data class BopliktOmraadeRow(
     val slettet: Boolean = false,
     val forskriftsreferanse: String?,
     val informasjon: String?,
-    val url: String?
+    val url: String?,
+    val nummer: String,
+    val navn: String,
 )

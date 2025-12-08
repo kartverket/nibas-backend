@@ -8,9 +8,8 @@ class BopliktRepository(
     private val jdbc: NamedParameterJdbcTemplate
 ) {
 
-    fun isEmpty(): Boolean {
-        val sql = "SELECT COUNT(*) = 0 FROM bopliktomraade"
-        return jdbc.queryForObject(sql, emptyMap<String, Any>(), Boolean::class.java)!!
+    fun truncate() {
+        jdbc.jdbcTemplate.execute("TRUNCATE TABLE bopliktomraade")
     }
 
     fun insert(row: BopliktOmraadeRow) {
@@ -21,9 +20,11 @@ class BopliktRepository(
             opphav, endretdato, endretav, typeendring,
             omraade, posisjon,
             kommunelokalid, delvis_boplikt, version, slettet,
-            forskriftsreferanse, informasjon, url
+            forskriftsreferanse, informasjon, url,
+            nummer, navn,
         ) VALUES (
-            :objid, :lokalid, :gyldigfra, :gyldigtil,
+            :objid, :lokalid, :nummer, :navn, 
+            :gyldigfra, :gyldigtil,
             :datafangstdato, :foerstedigitaliseringsdato,
             :opphav, :endretdato, :endretav, :typeendring,
             ST_SetSRID(ST_GeomFromGeoJSON(:omraade_geojson), 25833),
@@ -33,6 +34,7 @@ class BopliktRepository(
             ),
             :kommunelokalid, :delvisBoplikt, :version, :slettet,
             :forskriftsreferanse, :informasjon, :url
+            :nummer, :navn
         )
     """.trimIndent()
 
@@ -54,7 +56,9 @@ class BopliktRepository(
             "slettet" to row.slettet,
             "forskriftsreferanse" to row.forskriftsreferanse,
             "informasjon" to row.informasjon,
-            "url" to row.url
+            "url" to row.url,
+            "nummer" to row.nummer,
+            "navn" to row.navn,
         )
 
         jdbc.update(sql, params)
