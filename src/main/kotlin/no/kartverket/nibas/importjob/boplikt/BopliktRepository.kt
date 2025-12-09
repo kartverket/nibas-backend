@@ -21,10 +21,9 @@ class BopliktRepository(
             omraade, posisjon,
             kommunelokalid, delvis_boplikt, version, slettet,
             forskriftsreferanse, informasjon, url,
-            nummer, navn,
+            nummer, navn
         ) VALUES (
-            :objid, :lokalid, :nummer, :navn, 
-            :gyldigfra, :gyldigtil,
+            :objid, :lokalid, :gyldigfra, :gyldigtil,
             :datafangstdato, :foerstedigitaliseringsdato,
             :opphav, :endretdato, :endretav, :typeendring,
             ST_SetSRID(ST_GeomFromGeoJSON(:omraade_geojson), 25833),
@@ -33,7 +32,7 @@ class BopliktRepository(
                 25833
             ),
             :kommunelokalid, :delvisBoplikt, :version, :slettet,
-            :forskriftsreferanse, :informasjon, :url
+            :forskriftsreferanse, :informasjon, :url,
             :nummer, :navn
         )
     """.trimIndent()
@@ -58,7 +57,7 @@ class BopliktRepository(
             "informasjon" to row.informasjon,
             "url" to row.url,
             "nummer" to row.nummer,
-            "navn" to row.navn,
+            "navn" to row.navn
         )
 
         jdbc.update(sql, params)

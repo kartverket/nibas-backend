@@ -21,5 +21,5 @@ data class BopliktOmraadeRow(
     val informasjon: String?,
     val url: String?,
     val nummer: String,
-    val navn: String,
+    val navn: String
 )
