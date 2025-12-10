@@ -44,8 +44,7 @@ class BopliktImportService(
             val next = (nextNrPerKommune[kommunenummer] ?: 0) + 1
             nextNrPerKommune[kommunenummer] = next
             val nummerStr = String.format("%02d", next)
-            val navnStr = "Bopliktområde $nummerStr"
-            val row = mapFeatureToRow(feature, nummerStr, navnStr)
+            val row = mapFeatureToRow(feature, nummerStr)
             repository.insert(row)
             count++
         }
@@ -53,7 +52,7 @@ class BopliktImportService(
         return count
     }
 
-    private fun mapFeatureToRow(feature: GeoJsonFeature, nummer: String, navn: String): BopliktOmraadeRow {
+    private fun mapFeatureToRow(feature: GeoJsonFeature, nummer: String): BopliktOmraadeRow {
         val p = feature.properties
 
         fun prop(name: String): Any? = p[name]
@@ -93,7 +92,7 @@ class BopliktImportService(
                 "coordinates" to feature.geometry.coordinates
             )
         )
-
+        val navn = "Bopliktområde"
         return BopliktOmraadeRow(
             objid = objid,
             lokalid = lokalid,
