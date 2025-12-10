@@ -4,13 +4,16 @@ import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.info.Info
 import no.kartverket.nibas.config.NibasBackendConfigProps
 import org.slf4j.LoggerFactory
+import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
 import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Profile
 import org.springframework.scheduling.annotation.EnableScheduling
 import java.util.*
+
 
 @EnableScheduling
 @EnableConfigurationProperties(NibasBackendConfigProps::class)
@@ -26,6 +29,18 @@ class NibasBackendApplication {
                 version = "1.0.0"
             }
         )
+
+    @Bean
+    @Profile("bopliktimport")
+    fun runBopliktApps(
+        bopliktImportApplication: NibasBopliktImportApplication,
+        bopliktGrenserTransformasjonApplication: NibasBopliktgrenserTransformasjonApplication
+    ): CommandLineRunner {
+        return CommandLineRunner {
+            bopliktImportApplication.run()
+            bopliktGrenserTransformasjonApplication.run()
+        }
+    }
 
     companion object {
         @JvmStatic

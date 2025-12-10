@@ -15,7 +15,6 @@ import org.locationtech.jts.geom.MultiPolygon
 import org.locationtech.jts.geom.Polygon
 import org.springframework.stereotype.Service
 import java.time.LocalDate
-import java.util.*
 import jakarta.transaction.Transactional
 
 @Service
@@ -31,6 +30,7 @@ class BopliktgrenserTransformasjonService(
     //TODO: Legg til håndtering av hull i bopliktområdet sine polygoner.
     @Transactional
     fun transform() {
+        resetTables()
         val gf = createGeometryFactory()
         val allBopliktomraader = bopliktomraadeService.hentAlleBopliktomraader(LocalDate.now())
         val allGrensekoblinger = mutableListOf<BopliktomraadeGrenseKobling>()
@@ -68,6 +68,11 @@ class BopliktgrenserTransformasjonService(
         }
 
         flateService.oppdaterFlaterFor(allBopliktomraader.toSet())
+    }
+
+    private fun resetTables(){
+        grenseRepository.deleteAllByGrensetype(Grensetype.Bopliktgrense)
+        bopliktomraadeGrenseKoblingRepository.deleteAll()
     }
 
     private fun shellsOf(multiPolygon: MultiPolygon): List<LineString> {

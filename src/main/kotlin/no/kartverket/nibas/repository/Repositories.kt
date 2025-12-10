@@ -1,5 +1,6 @@
 package no.kartverket.nibas.repository
 
+import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.domain.Administrativenhetnavn
 import no.kartverket.nibas.domain.Bopliktomraade
 import no.kartverket.nibas.domain.BopliktomraadeGrenseKobling
@@ -98,6 +99,8 @@ interface GrenseRepository : JpaRepositoryWithLokalIdFinder<Grense, String> {
         gyldighetsdato: LocalDate,
         pageable: Pageable
     ): Page<Grense>
+
+    fun deleteAllByGrensetype(grensetype: Grensetype)
 }
 
 interface GrunnkretsGrenseKoblingRepository : JpaRepository<GrunnkretsGrenseKobling, Long> {

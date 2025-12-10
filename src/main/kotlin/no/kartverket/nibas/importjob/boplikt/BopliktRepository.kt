@@ -8,6 +8,10 @@ class BopliktRepository(
     private val jdbc: NamedParameterJdbcTemplate
 ) {
 
+    fun truncateCascade() {
+        jdbc.jdbcTemplate.execute("TRUNCATE TABLE bopliktomraade CASCADE")
+    }
+
     fun isEmpty(): Boolean {
         val sql = "SELECT COUNT(*) = 0 FROM bopliktomraade"
         return jdbc.queryForObject(sql, emptyMap<String, Any>(), Boolean::class.java)!!
