@@ -18,6 +18,7 @@ import no.kartverket.nibas.common.toNorskFormat
 import no.kartverket.nibas.domain.utkast.Utkast
 import no.kartverket.nibas.extensions.geometry.toLineString
 import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.service.BopliktomraadeService
 import no.kartverket.nibas.service.GrenseService
 import no.kartverket.nibas.service.GrunnkretsService
 import no.kartverket.nibas.service.StemmekretsService
@@ -30,10 +31,10 @@ class UtkastValidatorService(
     val grunnkretsService: GrunnkretsService,
     val grenseService: GrenseService,
     val stemmekretsService: StemmekretsService,
+    val bopliktomraadeService: BopliktomraadeService,
     val kodelisteService: KodelisteService,
     val currentTime: CurrentTime
 ) {
-
     fun validateGyldigeOperasjoner(operasjoner: Operasjoner): List<String> {
         val errorMessages = mutableListOf<String>()
         val endredeFeatures: List<Feature> = operasjoner.grenseendringer.endredeFeatures
@@ -414,6 +415,7 @@ class UtkastValidatorService(
             when (it.type) {
                 KontekstEnhetType.STEMMEKRETS -> finnEventueltSenerePubliserteStemmekretserOgLagOppdateringException(it.id.lokalid.value, gyldighetDato)
                 KontekstEnhetType.GRUNNKRETS -> finnEventueltSenerePubliserteGrunnkretserOgLagOppdateringException(it.id.lokalid.value, gyldighetDato)
+                KontekstEnhetType.BOPLIKTOMRAADE -> finnEventueltSenerePubliserteBopliktomraaderOgLagOppdateringException(it.id.lokalid.value, gyldighetDato)
             }
         }
     }
@@ -472,6 +474,16 @@ class UtkastValidatorService(
         return lagEventueltOppdateringException(senerePubliserteEndringer, gyldighetDato, FeilVedOppdatering.Type.GRUNNKRETS)
     }
 
+    private fun finnEventueltSenerePubliserteBopliktomraaderOgLagOppdateringException(bopliktomraadeLokalid: String, gyldighetDato: LocalDate)
+        : FeilVedOppdatering.OppdateringException? {
+        val senerePubliserteEndringer =
+            bopliktomraadeService.hentAlleVersjonerMedGyldigFraEtterGittDato(lokalId = Lokalid(bopliktomraadeLokalid), dato = gyldighetDato)
+                .map { Identifikator(Lokalid(it.lokalid), it.gyldighet.gyldigFra) }
+
+        return lagEventueltOppdateringException(senerePubliserteEndringer, gyldighetDato, FeilVedOppdatering.Type.BOPLIKTOMRAADE)
+    }
+
+
     private fun lagEventueltOppdateringException(senerePubliserteEndringer: List<Identifikator>, gyldighetDato: LocalDate,
                                                  feilVedOppdateringType: FeilVedOppdatering.Type) =
         if (senerePubliserteEndringer.isNotEmpty()) {
@@ -509,6 +521,10 @@ class UtkastValidatorService(
                         it.kretsNummer == kretsDelingEndringRequest.kretsNummer
 
                     KontekstEnhetType.STEMMEKRETS ->
+                        it.kretsNummer == kretsDelingEndringRequest.kretsNummer
+                            && it.kommuneId?.lokalid?.value == kretsDelingEndringRequest.kommuneId.lokalid.value
+
+                    KontekstEnhetType.BOPLIKTOMRAADE ->
                         it.kretsNummer == kretsDelingEndringRequest.kretsNummer
                             && it.kommuneId?.lokalid?.value == kretsDelingEndringRequest.kommuneId.lokalid.value
                 }

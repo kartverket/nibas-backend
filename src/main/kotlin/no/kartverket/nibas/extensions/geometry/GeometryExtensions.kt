@@ -120,6 +120,10 @@ fun Grense.grenseToFeature(gyldighetsdato: LocalDate = LocalDate.now(), shouldAr
             metadata = metadataMapper.toMetadataForKommunalKretsgrense(this),
             kontekstEgenskaper = featureMapper.toKontekstEgenskaperForStemmekretsGrense(grense = this, gyldighetsdato = gyldighetsdato))
 
+        Grensetype.Bopliktgrense -> featureProperties.copy(
+            metadata = metadataMapper.toMetadataForBopliktGrense(this),
+            kontekstEgenskaper = featureMapper.toKontekstEgenskaperForBopliktGrense(grense = this, gyldighetsdato = gyldighetsdato))
+
         else -> throw RuntimeException("Ikke støttet å mappe til metadata for grensetype: " + grensetype.name)
     }
     return Feature(

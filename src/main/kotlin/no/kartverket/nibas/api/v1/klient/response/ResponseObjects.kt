@@ -191,6 +191,12 @@ data class BopliktomraadeResponse(
     @Schema(description = "ID-en til bopliktområdet")
     val id: ObjektIdentifikator,
 
+    @Schema(description = "Navnet til bopliktområdet")
+    val navn: String,
+
+    @Schema(description = "Nummeret til bopliktområdet")
+    val nummer: String,
+
     @Schema(description = "Gyldighetsintervall for objektet")
     val gyldighet: GyldighetResponse,
 

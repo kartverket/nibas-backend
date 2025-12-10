@@ -4,7 +4,7 @@ sealed class FeilVedOppdatering {
 
     class OppdateringException(val oppdateringInfo: OppdateringInfo) : RuntimeException("Det er ikke mulig å oppdatere objekt.")
 
-    enum class Type { FYLKE, KOMMUNE, NASJON, GRUNNKRETS, STEMMEKRETS, GRENSE }
+    enum class Type { FYLKE, KOMMUNE, NASJON, GRUNNKRETS, STEMMEKRETS, GRENSE, BOPLIKTOMRAADE }
 
     data class OppdateringInfo(val id: Identifikator,
                                val type: Type,

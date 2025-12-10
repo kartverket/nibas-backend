@@ -26,6 +26,7 @@ import no.kartverket.nibas.domain.utkast.Utkast
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
 import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.service.BopliktomraadeService
 import no.kartverket.nibas.service.GrenseService
 import no.kartverket.nibas.service.GrunnkretsService
 import no.kartverket.nibas.service.StemmekretsService
@@ -44,6 +45,9 @@ class UtkastValideringTest {
 
     @MockK
     private lateinit var grunnkretsServiceMock: GrunnkretsService
+
+    @MockK
+    private lateinit var bopliktomraadeServiceMock: BopliktomraadeService
 
     @MockK
     private lateinit var stemmekretsServiceMock: StemmekretsService
@@ -72,7 +76,7 @@ class UtkastValideringTest {
 
         every { grenseServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns emptyList()
 
-        utkastValidatorService = UtkastValidatorService(grunnkretsServiceMock, grenseServiceMock, stemmekretsServiceMock, kodelisteServiceMock, currentTime)
+        utkastValidatorService = UtkastValidatorService(grunnkretsServiceMock, grenseServiceMock, stemmekretsServiceMock, bopliktomraadeServiceMock, kodelisteServiceMock, currentTime)
     }
 
     @Test

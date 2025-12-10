@@ -63,6 +63,11 @@ class MetadataMapper(private val kodelisteHrefProvider: KodelisteHrefProviderI =
         commonGrense = getCommonGrenseMetadata(grense),
     )
 
+    fun toMetadataForBopliktGrense(grense: Grense): BopliktgrenseMetadata = BopliktgrenseMetadata(
+        common = grense.getCommonMetadata(),
+        commonGrense = getCommonGrenseMetadata(grense),
+    )
+
     private fun getCommonGrenseMetadata(grense: Grense): CommonGrenseMetadata = CommonGrenseMetadata(
         posisjonskvalitet = grense.kvalitet?.toKvalitet(kodelisteHrefProvider),
     )
@@ -92,6 +97,7 @@ fun getMetadataForGrensetype(grensetype: Grensetype, commonMetadata: CommonMetad
         Grensetype.Stemmekretsgrense -> KommunalKretsgrenseMetadata(commonMetadata, commonGrenseMetadata)
         Grensetype.Soknegrense -> StatistiskgrenseMetadata(commonMetadata, commonGrenseMetadata)
         Grensetype.Skolekretsgrense -> StatistiskgrenseMetadata(commonMetadata, commonGrenseMetadata)
+        Grensetype.Bopliktgrense -> BopliktgrenseMetadata(commonMetadata, commonGrenseMetadata)
     }
 }
 

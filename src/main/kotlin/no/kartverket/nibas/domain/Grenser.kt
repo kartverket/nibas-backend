@@ -72,6 +72,9 @@ class Grense(
     @OneToMany(mappedBy = "grense")
     var stemmekretser: MutableSet<StemmekretsGrenseKobling> = mutableSetOf()
 
+    @OneToMany(mappedBy = "grense")
+    var bopliktomraader: MutableSet<BopliktomraadeGrenseKobling> = mutableSetOf()
+
     fun getAllDokumentasjonsreferanser() = dokrefGrensekobling.map { it.dokumentasjonsreferanse }.toSet()
     fun getDokumentasjonsreferanser(gyldighetsdato: LocalDate = LocalDate.now()) = dokrefGrensekobling.map { it.dokumentasjonsreferanse }.filter { it.gyldigPaaDato(gyldighetsdato) }.toSet()
     fun grunnkretser(gyldighetsdato: LocalDate = LocalDate.now()): Set<Grunnkrets> =
@@ -85,6 +88,9 @@ class Grense(
 
     fun gyldigeStemmekretsGrenseKoblinger(gyldighetsdato: LocalDate = LocalDate.now()): Set<StemmekretsGrenseKobling> =
         stemmekretser.filter { it.stemmekrets.gyldigPaaDato(gyldighetsdato) }.toSet()
+
+    fun gyldigeBopliktomraadeGrenseKoblinger(gyldighetsdato: LocalDate = LocalDate.now()): Set<BopliktomraadeGrenseKobling> =
+        bopliktomraader.filter { it.bopliktomraade.gyldigPaaDato(gyldighetsdato) }.toSet()
 
     fun kommuner(gyldighetsdato: LocalDate = LocalDate.now()): Set<Kommune> =
         grunnkretser(gyldighetsdato).mapNotNull { it.getKommune(gyldighetsdato) }.toSet()

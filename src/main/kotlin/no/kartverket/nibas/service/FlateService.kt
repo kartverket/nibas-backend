@@ -8,6 +8,7 @@ import no.kartverket.nibas.common.geometry.UgyldigGeometriException
 import no.kartverket.nibas.common.geometry.toCustomText
 import no.kartverket.nibas.common.getInSpraak
 import no.kartverket.nibas.domain.AdministrativEnhet
+import no.kartverket.nibas.domain.Bopliktomraade
 import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.Fylke
 import no.kartverket.nibas.domain.Grense
@@ -15,6 +16,7 @@ import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.domain.Stemmekrets
+import no.kartverket.nibas.repository.BopliktomraadeRepository
 import no.kartverket.nibas.repository.FylkeRepository
 import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.KommuneRepository
@@ -32,6 +34,7 @@ class FlateService @Autowired constructor(
     private val nasjonRepository: NasjonRepository,
     private val grunnkretsRepository: GrunnkretsRepository,
     private val stemmekretsRepository: StemmekretsRepository,
+    private val bopliktomraadeRepository: BopliktomraadeRepository,
 ) {
     private val logger = LoggerFactory.getLogger(this.javaClass.name)
 
@@ -43,6 +46,7 @@ class FlateService @Autowired constructor(
                 when (enhet) {
                     is Grunnkrets -> oppdaterGrunnkretsflate(enhet)
                     is Stemmekrets -> oppdaterStemmekretsflate(enhet)
+                    is Bopliktomraade -> oppdaterBopliktomraadeflate(enhet)
                     is Kommune -> oppdaterKommuneflate(enhet)
                     is Fylke -> oppdaterFylkesflate(enhet)
                     is Nasjon -> oppdaterNasjonsflate(enhet)
@@ -69,6 +73,12 @@ class FlateService @Autowired constructor(
         logger.info("Oppdaterer stemmekretsflate for ${stemmekrets.stemmekretsnummer} ${finnNavn(stemmekrets)} i kommune ${stemmekrets.getKommune(stemmekrets.gyldighet.gyldigFra)?.kommunenummer}")
         stemmekrets.oppdaterOmraadeOgPosisjon()
         stemmekretsRepository.save(stemmekrets)
+    }
+
+    private fun oppdaterBopliktomraadeflate(bopliktomraade: Bopliktomraade) {
+        logger.info("Oppdaterer bopliktomraadeflate i kommune ${bopliktomraade.getKommune()?.kommunenummer}")
+        bopliktomraade.oppdaterOmraadeOgPosisjon()
+        bopliktomraadeRepository.save(bopliktomraade)
     }
 
     private fun oppdaterKommuneflate(kommune: Kommune) {

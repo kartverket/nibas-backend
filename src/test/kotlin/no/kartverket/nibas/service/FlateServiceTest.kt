@@ -14,6 +14,7 @@ import no.kartverket.nibas.common.geometry.topologyValidationErrorToCustomText
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.repository.BopliktomraadeRepository
 import no.kartverket.nibas.repository.EnhetsGrenseRepository
 import no.kartverket.nibas.repository.FylkeRepository
 import no.kartverket.nibas.repository.GrenseRepository
@@ -57,6 +58,10 @@ class FlateServiceTest {
     @Suppress("unused")
     @MockBean
     lateinit var stemmekretsRepository: StemmekretsRepository
+
+    @Suppress("unused")
+    @MockBean
+    lateinit var bopliktomraadeRepository: BopliktomraadeRepository
 
     @Suppress("unused")
     @MockBean

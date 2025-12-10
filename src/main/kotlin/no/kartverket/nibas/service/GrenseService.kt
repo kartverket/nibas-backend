@@ -28,6 +28,7 @@ import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.StemmekretsGrenseKobling
 import no.kartverket.nibas.extensions.geometry.toLineString
+import no.kartverket.nibas.repository.BopliktomraadeRepository
 import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.StemmekretsRepository
@@ -54,6 +55,7 @@ class GrenseService(
     private val fylkeService: FylkeService,
     private val nasjonService: NasjonService,
     private val dokumentasjonsreferanseService: DokumentasjonsreferanseService,
+    private val bopliktomraadeRepository: BopliktomraadeRepository,
 ) {
     fun hentGrense(identifikator: Identifikator): Grense? = grenseRepository.findGyldigObjektForIdentifikator(identifikator)
 
@@ -459,6 +461,9 @@ class GrenseService(
 
                         KontekstEnhetType.STEMMEKRETS -> stemmekretsRepository.findGyldigObjektForIdentifikator(identifikator)
                             ?: throw NotFoundException("Fant ikke Stemmekrets med lokalid: ${identifikator.lokalid}")
+
+                        KontekstEnhetType.BOPLIKTOMRAADE -> bopliktomraadeRepository.findGyldigObjektForIdentifikator(identifikator)
+                            ?: throw NotFoundException("Fant ikke Bopliktområde med lokalid: ${identifikator.lokalid}")
                     }
                     Pair(laasbar, kontekstEgenskaper.version)
                 }

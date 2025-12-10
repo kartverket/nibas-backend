@@ -2,6 +2,7 @@ package no.kartverket.nibas.api.v1.common
 
 import io.swagger.v3.oas.annotations.media.Schema
 import no.kartverket.nibas.api.v1.common.geojson.Feature
+import no.kartverket.nibas.api.v1.request.BopliktomraadeRequest
 import no.kartverket.nibas.api.v1.request.FylkeRequest
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
 import no.kartverket.nibas.api.v1.request.KommuneRequest
@@ -11,6 +12,7 @@ import no.kartverket.nibas.api.v1.request.StemmekretsRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
 import no.kartverket.nibas.api.v1.request.GrunnkretsSammenslaaingsendringRequest
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.domain.Bopliktomraade
 import java.time.LocalDate
 import jakarta.persistence.AttributeConverter
 import jakarta.persistence.Converter
@@ -27,7 +29,7 @@ enum class Flatetype {
  * Definerer hvilken kontekst en skal se grense/feature i.
  */
 enum class KontekstEnhetType {
-    GRUNNKRETS, STEMMEKRETS
+    GRUNNKRETS, STEMMEKRETS, BOPLIKTOMRAADE
 }
 
 /**
@@ -45,6 +47,7 @@ enum class Grensetype(val value: String, val dbKey: String, val editerbar: Boole
     Grunnkretsgrense(value = "Grunnkretsgrense", dbKey = "Grunnkretsgrense", editerbar = true),
     Delomraadegrense(value = "Delområdegrense", dbKey = "Delområdegrense", editerbar = true),
     Stemmekretsgrense(value = "Stemmekretsgrense", dbKey = "Stemmekretsgrense", editerbar = true),
+    Bopliktgrense(value = "Bopliktgrense", dbKey = "Bopliktgrense", editerbar = true),
     Soknegrense(value = "Soknegrense", dbKey = "Soknegrense", editerbar = false),
     Skolekretsgrense(value = "Skolekretsgrense", dbKey = "Skolekretsgrense", editerbar = false);
 
@@ -158,7 +161,9 @@ data class Metadataendringer(
     @Schema(description = "Endringer på grunnkrets.")
     val grunnkretsendringer: Map<String, GrunnkretsRequest> = emptyMap(),
     @Schema(description = "Endringer på stemmekrets.")
-    val stemmekretsendringer: Map<String, StemmekretsRequest> = emptyMap()
+    val stemmekretsendringer: Map<String, StemmekretsRequest> = emptyMap(),
+    @Schema(description = "Endringer på bopliktomraade.")
+    val bopliktomraadeendringer: Map<String, BopliktomraadeRequest> = emptyMap()
 )
 
 @Schema(description = "Representasjon av endringer på grensegeometri.")

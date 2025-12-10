@@ -97,6 +97,8 @@ class BopliktImportService(
         return BopliktOmraadeRow(
             objid = objid,
             lokalid = lokalid,
+            navn = "Bopliktområde",
+            nummer = "01",
             gyldigfra = gyldigfra,
             gyldigtil = gyldigtil,
             datafangstdato = datafangstdato,

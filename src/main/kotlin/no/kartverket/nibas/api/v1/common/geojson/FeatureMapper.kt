@@ -43,10 +43,22 @@ class FeatureMapper {
             .plus(toKontekstEgenskaperForStemmekretsGrense(grense, gyldighetsdato))
     }
 
+    fun toKontekstEgenskaperForBopliktGrense(grense: Grense, gyldighetsdato: LocalDate = LocalDate.now()): List<KontekstEgenskaper> {
+        return grense.gyldigeBopliktomraadeGrenseKoblinger(gyldighetsdato).map {
+            lagKontekstEgenskaper(
+                lokalid = Lokalid(it.bopliktomraade.lokalid),
+                kommuneLokalid = Lokalid(it.bopliktomraade.kommuneLokalid.lokalid),
+                gyldighetsdato = it.bopliktomraade.gyldighet.gyldigFra,
+                kontekstType = KontekstEnhetType.BOPLIKTOMRAADE,
+                version = it.bopliktomraade.version,
+            )
+        }
+    }
+
     private fun lagKontekstEgenskaper(
         lokalid: Lokalid,
         kommuneLokalid: Lokalid,
-        kretsNummer: String?,
+        kretsNummer: String? = null,
         gyldighetsdato: LocalDate,
         kontekstType: KontekstEnhetType,
         version: Int,

@@ -16,14 +16,14 @@ class BopliktRepository(
     fun insert(row: BopliktOmraadeRow) {
         val sql = """
         INSERT INTO bopliktomraade (
-            objid, lokalid, gyldigfra, gyldigtil,
+            objid, lokalid, navn, nummer, gyldigfra, gyldigtil,
             datafangstdato, foerstedigitaliseringsdato,
             opphav, endretdato, endretav, typeendring,
             omraade, posisjon,
             kommunelokalid, delvis_boplikt, version, slettet,
             forskriftsreferanse, informasjon, url
         ) VALUES (
-            :objid, :lokalid, :gyldigfra, :gyldigtil,
+            :objid, :lokalid, :navn, :nummer, :gyldigfra, :gyldigtil,
             :datafangstdato, :foerstedigitaliseringsdato,
             :opphav, :endretdato, :endretav, :typeendring,
             ST_SetSRID(ST_GeomFromGeoJSON(:omraade_geojson), 25833),
@@ -39,6 +39,8 @@ class BopliktRepository(
         val params = mapOf(
             "objid" to row.objid,
             "lokalid" to row.lokalid,
+            "navn" to row.navn,
+            "nummer" to row.nummer,
             "gyldigfra" to row.gyldigfra,
             "gyldigtil" to row.gyldigtil,
             "datafangstdato" to row.datafangstdato,

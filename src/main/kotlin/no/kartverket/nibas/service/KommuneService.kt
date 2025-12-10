@@ -8,6 +8,7 @@ import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.common.UgyldigTilstandException
 import no.kartverket.nibas.domain.Administrativenhetnavn
 import no.kartverket.nibas.domain.Bopliktomraade
+import no.kartverket.nibas.domain.BopliktomraadeGrenseKobling
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Grunnkrets
@@ -217,6 +218,13 @@ class KommuneService(
     }
     fun hentKommunesBopliktomraade(kommuneIdentifikator: Identifikator): List<Bopliktomraade> {
         return hentKommune(kommuneIdentifikator)?.getBopliktomraade(kommuneIdentifikator.gyldighetsdato) ?: emptyList()
+    }
+
+    fun hentGrensekoblingerForAlleBopliktomraaderIKommune(identifikator: Identifikator): Set<BopliktomraadeGrenseKobling> {
+        return hentKommunesBopliktomraade(identifikator)
+            .flatMap { it.getGrensekoblinger(identifikator.gyldighetsdato) }
+            .distinctBy { it.grense.lokalid }
+            .toSet()
     }
 
     fun hentAlleGrunnkretserForKommune(kommunenummer: String, gyldighetsdato: LocalDate): List<Grunnkrets> {

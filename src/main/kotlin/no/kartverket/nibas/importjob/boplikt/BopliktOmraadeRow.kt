@@ -4,6 +4,8 @@ import java.time.OffsetDateTime
 data class BopliktOmraadeRow(
     val objid: String,
     val lokalid: String,
+    val navn: String,
+    val nummer: String,
     val gyldigfra: OffsetDateTime,
     val gyldigtil: OffsetDateTime?,
     val datafangstdato: OffsetDateTime?,

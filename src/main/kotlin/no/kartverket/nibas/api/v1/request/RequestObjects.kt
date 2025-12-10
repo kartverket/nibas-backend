@@ -113,6 +113,37 @@ data class StemmekretsRequest(
     val informasjon: String? = null
 )
 
+@Schema(description = "Representasjon av et bopliktomraade")
+data class BopliktomraadeRequest(
+    @Schema(description = "Identifikasjon av bopliktomraade")
+    val identifikasjon: Identifikasjon,
+
+    @Schema(description = "Navnet til bopliktomraadet")
+    val navn: String,
+
+    @Schema(description = "Nummeret til bopliktomraadet")
+    val nummer: String,
+
+    @Schema(description = "Kommunenummeret bopliktomraadet tilhører til")
+    var kommunenummer: Kommunenummer? = null,
+
+    @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
+    @NotNull
+    val version: Int,
+
+    @Schema(description = "informasjon om bopliktomraade")
+    val informasjon: String? = null,
+
+    @Schema(description = "Indikrerer om bopliktomraadet dekker deler av kommunen eller ikke")
+    val delvisBoplikt: Boolean,
+
+    @Schema(description = "Referanse til forskriften for bopliktomraadet")
+    var forskriftsreferanse: String? = null,
+
+    @Schema(description = "URL til kommunen sin informasjonside")
+    var url: String? = null,
+)
+
 @Schema(description = "Representasjon for opprettelse av utkast")
 data class OpprettUtkastRequest(
     @Schema(description = "Arbeidsnavnet til utkastet.")

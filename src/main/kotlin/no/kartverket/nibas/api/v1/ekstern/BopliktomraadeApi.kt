@@ -7,6 +7,8 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import no.kartverket.nibas.api.v1.DefaultFeatureCollectionApiResponses
+import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.ekstern.response.EksternBopliktomraadeRespons
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.MediaType
@@ -43,7 +45,6 @@ interface BopliktomraadeApi {
         gyldighetsdato: LocalDate?
     ): List<EksternBopliktomraadeRespons>
 
-
     @Operation(summary = "Henter ett bopliktområde basert på ID")
     @ApiResponses(
         ApiResponse(
@@ -65,4 +66,18 @@ interface BopliktomraadeApi {
         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
         gyldighetsdato: LocalDate?
     ): EksternBopliktomraadeRespons
+
+    @Operation(
+        summary = "Hent grensene til et gitt bopliktområde",
+        description = "Henter grensene til et bopliktområde med gitt id"
+    )
+    @DefaultFeatureCollectionApiResponses
+    @GetMapping("/{id}/grenser", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun hentGrenserForBopliktomraade(
+        @PathVariable(name = "id") lokalid: String,
+        @RequestParam(required = false, name = "gyldighetsdato")
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        gyldighetsdato: LocalDate?
+    ): FeatureCollection
 }
+

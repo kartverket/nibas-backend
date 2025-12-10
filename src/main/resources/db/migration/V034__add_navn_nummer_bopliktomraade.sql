@@ -1,0 +1,7 @@
+ALTER TABLE bopliktomraade
+    ADD COLUMN navn   TEXT NOT NULL DEFAULT 'Bopliktområde',
+    ADD COLUMN nummer TEXT NOT NULL DEFAULT '01';
+
+ALTER TABLE bopliktomraade
+    ALTER COLUMN navn DROP DEFAULT,
+    ALTER COLUMN nummer DROP DEFAULT;

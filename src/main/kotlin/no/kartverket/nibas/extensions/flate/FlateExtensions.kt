@@ -109,11 +109,13 @@ fun Nasjon.toNasjonResponse(): NasjonResponse {
     )
 }
 
-fun Bopliktomraade.toBopliktomraadeResponse(gyldighetsdato: LocalDate): BopliktomraadeResponse {
-    val kommune = this.getKommune(gyldighetsdato) ?: throw RuntimeException("Fant ikke kommune for bopliktområde")
+fun Bopliktomraade.toBopliktomraadeResponse(): BopliktomraadeResponse {
+    val kommune = this.getKommune(gyldighet.gyldigFra) ?: throw RuntimeException("Fant ikke kommune for bopliktområde")
 
     return BopliktomraadeResponse(
         id = ObjektIdentifikator(Lokalid(lokalid), gyldighet.gyldigFra),
+        navn = navn,
+        nummer = nummer,
         gyldighet = gyldighet.toGyldighetResponse(),
         datafangstdato = datafangstdato,
         kommunenummer = Kommunenummer(kommune.kommunenummerUuid, kommune.kommunenummer),

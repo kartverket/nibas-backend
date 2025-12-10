@@ -27,6 +27,7 @@ import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.UnikLokalid
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.service.BopliktomraadeService
 import no.kartverket.nibas.service.GrenseService
 import no.kartverket.nibas.service.GrunnkretsService
 import no.kartverket.nibas.service.StemmekretsService
@@ -42,9 +43,10 @@ class UtkastValidatorServiceTest {
     val stemmekretsServiceMock = mockk<StemmekretsService>()
     val kodelisteServiceMock = mockk<KodelisteService>()
     val currentTimeMock = mockk<CurrentTime>()
+    val bopliktomraadeServiceMock = mockk<BopliktomraadeService>()
 
     val utkastValidatorService = UtkastValidatorService(
-        grunnkretsServiceMock, grenseServiceMock, stemmekretsServiceMock,
+        grunnkretsServiceMock, grenseServiceMock, stemmekretsServiceMock, bopliktomraadeServiceMock,
         kodelisteServiceMock, currentTimeMock
     )
 

@@ -40,9 +40,11 @@ import no.kartverket.nibas.domain.utkast.UtkastStatus
 import no.kartverket.nibas.events.NibasEvent
 import no.kartverket.nibas.events.NibasEventPublisher
 import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.repository.BopliktomraadeRepository
 import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.repository.UtkastRepository
+import no.kartverket.nibas.service.BopliktomraadeService
 import no.kartverket.nibas.service.FylkeService
 import no.kartverket.nibas.service.GrenseService
 import no.kartverket.nibas.service.GrunnkretsService
@@ -75,6 +77,8 @@ internal class UtkastServiceTest {
     private val stemmekretsServiceMock = mockk<StemmekretsService>()
     private val stemmekretsRepositoryMock = mockk<StemmekretsRepository>()
 
+    private val bopliktomraadeServiceMock = mockk<BopliktomraadeService>()
+
     private val kodelisteServiceMock = mockk<KodelisteService>()
 
     private val currentTime = mockk<CurrentTime>()
@@ -89,7 +93,7 @@ internal class UtkastServiceTest {
     fun beforeEach() {
         every { currentTime.asLocalDate() } returns (LocalDate.of(2022, 6, 1))
         every { grenseServiceMock.validerLaasbareForGrenseendringerFinnesOgLagListeMedLaasbarOgOensketVersjon(any(), any()) } returns emptyList()
-        val utkastValidatorService = UtkastValidatorService(grunnkretsServiceMock, grenseServiceMock, stemmekretsServiceMock, kodelisteServiceMock, currentTime)
+        val utkastValidatorService = UtkastValidatorService(grunnkretsServiceMock, grenseServiceMock, stemmekretsServiceMock, bopliktomraadeServiceMock, kodelisteServiceMock, currentTime)
         utkastService = UtkastService(utkastRepositoryMock, nasjonServiceMock, fylkeServiceMock, kommuneServiceMock, grunnkretsServiceMock,
             stemmekretsServiceMock, grenseServiceMock, nibasEventPublisherMock, utkastValidatorService, currentTime,
             stemmekretsRepositoryMock, grunnkretsRepositoryMock)

@@ -86,6 +86,25 @@ class KommuneController(
         )
     }
 
+    override fun hentKommunesBopliktomraadegrenser(
+        lokalid: String,
+        gyldighetsdato: LocalDate?
+    ): FeatureCollection {
+        val identifikator = Identifikator(Lokalid(lokalid), gyldighetsdato ?: LocalDate.now())
+        val grensekoblinger = kommuneService.hentGrensekoblingerForAlleBopliktomraaderIKommune(identifikator)
+
+        if (grensekoblinger.isEmpty()) {
+            return FeatureCollection(
+                features = emptyList()
+            )
+        }
+
+        return FeatureCollection(
+            features = grensekoblinger
+                .map { it.grenseKoblingToFeature(identifikator.gyldighetsdato) }
+        )
+    }
+
     override fun hentKommunesStemmekretser(lokalid: String, gyldighetsdato: LocalDate?): List<StemmekretsResponse> {
         val kommuneIdentifikator = createIdentifikator(lokalid, gyldighetsdato)
         return kommuneService.hentKommunesStemmekretser(kommuneIdentifikator).map {
@@ -166,6 +185,6 @@ class KommuneController(
         val identifikator = createIdentifikator(lokalid, gyldighetsdato)
         val bopliktomraade = kommuneService.hentKommunesBopliktomraade(identifikator)
 
-        return bopliktomraade.map { it.toBopliktomraadeResponse(identifikator.gyldighetsdato) }
+        return bopliktomraade.map { it.toBopliktomraadeResponse() }
     }
 }

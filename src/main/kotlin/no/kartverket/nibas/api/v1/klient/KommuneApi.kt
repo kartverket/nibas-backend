@@ -170,6 +170,15 @@ interface KommuneApi {
         @RequestParam(required = true, name = "gyldigTilDate") gyldigTilDate: LocalDate
     ): FeatureCollection
 
+    @Operation(summary = "Henter alle bopliktomraadegrensene til en gitt kommune")
+    @DefaultFeatureCollectionApiResponses
+    @GetMapping("/{id}/bopliktomraadegrenser", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun hentKommunesBopliktomraadegrenser(
+        @Parameter(description = "ID til kommunen man vil hente bopliktomraadegrensene til") @PathVariable(name = "id") lokalid: String,
+        @Parameter(description = "Eventuell gyldighetsdato for kommune (default = dagens dato") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        @RequestParam(required = false, name = "gyldighetsdato") gyldighetsdato: LocalDate?
+    ): FeatureCollection
+
     @Operation(summary = "Henter alle grenser til inndelinger med delt geometri til kommunegrensa i en gitt kommune")
     @DefaultFeatureCollectionApiResponses
     @GetMapping("/{id}/inndelingerdeltgeometrigrenser", produces = [MediaType.APPLICATION_JSON_VALUE])
