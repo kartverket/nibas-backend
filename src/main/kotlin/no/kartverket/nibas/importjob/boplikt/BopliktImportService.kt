@@ -52,7 +52,7 @@ class BopliktImportService(
         return count
     }
 
-    private fun mapFeatureToRow(feature: GeoJsonFeature, nummer: String): BopliktOmraadeRow {
+    private fun mapFeatureToRow(feature: GeoJsonFeature, nummerStr: String): BopliktOmraadeRow {
         val p = feature.properties
 
         fun prop(name: String): Any? = p[name]
@@ -112,7 +112,7 @@ class BopliktImportService(
             forskriftsreferanse = forskriftsreferanse,
             informasjon = informasjon,
             url = url,
-            nummer = nummer,
+            nummer = nummerStr,
             navn = navn
         )
     }
