@@ -25,8 +25,14 @@ class BopliktImportService(
         val featureCollection = geoJsonReader.readFeatureCollectionFromClasspath(resourcePath)
 
         var count = 0
+        val nextNrPerKommune = mutableMapOf<String, Int>()
         featureCollection.features.forEach { feature ->
-            val row = mapFeatureToRow(feature)
+            val kommunenummer = feature.properties["kommunenummer"]?.toString()?.trim()
+                ?: error("Manglende 'kommunenummer' i : $feature")
+            val next = (nextNrPerKommune[kommunenummer] ?: 0) + 1
+            nextNrPerKommune[kommunenummer] = next
+            val nummerStr = String.format("%02d", next)
+            val row = mapFeatureToRow(feature, nummerStr)
             repository.insert(row)
             count++
         }
@@ -34,13 +40,15 @@ class BopliktImportService(
         return count
     }
 
-    private fun mapFeatureToRow(feature: GeoJsonFeature): BopliktOmraadeRow {
+    private fun mapFeatureToRow(feature: GeoJsonFeature, nummerStr: String): BopliktOmraadeRow {
         val p = feature.properties
 
         fun prop(name: String): Any? = p[name]
 
         val objid = UUID.randomUUID().toString()
         val lokalid = UUID.randomUUID().toString()
+
+        val navn = "Bopliktområde"
 
         val gyldigfra = parseDate(prop("gjelderFra"))
         val gyldigtil = parseDateOrNull(prop("gjelderTil"))
@@ -78,8 +86,8 @@ class BopliktImportService(
         return BopliktOmraadeRow(
             objid = objid,
             lokalid = lokalid,
-            navn = "Bopliktområde",
-            nummer = "01",
+            navn = navn,
+            nummer = nummerStr,
             gyldigfra = gyldigfra,
             gyldigtil = gyldigtil,
             datafangstdato = datafangstdato,
