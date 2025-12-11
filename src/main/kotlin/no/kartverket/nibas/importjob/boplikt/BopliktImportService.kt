@@ -66,20 +66,16 @@ class BopliktImportService(
         val informasjon = prop("utfyllendeBeskrivelse")?.toString()
         val url = prop("url")?.toString()
 
-        // Hvis gyldigFra < 2024-01-01, bruk 2024-01-01; ellers bruk gyldigFra for å lete opp kommune
+        // Hvis gyldigFra < 2024-01-01, bruk 2024-01-01; ellers bruk gyldigFra
         val gyldigFraDefaultDate = LocalDate.of(2024, 1, 1)
-        val gyldigFraDate = gyldigfra.toLocalDate()
-        val lookupDate =
-            if (gyldigFraDate.isBefore(gyldigFraDefaultDate)) {
-                gyldigFraDefaultDate
-            }
-            else {
-                gyldigFraDate
-            }
+        var gyldigFraDate = gyldigfra.toLocalDate()
+        if (gyldigFraDate.isBefore(gyldigFraDefaultDate)) {
+            gyldigFraDate = gyldigFraDefaultDate
+        }
         val kommunenummer = prop("kommunenummer")?.toString()
         val kommunelokalid = kommunenummer?.let {
             kommuneService
-                .hentKommuneByKommunenummer(it, lookupDate)
+                .hentKommuneByKommunenummer(it, gyldigFraDate)
                 ?.kommuneLokalid
                 ?.lokalid
         }
@@ -90,13 +86,12 @@ class BopliktImportService(
                 "coordinates" to feature.geometry.coordinates
             )
         )
-
         return BopliktOmraadeRow(
             objid = objid,
             lokalid = lokalid,
             navn = navn,
             nummer = nummerStr,
-            gyldigfra = gyldigfra,
+            gyldigfra = parseDate(gyldigFraDate),
             gyldigtil = gyldigtil,
             datafangstdato = datafangstdato,
             foerstedigitaliseringsdato = foerstedigitaliseringsdato,
