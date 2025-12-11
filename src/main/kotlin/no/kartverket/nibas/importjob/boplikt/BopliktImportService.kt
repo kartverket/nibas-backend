@@ -19,7 +19,6 @@ class BopliktImportService(
 ) {
     private val importDate = OffsetDateTime.now(ZoneOffset.UTC)
     private val resourcePath = "import/bopliktsomraade.geojson"
-
     fun importFromLocalResource(): Int {
         repository.truncateCascade()
         val featureCollection = geoJsonReader.readFeatureCollectionFromClasspath(resourcePath)
@@ -36,7 +35,6 @@ class BopliktImportService(
             repository.insert(row)
             count++
         }
-
         return count
     }
 
@@ -68,10 +66,20 @@ class BopliktImportService(
         val informasjon = prop("utfyllendeBeskrivelse")?.toString()
         val url = prop("url")?.toString()
 
+        // Hvis gyldigFra < 2024-01-01, bruk 2024-01-01; ellers bruk gyldigFra for å lete opp kommune
+        val gyldigFraDefaultDate = LocalDate.of(2024, 1, 1)
+        val gyldigFraDate = gyldigfra.toLocalDate()
+        val lookupDate =
+            if (gyldigFraDate.isBefore(gyldigFraDefaultDate)) {
+                gyldigFraDefaultDate
+            }
+            else {
+                gyldigFraDate
+            }
         val kommunenummer = prop("kommunenummer")?.toString()
         val kommunelokalid = kommunenummer?.let {
             kommuneService
-                .hentKommuneByKommunenummer(it, LocalDate.now())
+                .hentKommuneByKommunenummer(it, lookupDate)
                 ?.kommuneLokalid
                 ?.lokalid
         }
