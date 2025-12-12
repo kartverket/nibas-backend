@@ -12,8 +12,7 @@ class NibasBopliktgrenserTransformasjonApplication(
 ) {
 
     fun run() {
-        // Denne applikasjonen kjøres uten av systemet, så ingen http-filtre setter SecurityContext.
-        // Vi trenger likevel en autentisert bruker for sporing.
+        // No SecurityContext set automatically, so set a dummy user
         SecurityContextHolder.getContext().authentication = DummyAuthenticationToken(
             user = "bopliktgrenserapplication",
             credentials = "bopliktgrenserapplication",

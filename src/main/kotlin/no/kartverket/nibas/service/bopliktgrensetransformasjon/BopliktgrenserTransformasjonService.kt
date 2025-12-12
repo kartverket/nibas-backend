@@ -24,10 +24,7 @@ class BopliktgrenserTransformasjonService(
     private val bopliktomraadeGrenseKoblingRepository: BopliktomraadeGrenseKoblingRepository,
     private val flateService: FlateService
 ) {
-    // Henter alle bopliktområder og produserer én grense for hvert polygon ved å bruke polygonet sitt skall.
-    // Oppretter også BopliktomraadeGrenseKobling for alle grensene
 
-    //TODO: Legg til håndtering av hull i bopliktområdet sine polygoner.
     @Transactional
     fun transform() {
         resetTables()
@@ -38,13 +35,13 @@ class BopliktgrenserTransformasjonService(
             val omraade = bopliktomraade.omraade
             val grenserForMultiPolygon = mutableListOf<Grense>()
             if (omraade != null) {
-                grenserForMultiPolygon.addAll(shellsOf(omraade).map { shell ->
+                grenserForMultiPolygon.addAll(ringsOf(omraade).map { ring ->
                     val bopliktomraadegrense = Grense(
                         grensetype = Grensetype.Bopliktgrense,
                     ).apply {
                         setGyldigFra(bopliktomraade.gyldighet.gyldigFra)
                         datafangstdato = bopliktomraade.datafangstdato
-                        grense = gf.createLineString(avrundLineString(shell.coordinates))
+                        grense = gf.createLineString(avrundLineString(ring.coordinates))
                         auditInfo = AuditInfo(endretAv = "bopliktgrenserapplication")
                     }
                     val bopliktomraadeGrenseKobling = BopliktomraadeGrenseKobling(
@@ -75,10 +72,20 @@ class BopliktgrenserTransformasjonService(
         bopliktomraadeGrenseKoblingRepository.deleteAll()
     }
 
-    private fun shellsOf(multiPolygon: MultiPolygon): List<LineString> {
+    private fun ringsOf(multiPolygon: MultiPolygon): List<LineString> {
         return (0 until multiPolygon.numGeometries)
-            .map { n -> multiPolygon.getGeometryN(n) }
+            .asSequence()
+            .map { multiPolygon.getGeometryN(it) }
             .filterIsInstance<Polygon>()
-            .map { polygon -> polygon.exteriorRing }
+            .flatMap { polygon ->
+                sequence {
+                    yield(polygon.exteriorRing)
+                    for (i in 0 until polygon.numInteriorRing) {
+                        yield(polygon.getInteriorRingN(i))
+                    }
+                }
+            }
+            .toList()
     }
+
 }
