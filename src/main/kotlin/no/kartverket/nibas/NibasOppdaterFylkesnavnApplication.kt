@@ -11,7 +11,7 @@ import kotlin.system.exitProcess
 @Profile("oppdaterfylkesnavn")
 class NibasOppdaterFylkesnavnApplication(val oppdaterFylkesnavnService: OppdaterFylkesnavnService) : CommandLineRunner {
 
-    override fun run(vararg args: String?) {
+    override fun run(vararg args: String) {
         oppdaterFylkesnavnService.samiskeNavnForInnlandetOgNordland()
         exitProcess(0)
     }

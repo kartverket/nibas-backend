@@ -11,7 +11,7 @@ import kotlin.system.exitProcess
 @Profile("avrundkoordinater")
 class NibasAvrundKoordinaterApplication(val avrundKoordinaterService: AvrundKoordinaterService) : CommandLineRunner {
 
-    override fun run(vararg args: String?) {
+    override fun run(vararg args: String) {
         avrundKoordinaterService.avrundKoordinaterForAlleGrenser()
         exitProcess(0)
     }

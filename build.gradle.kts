@@ -75,6 +75,7 @@ dependencies {
     implementation(libs.spring.jpa)
     implementation(libs.spring.security) // Web-security
     implementation(libs.spring.web)
+    implementation(libs.spring.web.test)
     implementation(libs.spring.webflux)
     implementation(libs.jackson.module.kotlin)
     implementation(libs.kotlin.reflect)

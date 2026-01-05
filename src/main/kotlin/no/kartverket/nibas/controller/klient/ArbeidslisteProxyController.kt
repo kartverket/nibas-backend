@@ -143,7 +143,7 @@ class ArbeidslisteProxyController(
     private fun processResponse(response: HttpServletResponse, responseEntity: ResponseEntity<ByteArray>) {
         response.status = responseEntity.statusCode.value()
 
-        responseEntity.headers.forEach { (name, values) ->
+        responseEntity.headers.forEach { name, values ->
             if (!IGNORED_RESPONSE_HEADERS.contains(name.lowercase(Locale.getDefault()))) {
                 values.forEach { value ->
                     response.addHeader(name, value)

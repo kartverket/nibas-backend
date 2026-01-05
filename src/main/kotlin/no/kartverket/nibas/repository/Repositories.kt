@@ -29,7 +29,7 @@ import org.springframework.data.repository.NoRepositoryBean
 import java.time.LocalDate
 
 @NoRepositoryBean
-interface CrudRepositoryWithLokalIdFinder<T, ID> : CrudRepository<T, ID> {
+interface CrudRepositoryWithLokalIdFinder<T : Any, ID : Any> : CrudRepository<T, ID> {
     fun findAllByLokalid(lokalid: String): List<T>
 
     fun findLastByLokalid(lokalid: String): T? =
@@ -37,7 +37,7 @@ interface CrudRepositoryWithLokalIdFinder<T, ID> : CrudRepository<T, ID> {
 }
 
 @NoRepositoryBean
-interface JpaRepositoryWithLokalIdFinder<T, ID> : JpaRepository<T, ID> {
+interface JpaRepositoryWithLokalIdFinder<T : Any, ID : Any> : JpaRepository<T, ID> {
     fun findAllByLokalid(lokalid: String): List<T>
 
     fun findLastByLokalid(lokalid: String): T? =

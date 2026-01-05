@@ -11,7 +11,7 @@ import kotlin.system.exitProcess
 @Profile("deltgeometri")
 class NibasDeltGeometriApplication(val deltGeometriService: DeltGeometriService) : CommandLineRunner {
 
-    override fun run(vararg args: String?) {
+    override fun run(vararg args: String) {
         deltGeometriService.dannDeltGeometriForAdministrativeGrenser()
         exitProcess(0)
     }

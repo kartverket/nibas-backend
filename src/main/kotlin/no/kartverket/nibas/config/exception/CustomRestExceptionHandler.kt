@@ -119,7 +119,7 @@ class CustomRestExceptionHandler {
     fun handleResponseStatusExceptions(ex: ResponseStatusException, request: WebRequest): ResponseEntity<Any>? {
         val httpStatus = ex.statusCode
         val errorDescription = ErrorDescription(
-            description = ex.message
+            description = ex.message ?: ""
         )
         return handleException(ex, errorDescription, HttpHeaders(), httpStatus, logAsError = true)
     }
@@ -181,7 +181,7 @@ class CustomRestExceptionHandler {
         return createResponse(body, headers, statusCode)
     }
 
-    private fun <T> createResponse(body: T, headers: HttpHeaders, statusCode: HttpStatusCode): ResponseEntity<T> {
+    private fun <T : Any> createResponse(body: T, headers: HttpHeaders, statusCode: HttpStatusCode): ResponseEntity<T> {
         return ResponseEntity(body, headers, statusCode)
     }
 }

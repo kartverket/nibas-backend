@@ -10,7 +10,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest
 import org.springframework.core.io.DefaultResourceLoader
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles

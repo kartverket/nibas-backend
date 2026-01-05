@@ -31,7 +31,7 @@ import org.locationtech.jts.operation.valid.TopologyValidationError
 import org.mockito.Mockito.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.mock.mockito.MockBean
+import org.springframework.test.context.bean.override.mockito.MockitoBean
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
@@ -41,38 +41,31 @@ class FlateServiceTest {
     @Autowired
     lateinit var flateService: FlateService
 
-    @MockBean
+    @MockitoBean
     lateinit var kommuneRepository: KommuneRepository
 
-    @MockBean
+    @MockitoBean
     lateinit var fylkeRepository: FylkeRepository
 
-    @Suppress("unused")
-    @MockBean
+    @MockitoBean
     lateinit var nasjonRepository: NasjonRepository
 
-    @Suppress("unused")
-    @MockBean
+    @MockitoBean
     lateinit var grunnkretsRepository: GrunnkretsRepository
 
-    @Suppress("unused")
-    @MockBean
+    @MockitoBean
     lateinit var stemmekretsRepository: StemmekretsRepository
 
-    @Suppress("unused")
-    @MockBean
+    @MockitoBean
     lateinit var bopliktomraadeRepository: BopliktomraadeRepository
 
-    @Suppress("unused")
-    @MockBean
+    @MockitoBean
     lateinit var grenseRepository: GrenseRepository
 
-    @Suppress("unused")
-    @MockBean
+    @MockitoBean
     lateinit var kodelisteService: KodelisteService
 
-    @Suppress("unused")
-    @MockBean
+    @MockitoBean
     lateinit var enhetsGrenseRepository: EnhetsGrenseRepository
 
     @Test
