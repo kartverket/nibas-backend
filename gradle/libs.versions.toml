@@ -13,8 +13,8 @@ orgApacheCfxVersion = "4.1.4"
 prometheusVersion = "1.16.1"
 spatial4jVersion = "0.8"
 springDependencyManagementVersion = "1.1.7"
-springFrameworkVersion = "3.5.9"
-springdocOpenapiVersion2 = "2.8.15"
+springFrameworkVersion = "4.0.1"
+springdocOpenapiVersion2 = "3.0.1"
 springmockkVersion = "5.0.1"
 testContainerVersion = "1.21.3"
 proj4jVersion = "1.4.1"
@@ -26,7 +26,7 @@ flyway-postgres = { module = "org.flywaydb:flyway-database-postgresql", version.
 h2-db = { module = "com.h2database:h2" }
 hibernate-spatial = { module = "org.hibernate.orm:hibernate-spatial" }
 hypersistence-utils-hibernate = { module = "io.hypersistence:hypersistence-utils-hibernate-63", version.ref = "hypersistenceUtilsHibernate63Version" }
-jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin" }
+jackson-module-kotlin = { module = "tools.jackson.module:jackson-module-kotlin" }
 kotlin-mockito = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "kotlinMockitoVersion" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect" }
 kotlin-stdlib-jdk = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8" }
@@ -57,7 +57,7 @@ spring-mockk = { module = "com.ninja-squad:springmockk", version.ref = "springmo
 spring-security = { module = "org.springframework.boot:spring-boot-starter-security" }
 spring-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
 spring-validator = { module = "org.springframework.boot:spring-boot-starter-validation" }
-spring-web = { module = "org.springframework.boot:spring-boot-starter-web" }
+spring-web = { module = "org.springframework.boot:spring-boot-starter-webmvc" }
 spring-webflux = { module = "org.springframework.boot:spring-boot-starter-webflux" }
 springdoc-openapi-common = { module = "org.springdoc:springdoc-openapi-starter-common", version.ref = "springdocOpenapiVersion2" }
 springdoc-openapi-webmvc-api = { module = "org.springdoc:springdoc-openapi-starter-webmvc-api", version.ref = "springdocOpenapiVersion2" }
