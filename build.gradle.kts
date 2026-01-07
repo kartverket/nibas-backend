@@ -111,7 +111,7 @@ dependencies {
     implementation(libs.org.apache.cxf.frontend)
     implementation(libs.org.apache.cxf.transports)
 
-    runtimeOnly(libs.flyway.core)
+    runtimeOnly(libs.spring.flyway)
     runtimeOnly(libs.flyway.postgres)
     runtimeOnly(libs.postgres)
 
@@ -129,6 +129,7 @@ dependencies {
     testRuntimeOnly(libs.h2.db)
 
     intTestImplementation(libs.kotlin.test)
+    intTestImplementation(libs.spring.flyway.test)
     intTestImplementation(libs.spring.starter.test)
     intTestImplementation(libs.spring.thymeleaf.test)
     intTestImplementation(libs.spring.security.test)

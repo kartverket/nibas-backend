@@ -1711,6 +1711,9 @@ class GrenseServiceIT : TestWithDbContainer() {
             .addGyldighet(Gyldighet(gyldigFra = gyldighetsdato))
             .build()
 
+        entityManager.persist(dokumentasjonsreferanse)
+        entityManager.flush()
+
         val grenseA = grunnkretser.flatMap { it.grenser }.find { it.grense.lokalid == "grenseDeltLokalid" }!!.grense
 
         val grensekobling = DokrefGrenseKobling().apply {
