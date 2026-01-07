@@ -42,15 +42,11 @@ class NasjonServiceTest {
     lateinit var nasjonService: NasjonService
 
     @MockkBean
-    @Suppress("unused")
     private lateinit var nasjonRepository: NasjonRepository
 
     @MockkBean
     @Suppress("unused")
     private lateinit var administrativenhetnavnRepository: AdministrativenhetnavnRepository
-
-    @MockkBean
-    private lateinit var nasjonRepositoryKotlinMock: NasjonRepository
 
     @BeforeEach
     fun beforeEach() {
@@ -86,7 +82,7 @@ class NasjonServiceTest {
                     .build())
                 .build())
             .build()
-        every { nasjonRepositoryKotlinMock.findGyldigObjektForIdentifikator(nasjonIdentifikator) } returns nasjon
+        every { nasjonRepository.findGyldigObjektForIdentifikator(nasjonIdentifikator) } returns nasjon
 
         val grensekoblingerForNasjon = nasjonService.hentGrensekoblingerForNasjon(nasjonIdentifikator)
         assertEquals(6, grensekoblingerForNasjon.size, "Expected six borders")
@@ -109,7 +105,7 @@ class NasjonServiceTest {
 
     private fun returnNullForLokalid1(): Identifikator {
         val nasjonIdentifikator = Identifikator(lokalid = Lokalid("1"))
-        every { nasjonRepositoryKotlinMock.findGyldigObjektForIdentifikator(nasjonIdentifikator) } returns null
+        every { nasjonRepository.findGyldigObjektForIdentifikator(nasjonIdentifikator) } returns null
         return nasjonIdentifikator
     }
 }

@@ -72,12 +72,12 @@ buildscript {
 }
 
 dependencies {
+    implementation(libs.spring.starter)
+    implementation(libs.spring.webmvc)
     implementation(libs.spring.jpa)
     implementation(libs.spring.security) // Web-security
-    implementation(libs.spring.web)
-    implementation(libs.spring.web.test)
     implementation(libs.spring.webflux)
-    implementation(libs.jackson.module.kotlin)
+    implementation(libs.spring.jackson)
     implementation(libs.kotlin.reflect)
     implementation(libs.kotlin.stdlib.jdk)
     implementation(libs.spring.actuator)
@@ -117,14 +117,22 @@ dependencies {
 
     testImplementation(libs.kotlin.test)
     testImplementation(libs.spring.starter.test)
+    testImplementation(libs.spring.thymeleaf.test)
+    testImplementation(libs.spring.jackson.test)
+    testImplementation(libs.spring.security.test)
     testImplementation(libs.spring.batch.test)
     testImplementation(libs.spring.mockk)
+    testImplementation(libs.spring.webmvc.test)
     testImplementation(libs.kotlin.mockito)
 
     testRuntimeOnly(libs.h2.db)
 
     intTestImplementation(libs.kotlin.test)
     intTestImplementation(libs.spring.starter.test)
+    intTestImplementation(libs.spring.thymeleaf.test)
+    intTestImplementation(libs.spring.security.test)
+    intTestImplementation(libs.spring.jackson.test)
+    intTestImplementation(libs.spring.webmvc.test)
     intTestImplementation(libs.testcontainers.postgres)
     intTestImplementation(libs.testcontainers.junit)
     intTestImplementation(libs.spring.mockk)
