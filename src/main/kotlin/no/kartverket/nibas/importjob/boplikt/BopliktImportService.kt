@@ -1,6 +1,6 @@
 package no.kartverket.nibas.importjob.boplikt
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import no.kartverket.nibas.importjob.geojson.GeoJsonFeature
 import no.kartverket.nibas.importjob.geojson.GeoJsonReader
 import no.kartverket.nibas.service.KommuneService
