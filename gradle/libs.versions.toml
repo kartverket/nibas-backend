@@ -27,6 +27,7 @@ h2-db = { module = "com.h2database:h2" }
 hibernate-spatial = { module = "org.hibernate.orm:hibernate-spatial" }
 hypersistence-utils-hibernate = { module = "io.hypersistence:hypersistence-utils-hibernate-71", version.ref = "hypersistenceUtilsHibernate63Version" }
 spring-jackson = { module = "org.springframework.boot:spring-boot-starter-jackson" }
+spring-jackson2 = {module = "org.springframework.boot:spring-boot-jackson2"}
 spring-jackson-test = { module = "org.springframework.boot:spring-boot-starter-jackson-test"}
 kotlin-mockito = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "kotlinMockitoVersion" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect" }

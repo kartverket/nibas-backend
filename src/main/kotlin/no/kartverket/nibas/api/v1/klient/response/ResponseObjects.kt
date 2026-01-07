@@ -303,7 +303,7 @@ data class AuditInfoResponse(
 
 data class OptimistiskLaasWrapper(
     @Schema(description = "HttpStatus for responsen.")
-    val httpStatus: HttpStatus = HttpStatus.CONFLICT,
+    val httpStatus: String = "409 Conflict",
     @Schema(description = "Feil som har oppstått pga optimistisk lås.")
     val optimisticLockExceptions: List<OptimistiskLaasResponse> = emptyList(),
 )
