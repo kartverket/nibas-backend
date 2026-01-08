@@ -1,6 +1,6 @@
 [versions]
 flywayVersion = "11.20.0"
-hypersistenceUtilsHibernate63Version = "3.14.1"
+hypersistenceUtilsHibernate71Version = "3.14.1"
 jtsVersion = "1.20.0"
 kotlinMockitoVersion = "6.1.0"
 kotlinPluginVersion = "2.2.0"
@@ -24,7 +24,7 @@ proj4jEPSGVersion = "1.4.1"
 flyway-postgres = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flywayVersion" }
 h2-db = { module = "com.h2database:h2" }
 hibernate-spatial = { module = "org.hibernate.orm:hibernate-spatial" }
-hypersistence-utils-hibernate = { module = "io.hypersistence:hypersistence-utils-hibernate-71", version.ref = "hypersistenceUtilsHibernate63Version" }
+hypersistence-utils-hibernate = { module = "io.hypersistence:hypersistence-utils-hibernate-71", version.ref = "hypersistenceUtilsHibernate71Version" }
 spring-jackson = { module = "org.springframework.boot:spring-boot-starter-jackson" }
 spring-jackson2 = {module = "org.springframework.boot:spring-boot-jackson2"}
 spring-jackson-test = { module = "org.springframework.boot:spring-boot-starter-jackson-test"}
