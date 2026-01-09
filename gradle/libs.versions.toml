@@ -16,7 +16,7 @@ springDependencyManagementVersion = "1.1.7"
 springFrameworkVersion = "3.5.9"
 springdocOpenapiVersion2 = "2.8.15"
 springmockkVersion = "5.0.1"
-testContainerVersion = "1.21.3"
+testContainerVersion = "1.21.4"
 proj4jVersion = "1.4.1"
 proj4jEPSGVersion = "1.4.1"
 
