@@ -102,8 +102,6 @@ dependencies {
     implementation(libs.nimbus.jose.jwt)
     implementation(platform(libs.opentelemetry.bom))
     implementation(libs.opentelemetry.api)
-    // This library provides Hibernate 5.5+ Json column support, which is not natively supported by Hibernate
-    implementation(libs.hypersistence.utils.hibernate)
 
     //WS
     implementation(libs.matrikkelapi.wsclient)

@@ -1,6 +1,5 @@
 package no.kartverket.nibas.domain.utkast
 
-import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.request.FylkeRequest
@@ -13,7 +12,6 @@ import no.kartverket.nibas.sporing.AuditInfo
 import no.kartverket.nibas.sporing.Laasbar
 import no.kartverket.nibas.sporing.Sporbar
 import org.hibernate.annotations.JdbcTypeCode
-import org.hibernate.annotations.Type
 import org.hibernate.type.SqlTypes
 import java.time.LocalDate
 import java.time.ZonedDateTime
@@ -42,7 +40,6 @@ class Utkast(
     var gyldigFra: LocalDate,
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Type(JsonBinaryType::class)
     @Column(columnDefinition = "jsonb", name = "utkast")
     var operasjoner: Operasjoner? = Operasjoner()
 ) : Sporbar, Laasbar {
@@ -54,7 +51,6 @@ class Utkast(
     val opprettetDato: ZonedDateTime = ZonedDateTime.now()
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Type(JsonBinaryType::class)
     @Column(columnDefinition = "jsonb", name = "endrede_inndelinger")
     var endredeInndelinger: EndredeInndelinger? = null
 
