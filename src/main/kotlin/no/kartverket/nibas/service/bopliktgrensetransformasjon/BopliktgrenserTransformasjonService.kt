@@ -5,6 +5,7 @@ import no.kartverket.nibas.common.geometry.avrundLineString
 import no.kartverket.nibas.common.geometry.createGeometryFactory
 import no.kartverket.nibas.domain.BopliktomraadeGrenseKobling
 import no.kartverket.nibas.domain.Grense
+import no.kartverket.nibas.domain.PosisjonskvalitetEmbeddable
 import no.kartverket.nibas.repository.BopliktomraadeGrenseKoblingRepository
 import no.kartverket.nibas.repository.GrenseRepository
 import no.kartverket.nibas.service.BopliktomraadeService
@@ -46,6 +47,7 @@ class BopliktgrenserTransformasjonService(
                         datafangstdato = bopliktomraade.datafangstdato
                         grense = gf.createLineString(avrundLineString(shell.coordinates))
                         auditInfo = AuditInfo(endretAv = "bopliktgrenserapplication")
+                        kvalitet = PosisjonskvalitetEmbeddable("637d1a12-cdeb-4798-8833-1ccfbb23dd5a") //99 Ukjent målemetode
                     }
                     val bopliktomraadeGrenseKobling = BopliktomraadeGrenseKobling(
                         bopliktomraade = bopliktomraade, grense = bopliktomraadegrense
