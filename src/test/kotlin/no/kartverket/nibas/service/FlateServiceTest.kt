@@ -5,12 +5,12 @@ import no.kartverket.nibas.builders.FylkeBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.builders.NasjonBuilder
+import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.common.geometry.UgyldigeFlaterException
 import no.kartverket.nibas.common.geometry.getGrenserIRiktigRekkefoelge
 import no.kartverket.nibas.common.geometry.toMultiPolygon
-import no.kartverket.nibas.common.geometry.UgyldigeFlaterException
-import no.kartverket.nibas.domain.Administrativenhetnavn
-import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.geometry.topologyValidationErrorToCustomText
+import no.kartverket.nibas.domain.Administrativenhetnavn
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
 import no.kartverket.nibas.kodelister.KodelisteService
@@ -31,7 +31,7 @@ import org.locationtech.jts.operation.valid.TopologyValidationError
 import org.mockito.Mockito.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.mock.mockito.MockBean
+import org.springframework.test.context.bean.override.mockito.MockitoBean
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
@@ -41,52 +41,55 @@ class FlateServiceTest {
     @Autowired
     lateinit var flateService: FlateService
 
-    @MockBean
+    @MockitoBean
     lateinit var kommuneRepository: KommuneRepository
 
-    @MockBean
+    @MockitoBean
     lateinit var fylkeRepository: FylkeRepository
 
     @Suppress("unused")
-    @MockBean
+    @MockitoBean
     lateinit var nasjonRepository: NasjonRepository
 
     @Suppress("unused")
-    @MockBean
+    @MockitoBean
     lateinit var grunnkretsRepository: GrunnkretsRepository
 
     @Suppress("unused")
-    @MockBean
+    @MockitoBean
     lateinit var stemmekretsRepository: StemmekretsRepository
 
     @Suppress("unused")
-    @MockBean
+    @MockitoBean
     lateinit var bopliktomraadeRepository: BopliktomraadeRepository
 
     @Suppress("unused")
-    @MockBean
+    @MockitoBean
     lateinit var grenseRepository: GrenseRepository
 
     @Suppress("unused")
-    @MockBean
+    @MockitoBean
     lateinit var kodelisteService: KodelisteService
 
     @Suppress("unused")
-    @MockBean
+    @MockitoBean
     lateinit var enhetsGrenseRepository: EnhetsGrenseRepository
 
     @Test
     fun thatOppdaterFlaterSetterFlaterPaaAlleEnheter() {
         val fylkesgrenser: List<Grense> = listOf(
-            Grense("1", "1", Grensetype.Fylkesgrense).apply { grense = GeometryFactory().createLineString(arrayOf(
-                Coordinate(1.0, 1.0),
-                Coordinate(2.0, 1.0),
-                Coordinate(200.0, 200.0)
-            )) },
-            Grense("2", "2", Grensetype.Fylkesgrense).apply {grense = GeometryFactory().createLineString(arrayOf(
-                Coordinate(200.0, 200.0),
-                Coordinate(10.0, 20.0),
-                Coordinate(1.0, 1.0)))
+            Grense("1", "1", Grensetype.Fylkesgrense).apply {
+                grense = GeometryFactory().createLineString(arrayOf(
+                    Coordinate(1.0, 1.0),
+                    Coordinate(2.0, 1.0),
+                    Coordinate(200.0, 200.0)
+                ))
+            },
+            Grense("2", "2", Grensetype.Fylkesgrense).apply {
+                grense = GeometryFactory().createLineString(arrayOf(
+                    Coordinate(200.0, 200.0),
+                    Coordinate(10.0, 20.0),
+                    Coordinate(1.0, 1.0)))
             }
         )
         val grunnkrets = GrunnkretsBuilder().build()
@@ -110,15 +113,18 @@ class FlateServiceTest {
     @Test
     fun `oppdater flater kaster feilmelding for alle flater som feiler`() {
         val korrekteGrunnkretsgrenser: List<Grense> = listOf(
-            Grense("1", "1", Grensetype.Grunnkretsgrense).apply { grense = GeometryFactory().createLineString(arrayOf(
-                Coordinate(1.0, 1.0),
-                Coordinate(2.0, 1.0),
-                Coordinate(200.0, 200.0)
-            )) },
-            Grense("2", "2", Grensetype.Grunnkretsgrense).apply {grense = GeometryFactory().createLineString(arrayOf(
-                Coordinate(200.0, 200.0),
-                Coordinate(10.0, 20.0),
-                Coordinate(1.0, 1.0)))
+            Grense("1", "1", Grensetype.Grunnkretsgrense).apply {
+                grense = GeometryFactory().createLineString(arrayOf(
+                    Coordinate(1.0, 1.0),
+                    Coordinate(2.0, 1.0),
+                    Coordinate(200.0, 200.0)
+                ))
+            },
+            Grense("2", "2", Grensetype.Grunnkretsgrense).apply {
+                grense = GeometryFactory().createLineString(arrayOf(
+                    Coordinate(200.0, 200.0),
+                    Coordinate(10.0, 20.0),
+                    Coordinate(1.0, 1.0)))
             }
         )
         val grunnkretsMedKorrekteGrenser = GrunnkretsBuilder().build()
@@ -126,21 +132,25 @@ class FlateServiceTest {
         grunnkretsMedKorrekteGrenser.apply { grenser = korrekteGrenseKoblinger.toMutableSet() }
 
         val feilaktigeGrunnkretsgrenser: List<Grense> = listOf(
-            Grense("1", "1", Grensetype.Grunnkretsgrense).apply { grense = GeometryFactory().createLineString(arrayOf(
-                Coordinate(1.0, 1.0),
-                Coordinate(2.0, 1.0),
-                Coordinate(20.0, 20.0),
-                Coordinate(10.0, 20.0),
-            )) }
+            Grense("1", "1", Grensetype.Grunnkretsgrense).apply {
+                grense = GeometryFactory().createLineString(arrayOf(
+                    Coordinate(1.0, 1.0),
+                    Coordinate(2.0, 1.0),
+                    Coordinate(20.0, 20.0),
+                    Coordinate(10.0, 20.0),
+                ))
+            }
         )
 
         val feilaktigeKommunegrenser: List<Grense> = listOf(
-            Grense("2", "2", Grensetype.Kommunegrense).apply { grense = GeometryFactory().createLineString(arrayOf(
-                Coordinate(1.0, 1.0),
-                Coordinate(2.0, 1.0),
-                Coordinate(20.0, 20.0),
-                Coordinate(10.0, 15.0),
-            )) }
+            Grense("2", "2", Grensetype.Kommunegrense).apply {
+                grense = GeometryFactory().createLineString(arrayOf(
+                    Coordinate(1.0, 1.0),
+                    Coordinate(2.0, 1.0),
+                    Coordinate(20.0, 20.0),
+                    Coordinate(10.0, 15.0),
+                ))
+            }
         )
 
         val feilaktigGrunnkrets1 = GrunnkretsBuilder(grunnkretsnavn = "grunnkrets1", lokalId = Lokalid("gk1")).build()
@@ -177,12 +187,14 @@ class FlateServiceTest {
     @Test
     fun `oppdater kommuneflater som feiler kaster feil`() {
         val kommunegrenser: List<Grense> = listOf(
-            Grense("1", "1", Grensetype.Kommunegrense).apply { grense = GeometryFactory().createLineString(arrayOf(
-                Coordinate(1.0, 1.0),
-                Coordinate(2.0, 1.0),
-                Coordinate(20.0, 20.0),
-                Coordinate(10.0, 20.0),
-            )) }
+            Grense("1", "1", Grensetype.Kommunegrense).apply {
+                grense = GeometryFactory().createLineString(arrayOf(
+                    Coordinate(1.0, 1.0),
+                    Coordinate(2.0, 1.0),
+                    Coordinate(20.0, 20.0),
+                    Coordinate(10.0, 20.0),
+                ))
+            }
         )
         val grunnkrets = GrunnkretsBuilder().build()
         val grenseKoblinger = (kommunegrenser)
@@ -208,15 +220,18 @@ class FlateServiceTest {
     fun `oppdater fylkesflater som feiler kaster feil`() {
 
         val fylkesgrenser: List<Grense> = listOf(
-            Grense("1", "1", Grensetype.Fylkesgrense).apply { grense = GeometryFactory().createLineString(arrayOf(
-                Coordinate(1.0, 1.0),
-                Coordinate(2.0, 1.0),
-                Coordinate(20.0, 20.0),
-                Coordinate(10.0, 20.0),
-            )) },
-            Grense("2", "2", Grensetype.Fylkesgrense).apply {grense = GeometryFactory().createLineString(arrayOf(
-                Coordinate(12.0, 20.0),
-                Coordinate(1.0, 1.0)))
+            Grense("1", "1", Grensetype.Fylkesgrense).apply {
+                grense = GeometryFactory().createLineString(arrayOf(
+                    Coordinate(1.0, 1.0),
+                    Coordinate(2.0, 1.0),
+                    Coordinate(20.0, 20.0),
+                    Coordinate(10.0, 20.0),
+                ))
+            },
+            Grense("2", "2", Grensetype.Fylkesgrense).apply {
+                grense = GeometryFactory().createLineString(arrayOf(
+                    Coordinate(12.0, 20.0),
+                    Coordinate(1.0, 1.0)))
             }
         )
 
@@ -253,15 +268,18 @@ class FlateServiceTest {
     @Test
     fun `oppdater nasjon som feiler kaster feil`() {
         val fylkesgrenser: List<Grense> = listOf(
-            Grense("1", "1", Grensetype.Riksgrense).apply { grense = GeometryFactory().createLineString(arrayOf(
-                Coordinate(1.0, 1.0),
-                Coordinate(2.0, 1.0),
-                Coordinate(20.0, 20.0),
-                Coordinate(10.0, 20.0),
-            )) },
-            Grense("2", "2", Grensetype.Riksgrense).apply {grense = GeometryFactory().createLineString(arrayOf(
-                Coordinate(12.0, 20.0),
-                Coordinate(1.0, 1.0)))
+            Grense("1", "1", Grensetype.Riksgrense).apply {
+                grense = GeometryFactory().createLineString(arrayOf(
+                    Coordinate(1.0, 1.0),
+                    Coordinate(2.0, 1.0),
+                    Coordinate(20.0, 20.0),
+                    Coordinate(10.0, 20.0),
+                ))
+            },
+            Grense("2", "2", Grensetype.Riksgrense).apply {
+                grense = GeometryFactory().createLineString(arrayOf(
+                    Coordinate(12.0, 20.0),
+                    Coordinate(1.0, 1.0)))
             }
         )
 

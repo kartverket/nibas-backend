@@ -17,14 +17,15 @@ fun sammenlignJsonFeltnavn(forventet: JsonNode, faktisk: JsonNode, arrayNavn: Id
         return sammenlignJsonNoder(forventet, faktisk)
     }
 }
+
 private fun sammenlignJsonNoder(forventet: JsonNode, faktisk: JsonNode): SammenligningResultat {
-    val forventedeFelter = forventet.fields().asSequence().toList()
-    val faktiskeFelter = faktisk.fields().asSequence().toList()
+    val forventedeFelter = forventet.properties().toList()
+    val faktiskeFelter = faktisk.properties().toList()
 
     for (forventetFelt in forventedeFelter) {
-        val faktiskFeltMedSammeNavn = faktiskeFelter.find { it.key == forventetFelt.key}
+        val faktiskFeltMedSammeNavn = faktiskeFelter.find { it.key == forventetFelt.key }
         if (faktiskFeltMedSammeNavn == null) {
-            return SammenligningResultat("Node med navn ${forventetFelt.key} ble ikke funnet i faktisk respons: ${faktiskeFelter}", false)
+            return SammenligningResultat("Node med navn ${forventetFelt.key} ble ikke funnet i faktisk respons: $faktiskeFelter", false)
         }
 
         if (felterHarIkkeSammeType(forventetFelt, faktiskFeltMedSammeNavn) && faktiskFeltMedSammeNavn.value.nodeType != JsonNodeType.NULL) {
@@ -57,13 +58,13 @@ private fun sammenlignJsonNoder(forventet: JsonNode, faktisk: JsonNode): Sammenl
 
 private fun sammenlignJsonLister(forventet: ArrayNode, faktisk: ArrayNode, idType: IdType?): SammenligningResultat {
     forventet.forEach { forventetNode ->
-        val faktiskeFelter = faktisk.asSequence().toList()
+        val faktiskeFelter = faktisk.toList()
         val faktiskNode = if (forventet.size() == 1) {
             faktiskeFelter[0]
         } else {
             when (idType) {
-                IdType.ID_LOKALID_VALUE -> faktiskeFelter.find { it["id"]["lokalid"]["value"] == forventetNode["id"]["lokalid"]["value"]}
-                IdType.ID_DIREKTE -> faktiskeFelter.find { it["id"] == forventetNode["id"]}
+                IdType.ID_LOKALID_VALUE -> faktiskeFelter.find { it["id"]["lokalid"]["value"] == forventetNode["id"]["lokalid"]["value"] }
+                IdType.ID_DIREKTE -> faktiskeFelter.find { it["id"] == forventetNode["id"] }
                 null -> return SammenligningResultat("Trenger id-type for å slå opp element i lista", false)
             }
         }
