@@ -76,7 +76,7 @@ class FlateService @Autowired constructor(
     }
 
     private fun oppdaterBopliktomraadeflate(bopliktomraade: Bopliktomraade) {
-        logger.info("Oppdaterer bopliktomraadeflate i kommune ${bopliktomraade.getKommune()?.kommunenummer}")
+        logger.info("Oppdaterer bopliktområdeflate i kommune ${bopliktomraade.getKommune()?.kommunenummer}")
         bopliktomraade.oppdaterOmraadeOgPosisjon()
         bopliktomraadeRepository.save(bopliktomraade)
     }

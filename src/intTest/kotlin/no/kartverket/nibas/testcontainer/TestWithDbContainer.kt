@@ -14,6 +14,7 @@ import no.kartverket.nibas.api.v1.common.geojson.KontekstEgenskaper
 import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
 import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.api.v1.request.KretsNavnOgNummer
+import no.kartverket.nibas.builders.BopliktomraadeBuilder
 import no.kartverket.nibas.builders.FeatureBuilder
 import no.kartverket.nibas.builders.FylkeBuilder
 import no.kartverket.nibas.builders.GrenseBuilder
@@ -26,10 +27,12 @@ import no.kartverket.nibas.builders.StemmekretsBuilder
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.Administrativenhetnavn
+import no.kartverket.nibas.domain.Bopliktomraade
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.Fylke
 import no.kartverket.nibas.domain.Grense
+import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Nasjon
@@ -42,6 +45,7 @@ import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.extensions.geometry.geometryToDto
 import no.kartverket.nibas.extensions.geometry.grenseToFeature
 import no.kartverket.nibas.repository.AdministrativenhetnavnRepository
+import no.kartverket.nibas.repository.BopliktomraadeRepository
 import no.kartverket.nibas.repository.DokrefGrenseKoblingRepository
 import no.kartverket.nibas.repository.DokumentasjonsreferanseRepository
 import no.kartverket.nibas.repository.FylkeRepository
@@ -53,6 +57,7 @@ import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.repository.UnikLokalidRepository
 import no.kartverket.nibas.repository.UtkastRepository
 import no.kartverket.nibas.service.AdministrativenhetnavnService
+import no.kartverket.nibas.service.BopliktomraadeService
 import no.kartverket.nibas.service.FlateService
 import no.kartverket.nibas.service.FylkeService
 import no.kartverket.nibas.service.GrenseService
@@ -110,6 +115,9 @@ class TestWithDbContainer {
     lateinit var stemmekretsRepository: StemmekretsRepository
 
     @Autowired
+    lateinit var bopliktomraadeRepository: BopliktomraadeRepository
+
+    @Autowired
     lateinit var grenseRepository: GrenseRepository
 
     @Autowired
@@ -144,6 +152,9 @@ class TestWithDbContainer {
 
     @Autowired
     lateinit var administrativenhetnavnService: AdministrativenhetnavnService
+
+    @Autowired
+    lateinit var bopliktomraadeService: BopliktomraadeService
 
     @Autowired
     lateinit var inndelingerService: InndelingerService
@@ -313,7 +324,9 @@ class TestWithDbContainer {
         gyldigTil: LocalDate? = null,
         administrativenhetnavn: List<Administrativenhetnavn> = emptyList(),
         grunnkretser: List<Grunnkrets> = emptyList(),
-        stemmekretser: List<Stemmekrets> = emptyList()): Kommune {
+        stemmekretser: List<Stemmekrets> = emptyList(),
+        bopliktomraader: List<Bopliktomraade> = emptyList(),
+    ): Kommune {
 
         val kommune = KommuneBuilder(
             id = id,
@@ -330,6 +343,7 @@ class TestWithDbContainer {
         grunnkretser.forEach { save.addGrunnkrets(it) }
         stemmekretser.forEach { save.addStemmekrets(it) }
         administrativenhetnavn.forEach { save.addAdministrativenhetNavn(it) }
+        bopliktomraader.forEach { save.addBopliktomraade(it) }
 
         return save
     }
@@ -343,7 +357,8 @@ class TestWithDbContainer {
         gyldigTil: LocalDate? = null,
         administrativenhetnavn: List<Administrativenhetnavn> = emptyList(),
         grunnkretser: List<Grunnkrets> = emptyList(),
-        stemmekretser: List<Stemmekrets> = emptyList()
+        stemmekretser: List<Stemmekrets> = emptyList(),
+        bopliktomraader: List<Bopliktomraade> = emptyList(),
     ): Kommune {
 
         val unikLokalid = saveUnikLokalid(lokalid = lokalid, flatetype = Flatetype.KOMMUNE)
@@ -357,7 +372,8 @@ class TestWithDbContainer {
             gyldigTil = gyldigTil,
             administrativenhetnavn = administrativenhetnavn,
             grunnkretser = grunnkretser,
-            stemmekretser = stemmekretser
+            stemmekretser = stemmekretser,
+            bopliktomraader = bopliktomraader,
         )
     }
 
@@ -435,18 +451,57 @@ class TestWithDbContainer {
         return save
     }
 
-    fun saveGrenseAvTypeKommunegrense(id: String = "kommunegrense-id",
-                                      lokalid: Lokalid = Lokalid("kommunegrense-fb07-4277-ad95-63c32c1370d0"),
-                                      gyldigFra: LocalDate = LocalDate.of(2022, Month.OCTOBER, 1),
-                                      gyldigTil: LocalDate? = null,
-                                      opphav: String = "Eidsvoll"): Grense {
+    fun saveBopliktomraade(
+        id: String = "bopliktomraade-9000",
+        lokalid: Lokalid,
+        bopliktomraadenummer: String = "01",
+        bopliktomraadenavn: String = "Bopliktområde i kommune",
+        gyldigFra: LocalDate = LocalDate.of(2022, Month.OCTOBER, 1),
+        gyldigTil: LocalDate? = null,
+        grenser: List<Grense> = emptyList(),
+        informasjon: String = "Opprinnelig informasjon"
+    ): Bopliktomraade {
+
+        val bopliktomraade = BopliktomraadeBuilder(
+            id = id,
+            lokalId = lokalid,
+            gyldigFra = gyldigFra,
+            gyldigTil = gyldigTil,
+            bopliktomraadenummer = bopliktomraadenummer,
+            bopliktomraadenavn = bopliktomraadenavn,
+            kommune = null,
+            grenser = grenser,
+            informasjonstekst = informasjon
+        ).buildUtenKommuneOgGrenser()
+
+        val save = bopliktomraadeRepository.save(bopliktomraade)
+
+        grenser.forEach { save.addGrensekobling(it) }
+        if (grenser.isNotEmpty() && grenser.none { it.grense.isEmpty }) {
+            save.oppdaterOmraadeOgPosisjon()
+            if (!save.omraade!!.isEmpty) {
+                save.posisjon = save.omraade?.interiorPoint
+            }
+        }
+
+        return save
+    }
+
+    fun saveGrense(
+        id: String = "grense-id",
+        lokalid: Lokalid = Lokalid("grense-fb07-4277-ad95-63c32c1370d0"),
+        gyldigFra: LocalDate = LocalDate.of(2022, Month.OCTOBER, 1),
+        gyldigTil: LocalDate? = null,
+        opphav: String = "Eidsvoll",
+        grensetype: Grensetype = Grensetype.Kommunegrense
+    ): Grense {
         return grenseRepository.save(GrenseBuilder(
             id = id,
             lokalId = lokalid,
             gyldigFra = gyldigFra,
             gyldigTil = gyldigTil,
             opphav = opphav
-        ).withGrensetype(Grensetype.Kommunegrense).build())
+        ).withGrensetype(grensetype).build())
     }
 
     fun saveGrenseAvTypeRiksgrense(id: String = "riksgrense-id",
@@ -609,7 +664,7 @@ class TestWithDbContainer {
     }
 
     fun utfoerGrenseendring(
-        kretsSomSkalHaGrenseendring: Grunnkrets,
+        kretsSomSkalHaGrenseendring: Flate,
         opprinneligDato: LocalDate,
         endringsdato: LocalDate,
         featureAnnenOppdatertGrense: Feature? = null,
@@ -897,4 +952,29 @@ class TestWithDbContainer {
         return utkastRepository.save(utkast)
     }
 
+    fun lagFeatureEndreYkoordinat(kretsSomSkalHaGrenseendring: Flate, opprinneligDato: LocalDate, lokalidGrenseSomSkalEndres: String): Feature {
+        val grenseKobling = kretsSomSkalHaGrenseendring.getGrensekoblinger(gyldighetsdato = opprinneligDato)
+            .first { it.grense.lokalid == lokalidGrenseSomSkalEndres }
+        val grense = grenseKobling.grense.grense
+        val oppdatertGeometri = GeometryFactory().createLineString(arrayOf(
+            grense.getCoordinateN(0).copy(),
+            grense.getCoordinateN(1).copy().also { it.setY(it.getY() + 4) },
+            grense.getCoordinateN(2).copy()
+        ))
+
+        val oppdatertGrensefeature = grenseKobling.grense.grenseToFeature(opprinneligDato)
+        oppdatertGeometri.geometryToDto().also { oppdatertGrensefeature.geometry = it }
+        return oppdatertGrensefeature
+    }
+
+}
+
+fun assertGrenser(grensekoblinger: List<GrenseKobling>,
+                  grenseIGrensekoblingId: String,
+                  enhetKobletTilGrenseLokalid: Lokalid) {
+    assertThat(grensekoblinger).hasSize(1)
+    val grensekobling = grensekoblinger[0]
+    val grenseIGrensekobling = grensekobling.grense
+    assertThat(grenseIGrensekobling.id).isEqualTo(grenseIGrensekoblingId)
+    assertThat(grensekobling.getEnhetKobletTilGrense().lokalid).isEqualTo(enhetKobletTilGrenseLokalid.value)
 }

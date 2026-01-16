@@ -11,6 +11,7 @@ import no.kartverket.nibas.domain.*
 import no.kartverket.nibas.extensions.geometry.grenseKoblingToFeature
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
+import no.kartverket.nibas.testcontainer.assertGrenser
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.tuple
@@ -57,9 +58,9 @@ class KommuneServiceIT : TestWithDbContainer() {
         // Grense 1 er gyldig til 1.1.23
         // Grense 2 er gyldig 1.1.23-1.1.24
         // Grense 3 er gyldig fra 1.1.24
-        val grense3 = saveGrenseAvTypeKommunegrense(id = "2002", lokalid = grenseLokallid, gyldigFra = jan1In2024)
-        val grense2 = saveGrenseAvTypeKommunegrense(id = "2001", lokalid = grenseLokallid, gyldigFra = jan1In2023, gyldigTil = jan1In2024)
-        val grense1 = saveGrenseAvTypeKommunegrense(id = "2000", lokalid = grenseLokallid, gyldigFra = october1In2022, gyldigTil = jan1In2023)
+        val grense3 = saveGrense(id = "2002", lokalid = grenseLokallid, gyldigFra = jan1In2024)
+        val grense2 = saveGrense(id = "2001", lokalid = grenseLokallid, gyldigFra = jan1In2023, gyldigTil = jan1In2024)
+        val grense1 = saveGrense(id = "2000", lokalid = grenseLokallid, gyldigFra = october1In2022, gyldigTil = jan1In2023)
         // Alle grunnkretsene er koblet til grense 1 i koblingstabellen
         // Grunnkrets 2 er ikke gyldig 1.1.24 og det er den vi tester å få ut
         val grunnkrets1 = saveGrunnkrets(id = "101", lokalid = kretsLokalid, gyldigFra = october1In2022, gyldigTil = december1In2022, grenser = listOf(grense1))
@@ -82,9 +83,9 @@ class KommuneServiceIT : TestWithDbContainer() {
         // Grense 1 er gyldig til 1.1.23
         // Grense 2 er gyldig 1.1.23-1.1.24
         // Grense 3 er gyldig fra 1.1.24
-        val grense3 = saveGrenseAvTypeKommunegrense(id = "2002", lokalid = grenseLokallid, gyldigFra = jan1In2024)
-        val grense2 = saveGrenseAvTypeKommunegrense(id = "2001", lokalid = grenseLokallid, gyldigFra = jan1In2023, gyldigTil = jan1In2024)
-        val grense1 = saveGrenseAvTypeKommunegrense(id = "2000", lokalid = grenseLokallid, gyldigFra = october1In2022, gyldigTil = jan1In2023)
+        val grense3 = saveGrense(id = "2002", lokalid = grenseLokallid, gyldigFra = jan1In2024)
+        val grense2 = saveGrense(id = "2001", lokalid = grenseLokallid, gyldigFra = jan1In2023, gyldigTil = jan1In2024)
+        val grense1 = saveGrense(id = "2000", lokalid = grenseLokallid, gyldigFra = october1In2022, gyldigTil = jan1In2023)
         // Alle grunnkretsene er koblet til grense 1 i koblingstabellen
         // Grunnkrets 2 er ikke gyldig 1.1.24 og det er den vi tester å få ut
         val stemmekrets1 = saveStemmekrets(id = "101", lokalid = kretsLokalid, gyldigFra = october1In2022, gyldigTil = december1In2022, grenser = listOf(grense1))
@@ -220,9 +221,9 @@ class KommuneServiceIT : TestWithDbContainer() {
         // Grense 1 er gyldig til 1.1.23
         // Grense 2 er gyldig 1.1.23-1.1.24
         // Grense 3 er gyldig fra 1.1.24
-        val grense3 = saveGrenseAvTypeKommunegrense(id = "2002", lokalid = grenseLokallid, gyldigFra = jan1In2024)
-        val grense2 = saveGrenseAvTypeKommunegrense(id = "2001", lokalid = grenseLokallid, gyldigFra = jan1In2023, gyldigTil = jan1In2024)
-        val grense1 = saveGrenseAvTypeKommunegrense(id = "2000", lokalid = grenseLokallid, gyldigFra = october1In2022, gyldigTil = jan1In2023)
+        val grense3 = saveGrense(id = "2002", lokalid = grenseLokallid, gyldigFra = jan1In2024)
+        val grense2 = saveGrense(id = "2001", lokalid = grenseLokallid, gyldigFra = jan1In2023, gyldigTil = jan1In2024)
+        val grense1 = saveGrense(id = "2000", lokalid = grenseLokallid, gyldigFra = october1In2022, gyldigTil = jan1In2023)
 
         // Alle grunnkretsene er koblet til grense 1 i koblingstabellen
         // Grunnkrets 2 er gyldig 1.1.23 og det er dennes kobling som vil brukes

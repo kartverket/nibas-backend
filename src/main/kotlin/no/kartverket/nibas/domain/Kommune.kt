@@ -12,10 +12,8 @@ import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
-import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
-import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 
 /**
@@ -87,6 +85,11 @@ class Kommune(
     fun addStemmekrets(stemmekrets: Stemmekrets) {
         stemmekrets.kommuneLokalid = kommuneLokalid
         kommuneLokalid.stemmekretser.add(stemmekrets)
+    }
+
+    fun addBopliktomraade(bopliktomraade: Bopliktomraade) {
+        bopliktomraade.kommuneLokalid = kommuneLokalid
+        kommuneLokalid.bopliktomraade.add(bopliktomraade)
     }
 
     fun getGrunnkretser(gyldighetsdato: LocalDate = LocalDate.now()): List<Grunnkrets> {

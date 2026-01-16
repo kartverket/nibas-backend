@@ -55,7 +55,7 @@ class GrenseServiceIT : TestWithDbContainer() {
     @Test
     fun hentEksisterendeGrenseMedDagensDato() {
         val lokalIdOfGrense = Lokalid("ac7e05ca-fb65-4277-ad95-63c32c1370d0")
-        saveGrenseAvTypeKommunegrense(lokalid = lokalIdOfGrense)
+        saveGrense(lokalid = lokalIdOfGrense)
         assertThat(grenseRepository.findAllByLokalid(lokalIdOfGrense.value)).hasSize(1)
 
         // Later som 28.11.22 er dagens dato. Det fungerer så lenge den er senere enn 1.10.22
@@ -65,8 +65,8 @@ class GrenseServiceIT : TestWithDbContainer() {
     @Test
     fun hentVersjonAvKommunegrenseFramITid() {
         val lokalIdOfGrense = Lokalid("ac7e05ca-fb65-4277-ad95-63c32c1370d0")
-        saveGrenseAvTypeKommunegrense(id = "9000", lokalid = lokalIdOfGrense, gyldigTil = jan1In2023)
-        saveGrenseAvTypeKommunegrense(id = "9001", lokalid = lokalIdOfGrense, gyldigFra = jan1In2023, opphav = "Oslo")
+        saveGrense(id = "9000", lokalid = lokalIdOfGrense, gyldigTil = jan1In2023)
+        saveGrense(id = "9001", lokalid = lokalIdOfGrense, gyldigFra = jan1In2023, opphav = "Oslo")
         assertThat(grenseRepository.findAllByLokalid(lokalIdOfGrense.value)).hasSize(2)
 
         val framtidigVersjonAvGrense = grenseService.hentGrense(Identifikator(lokalIdOfGrense, jan1In2023))

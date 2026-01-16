@@ -1,9 +1,9 @@
 package no.kartverket.nibas.domain
 
 import no.kartverket.nibas.api.v1.common.Flatetype
+import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.common.geometry.getGrenserIRiktigRekkefoelge
 import no.kartverket.nibas.common.geometry.toMultiPolygon
-import no.kartverket.nibas.domain.Stemmekrets.Companion.tillatteGrensetyper
 import no.kartverket.nibas.events.EventRad
 import no.kartverket.nibas.events.EventType
 import org.hibernate.annotations.SQLRestriction
@@ -21,9 +21,6 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 
-/**
- * id overrides i konstruktør for å kunne overstyre verdi for test.
- */
 @Table(name = "bopliktomraade")
 @Entity
 class Bopliktomraade(
@@ -115,6 +112,35 @@ class Bopliktomraade(
             flateType = Flatetype.BOPLIKTOMRAADE,
             lokalid = this.lokalid
         )
+
+    fun applyMappingFromExistingBopliktomraade(gammeltBopliktomraade: Bopliktomraade): Bopliktomraade =
+        this.apply {
+            nummer = gammeltBopliktomraade.nummer
+            navn = gammeltBopliktomraade.navn
+            delvisBoplikt = gammeltBopliktomraade.delvisBoplikt
+            forskriftsreferanse = gammeltBopliktomraade.forskriftsreferanse
+            url = gammeltBopliktomraade.url
+            omraade = gammeltBopliktomraade.omraade
+            datafangstdato = gammeltBopliktomraade.datafangstdato
+            foerstedigitaliseringsdato = gammeltBopliktomraade.foerstedigitaliseringsdato
+            posisjon = gammeltBopliktomraade.posisjon
+            opphav = gammeltBopliktomraade.opphav
+            informasjon = gammeltBopliktomraade.informasjon
+        }
+
+    fun copyGrenserFromExistingBopliktomraade(gammeltBopliktomraade: Bopliktomraade, gyldigFra: LocalDate = LocalDate.now()): Bopliktomraade {
+        gammeltBopliktomraade.getGrensekoblinger(gyldigFra).forEach { gammelGrenseKobling ->
+            addGrensekobling(grense = gammelGrenseKobling.grense)
+        }
+        return this
+    }
+
+    companion object {
+        fun tillatteGrensetyper(): Set<Grensetype> = setOf(
+            Grensetype.Bopliktgrense
+        )
+    }
+
 }
 
 /**

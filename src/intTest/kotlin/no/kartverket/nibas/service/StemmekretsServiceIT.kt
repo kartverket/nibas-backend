@@ -4,7 +4,8 @@ import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grensetype
-import no.kartverket.nibas.api.v1.common.geojson.Feature
+import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
+import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.KodelisteEntry
@@ -14,8 +15,6 @@ import no.kartverket.nibas.api.v1.common.getUnikeKretsDelingEndringRequests
 import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.api.v1.request.KretsNavnOgNummer
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
-import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
-import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.builders.MaalemetodeKodeEnum
 import no.kartverket.nibas.builders.StemmekretsRequestBuilder
 import no.kartverket.nibas.builders.UtkastRequestBuilder
@@ -23,22 +22,17 @@ import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.domain.Endringstype
-import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.Grense
-import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
-import no.kartverket.nibas.extensions.geometry.geometryToDto
-import no.kartverket.nibas.extensions.geometry.grenseToFeature
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
+import no.kartverket.nibas.testcontainer.assertGrenser
 import no.kartverket.nibas.utils.GrenseHelper
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
-import org.locationtech.jts.geom.Coordinate
-import org.locationtech.jts.geom.GeometryFactory
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -115,9 +109,9 @@ class StemmekretsServiceIT : TestWithDbContainer() {
     fun `hent grenser for stemmekrets fram i tid`() {
         val identifikatorFor1Jan23 = Identifikator(stemmekretsLokalid, jan1In2023)
 
-        val grense3 = saveGrenseAvTypeKommunegrense(id = "4002", lokalid = grenseLokallid, gyldigFra = jan1In2024)
-        val grense2 = saveGrenseAvTypeKommunegrense(id = "4001", lokalid = grenseLokallid, gyldigFra = jan1In2023, gyldigTil = jan1In2024)
-        val grense1 = saveGrenseAvTypeKommunegrense(id = "4000", lokalid = grenseLokallid, gyldigFra = october1In2022, gyldigTil = jan1In2023)
+        val grense3 = saveGrense(id = "4002", lokalid = grenseLokallid, gyldigFra = jan1In2024)
+        val grense2 = saveGrense(id = "4001", lokalid = grenseLokallid, gyldigFra = jan1In2023, gyldigTil = jan1In2024)
+        val grense1 = saveGrense(id = "4000", lokalid = grenseLokallid, gyldigFra = october1In2022, gyldigTil = jan1In2023)
 
         val stemmekrets1 = saveStemmekrets(id = "301", lokalid = stemmekretsLokalid, gyldigFra = october1In2022, gyldigTil = december1In2022, grenser = listOf(grense1))
         val stemmekrets2 = saveStemmekrets(id = "302", lokalid = stemmekretsLokalid, gyldigFra = december1In2022, gyldigTil = jan1In2024, grenser = listOf(grense1, grense2))
@@ -1019,45 +1013,6 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         return stemmekretsService.hentStemmekrets(identifikator)
     }
 
-    private fun utfoerGrenseendring(kretsSomSkalHaGrenseendring: Stemmekrets, opprinneligDato: LocalDate, endringsdato: LocalDate,
-                                    featureAnnenOppdatertGrense: Feature? = null): Set<Flate> {
-        val grenseKobling = kretsSomSkalHaGrenseendring.getGrensekoblinger(gyldighetsdato = opprinneligDato)
-            .first { it.grense.lokalid == "grenseDeltLokalid" }
-
-        val oppdatertGeometri = GeometryFactory().createLineString(arrayOf(
-            Coordinate(10.0, 10.0),
-            Coordinate(5.0, 5.0),
-            Coordinate(10.0, 0.0)
-        ))
-
-        val oppdatertGrensefeature = grenseKobling.grense.grenseToFeature(opprinneligDato)
-        oppdatertGeometri.geometryToDto().also { oppdatertGrensefeature.geometry = it }
-
-        val features = if (featureAnnenOppdatertGrense != null)
-            listOf(oppdatertGrensefeature, featureAnnenOppdatertGrense) else listOf(oppdatertGrensefeature)
-
-        return grenseService.lagreGrenser(
-            grenser = FeatureCollection(features = features),
-            gyldighetsdato = endringsdato,
-            endringstype = Endringstype.VEDTATT_GRENSEJUSTERING
-        )
-    }
-
-    private fun lagFeatureEndreYkoordinat(kretsSomSkalHaGrenseendring: Stemmekrets, opprinneligDato: LocalDate, lokalidGrenseSomSkalEndres: String): Feature {
-        val grenseKobling = kretsSomSkalHaGrenseendring.getGrensekoblinger(gyldighetsdato = opprinneligDato)
-            .first { it.grense.lokalid == lokalidGrenseSomSkalEndres }
-        val grense = grenseKobling.grense.grense
-        val oppdatertGeometri = GeometryFactory().createLineString(arrayOf(
-            grense.getCoordinateN(0).copy(),
-            grense.getCoordinateN(1).copy().also { it.setY(it.getY() + 4) },
-            grense.getCoordinateN(2).copy()
-        ))
-
-        val oppdatertGrensefeature = grenseKobling.grense.grenseToFeature(opprinneligDato)
-        oppdatertGeometri.geometryToDto().also { oppdatertGrensefeature.geometry = it }
-        return oppdatertGrensefeature
-    }
-
     fun settGrensetypeForGrenserSomIkkeErDelt(vestreKrets: Stemmekrets, oestreKrets: Stemmekrets, grensetype: Grensetype) {
         vestreKrets.grenser.stream().forEach { if (it.grense.id != "grenseDelt" && it.grense.id != "grenseDelt2") it.grense.grensetype = grensetype }
         oestreKrets.grenser.stream().forEach { if (it.grense.id != "grenseDelt" && it.grense.id != "grenseDelt2") it.grense.grensetype = grensetype }
@@ -1111,12 +1066,3 @@ class StemmekretsServiceIT : TestWithDbContainer() {
 
 }
 
-fun assertGrenser(grensekoblinger: List<GrenseKobling>,
-                  grenseIGrensekoblingId: String,
-                  enhetKobletTilGrenseLokalid: Lokalid) {
-    assertThat(grensekoblinger).hasSize(1)
-    val grensekobling = grensekoblinger[0]
-    val grenseIGrensekobling = grensekobling.grense
-    assertThat(grenseIGrensekobling.id).isEqualTo(grenseIGrensekoblingId)
-    assertThat(grensekobling.getEnhetKobletTilGrense().lokalid).isEqualTo(enhetKobletTilGrenseLokalid.value)
-}

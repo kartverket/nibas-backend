@@ -6,7 +6,6 @@ import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.common.Operasjoner
-import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.KodelisteEntry
@@ -28,13 +27,12 @@ import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
-import no.kartverket.nibas.extensions.geometry.geometryToDto
 import no.kartverket.nibas.extensions.geometry.grenseKoblingToFeature
-import no.kartverket.nibas.extensions.geometry.grenseToFeature
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.repository.findAllByLokalidSortedByGyldigFra
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
+import no.kartverket.nibas.testcontainer.assertGrenser
 import no.kartverket.nibas.utils.GrenseHelper
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
@@ -133,9 +131,9 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
     fun hentGrenserForGrunnkretsFramITid() {
         val identifikatorFor1Jan23 = Identifikator(grunnkretsLokalid, jan1In2023)
 
-        val grense3 = saveGrenseAvTypeKommunegrense(id = "3002", lokalid = grenseLokallid, gyldigFra = jan1In2024)
-        val grense2 = saveGrenseAvTypeKommunegrense(id = "3001", lokalid = grenseLokallid, gyldigFra = jan1In2023, gyldigTil = jan1In2024)
-        val grense1 = saveGrenseAvTypeKommunegrense(id = "3000", lokalid = grenseLokallid, gyldigFra = october1In2022, gyldigTil = jan1In2023)
+        val grense3 = saveGrense(id = "3002", lokalid = grenseLokallid, gyldigFra = jan1In2024)
+        val grense2 = saveGrense(id = "3001", lokalid = grenseLokallid, gyldigFra = jan1In2023, gyldigTil = jan1In2024)
+        val grense1 = saveGrense(id = "3000", lokalid = grenseLokallid, gyldigFra = october1In2022, gyldigTil = jan1In2023)
 
         val grunnkrets1 = saveGrunnkrets(id = "1301", lokalid = grunnkretsLokalid, gyldigFra = october1In2022, gyldigTil = december1In2022, grenser = listOf(grense1))
         val grunnkrets2 = saveGrunnkrets(id = "1302", lokalid = grunnkretsLokalid, gyldigFra = december1In2022, gyldigTil = jan1In2024, grenser = listOf(grense1, grense2))
@@ -981,21 +979,6 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
     fun settGrensetypeForGrenserSomIkkeErDelt(vestreKrets: Grunnkrets, oestreKrets: Grunnkrets, grensetype: Grensetype) {
         vestreKrets.grenser.stream().forEach { if (it.grense.id != "grenseDelt" && it.grense.id != "grenseDelt2") it.grense.grensetype = grensetype }
         oestreKrets.grenser.stream().forEach { if (it.grense.id != "grenseDelt" && it.grense.id != "grenseDelt2") it.grense.grensetype = grensetype }
-    }
-
-    private fun lagFeatureEndreYkoordinat(kretsSomSkalHaGrenseendring: Grunnkrets, opprinneligDato: LocalDate, lokalidGrenseSomSkalEndres: String): Feature {
-        val grenseKobling = kretsSomSkalHaGrenseendring.getGrensekoblinger(gyldighetsdato = opprinneligDato)
-            .first { it.grense.lokalid == lokalidGrenseSomSkalEndres }
-        val grense = grenseKobling.grense.grense
-        val oppdatertGeometri = GeometryFactory().createLineString(arrayOf(
-            grense.getCoordinateN(0).copy(),
-            grense.getCoordinateN(1).copy().also { it.setY(it.getY() + 4) },
-            grense.getCoordinateN(2).copy()
-        ))
-
-        val oppdatertGrensefeature = grenseKobling.grense.grenseToFeature(opprinneligDato)
-        oppdatertGeometri.geometryToDto().also { oppdatertGrensefeature.geometry = it }
-        return oppdatertGrensefeature
     }
 
     private fun lagGrenserForGrunnkrets(

@@ -4,6 +4,7 @@ import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
+import no.kartverket.nibas.testcontainer.assertGrenser
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.test.context.ActiveProfiles

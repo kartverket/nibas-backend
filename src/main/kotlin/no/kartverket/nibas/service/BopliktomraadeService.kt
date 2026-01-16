@@ -1,31 +1,33 @@
 package no.kartverket.nibas.service
 
+import no.kartverket.nibas.api.v1.request.BopliktomraadeRequest
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.common.ResponseException
+import no.kartverket.nibas.common.UgyldigTilstandException
 import no.kartverket.nibas.domain.Bopliktomraade
 import no.kartverket.nibas.domain.BopliktomraadeGrenseKobling
-import no.kartverket.nibas.domain.Grunnkrets
+import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.repository.BopliktomraadeRepository
 import no.kartverket.nibas.repository.findAllByLokalidSortedByGyldigFra
+import no.kartverket.nibas.repository.findAllGyldigPaaDato
+import no.kartverket.nibas.repository.findAntallFramtidigeVersjonerForIdentifikator
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
+
 @Service
-@Transactional
+@Transactional(readOnly = true)
 class BopliktomraadeService(
-    private val bopliktRepository: BopliktomraadeRepository
+    private val bopliktomraadeRepository: BopliktomraadeRepository
 ) {
-    @Transactional
     fun hentAlleBopliktomraader(dato: LocalDate): List<Bopliktomraade> =
-        bopliktRepository.findAll()
-            .filter { it.gyldigPaaDato(dato) }
+        bopliktomraadeRepository.findAllGyldigPaaDato(dato)
 
-    @Transactional(readOnly = true)
     fun hentBopliktomraade(identifikator: Identifikator): Bopliktomraade? =
-        bopliktRepository.findGyldigObjektForIdentifikator(identifikator)
+        bopliktomraadeRepository.findGyldigObjektForIdentifikator(identifikator)
 
-    @Transactional(readOnly = true)
     fun hentGrensekoblingerForBopliktomraade(identifikator: Identifikator): List<BopliktomraadeGrenseKobling> {
         return hentBopliktomraade(identifikator)
             ?.getGrensekoblinger(identifikator.gyldighetsdato)?.toList()
@@ -33,8 +35,85 @@ class BopliktomraadeService(
     }
 
     fun hentAlleVersjonerMedGyldigFraEtterGittDato(lokalId: Lokalid, dato: LocalDate): List<Bopliktomraade> =
-        bopliktRepository.findAllByLokalidSortedByGyldigFra(lokalId)
+        bopliktomraadeRepository.findAllByLokalidSortedByGyldigFra(lokalId)
             .filter { it.gyldighet.gyldigFra.isAfter(dato) }
+
+    fun hentAntallGyldigeVersjonerFramITidFor(identifikator: Identifikator): Int =
+        bopliktomraadeRepository.findAntallFramtidigeVersjonerForIdentifikator(identifikator)
+
+    fun hentFramtidigeVersjonerForBopliktomraade(lokalId: Lokalid, gyldighetsdato: LocalDate?): List<Bopliktomraade> {
+        val identifikator = Identifikator(lokalId, gyldighetsdato ?: LocalDate.now())
+        val gyldigBopliktomraadeForDagensDato = hentBopliktomraade(identifikator)
+            ?: throw UgyldigTilstandException("Det finnes ingen gyldig bopliktomraade for identifikator $identifikator")
+        return listOf(gyldigBopliktomraadeForDagensDato)
+            .plus(hentAlleVersjonerMedGyldigFraEtterGittDato(lokalId, identifikator.gyldighetsdato))
+    }
+
+    @Transactional(readOnly = false)
+    fun oppdaterBopliktomraade(
+        lokalId: Lokalid,
+        gyldigFra: LocalDate,
+        endringstype: Endringstype,
+        oppdatertBopliktomraade: BopliktomraadeRequest
+    ): Bopliktomraade {
+
+        val identifikator = Identifikator(lokalId, gyldigFra)
+        val gammeltBopliktomraade = hentBopliktomraade(identifikator)
+            ?: throw ResponseException.NotFoundException(title = "Bopliktområde ikke funnet", msg = "Bopliktområde med $identifikator ble ikke funnet.")
+
+        val nyttBopliktomraade = createNyVersjonAvBopliktomraade(gammeltBopliktomraade, gyldigFra, endringstype)
+            .applyChangesFromRequest(oppdatertBopliktomraade)
+
+        return nyttBopliktomraade
+    }
+
+    @Transactional(readOnly = false)
+    fun createNyVersjonAvBopliktomraade(bopliktomraade: Bopliktomraade, gyldigFra: LocalDate, endringstype: Endringstype): Bopliktomraade {
+        return createNyVersjonAvBopliktomraadeUtenGrenser(bopliktomraade, gyldigFra, endringstype)
+            .copyGrenserFromExistingBopliktomraade(bopliktomraade, gyldigFra)
+    }
+
+    @Transactional(readOnly = false)
+    fun createNyVersjonAvBopliktomraadeUtenGrenser(bopliktomraade: Bopliktomraade, gyldigFra: LocalDate, endringstype: Endringstype): Bopliktomraade {
+        val nyttBopliktomraade = kopierOgSaveBopliktomraade(bopliktomraade, gyldigFra, endringstype)
+
+        val kommune = bopliktomraade.getKommune(gyldigFra) ?: throw ResponseException.NotFoundException(title = "Kommune ikke funnet",
+            msg = "Fant ikke kommune for bopliktområde med id ${bopliktomraade.id} og gyldig fra $gyldigFra")
+        kommune.addBopliktomraade(nyttBopliktomraade)
+        return nyttBopliktomraade
+    }
+
+    private fun kopierOgSaveBopliktomraade(bopliktomraade: Bopliktomraade, gyldigFra: LocalDate, endringstype: Endringstype): Bopliktomraade {
+        val nyttBopliktomraade = bopliktomraadeRepository.save(
+            Bopliktomraade(lokalid = bopliktomraade.lokalid)
+                .applyMappingFromExistingBopliktomraade(bopliktomraade)
+                .apply {
+                    setGyldigFra(gyldigFra)
+                    bopliktomraade.gyldighet.gyldigTil?.let { setGyldigTil(it) }
+                    version = nesteVersjonForBopliktomraade(Lokalid(bopliktomraade.lokalid))
+                    auditInfo.typeEndring = endringstype
+                }
+        )
+
+        return nyttBopliktomraade
+            .also { bopliktomraade.setGyldigTil(gyldigFra) }
+    }
+
+    private fun nesteVersjonForBopliktomraade(lokalId: Lokalid): Int =
+        bopliktomraadeRepository
+            .findAllByLokalid(lokalId.value)
+            .maxBy { it.version }
+            .version + 1
+
 }
 
+fun Bopliktomraade.applyChangesFromRequest(request: BopliktomraadeRequest): Bopliktomraade =
+    this.apply {
+        this.navn = request.navn
+        this.nummer = request.nummer
+        this.delvisBoplikt = request.delvisBoplikt
+        this.forskriftsreferanse = request.forskriftsreferanse
+        this.url = request.url
+        this.setInfo(request.informasjon)
+    }
 
