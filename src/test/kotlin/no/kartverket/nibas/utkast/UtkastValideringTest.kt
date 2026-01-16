@@ -25,7 +25,11 @@ import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.utkast.Utkast
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
+import no.kartverket.nibas.builders.MaalemetodeKodeEnum
+import no.kartverket.nibas.kodelister.KodelisteItem
+import no.kartverket.nibas.kodelister.KodelisteRespons
 import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.kodelister.KodelisteType
 import no.kartverket.nibas.service.BopliktomraadeService
 import no.kartverket.nibas.service.GrenseService
 import no.kartverket.nibas.service.GrunnkretsService
@@ -75,6 +79,13 @@ class UtkastValideringTest {
         every { stemmekretsServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns emptyList()
 
         every { grenseServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns emptyList()
+
+        every { kodelisteServiceMock.getMaalemetodeKoder() } returns KodelisteRespons(
+            type = KodelisteType.MAALEMETODE_KODE,
+            items = listOf(
+                KodelisteItem(id = MaalemetodeKodeEnum.TERRENGMAALT.uuid, kode = "93", label = "Terrengmålt")
+            )
+        )
 
         utkastValidatorService = UtkastValidatorService(grunnkretsServiceMock, grenseServiceMock, stemmekretsServiceMock, bopliktomraadeServiceMock, kodelisteServiceMock, currentTime)
     }

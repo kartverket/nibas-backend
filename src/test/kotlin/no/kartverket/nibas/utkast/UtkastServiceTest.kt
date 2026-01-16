@@ -39,7 +39,11 @@ import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
 import no.kartverket.nibas.events.NibasEvent
 import no.kartverket.nibas.events.NibasEventPublisher
+import no.kartverket.nibas.builders.MaalemetodeKodeEnum
+import no.kartverket.nibas.kodelister.KodelisteItem
+import no.kartverket.nibas.kodelister.KodelisteRespons
 import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.kodelister.KodelisteType
 import no.kartverket.nibas.repository.BopliktomraadeRepository
 import no.kartverket.nibas.repository.GrunnkretsRepository
 import no.kartverket.nibas.repository.StemmekretsRepository
@@ -93,6 +97,12 @@ internal class UtkastServiceTest {
     fun beforeEach() {
         every { currentTime.asLocalDate() } returns (LocalDate.of(2022, 6, 1))
         every { grenseServiceMock.validerLaasbareForGrenseendringerFinnesOgLagListeMedLaasbarOgOensketVersjon(any(), any()) } returns emptyList()
+        every { kodelisteServiceMock.getMaalemetodeKoder() } returns KodelisteRespons(
+            type = KodelisteType.MAALEMETODE_KODE,
+            items = listOf(
+                KodelisteItem(id = MaalemetodeKodeEnum.TERRENGMAALT.uuid, kode = "93", label = "Terrengmålt")
+            )
+        )
         val utkastValidatorService = UtkastValidatorService(grunnkretsServiceMock, grenseServiceMock, stemmekretsServiceMock, bopliktomraadeServiceMock, kodelisteServiceMock, currentTime)
         utkastService = UtkastService(utkastRepositoryMock, nasjonServiceMock, fylkeServiceMock, kommuneServiceMock, grunnkretsServiceMock,
             stemmekretsServiceMock, grenseServiceMock, nibasEventPublisherMock, utkastValidatorService, currentTime,

@@ -10,6 +10,8 @@ import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
+import no.kartverket.nibas.api.v1.common.geojson.metadata.KodelisteEntry
+import no.kartverket.nibas.api.v1.common.geojson.metadata.Posisjonskvalitet
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
 import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.api.v1.request.KretsNavnOgNummer
@@ -20,13 +22,17 @@ import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.builders.LOKALID
+import no.kartverket.nibas.builders.MaalemetodeKodeEnum
 import no.kartverket.nibas.builders.StemmekretsBuilder
 import no.kartverket.nibas.common.CurrentTime
 import no.kartverket.nibas.common.FeilVedOppdatering
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.UnikLokalid
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
+import no.kartverket.nibas.kodelister.KodelisteItem
+import no.kartverket.nibas.kodelister.KodelisteRespons
 import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.kodelister.KodelisteType
 import no.kartverket.nibas.service.BopliktomraadeService
 import no.kartverket.nibas.service.GrenseService
 import no.kartverket.nibas.service.GrunnkretsService
@@ -74,6 +80,13 @@ class UtkastValidatorServiceTest {
             GrenseBuilder()
                 .withGyldigFra(eksisterendeTingGyldigFra)
                 .build()
+        )
+
+        every { kodelisteServiceMock.getMaalemetodeKoder() } returns KodelisteRespons(
+            type = KodelisteType.MAALEMETODE_KODE,
+            items = listOf(
+                KodelisteItem(id = MaalemetodeKodeEnum.TERRENGMAALT.uuid, kode = "93", label = "Terrengmålt")
+            )
         )
     }
 
@@ -207,7 +220,7 @@ class UtkastValidatorServiceTest {
     }
 
     @Test
-    fun `skal gi feil om det finnes flere endringer på grenser med samme ID`() {
+    fun `skal gi feil om det finnes flere endringer paa grenser med samme ID`() {
         val utkast = UtkastBuilder.builder("test", gyldigFra = datoSomVilGiFremtidEndringKonflikt)
             .withOperasjoner(
                 Operasjoner(
@@ -281,6 +294,50 @@ class UtkastValidatorServiceTest {
 
         val oppdateringFeil = result as FeilVedOppdatering.OppdateringException
         assertThat(oppdateringFeil.oppdateringInfo.type).isEqualTo(FeilVedOppdatering.Type.STEMMEKRETS)
+    }
+
+    @Test
+    fun `skal gi feil naar maalemetode mangler paa grense`() {
+        val utkast = UtkastBuilder.builder("test", gyldigFra = LocalDate.now())
+            .withOperasjoner(
+                Operasjoner(
+                    grenseendringer = Grenseendringer(
+                        endredeFeatures = listOf(
+                            FeatureBuilder()
+                                .withGrensetype(Grensetype.Grunnkretsgrense)
+                                .withPosisjonskvalitet(null)
+                                .build()
+                        )
+                    )
+                )
+            )
+            .build()
+        val result = utkastValidatorService.validateUtkastKlartForPublisering(utkast, utkast.gyldigFra)
+        assertThat(result).anyMatch { it.contains("Målemetode mangler") }
+    }
+
+    @Test
+    fun `skal gi feil naar maalemetode ikke finnes i kodeliste`() {
+        val ugyldigMaalemetode = Posisjonskvalitet(
+            maalemetode = KodelisteEntry(id = "finnes-ikke-i-kodeliste"),
+            noeyaktighet = null
+        )
+        val utkast = UtkastBuilder.builder("test", gyldigFra = LocalDate.now())
+            .withOperasjoner(
+                Operasjoner(
+                    grenseendringer = Grenseendringer(
+                        endredeFeatures = listOf(
+                            FeatureBuilder()
+                                .withGrensetype(Grensetype.Grunnkretsgrense)
+                                .withPosisjonskvalitet(ugyldigMaalemetode)
+                                .build()
+                        )
+                    )
+                )
+            )
+            .build()
+        val result = utkastValidatorService.validateUtkastKlartForPublisering(utkast, utkast.gyldigFra)
+        assertThat(result).anyMatch { it.contains("Ugyldig målemetode") }
     }
 
     @Test

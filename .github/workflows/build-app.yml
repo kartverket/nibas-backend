@@ -51,12 +51,13 @@ jobs:
         with:
           java-version: "21"
           distribution: "temurin"
+          cache: 'gradle'
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
       - name: Build with Gradle
-        run: ./gradlew build --info
+        run: ./gradlew build --build-cache --parallel
         env:
           JAVA_TOOL_OPTIONS: "-Duser.timezone=Europe/Oslo"
           GH_PACKAGES_PAT: ${{ secrets.SHARED_PACKAGES_READ_TOKEN }}

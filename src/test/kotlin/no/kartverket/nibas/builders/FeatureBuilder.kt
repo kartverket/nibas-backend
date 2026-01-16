@@ -8,12 +8,15 @@ import no.kartverket.nibas.api.v1.common.geojson.FeatureProperties
 import no.kartverket.nibas.api.v1.common.geojson.KontekstEgenskaper
 import no.kartverket.nibas.api.v1.common.geojson.metadata.AdministrativGrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.AvtaltAvgrensningslinjeMetadata
+import no.kartverket.nibas.api.v1.common.geojson.metadata.CommonGrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.CommonMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.DokumentasjonsreferanseDTO
 import no.kartverket.nibas.api.v1.common.geojson.metadata.GrunnlinjeMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
+import no.kartverket.nibas.api.v1.common.geojson.metadata.KodelisteEntry
 import no.kartverket.nibas.api.v1.common.geojson.metadata.KommunalKretsgrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Metadata
+import no.kartverket.nibas.api.v1.common.geojson.metadata.Posisjonskvalitet
 import no.kartverket.nibas.api.v1.common.geojson.metadata.RiksgrenseMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Sporingsinformasjon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.StatistiskgrenseMetadata
@@ -43,6 +46,10 @@ class FeatureBuilder(private var id: String? = "1") {
         GeometryFactory().createLineString(arrayOf(Coordinate(0.0, 0.0), Coordinate(1.0, 1.0)))
     private var shouldArchive: Boolean = false
     private val dokumentasjonsreferanser = mutableListOf<DokumentasjonsreferanseDTO>()
+    private var posisjonskvalitet: Posisjonskvalitet? = Posisjonskvalitet(
+        maalemetode = KodelisteEntry(id = MaalemetodeKodeEnum.TERRENGMAALT.uuid),
+        noeyaktighet = null
+    )
 
     fun build(): Feature {
         var properties = FeatureProperties(
@@ -59,16 +66,17 @@ class FeatureBuilder(private var id: String? = "1") {
                 sporingsinformasjon = Sporingsinformasjon(oppdateringsdato = ZonedDateTime.now()),
                 gyldigFra = LocalDate.now()
             )
+            val commonGrense = CommonGrenseMetadata(posisjonskvalitet = posisjonskvalitet)
             metadata = when (grenseType) {
-                Grensetype.Kommunegrense -> AdministrativGrenseMetadata(common = commonMetadata, dokumentasjonsreferanser = dokumentasjonsreferanser)
-                Grensetype.Fylkesgrense -> AdministrativGrenseMetadata(common = commonMetadata, dokumentasjonsreferanser = dokumentasjonsreferanser)
-                Grensetype.Riksgrense -> RiksgrenseMetadata(common = commonMetadata, dokumentasjonsreferanser = dokumentasjonsreferanser)
-                Grensetype.Territorialgrense -> TerritorialgrenseMetadata(common = commonMetadata, dokumentasjonsreferanser = dokumentasjonsreferanser)
-                Grensetype.AvtaltAvgrensningslinje -> AvtaltAvgrensningslinjeMetadata(common = commonMetadata)
-                Grensetype.Stemmekretsgrense -> KommunalKretsgrenseMetadata(common = commonMetadata)
-                Grensetype.Grunnkretsgrense -> StatistiskgrenseMetadata(common = commonMetadata)
-                Grensetype.Delomraadegrense -> StatistiskgrenseMetadata(common = commonMetadata)
-                Grensetype.Grunnlinje -> GrunnlinjeMetadata(common = commonMetadata)
+                Grensetype.Kommunegrense -> AdministrativGrenseMetadata(common = commonMetadata, commonGrense = commonGrense, dokumentasjonsreferanser = dokumentasjonsreferanser)
+                Grensetype.Fylkesgrense -> AdministrativGrenseMetadata(common = commonMetadata, commonGrense = commonGrense, dokumentasjonsreferanser = dokumentasjonsreferanser)
+                Grensetype.Riksgrense -> RiksgrenseMetadata(common = commonMetadata, commonGrense = commonGrense, dokumentasjonsreferanser = dokumentasjonsreferanser)
+                Grensetype.Territorialgrense -> TerritorialgrenseMetadata(common = commonMetadata, commonGrense = commonGrense, dokumentasjonsreferanser = dokumentasjonsreferanser)
+                Grensetype.AvtaltAvgrensningslinje -> AvtaltAvgrensningslinjeMetadata(common = commonMetadata, commonGrense = commonGrense)
+                Grensetype.Stemmekretsgrense -> KommunalKretsgrenseMetadata(common = commonMetadata, commonGrense = commonGrense)
+                Grensetype.Grunnkretsgrense -> StatistiskgrenseMetadata(common = commonMetadata, commonGrense = commonGrense)
+                Grensetype.Delomraadegrense -> StatistiskgrenseMetadata(common = commonMetadata, commonGrense = commonGrense)
+                Grensetype.Grunnlinje -> GrunnlinjeMetadata(common = commonMetadata, commonGrense = commonGrense)
                 else -> throw RuntimeException("Not implemented yet.")
             }
         }
@@ -134,6 +142,11 @@ class FeatureBuilder(private var id: String? = "1") {
 
     fun withDokref(dokref: List<DokumentasjonsreferanseDTO>): FeatureBuilder {
         dokumentasjonsreferanser.addAll(dokref)
+        return this
+    }
+
+    fun withPosisjonskvalitet(posisjonskvalitet: Posisjonskvalitet?): FeatureBuilder {
+        this.posisjonskvalitet = posisjonskvalitet
         return this
     }
 }

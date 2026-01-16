@@ -1,3 +1,5 @@
+@file:Suppress("SpringJavaInjectionPointsAutowiringInspection")
+
 package no.kartverket.nibas.testcontainer
 
 import no.kartverket.nibas.api.v1.common.Flatetype
@@ -18,6 +20,7 @@ import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.GrunnkretsRequestBuilder
 import no.kartverket.nibas.builders.KommuneBuilder
+import no.kartverket.nibas.builders.MaalemetodeKodeEnum
 import no.kartverket.nibas.builders.NasjonBuilder
 import no.kartverket.nibas.builders.StemmekretsBuilder
 import no.kartverket.nibas.common.Identifikator
@@ -30,6 +33,7 @@ import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Nasjon
+import no.kartverket.nibas.domain.PosisjonskvalitetEmbeddable
 import no.kartverket.nibas.domain.Spraakkode
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.UnikLokalid
@@ -61,6 +65,7 @@ import no.kartverket.nibas.service.deltgeometri.DeltGeometriAdministrativeGrense
 import no.kartverket.nibas.service.utkast.UtkastService
 import no.kartverket.nibas.sporing.Gyldighet
 import no.kartverket.nibas.sporing.Laasbar
+import no.kartverket.nibas.testsupport.TestUserFacadeConfig
 import no.kartverket.nibas.utils.GrenseHelper
 import org.assertj.core.api.Assertions.assertThat
 import org.locationtech.jts.geom.Coordinate
@@ -70,7 +75,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment
 import org.springframework.context.annotation.Import
-import no.kartverket.nibas.testsupport.TestUserFacadeConfig
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.containers.PostgreSQLContainer
@@ -466,7 +470,7 @@ class TestWithDbContainer {
     fun assertTopologi(flate1: MultiPolygon?, flate2: MultiPolygon?, lik: Boolean = true) {
         assertThat(flate1).isNotNull()
         assertThat(flate2).isNotNull()
-        assertThat(flate1?.equals(flate2)).`as`("Flate1: " + flate1 + " Flate2: " + flate2).isEqualTo(lik)
+        assertThat(flate1?.equals(flate2)).`as`("Flate1: $flate1 Flate2: $flate2").isEqualTo(lik)
     }
 
     fun saveNaboGrunnkretser(gyldigFra: LocalDate, medHull: Boolean = false, medTredjeKrets: Boolean = false, medToDelteGrenser: Boolean = false, medKommunegrense: Boolean = false)
@@ -671,7 +675,7 @@ class TestWithDbContainer {
     }
 
     fun saveNaboStemmekretser(gyldigFra: LocalDate, medHull: Boolean = false, medTredjeKrets: Boolean = false, medToDelteGrenser: Boolean = false)
-    : List<Stemmekrets> {
+        : List<Stemmekrets> {
         val grenserForHull = if (medHull) {
             GrenseHelper.getHullVestligKrets(gyldigFra, Grensetype.Grunnkretsgrense)
         } else {
@@ -731,6 +735,10 @@ class TestWithDbContainer {
                 setGyldigFra(gyldigFra)
                 grense = GrenseHelper.geometryFactory.createLineString(
                     coordinates.toTypedArray()
+                )
+                kvalitet = PosisjonskvalitetEmbeddable(
+                    maalemetode = MaalemetodeKodeEnum.TERRENGMAALT.uuid,
+                    noeyaktighet = null
                 )
             }
     }

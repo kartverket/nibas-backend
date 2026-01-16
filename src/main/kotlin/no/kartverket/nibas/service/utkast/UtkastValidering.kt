@@ -7,6 +7,7 @@ import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.UnikKretsDelingEndring
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.KontekstEgenskaper
+import no.kartverket.nibas.api.v1.common.geojson.metadata.HarCommonGrense
 import no.kartverket.nibas.api.v1.common.getUnikeKretsDelingEndringRequests
 import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.common.CurrentTime
@@ -50,7 +51,30 @@ class UtkastValidatorService(
         }
 
         errorMessages.addAll(validerKretsinfoEndringer(operasjoner))
+        errorMessages.addAll(validerMaalemetode(endredeFeatures))
 
+        return errorMessages
+    }
+
+    private fun validerMaalemetode(endredeFeatures: List<Feature>): List<String> {
+        val errorMessages = mutableListOf<String>()
+        val gyldigeMaalemetoder = kodelisteService.getMaalemetodeKoder().items.map { it.id }.toSet()
+
+        endredeFeatures.forEach { feature ->
+            val metadata = feature.properties.metadata
+            if (metadata is HarCommonGrense) {
+                val maalemetodeId = metadata.commonGrense.posisjonskvalitet?.maalemetode?.id
+                val featureId = feature.id ?: "NY"
+
+                when {
+                    maalemetodeId.isNullOrBlank() ->
+                        errorMessages.add("Målemetode mangler på grense $featureId.")
+
+                    maalemetodeId !in gyldigeMaalemetoder ->
+                        errorMessages.add("Ugyldig målemetode '$maalemetodeId' på grense $featureId.")
+                }
+            }
+        }
         return errorMessages
     }
 
@@ -312,9 +336,10 @@ class UtkastValidatorService(
                         }
                     }
                 }
+
                 else -> {}
             }
-            if (errorMessages.isNotEmpty()){
+            if (errorMessages.isNotEmpty()) {
                 errorMessages.addFirst("Grense med id: ${feature.id ?: "Ny grense, ingen id - "} har ugyldig tilhørighet. Årsak(er):")
             }
         }
@@ -594,4 +619,3 @@ private fun Operasjoner.harEndringer(): Boolean {
 }
 
 private fun Operasjoner.harIkkeEndringer(): Boolean = !this.harEndringer()
-
