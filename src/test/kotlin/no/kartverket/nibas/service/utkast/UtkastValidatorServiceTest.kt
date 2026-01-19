@@ -12,11 +12,13 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.KodelisteEntry
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Posisjonskvalitet
+import no.kartverket.nibas.api.v1.request.BopliktomraadeRequest
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
 import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.api.v1.request.KretsNavnOgNummer
 import no.kartverket.nibas.api.v1.request.StemmekretsRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
+import no.kartverket.nibas.builders.BopliktomraadeBuilder
 import no.kartverket.nibas.builders.FeatureBuilder
 import no.kartverket.nibas.builders.GrenseBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
@@ -76,6 +78,12 @@ class UtkastValidatorServiceTest {
                 .build()
         )
 
+        every { bopliktomraadeServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns listOf(
+            BopliktomraadeBuilder()
+                .withGyldigFra(eksisterendeTingGyldigFra)
+                .build()
+        )
+
         every { grenseServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns listOf(
             GrenseBuilder()
                 .withGyldigFra(eksisterendeTingGyldigFra)
@@ -120,6 +128,45 @@ class UtkastValidatorServiceTest {
 
         val oppdateringFeil = result as FeilVedOppdatering.OppdateringException
         assertThat(oppdateringFeil.oppdateringInfo.type).isEqualTo(FeilVedOppdatering.Type.GRUNNKRETS)
+    }
+
+    @Test
+    fun `skal gi feil om det finnes nyere endringer paa bopliktomraade`() {
+        every { bopliktomraadeServiceMock.hentBopliktomraade(any()) } returns BopliktomraadeBuilder.DEFAULT_BOPLIKTOMRAADE.apply {
+            kommuneLokalid = UnikLokalid(
+                lokalid = "lokalid",
+                flatetype = Flatetype.KOMMUNE
+            ).also {
+                it.kommuner = mutableSetOf(KommuneBuilder()
+                    .withGyldigFra(eksisterendeTingGyldigFra)
+                    .build()
+                )
+            }
+        }
+
+        val utkast = UtkastBuilder.builder("test", gyldigFra = datoSomVilGiFremtidEndringKonflikt)
+            .withBopliktomraadeRequests(mapOf(
+                "lokalId" to BopliktomraadeRequest(
+                    identifikasjon = Identifikasjon(lokalid = "lokalid"),
+                    nummer = "0123",
+                    navn = "navn",
+                    version = 0,
+                    forskriftsreferanse = "01",
+                    url = "tellekrets",
+                    delvisBoplikt = false,
+                    kommunenummer = Kommunenummer(
+                        "1",
+                        "1"
+                    )
+                )
+            ))
+            .build()
+
+        val result = utkastValidatorService.validerFremtidigeEndringer(utkast, gyldighetDato = utkast.gyldigFra)
+        assertThat(result).isInstanceOf(FeilVedOppdatering.OppdateringException::class.java)
+
+        val oppdateringFeil = result as FeilVedOppdatering.OppdateringException
+        assertThat(oppdateringFeil.oppdateringInfo.type).isEqualTo(FeilVedOppdatering.Type.BOPLIKTOMRAADE)
     }
 
     @Test

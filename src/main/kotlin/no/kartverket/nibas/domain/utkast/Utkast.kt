@@ -2,6 +2,7 @@ package no.kartverket.nibas.domain.utkast
 
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Operasjoner
+import no.kartverket.nibas.api.v1.request.BopliktomraadeRequest
 import no.kartverket.nibas.api.v1.request.FylkeRequest
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
 import no.kartverket.nibas.api.v1.request.KommuneRequest
@@ -123,6 +124,12 @@ class UtkastBuilder private constructor(val navn: String, private val endringsty
 
     fun withStemmekretsRequests(stemmekretsRequest: Map<String, StemmekretsRequest>): UtkastBuilder {
         val metadataEndringerCopy = operasjoner.metadataendringer.copy(stemmekretsendringer = stemmekretsRequest)
+        operasjoner = operasjoner.copy(metadataendringer = metadataEndringerCopy)
+        return this
+    }
+
+    fun withBopliktomraadeRequests(bopliktomraadeRequest: Map<String, BopliktomraadeRequest>): UtkastBuilder {
+        val metadataEndringerCopy = operasjoner.metadataendringer.copy(bopliktomraadeendringer = bopliktomraadeRequest)
         operasjoner = operasjoner.copy(metadataendringer = metadataEndringerCopy)
         return this
     }

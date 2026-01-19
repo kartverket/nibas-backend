@@ -29,6 +29,7 @@ import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.repository.UtkastRepository
 import no.kartverket.nibas.repository.verifiserOptimistiskLaas
+import no.kartverket.nibas.service.BopliktomraadeService
 import no.kartverket.nibas.service.FylkeService
 import no.kartverket.nibas.service.GrenseService
 import no.kartverket.nibas.service.GrunnkretsService
@@ -59,6 +60,7 @@ class UtkastService(
     private val currentTime: CurrentTime,
     private val stemmekretsRepository: StemmekretsRepository,
     private val grunnkretsRepository: GrunnkretsRepository,
+    private val bopliktomraadeService: BopliktomraadeService,
 ) {
 
     private val logger: Logger = LoggerFactory.getLogger(UtkastService::class.java)
@@ -226,7 +228,7 @@ class UtkastService(
 
     /**
      * Sjekker at det som utkastet ønsker å oppdatere finnes. Alt som kan oppdateres er en subklasse av Laasbar:
-     * Grense, Grunnkrets, Stemmekrets, Kommune, Fylke, Nasjon
+     * Grense, Grunnkrets, Stemmekrets, Kommune, Fylke, Nasjon, Bopliktomraade
      * Returnerer liste med alle låsbare og hvilken versjon utkastet mener de skal ha
      * Den kallende tjenesten validerer at de låsbare har ønsket versjon
      */
@@ -283,9 +285,15 @@ class UtkastService(
         })
 
         laasbarMedOensketVersjonListe.addAll(metadataendringer.grunnkretsendringer.mapNotNull {
-            val stemmekrets = (grunnkretsService.hentGrunnkrets(Identifikator(Lokalid(it.value.identifikasjon.lokalid), gyldigFra))
-                ?: throw ResponseException.NotFoundException("Fant ikke stemmekrets med id ${it.value.identifikasjon.lokalid} som er gyldig ${gyldigFra.toNorskFormat()}"))
-            Pair(stemmekrets, it.value.version)
+            val grunnkrets = (grunnkretsService.hentGrunnkrets(Identifikator(Lokalid(it.value.identifikasjon.lokalid), gyldigFra))
+                ?: throw ResponseException.NotFoundException("Fant ikke grunnkrets med id ${it.value.identifikasjon.lokalid} som er gyldig ${gyldigFra.toNorskFormat()}"))
+            Pair(grunnkrets, it.value.version)
+        })
+
+        laasbarMedOensketVersjonListe.addAll(metadataendringer.bopliktomraadeendringer.mapNotNull {
+            val bopliktomraade = (bopliktomraadeService.hentBopliktomraade(Identifikator(Lokalid(it.value.identifikasjon.lokalid), gyldigFra))
+                ?: throw ResponseException.NotFoundException("Fant ikke bopliktområde med id ${it.value.identifikasjon.lokalid} som er gyldig ${gyldigFra.toNorskFormat()}"))
+            Pair(bopliktomraade, it.value.version)
         })
 
         return laasbarMedOensketVersjonListe

@@ -12,6 +12,7 @@ import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
 import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.api.v1.request.KretsNavnOgNummer
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
+import no.kartverket.nibas.builders.BopliktomraadeRequestBuilder
 import no.kartverket.nibas.builders.GrunnkretsRequestBuilder
 import no.kartverket.nibas.builders.OpprettUtkastRequestBuilder
 import no.kartverket.nibas.builders.StemmekretsRequestBuilder
@@ -274,6 +275,40 @@ class UtkastServiceIT : TestWithDbContainer() {
             .matches {
                 (it as OptimistiskLaasException).konflikter.first().getMessage()
                     .contains("Det er ikke samsvar med versjon for grunnkrets 42270304 Gammelt navn. Ønsket versjon = 0, eksisterende versjon = 1 for objekt med id = grunnkrets-9000")
+            }
+    }
+
+    @Test
+    fun `skal gi optimistisklaasexception om man har har en metadataendring paa utdatert versjon av et bopliktomraade`() {
+        val kommune = saveKommune()
+
+        val bopliktomraade = saveBopliktomraade(lokalid = Lokalid("test1"), bopliktomraadenavn = "Gammelt navn")
+        kommune.addBopliktomraade(bopliktomraade)
+
+        val bopliktomraadeEndring = BopliktomraadeRequestBuilder()
+            .withLokalId("test1")
+            .withNavn("nytt navn")
+            .withVersion(0)
+            .build()
+
+        val utkast = UtkastBuilder.builder("test", gyldigFra = LocalDate.now())
+            .withOperasjoner(
+                Operasjoner(
+                    metadataendringer = Metadataendringer(
+                        bopliktomraadeendringer = mapOf("test1" to bopliktomraadeEndring)
+                    )
+                )
+            )
+            .build()
+
+        utkastRepository.save(utkast)
+
+        assertThatThrownBy { utkastService.publiserUtkast(utkast.id) }
+            .isInstanceOf(OptimistiskLaasException::class.java)
+            .hasMessageContaining("Det er ikke samsvar med versjon")
+            .matches {
+                (it as OptimistiskLaasException).konflikter.first().getMessage()
+                    .contains("Det er ikke samsvar med versjon for bopliktomraade 01 Gammelt navn. Ønsket versjon = 0, eksisterende versjon = 1 for objekt med id = bopliktomraade-9000")
             }
     }
 

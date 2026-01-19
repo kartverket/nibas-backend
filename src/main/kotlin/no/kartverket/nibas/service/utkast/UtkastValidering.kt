@@ -133,6 +133,7 @@ class UtkastValidatorService(
     fun validerFremtidigeEndringer(utkast: Utkast, gyldighetDato: LocalDate): FeilVedOppdatering.OppdateringException? {
         validerGrunnkretsEndringerKonflikt(utkast, gyldighetDato)?.let { return it }
         validerStemmekretsEndringerKonflikt(utkast, gyldighetDato)?.let { return it }
+        validerBopliktomraadeEndringerKonflikt(utkast, gyldighetDato)?.let { return it }
         validerGrenseEndringerKonflikt(utkast, gyldighetDato)?.let { return it }
         validerStemmekretsSammenslaaingerKonflikt(utkast, gyldighetDato)?.let { return it }
         validerStemmekretsDelingerKonflikt(utkast, gyldighetDato)?.let { return it }
@@ -454,6 +455,12 @@ class UtkastValidatorService(
     private fun validerStemmekretsEndringerKonflikt(utkast: Utkast, gyldighetDato: LocalDate): FeilVedOppdatering.OppdateringException? {
         return utkast.operasjoner?.metadataendringer?.stemmekretsendringer?.firstNotNullOfOrNull { stemmekretsendring ->
             finnEventueltSenerePubliserteStemmekretserOgLagOppdateringException(stemmekretsendring.key, gyldighetDato)
+        }
+    }
+
+    private fun validerBopliktomraadeEndringerKonflikt(utkast: Utkast, gyldighetDato: LocalDate): FeilVedOppdatering.OppdateringException? {
+        return utkast.operasjoner?.metadataendringer?.bopliktomraadeendringer?.firstNotNullOfOrNull { bopliktomraadeendring ->
+            finnEventueltSenerePubliserteBopliktomraaderOgLagOppdateringException(bopliktomraadeendring.key, gyldighetDato)
         }
     }
 

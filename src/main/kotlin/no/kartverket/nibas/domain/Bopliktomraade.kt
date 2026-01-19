@@ -100,7 +100,7 @@ class Bopliktomraade(
     }
 
     override fun getFlateInformasjon(): FlateInformasjon =
-        FlateInformasjon(type, "$id $lokalid")
+        FlateInformasjon(type, "$nummer $navn")
 
     override fun toString(): String =
         "Bopliktomraade(id='$id', gyldighet: $gyldighet)"
