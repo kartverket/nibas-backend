@@ -27,7 +27,6 @@ hibernate-spatial = { module = "org.hibernate.orm:hibernate-spatial" }
 jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin" }
 kotlin-mockito = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "kotlinMockitoVersion" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect" }
-kotlin-stdlib-jdk = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test" }
 kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutinesCoreVersion" }
 locationtech-jts = { module = "org.locationtech.jts:jts", version.ref = "jtsVersion" }
@@ -65,5 +64,9 @@ testcontainers-postgres = { module = "org.testcontainers:postgresql", version.re
 
 [plugins]
 flyway = { id = "org.flywaydb.flyway", version.ref = "flywayVersion" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlinPluginVersion" }
+kotlin-spring = { id = "org.jetbrains.kotlin.plugin.spring", version.ref = "kotlinPluginVersion" }
+kotlin-jpa = { id = "org.jetbrains.kotlin.plugin.jpa", version.ref = "kotlinPluginVersion" }
+kotlin-allopen = { id = "org.jetbrains.kotlin.plugin.allopen", version.ref = "kotlinPluginVersion" }
 spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "springDependencyManagementVersion" }
 spring-framework = { id = "org.springframework.boot", version.ref = "springFrameworkVersion" }

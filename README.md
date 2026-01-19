@@ -31,16 +31,18 @@ For å kunne sjekke ut kode fra Nibas, må du ha satt opp en PAT
 
 For mer informasjon, se [GitHub dokumentasjon](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token).
 
-### Legg inn i gradle.properties
+### Legg inn i local.properties
 
-Rename `gradle.properties.template` til `gradle.properties` og legg inn tokenet du genererte i stedet for `<genererte token>`.
+Opprett filen `local.properties` i prosjektets rotmappe og legg inn tokenet du genererte:
 
 ```
 GH_PACKAGES_PAT=<genererte token>
 ```
 
-`gradle.properties` er gitignored så den vil ikke bli committet.
+`local.properties` er gitignored så den vil ikke bli committet.
 `GH_PACKAGES_PAT` er for henting av matrikkelkode via maven.
+
+Alternativt kan du sette `GH_PACKAGES_PAT` som miljøvariabel.
 
 ### Matrikkel WFS
 
