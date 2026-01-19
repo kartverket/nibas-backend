@@ -180,14 +180,6 @@ data class KommunalKretsgrenseMetadata(
     override val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
 ) : Metadata, HarCommonMetadata, HarCommonGrense
 
-
-data class BopliktgrenseMetadata(
-    @Schema(description = "Felles metadata-egenskaper.")
-    override val common: CommonMetadata,
-    @Schema(description = "Felles metadata-egenskaper for grenser.")
-    override val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
-): Metadata, HarCommonMetadata, HarCommonGrense
-
 data class CommonMetadata(
     @Schema(description = "Unik identifikasjon av et objekt")
     var identifikasjon: Identifikasjon,
