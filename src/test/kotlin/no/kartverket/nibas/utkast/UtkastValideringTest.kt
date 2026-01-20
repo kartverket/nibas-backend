@@ -16,6 +16,7 @@ import no.kartverket.nibas.api.v1.request.GrunnkretsSammenslaaingsendringRequest
 import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.api.v1.request.KretsNavnOgNummer
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
+import no.kartverket.nibas.builders.BopliktomraadeRequestBuilder
 import no.kartverket.nibas.builders.FeatureBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.GrunnkretsRequestBuilder
@@ -291,6 +292,81 @@ class UtkastValideringTest {
 
         val validateGyldigeOperasjoner = utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
         assertThat(validateGyldigeOperasjoner).contains("Kretsnummer (-123) kan ikke være negativt.")
+    }
+
+    @Test
+    fun `valider at bopliktomraadenummer med mer enn 4 siffer gir ugyldige operasjoner`() {
+        val operasjoner =
+            Operasjoner(
+                metadataendringer =
+                Metadataendringer(
+                    bopliktomraadeendringer =
+                    mapOf("1" to BopliktomraadeRequestBuilder(bopliktomraadenummer = "12345").build())
+                )
+            )
+
+        val validateGyldigeOperasjoner = utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
+        assertThat(validateGyldigeOperasjoner).contains("Bopliktområdenummer (12345) kan ikke være på flere enn fire tegn.")
+    }
+
+    @Test
+    fun `valider at negativt bopliktomraadenummer gir ugyldige operasjoner`() {
+        val operasjoner =
+            Operasjoner(
+                metadataendringer =
+                Metadataendringer(
+                    bopliktomraadeendringer =
+                    mapOf("1" to BopliktomraadeRequestBuilder(bopliktomraadenummer = "-123").build())
+                )
+            )
+
+        val validateGyldigeOperasjoner = utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
+        assertThat(validateGyldigeOperasjoner).contains("Kretsnummer (-123) kan ikke være negativt.")
+    }
+
+    @Test
+    fun `valider at metadataoperasjoner med blankt bopliktomraadenummer gir ugyldige operasjoner`() {
+        val operasjoner =
+            Operasjoner(
+                metadataendringer =
+                    Metadataendringer(
+                        bopliktomraadeendringer =
+                            mapOf("1" to BopliktomraadeRequestBuilder(bopliktomraadenummer = "").build())
+                    )
+            )
+
+        val validateGyldigeOperasjoner = utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
+        assertThat(validateGyldigeOperasjoner).contains("Kretsnummer kan ikke være tomt.")
+    }
+
+    @Test
+    fun `valider at metadataoperasjoner med 0 som bopliktomraadenummer gir ugyldige operasjoner`() {
+        val operasjoner =
+            Operasjoner(
+                metadataendringer =
+                    Metadataendringer(
+                        bopliktomraadeendringer =
+                            mapOf("1" to BopliktomraadeRequestBuilder(bopliktomraadenummer = "0").build())
+                    )
+            )
+
+        val validateGyldigeOperasjoner = utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
+        assertThat(validateGyldigeOperasjoner).contains("Kretsnummer (0) kan ikke være 0.")
+    }
+
+    @Test
+    fun `valider at metadataoperasjoner med blankt bopliktomraadenavn gir ugyldige operasjoner`() {
+        val operasjoner =
+            Operasjoner(
+                metadataendringer =
+                    Metadataendringer(
+                        bopliktomraadeendringer =
+                            mapOf("2" to BopliktomraadeRequestBuilder(bopliktomraadenavn = "").build())
+                    )
+            )
+
+        val validateGyldigeOperasjoner = utkastValidatorService.validateGyldigeOperasjoner(operasjoner)
+        assertThat(validateGyldigeOperasjoner).contains("Kretsnavn kan ikke være tomt.")
     }
 
     @Test

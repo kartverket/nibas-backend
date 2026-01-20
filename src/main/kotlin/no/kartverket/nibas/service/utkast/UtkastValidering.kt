@@ -407,6 +407,15 @@ class UtkastValidatorService(
                 operasjoner.stemmekretsSammenslaaingsendring.viderefoertStemmekrets.lokalId
             ))
 
+        operasjoner.metadataendringer.bopliktomraadeendringer.values.forEach {
+            errorMessages.addAll(validateMetadataendringUgyldig(
+                Flatetype.BOPLIKTOMRAADE,
+                it.navn,
+                it.nummer,
+                it.identifikasjon.lokalid
+            ))
+        }
+
         getUnikeKretsDelingEndringRequests(operasjoner.kretsDelingEndringer)
             .forEach {
                 errorMessages.addAll(validateMetadataendringUgyldig(
@@ -585,6 +594,8 @@ class UtkastValidatorService(
                 errorMessages.add("Kretsnummer ($kretsnummer) kan ikke være negativt.")
             } else if (flatetype == Flatetype.STEMMEKRETS && kretsnummer.length > 4) {
                 errorMessages.add("Stemmekretsnummer ($kretsnummer) kan ikke være på flere enn fire tegn.")
+            } else if (flatetype == Flatetype.BOPLIKTOMRAADE && kretsnummer.length > 4) {
+                errorMessages.add("Bopliktområdenummer ($kretsnummer) kan ikke være på flere enn fire tegn.")
             } else if (flatetype == Flatetype.GRUNNKRETS) {
                 if (kretsnummer.length != 8) {
                     errorMessages.add("Grunnkretsnummer ($kretsnummer) må være på åtte tegn.")

@@ -264,6 +264,55 @@ internal class UtkastServiceTest {
     }
 
     @Test
+    fun `oppdater-valider utkast med blankt bopliktomraadenavn gir bad request`() {
+        val utkast = UtkastRequestBuilder()
+            .withOperasjoner(
+                Operasjoner(
+                    metadataendringer = Metadataendringer(
+                        bopliktomraadeendringer = mapOf("1" to BopliktomraadeRequestBuilder(bopliktomraadenummer = "01", bopliktomraadenavn = "").build())
+                    )
+                )
+            )
+            .build()
+
+        every { utkastRepositoryMock.findById(any()) } returns Optional.of(Utkast(navn = "Gyldig", gyldigFra = LocalDate.now()))
+        every { bopliktomraadeServiceMock.hentBopliktomraade(any()) } returns BopliktomraadeBuilder.DEFAULT_BOPLIKTOMRAADE
+        every { bopliktomraadeServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns listOf()
+
+        assertThatThrownBy { utkastService.oppdaterUtkast("123", utkast) }
+            .isInstanceOf(BadRequestException::class.java)
+            .hasMessageContaining("Kretsnavn kan ikke være tomt.")
+
+        assertThatThrownBy { utkastService.validerUtkast("123", utkast) }
+            .isInstanceOf(BadRequestException::class.java)
+            .hasMessageContaining("Kretsnavn kan ikke være tomt.")
+    }
+
+    @Test
+    fun `oppdater-valider utkast med ikke-numerisk bopliktomraadenummer gir bad request`() {
+        val utkastRequest = UtkastRequestBuilder()
+            .withNavn("Utkast med for ikke-numerisk bopliktområdenummer")
+            .withOperasjoner(Operasjoner(
+                metadataendringer = Metadataendringer(
+                    bopliktomraadeendringer = mapOf("1" to BopliktomraadeRequestBuilder(bopliktomraadenummer = "bopliktomraadenummer").build())
+                )
+            ))
+            .build()
+
+        every { utkastRepositoryMock.findById(any()) } returns Optional.of(Utkast(navn = "Gyldig", gyldigFra = LocalDate.now()))
+        every { bopliktomraadeServiceMock.hentBopliktomraade(any()) } returns BopliktomraadeBuilder.DEFAULT_BOPLIKTOMRAADE
+        every { bopliktomraadeServiceMock.hentAlleVersjonerMedGyldigFraEtterGittDato(any(), any()) } returns listOf()
+
+        assertThatThrownBy { utkastService.oppdaterUtkast("123", utkastRequest) }
+            .isInstanceOf(BadRequestException::class.java)
+            .hasMessageContaining("Kretsnummer (bopliktomraadenummer) kan bare inneholde sifre.")
+
+        assertThatThrownBy { utkastService.validerUtkast("123", utkastRequest) }
+            .isInstanceOf(BadRequestException::class.java)
+            .hasMessageContaining("Kretsnummer (bopliktomraadenummer) kan bare inneholde sifre.")
+    }
+
+    @Test
     fun `oppdater-valider utkast med ikke-editerbare grenser gir bad request`() {
         val utkast = UtkastRequestBuilder()
             .withOperasjoner(operasjonerMedIkkeEditerbareGrenser())

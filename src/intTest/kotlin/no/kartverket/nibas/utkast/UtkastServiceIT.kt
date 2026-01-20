@@ -313,6 +313,69 @@ class UtkastServiceIT : TestWithDbContainer() {
     }
 
     @Test
+    fun `skal gi optimistisklaasexception om man har en grenseendring paa utdatert versjon av grense og bopliktomraade`() {
+        val grenser = grenseRepository.saveAllAndFlush(GrenseHelper.getGrenserForVestligKrets(grensetype = Grensetype.Bopliktgrense))
+        val kommune = saveKommune()
+        val bopliktomraade = saveBopliktomraade(lokalid = Lokalid("test1"), bopliktomraadenavn = "Gammelt navn")
+
+        grenser.forEach {
+            bopliktomraade.addGrensekobling(it)
+        }
+
+        kommune.addBopliktomraade(bopliktomraade)
+
+        val opprinneligBopliktomraadeversjon = bopliktomraade.version
+        bopliktomraade.version = 5
+        val grenseSomEndres = grenser.first().grenseToFeature()
+        grenseSomEndres.properties = grenseSomEndres.properties.copy(version = 0)
+        bopliktomraade.version = opprinneligBopliktomraadeversjon
+
+        val grenseendringer = Grenseendringer(endredeFeatures = listOf(grenseSomEndres))
+
+        val utkastRequestBuilder = UtkastRequestBuilder()
+            .withOperasjoner(Operasjoner(grenseendringer = grenseendringer))
+
+        val utkast = UtkastBuilder.builder("test", gyldigFra = LocalDate.now())
+            .withOperasjoner(Operasjoner(grenseendringer = grenseendringer))
+            .build()
+        utkastRepository.save(utkast)
+
+        val oppdaterutkastexception = assertFailsWith<OptimistiskLaasException> {
+            utkastService.oppdaterUtkast(utkast.id, utkastRequestBuilder
+                .withVersjon(2)
+                .build())
+        }
+        assertThat(oppdaterutkastexception.message).contains("Det er ikke samsvar med versjon")
+        assertThat(oppdaterutkastexception.konflikter).hasSize(2)
+        oppdaterutkastexception.konflikter.toList().map { it.getMessage() }
+        assertThat(oppdaterutkastexception.konflikter.toList().map { it.getMessage() })
+            .contains("Det er ikke samsvar med versjon for bopliktomraade 01 Gammelt navn. Ønsket versjon = 5, eksisterende versjon = 1 for objekt med id = bopliktomraade-9000")
+            .contains("Det er ikke samsvar med versjon. Ønsket versjon = 0, eksisterende versjon = 1 for objekt med id = grenseVest")
+
+        val validerutkastexception = assertFailsWith<OptimistiskLaasException> {
+            utkastService.validerUtkast(utkast.id, utkastRequestBuilder
+                .withVersjon(2)
+                .build())
+        }
+        assertThat(validerutkastexception.message).contains("Det er ikke samsvar med versjon")
+        assertThat(validerutkastexception.konflikter).hasSize(2)
+        validerutkastexception.konflikter.toList().map { it.getMessage() }
+        assertThat(validerutkastexception.konflikter.toList().map { it.getMessage() })
+            .contains("Det er ikke samsvar med versjon for bopliktomraade 01 Gammelt navn. Ønsket versjon = 5, eksisterende versjon = 1 for objekt med id = bopliktomraade-9000")
+            .contains("Det er ikke samsvar med versjon. Ønsket versjon = 0, eksisterende versjon = 1 for objekt med id = grenseVest")
+
+        val publiserutkastexception = assertFailsWith<OptimistiskLaasException> {
+            utkastService.publiserUtkast(utkast.id)
+        }
+        assertThat(publiserutkastexception.message).contains("Det er ikke samsvar med versjon")
+        assertThat(publiserutkastexception.konflikter).hasSize(2)
+        publiserutkastexception.konflikter.toList().map { it.getMessage() }
+        assertThat(publiserutkastexception.konflikter.toList().map { it.getMessage() })
+            .contains("Det er ikke samsvar med versjon. Ønsket versjon = 0, eksisterende versjon = 1 for objekt med id = grenseVest")
+            .contains("Det er ikke samsvar med versjon for bopliktomraade 01 Gammelt navn. Ønsket versjon = 5, eksisterende versjon = 1 for objekt med id = bopliktomraade-9000")
+    }
+
+    @Test
     fun `skal gi optimistisklaasexception om man har en metadataendring paa utdatert versjon av en stemmekrets`() {
         saveStemmekrets(lokalid = Lokalid("test1"), stemmekretsnavn = "gammelt navn")
 
