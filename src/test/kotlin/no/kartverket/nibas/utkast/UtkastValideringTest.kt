@@ -498,6 +498,47 @@ class UtkastValideringTest {
     }
 
     @Test
+    fun `utkast med bopliktomraadegrensefeature med kun en tilhoerighet er gyldig`() {
+        val gyldighetsdato = LocalDate.now()
+        val feature = FeatureBuilder("1")
+            .withGrensetype(Grensetype.Bopliktgrense)
+            .withKontekstEgenskaper(listOf(KontekstEgenskaper(
+                id = ObjektIdentifikator(Lokalid("G3"), gyldighetsdato),
+                type = KontekstEnhetType.BOPLIKTOMRAADE,
+                version = 1,
+            )))
+            .build()
+        val utkast = Utkast(navn = "test",
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(feature))), gyldigFra = gyldighetsdato)
+
+        assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast)).isEmpty()
+    }
+
+    @Test
+    fun `utkast med bopliktomraadegrensefeature med to tilhoerigheter er ugyldig`() {
+        val gyldighetsdato = LocalDate.now()
+        val feature = FeatureBuilder("1")
+            .withGrensetype(Grensetype.Bopliktgrense)
+            .withKontekstEgenskaper(listOf(KontekstEgenskaper(
+                id = ObjektIdentifikator(Lokalid("G3"), gyldighetsdato),
+                kommuneId = ObjektIdentifikator(Lokalid("1"), gyldighetsdato),
+                type = KontekstEnhetType.BOPLIKTOMRAADE,
+                version = 1,
+            ), KontekstEgenskaper(
+                id = ObjektIdentifikator(Lokalid("G2"), gyldighetsdato),
+                kommuneId = ObjektIdentifikator(Lokalid("1"), gyldighetsdato),
+                type = KontekstEnhetType.BOPLIKTOMRAADE,
+                version = 1
+            )))
+            .build()
+        val utkast = Utkast(navn = "test",
+            operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(feature))), gyldigFra = LocalDate.now())
+
+        assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast).joinToString("\n"))
+            .contains("Grensen har 2 tilhørighet(er) satt, men må ha 1")
+    }
+
+    @Test
     fun `utkast med grunnkretsgrensefeature med kun en tilhørighet er ugyldig`() {
         val gyldighetsdato = LocalDate.now()
         val featureMedFeilAntallTilhorigheter = FeatureBuilder("1")

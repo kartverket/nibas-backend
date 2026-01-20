@@ -440,7 +440,7 @@ internal class UtkastServiceTest {
         verify { kommuneServiceMock.oppdaterKommune(any(), any(), any(), any()) }
         verify { grunnkretsServiceMock.oppdaterGrunnkrets(any(), any(), any(), any()) }
         verify { stemmekretsServiceMock.oppdaterStemmekrets(any(), any(), any(), any()) }
-       // verify { bopliktomraadeServiceMock.oppdaterBopliktomraade(any(), any(), any(), any()) }
+        verify { bopliktomraadeServiceMock.oppdaterBopliktomraade(any(), any(), any(), any()) }
         verify { grenseServiceMock.lagreGrenser(any(), any(), any()) }
         verify { nibasEventPublisherMock.publishNibasEvent(any(), any()) }
     }
@@ -491,7 +491,9 @@ internal class UtkastServiceTest {
                             mapOf(
                                 "Stemmekrets-UUID-1" to
                                     StemmekretsRequestBuilder.DEFAULT_REQUEST
-                            )
+                            ),
+                            bopliktomraadeendringer = mapOf("Bopliktomraade-UUID-1" to
+                                BopliktomraadeRequestBuilder.DEFAULT_REQUEST)
                         ),
                         stemmekretsSammenslaaingsendring = sammenslaaingsendringRequest,
                         grenseendringer = Grenseendringer(
@@ -536,6 +538,14 @@ internal class UtkastServiceTest {
                 any()
             )
         } returns StemmekretsBuilder.DEFAULT_STEMMEKRETS
+        every {
+            bopliktomraadeServiceMock.oppdaterBopliktomraade(
+                any(),
+                any(),
+                any(),
+                any()
+            )
+        } returns BopliktomraadeBuilder.DEFAULT_BOPLIKTOMRAADE
 
         every {
             stemmekretsServiceMock.slaaSammenStemmekretser(
@@ -569,11 +579,12 @@ internal class UtkastServiceTest {
 
         every { stemmekretsRepositoryMock.findById(any()) } returns Optional.of(StemmekretsBuilder.DEFAULT_STEMMEKRETS)
         every { grunnkretsRepositoryMock.findById(any()) } returns Optional.of(GrunnkretsBuilder.DEFAULT_GRUNNKRETS)
+        every { bopliktomraadeRepositoryMock.findById(any()) } returns Optional.of(BopliktomraadeBuilder.DEFAULT_BOPLIKTOMRAADE)
         every { grunnkretsServiceMock.finnesAnnenGrunnkretsMedSammeGrunnkretsnummer(any()) } returns false
         every { stemmekretsServiceMock.finnesAnnenStemmekretsMedSammeKommuneOgStemmekretsnummer(any()) } returns false
 
         val redigerteFlater = utkastService.publiserEndringerOgValiderUnikeKretsnumre(utkast.operasjoner!!, utkast, LocalDate.of(2024, Month.JANUARY, 1))
-        assertThat(redigerteFlater).hasSize(10)
+        assertThat(redigerteFlater).hasSize(11)
     }
 
     private val sammenslaaingsendringRequest =
@@ -613,7 +624,7 @@ internal class UtkastServiceTest {
                     FeatureBuilder("6").withGrensetype(Grensetype.AvtaltAvgrensningslinje).build(),
                     FeatureBuilder("7").withGrensetype(Grensetype.Riksgrense).build(),
                     FeatureBuilder("8").withGrensetype(Grensetype.Territorialgrense).build(),
-                   // FeatureBuilder("9").withGrensetype(Grensetype.Bopliktgrense).build()
+                    FeatureBuilder("9").withGrensetype(Grensetype.Bopliktgrense).build()
                 )
             )
         )

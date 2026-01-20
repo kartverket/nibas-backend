@@ -2,7 +2,12 @@ package no.kartverket.nibas.service
 
 import com.ninjasquad.springmockk.MockkBean
 import no.kartverket.nibas.api.v1.common.Grensetype
+import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
+import no.kartverket.nibas.api.v1.common.geojson.metadata.KodelisteEntry
+import no.kartverket.nibas.api.v1.common.geojson.metadata.KommunalKretsgrenseMetadata
+import no.kartverket.nibas.api.v1.common.geojson.metadata.Posisjonskvalitet
 import no.kartverket.nibas.builders.BopliktomraadeRequestBuilder
+import no.kartverket.nibas.builders.MaalemetodeKodeEnum
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
@@ -170,7 +175,6 @@ class BopliktomraadeServiceIT : TestWithDbContainer() {
         }
     }
 
-
     @Test
     fun `oppdaterBopliktomraade skal kunne blanke ut felt`() {
         val bopliktomraadeRequest = BopliktomraadeRequestBuilder.DEFAULT_REQUEST.copy(url = null, forskriftsreferanse = null, informasjon = null)
@@ -272,59 +276,178 @@ class BopliktomraadeServiceIT : TestWithDbContainer() {
 
     }
 
-    private fun assertOmradeGyldighetVersjon(vestreKretsEtterLagring: Bopliktomraade, oestreKretsEtterLagring: Bopliktomraade,
-                                             opprinneligVestreKrets: Bopliktomraade, opprinneligOestreKrets: Bopliktomraade) {
-        assertThat(vestreKretsEtterLagring.gyldighet.gyldigTil).isNull()
-        assertThat(oestreKretsEtterLagring.gyldighet.gyldigTil).isNull()
-        assertThat(vestreKretsEtterLagring.omraade).isNotEqualTo(opprinneligVestreKrets.omraade)
-        assertThat(oestreKretsEtterLagring.omraade).isNotEqualTo(opprinneligOestreKrets.omraade)
-        assertThat(vestreKretsEtterLagring.version).isGreaterThan(opprinneligVestreKrets.version)
-        assertThat(oestreKretsEtterLagring.version).isGreaterThan(opprinneligOestreKrets.version)
+    @Test
+    fun `endre metadata for grense skal lagres paa ny grense`() {
+        val opprinneligDato = LocalDate.parse("2022-01-01")
+        val endringsdato = LocalDate.parse("2022-02-01")
+
+        val lagredeGrenserForKrets = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(opprinneligDato, Grensetype.Bopliktgrense))
+        grenseRepository.flush()
+
+        val bopliktomraade = saveBopliktomraade(
+            id = "2",
+            lokalid = Lokalid("22"),
+            gyldigFra = opprinneligDato,
+            grenser = lagredeGrenserForKrets
+        )
+        saveKommuneOgUnikLokalid(kommunenummerUuid = "4227", bopliktomraader = listOf(bopliktomraade), gyldigFra = opprinneligDato)
+
+        val featureForAnnenGrense = lagFeatureEndreYkoordinat(bopliktomraade, opprinneligDato, "grenseDeltLokalid")
+        val kommunalKretsgrenseMetadata = featureForAnnenGrense.properties.metadata as KommunalKretsgrenseMetadata
+        kommunalKretsgrenseMetadata.common.informasjon = "En eller annen informasjon"
+        kommunalKretsgrenseMetadata.commonGrense.posisjonskvalitet =
+            Posisjonskvalitet(maalemetode = KodelisteEntry(id = MaalemetodeKodeEnum.TERRENGMAALT.uuid, href = "maalemetodeHref"), noeyaktighet = 100)
+
+        val flaterSomErEndret = grenseService.lagreGrenser(grenser = FeatureCollection(features = listOf(featureForAnnenGrense)),
+            gyldighetsdato = endringsdato, endringstype = Endringstype.FASTSETTING
+        )
+
+        val opprinneligKrets = bopliktomraadeService.hentBopliktomraade(Identifikator(Lokalid(bopliktomraade.lokalid), opprinneligDato))!!
+        assertThat(opprinneligKrets.gyldighet.gyldigTil).isEqualTo(endringsdato)
+
+        val kretsEtterLagring = bopliktomraadeService.hentBopliktomraade(Identifikator(Lokalid(bopliktomraade.lokalid), endringsdato))!!
+        assertThat(kretsEtterLagring.gyldighet.gyldigTil).isNull()
+        assertThat(kretsEtterLagring.omraade).isNotEqualTo(opprinneligKrets.omraade)
+        assertThat(kretsEtterLagring.version).isGreaterThan(opprinneligKrets.version)
+        assertThat(kretsEtterLagring.auditInfo.typeEndring).isEqualTo(Endringstype.FASTSETTING)
+
+        assertThat(flaterSomErEndret).containsExactly(kretsEtterLagring)
+        assertAnnenGrenseEtterGrenseendring("grenseDelt", "grenseDeltLokalid", endringsdato, opprinneligDato,
+            kretsEtterLagring, opprinneligKrets)
+
+        val nyGrense = grenseService.hentGrense(Identifikator(Lokalid("grenseDeltLokalid"), endringsdato))!!
+        assertThat(nyGrense.kvalitet!!.noeyaktighet).isEqualTo(100)
+        assertThat(nyGrense.kvalitet!!.maalemetode).isEqualTo(MaalemetodeKodeEnum.TERRENGMAALT.uuid)
+        assertThat(nyGrense.informasjon).isEqualTo("En eller annen informasjon")
+        assertThat(nyGrense.auditInfo.typeEndring).isEqualTo(Endringstype.FASTSETTING)
     }
 
-    private fun assertDeltGrenseEtterGrenseendring(
-        @Suppress("SameParameterValue") deltGrenseLokalid: String, datoForGrenseendring: LocalDate, opprinneligGrense: Grense,
-        vestreKretsEtterLagring: Bopliktomraade, oestreKretsEtterLagring: Bopliktomraade, opprinneligVestreKrets: Bopliktomraade, opprinneligOestreKrets: Bopliktomraade
+    @Test
+    fun `endre to grenser for bopliktomraade skal opprette nye versjoner for grensene og deres bopliktomraade`() {
+        val opprinneligDato = LocalDate.parse("2022-01-01")
+        val endringsdato = LocalDate.parse("2022-02-01")
+        val grenseLokalid = "grenseDeltLokalid"
+
+        val lagredeGrenserForKrets = grenseRepository.saveAll(GrenseHelper.getGrenserForVestligKrets(opprinneligDato, Grensetype.Bopliktgrense))
+        grenseRepository.flush()
+
+        val bopliktomraade = saveBopliktomraade(
+            id = "2",
+            lokalid = Lokalid("22"),
+            gyldigFra = opprinneligDato,
+            grenser = lagredeGrenserForKrets
+        )
+        saveKommuneOgUnikLokalid(kommunenummerUuid = "4227", bopliktomraader = listOf(bopliktomraade), gyldigFra = opprinneligDato)
+
+        val grense = grenseService.hentGrense(Identifikator(Lokalid(grenseLokalid), opprinneligDato))!!
+        assertThat(grense.bopliktomraader).hasSize(1)
+        assertThat(grense.bopliktomraader.map { it.bopliktomraade.id }).containsExactlyInAnyOrder(bopliktomraade.id)
+
+        val featureForAnnenGrense = lagFeatureEndreYkoordinat(bopliktomraade, opprinneligDato, "grenseNordVestLokalid")
+        val flaterSomErEndret = utfoerGrenseendring(kretsSomSkalHaGrenseendring = bopliktomraade, opprinneligDato = opprinneligDato,
+            endringsdato = endringsdato, featureForAnnenGrense)
+
+        val opprinneligKrets = bopliktomraadeService.hentBopliktomraade(Identifikator(Lokalid(bopliktomraade.lokalid), opprinneligDato))!!
+        assertThat(opprinneligKrets.gyldighet.gyldigTil).isEqualTo(endringsdato)
+
+        val kretsEtterLagring = bopliktomraadeService.hentBopliktomraade(Identifikator(Lokalid(bopliktomraade.lokalid), endringsdato))!!
+
+        assertOmradeGyldighetVersjon(kretsEtterLagring, opprinneligKrets, endringsdato, Endringstype.VEDTATT_GRENSEJUSTERING)
+        assertThat(flaterSomErEndret).containsExactly(kretsEtterLagring)
+
+        val opprinneligGrense = grenseService.hentGrense(Identifikator(Lokalid(grenseLokalid), opprinneligDato))!!
+        assertThat(opprinneligGrense.bopliktomraader).hasSize(1)
+        assertThat(opprinneligGrense.bopliktomraader.map { it.bopliktomraade.id }).containsExactlyInAnyOrder(opprinneligKrets.id)
+
+        assertAnnenGrenseEtterGrenseendring("grenseDelt", "grenseDeltLokalid", endringsdato, opprinneligDato,
+            kretsEtterLagring, opprinneligKrets)
+        assertAnnenGrenseEtterGrenseendring("grenseNordVest", "grenseNordVestLokalid", endringsdato, opprinneligDato,
+            kretsEtterLagring, opprinneligKrets)
+    }
+
+    @Test
+    fun `endre grense etter oppdatering av bopliktomraade skal opprette nye versjoner for grensa og dens bopliktomraade`() {
+        val opprinneligDato = LocalDate.parse("2022-01-01")
+        val datoForOppdatering = october1In2022
+        val datoForGrenseendring = LocalDate.parse("2023-02-01")
+        val grenseLokalid = "grenseDeltLokalid"
+
+        val lagredeGrenserForKrets = grenseRepository.saveAll(GrenseHelper.getGrenserForVestligKrets(opprinneligDato, Grensetype.Bopliktgrense))
+        grenseRepository.flush()
+
+        val bopliktomraade = saveBopliktomraade(
+            id = "2",
+            lokalid = Lokalid("22"),
+            gyldigFra = opprinneligDato,
+            grenser = lagredeGrenserForKrets
+        )
+        saveKommuneOgUnikLokalid(kommunenummerUuid = "4227", bopliktomraader = listOf(bopliktomraade), gyldigFra = opprinneligDato)
+
+        val bopliktomraadeEtterOppdatering = utfoerMetadataoppdatering(kretsSomSkalOppdateres = bopliktomraade, datoForOppdatering = datoForOppdatering)!!
+
+        val grense = grenseService.hentGrense(Identifikator(Lokalid(grenseLokalid), datoForOppdatering))!!
+        assertThat(grense.bopliktomraader).hasSize(2)
+        assertThat(grense.bopliktomraader.map { it.bopliktomraade.id }).containsExactlyInAnyOrder(bopliktomraade.id, bopliktomraadeEtterOppdatering.id)
+
+        val flaterSomErEndret = utfoerGrenseendring(kretsSomSkalHaGrenseendring = bopliktomraade, opprinneligDato = datoForOppdatering,
+            endringsdato = datoForGrenseendring)
+
+        val opprinneligKrets = bopliktomraadeService.hentBopliktomraade(Identifikator(Lokalid(bopliktomraade.lokalid), datoForOppdatering))!!
+        assertThat(opprinneligKrets.gyldighet.gyldigTil).isEqualTo(datoForGrenseendring)
+
+        val kretsEtterLagring = bopliktomraadeService.hentBopliktomraade(Identifikator(Lokalid(bopliktomraade.lokalid), datoForGrenseendring))!!
+        assertOmradeGyldighetVersjon(kretsEtterLagring, bopliktomraadeEtterOppdatering, datoForGrenseendring, Endringstype.VEDTATT_GRENSEJUSTERING)
+        assertThat(flaterSomErEndret).containsExactly(kretsEtterLagring)
+
+        val opprinneligGrense = grenseService.hentGrense(Identifikator(Lokalid(grenseLokalid), opprinneligDato))!!
+
+        //Sjekker at gammel versjon av grensa ikke har fått endra sine bopliktomraader
+        assertThat(opprinneligGrense.bopliktomraader).hasSize(2)
+        assertThat(opprinneligGrense.bopliktomraader.map { it.bopliktomraade.id })
+            .containsExactlyInAnyOrder(bopliktomraade.id, bopliktomraadeEtterOppdatering.id)
+
+        assertGrenseEtterGrenseendring("grenseDeltLokalid", datoForGrenseendring, opprinneligGrense, kretsEtterLagring, opprinneligKrets)
+    }
+
+    private fun assertGrenseEtterGrenseendring(
+        @Suppress("SameParameterValue") grenseLokalid: String, datoForGrenseendring: LocalDate, opprinneligGrense: Grense,
+        kretsEtterLagring: Bopliktomraade, opprinneligKrets: Bopliktomraade
     ) {
-        val deltGrenseEtterGrenseendring = grenseService.hentGrense(Identifikator(Lokalid(deltGrenseLokalid), datoForGrenseendring))!!
-        assertThat(deltGrenseEtterGrenseendring.bopliktomraader).hasSize(2)
-        assertThat(deltGrenseEtterGrenseendring.bopliktomraader.map { it.bopliktomraade.id })
-            .containsExactlyInAnyOrder(vestreKretsEtterLagring.id, oestreKretsEtterLagring.id)
+        val grenseEtterGrenseendring = grenseService.hentGrense(Identifikator(Lokalid(grenseLokalid), datoForGrenseendring))!!
+        assertThat(grenseEtterGrenseendring.bopliktomraader).hasSize(1)
+        assertThat(grenseEtterGrenseendring.bopliktomraader.map { it.bopliktomraade.id }).containsExactlyInAnyOrder(kretsEtterLagring.id)
 
         assertThat(opprinneligGrense.gyldighet.gyldigTil).isEqualTo(datoForGrenseendring)
-        assertThat(deltGrenseEtterGrenseendring.gyldighet.gyldigTil).isNull()
-        assertThat(opprinneligGrense.lokalid).isEqualTo(deltGrenseEtterGrenseendring.lokalid)
-        assertThat(opprinneligGrense.grense).isNotEqualTo(deltGrenseEtterGrenseendring.grense)
-        assertThat(deltGrenseEtterGrenseendring.version).isGreaterThan(opprinneligGrense.version)
+        assertThat(grenseEtterGrenseendring.gyldighet.gyldigTil).isNull()
+        assertThat(opprinneligGrense.lokalid).isEqualTo(grenseEtterGrenseendring.lokalid)
+        assertThat(opprinneligGrense.grense).isNotEqualTo(grenseEtterGrenseendring.grense)
+        assertThat(grenseEtterGrenseendring.version).isGreaterThan(opprinneligGrense.version)
 
-        assertThat(opprinneligVestreKrets.grenser.map { it.grense.id }).contains("grenseDelt")
-        assertThat(opprinneligOestreKrets.grenser.map { it.grense.id }).contains("grenseDelt")
-        assertThat(vestreKretsEtterLagring.grenser.map { it.grense.id }).doesNotContain("grenseDelt")
-        assertThat(oestreKretsEtterLagring.grenser.map { it.grense.id }).doesNotContain("grenseDelt")
-        assertThat(vestreKretsEtterLagring.grenser.map { it.grense.lokalid }).contains(deltGrenseLokalid)
-        assertThat(oestreKretsEtterLagring.grenser.map { it.grense.lokalid }).contains(deltGrenseLokalid)
+        assertThat(opprinneligKrets.grenser.map { it.grense.id }).contains("grenseDelt")
+        assertThat(kretsEtterLagring.grenser.map { it.grense.id }).doesNotContain("grenseDelt")
+        assertThat(kretsEtterLagring.grenser.map { it.grense.lokalid }).contains(grenseLokalid)
     }
 
-    private fun assertAnnenGrenseEtterGrenseendring(annenGrenseId: String, annenGrenseLokalid: String, datoForGrenseendring: LocalDate,
+    private fun assertAnnenGrenseEtterGrenseendring(grenseId: String, grenseLokalid: String, datoForGrenseendring: LocalDate,
                                                     opprinneligDato: LocalDate, kretsEtterLagring: Bopliktomraade, opprinneligKrets: Bopliktomraade) {
 
-        val opprinneligGrense = grenseService.hentGrense(Identifikator(Lokalid(annenGrenseLokalid), opprinneligDato))!!
-        assertThat(opprinneligGrense.bopliktomraader).hasSize(2)
+        val opprinneligGrense = grenseService.hentGrense(Identifikator(Lokalid(grenseLokalid), opprinneligDato))!!
+        assertThat(opprinneligGrense.bopliktomraader).hasSize(1)
         assertThat(opprinneligGrense.bopliktomraader.map { it.bopliktomraade.id }).contains(opprinneligKrets.id)
 
-        val annenGrenseEtterGrenseendring = grenseService.hentGrense(Identifikator(Lokalid(annenGrenseLokalid), datoForGrenseendring))!!
-        assertThat(annenGrenseEtterGrenseendring.bopliktomraader).hasSize(2)
-        assertThat(annenGrenseEtterGrenseendring.bopliktomraader.map { it.bopliktomraade.id }).contains(kretsEtterLagring.id)
+        val grenseEtterGrenseendring = grenseService.hentGrense(Identifikator(Lokalid(grenseLokalid), datoForGrenseendring))!!
+        assertThat(grenseEtterGrenseendring.bopliktomraader).hasSize(1)
+        assertThat(grenseEtterGrenseendring.bopliktomraader.map { it.bopliktomraade.id }).contains(kretsEtterLagring.id)
 
         assertThat(opprinneligGrense.gyldighet.gyldigTil).isEqualTo(datoForGrenseendring)
-        assertThat(annenGrenseEtterGrenseendring.gyldighet.gyldigTil).isNull()
-        assertThat(opprinneligGrense.lokalid).isEqualTo(annenGrenseEtterGrenseendring.lokalid)
-        assertThat(opprinneligGrense.grense).isNotEqualTo(annenGrenseEtterGrenseendring.grense)
-        assertThat(annenGrenseEtterGrenseendring.version).isGreaterThan(opprinneligGrense.version)
+        assertThat(grenseEtterGrenseendring.gyldighet.gyldigTil).isNull()
+        assertThat(opprinneligGrense.lokalid).isEqualTo(grenseEtterGrenseendring.lokalid)
+        assertThat(opprinneligGrense.grense).isNotEqualTo(grenseEtterGrenseendring.grense)
+        assertThat(grenseEtterGrenseendring.version).isGreaterThan(opprinneligGrense.version)
 
-        assertThat(opprinneligKrets.grenser.map { it.grense.id }).contains(annenGrenseId)
-        assertThat(kretsEtterLagring.grenser.map { it.grense.id }).doesNotContain(annenGrenseId)
-        assertThat(kretsEtterLagring.grenser.map { it.grense.lokalid }).contains(annenGrenseLokalid)
+        assertThat(opprinneligKrets.grenser.map { it.grense.id }).contains(grenseId)
+        assertThat(kretsEtterLagring.grenser.map { it.grense.id }).doesNotContain(grenseId)
+        assertThat(kretsEtterLagring.grenser.map { it.grense.lokalid }).contains(grenseLokalid)
     }
 
     private fun utfoerMetadataoppdatering(kretsSomSkalOppdateres: Bopliktomraade, datoForOppdatering: LocalDate): Bopliktomraade? {
@@ -338,11 +461,6 @@ class BopliktomraadeServiceIT : TestWithDbContainer() {
             endringstype = Endringstype.RETTING
         )
         return bopliktomraadeService.hentBopliktomraade(identifikator)
-    }
-
-    fun settGrensetypeForGrenserSomIkkeErDelt(vestreKrets: Bopliktomraade, oestreKrets: Bopliktomraade, grensetype: Grensetype) {
-        vestreKrets.grenser.stream().forEach { if (it.grense.id != "grenseDelt" && it.grense.id != "grenseDelt2") it.grense.grensetype = grensetype }
-        oestreKrets.grenser.stream().forEach { if (it.grense.id != "grenseDelt" && it.grense.id != "grenseDelt2") it.grense.grensetype = grensetype }
     }
 
     private fun saveBopliktomraadeMed1FramtidigVersjon(bopliktomraadeLokalid: Lokalid) {

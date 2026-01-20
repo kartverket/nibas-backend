@@ -211,7 +211,12 @@ class UtkastValidatorService(
             //Kommunegrense og fylkesgrense skal ha 4 tilhørigheter (2 grunnkretser og 2 stemmekretser), andre skal bare ha 2
             val grensetype = Grensetype.fromValue(feature.properties.type)
             val erKommuneEllerFylkesGrense = grensetype == Grensetype.Kommunegrense || grensetype == Grensetype.Fylkesgrense
-            val krevdAntallKontekstEgenskaper = if (erKommuneEllerFylkesGrense) 4 else 2
+
+            val krevdAntallKontekstEgenskaper = when (grensetype) {
+                Grensetype.Kommunegrense, Grensetype.Fylkesgrense -> 4
+                Grensetype.Bopliktgrense -> 1
+                else -> 2
+            }
             val krevdAntallTilhorighetstyper = if (Grensetype.erAdministrativGrense(grensetype)) 2 else 1
 
             val harFeilAntallKontekstEgenskaper = feature.properties.kontekstEgenskaper.size != krevdAntallKontekstEgenskaper

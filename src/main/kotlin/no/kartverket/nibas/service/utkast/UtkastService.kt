@@ -354,12 +354,23 @@ class UtkastService(
                 )
             }
 
+        val endredeBopliktomraader =
+            metadata.bopliktomraadeendringer.mapNotNull { bopliktomraadeEndring ->
+                bopliktomraadeService.oppdaterBopliktomraade(
+                    lokalId = Lokalid(bopliktomraadeEndring.key),
+                    gyldigFra = gyldigFra,
+                    oppdatertBopliktomraade = bopliktomraadeEndring.value,
+                    endringstype = utkast.auditInfo.typeEndring
+                )
+            }
+
         val alleEndringer =
             endredeNasjoner +
                 endredeFylker +
                 endredeKommuner +
                 endredeGrunnkretser +
-                endredeStemmekretser
+                endredeStemmekretser +
+                endredeBopliktomraader
         return alleEndringer.map { it.toEventRad(EventType.MODIFIED) }
     }
 

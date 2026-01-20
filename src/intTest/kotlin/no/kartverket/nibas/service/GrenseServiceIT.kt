@@ -8,6 +8,7 @@ import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.KontekstEgenskaper
 import no.kartverket.nibas.api.v1.common.geojson.metadata.dokLink
 import no.kartverket.nibas.api.v1.common.geojson.metadata.internReferanse
+import no.kartverket.nibas.builders.BopliktomraadeRequestBuilder
 import no.kartverket.nibas.builders.DokumentasjonsreferanseBuilder
 import no.kartverket.nibas.builders.FeatureBuilder
 import no.kartverket.nibas.builders.GrunnkretsRequestBuilder
@@ -256,7 +257,6 @@ class GrenseServiceIT : TestWithDbContainer() {
         }
     }
 
-
     @Test
     fun `arkiver grunnkretsgrense og opprett ny grunnkretsgrense som lukker grunnkretsene`() {
         val gyldigFra = november28In2022
@@ -301,9 +301,7 @@ class GrenseServiceIT : TestWithDbContainer() {
 
         val stemmekretsRequest = StemmekretsRequestBuilder.DEFAULT_REQUEST
         val identifikator = Identifikator(Lokalid(stemmekretsRequest.identifikasjon.lokalid), gyldigFra)
-        val lagredeGrenser = grenseRepository.saveAll(getGrenserForEnkelKrets(
-            gyldigFra, gyldighetsdato = gyldighetsdato, Grensetype.Stemmekretsgrense)
-        )
+        val lagredeGrenser = grenseRepository.saveAll(getGrenserForEnkelKrets(gyldigFra, Grensetype.Stemmekretsgrense))
         grenseRepository.flush()
 
         val stemmekrets = saveStemmekrets(id = "1", lokalid = identifikator.lokalid, stemmekretsnummer = "20", gyldigFra = gyldigFra, grenser = lagredeGrenser)
@@ -343,7 +341,7 @@ class GrenseServiceIT : TestWithDbContainer() {
         val lokalid1 = Lokalid("1")
         val lokalid2 = Lokalid("2")
 
-        val lagredeGrenser = grenseRepository.saveAll(getGrenserForEnkelKrets(gyldigFra, gyldighetsdato = gyldighetsdato, Grensetype.Stemmekretsgrense))
+        val lagredeGrenser = grenseRepository.saveAll(getGrenserForEnkelKrets(gyldigFra, Grensetype.Stemmekretsgrense))
         grenseRepository.flush()
 
         val stemmekrets = saveStemmekrets(id = "1", lokalid = lokalid1, stemmekretsnummer = "20", gyldigFra = gyldigFra, grenser = lagredeGrenser)
@@ -356,7 +354,7 @@ class GrenseServiceIT : TestWithDbContainer() {
         val grenseSomSkalJusteres = stemmekrets.grenser.first { it.grense.lokalid == "grense2Lokalid" }.grense
 
         val arkivertFeature = grenseSomSkalArkiveres.grenseToFeature(gyldighetsdato, true)
-        val featureMedEndretGeometri = utfoerStemmekretsgrensejusteringEtterArkivering(grenseSomSkalJusteres, gyldighetsdato)
+        val featureMedEndretGeometri = utfoerGrensejusteringEtterArkivering(grenseSomSkalJusteres, gyldighetsdato)
 
         val flateSet = grenseService.lagreGrenser(
             grenser = FeatureCollection(features = listOf(arkivertFeature, featureMedEndretGeometri)),
@@ -379,7 +377,7 @@ class GrenseServiceIT : TestWithDbContainer() {
 
         val grunnkretsRequest = GrunnkretsRequestBuilder.DEFAULT_REQUEST
         val identifikator = Identifikator(Lokalid(grunnkretsRequest.identifikasjon.lokalid), gyldigFra)
-        val lagredeGrenser = grenseRepository.saveAll(getGrenserForEnkelKrets(gyldigFra, gyldighetsdato = gyldighetsdato, Grensetype.Grunnkretsgrense))
+        val lagredeGrenser = grenseRepository.saveAll(getGrenserForEnkelKrets(gyldigFra, Grensetype.Grunnkretsgrense))
         grenseRepository.flush()
 
         val grunnkrets = saveGrunnkrets(id = "1", lokalid = identifikator.lokalid, grunnkretsnummer = "20", gyldigFra = gyldigFra, grenser = lagredeGrenser)
@@ -419,7 +417,7 @@ class GrenseServiceIT : TestWithDbContainer() {
         val lokalid1 = Lokalid("1")
         val lokalid2 = Lokalid("2")
 
-        val lagredeGrenser = grenseRepository.saveAll(getGrenserForEnkelKrets(gyldigFra, gyldighetsdato = gyldighetsdato, Grensetype.Grunnkretsgrense))
+        val lagredeGrenser = grenseRepository.saveAll(getGrenserForEnkelKrets(gyldigFra, Grensetype.Grunnkretsgrense))
         grenseRepository.flush()
 
         val grunnkrets = saveGrunnkrets(id = "1", lokalid = lokalid1, grunnkretsnummer = "20", gyldigFra = gyldigFra, grenser = lagredeGrenser)
@@ -432,7 +430,7 @@ class GrenseServiceIT : TestWithDbContainer() {
         val grenseSomSkalJusteres = grunnkrets.grenser.first { it.grense.lokalid == "grense2Lokalid" }.grense
 
         val arkivertFeature = grenseSomSkalArkiveres.grenseToFeature(gyldighetsdato, true)
-        val featureMedEndretGeometri = utfoerGrunnkretsgrensejusteringEtterArkivering(grenseSomSkalJusteres, gyldighetsdato)
+        val featureMedEndretGeometri = utfoerGrensejusteringEtterArkivering(grenseSomSkalJusteres, gyldighetsdato)
 
         val flateSet = grenseService.lagreGrenser(
             grenser = FeatureCollection(features = listOf(arkivertFeature, featureMedEndretGeometri)),
@@ -449,19 +447,7 @@ class GrenseServiceIT : TestWithDbContainer() {
             .doesNotContain("grense1Lokalid")
     }
 
-
-    private fun utfoerStemmekretsgrensejusteringEtterArkivering(grenseSomSkalJusteres: Grense, gyldighetsdato: LocalDate): Feature {
-        val oppdatertGeometri = GeometryFactory().createLineString(arrayOf(
-            Coordinate(5.0, 5.0),
-            Coordinate(0.0, 0.0),
-        ))
-        val oppdatertGrensefeature = grenseSomSkalJusteres.grenseToFeature(gyldighetsdato)
-        oppdatertGeometri.geometryToDto().also { oppdatertGrensefeature.geometry = it }
-
-        return oppdatertGrensefeature
-    }
-
-    private fun utfoerGrunnkretsgrensejusteringEtterArkivering(grenseSomSkalJusteres: Grense, gyldighetsdato: LocalDate): Feature {
+    private fun utfoerGrensejusteringEtterArkivering(grenseSomSkalJusteres: Grense, gyldighetsdato: LocalDate): Feature {
         val oppdatertGeometri = GeometryFactory().createLineString(arrayOf(
             Coordinate(5.0, 5.0),
             Coordinate(0.0, 0.0),
@@ -482,7 +468,7 @@ class GrenseServiceIT : TestWithDbContainer() {
      *      |            grense4           |
      *   (0.0, 0.0) ----- ----- -----  (5.0, 0.0)
      */
-    fun getGrenserForEnkelKrets(gyldigFra: LocalDate, gyldighetsdato: LocalDate, grensetype: Grensetype): List<Grense> {
+    fun getGrenserForEnkelKrets(gyldigFra: LocalDate, grensetype: Grensetype): List<Grense> {
 
         val grense1 = Grense(id = "grense1", lokalid = "grense1Lokalid", grensetype = grensetype)
             .apply {
@@ -1776,4 +1762,163 @@ class GrenseServiceIT : TestWithDbContainer() {
         val dokrefPaaGyldighetsdato = gammelVersjonAvGrense?.getDokumentasjonsreferanser(gyldighetsdato)
         assertThat(dokrefPaaGyldighetsdato?.first()?.rettskildetittel).isEqualTo(orginalTittel)
     }
+
+    @Test
+    fun arkiverBopliktomraadegrenseOgLukkKrets() {
+        val gyldigFra = november28In2022
+        val gyldighetsdato = LocalDate.now()
+        val lokalid1 = Lokalid("1")
+
+        val lagredeGrenser = grenseRepository.saveAll(getGrenserForEnkelKrets(gyldigFra, Grensetype.Bopliktgrense))
+        grenseRepository.flush()
+
+        val bopliktomraade = saveBopliktomraade(id = "1", lokalid = lokalid1, bopliktomraadenummer = "20", gyldigFra = gyldigFra, grenser = lagredeGrenser)
+
+        saveKommuneOgUnikLokalid(bopliktomraader = listOf(bopliktomraade), gyldigFra = gyldigFra)
+        grenseRepository.flush()
+
+        val grenseSomSkalArkiveres = bopliktomraade.grenser.first { it.grense.lokalid == "grense1Lokalid" }.grense
+        val grenseSomSkalJusteres = bopliktomraade.grenser.first { it.grense.lokalid == "grense2Lokalid" }.grense
+
+        val arkivertFeature = grenseSomSkalArkiveres.grenseToFeature(gyldighetsdato, true)
+        val featureMedEndretGeometri = utfoerGrensejusteringEtterArkivering(grenseSomSkalJusteres, gyldighetsdato)
+
+        val flateSet = grenseService.lagreGrenser(
+            grenser = FeatureCollection(features = listOf(arkivertFeature, featureMedEndretGeometri)),
+            gyldighetsdato = gyldighetsdato,
+            endringstype = Endringstype.VEDTATT_GRENSEJUSTERING
+        )
+        assertThat(flateSet).hasSize(1)
+        val flate = flateSet.firstOrNull { it.lokalid == lokalid1.value }
+        assertThat(flate).isNotNull
+
+        val bopliktomraadeEtterLagring = bopliktomraadeService.hentBopliktomraade(Identifikator(Lokalid(flate!!.lokalid), gyldighetsdato))!!
+        assertThat(bopliktomraadeEtterLagring.grenser).hasSize(3).extracting("grense.lokalid").doesNotContain("grense1Lokalid")
+    }
+
+    @Test
+    fun arkiverBopliktomraadegrenseUtenAaLukkeKrets() {
+        val gyldigFra = november28In2022
+        val gyldighetsdato = LocalDate.now()
+
+        val bopliktomraadeRequest = BopliktomraadeRequestBuilder.DEFAULT_REQUEST
+        val identifikator = Identifikator(Lokalid(bopliktomraadeRequest.identifikasjon.lokalid), gyldigFra)
+        val lagredeGrenser = grenseRepository.saveAll(getGrenserForEnkelKrets(gyldigFra, Grensetype.Bopliktgrense))
+        grenseRepository.flush()
+
+        val bopliktomraade = saveBopliktomraade(id = "1", lokalid = identifikator.lokalid, bopliktomraadenummer = "20",
+            gyldigFra = gyldigFra, grenser = lagredeGrenser)
+
+        saveKommuneOgUnikLokalid(bopliktomraader = listOf(bopliktomraade), gyldigFra = gyldigFra)
+        grenseRepository.flush()
+
+        val grenseSomSkalArkiveres = bopliktomraade.grenser.first { it.grense.lokalid == "grense1Lokalid" }.grense
+        val arkivertFeature = grenseSomSkalArkiveres.grenseToFeature(gyldighetsdato, true)
+
+        val exception = assertFailsWith<UgyldigeFlaterException> {
+            grenseService.lagreGrenser(
+                grenser = FeatureCollection(features = listOf(arkivertFeature)),
+                gyldighetsdato = gyldighetsdato,
+                endringstype = Endringstype.VEDTATT_GRENSEJUSTERING
+            )
+        }
+
+        assertThat(exception.message).contains("Feil ved flatedanning")
+        val ugyldigeFlater = exception.ugyldigeFlater
+        assertThat(ugyldigeFlater).hasSize(1)
+        ugyldigeFlater.find { it.lokalid == bopliktomraade.lokalid }!!.let { assertThat(it.flateInformasjon).isEqualTo(bopliktomraade.getFlateInformasjon()) }
+
+        ugyldigeFlater.forEach {
+            assertThat(it.topologifeil).isEqualTo(topologyValidationErrorToCustomText(TopologyValidationError.RING_NOT_CLOSED))
+            assertThat(it.koordinat).isEqualTo(Coordinate(0.0, 5.0))
+        }
+    }
+
+    @Test
+    fun `opprett ny bopliktomraadegrense som lukker bopliktomraadene`() {
+        val gyldigFra = november28In2022
+        val gyldighetsdato = LocalDate.now()
+
+        val lagredeGrenser = grenseRepository.saveAll(getGrenserForEnkelKrets(gyldigFra, Grensetype.Bopliktgrense))
+        grenseRepository.flush()
+
+        val bopliktomraade = saveBopliktomraade(id = "1", lokalid = Lokalid("2"), bopliktomraadenummer = "20",
+            gyldigFra = gyldigFra, grenser = lagredeGrenser)
+
+        saveKommuneOgUnikLokalid(bopliktomraader = listOf(bopliktomraade), gyldigFra = gyldigFra)
+
+        val grenseSomSkalEndres = bopliktomraade.grenser.first { it.grense.lokalid == "grense2Lokalid" }.grense
+        val featureForGrenseSomSkalEndres = grenseSomSkalEndres.grenseToFeature(gyldighetsdato)
+        val oppdatertGeometri = GrenseHelper.geometryFactory.createLineString(
+            arrayOf(
+                Coordinate(0.0, 5.0),
+                Coordinate(5.0, 10.0)
+            )
+        )
+        oppdatertGeometri.geometryToDto().also { featureForGrenseSomSkalEndres.geometry = it }
+
+        val gyldigNyGrense = lagNyGrense(
+            "grense5Id",
+            Grensetype.Bopliktgrense,
+            "grense5Lokalid",
+            gyldigFra,
+            listOf(Coordinate(5.0, 5.0), Coordinate(5.0, 10.0)))
+        gyldigNyGrense.bopliktomraader = grenseSomSkalEndres.bopliktomraader
+        val featureForNyGrense: Feature = gyldigNyGrense.grenseToFeature(gyldighetsdato, nyGrense = true)
+
+        grenseService.lagreGrenser(
+            grenser = FeatureCollection(features = listOf(featureForGrenseSomSkalEndres, featureForNyGrense)),
+            gyldighetsdato = gyldighetsdato,
+            endringstype = Endringstype.VEDTATT_GRENSEJUSTERING
+        )
+
+        val bopliktomraadeEtterLagring = bopliktomraadeService.hentBopliktomraade(Identifikator(Lokalid(bopliktomraade.lokalid), gyldighetsdato))!!
+        assertThat(bopliktomraadeEtterLagring.grenser).hasSize(5)
+            .extracting("grense.id")
+            .doesNotContain("grense2").contains("grense1", "grense3", "grense4")
+    }
+
+    @Test
+    fun `opprett ny bopliktomraadegrense som ikke lukker bopliktomraadene`() {
+        val gyldigFra = november28In2022
+        val gyldighetsdato = LocalDate.now()
+
+        val lagredeGrenser = grenseRepository.saveAll(getGrenserForEnkelKrets(gyldigFra, Grensetype.Bopliktgrense))
+        grenseRepository.flush()
+
+        val bopliktomraade = saveBopliktomraade(id = "1", lokalid = Lokalid("2"), bopliktomraadenummer = "20",
+            gyldigFra = gyldigFra, grenser = lagredeGrenser)
+
+        saveKommuneOgUnikLokalid(bopliktomraader = listOf(bopliktomraade), gyldigFra = gyldigFra)
+
+        val grenseSomSkalEndres = bopliktomraade.grenser.first { it.grense.lokalid == "grense2Lokalid" }.grense
+
+        val ugyldigNyGrense = lagNyGrense(
+            "grenseDelt2Id",
+            Grensetype.Bopliktgrense,
+            "grenseDelt2Lokalid",
+            gyldigFra,
+            listOf(Coordinate(10.0, 8.0), Coordinate(10.0, 10.0)))
+        ugyldigNyGrense.bopliktomraader = grenseSomSkalEndres.bopliktomraader
+        val featureForNyGrense: Feature = ugyldigNyGrense.grenseToFeature(gyldighetsdato, nyGrense = true)
+
+        val exception = assertFailsWith<UgyldigeFlaterException> {
+            grenseService.lagreGrenser(
+                grenser = FeatureCollection(features = listOf( featureForNyGrense)),
+                gyldighetsdato = gyldighetsdato,
+                endringstype = Endringstype.VEDTATT_GRENSEJUSTERING
+            )
+        }
+
+        assertThat(exception.message).contains("Feil ved flatedanning")
+        val ugyldigeFlater = exception.ugyldigeFlater
+        assertThat(ugyldigeFlater).hasSize(1)
+        ugyldigeFlater.find { it.lokalid == bopliktomraade.lokalid }!!.let { assertThat(it.flateInformasjon).isEqualTo(bopliktomraade.getFlateInformasjon()) }
+
+        ugyldigeFlater.forEach {
+            assertThat(it.topologifeil).isEqualTo(topologyValidationErrorToCustomText(TopologyValidationError.RING_NOT_CLOSED))
+            assertThat(it.koordinat).isEqualTo(Coordinate(10.0, 10.0))
+        }
+    }
+
 }

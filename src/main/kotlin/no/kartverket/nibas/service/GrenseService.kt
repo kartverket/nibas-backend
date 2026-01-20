@@ -15,6 +15,7 @@ import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException.BadRequestException
 import no.kartverket.nibas.common.ResponseException.NotFoundException
 import no.kartverket.nibas.common.toNorskFormat
+import no.kartverket.nibas.domain.Bopliktomraade
 import no.kartverket.nibas.domain.CommonMetadataProperties
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Flate
@@ -23,6 +24,7 @@ import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GrenseKobling
 import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.GrunnkretsGrenseKobling
+import no.kartverket.nibas.domain.KobletTilGrense
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.domain.Stemmekrets
@@ -56,6 +58,7 @@ class GrenseService(
     private val nasjonService: NasjonService,
     private val dokumentasjonsreferanseService: DokumentasjonsreferanseService,
     private val bopliktomraadeRepository: BopliktomraadeRepository,
+    private val bopliktomraadeService: BopliktomraadeService,
 ) {
     fun hentGrense(identifikator: Identifikator): Grense? = grenseRepository.findGyldigObjektForIdentifikator(identifikator)
 
@@ -80,16 +83,19 @@ class GrenseService(
         val (featuresMedArkivering, featuresMedEndringer) = grenser.features.partition { it.properties.shouldArchive }
         val stemmekretserForTilhorigheter = createStemmekretserVersjonerForTilhorigheterIFeatures(grenser.features, gyldighetsdato, endringstype)
         val grunnkretserForTilhorigheter = createGrunnkretsVersjonerForTilhorigheterIFeatures(grenser.features, gyldighetsdato, endringstype)
+        val bopliktomraaderForTilhorigheter = createBopliktomraadeVersjonerForTilhorigheterIFeatures(grenser.features, gyldighetsdato, endringstype)
 
         featuresMedArkivering.map { arkiverGrense(it, gyldighetsdato) }
 
         val endredeGrenserMedTilhorigheter = featuresMedEndringer.map { feature ->
             val grenseUtenTilhorighet = createGrenseForFeatureUtenTilhorigheter(feature, gyldighetsdato, endringstype)
-            addTilhorigheterTilGrense(grenseUtenTilhorighet, feature, stemmekretserForTilhorigheter, grunnkretserForTilhorigheter, gyldighetsdato)
+            addTilhorigheterTilGrense(grenseUtenTilhorighet, feature, stemmekretserForTilhorigheter, grunnkretserForTilhorigheter,
+                bopliktomraaderForTilhorigheter, gyldighetsdato)
         }
 
         val flaterSomSkalOppdatereHoyereIHierakiet = createNyeVersjonerAvFlaterHoyereIHierakietForGrenser(endredeGrenserMedTilhorigheter, gyldighetsdato, endringstype)
-        val flaterSomSkalFlatedannes = (stemmekretserForTilhorigheter + grunnkretserForTilhorigheter + flaterSomSkalOppdatereHoyereIHierakiet)
+        val flaterSomSkalFlatedannes = (stemmekretserForTilhorigheter + grunnkretserForTilhorigheter + bopliktomraaderForTilhorigheter +
+            flaterSomSkalOppdatereHoyereIHierakiet)
             .distinctBy { it.id }
             .toSet()
 
@@ -274,10 +280,19 @@ class GrenseService(
         return createNyGrenseMedNyLokalid(feature, gyldighetsdato, endringstype)
     }
 
-    private fun addTilhorigheterTilGrense(grense: Grense, feature: Feature, stemmekretser: Collection<Stemmekrets>, grunnkretser: Collection<Grunnkrets>, gyldighetsdato: LocalDate): Grense {
+    private fun addTilhorigheterTilGrense(
+        grense: Grense,
+        feature: Feature,
+        stemmekretser: Collection<Stemmekrets>,
+        grunnkretser: Collection<Grunnkrets>,
+        bopliktomraader: Collection<Bopliktomraade>,
+        gyldighetsdato: LocalDate
+    ): Grense {
         hentStemmekretserForTilhorigheterIFeature(feature, stemmekretser, gyldighetsdato)
             .forEach { it.addGrensekobling(grense) }
         hentGrunnkretserForTilhorigheterIFeature(feature, grunnkretser)
+            .forEach { it.addGrensekobling(grense) }
+        hentBopliktomraaderForTilhorigheterIFeature(feature, bopliktomraader)
             .forEach { it.addGrensekobling(grense) }
 
         return grense
@@ -318,6 +333,18 @@ class GrenseService(
             }
 
         return tilhorigheterTilNyeKretser + tilhorigheterTilEksisterendeKretser
+    }
+
+    private fun hentBopliktomraaderForTilhorigheterIFeature(feature: Feature, bopliktomraader: Collection<Bopliktomraade>): List<Bopliktomraade> {
+        //Har ikke med tilhørighet for deling
+        val tilhorigheterTilEksisterendeKretser = feature.properties.kontekstEgenskaper
+            .filter { it.type == KontekstEnhetType.BOPLIKTOMRAADE && it.id != null }
+            .map { kontekstEgenskap ->
+                bopliktomraader.firstOrNull { it.lokalid == kontekstEgenskap.id?.lokalid?.value }
+                    ?: throw BadRequestException("Kunne ikke sette tilhørighet på grensen. Fant ikke bopliktområde med lokalid: ${kontekstEgenskap.id?.lokalid?.value}")
+            }
+
+        return tilhorigheterTilEksisterendeKretser
     }
 
     fun createNyeVersjonerAvFlaterHoyereIHierakietForGrenser(
@@ -361,6 +388,11 @@ class GrenseService(
         return getNyopprettedeGrunnkretserForFeatures(features, gyldighetsdato) + getNyeVersjonerAvEksisterendeGrunnkretserForFeatures(features, gyldighetsdato, endringstype)
     }
 
+    private fun createBopliktomraadeVersjonerForTilhorigheterIFeatures(features: List<Feature>, gyldighetsdato: LocalDate, endringstype: Endringstype): Set<Bopliktomraade> {
+        //Har ikke med nyopprettede bopliktmråder oppstått ved deling
+        return getNyeVersjonerAvEksisterendeBopliktomraaderForFeatures(features, gyldighetsdato, endringstype)
+    }
+
     private fun getNyopprettedeStemmekretserForFeatures(features: List<Feature>, gyldighetsdato: LocalDate): Set<Stemmekrets> {
         val kontekstEgenskaper = features
             .flatMap { it.properties.kontekstEgenskaper }
@@ -390,7 +422,7 @@ class GrenseService(
                 val gammelVersjon = stemmekretsService.hentStemmekrets(Identifikator(it.lokalid, gyldighetsdato))
                     ?: throw RuntimeException("Fant ikke stemmekrets med id ${it.lokalid} på gyldighetsdato ${gyldighetsdato.toNorskFormat()}")
                 stemmekretsService.createNyVersjonAvStemmekretsUtenGrenser(gammelVersjon, gyldighetsdato, endringstype)
-                    .kopierTilhorigheterSomIkkeErMedIUtkastet(gammelVersjon, features, gyldighetsdato)
+                    .kopierTilhorigheterSomIkkeErMedIUtkastet(gammelVersjon, features, gyldighetsdato) as Stemmekrets
             }.toSet()
     }
 
@@ -424,7 +456,24 @@ class GrenseService(
                 val gammelVersjon = grunnkretsService.hentGrunnkrets(Identifikator(it.lokalid, gyldighetsdato))
                     ?: throw RuntimeException("Fant ikke grunnkrets med id ${it.lokalid.value} på gyldighetsdato ${gyldighetsdato.toNorskFormat()}")
                 grunnkretsService.createNyVersjonAvGrunnkretsUtenGrenser(gammelVersjon, gyldighetsdato, endringstype)
-                    .kopierTilhorigheterSomIkkeErMedIUtkastet(gammelVersjon, features, gyldighetsdato)
+                    .kopierTilhorigheterSomIkkeErMedIUtkastet(gammelVersjon, features, gyldighetsdato) as Grunnkrets
+            }.toSet()
+    }
+
+    private fun getNyeVersjonerAvEksisterendeBopliktomraaderForFeatures(features: Collection<Feature>, gyldighetsdato: LocalDate, endringstype: Endringstype)
+        : Set<Bopliktomraade> {
+        val unikeBopliktomraadeLokalIder = features
+            .flatMap { it.properties.kontekstEgenskaper }
+            .filter { it.type == KontekstEnhetType.BOPLIKTOMRAADE }
+            .mapNotNull { it.id }
+            .distinctBy { it.lokalid.value }
+
+        return unikeBopliktomraadeLokalIder
+            .map {
+                val gammelVersjon = bopliktomraadeService.hentBopliktomraade(Identifikator(it.lokalid, gyldighetsdato))
+                    ?: throw RuntimeException("Fant ikke bopliktomraåde med id ${it.lokalid.value} på gyldighetsdato ${gyldighetsdato.toNorskFormat()}")
+                bopliktomraadeService.createNyVersjonAvBopliktomraadeUtenGrenser(gammelVersjon, gyldighetsdato, endringstype)
+                    .kopierTilhorigheterSomIkkeErMedIUtkastet(gammelVersjon, features, gyldighetsdato) as Bopliktomraade
             }.toSet()
     }
 
@@ -490,16 +539,8 @@ class GrenseService(
             .maxBy { it.version }
             .version + 1
 
-    private fun Stemmekrets.kopierTilhorigheterSomIkkeErMedIUtkastet(gammelStemmekrets: Stemmekrets, features: Collection<Feature>, gyldighetsdato: LocalDate): Stemmekrets {
-        gammelStemmekrets.getGrensekoblinger(gyldighetsdato)
-            .map { it.grense }
-            .filter { features.none { feature -> feature.id == it.lokalid } }
-            .forEach { this.addGrensekobling(it) }
-        return this
-    }
-
-    private fun Grunnkrets.kopierTilhorigheterSomIkkeErMedIUtkastet(gammelGrunnkrets: Grunnkrets, features: Collection<Feature>, gyldighetsdato: LocalDate): Grunnkrets {
-        gammelGrunnkrets.getGrensekoblinger(gyldighetsdato)
+    private fun KobletTilGrense.kopierTilhorigheterSomIkkeErMedIUtkastet(gammelFlate: Flate, features: Collection<Feature>, gyldighetsdato: LocalDate): KobletTilGrense {
+        gammelFlate.getGrensekoblinger(gyldighetsdato)
             .map { it.grense }
             .filter { features.none { feature -> feature.id == it.lokalid } }
             .forEach { this.addGrensekobling(it) }

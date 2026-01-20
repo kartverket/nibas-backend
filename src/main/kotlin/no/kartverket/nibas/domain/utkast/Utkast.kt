@@ -143,6 +143,7 @@ class UtkastBuilder private constructor(val navn: String, private val endringsty
 data class EndredeInndelinger(
     val endredeStemmekretser: MutableSet<String> = mutableSetOf(),
     val endredeGrunnkretser: MutableSet<String> = mutableSetOf(),
+    val endredeBopliktomraader: MutableSet<String> = mutableSetOf(),
     val endredeKommuner: MutableSet<String> = mutableSetOf(),
     val endredeFylker: MutableSet<String> = mutableSetOf(),
     val endredeNasjoner: MutableSet<String> = mutableSetOf()
@@ -153,6 +154,7 @@ fun List<EventRad>.toEndredeInndelinger(): EndredeInndelinger {
 
     filter { Flatetype.GRUNNKRETS == it.flateType }.forEach { endredeInndelinger.endredeGrunnkretser.add(it.lokalid) }
     filter { Flatetype.STEMMEKRETS == it.flateType }.forEach { endredeInndelinger.endredeStemmekretser.add(it.lokalid) }
+    filter { Flatetype.BOPLIKTOMRAADE == it.flateType }.forEach { endredeInndelinger.endredeBopliktomraader.add(it.lokalid) }
     filter { Flatetype.KOMMUNE == it.flateType }.forEach { endredeInndelinger.endredeKommuner.add(it.lokalid) }
     filter { Flatetype.FYLKE == it.flateType }.forEach { endredeInndelinger.endredeFylker.add(it.lokalid) }
     filter { Flatetype.NASJON == it.flateType }.forEach { endredeInndelinger.endredeNasjoner.add(it.lokalid) }

@@ -22,6 +22,7 @@ class UtkastEndredeInndelingerTest {
         assertThat(endredeInndelinger.endredeGrunnkretser).isEmpty()
         assertThat(endredeInndelinger.endredeFylker).isEmpty()
         assertThat(endredeInndelinger.endredeNasjoner).isEmpty()
+        assertThat(endredeInndelinger.endredeBopliktomraader).isEmpty()
     }
 
     @Test
@@ -42,35 +43,29 @@ class UtkastEndredeInndelingerTest {
     }
 
     @Test
-    fun `toEndredeInndelinger skal registrere alle typer metadata endringer`() {
+    fun `toEndredeInndelinger skal registrere alle typer metadataendringer`() {
         val nasjonId = "Norge"
         val kommuneId = "5001"
         val fylkeId = "30"
         val grunnkretsId = "grunnkrets1"
         val stemmekretsId = "stemmekrets1"
+        val bopliktomraadeId = "bopliktomraade1"
 
         val nasjonEvent = EventRad(nasjonId, EventType.MODIFIED, Flatetype.NASJON, nasjonId)
         val kommuneEvent = EventRad(kommuneId, EventType.MODIFIED, Flatetype.KOMMUNE, kommuneId)
         val fylkeEvent = EventRad(fylkeId, EventType.MODIFIED, Flatetype.FYLKE, fylkeId)
         val grunnkretsEvent = EventRad(grunnkretsId, EventType.MODIFIED, Flatetype.GRUNNKRETS, grunnkretsId)
         val stemmekretsEvent = EventRad(stemmekretsId, EventType.MODIFIED, Flatetype.STEMMEKRETS, stemmekretsId)
+        val bopliktomraadeEvent = EventRad(stemmekretsId, EventType.MODIFIED, Flatetype.BOPLIKTOMRAADE, bopliktomraadeId)
 
-        val eventrader: List<EventRad> = listOf(kommuneEvent, fylkeEvent, grunnkretsEvent, stemmekretsEvent, nasjonEvent)
+        val eventrader: List<EventRad> = listOf(kommuneEvent, fylkeEvent, grunnkretsEvent, stemmekretsEvent, nasjonEvent, bopliktomraadeEvent)
         val endredeInndelinger = eventrader.toEndredeInndelinger()
 
-        assertThat(endredeInndelinger.endredeKommuner).hasSize(1)
-        assertThat(endredeInndelinger.endredeKommuner).containsExactly(kommuneId)
-
-        assertThat(endredeInndelinger.endredeFylker).hasSize(1)
-        assertThat(endredeInndelinger.endredeFylker).containsExactly(fylkeId)
-
-        assertThat(endredeInndelinger.endredeGrunnkretser).hasSize(1)
-        assertThat(endredeInndelinger.endredeGrunnkretser).containsExactly(grunnkretsId)
-
-        assertThat(endredeInndelinger.endredeStemmekretser).hasSize(1)
-        assertThat(endredeInndelinger.endredeStemmekretser).containsExactly(stemmekretsId)
-
-        assertThat(endredeInndelinger.endredeNasjoner).hasSize(1)
-        assertThat(endredeInndelinger.endredeNasjoner).containsExactly(nasjonId)
+        assertThat(endredeInndelinger.endredeKommuner).hasSize(1).containsExactly(kommuneId)
+        assertThat(endredeInndelinger.endredeFylker).hasSize(1).containsExactly(fylkeId)
+        assertThat(endredeInndelinger.endredeGrunnkretser).hasSize(1).containsExactly(grunnkretsId)
+        assertThat(endredeInndelinger.endredeStemmekretser).hasSize(1).containsExactly(stemmekretsId)
+        assertThat(endredeInndelinger.endredeNasjoner).hasSize(1).containsExactly(nasjonId)
+        assertThat(endredeInndelinger.endredeBopliktomraader).hasSize(1).containsExactly(bopliktomraadeId)
     }
 }
