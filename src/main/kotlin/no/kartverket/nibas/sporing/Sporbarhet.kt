@@ -3,22 +3,16 @@ package no.kartverket.nibas.sporing
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Sporingsinformasjon
 import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.domain.Endringstype
-import org.hibernate.event.service.spi.EventListenerRegistry
-import org.hibernate.event.spi.AbstractPreDatabaseOperationEvent
-import org.hibernate.event.spi.EventType
-import org.hibernate.event.spi.PreInsertEvent
-import org.hibernate.event.spi.PreInsertEventListener
-import org.hibernate.event.spi.PreUpdateEvent
-import org.hibernate.event.spi.PreUpdateEventListener
-import org.hibernate.internal.SessionFactoryImpl
+import no.kartverket.nibas.service.TransactionTimeService
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Component
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.ZonedDateTime
-import jakarta.annotation.PostConstruct
 import jakarta.persistence.Column
 import jakarta.persistence.Embeddable
-import jakarta.persistence.EntityManagerFactory
+import jakarta.persistence.PrePersist
+import jakarta.persistence.PreUpdate
 
 
 interface UserFacade {
@@ -40,51 +34,24 @@ class DefaultUserFacade(
     }
 }
 
-
 @Component
-class AuditComponent(private val jpaEntityManagerFactory: EntityManagerFactory,
-                     private val auditPreInsertEventListener: AuditPreInsertEventListener,
-                     private val auditPreUpdateEventListener: AuditPreUpdateEventListener) {
-    // Litt omstendelig, men må registrere event listeners i EventListenerRegistry
-    @PostConstruct
-    @Suppress("UnusedPrivateMember")
-    private fun postConstruct() {
-        val eventListenerRegistry = jpaEntityManagerFactory
-            .unwrap(SessionFactoryImpl::class.java)
-            .serviceRegistry
-            .getService(EventListenerRegistry::class.java) ?: throw RuntimeException("Fant ingen service av typen EventListenerRegistry.")
-
-        eventListenerRegistry.getEventListenerGroup(EventType.PRE_INSERT).appendListener(auditPreInsertEventListener)
-        eventListenerRegistry.getEventListenerGroup(EventType.PRE_UPDATE).appendListener(auditPreUpdateEventListener)
+class SporbarEntityListener(
+    private val userFacade: UserFacade,
+    private val transactionTimeService: TransactionTimeService
+) {
+    @PrePersist
+    @PreUpdate
+    fun setAuditInfo(entity: Any) {
+        if (entity is Sporbar) {
+            entity.auditInfo.run {
+                endretAv = userFacade.getAuthenticatedUser()
+                endretdato = transactionTimeService.transactionTime.atZone(ZONE_ID)
+            }
+        }
     }
-}
-
-/**
- * Hibernate event listener som ved oppdatering setter sporbarhetsfelter på entiteter som har Sporbar-egenskapen.
- */
-@Component
-class AuditPreUpdateEventListener(private val userFacade: UserFacade) : PreUpdateEventListener {
-    override fun onPreUpdate(event: PreUpdateEvent): Boolean {
-        return event.processSporbarEntity(userFacade)
+    companion object {
+        val ZONE_ID = ZoneId.of("Europe/Oslo")
     }
-}
-
-/**
- * Hibernate event listener som ved insert setter sporbarhetsfelter på entiteter som har Sporbar-egenskapen.
- */
-@Component
-class AuditPreInsertEventListener(private val userFacade: UserFacade) : PreInsertEventListener {
-    override fun onPreInsert(event: PreInsertEvent): Boolean {
-        return event.processSporbarEntity(userFacade)
-    }
-}
-
-private fun AbstractPreDatabaseOperationEvent.processSporbarEntity(userFacade: UserFacade): Boolean {
-    val entity = this.entity
-    if (entity is Sporbar) {
-        entity.auditInfo.onUpdate(userFacade.getAuthenticatedUser())
-    }
-    return false
 }
 
 interface Sporbar {
@@ -101,12 +68,7 @@ data class AuditInfo(
     @Column(name = "endretdato", nullable = false) var endretdato: ZonedDateTime = ZonedDateTime.now(),
     @Column(name = "endretav", nullable = false) var endretAv: String = "import",
     @Column(name = "typeendring", nullable = false) var typeEndring: Endringstype = Endringstype.IMPORT
-) {
-    fun onUpdate(user: String) {
-        endretAv = user
-        endretdato = ZonedDateTime.now()
-    }
-}
+)
 
 interface Gyldig {
     // Inklusiv gyldigFra, eksklusiv gyldigTil
