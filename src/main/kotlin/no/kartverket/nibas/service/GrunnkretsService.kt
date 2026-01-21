@@ -249,6 +249,7 @@ class GrunnkretsService(
             posisjon = geometryFactory.createPoint()
             setGyldigFra(delingsDato)
             informasjon = grunnkrets.informasjon
+            auditInfo.typeEndring = endringstype
         }
 
         return grunnkretsRepository.save(nyGrunnkrets)

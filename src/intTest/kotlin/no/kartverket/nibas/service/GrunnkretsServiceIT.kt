@@ -873,8 +873,9 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
             nyeKretser = listOf(KretsNavnOgNummer("nyGrunnkrets", "1"))
         )
 
+        val endringstype = Endringstype.VEDTATT_DELING
         val unikKretsDelingEndring = getUnikeKretsDelingEndringRequests(delingEndringRequest).first()
-        val nyGrunnkrets = grunnkretsService.delGrunnkrets(unikKretsDelingEndring, gyldighetsdato, Endringstype.VEDTATT_DELING)
+        val nyGrunnkrets = grunnkretsService.delGrunnkrets(unikKretsDelingEndring, gyldighetsdato, endringstype)
 
         assertThat(nyGrunnkrets).isNotNull
         assertThat(nyGrunnkrets.grenser).isEmpty()
@@ -882,6 +883,7 @@ class GrunnkretsServiceIT : TestWithDbContainer() {
         assertThat(nyGrunnkrets.grunnkretsnummer).isEqualTo(unikKretsDelingEndring.kretsNummer)
         assertThat(nyGrunnkrets.grunnkretsnavn).isEqualTo(unikKretsDelingEndring.kretsNavn)
         assertThat(nyGrunnkrets.version).isEqualTo(1)
+        assertThat(nyGrunnkrets.auditInfo.typeEndring).isEqualTo(endringstype)
     }
 
     @Test

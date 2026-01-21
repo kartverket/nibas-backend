@@ -198,6 +198,7 @@ class StemmekretsService(
                 omraade = MultiPolygon(arrayOfNulls(0), geometryFactory)
                 posisjon = geometryFactory.createPoint()
                 setGyldigFra(delingsDato)
+                auditInfo.typeEndring = endringstype
             }
 
         return stemmekretsRepository.save(nyStemmekrets)

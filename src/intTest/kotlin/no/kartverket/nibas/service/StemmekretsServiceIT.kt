@@ -801,8 +801,9 @@ class StemmekretsServiceIT : TestWithDbContainer() {
             nyeKretser = listOf(KretsNavnOgNummer("nyStemmekrets", "1"))
         )
 
+        val endringstype = Endringstype.VEDTATT_DELING
         val unikKretsDelingEndring = getUnikeKretsDelingEndringRequests(delingEndringRequest).first()
-        val nyStemmekrets = stemmekretsService.delStemmekrets(unikKretsDelingEndring, gyldighetsdato, Endringstype.VEDTATT_DELING)
+        val nyStemmekrets = stemmekretsService.delStemmekrets(unikKretsDelingEndring, gyldighetsdato, endringstype)
 
         assertThat(nyStemmekrets).isNotNull
         assertThat(nyStemmekrets.utledetFra?.lokalid).isEqualTo(opprinneligStemmekrets.lokalid)
@@ -813,6 +814,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         assertThat(nyStemmekrets.valgdistriktsnummer).isNotNull().isEqualTo(opprinneligStemmekrets.valgdistriktsnummer)
         assertThat(nyStemmekrets.tellekretsnummer).isEqualTo(opprinneligStemmekrets.tellekretsnummer)
         assertThat(nyStemmekrets.tellekretsnavn).isEqualTo(opprinneligStemmekrets.tellekretsnavn)
+        assertThat(nyStemmekrets.auditInfo.typeEndring).isEqualTo(endringstype)
     }
 
     @Test
