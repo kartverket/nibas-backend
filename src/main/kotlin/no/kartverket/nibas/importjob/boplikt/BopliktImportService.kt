@@ -1,16 +1,19 @@
 package no.kartverket.nibas.importjob.boplikt
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import no.kartverket.nibas.common.getInSpraak
 import no.kartverket.nibas.importjob.geojson.GeoJsonFeature
 import no.kartverket.nibas.importjob.geojson.GeoJsonReader
 import no.kartverket.nibas.service.KommuneService
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.util.UUID
 
 @Service
+@Transactional
 class BopliktImportService(
     private val geoJsonReader: GeoJsonReader,
     private val objectMapper: ObjectMapper,
@@ -46,8 +49,6 @@ class BopliktImportService(
         val objid = UUID.randomUUID().toString()
         val lokalid = UUID.randomUUID().toString()
 
-        val navn = "Bopliktområde"
-
         val gyldigfra = parseDate(prop("gjelderFra"))
         val gyldigtil = parseDateOrNull(prop("gjelderTil"))
 
@@ -73,12 +74,10 @@ class BopliktImportService(
             gyldigFraDate = gyldigFraDefaultDate
         }
         val kommunenummer = prop("kommunenummer")?.toString()
-        val kommunelokalid = kommunenummer?.let {
-            kommuneService
-                .hentKommuneByKommunenummer(it, gyldigFraDate)
-                ?.kommuneLokalid
-                ?.lokalid
-        }
+        val kommune = kommunenummer?.let { kommuneService.hentKommuneByKommunenummer(it, gyldigFraDate) }
+        val kommunelokalid = kommune?.lokalid
+        val kommunenavn = kommune?.getAdministrativenhetNavn(gyldigFraDate)?.getInSpraak("nor")
+        val navn = "Bopliktområde i $kommunenavn"
 
         val geometryJson = objectMapper.writeValueAsString(
             mapOf(
