@@ -59,6 +59,30 @@ class InndelingSearchRepository(val jdbcTemplate: NamedParameterJdbcTemplate) {
         return jdbcTemplate.query(query, mapOf("gyldighetsdato" to gyldighetsdato, "searchString" to searchString, "limit" to limit), InndelingRowMapper(Flatetype.STEMMEKRETS))
     }
 
+    fun finnBopliktomraader(gyldighetsdato: LocalDate, searchString: String, limit: Int): List<Inndeling> {
+        val query = """
+                SELECT DISTINCT ON (b.navn, b.nummer, k.kommunenummer)
+                        b.lokalid,
+                        b.navn AS navn,
+                        concat(k.kommunenummer, b.nummer) AS nummer,
+                        b.posisjon AS representasjonspunkt
+                FROM bopliktomraade b
+                JOIN kommune k ON k.lokalid = b.kommunelokalid
+                WHERE b.gyldigfra <= :gyldighetsdato
+                  AND (b.gyldigtil > :gyldighetsdato OR b.gyldigtil IS NULL)
+                  AND b.slettet = FALSE 
+                  AND k.gyldigfra <= :gyldighetsdato
+                  AND (k.gyldigtil > :gyldighetsdato OR k.gyldigtil IS NULL)
+                  AND k.slettet = FALSE
+                  AND CONCAT(k.kommunenummer, b.nummer, ' ', b.navn) ILIKE CONCAT('%', :searchString, '%')
+                ORDER BY b.navn, b.nummer, k.kommunenummer, b.gyldigfra DESC
+                LIMIT :limit
+            """.trimIndent()
+
+        return jdbcTemplate.query(query, mapOf("gyldighetsdato" to gyldighetsdato, "searchString" to searchString, "limit" to limit),
+            InndelingRowMapper(Flatetype.BOPLIKTOMRAADE))
+    }
+
     fun finnKommuner(gyldighetsdato: LocalDate, searchString: String, limit: Int): List<Inndeling> {
         val query = """
                 WITH gyldige_administrativenhetnavn AS (
