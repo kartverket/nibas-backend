@@ -133,7 +133,7 @@ class FylkesgrenseBuilder(private val id: String = "1",
         fylkesgrense.kvalitet = kvalitet
         fylkesgrense.auditInfo.endretdato = endretdato
         fylkesgrense.opphav = opphav
-        fylkesgrense.setInfo(informasjonstekst)
+        fylkesgrense.informasjon = informasjonstekst
         fylkesgrense.grense = grenseGeometri
 
         fylkesgrense.dokrefGrensekobling.addAll(dokumentasjonsreferanser.map {

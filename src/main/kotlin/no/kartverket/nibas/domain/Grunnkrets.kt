@@ -39,7 +39,7 @@ class Grunnkrets(
     var grunnkretsnavn: String? = null
 
     @Column(name = "informasjon")
-    var informasjon: String? = null
+    override var informasjon: String? = null
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "delomraadeinndeling_fk")
@@ -56,12 +56,6 @@ class Grunnkrets(
 
     @OneToMany(mappedBy = "grunnkrets", cascade = [CascadeType.ALL])
     var grenser: MutableSet<GrunnkretsGrenseKobling> = Collections.synchronizedSet(mutableSetOf())
-
-    override fun getInfo(): String? = informasjon
-
-    override fun setInfo(updatedInfo: String?) {
-        informasjon = updatedInfo
-    }
 
     /**
      * Henter kretsen sin kommune på en gitt dato. Hvis man gir en dato hvor kommunen med gitt lokalid ikke er gyldig, returneres null

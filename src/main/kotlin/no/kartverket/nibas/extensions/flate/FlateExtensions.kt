@@ -39,7 +39,7 @@ fun Grunnkrets.toGrunnkretsResponse(): GrunnkretsResponse {
         oppdateringsdato = auditInfo.endretdato,
         representasjonspunkt = posisjon.posisjonToFeature(version),
         version = version,
-        informasjon = getInfo()
+        informasjon = informasjon
     )
 }
 
@@ -91,7 +91,7 @@ fun Stemmekrets.toStemmekretsResponse(): StemmekretsResponse {
         representasjonspunkt = posisjon.posisjonToFeature(version),
         datafangstdato = datafangstdato,
         version = version,
-        informasjon = getInfo()
+        informasjon = informasjon
     )
 }
 

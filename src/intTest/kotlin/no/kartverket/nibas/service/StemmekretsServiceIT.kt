@@ -180,6 +180,9 @@ class StemmekretsServiceIT : TestWithDbContainer() {
             .isEqualTo(stemmekretsRequest.nummer)
         assertThat(stemmekretsEtter.stemmekretsnavn).isNotEqualTo(stemmekrets.stemmekretsnavn)
             .isEqualTo(stemmekretsRequest.navn)
+        assertThat(stemmekretsEtter.informasjon)
+            .isNotEqualTo(stemmekrets.informasjon)
+            .isEqualTo(stemmekretsRequest.informasjon)
         assertThat(stemmekretsEtter.omraade).isEqualTo(stemmekrets.omraade)
         assertThat(stemmekretsEtter.posisjon).isEqualTo(stemmekrets.posisjon)
         assertThat(stemmekretsEtter.gyldighet.gyldigFra).isEqualTo(now)
@@ -825,14 +828,14 @@ class StemmekretsServiceIT : TestWithDbContainer() {
             .apply {
                 tellekretsnummer = null
                 tellekretsnavn = null
-                setInfo("Info fra en test")
+                informasjon = "Info fra en test"
             }
 
         val kommune = saveKommune(stemmekretser = listOf(opprinneligStemmekrets), gyldigFra = gyldighetsdato)
         assertThat(opprinneligStemmekrets.valgdistriktsnummer).isNotNull()
         assertThat(opprinneligStemmekrets.tellekretsnummer).isNull()
         assertThat(opprinneligStemmekrets.tellekretsnavn).isNull()
-        assertThat(opprinneligStemmekrets.getInfo()).isNotNull()
+        assertThat(opprinneligStemmekrets.informasjon).isNotNull()
 
         val delingEndringRequest = KretsDelingEndringRequest(
             IdentifikatorMedVersjon(opprinneligStemmekrets.lokalid, opprinneligStemmekrets.version),
@@ -853,7 +856,7 @@ class StemmekretsServiceIT : TestWithDbContainer() {
         assertThat(nyStemmekrets.valgdistriktsnummer).isNotNull().isEqualTo(opprinneligStemmekrets.valgdistriktsnummer)
         assertThat(nyStemmekrets.tellekretsnummer).isNull()
         assertThat(nyStemmekrets.tellekretsnavn).isNull()
-        assertThat(nyStemmekrets.getInfo()).isNotNull().isEqualTo(opprinneligStemmekrets.getInfo())
+        assertThat(nyStemmekrets.informasjon).isNotNull().isEqualTo(opprinneligStemmekrets.informasjon)
     }
 
     @Test

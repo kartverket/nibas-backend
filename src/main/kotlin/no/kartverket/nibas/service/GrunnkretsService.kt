@@ -156,7 +156,7 @@ class GrunnkretsService(
 
         grunnkretserSomUtgaar.forEach {
             it.setGyldigTil(sammenslaaingsDato)
-            it.setInfo(sammenslaaingsendringRequest.informasjon)
+            it.informasjon = sammenslaaingsendringRequest.informasjon
         }
 
         val alleGrunnkretsGrenseKoblinger = viderefoertGrunnkrets.getGrensekoblinger(sammenslaaingsDato) +
@@ -177,7 +177,7 @@ class GrunnkretsService(
 
         grensekoblingerSomUtgaar.forEach {
             it.grense.setGyldigTil(sammenslaaingsDato)
-            it.grense.setInfo(sammenslaaingsInformasjon)
+            it.grense.informasjon = sammenslaaingsInformasjon
         }
 
         viderefoerteGrensekoblinger.forEach {
@@ -308,7 +308,7 @@ private fun Grunnkrets.applyChangesFromRequest(request: GrunnkretsRequest): Grun
     return this.apply {
         grunnkretsnavn = request.navn
         grunnkretsnummer = request.nummer
-        request.informasjon?.let { this.setInfo(it) }
+        informasjon = request.informasjon
     }
 }
 

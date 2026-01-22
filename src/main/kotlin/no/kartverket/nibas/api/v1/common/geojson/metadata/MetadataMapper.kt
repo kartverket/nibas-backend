@@ -77,7 +77,7 @@ class MetadataMapper(private val kodelisteHrefProvider: KodelisteHrefProviderI =
         datafangstdato = this.datafangstdato,
         gyldigFra = this.gyldighet.gyldigFra,
         gyldigTil = this.gyldighet.gyldigTil,
-        informasjon = this.getInfo(),
+        informasjon = informasjon,
         sporingsinformasjon = this.auditInfo.toSporingsinformasjon(),
         opphav = this.opphav,
     )

@@ -62,7 +62,7 @@ class Grense(
     lateinit var grense: LineString
 
     @Column(name = "informasjon")
-    var informasjon: String? = null
+    override var informasjon: String? = null
 
     // Relasjon oppover i treet til Grunnkrets
     @OneToMany(mappedBy = "grense")
@@ -112,14 +112,6 @@ class Grense(
 
     fun erAdministrativGrense(): Boolean {
         return Grensetype.erAdministrativGrense(this.grensetype)
-    }
-
-    override fun getInfo(): String? {
-        return informasjon
-    }
-
-    override fun setInfo(updatedInfo: String?) {
-        this.informasjon = updatedInfo
     }
 
     fun harGrenseTypeContainedInSet(grensetyper: Set<Grensetype>): Boolean = grensetyper.contains(this.grensetype)

@@ -36,7 +36,7 @@ class Kommune(
     var samiskforvaltningsomraade: Boolean? = false
 
     @Column(name = "informasjon")
-    var informasjon: String? = null
+    override var informasjon: String? = null
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     @JoinColumn(name = "lokalid", referencedColumnName = "lokalid", insertable = false, updatable = false)
@@ -51,12 +51,6 @@ class Kommune(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "utledetfra")
     var utledetFra: Kommune? = null
-
-    override fun getInfo(): String? = informasjon
-
-    override fun setInfo(updatedInfo: String?) {
-        informasjon = updatedInfo
-    }
 
     override fun getGrensekoblinger(gyldighetsdato: LocalDate): Set<GrunnkretsGrenseKobling> {
         return getGrunnkretser(gyldighetsdato)

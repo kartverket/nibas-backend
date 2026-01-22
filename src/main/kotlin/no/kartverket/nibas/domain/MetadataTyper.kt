@@ -31,8 +31,7 @@ interface CommonMetadataProperties : ContainsSosiIdentifikasjon, Sporbar, Gyldig
     var datafangstdato: ZonedDateTime?
     val foerstedigitaliseringsdato: ZonedDateTime
     var opphav: String?
-    fun getInfo(): String?
-    fun setInfo(updatedInfo: String?)
+    var informasjon: String?
 }
 
 // Representerer domenemodellen, slipper ut av backend.

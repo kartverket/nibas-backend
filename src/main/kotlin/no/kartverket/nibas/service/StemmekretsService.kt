@@ -108,7 +108,7 @@ class StemmekretsService(
 
         stemmekretserSomUtgaar.forEach {
             it.setGyldigTil(sammenslaaingsDato)
-            it.setInfo(sammenslaaingsInformasjon)
+            it.informasjon = sammenslaaingsInformasjon
         }
 
         val alleStemmekretsGrensekoblinger = viderefortStemmekrets.getGrensekoblinger(sammenslaaingsDato) +
@@ -131,7 +131,7 @@ class StemmekretsService(
 
         grensekoblingerSomUtgaar.forEach {
             it.grense.setGyldigTil(sammenslaaingsDato)
-            it.grense.setInfo(sammenslaaingsInformasjon)
+            it.grense.informasjon = sammenslaaingsInformasjon
         }
 
         viderefoerteGrensekoblinger.forEach {
@@ -297,9 +297,9 @@ fun Stemmekrets.applyChangesFromRequest(stemmekretsRequest: StemmekretsRequest):
         stemmekretsRequest.nummer?.let { this.stemmekretsnummer = it }
         stemmekretsRequest.valgdistriktsnummer?.let { this.valgdistriktsnummer = it }
         //Tellekrets kan nullstilles, mens navn, nummer og valgdistrikt må være gitt
-        this.tellekretsnummer = stemmekretsRequest.tellekretsnummer
-        this.tellekretsnavn = stemmekretsRequest.tellekretsnavn
-        stemmekretsRequest.informasjon?.let { this.setInfo(it) }
+        tellekretsnummer = stemmekretsRequest.tellekretsnummer
+        tellekretsnavn = stemmekretsRequest.tellekretsnavn
+        informasjon = stemmekretsRequest.informasjon
     }
 
 

@@ -62,7 +62,7 @@ class StemmekretsBuilder(
         stemmekrets.auditInfo.endretdato = endretdato
         stemmekrets.auditInfo.typeEndring = typeEndring
         stemmekrets.gyldighet = Gyldighet(gyldigFra, gyldigTil)
-        stemmekrets.setInfo(informasjonstekst)
+        stemmekrets.informasjon = informasjonstekst
         stemmekrets.opphav = opphav
         stemmekrets.datafangstdato = datafangstdato
 

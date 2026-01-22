@@ -62,7 +62,7 @@ class BopliktomraadeBuilder(
         bopliktomraade.auditInfo.endretdato = endretdato
         bopliktomraade.auditInfo.typeEndring = typeEndring
         bopliktomraade.gyldighet = Gyldighet(gyldigFra, gyldigTil)
-        bopliktomraade.setInfo(informasjonstekst)
+        bopliktomraade.informasjon = informasjonstekst
         bopliktomraade.opphav = opphav
         bopliktomraade.datafangstdato = datafangstdato
 

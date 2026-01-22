@@ -35,7 +35,7 @@ class Bopliktomraade(
     lateinit var nummer: String
 
     @Column(name = "informasjon")
-    var informasjon: String? = null
+    override var informasjon: String? = null
 
     @Column(name = "delvis_boplikt")
     var delvisBoplikt: Boolean = false
@@ -50,9 +50,6 @@ class Bopliktomraade(
     @JoinColumn(name = "kommunelokalid", referencedColumnName = "lokalid")
     @SQLRestriction("flatetype='KOMMUNE'")
     lateinit var kommuneLokalid: UnikLokalid
-
-    override fun getInfo(): String? = informasjon
-    override fun setInfo(updatedInfo: String?) { informasjon = updatedInfo }
 
     fun getKommune(gyldighetsdato: LocalDate = LocalDate.now()): Kommune? {
         return kommuneLokalid.kommuner.firstOrNull { it.gyldigPaaDato(gyldighetsdato) }

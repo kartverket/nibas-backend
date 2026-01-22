@@ -45,7 +45,7 @@ class Stemmekrets(
 
     // Nytt felt informasjon
     @Column(name = "informasjon")
-    var informasjon: String? = null
+    override var informasjon: String? = null
 
     @OneToMany(mappedBy = "stemmekrets", cascade = [CascadeType.ALL])
     var grenser: MutableSet<StemmekretsGrenseKobling> = Collections.synchronizedSet(mutableSetOf())
@@ -86,12 +86,6 @@ class Stemmekrets(
         val grenserForFlate = getGrensekoblinger(gyldighetsdato = gyldighet.gyldigFra)
         omraade = getGrenserIRiktigRekkefoelge(grenserForFlate.map { it.grense.grense }).toMultiPolygon()
         posisjon = omraade?.interiorPoint
-    }
-
-    override fun getInfo(): String? = informasjon
-
-    override fun setInfo(updatedInfo: String?) {
-        informasjon = updatedInfo
     }
 
     override fun addGrensekobling(grense: Grense) {

@@ -60,7 +60,7 @@ class GrunnkretsBuilder(
         grunnkrets.grunnkretsnavn = grunnkretsnavn
         grunnkrets.grunnkretsnummer = grunnkretsnummer
         grunnkrets.gyldighet = Gyldighet(gyldigFra, gyldigTil, slettet)
-        grunnkrets.setInfo(informasjonstekst)
+        grunnkrets.informasjon = informasjonstekst
         grunnkrets.opphav = opphav
         grunnkrets.auditInfo.endretdato = endretdato
         grunnkrets.auditInfo.typeEndring = typeEndring

@@ -38,7 +38,7 @@ class Fylke(
     var samiskforvaltningsomraade: Boolean? = null
 
     @Column(name = "informasjon")
-    var informasjon: String? = null
+    override var informasjon: String? = null
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     @JoinColumn(name = "nasjonlokalid", referencedColumnName = "lokalid")
@@ -53,12 +53,6 @@ class Fylke(
     @JoinColumn(name = "lokalid", referencedColumnName = "lokalid", insertable = false, updatable = false)
     @SQLRestriction("flatetype='FYLKE'")
     lateinit var fylkeLokalid : UnikLokalid
-
-    override fun getInfo(): String? = informasjon
-
-    override fun setInfo(updatedInfo: String?) {
-        informasjon = updatedInfo
-    }
 
     override fun getGrensekoblinger(gyldighetsdato: LocalDate): Set<GrunnkretsGrenseKobling> {
         return getKommuner(gyldighetsdato)

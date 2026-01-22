@@ -41,7 +41,7 @@ class TerritorialgrenseBuilder {
         territorialgrense.kvalitet = kvalitet
         territorialgrense.auditInfo.endretdato = endretdato
         territorialgrense.opphav = opphav
-        territorialgrense.setInfo(informasjonstekst)
+        territorialgrense.informasjon = informasjonstekst
         territorialgrense.dokrefGrensekobling.addAll(dokumentasjonsreferanser.map {
             DokrefGrenseKobling().apply {
                 dokumentasjonsreferanse = it

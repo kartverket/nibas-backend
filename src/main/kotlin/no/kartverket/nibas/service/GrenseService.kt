@@ -576,7 +576,7 @@ class GrenseService(
 
     private fun CommonMetadataProperties.updateWithCommonMetadata(common: CommonMetadata) {
         this.datafangstdato = common.datafangstdato
-        this.setInfo(common.informasjon)
+        informasjon = common.informasjon
         this.opphav = common.opphav
     }
 
