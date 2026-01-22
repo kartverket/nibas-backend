@@ -248,7 +248,8 @@ class UtkastService(
                 laasbarMedOensketVersjonListe.add(when (it.flatetype) {
                     Flatetype.STEMMEKRETS -> stemmekretsService.validerStemmekretsForDelingFinnesOgLagPairMedStemmekretsOgOensketVersjon(it, gyldigFra)
                     Flatetype.GRUNNKRETS -> grunnkretsService.validerGrunnkretsForDelingFinnesOgLagPairMedGrunnkretsOgOensketVersjon(it, gyldigFra)
-                    else -> throw ResponseException.BadRequestException("Støtter kun deling av grunnkrets eller stemmekrets, ikke ${it.flatetype}")
+                    Flatetype.BOPLIKTOMRAADE -> bopliktomraadeService.validerBopliktomraadeForDelingFinnesOgLagPairMedBopliktomraadeOgOensketVersjon(it, gyldigFra)
+                    else -> throw ResponseException.BadRequestException("Støtter kun deling av grunnkrets, stemmekrets, og bopliktområde, men ikke ${it.flatetype}")
                 }
                 )
             }
@@ -439,7 +440,13 @@ class UtkastService(
                     utkast.auditInfo.typeEndring
                 )
 
-                else -> throw ResponseException.BadRequestException("Støtter kun deling av grunnkrets eller stemmekrets, ikke ${unikKretsDelingEndring.flatetype}")
+                Flatetype.BOPLIKTOMRAADE -> bopliktomraadeService.delBopliktomraade(
+                    unikKretsDelingEndring,
+                    gyldigFra,
+                    utkast.auditInfo.typeEndring
+                )
+
+                else -> throw ResponseException.BadRequestException("Støtter kun deling av grunnkrets, stemmekrets, og bopliktområde, men ikke ${unikKretsDelingEndring.flatetype}")
             }
             listOf(
                 nyKrets.toEventRad(EventType.ADDED)

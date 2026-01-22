@@ -51,6 +51,10 @@ class Bopliktomraade(
     @SQLRestriction("flatetype='KOMMUNE'")
     lateinit var kommuneLokalid: UnikLokalid
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "utledetfra")
+    var utledetFra: Bopliktomraade? = null
+
     fun getKommune(gyldighetsdato: LocalDate = LocalDate.now()): Kommune? {
         return kommuneLokalid.kommuner.firstOrNull { it.gyldigPaaDato(gyldighetsdato) }
     }

@@ -1,6 +1,9 @@
 package no.kartverket.nibas.service
 
+import no.kartverket.nibas.api.v1.common.Flatetype
+import no.kartverket.nibas.api.v1.common.UnikKretsDelingEndring
 import no.kartverket.nibas.api.v1.request.BopliktomraadeRequest
+import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
@@ -13,6 +16,8 @@ import no.kartverket.nibas.repository.findAllByLokalidSortedByGyldigFra
 import no.kartverket.nibas.repository.findAllGyldigPaaDato
 import no.kartverket.nibas.repository.findAntallFramtidigeVersjonerForIdentifikator
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
+import org.locationtech.jts.geom.GeometryFactory
+import org.locationtech.jts.geom.MultiPolygon
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -81,6 +86,44 @@ class BopliktomraadeService(
             msg = "Fant ikke kommune for bopliktområde med id ${bopliktomraade.id} og gyldig fra $gyldigFra")
         kommune.addBopliktomraade(nyttBopliktomraade)
         return nyttBopliktomraade
+    }
+
+    fun validerBopliktomraadeForDelingFinnesOgLagPairMedBopliktomraadeOgOensketVersjon(kretsDelingEndringRequest: KretsDelingEndringRequest, gyldigFra: LocalDate)
+        : Pair<Bopliktomraade, Int> {
+        val bopliktomraadeForSjekkeOptimistiskLaas =
+            Identifikator(lokalid = Lokalid(kretsDelingEndringRequest.opprinneligKrets.lokalId), gyldighetsdato = gyldigFra)
+                .let {
+                    hentBopliktomraade(it) ?: throw ResponseException.NotFoundException(title = "Bopliktomraade ikke funnet",
+                        msg = "Fant ikke bopliktomraade for deling med lokalid: ${it.lokalid.value} gyldig på $gyldigFra")
+                }.let { Pair(it, kretsDelingEndringRequest.opprinneligKrets.version) }
+        return bopliktomraadeForSjekkeOptimistiskLaas
+    }
+
+    fun delBopliktomraade(
+        kretsDelingEndringRequest: UnikKretsDelingEndring, delingsDato: LocalDate, endringstype: Endringstype
+    ): Bopliktomraade {
+        if (kretsDelingEndringRequest.flatetype != Flatetype.STEMMEKRETS) {
+            throw ResponseException.BadRequestException("Kan ikke dele og opprette en ny ${kretsDelingEndringRequest.flatetype} fra en bopliktområde")
+        }
+        val identifikator = Identifikator(Lokalid(kretsDelingEndringRequest.opprinneligKrets.lokalId), delingsDato)
+        val bopliktomraade = hentBopliktomraade(identifikator)
+            ?: throw ResponseException.NotFoundException("Fant ikke bopliktområde med lokalid: ${kretsDelingEndringRequest.opprinneligKrets.lokalId} gyldig på $delingsDato")
+
+        val geometryFactory = GeometryFactory()
+
+        val nyBopliktomraade = Bopliktomraade()
+            .applyMappingFromExistingBopliktomraade(bopliktomraade)
+            .apply {
+                navn = kretsDelingEndringRequest.kretsNavn
+                nummer = kretsDelingEndringRequest.kretsNummer
+                kommuneLokalid = bopliktomraade.kommuneLokalid
+                utledetFra = bopliktomraade
+                omraade = MultiPolygon(arrayOfNulls(0), geometryFactory)
+                posisjon = geometryFactory.createPoint()
+                setGyldigFra(delingsDato)
+            }
+
+        return bopliktomraadeRepository.save(nyBopliktomraade)
     }
 
     private fun kopierOgSaveBopliktomraade(bopliktomraade: Bopliktomraade, gyldigFra: LocalDate, endringstype: Endringstype): Bopliktomraade {
