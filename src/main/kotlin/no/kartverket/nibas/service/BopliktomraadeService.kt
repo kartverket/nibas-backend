@@ -103,7 +103,7 @@ class BopliktomraadeService(
         kretsDelingEndringRequest: UnikKretsDelingEndring, delingsDato: LocalDate, endringstype: Endringstype
     ): Bopliktomraade {
         if (kretsDelingEndringRequest.flatetype != Flatetype.BOPLIKTOMRAADE) {
-            throw ResponseException.BadRequestException("Kan ikke dele og opprette en ny ${kretsDelingEndringRequest.flatetype} fra en bopliktområde")
+            throw ResponseException.BadRequestException("Kan ikke dele og opprette et nytt ${kretsDelingEndringRequest.flatetype} fra et bopliktområde")
         }
         val identifikator = Identifikator(Lokalid(kretsDelingEndringRequest.opprinneligKrets.lokalId), delingsDato)
         val bopliktomraade = hentBopliktomraade(identifikator)
