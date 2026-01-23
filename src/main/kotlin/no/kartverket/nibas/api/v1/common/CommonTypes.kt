@@ -12,7 +12,6 @@ import no.kartverket.nibas.api.v1.request.StemmekretsRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
 import no.kartverket.nibas.api.v1.request.GrunnkretsSammenslaaingsendringRequest
 import no.kartverket.nibas.common.Lokalid
-import no.kartverket.nibas.domain.Bopliktomraade
 import java.time.LocalDate
 import jakarta.persistence.AttributeConverter
 import jakarta.persistence.Converter
@@ -22,7 +21,7 @@ import jakarta.validation.constraints.NotNull
  * Definerer flatene/enhetene i domenet.
  */
 enum class Flatetype {
-    FYLKE, KOMMUNE, NASJON, GRUNNKRETS, STEMMEKRETS, SKOLEKRETS, BOPLIKTOMRAADE
+    FYLKE, KOMMUNE, NASJON, GRUNNKRETS, STEMMEKRETS, BOPLIKTOMRAADE
 }
 
 /**
@@ -43,13 +42,10 @@ enum class Grensetype(val value: String, val dbKey: String, val editerbar: Boole
     AvtaltAvgrensningslinje(value = "AvtaltAvgrensningslinje", dbKey =  "AvtaltAvgrensningslinje", editerbar = true),
     Territorialgrense(value = "Territorialgrense", dbKey = "Territorialgrense", editerbar = true),
     Grunnlinje(value = "Grunnlinje", dbKey = "Grunnlinje", editerbar = false),
-    Lovvirkeomraadegrense(value = "LovVirkeområdeGrense", dbKey =  "LovVirkeområdeGrense", editerbar = false),
     Grunnkretsgrense(value = "Grunnkretsgrense", dbKey = "Grunnkretsgrense", editerbar = true),
     Delomraadegrense(value = "Delområdegrense", dbKey = "Delområdegrense", editerbar = true),
     Stemmekretsgrense(value = "Stemmekretsgrense", dbKey = "Stemmekretsgrense", editerbar = true),
-    Bopliktgrense(value = "Bopliktgrense", dbKey = "Bopliktgrense", editerbar = true),
-    Soknegrense(value = "Soknegrense", dbKey = "Soknegrense", editerbar = false),
-    Skolekretsgrense(value = "Skolekretsgrense", dbKey = "Skolekretsgrense", editerbar = false);
+    Bopliktgrense(value = "Bopliktgrense", dbKey = "Bopliktgrense", editerbar = true);
 
     companion object {
         fun fromValue(valueIn: String): Grensetype {

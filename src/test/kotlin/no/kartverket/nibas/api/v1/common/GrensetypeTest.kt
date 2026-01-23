@@ -8,7 +8,7 @@ internal class GrensetypeTest {
 
     @Test
     fun fromValue() {
-        assertThat(Grensetype.fromValue("LovVirkeområdeGrense")).isEqualTo(Grensetype.Lovvirkeomraadegrense)
+        assertThat(Grensetype.fromValue("Stemmekretsgrense")).isEqualTo(Grensetype.Stemmekretsgrense)
     }
 
     @Test
@@ -18,7 +18,7 @@ internal class GrensetypeTest {
 
     @Test
     fun fromDbKey() {
-        assertThat(Grensetype.fromDbKey("LovVirkeområdeGrense")).isEqualTo(Grensetype.Lovvirkeomraadegrense)
+        assertThat(Grensetype.fromDbKey("Stemmekretsgrense")).isEqualTo(Grensetype.Stemmekretsgrense)
     }
 
     @Test

@@ -91,12 +91,9 @@ fun getMetadataForGrensetype(grensetype: Grensetype, commonMetadata: CommonMetad
         Grensetype.AvtaltAvgrensningslinje -> AvtaltAvgrensningslinjeMetadata(commonMetadata, commonGrenseMetadata)
         Grensetype.Territorialgrense -> TerritorialgrenseMetadata(commonMetadata, commonGrenseMetadata)
         Grensetype.Grunnlinje -> GrunnlinjeMetadata(commonMetadata, commonGrenseMetadata)
-        Grensetype.Lovvirkeomraadegrense -> AdministrativGrenseMetadata(commonMetadata, commonGrenseMetadata)
         Grensetype.Grunnkretsgrense -> StatistiskgrenseMetadata(commonMetadata, commonGrenseMetadata)
         Grensetype.Delomraadegrense -> StatistiskgrenseMetadata(commonMetadata, commonGrenseMetadata)
         Grensetype.Stemmekretsgrense -> KommunalKretsgrenseMetadata(commonMetadata, commonGrenseMetadata)
-        Grensetype.Soknegrense -> StatistiskgrenseMetadata(commonMetadata, commonGrenseMetadata)
-        Grensetype.Skolekretsgrense -> StatistiskgrenseMetadata(commonMetadata, commonGrenseMetadata)
         Grensetype.Bopliktgrense -> KommunalKretsgrenseMetadata(commonMetadata, commonGrenseMetadata)
     }
 }
