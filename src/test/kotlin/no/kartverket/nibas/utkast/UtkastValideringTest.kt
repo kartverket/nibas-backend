@@ -442,7 +442,7 @@ class UtkastValideringTest {
                 "${utkast.operasjoner?.kretsDelingEndringer?.first()?.nyeKretser?.first()?.kretsNavn} " +
                 "har ikke fått noen grenser tildelt. Dette er en feil, og den kan rettes opp ved å sette tilhørighet på de relevante grensene som skal høre til enten: " +
                 "${utkast.operasjoner?.kretsDelingEndringer?.first()?.nyeKretser?.first()?.kretsNavn}")
-            .contains("Grense med id: 4 har ugyldig tilhørighet. Årsak(er):")
+            .contains("Kommunegrense med id: 4 har ugyldig tilhørighet. Årsak(er):")
             .contains("	- Grensen har 2 tilhørighet(er) satt, men må ha 4.")
             .contains("	- Grensen har 1 tilhørighetstyper satt, men må ha 2.")
             .contains("	- Grensen er kommune-/fylkesgrense og har tilhørighet til to kretser i samme kommune.")
@@ -779,7 +779,7 @@ class UtkastValideringTest {
             operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedToFeil))), gyldigFra = gyldighetsdato)
 
         assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast4).joinToString("\n"))
-            .contains("Grense med id: 1 har ugyldig tilhørighet. Årsak(er)")
+            .contains("Fylkesgrense med id: 1 har ugyldig tilhørighet. Årsak(er)")
             .contains("Grensen har 2 tilhørighet(er) satt, men må ha 4")
             .contains("Grensen har 1 tilhørighetstyper satt, men må ha 2")
             .contains("Grensen har flere tilhørigheter til samme krets. Gjelder kretsnr 12345678 med lokalid G3")
@@ -810,7 +810,7 @@ class UtkastValideringTest {
             operasjoner = Operasjoner(grenseendringer = Grenseendringer(endredeFeatures = listOf(featureMedStemmekretsOgGrunnkrets))), gyldigFra = gyldighetsdato)
 
         assertThat(utkastValidatorService.validerTilhorighetEndringer(utkast5).joinToString("\n"))
-            .contains("Grense med id: 1 har ugyldig tilhørighet. Årsak(er)")
+            .contains("Kommunegrense med id: 1 har ugyldig tilhørighet. Årsak(er)")
             .contains("Grensen har 2 tilhørighet(er) satt, men må ha 4")
             .doesNotContain("Grensen har 1 tilhørighetstyper satt, men må ha 2")
     }

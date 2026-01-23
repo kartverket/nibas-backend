@@ -89,6 +89,9 @@ class Stemmekrets(
     }
 
     override fun addGrensekobling(grense: Grense) {
+        require(tillatteGrensetyper().contains(grense.grensetype)) {
+            "Kan ikke legge til ${grense.grensetype.name} på Stemmekrets"
+        }
         val stemmekretsGrenseKobling = StemmekretsGrenseKobling(
             stemmekrets = this,
             grense = grense
@@ -99,8 +102,8 @@ class Stemmekrets(
     }
 
     override fun replaceGrensekobling(gammelGrense: Grense, grense: Grense?) {
-        if (!tillatteGrensetyper().contains(grense?.grensetype) && grense != null) {
-            throw RuntimeException("Kan ikke oppdatere/legge til ${grense.grensetype.name} på enhet Stemmekrets")
+        require(grense == null || tillatteGrensetyper().contains(grense.grensetype)) {
+            "Kan ikke oppdatere/legge til ${grense?.grensetype?.name} på Stemmekrets"
         }
         if (grenser.removeIf { it.grense.id == gammelGrense.id }) {
             //Grensa ble tatt vekk fra stemmekretsen. Fjerner stemmekretsen også fra grensa (koblingen fra den andre veien), ellers feiler tester

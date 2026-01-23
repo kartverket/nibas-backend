@@ -97,6 +97,9 @@ class Grunnkrets(
         )
 
     override fun addGrensekobling(grense: Grense) {
+        require(tillatteGrensetyper().contains(grense.grensetype)) {
+            "Kan ikke legge til ${grense.grensetype.name} på Grunnkrets"
+        }
         val grunnkretsGrenseKobling = GrunnkretsGrenseKobling(
             grunnkrets = this,
             grense = grense
@@ -107,8 +110,8 @@ class Grunnkrets(
     }
 
     override fun replaceGrensekobling(gammelGrense: Grense, grense: Grense?) {
-        if (!tillatteGrensetyper().contains(grense?.grensetype) && grense != null) {
-            throw RuntimeException("Kan ikke oppdatere/legge til ${grense.grensetype.name} på enhet Grunnkrets")
+        require(grense == null || tillatteGrensetyper().contains(grense.grensetype)) {
+            "Kan ikke oppdatere/legge til ${grense?.grensetype?.name} på Grunnkrets"
         }
         if (grenser.removeIf { it.grense.id == gammelGrense.id }) {
             //Grensa ble tatt vekk fra grunnkretsen. Fjerner grunnkretsen også fra grensa (koblingen fra den andre veien), ellers feiler tester

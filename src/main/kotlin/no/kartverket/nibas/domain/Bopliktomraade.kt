@@ -63,6 +63,9 @@ class Bopliktomraade(
     }
 
     override fun addGrensekobling(grense: Grense) {
+        require(tillatteGrensetyper().contains(grense.grensetype)) {
+            "Kan ikke legge til ${grense.grensetype.name} på Bopliktomraade"
+        }
         val bopliktomraadeGrenseKobling = BopliktomraadeGrenseKobling(
             bopliktomraade = this,
             grense = grense
@@ -78,8 +81,8 @@ class Bopliktomraade(
     }
 
     override fun replaceGrensekobling(gammelGrense: Grense, grense: Grense?) {
-        if (!tillatteGrensetyper().contains(grense?.grensetype) && grense != null) {
-            throw RuntimeException("Kan ikke oppdatere/legge til ${grense.grensetype.name} på enhet Bopliktomraade")
+        require(grense == null || tillatteGrensetyper().contains(grense.grensetype)) {
+            "Kan ikke oppdatere/legge til ${grense?.grensetype?.name} på Bopliktomraade"
         }
         if (grenser.removeIf { it.grense.id == gammelGrense.id }) {
             gammelGrense.bopliktomraader.removeIf { it.bopliktomraade.id == this.id }

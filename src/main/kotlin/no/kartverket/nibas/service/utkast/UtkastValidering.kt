@@ -346,7 +346,7 @@ class UtkastValidatorService(
                 else -> {}
             }
             if (errorMessages.isNotEmpty()) {
-                errorMessages.addFirst("Grense med id: ${feature.id ?: "Ny grense, ingen id - "} har ugyldig tilhørighet. Årsak(er):")
+                errorMessages.addFirst("${grensetype.name} med id: ${feature.id ?: "Ny grense, ingen id - "} har ugyldig tilhørighet. Årsak(er):")
             }
         }
         return errorMessages

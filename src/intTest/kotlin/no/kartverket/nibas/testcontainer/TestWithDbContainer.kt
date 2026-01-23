@@ -732,7 +732,7 @@ class TestWithDbContainer {
     fun saveNaboStemmekretser(gyldigFra: LocalDate, medHull: Boolean = false, medTredjeKrets: Boolean = false, medToDelteGrenser: Boolean = false)
         : List<Stemmekrets> {
         val grenserForHull = if (medHull) {
-            GrenseHelper.getHullVestligKrets(gyldigFra, Grensetype.Grunnkretsgrense)
+            GrenseHelper.getHullVestligKrets(gyldigFra, Grensetype.Stemmekretsgrense)
         } else {
             emptyList()
         }
