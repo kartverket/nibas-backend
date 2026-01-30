@@ -124,6 +124,26 @@ fun List<List<LineString>>.toMultiPolygon(): MultiPolygon {
 }
 
 /**
+ * Transformerer et multipolygon til en liste med linestrings. En linestring for hver ytre ring, og en for hvert hull.
+ * Er brukt av bopliktimport.
+ */
+fun MultiPolygon.toLineStrings() : List<LineString>{
+    val rings = mutableListOf<LineString>()
+    for (n in 0 until numGeometries) {
+        val geometry = getGeometryN(n)
+        if (geometry is Polygon) {
+            rings.add(geometry.exteriorRing)
+
+            for (i in 0 until geometry.numInteriorRing) {
+                val interior = geometry.getInteriorRingN(i)
+                rings.add(interior)
+            }
+        }
+    }
+    return rings
+}
+
+/**
  * Konverterer en liste av linestrings til et polygon
  */
 fun konverterLineStringsTilPolygon(lineStrings: List<LineString>): Polygon {

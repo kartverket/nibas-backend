@@ -2,6 +2,7 @@ package no.kartverket.nibas.common
 
 import no.kartverket.nibas.common.geometry.avrundLineString
 import no.kartverket.nibas.common.geometry.getGrenserIRiktigRekkefoelge
+import no.kartverket.nibas.common.geometry.toLineStrings
 import no.kartverket.nibas.common.geometry.toMultiPolygon
 import org.assertj.core.api.Assertions.assertThat
 import org.locationtech.jts.geom.Coordinate
@@ -12,6 +13,7 @@ import java.util.*
 import kotlin.test.Test
 
 internal class GeometryFunctionsKtTest {
+
 
     @Test
     fun `getGrenserIRiktigRekkefoelge skal returere en sortert liste med grenser`() {
@@ -78,6 +80,15 @@ internal class GeometryFunctionsKtTest {
 
         val result = getGrenserIRiktigRekkefoelge(skallGrenser + hullGrenser)
         assertThat(result).hasSize(2)
+
+        val multiPolygon = result.toMultiPolygon()
+        assertThat(multiPolygon.numGeometries).isEqualTo(1)
+        assertThat((multiPolygon.getGeometryN(0) as Polygon).numInteriorRing).isEqualTo(1)
+
+        val lineStringsForMultipolygon = multiPolygon.toLineStrings()
+        val linestringsIRiktigRekkefoelge = getGrenserIRiktigRekkefoelge(lineStringsForMultipolygon)
+        val nyttMultiPolygon = linestringsIRiktigRekkefoelge.toMultiPolygon()
+        assertThat(nyttMultiPolygon).isEqualTo(multiPolygon)
     }
 
     @Test
@@ -117,6 +128,14 @@ internal class GeometryFunctionsKtTest {
 
         val result = getGrenserIRiktigRekkefoelge(skallGrenser + skall2Grenser)
         assertThat(result).hasSize(2)
+
+        val multiPolygon = result.toMultiPolygon()
+        assertThat(multiPolygon.numGeometries).isEqualTo(2)
+
+        val lineStringsForMultipolygon = multiPolygon.toLineStrings()
+        val linestringsIRiktigRekkefoelge = getGrenserIRiktigRekkefoelge(lineStringsForMultipolygon)
+        val nyttMultiPolygon = linestringsIRiktigRekkefoelge.toMultiPolygon()
+        assertThat(nyttMultiPolygon).isEqualTo(multiPolygon)
     }
 
     @Test
@@ -133,41 +152,18 @@ internal class GeometryFunctionsKtTest {
 
         val result = getGrenserIRiktigRekkefoelge(skallGrenser)
         assertThat(result).hasSize(1)
+
+        val multiPolygon = result.toMultiPolygon()
+        assertThat(multiPolygon.numGeometries).isEqualTo(1)
+
+        val lineStringsForMultipolygon = multiPolygon.toLineStrings()
+        val linestringsIRiktigRekkefoelge = getGrenserIRiktigRekkefoelge(lineStringsForMultipolygon)
+        val nyttMultiPolygon = linestringsIRiktigRekkefoelge.toMultiPolygon()
+        assertThat(nyttMultiPolygon).isEqualTo(multiPolygon)
     }
 
     @Test
-    fun `getGrenserIRiktigRekkefoelge skal håndtere enklaver på kun 1 grense`() {
-        val skallGrenser = listOf(
-            lagLineString(
-                Coordinate(0.0, 0.0),
-                Coordinate(0.0, 100.0),
-            ),
-            lagLineString(
-                Coordinate(0.0, 100.0),
-                Coordinate(100.0, 100.0),
-            ),
-            lagLineString(
-                Coordinate(100.0, 100.0),
-                Coordinate(0.0, 0.0),
-            ),
-        )
-
-        val skall2Grenser = listOf(
-            lagLineString(
-                Coordinate(1000.0, 1000.0),
-                Coordinate(1000.0, 2000.0),
-                Coordinate(2000.0, 2000.0),
-                Coordinate(2000.0, 1000.0),
-                Coordinate(1000.0, 1000.0),
-            ),
-        )
-
-        val result = getGrenserIRiktigRekkefoelge(skallGrenser + skall2Grenser)
-        assertThat(result).hasSize(2)
-    }
-
-    @Test
-    fun `getGrenserIRiktigRekkefoelge skal klare å bygge opp grensene for en krets med enklave som henger sammen med hovedkretsen i ett punkt som 2 polygoner`() {
+    fun `getGrenserIRiktigRekkefoelge skal kunne bygge opp grensene for en krets med to flater som henger sammen i ett punkt som 2 polygoner`() {
         val skallGrenser = listOf(
             lagLineString(
                 Coordinate(0.0, 0.0),
@@ -203,8 +199,15 @@ internal class GeometryFunctionsKtTest {
         for (i in 1 .. 10) {
             val result = getGrenserIRiktigRekkefoelge(skallGrenser.shuffled(random))
             assertThat(result).hasSize(2)
-        }
 
+            val multiPolygon = result.toMultiPolygon()
+            assertThat(multiPolygon.numGeometries).isEqualTo(2)
+
+            val lineStringsForMultipolygon = multiPolygon.toLineStrings()
+            val linestringsIRiktigRekkefoelge = getGrenserIRiktigRekkefoelge(lineStringsForMultipolygon)
+            val nyttMultiPolygon = linestringsIRiktigRekkefoelge.toMultiPolygon()
+            assertThat(nyttMultiPolygon).isEqualTo(multiPolygon)
+        }
     }
 
     @Test
@@ -230,7 +233,6 @@ internal class GeometryFunctionsKtTest {
         val hullGrenser = listOf(
             lagLineString(
                 Coordinate(50.0, 50.0),
-                Coordinate(75.0, 50.0),
                 Coordinate(100.0, 50.0),
             ),
             lagLineString(
@@ -242,8 +244,16 @@ internal class GeometryFunctionsKtTest {
                 Coordinate(50.0, 50.0),
             )
         )
+        val hullGrenser2 = listOf(
+            lagLineString(
+                Coordinate(150.0, 50.0),
+                Coordinate(150.0, 25.0),
+                Coordinate(125.0, 25.0),
+                Coordinate(150.0, 50.0)
+            )
+        )
 
-        val grenser = listOf(skallGrenser, hullGrenser)
+        val grenser = listOf(skallGrenser, hullGrenser, hullGrenser2)
 
         val result = grenser.toMultiPolygon()
         assertThat(result.numGeometries).isEqualTo(1)
@@ -254,10 +264,25 @@ internal class GeometryFunctionsKtTest {
         val polygon = geometry as Polygon
 
         assertThat(polygon.exteriorRing.coordinates).containsAll(listOf(Coordinate(0.0, 0.0), Coordinate(200.0, 0.0), Coordinate(100.0, 200.0)))
-        assertThat(polygon.numInteriorRing).isEqualTo(1)
+        assertThat(polygon.numInteriorRing).isEqualTo(2)
 
         val hull = polygon.getInteriorRingN(0)
-        assertThat(hull.coordinates).containsAll(listOf(Coordinate(50.0, 50.0), Coordinate(100.0, 50.0), Coordinate(75.0, 100.0)))
+        val hull2 = polygon.getInteriorRingN(1)
+        val koordinaterForHull1 = listOf(Coordinate(50.0, 50.0), Coordinate(100.0, 50.0), Coordinate(75.0, 100.0), Coordinate(50.0, 50.0))
+        val koordinaterForHull2 = listOf(Coordinate(150.0, 50.0), Coordinate(150.0, 25.0), Coordinate(125.0, 25.0), Coordinate(150.0, 50.0))
+        val koordinatlister = listOf(koordinaterForHull1, koordinaterForHull2)
+
+        //Kan vel ikke være sikker at hullene kommer i samme rekkefølge hver gang
+        assertThat(koordinatlister).contains(hull.coordinates.toList())
+        assertThat(koordinatlister).contains(hull2.coordinates.toList())
+        assertThat(hull).isNotEqualTo(hull2)
+
+        val lineStringsForMultipolygon = result.toLineStrings()
+        assertThat(lineStringsForMultipolygon).hasSize(3)
+
+        val linestringsIRiktigRekkefoelge = getGrenserIRiktigRekkefoelge(lineStringsForMultipolygon)
+        val nyttMultiPolygon = linestringsIRiktigRekkefoelge.toMultiPolygon()
+        assertThat(nyttMultiPolygon).isEqualTo(result)
     }
 
     @Test
