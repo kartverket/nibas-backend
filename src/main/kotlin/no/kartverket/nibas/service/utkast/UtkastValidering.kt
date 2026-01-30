@@ -635,6 +635,7 @@ private fun Operasjoner.harEndringer(): Boolean {
         metadata.kommuneendringer.isNotEmpty() ||
         metadata.grunnkretsendringer.isNotEmpty() ||
         metadata.stemmekretsendringer.isNotEmpty() ||
+        metadata.bopliktomraadeendringer.isNotEmpty() ||
         this.grenseendringer.endredeFeatures.isNotEmpty() ||
         this.stemmekretsSammenslaaingsendring != null ||
         this.grunnkretsSammenslaaingsendring != null ||

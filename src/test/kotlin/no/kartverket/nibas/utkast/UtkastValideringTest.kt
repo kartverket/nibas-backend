@@ -370,6 +370,24 @@ class UtkastValideringTest {
     }
 
     @Test
+    fun `valider at gyldige metadataoperasjoner med boplikt gir gyldige operasjoner`() {
+
+        val utkast = Utkast(navn = "test", operasjoner = Operasjoner(
+            metadataendringer =
+                Metadataendringer(
+                    bopliktomraadeendringer =
+                        mapOf("2" to BopliktomraadeRequestBuilder().build())
+                ),
+        ), gyldigFra = june2024)
+
+        val validateGyldigeOperasjoner = utkastValidatorService.validateGyldigeOperasjoner(utkast.operasjoner!!)
+        assertThat(validateGyldigeOperasjoner).isEmpty()
+
+        val utkastValidering = utkastValidatorService.validateUtkastKlartForPublisering(utkast, june2024)
+        assertThat(utkastValidering).isEmpty()
+    }
+
+    @Test
     fun `valider at grunnkretsnummer som ikke matcher med kommunenummer gir ugyldige operasjoner`() {
         val operasjoner =
             Operasjoner(
