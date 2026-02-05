@@ -12,19 +12,13 @@ updates:
     directory: "/"
     registries:
       - maven-matrikkel
-    schedule:
-      interval: weekly
-      day: monday
-      time: "02:23"
-      timezone: "Europe/Oslo"
-
-  - package-ecosystem: "gradle"
-    directory: "/gradle"
     groups:
       minor-and-patch:
         update-types:
           - "minor"
           - "patch"
+        exclude-patterns:
+          - "org.jetbrains.kotlin*"
     schedule:
       interval: weekly
       day: monday
@@ -47,10 +41,3 @@ updates:
       time: "02:23"
       timezone: "Europe/Oslo"
 
-  - package-ecosystem: "terraform"
-    directory: "/terraform"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "02:23"
-      timezone: "Europe/Oslo"
