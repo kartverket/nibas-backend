@@ -103,9 +103,7 @@ data class FeatureProperties(
     @Schema(description = "Koordinatsystemet. Defaulter til 25833.")
     val srid: Int = defaultSrid,
 
-    @Schema(
-        description = "Diverse metadata-felter fra sosi-modellen.",
-    )
+    @Schema(description = "Diverse metadata-felter fra sosi-modellen.")
     val metadata: Metadata? = null,
 
     @Schema(description = "Egenskaper til konteksten til grensen.")

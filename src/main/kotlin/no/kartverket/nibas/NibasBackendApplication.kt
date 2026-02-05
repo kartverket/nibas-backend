@@ -2,6 +2,8 @@ package no.kartverket.nibas
 
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.info.Info
+import io.swagger.v3.oas.models.media.Schema
+import org.springdoc.core.customizers.OpenApiCustomizer
 import no.kartverket.nibas.config.NibasBackendConfigProps
 import org.slf4j.LoggerFactory
 import org.springframework.boot.CommandLineRunner
@@ -29,6 +31,12 @@ class NibasBackendApplication {
                 version = "1.0.0"
             }
         )
+
+    @Bean
+    fun nullableMetadataCustomizer(): OpenApiCustomizer = OpenApiCustomizer { openApi ->
+        openApi.components?.schemas?.get("FeatureProperties")?.properties?.get("metadata")
+            ?.addOneOfItem(Schema<Any>().apply { types = setOf("null") })
+    }
 
     @Bean
     @Profile("bopliktimport")
