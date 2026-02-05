@@ -8,7 +8,6 @@ import no.kartverket.nibas.api.v1.common.Kommunenummer
 import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.Feature
-import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.MultiPolygon
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.domain.utkast.EndredeInndelinger
@@ -225,16 +224,13 @@ data class BopliktomraadeResponse(
     val informasjon: String? = null,
 
     @Schema(description = "Om boplikten gjelder delvis innenfor området")
-    val delvisBoplikt: Boolean,
+    val delvisBoplikt: Boolean? = null,
 
     @Schema(description = "Forskriftsreferansen for bopliktområdet")
-    val forskriftsreferanse: String?,
+    val forskriftsreferanse: String? = null,
 
     @Schema(description = "Lenke til mer informasjon")
-    val url: String?,
-
-    @Schema(description = "Geometrien til bopliktområdet, dvs representasjonspunkt og flaten")
-    val features: FeatureCollection
+    val url: String? = null,
 )
 
 @Schema(description = "Returtype for opprettelse av utkast")

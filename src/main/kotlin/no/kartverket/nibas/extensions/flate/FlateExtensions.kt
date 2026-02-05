@@ -3,7 +3,6 @@ package no.kartverket.nibas.extensions.flate
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.common.Kommunenummer
 import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
-import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.klient.response.BopliktomraadeResponse
 import no.kartverket.nibas.api.v1.klient.response.FylkeResponse
 import no.kartverket.nibas.api.v1.klient.response.GrunnkretsResponse
@@ -20,7 +19,6 @@ import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.domain.Stemmekrets
-import no.kartverket.nibas.extensions.geometry.flateToFeature
 import no.kartverket.nibas.extensions.geometry.multiPolygonToDto
 import no.kartverket.nibas.extensions.geometry.posisjonToFeature
 import java.time.LocalDate
@@ -128,11 +126,6 @@ fun Bopliktomraade.toBopliktomraadeResponse(): BopliktomraadeResponse {
         delvisBoplikt = delvisBoplikt,
         forskriftsreferanse = forskriftsreferanse,
         url = url,
-        features = FeatureCollection(features = listOf(
-            posisjon.posisjonToFeature(version),
-            flateToFeature(version)
-        )),
-
     )
 }
 

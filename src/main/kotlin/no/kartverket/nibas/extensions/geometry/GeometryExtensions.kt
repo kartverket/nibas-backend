@@ -123,8 +123,6 @@ fun Grense.grenseToFeature(gyldighetsdato: LocalDate = LocalDate.now(), shouldAr
         Grensetype.Bopliktgrense -> featureProperties.copy(
             metadata = metadataMapper.toMetadataForBopliktGrense(this),
             kontekstEgenskaper = featureMapper.toKontekstEgenskaperForBopliktGrense(grense = this, gyldighetsdato = gyldighetsdato))
-
-        else -> throw RuntimeException("Ikke støttet å mappe til metadata for grensetype: " + grensetype.name)
     }
     return Feature(
         // Dersom feature har en id (nye grenser har ingen id før de opprettes i databasen) må denne være objektets lokalid

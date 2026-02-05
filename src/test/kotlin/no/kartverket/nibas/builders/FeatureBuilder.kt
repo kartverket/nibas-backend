@@ -78,7 +78,6 @@ class FeatureBuilder(private var id: String? = "1") {
                 Grensetype.Grunnkretsgrense -> StatistiskgrenseMetadata(common = commonMetadata, commonGrense = commonGrense)
                 Grensetype.Delomraadegrense -> StatistiskgrenseMetadata(common = commonMetadata, commonGrense = commonGrense)
                 Grensetype.Grunnlinje -> GrunnlinjeMetadata(common = commonMetadata, commonGrense = commonGrense)
-                else -> throw RuntimeException("Not implemented yet.")
             }
         }
         properties = properties.copy(metadata = metadata)
