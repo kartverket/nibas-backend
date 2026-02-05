@@ -15,7 +15,7 @@ For å sette opp applikasjonen lokalt trenger du følgende:
 
 -   JDK 21
 -   Docker
--   PostgreSQL (versjon 14 anbefales)
+-   PostgreSQL (versjon 16 anbefales)
 
 ## Miljøvariabler
 
@@ -100,6 +100,17 @@ For å importere en databasedump kan du bruke psql med kommandoen:
 psql -f {DB_DUMP_FILENAME} -h localhost -U nibas -d nibas
 ```
 
+### Feilsøking
+- Sjekk postgres versjon 
+    ```bash
+    postgres --version
+    ```
+- Sjekk om postgres porten er i bruk 
+    ```bash
+    lsof -i :5432
+    ```
+
+
 ## Kjøre applikasjonen
 
 ### IntelliJ
@@ -123,6 +134,21 @@ Alternativt kan man også starte applikasjonen via terminalen:
 ```
 
 Nå skal applikasjonen være klar til bruk og du kan sette opp [nibas-frontend](https://github.com/kartverket/nibas-frontend) dersom du ønsker å ha den kjørende lokalt også.
+
+### Feilsøking
+
+- Ved feil eller manglende imports fra Matrikkel (`no.statkart...`):
+    - Sjekk at `GH_PACKAGES_PAT` i **Run Configuration** er korrekt
+    - Tokenet må være **Personal Access Token (classic)** med `read:packages`
+    - Husk å **SSO-autorisere tokenet for Kartverket**
+- Ved Matrikkel-kodelistefeil eller runtime-feil mot Matrikkel:
+    - Dobbeltsjekk `MATRIKKELEN_WFS_URL`, `MATRIKKELEN_USERNAME` og `MATRIKKELEN_PASSWORD` i **Run Configuration**
+- Hvis build fungerer i terminal, men IntelliJ viser røde imports eller rare feil:
+    - Kjør **File → Invalidate Caches… → Invalidate and Restart**
+- Etter endring av miljøvariabler eller token kjør:
+    ```bash
+    ./gradlew clean build --refresh-dependencies
+    ```
 
 ## Integrasjon mot nibas-events
 
