@@ -14,6 +14,8 @@ import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
+import jakarta.persistence.PostPersist
+import jakarta.persistence.PostUpdate
 import jakarta.persistence.Table
 
 /**
@@ -143,6 +145,18 @@ class Kommune(
 
             // Må legge til denne Kommunen på eksisterende kommune sitt fylke
             gammelKommune.getFylke(gyldighetsdato = gyldigFra)!!.addKommune(this)
+        }
+    }
+
+    @PostUpdate
+    @PostPersist
+    private fun validateBopliktomraader() {
+        if (!this::kommuneLokalid.isInitialized) return
+        val invalidBopliktomraader = kommuneLokalid.bopliktomraade
+            .filterNot { it.isCoveredByOrTemporallyDisjoint(this) }
+        require(invalidBopliktomraader.isEmpty()) {
+            "Kommune($id) dekker ikke alle bopliktområder(i hele sin gyldighetsperiode: $gyldighet). " +
+                "Ugyldige bopliktområder: ${invalidBopliktomraader.joinToString { it.id }}"
         }
     }
 

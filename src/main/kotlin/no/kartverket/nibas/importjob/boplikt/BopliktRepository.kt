@@ -1,5 +1,6 @@
 package no.kartverket.nibas.importjob.boplikt
 
+import org.locationtech.jts.io.WKBWriter
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
 
@@ -30,11 +31,8 @@ class BopliktRepository(
             :objid, :lokalid, :navn, :nummer, :gyldigfra, :gyldigtil,
             :datafangstdato, :foerstedigitaliseringsdato,
             :opphav, :endretdato, :endretav, :typeendring,
-            ST_SetSRID(ST_GeomFromGeoJSON(:omraade_geojson), 25833),
-            ST_SetSRID(
-                ST_PointOnSurface(ST_GeomFromGeoJSON(:omraade_geojson)),
-                25833
-            ),
+            st_geomfromewkb(:omraade_geojson),
+            st_pointonsurface(st_geomfromewkb(:omraade_geojson)),
             :kommunelokalid, :delvisBoplikt, :version, :slettet,
             :forskriftsreferanse, :informasjon, :url
         )
@@ -53,7 +51,7 @@ class BopliktRepository(
             "endretdato" to row.endretdato,
             "endretav" to row.endretav,
             "typeendring" to row.typeendring,
-            "omraade_geojson" to row.omraadeGeoJson,
+            "omraade_geojson" to WKBWriter(2, true).write(row.omraadeGeo),
             "kommunelokalid" to row.kommunelokalid,
             "delvisBoplikt" to row.delvisBoplikt,
             "version" to row.version,
@@ -65,5 +63,4 @@ class BopliktRepository(
 
         jdbc.update(sql, params)
     }
-
 }

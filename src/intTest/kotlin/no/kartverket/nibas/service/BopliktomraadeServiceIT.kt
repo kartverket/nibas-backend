@@ -21,6 +21,8 @@ import no.kartverket.nibas.utils.GrenseHelper
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
+import org.locationtech.jts.geom.util.AffineTransformation
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -407,6 +409,48 @@ class BopliktomraadeServiceIT : TestWithDbContainer() {
             .containsExactlyInAnyOrder(bopliktomraade.id, bopliktomraadeEtterOppdatering.id)
 
         assertGrenseEtterGrenseendring("grenseDeltLokalid", datoForGrenseendring, opprinneligGrense, kretsEtterLagring, opprinneligKrets)
+    }
+
+    @Test
+    fun `ikke tillat bopliktomraade utenfor kommune`() {
+        val opprinneligDato = LocalDate.parse("2022-01-01")
+        val kretsgrenser = grenseRepository.saveAll(GrenseHelper.getGrenserForVestligKrets(opprinneligDato, Grensetype.Kommunegrense))
+        val bopliktgrenser = kretsgrenser.map { kretsgrense ->
+            Grense(grensetype = Grensetype.Bopliktgrense).apply {
+                grense = AffineTransformation.translationInstance(10.0, 0.0).transform(kretsgrense.grense) as org.locationtech.jts.geom.LineString
+                gyldighet = kretsgrense.gyldighet
+            }
+        }
+        val bopliktomraade = saveBopliktomraade(
+            id = "2",
+            lokalid = Lokalid("22"),
+            gyldigFra = opprinneligDato,
+            grenser = bopliktgrenser
+        )
+        val kommune = saveKommuneOgUnikLokalid(kommunenummerUuid = "4227", gyldigFra = opprinneligDato, bopliktomraader = listOf(bopliktomraade))
+        assertThatThrownBy { kommune.oppdaterOmraadeOgPosisjon(kretsgrenser); entityManager.flush() }
+            .message()
+            .matches("Bopliktomraade.* er ikke dekket av kommune.*")
+    }
+
+    @Test
+    fun `tillat bopliktomraade i kommune`() {
+        val opprinneligDato = LocalDate.parse("2022-01-01")
+        val kretsgrenser = grenseRepository.saveAll(GrenseHelper.getGrenserForVestligKrets(opprinneligDato, Grensetype.Kommunegrense))
+        val bopliktgrenser = kretsgrenser.map { kretsgrense ->
+            Grense(grensetype = Grensetype.Bopliktgrense).apply {
+                grense = kretsgrense.grense.factory.createLineString(kretsgrense.grense.coordinates.copyOf())
+                gyldighet = kretsgrense.gyldighet
+            }
+        }
+        val bopliktomraade = saveBopliktomraade(
+            id = "2",
+            lokalid = Lokalid("22"),
+            gyldigFra = opprinneligDato,
+            grenser = bopliktgrenser
+        )
+        val kommune = saveKommuneOgUnikLokalid(kommunenummerUuid = "4227", gyldigFra = opprinneligDato, bopliktomraader = listOf(bopliktomraade))
+        assertDoesNotThrow { kommune.oppdaterOmraadeOgPosisjon(kretsgrenser); entityManager.flush() }
     }
 
     private fun assertGrenseEtterGrenseendring(

@@ -7,6 +7,8 @@ import no.kartverket.nibas.common.geometry.toMultiPolygon
 import no.kartverket.nibas.events.EventRad
 import no.kartverket.nibas.events.EventType
 import org.hibernate.annotations.SQLRestriction
+import org.locationtech.jts.io.WKTWriter
+import org.slf4j.LoggerFactory
 import java.io.Serializable
 import java.time.LocalDate
 import java.util.*
@@ -19,6 +21,8 @@ import jakarta.persistence.IdClass
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
+import jakarta.persistence.PostPersist
+import jakarta.persistence.PostUpdate
 import jakarta.persistence.Table
 
 @Table(name = "bopliktomraade")
@@ -135,7 +139,61 @@ class Bopliktomraade(
         return this
     }
 
+
+    /**
+    * Sjekker om bopliktområdet ligger innenfor kommunen, eller om de ikke overlapper i tid.
+    *
+    * Returnerer `true` hvis:
+    * - Bopliktområdet og kommunen har ulike gyldighetsperioder som ikke overlapper
+    * - Bopliktområdet ligger innenfor kommunens grenser (med en liten buffer på [KOMMUNE_BOUNDARY_BUFFER_METER])
+    * - Enten bopliktområdet eller kommunen mangler geometri
+    *
+    * @param kommune kommunen som skal sjekkes mot
+    * @return `true` hvis området ligger innenfor kommunen eller ikke overlapper i tid, `false` ellers
+    */
+    fun isCoveredByOrTemporallyDisjoint(kommune: Kommune): Boolean {
+        if (!gyldighet.overlapperMed(kommune.gyldighet)) {
+            return true
+        }
+        val kommuneOmraade = kommune.omraade?.takeUnless { it.isEmpty } ?: return true
+        val thisOmraade = omraade?.takeUnless { it.isEmpty } ?: return true
+        val coveredByKommune = kommuneOmraade
+            .buffer(KOMMUNE_BOUNDARY_BUFFER_METER)
+            .covers(thisOmraade)
+        if (!coveredByKommune) {
+            val differenceText = WKTWriter()
+                .writeFormatted(kommuneOmraade.difference(thisOmraade))
+                .let {
+                    if (it.length > 500) {
+                        it.substring(0, 500) + "..."
+                    } else {
+                        it
+                    }
+                }
+            log.error(
+                "Bopliktomraade({}) er ikke dekket av kommune {}({})@{}:\n{}",
+                id, kommune.kommunenummer, kommune.id, kommune.gyldighet, differenceText
+            )
+            return false
+        }
+        return true
+    }
+
+    @PostUpdate
+    @PostPersist
+    fun validateCoveredByKommune() {
+        if (!this::kommuneLokalid.isInitialized) return
+        val valid = kommuneLokalid.kommuner.asSequence()
+            .map(this::isCoveredByOrTemporallyDisjoint)
+            .fold(true) { a, b -> a && b }
+        require(valid) {
+            "Bopliktomraade($id) er ikke dekket av kommunen(i hele sin gyldighetsperiode: $gyldighet)"
+        }
+    }
+
     companion object {
+        const val KOMMUNE_BOUNDARY_BUFFER_METER = 1.0 / 1_000_000.0
+        private val log = LoggerFactory.getLogger(Bopliktomraade::class.java)
         fun tillatteGrensetyper(): Set<Grensetype> = setOf(
             Grensetype.Bopliktgrense
         )

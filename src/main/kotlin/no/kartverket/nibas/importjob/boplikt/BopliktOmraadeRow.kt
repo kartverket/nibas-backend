@@ -1,4 +1,5 @@
 package no.kartverket.nibas.importjob.boplikt
+import org.locationtech.jts.geom.MultiPolygon
 import java.time.OffsetDateTime
 
 data class BopliktOmraadeRow(
@@ -14,7 +15,7 @@ data class BopliktOmraadeRow(
     val endretdato: OffsetDateTime,
     val endretav: String,
     val typeendring: String,
-    val omraadeGeoJson: String,
+    val omraadeGeo: MultiPolygon,
     val kommunelokalid: String?,
     val delvisBoplikt: Boolean = false,
     val version: Short = 1,
