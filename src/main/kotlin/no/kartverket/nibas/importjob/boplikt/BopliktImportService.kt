@@ -125,7 +125,7 @@ class BopliktImportService(
         val originalGeometry = feature.geometry.toJTS(UTM33_SRID)
 
         val fixedGeometry = originalGeometry
-            .let { TopologyPreservingSimplifier.simplify(it, 1.5) }.buffer(0.0)
+            .let { TopologyPreservingSimplifier.simplify(it, 10.0) }.buffer(0.0)
             .let { GeometryPrecisionReducer.reduce(it, halfCmModel) }
             .let { GeometrySnapper(it).snapTo(
                 kommuneOmraade,
