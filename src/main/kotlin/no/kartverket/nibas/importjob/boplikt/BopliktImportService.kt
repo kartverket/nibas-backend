@@ -16,6 +16,7 @@ import org.locationtech.jts.geom.Polygon
 import org.locationtech.jts.geom.PrecisionModel
 import org.locationtech.jts.operation.overlay.snap.GeometrySnapper
 import org.locationtech.jts.precision.GeometryPrecisionReducer
+import org.locationtech.jts.simplify.TopologyPreservingSimplifier
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -25,6 +26,7 @@ import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.*
+import java.time.Duration
 
 
 @Service
@@ -36,12 +38,13 @@ class BopliktImportService(
     private val kommuneService: KommuneService,
     transactionTimeService: TransactionTimeService
 ) {
-    private val resourcePath = "import/bopliktomraader110226.geojson"
+    private val resourcePath = "import/bopliktsomraader.geojson"
     private val now: Instant = transactionTimeService.transactionTime
     private val importDate = now.atOffset(ZoneOffset.UTC)
     private val today: LocalDate = now.atZone(ZoneId.of("Europe/Oslo")).toLocalDate()
 
     fun importFromLocalResource(): Int {
+        val start = Instant.now()
         repository.truncateCascade()
         val featureCollection = geoJsonReader.readFeatureCollectionFromClasspath(resourcePath)
 
@@ -57,6 +60,12 @@ class BopliktImportService(
             repository.insert(row)
             count++
         }
+        val end = Instant.now()
+        val duration = Duration.between(start, end)
+        val minutes = duration.toMinutes()
+        val seconds = duration.seconds % 60
+        val formatted = "%02d:%02d".format(minutes, seconds)
+        log.warn("Importerte bopliktområder på $formatted")
         return count
     }
 
@@ -116,6 +125,7 @@ class BopliktImportService(
         val originalGeometry = feature.geometry.toJTS(UTM33_SRID)
 
         val fixedGeometry = originalGeometry
+            .let { TopologyPreservingSimplifier.simplify(it, 1.5) }.buffer(0.0)
             .let { GeometryPrecisionReducer.reduce(it, halfCmModel) }
             .let { GeometrySnapper(it).snapTo(
                 kommuneOmraade,
