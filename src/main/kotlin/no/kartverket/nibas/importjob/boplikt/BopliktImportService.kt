@@ -36,7 +36,7 @@ class BopliktImportService(
     private val kommuneService: KommuneService,
     transactionTimeService: TransactionTimeService
 ) {
-    private val resourcePath = "import/bopliktsomraade.geojson"
+    private val resourcePath = "import/bopliktomraader110226.geojson"
     private val now: Instant = transactionTimeService.transactionTime
     private val importDate = now.atOffset(ZoneOffset.UTC)
     private val today: LocalDate = now.atZone(ZoneId.of("Europe/Oslo")).toLocalDate()
