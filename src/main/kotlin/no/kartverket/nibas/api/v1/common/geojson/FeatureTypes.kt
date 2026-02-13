@@ -43,8 +43,6 @@ interface Geometry
     description = "Wrapper-objekt rundt en JTS Point.",
 )
 data class Point(
-    @Schema(description = "Geometriens type. Diskriminator.")
-    val type: String = POINT_SCHEMA,
     @Schema(description = "X og y som liste.")
     val coordinates: List<Double>)
     : Geometry
@@ -54,8 +52,6 @@ data class Point(
     description = "Wrapper-objekt rundt en JTS LineString.",
 )
 data class LineString(
-    @Schema(description = "Geometriens type. Diskriminator.")
-    val type: String = LINE_STRING_SCHEMA,
     @Schema(description = "Liste av (x og y som liste).")
     val coordinates: List<List<Double>>)
     : Geometry
@@ -65,8 +61,6 @@ data class LineString(
     description = "Wrapper-objekt rundt et JTS MultiPolygon.",
 )
 data class MultiPolygon(
-    @Schema(description = "Geometriens type. Diskriminator.")
-    val type: String = MULTI_POLYGON_SCHEMA,
     @Schema(description = "Liste av polygonenes liste av LinearRings som igjen har liste av koordinater som er liste av x og y.")
     val coordinates: List<List<List<List<Double>>>>)
     : Geometry
