@@ -26,6 +26,9 @@ class BopliktgrenserTransformasjonService(
     // Oppretter også BopliktomraadeGrenseKobling for alle grensene
     @Transactional
     fun transform() {
+        if(!bopliktomraadeGrenseKoblingRepository.isEmpty()){
+            return
+        }
         resetTables()
         val allBopliktomraader = bopliktomraadeService.hentAlleBopliktomraader(LocalDate.now())
         val allGrensekoblinger = mutableListOf<BopliktomraadeGrenseKobling>()

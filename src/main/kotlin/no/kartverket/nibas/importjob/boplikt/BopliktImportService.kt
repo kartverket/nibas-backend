@@ -42,6 +42,9 @@ class BopliktImportService(
     private val today: LocalDate = now.atZone(ZoneId.of("Europe/Oslo")).toLocalDate()
 
     fun importFromLocalResource(): Int {
+        if(!repository.isEmpty()) {
+            return 0
+        }
         repository.truncateCascade()
         val featureCollection = geoJsonReader.readFeatureCollectionFromClasspath(resourcePath)
 

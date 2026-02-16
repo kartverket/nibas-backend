@@ -111,7 +111,10 @@ interface StemmekretsGrenseKoblingRepository : JpaRepository<StemmekretsGrenseKo
     fun findByStemmekretsKommuneLokalid(kommuneLokalid: UnikLokalid): List<StemmekretsGrenseKobling>
 }
 
-interface BopliktomraadeGrenseKoblingRepository : JpaRepository<BopliktomraadeGrenseKobling, Long>
+interface BopliktomraadeGrenseKoblingRepository : JpaRepository<BopliktomraadeGrenseKobling, Long> {
+    @Query("SELECT COUNT(*) = 0 FROM BopliktomraadeGrenseKobling")
+    fun isEmpty(): Boolean
+}
 
 interface UtkastRepository : CrudRepository<Utkast, String>, JpaRepository<Utkast, String> {
     fun findAllByStatus(status: UtkastStatus): List<Utkast>
