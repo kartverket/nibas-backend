@@ -6,6 +6,7 @@ import no.kartverket.nibas.sosi.model.SosiObjektFactory
 import org.springframework.stereotype.Service
 import java.io.*
 import java.nio.charset.Charset
+import java.nio.charset.UnsupportedCharsetException
 import java.util.logging.Logger
 import java.util.regex.Pattern
 import kotlin.collections.ArrayList
@@ -17,7 +18,9 @@ class NibasSosiDeserializer {
     fun deserialize(stream: InputStream, filnavn: String): SosiObjekt {
         skipUTF8BOM(stream)
         val contentAsBytes = stream.readAllBytes()
-        val encoding = finnEncoding(contentAsBytes)
+        val encoding = try {
+            finnEncoding(contentAsBytes) }
+        catch (e: Exception) { throw IllegalArgumentException("Kunne ikke behandle SOSI-filen. Årsak: Tegnsett ${e.message} er ikke støttet.") }
         val reformatted = reformat(contentAsBytes, encoding)
 
         val parseLinjer = parseLinjer(reformatted)
@@ -110,6 +113,7 @@ class NibasSosiDeserializer {
         return reformattedLines
     }
 
+    @Throws (UnsupportedCharsetException::class)
     fun finnEncoding(content: ByteArray): Charset {
         val contentAsString = content.toString(Charset.defaultCharset())
         val matcher = Pattern.compile("(\\.\\.TEGNSETT)\\s+(\\S*)\\s.*").matcher(contentAsString)

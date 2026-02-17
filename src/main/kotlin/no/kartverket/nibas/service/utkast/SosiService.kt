@@ -56,7 +56,8 @@ class SosiGeometryService(
         val sosiVersjonString = sosiObjekt.getHode()?.getSosiVersjon() ?: throw RuntimeException("SosiVersjon ble ikke funnet i filen")
         val sosiVersjon = parseSosiVersjon(sosiVersjonString)
         val illegalSOSIversionMessage = "Du kan kun laste opp sosifiler med versjon 4.5 eller 5.0, ikke $sosiVersjon"
-        if(sosiVersjon != "4.5" && sosiVersjon != "5.0") throw IllegalArgumentException(illegalSOSIversionMessage)
+        val isSupportedSOSIVersjon = listOf("4.5", "5.0").contains(sosiVersjon)
+        if(!isSupportedSOSIVersjon) throw IllegalArgumentException(illegalSOSIversionMessage)
         val features = mutableListOf<Feature>()
 
         val koordsys = getEPSGCodeForSosiKode(sosiObjekt.getKurver()[0].koordsys)
@@ -72,11 +73,12 @@ class SosiGeometryService(
             val lineString = convertSosiKurveToLineString(
                 sosiKurve = kurve, geometryFactory = geometryFactory, sourceCRS = sourceCRS, targetCRS = targetCRS, transformer = transformer
             )
-            val grenseTypeString = getGrenseTypeForKurve(kurve = kurve, sosiVersjon = sosiVersjon) ?: throw IllegalArgumentException(illegalSOSIversionMessage)
+            val grenseTypeString = getGrenseTypeForKurve(kurve = kurve, sosiVersjon = sosiVersjon) ?: throw IllegalArgumentException("Filen samsvarer ikke med oppgitt SOSI-versjon. Kontakt Kartverket hvis du mener dette er feil.")
+            val formattedGrenseTypeString = grenseTypeString.lowercase().replaceFirstChar { it.uppercase() }
             val grenseType = try {
-                Grensetype.fromValue(grenseTypeString)
+                    Grensetype.fromValue(formattedGrenseTypeString)
             } catch(e: IllegalArgumentException){
-                throw IllegalArgumentException("Filen inneholder en eller flere grenser med grensetype som ikke støttes: '$grenseTypeString'")
+                throw IllegalArgumentException("Filen inneholder en eller flere grenser med grensetype som ikke støttes: '$formattedGrenseTypeString'")
             }
             val id = kurve.getIdent()?.getVerdiAvBarn("LOKALID") ?: kurve.getId()
             val posisjonskvalitet = kurve.getPosisjonskvalitet(kodelisteService = kodelisteService, sosiVersjon = sosiVersjon)?.toKvalitet()
