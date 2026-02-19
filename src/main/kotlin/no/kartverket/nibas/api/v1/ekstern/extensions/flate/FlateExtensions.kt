@@ -166,6 +166,8 @@ fun Bopliktomraade.toEksternBopliktomraadeResponse(gyldighetsdato: LocalDate): E
         delvisBoplikt = delvisBoplikt,
         informasjon = informasjon,
         forskriftsreferanse = forskriftsreferanse,
+        materielleVilkaar = materielleVilkaar,
+        andreAvgrensninger = andreAvgrensninger,
         url = url,
         features = FeatureCollection(features = listOf(
             posisjon.posisjonToFeature(version),

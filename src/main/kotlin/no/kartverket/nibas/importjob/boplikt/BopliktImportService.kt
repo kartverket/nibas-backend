@@ -24,8 +24,7 @@ import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.ZoneOffset
-import java.util.*
-
+import java.util.UUID
 
 @Service
 @Transactional
@@ -42,9 +41,9 @@ class BopliktImportService(
     private val today: LocalDate = now.atZone(ZoneId.of("Europe/Oslo")).toLocalDate()
 
     fun importFromLocalResource(): Int {
-        if(!repository.isEmpty()) {
+        /*if(!repository.isEmpty()) {
             return 0
-        }
+        }*/
         repository.truncateCascade()
         val featureCollection = geoJsonReader.readFeatureCollectionFromClasspath(resourcePath)
 
@@ -68,6 +67,19 @@ class BopliktImportService(
 
         fun prop(name: String): Any? = p[name]
 
+        fun propIntToBoolean(name: String): Boolean {
+            val v = prop(name) ?: return false
+            require(v is Number) { "Property '$name' må være tall eller null, var: $v" }
+            return v.toInt() == 1
+        }
+        fun propGjelderToBoolean(name: String): Boolean {
+            val v = prop(name)
+            require(v is String && (v == "Gjelder" || v == "Gjelder ikke")) {
+                "Property '$name' må være 'Gjelder' eller 'Gjelder ikke', var: $v"
+            }
+            return v == "Gjelder"
+        }
+
         val objid = UUID.randomUUID().toString()
         val lokalid = UUID.randomUUID().toString()
 
@@ -82,12 +94,17 @@ class BopliktImportService(
         val endretav = "boplikt-import"
         val typeendring = "import"
 
-        val delvisBoplikt =
-            (prop("delvis_boplikt") as? Number)?.toInt() == 1
+        val delvisBoplikt = propIntToBoolean("delvis_boplikt")
 
         val forskriftsreferanse = prop("forskriftsreferanse")?.toString()
         val informasjon = prop("utfyllendeBeskrivelse")?.toString()
         val url = prop("url")?.toString()
+
+        val bebygdEiendom = propGjelderToBoolean("bebygd_eiendom")
+        val ikkeHelaarsboligUnderOppforing = propGjelderToBoolean("helaarsbolig")
+        val ubebygdTomt = propGjelderToBoolean("ubebygd_tomt")
+        val unntakFraSlektskapsunntak = propGjelderToBoolean("slektskapsunntak")
+        val andreAvgrensninger = prop("andre_avgrensninger")?.toString()
 
         // Hvis gyldigFra < 2024-01-01, bruk 2024-01-01; ellers bruk gyldigFra
         val gyldigFraDefaultDate = LocalDate.of(2024, 1, 1)
@@ -180,6 +197,11 @@ class BopliktImportService(
             omraadeGeo = bopliktomraade,
             kommunelokalid = kommunelokalid,
             delvisBoplikt = delvisBoplikt,
+            bebygdEiendom = bebygdEiendom,
+            ikkeHelaarsboligUnderOppforing = ikkeHelaarsboligUnderOppforing,
+            ubebygdTomt = ubebygdTomt,
+            unntakFraSlektskapsunntak = unntakFraSlektskapsunntak,
+            andreAvgrensninger = andreAvgrensninger,
             version = 1,
             slettet = false,
             forskriftsreferanse = forskriftsreferanse,

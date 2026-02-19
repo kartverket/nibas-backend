@@ -113,6 +113,8 @@ fun Bopliktomraade.applyChangesFromRequest(request: BopliktomraadeRequest): Bopl
         this.nummer = request.nummer
         this.delvisBoplikt = request.delvisBoplikt
         this.forskriftsreferanse = request.forskriftsreferanse
+        this.setMaterielleVilkaar(request.materielleVilkaar)
+        this.andreAvgrensninger = request.andreAvgrensninger
         this.url = request.url
         informasjon = request.informasjon
     }

@@ -1,5 +1,6 @@
 package no.kartverket.nibas.api.v1.ekstern.response
 
+import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Schema
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.common.Fylkesnummer
@@ -7,6 +8,7 @@ import no.kartverket.nibas.api.v1.common.GyldighetResponse
 import no.kartverket.nibas.api.v1.common.Kommunenummer
 import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
+import no.kartverket.nibas.domain.MaterieltVilkaar
 import java.time.ZonedDateTime
 
 @Schema(description = "En referanse til et fylke")
@@ -200,6 +202,18 @@ data class EksternBopliktomraadeRespons(
 
     @Schema(description = "Forskriftsreferanse til boplikten")
     val forskriftsreferanse: String?,
+
+    @ArraySchema(
+        arraySchema = Schema(description = "Materielle vilkår for bopliktområdet"),
+        schema = Schema(
+            description = "Materielt vilkår",
+            implementation = MaterieltVilkaar::class
+        )
+    )
+    val materielleVilkaar: Set<MaterieltVilkaar> = emptySet(),
+
+    @Schema(description = "Andre avgrensninger")
+    val andreAvgrensninger: String? = null,
 
     @Schema(description = "URL til informasjon om boplikten")
     val url: String?,

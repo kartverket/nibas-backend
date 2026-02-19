@@ -25,6 +25,13 @@ import jakarta.persistence.PostPersist
 import jakarta.persistence.PostUpdate
 import jakarta.persistence.Table
 
+enum class MaterieltVilkaar {
+    BEBYGDEIENDOM,
+    IKKEHELAARSBOLIGUNDEROPPFORING,
+    UBEBYGDTOMT,
+    UNNTAKFRASLEKTSKAPSUNNTAK
+}
+
 @Table(name = "bopliktomraade")
 @Entity
 class Bopliktomraade(
@@ -49,6 +56,36 @@ class Bopliktomraade(
 
     @Column(name = "url")
     var url: String? = null
+
+    @Column(name = "bebygd_eiendom")
+    var bebygdEiendom: Boolean = false
+
+    @Column(name = "ikke_helaarsbolig_under_oppforing")
+    var ikkeHelaarsBoligUnderOppforing: Boolean = false
+
+    @Column(name = "ubebygd_tomt")
+    var ubebygdTomt: Boolean = false
+
+    @Column(name = "unntak_fra_slektskapsunntak")
+    var unntakFraSlektskapsunntak: Boolean = false
+
+    @Column(name = "andre_avgrensninger")
+    var andreAvgrensninger: String? = null
+
+    val materielleVilkaar: Set<MaterieltVilkaar>
+        get() = buildSet {
+            if (bebygdEiendom) add(MaterieltVilkaar.BEBYGDEIENDOM)
+            if (ikkeHelaarsBoligUnderOppforing) add(MaterieltVilkaar.IKKEHELAARSBOLIGUNDEROPPFORING)
+            if (ubebygdTomt) add(MaterieltVilkaar.UBEBYGDTOMT)
+            if (unntakFraSlektskapsunntak) add(MaterieltVilkaar.UNNTAKFRASLEKTSKAPSUNNTAK)
+        }
+
+    fun setMaterielleVilkaar(vilkaar: Set<MaterieltVilkaar>) {
+        bebygdEiendom = MaterieltVilkaar.BEBYGDEIENDOM in vilkaar
+        ikkeHelaarsBoligUnderOppforing = MaterieltVilkaar.IKKEHELAARSBOLIGUNDEROPPFORING in vilkaar
+        ubebygdTomt = MaterieltVilkaar.UBEBYGDTOMT in vilkaar
+        unntakFraSlektskapsunntak = MaterieltVilkaar.UNNTAKFRASLEKTSKAPSUNNTAK in vilkaar
+    }
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "kommunelokalid", referencedColumnName = "lokalid")
@@ -122,6 +159,11 @@ class Bopliktomraade(
             nummer = gammeltBopliktomraade.nummer
             navn = gammeltBopliktomraade.navn
             delvisBoplikt = gammeltBopliktomraade.delvisBoplikt
+            bebygdEiendom = gammeltBopliktomraade.bebygdEiendom
+            ikkeHelaarsBoligUnderOppforing = gammeltBopliktomraade.ikkeHelaarsBoligUnderOppforing
+            ubebygdTomt = gammeltBopliktomraade.ubebygdTomt
+            unntakFraSlektskapsunntak = gammeltBopliktomraade.unntakFraSlektskapsunntak
+            andreAvgrensninger = gammeltBopliktomraade.andreAvgrensninger
             forskriftsreferanse = gammeltBopliktomraade.forskriftsreferanse
             url = gammeltBopliktomraade.url
             omraade = gammeltBopliktomraade.omraade
@@ -198,7 +240,6 @@ class Bopliktomraade(
             Grensetype.Bopliktgrense
         )
     }
-
 }
 
 /**

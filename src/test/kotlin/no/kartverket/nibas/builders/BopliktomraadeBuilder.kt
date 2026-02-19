@@ -21,6 +21,11 @@ class BopliktomraadeBuilder(
     private var forskriftsreferanse: String? = "Forskrift om nedsatt konsesjonsgrense etter konsesjonsloven § 7",
     private var url: String? = "https://frogn.kommunegis.no/publikum",
     private var delvisBoplikt: Boolean = false,
+    private var bebygdEiendom: Boolean = false,
+    private var ikkeHelaarsboligUnderOppforing: Boolean = false,
+    private var ubebygdTomt: Boolean = false,
+    private var unntakFraSlektskapsunntak: Boolean = false,
+    private var andreAvgrensninger: String? = null,
     private var endretdato: ZonedDateTime = ZonedDateTime.now(),
     private var datafangstdato: ZonedDateTime = ZonedDateTime.now(),
     private var gyldigFra: LocalDate = LocalDate.now(),
@@ -58,6 +63,11 @@ class BopliktomraadeBuilder(
         bopliktomraade.forskriftsreferanse = forskriftsreferanse
         bopliktomraade.url = url
         bopliktomraade.delvisBoplikt = delvisBoplikt
+        bopliktomraade.bebygdEiendom = bebygdEiendom
+        bopliktomraade.ikkeHelaarsBoligUnderOppforing = ikkeHelaarsboligUnderOppforing
+        bopliktomraade.ubebygdTomt = ubebygdTomt
+        bopliktomraade.unntakFraSlektskapsunntak = unntakFraSlektskapsunntak
+        bopliktomraade.andreAvgrensninger = andreAvgrensninger
 
         bopliktomraade.auditInfo.endretdato = endretdato
         bopliktomraade.auditInfo.typeEndring = typeEndring
@@ -99,6 +109,36 @@ class BopliktomraadeBuilder(
 
     fun withGrenser(grenser: List<Grense>): BopliktomraadeBuilder {
         this.grenser = this.grenser + grenser
+        return this
+    }
+
+    fun withDelvisBoplikt(delvisBoplikt: Boolean): BopliktomraadeBuilder {
+        this.delvisBoplikt = delvisBoplikt
+        return this
+    }
+
+    fun withBebygdEiendom(bebygdEiendom: Boolean): BopliktomraadeBuilder {
+        this.bebygdEiendom = bebygdEiendom
+        return this
+    }
+
+    fun withIkkeHelaarsboligUnderOppforing(ikkeHelaarsboligUnderOppforing: Boolean): BopliktomraadeBuilder {
+        this.ikkeHelaarsboligUnderOppforing = ikkeHelaarsboligUnderOppforing
+        return this
+    }
+
+    fun withUbebygdTomt(ubebygdTomt: Boolean): BopliktomraadeBuilder {
+        this.ubebygdTomt = ubebygdTomt
+        return this
+    }
+
+    fun withUnntakfraslektskapsunntak(unntakFraSlektskapsunntak: Boolean): BopliktomraadeBuilder {
+        this.unntakFraSlektskapsunntak = unntakFraSlektskapsunntak
+        return this
+    }
+
+    fun withAndreAvgrensninger(andreAvgrensninger: String?): BopliktomraadeBuilder {
+        this.andreAvgrensninger = andreAvgrensninger
         return this
     }
 }

@@ -26,7 +26,12 @@ class BopliktRepository(
             opphav, endretdato, endretav, typeendring,
             omraade, posisjon,
             kommunelokalid, delvis_boplikt, version, slettet,
-            forskriftsreferanse, informasjon, url
+            forskriftsreferanse, informasjon, url,
+            bebygd_eiendom,
+            ikke_helaarsbolig_under_oppforing,
+            ubebygd_tomt,
+            unntak_fra_slektskapsunntak,
+            andre_avgrensninger
         ) VALUES (
             :objid, :lokalid, :navn, :nummer, :gyldigfra, :gyldigtil,
             :datafangstdato, :foerstedigitaliseringsdato,
@@ -34,7 +39,12 @@ class BopliktRepository(
             st_geomfromewkb(:omraade_geojson),
             st_pointonsurface(st_geomfromewkb(:omraade_geojson)),
             :kommunelokalid, :delvisBoplikt, :version, :slettet,
-            :forskriftsreferanse, :informasjon, :url
+            :forskriftsreferanse, :informasjon, :url,
+            :bebygdEiendom,
+            :ikkeHelaarsboligUnderOppforing,
+            :ubebygdTomt,
+            :unntakFraSlektskapsunntak,
+            :andreAvgrensninger
         )
     """.trimIndent()
 
@@ -58,7 +68,12 @@ class BopliktRepository(
             "slettet" to row.slettet,
             "forskriftsreferanse" to row.forskriftsreferanse,
             "informasjon" to row.informasjon,
-            "url" to row.url
+            "url" to row.url,
+            "bebygdEiendom" to row.bebygdEiendom,
+            "ikkeHelaarsboligUnderOppforing" to row.ikkeHelaarsboligUnderOppforing,
+            "ubebygdTomt" to row.ubebygdTomt,
+            "unntakFraSlektskapsunntak" to row.unntakFraSlektskapsunntak,
+            "andreAvgrensninger" to row.andreAvgrensninger
         )
 
         jdbc.update(sql, params)

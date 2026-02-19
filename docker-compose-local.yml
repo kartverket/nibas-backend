@@ -7,6 +7,7 @@ services:
     environment:
       - POSTGRES_USER=nibas
       - POSTGRES_PASSWORD=nibas
+      - POSTGRES_DB=nibas
       - TZ=Europe/Oslo
       - PGTZ=Europe/Oslo
 volumes:

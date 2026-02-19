@@ -1,5 +1,6 @@
 package no.kartverket.nibas.api.v1.request
 
+import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Schema
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.common.Flatetype
@@ -8,6 +9,7 @@ import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
 import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
+import no.kartverket.nibas.domain.MaterieltVilkaar
 import java.time.LocalDate
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
@@ -134,8 +136,20 @@ data class BopliktomraadeRequest(
     @Schema(description = "informasjon om bopliktomraade")
     val informasjon: String? = null,
 
-    @Schema(description = "Indikrerer om bopliktomraadet dekker deler av kommunen eller ikke")
+    @Schema(description = "Indikerer om bopliktomraadet dekker deler av kommunen eller ikke")
     val delvisBoplikt: Boolean,
+
+    @ArraySchema(
+        arraySchema = Schema(description = "Materielle vilkår for bopliktområdet"),
+        schema = Schema(
+            description = "Materielt vilkår",
+            implementation = MaterieltVilkaar::class
+        )
+    )
+    val materielleVilkaar: Set<MaterieltVilkaar> = emptySet(),
+
+    @Schema(description = "Andre avgrensninger")
+    val andreAvgrensninger: String? = null,
 
     @Schema(description = "Referanse til forskriften for bopliktomraadet")
     var forskriftsreferanse: String? = null,

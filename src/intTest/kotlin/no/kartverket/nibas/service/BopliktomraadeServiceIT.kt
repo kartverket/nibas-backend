@@ -14,6 +14,7 @@ import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.domain.Bopliktomraade
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Grense
+import no.kartverket.nibas.domain.MaterieltVilkaar
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import no.kartverket.nibas.testcontainer.assertGrenser
@@ -119,7 +120,8 @@ class BopliktomraadeServiceIT : TestWithDbContainer() {
         assertThat(bopliktomraadeRequest.delvisBoplikt).isTrue()
 
         val identifikator = Identifikator(Lokalid(bopliktomraadeRequest.identifikasjon.lokalid), october1In2022)
-        val lagredeGrenserForKrets = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(october1In2022, Grensetype.Bopliktgrense))
+        val lagredeGrenserForKrets =
+            grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(october1In2022, Grensetype.Bopliktgrense))
         grenseRepository.flush()
 
         val bopliktomraade = saveBopliktomraade(
@@ -128,6 +130,13 @@ class BopliktomraadeServiceIT : TestWithDbContainer() {
             gyldigFra = october1In2022,
             grenser = lagredeGrenserForKrets
         )
+
+        bopliktomraade.bebygdEiendom = true
+        bopliktomraade.ubebygdTomt = true
+        bopliktomraadeRepository.save(bopliktomraade)
+
+        val opprinneligeVilkaar = setOf(MaterieltVilkaar.BEBYGDEIENDOM, MaterieltVilkaar.UBEBYGDTOMT)
+        assertThat(bopliktomraade.materielleVilkaar).containsExactlyInAnyOrderElementsOf(opprinneligeVilkaar)
 
         saveKommuneOgUnikLokalid(kommunenummerUuid = "4227", bopliktomraader = listOf(bopliktomraade))
 
@@ -159,6 +168,21 @@ class BopliktomraadeServiceIT : TestWithDbContainer() {
 
         assertThat(opprinneligBopliktomraadeEtter.gyldighet.gyldigFra).isEqualTo(october1In2022)
         assertThat(opprinneligBopliktomraadeEtter.gyldighet.gyldigTil).isEqualTo(now)
+
+        assertThat(opprinneligBopliktomraadeEtter.materielleVilkaar)
+            .containsExactlyInAnyOrderElementsOf(opprinneligeVilkaar)
+
+        assertThat(bopliktomraadeEtter.materielleVilkaar)
+            .allMatch { it in MaterieltVilkaar.entries }
+
+        assertThat(bopliktomraadeEtter.bebygdEiendom)
+            .isEqualTo(MaterieltVilkaar.BEBYGDEIENDOM in bopliktomraadeEtter.materielleVilkaar)
+        assertThat(bopliktomraadeEtter.ikkeHelaarsBoligUnderOppforing)
+            .isEqualTo(MaterieltVilkaar.IKKEHELAARSBOLIGUNDEROPPFORING in bopliktomraadeEtter.materielleVilkaar)
+        assertThat(bopliktomraadeEtter.ubebygdTomt)
+            .isEqualTo(MaterieltVilkaar.UBEBYGDTOMT in bopliktomraadeEtter.materielleVilkaar)
+        assertThat(bopliktomraadeEtter.unntakFraSlektskapsunntak)
+            .isEqualTo(MaterieltVilkaar.UNNTAKFRASLEKTSKAPSUNNTAK in bopliktomraadeEtter.materielleVilkaar)
 
         val grenseObjIdsForOpprinneligBopliktomraade = opprinneligBopliktomraade.grenser.map { it.grense.id }
         val grenseObjIdsForOpprinneligBopliktomraadeEtter = opprinneligBopliktomraadeEtter.grenser.map { it.grense.id }

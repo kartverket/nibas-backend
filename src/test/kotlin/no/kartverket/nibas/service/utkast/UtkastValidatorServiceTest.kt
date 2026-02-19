@@ -154,6 +154,8 @@ class UtkastValidatorServiceTest {
                     forskriftsreferanse = "01",
                     url = "tellekrets",
                     delvisBoplikt = false,
+                    materielleVilkaar = emptySet(),
+                    andreAvgrensninger = "test",
                     kommunenummer = Kommunenummer(
                         "1",
                         "1"
