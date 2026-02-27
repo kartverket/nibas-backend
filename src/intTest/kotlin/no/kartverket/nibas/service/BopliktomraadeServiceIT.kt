@@ -12,6 +12,7 @@ import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.domain.Bopliktomraade
+import no.kartverket.nibas.domain.BopliktomraadeGrenser
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.MaterieltVilkaar
@@ -124,24 +125,24 @@ class BopliktomraadeServiceIT : TestWithDbContainer() {
             grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(october1In2022, Grensetype.Bopliktgrense))
         grenseRepository.flush()
 
-        val bopliktomraade = saveBopliktomraade(
+        val opprinneligBopliktomraade = saveBopliktomraade(
             id = "2",
             lokalid = identifikator.lokalid,
             gyldigFra = october1In2022,
             grenser = lagredeGrenserForKrets
         )
 
-        bopliktomraade.bebygdEiendom = true
-        bopliktomraade.ubebygdTomt = true
-        bopliktomraadeRepository.save(bopliktomraade)
+        opprinneligBopliktomraade.bebygdEiendom = true
+        opprinneligBopliktomraade.ubebygdTomt = true
+        bopliktomraadeRepository.save(opprinneligBopliktomraade)
 
         val opprinneligeVilkaar = setOf(MaterieltVilkaar.BEBYGDEIENDOM, MaterieltVilkaar.UBEBYGDTOMT)
-        assertThat(bopliktomraade.materielleVilkaar).containsExactlyInAnyOrderElementsOf(opprinneligeVilkaar)
+        assertThat(opprinneligBopliktomraade.materielleVilkaar).containsExactlyInAnyOrderElementsOf(opprinneligeVilkaar)
 
-        saveKommuneOgUnikLokalid(kommunenummerUuid = "4227", bopliktomraader = listOf(bopliktomraade))
+        saveKommuneOgUnikLokalid(kommunenummerUuid = "4227", bopliktomraader = listOf(opprinneligBopliktomraade))
 
         val now = LocalDate.now()
-        val opprinneligBopliktomraade = bopliktomraadeService.hentBopliktomraade(identifikator)!!
+        assertThat (bopliktomraadeService.hentBopliktomraade(identifikator)).isSameAs(opprinneligBopliktomraade)
 
         bopliktomraadeService.oppdaterBopliktomraade(
             lokalId = identifikator.lokalid,
@@ -150,26 +151,28 @@ class BopliktomraadeServiceIT : TestWithDbContainer() {
             endringstype = Endringstype.RETTING
         )
 
-        val opprinneligBopliktomraadeEtter = bopliktomraadeService.hentBopliktomraade(identifikator)!!
         val bopliktomraadeEtter = bopliktomraadeService.hentBopliktomraade(Identifikator(identifikator.lokalid))!!
 
-        assertThat(bopliktomraadeEtter.nummer).isNotEqualTo(bopliktomraade.nummer)
+        assertThat(bopliktomraadeEtter.nummer).isNotEqualTo(opprinneligBopliktomraade.nummer)
             .isEqualTo(bopliktomraadeRequest.nummer)
-        assertThat(bopliktomraadeEtter.navn).isNotEqualTo(bopliktomraade.navn)
+        assertThat(bopliktomraadeEtter.navn).isNotEqualTo(opprinneligBopliktomraade.navn)
             .isEqualTo(bopliktomraadeRequest.navn)
-        assertThat(bopliktomraadeEtter.omraade).isEqualTo(bopliktomraade.omraade)
-        assertThat(bopliktomraadeEtter.posisjon).isEqualTo(bopliktomraade.posisjon)
+        assertThat(bopliktomraadeEtter.omraade).isEqualTo(opprinneligBopliktomraade.omraade)
+        assertThat(bopliktomraadeEtter.posisjon).isEqualTo(opprinneligBopliktomraade.posisjon)
         assertThat(bopliktomraadeEtter.gyldighet.gyldigFra).isEqualTo(now)
-        assertThat(bopliktomraadeEtter.url).isNotNull().isNotEqualTo(bopliktomraade.url).isEqualTo(bopliktomraadeRequest.url)
-        assertThat(bopliktomraadeEtter.forskriftsreferanse).isNotNull().isNotEqualTo(bopliktomraade.forskriftsreferanse)
+        assertThat(bopliktomraadeEtter.url).isNotNull().isNotEqualTo(opprinneligBopliktomraade.url).isEqualTo(bopliktomraadeRequest.url)
+        assertThat(bopliktomraadeEtter.forskriftsreferanse).isNotNull().isNotEqualTo(opprinneligBopliktomraade.forskriftsreferanse)
             .isEqualTo(bopliktomraadeRequest.forskriftsreferanse)
-        assertThat(bopliktomraadeEtter.delvisBoplikt).isNotNull().isTrue.isNotEqualTo(bopliktomraade.delvisBoplikt)
-            .isEqualTo(bopliktomraadeRequest.delvisBoplikt)
+        assertThat(bopliktomraadeEtter.delvisBoplikt).isEqualTo(opprinneligBopliktomraade.delvisBoplikt)
 
-        assertThat(opprinneligBopliktomraadeEtter.gyldighet.gyldigFra).isEqualTo(october1In2022)
-        assertThat(opprinneligBopliktomraadeEtter.gyldighet.gyldigTil).isEqualTo(now)
+        assertThat(opprinneligBopliktomraade.gyldighet.gyldigFra).isEqualTo(october1In2022)
+        assertThat(opprinneligBopliktomraade.gyldighet.gyldigTil).isEqualTo(now)
 
-        assertThat(opprinneligBopliktomraadeEtter.materielleVilkaar)
+        val opprinnligeGrenser = opprinneligBopliktomraade.bopliktomraadeGrenser
+            as? BopliktomraadeGrenser.DelvisBoplikt
+            ?: throw IllegalStateException("Forventet delvis boplikt")
+
+        assertThat(opprinneligBopliktomraade.materielleVilkaar)
             .containsExactlyInAnyOrderElementsOf(opprinneligeVilkaar)
 
         assertThat(bopliktomraadeEtter.materielleVilkaar)
@@ -184,14 +187,14 @@ class BopliktomraadeServiceIT : TestWithDbContainer() {
         assertThat(bopliktomraadeEtter.unntakFraSlektskapsunntak)
             .isEqualTo(MaterieltVilkaar.UNNTAKFRASLEKTSKAPSUNNTAK in bopliktomraadeEtter.materielleVilkaar)
 
-        val grenseObjIdsForOpprinneligBopliktomraade = opprinneligBopliktomraade.grenser.map { it.grense.id }
-        val grenseObjIdsForOpprinneligBopliktomraadeEtter = opprinneligBopliktomraadeEtter.grenser.map { it.grense.id }
-        val grenseObjIdsForNyBopliktomraade = bopliktomraadeEtter.grenser.map { it.grense.id }
+        val etterGrenser = bopliktomraadeEtter.bopliktomraadeGrenser
+            as? BopliktomraadeGrenser.DelvisBoplikt
+            ?: throw IllegalStateException("Forventet delvis boplikt")
 
-        assertThat(grenseObjIdsForOpprinneligBopliktomraade).containsAll(grenseObjIdsForOpprinneligBopliktomraadeEtter)
-        assertThat(grenseObjIdsForOpprinneligBopliktomraade).containsAll(grenseObjIdsForNyBopliktomraade)
-        assertThat(grenseObjIdsForNyBopliktomraade).containsAll(grenseObjIdsForOpprinneligBopliktomraade)
-        assertThat(grenseObjIdsForNyBopliktomraade).containsAll(grenseObjIdsForOpprinneligBopliktomraadeEtter)
+        val grenseObjIdsForOpprinneligBopliktomraade = opprinnligeGrenser.grenser.map { it.grense.id }
+        val grenseObjIdsForNyBopliktomraade = etterGrenser.grenser.map { it.grense.id }
+
+        assertThat(grenseObjIdsForOpprinneligBopliktomraade).containsExactlyInAnyOrderElementsOf(grenseObjIdsForNyBopliktomraade)
 
         val grenser = grenseRepository.findAllById(grenseObjIdsForOpprinneligBopliktomraade)
         assertThat(grenser).hasSize(4)
@@ -250,9 +253,18 @@ class BopliktomraadeServiceIT : TestWithDbContainer() {
         assertThat(opprinneligBopliktomraadeEtter.url).isNotNull()
         assertThat(opprinneligBopliktomraadeEtter.forskriftsreferanse).isNotNull()
 
-        val grenseObjIdsForOpprinneligBopliktomraade = opprinneligBopliktomraade.grenser.map { it.grense.id }
-        val grenseObjIdsForOpprinneligBopliktomraadeEtter = opprinneligBopliktomraadeEtter.grenser.map { it.grense.id }
-        val grenseObjIdsForNyBopliktomraade = bopliktomraadeEtter.grenser.map { it.grense.id }
+
+        val opprinnligeGrenser = opprinneligBopliktomraade.bopliktomraadeGrenser
+            as? BopliktomraadeGrenser.DelvisBoplikt
+            ?: throw IllegalStateException("Forventet delvis boplikt")
+
+        val etterGrenser = bopliktomraadeEtter.bopliktomraadeGrenser
+            as? BopliktomraadeGrenser.DelvisBoplikt
+            ?: throw IllegalStateException("Forventet delvis boplikt")
+
+        val grenseObjIdsForOpprinneligBopliktomraade = opprinnligeGrenser.grenser.map { it.grense.id }
+        val grenseObjIdsForOpprinneligBopliktomraadeEtter = etterGrenser.grenser.map { it.grense.id }
+        val grenseObjIdsForNyBopliktomraade = etterGrenser.grenser.map { it.grense.id }
 
         assertThat(grenseObjIdsForOpprinneligBopliktomraade).containsAll(grenseObjIdsForOpprinneligBopliktomraadeEtter)
         assertThat(grenseObjIdsForOpprinneligBopliktomraade).containsAll(grenseObjIdsForNyBopliktomraade)
@@ -491,9 +503,17 @@ class BopliktomraadeServiceIT : TestWithDbContainer() {
         assertThat(opprinneligGrense.grense).isNotEqualTo(grenseEtterGrenseendring.grense)
         assertThat(grenseEtterGrenseendring.version).isGreaterThan(opprinneligGrense.version)
 
-        assertThat(opprinneligKrets.grenser.map { it.grense.id }).contains("grenseDelt")
-        assertThat(kretsEtterLagring.grenser.map { it.grense.id }).doesNotContain("grenseDelt")
-        assertThat(kretsEtterLagring.grenser.map { it.grense.lokalid }).contains(grenseLokalid)
+        val opprinnligeGrenser = opprinneligKrets.bopliktomraadeGrenser
+            as? BopliktomraadeGrenser.DelvisBoplikt
+            ?: throw IllegalStateException("Forventet delvis boplikt")
+
+        val etterGrenser = kretsEtterLagring.bopliktomraadeGrenser
+            as? BopliktomraadeGrenser.DelvisBoplikt
+            ?: throw IllegalStateException("Forventet delvis boplikt")
+
+        assertThat(opprinnligeGrenser.grenser.map { it.grense.id }).contains("grenseDelt")
+        assertThat(etterGrenser.grenser.map { it.grense.id }).doesNotContain("grenseDelt")
+        assertThat(etterGrenser.grenser.map { it.grense.lokalid }).contains(grenseLokalid)
     }
 
     private fun assertAnnenGrenseEtterGrenseendring(grenseId: String, grenseLokalid: String, datoForGrenseendring: LocalDate,
@@ -513,9 +533,17 @@ class BopliktomraadeServiceIT : TestWithDbContainer() {
         assertThat(opprinneligGrense.grense).isNotEqualTo(grenseEtterGrenseendring.grense)
         assertThat(grenseEtterGrenseendring.version).isGreaterThan(opprinneligGrense.version)
 
-        assertThat(opprinneligKrets.grenser.map { it.grense.id }).contains(grenseId)
-        assertThat(kretsEtterLagring.grenser.map { it.grense.id }).doesNotContain(grenseId)
-        assertThat(kretsEtterLagring.grenser.map { it.grense.lokalid }).contains(grenseLokalid)
+        val opprinnligeGrenser = opprinneligKrets.bopliktomraadeGrenser
+            as? BopliktomraadeGrenser.DelvisBoplikt
+            ?: throw IllegalStateException("Forventet delvis boplikt")
+
+        val etterGrenser = kretsEtterLagring.bopliktomraadeGrenser
+            as? BopliktomraadeGrenser.DelvisBoplikt
+            ?: throw IllegalStateException("Forventet delvis boplikt")
+
+        assertThat(opprinnligeGrenser.grenser.map { it.grense.id }).contains(grenseId)
+        assertThat(etterGrenser.grenser.map { it.grense.id }).doesNotContain(grenseId)
+        assertThat(etterGrenser.grenser.map { it.grense.lokalid }).contains(grenseLokalid)
     }
 
     private fun utfoerMetadataoppdatering(kretsSomSkalOppdateres: Bopliktomraade, datoForOppdatering: LocalDate): Bopliktomraade? {

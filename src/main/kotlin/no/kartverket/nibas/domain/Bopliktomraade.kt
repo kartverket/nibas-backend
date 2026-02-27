@@ -7,20 +7,20 @@ import no.kartverket.nibas.common.geometry.toMultiPolygon
 import no.kartverket.nibas.events.EventRad
 import no.kartverket.nibas.events.EventType
 import org.hibernate.annotations.SQLRestriction
+import org.locationtech.jts.geom.MultiPolygon
 import org.locationtech.jts.io.WKTWriter
 import org.slf4j.LoggerFactory
 import java.io.Serializable
 import java.time.LocalDate
 import java.util.*
-import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
+import jakarta.persistence.Embedded
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
 import jakarta.persistence.Id
 import jakarta.persistence.IdClass
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
-import jakarta.persistence.OneToMany
 import jakarta.persistence.PostPersist
 import jakarta.persistence.PostUpdate
 import jakarta.persistence.Table
@@ -47,9 +47,6 @@ class Bopliktomraade(
 
     @Column(name = "informasjon")
     override var informasjon: String? = null
-
-    @Column(name = "delvis_boplikt")
-    var delvisBoplikt: Boolean = false
 
     @Column(name = "forskriftsreferanse")
     var forskriftsreferanse: String? = null
@@ -96,48 +93,99 @@ class Bopliktomraade(
         return kommuneLokalid.kommuner.firstOrNull { it.gyldigPaaDato(gyldighetsdato) }
     }
 
-    @OneToMany(mappedBy = "bopliktomraade", cascade = [CascadeType.ALL])
-    var grenser: MutableSet<BopliktomraadeGrenseKobling> = Collections.synchronizedSet(mutableSetOf())
+    override var omraade: MultiPolygon?
+        get() = super.omraade
+        set(value) {
+            if (value != null && !delvisBoplikt) {
+                bopliktomraadeGrenserInternal = BopliktomraadeGrenser.DelvisBoplikt()
+            } else if (value == null && delvisBoplikt) {
+                bopliktomraadeGrenserInternal = BopliktomraadeGrenser.FullBoplikt()
+            }
+            super.omraade = value
+        }
+
+    // Dette er workaround for at hibernate initialserer instanser av denne klassen
+    // der det er nullverdier, fordi den kan finne på å skippe initialisering av feltet
+    @Embedded
+    @JvmField
+    final var bopliktomraadeGrenserInternal: BopliktomraadeGrenser? = null
+
+    var bopliktomraadeGrenser: BopliktomraadeGrenser
+        get() = when (val value = bopliktomraadeGrenserInternal) {
+            null -> BopliktomraadeGrenser.FullBoplikt().also {
+                bopliktomraadeGrenserInternal = it
+            }
+            else -> value
+        }
+        set(value) {
+            if (value is BopliktomraadeGrenser.FullBoplikt) {
+                super.omraade = null
+            }
+            bopliktomraadeGrenserInternal = value
+        }
+
+    val delvisBoplikt: Boolean get() = when (bopliktomraadeGrenser) {
+        is BopliktomraadeGrenser.DelvisBoplikt -> true
+        is BopliktomraadeGrenser.FullBoplikt -> false
+    }
 
     override fun getGrensekoblinger(gyldighetsdato: LocalDate): Set<BopliktomraadeGrenseKobling> {
-        return grenser.filter { it.grense.gyldigPaaDato(gyldighetsdato) }.toSet()
+        return when(val geometry = bopliktomraadeGrenser) {
+            is BopliktomraadeGrenser.DelvisBoplikt -> geometry.getGrensekoblinger(gyldighetsdato)
+            is BopliktomraadeGrenser.FullBoplikt -> getKommune(gyldighetsdato)
+                ?.getGrensekoblinger(gyldighetsdato)
+                ?.map { BopliktomraadeGrenseKobling(this, it.grense) }
+                ?.toSet()
+                ?: emptySet()
+        }
     }
 
     override fun addGrensekobling(grense: Grense) {
-        require(tillatteGrensetyper().contains(grense.grensetype)) {
-            "Kan ikke legge til ${grense.grensetype.name} på Bopliktomraade"
+        when(val geometry = bopliktomraadeGrenser) {
+            is BopliktomraadeGrenser.DelvisBoplikt -> geometry.addGrensekobling(this, grense)
+            is BopliktomraadeGrenser.FullBoplikt -> throw IllegalStateException("Kan ikke legge til grense på Bopliktomraade med full boplikt")
         }
-        val bopliktomraadeGrenseKobling = BopliktomraadeGrenseKobling(
-            bopliktomraade = this,
-            grense = grense
-        )
-        grenser.add(bopliktomraadeGrenseKobling)
-        grense.bopliktomraader.add(bopliktomraadeGrenseKobling)
     }
 
     override fun removeGrensekobling(gammelGrense: Grense) {
-        if (grenser.removeIf { it.grense.id == gammelGrense.id }) {
-            gammelGrense.bopliktomraader.removeIf { it.bopliktomraade.id == this.id }
+        when(val geometry = bopliktomraadeGrenser) {
+            is BopliktomraadeGrenser.DelvisBoplikt -> geometry.removeGrensekobling(this, gammelGrense)
+            is BopliktomraadeGrenser.FullBoplikt -> throw IllegalStateException("Kan ikke fjerne grense på Bopliktomraade med full boplikt")
         }
     }
 
     override fun replaceGrensekobling(gammelGrense: Grense, grense: Grense?) {
-        require(grense == null || tillatteGrensetyper().contains(grense.grensetype)) {
-            "Kan ikke oppdatere/legge til ${grense?.grensetype?.name} på Bopliktomraade"
-        }
-        if (grenser.removeIf { it.grense.id == gammelGrense.id }) {
-            gammelGrense.bopliktomraader.removeIf { it.bopliktomraade.id == this.id }
-            //skal bare adde om det grense != null
-            if (grense != null) {
-                addGrensekobling(grense)
-            }
+        when(val geometry = bopliktomraadeGrenser) {
+            is BopliktomraadeGrenser.DelvisBoplikt -> geometry.replaceGrensekobling(this, gammelGrense, grense)
+            is BopliktomraadeGrenser.FullBoplikt -> throw IllegalStateException("Kan ikke oppdatere/legge til grense på Bopliktomraade med full boplikt")
         }
     }
 
     override fun oppdaterOmraadeOgPosisjon() {
-        val grenserForFlate = getGrensekoblinger(gyldighetsdato = gyldighet.gyldigFra)
-        omraade = getGrenserIRiktigRekkefoelge(grenserForFlate.map { it.grense.grense }).toMultiPolygon()
-        posisjon = omraade?.interiorPoint
+        when (val geometry = bopliktomraadeGrenser) {
+            is BopliktomraadeGrenser.DelvisBoplikt -> {
+                omraade = getGrenserIRiktigRekkefoelge(geometry
+                    .grenser
+                    .filter { it.grense.gyldighet.overlapperMed(gyldighet) }
+                    .map { it.grense.grense }
+                ).toMultiPolygon()
+                posisjon = omraade?.interiorPoint
+            }
+
+            is BopliktomraadeGrenser.FullBoplikt -> {
+                omraade = null
+                posisjon = kommuneLokalid.kommuner
+                    .asSequence()
+                    .filter { this.gyldighet.overlapperMed(it.gyldighet) }
+                    .sortedWith(Comparator
+                        .comparing<Kommune, LocalDate> { it.gyldighet.gyldigTil ?: LocalDate.MAX }
+                        .thenBy { it.gyldighet.gyldigFra }
+                        .reversed()
+                    )
+                    .firstOrNull()
+                    ?.posisjon
+            }
+        }
     }
 
     override fun getFlateInformasjon(): FlateInformasjon =
@@ -158,7 +206,11 @@ class Bopliktomraade(
         this.apply {
             nummer = gammeltBopliktomraade.nummer
             navn = gammeltBopliktomraade.navn
-            delvisBoplikt = gammeltBopliktomraade.delvisBoplikt
+            omraade = gammeltBopliktomraade.omraade
+            bopliktomraadeGrenser = when (gammeltBopliktomraade.bopliktomraadeGrenser) {
+                is BopliktomraadeGrenser.DelvisBoplikt -> BopliktomraadeGrenser.DelvisBoplikt()
+                is BopliktomraadeGrenser.FullBoplikt -> BopliktomraadeGrenser.FullBoplikt()
+            }
             bebygdEiendom = gammeltBopliktomraade.bebygdEiendom
             ikkeHelaarsBoligUnderOppforing = gammeltBopliktomraade.ikkeHelaarsBoligUnderOppforing
             ubebygdTomt = gammeltBopliktomraade.ubebygdTomt
@@ -166,7 +218,6 @@ class Bopliktomraade(
             andreAvgrensninger = gammeltBopliktomraade.andreAvgrensninger
             forskriftsreferanse = gammeltBopliktomraade.forskriftsreferanse
             url = gammeltBopliktomraade.url
-            omraade = gammeltBopliktomraade.omraade
             datafangstdato = gammeltBopliktomraade.datafangstdato
             foerstedigitaliseringsdato = gammeltBopliktomraade.foerstedigitaliseringsdato
             posisjon = gammeltBopliktomraade.posisjon

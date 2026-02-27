@@ -28,6 +28,7 @@ import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.domain.Administrativenhetnavn
 import no.kartverket.nibas.domain.Bopliktomraade
+import no.kartverket.nibas.domain.BopliktomraadeGrenser
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Flate
 import no.kartverket.nibas.domain.Fylke
@@ -459,7 +460,8 @@ class TestWithDbContainer {
         gyldigFra: LocalDate = LocalDate.of(2022, Month.OCTOBER, 1),
         gyldigTil: LocalDate? = null,
         grenser: List<Grense> = emptyList(),
-        informasjon: String = "Opprinnelig informasjon"
+        informasjon: String = "Opprinnelig informasjon",
+        delvisBoplikt: Boolean = true
     ): Bopliktomraade {
 
         val bopliktomraade = BopliktomraadeBuilder(
@@ -473,6 +475,10 @@ class TestWithDbContainer {
             grenser = grenser,
             informasjonstekst = informasjon
         ).buildUtenKommuneOgGrenser()
+
+        if (!delvisBoplikt) {
+            bopliktomraade.bopliktomraadeGrenser = BopliktomraadeGrenser.FullBoplikt()
+        }
 
         val save = bopliktomraadeRepository.save(bopliktomraade)
 

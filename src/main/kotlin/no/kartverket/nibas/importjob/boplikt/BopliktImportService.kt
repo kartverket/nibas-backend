@@ -4,6 +4,7 @@ import no.kartverket.nibas.common.TransactionScope
 import no.kartverket.nibas.common.getInSpraak
 import no.kartverket.nibas.common.round
 import no.kartverket.nibas.domain.Bopliktomraade.Companion.KOMMUNE_BOUNDARY_BUFFER_METER
+import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.importjob.geojson.GeoJsonFeature
 import no.kartverket.nibas.importjob.geojson.GeoJsonReader
 import no.kartverket.nibas.importjob.geojson.toJTS
@@ -12,6 +13,7 @@ import no.kartverket.nibas.service.TransactionTimeService
 import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.GeometryFactory
 import org.locationtech.jts.geom.MultiPolygon
+import org.locationtech.jts.geom.Point
 import org.locationtech.jts.geom.Polygon
 import org.locationtech.jts.geom.PrecisionModel
 import org.locationtech.jts.operation.overlay.snap.GeometrySnapper
@@ -121,9 +123,6 @@ class BopliktImportService(
             ?: throw IllegalStateException("Kommune not found: $kommunenummer@$today")
         val kommunelokalid = kommune.lokalid
         val kommunenavn = kommune.getAdministrativenhetNavn(today).getInSpraak("nor")
-        val navn = "Bopliktområde i $kommunenavn"
-        val kommuneOmraade = kommune.omraade
-            ?: throw IllegalStateException("Kommune $kommunenummer $kommunenavn har ikke geometri")
 
         if (gyldigFraDate.isBefore(kommune.gyldighet.gyldigFra)) {
             log.warn(
@@ -133,13 +132,56 @@ class BopliktImportService(
             gyldigFraDate = kommune.gyldighet.gyldigFra
         }
 
-        val originalGeometry = feature.geometry.toJTS(UTM33_SRID)
+        val (bopliktomraade, posisjon: Point) = if (delvisBoplikt) {
+            fixGeometryTo(feature.geometry.toJTS(UTM33_SRID), kommune).let { it to it.interiorPoint }
+        } else {
+            null to (kommune.omraade?.interiorPoint ?: throw IllegalStateException("Kommune $kommunenummer $kommunenavn har ikke geometri"))
+        }
+
+        return BopliktOmraadeRow(
+            objid = objid,
+            lokalid = lokalid,
+            navn = "Bopliktområde i $kommunenavn",
+            nummer = nummerStr,
+            gyldigfra = parseDate(gyldigFraDate),
+            gyldigtil = gyldigtil,
+            datafangstdato = datafangstdato,
+            foerstedigitaliseringsdato = foerstedigitaliseringsdato,
+            opphav = opphav,
+            endretdato = endretdato,
+            endretav = endretav,
+            typeendring = typeendring,
+            omraadeGeo = bopliktomraade,
+            posisjonGeo = posisjon,
+            kommunelokalid = kommunelokalid,
+            bebygdEiendom = bebygdEiendom,
+            ikkeHelaarsboligUnderOppforing = ikkeHelaarsboligUnderOppforing,
+            ubebygdTomt = ubebygdTomt,
+            unntakFraSlektskapsunntak = unntakFraSlektskapsunntak,
+            andreAvgrensninger = andreAvgrensninger,
+            version = 1,
+            slettet = false,
+            forskriftsreferanse = forskriftsreferanse,
+            informasjon = informasjon,
+            url = url
+        )
+    }
+    private fun fixGeometryTo(
+        originalGeometry: Geometry,
+        kommune: Kommune,
+    ): MultiPolygon {
+        val kommunenummer = kommune.kommunenummer
+        val kommunenavn = kommune.getAdministrativenhetNavn(today).getInSpraak("nor")
+
+        val kommuneOmraade = kommune.omraade
+            ?: throw IllegalStateException("Kommune $kommunenummer $kommunenavn har ikke geometri")
 
         val fixedGeometry = originalGeometry
             .let { GeometryPrecisionReducer.reduce(it, halfCmModel) }
-            .let { GeometrySnapper(it).snapTo(
-                kommuneOmraade,
-                MIN_DISTANCE_KOMMUNE_BOUNDARY_METER)
+            .let {
+                GeometrySnapper(it).snapTo(
+                    kommuneOmraade,
+                    MIN_DISTANCE_KOMMUNE_BOUNDARY_METER)
             }
             .intersection(kommuneOmraade)
 
@@ -155,16 +197,18 @@ class BopliktImportService(
             Geometry.TYPENAME_POLYGON -> gf.createMultiPolygon(arrayOf(fixedGeometry as Polygon))
             Geometry.TYPENAME_MULTIPOLYGON -> fixedGeometry as MultiPolygon
             Geometry.TYPENAME_GEOMETRYCOLLECTION -> {
-                (0 until fixedGeometry.numGeometries).map { fixedGeometry.getGeometryN(it) }.flatMap { when (it.geometryType) {
-                    Geometry.TYPENAME_POLYGON -> listOf(it as Polygon)
-                    Geometry.TYPENAME_MULTIPOLYGON -> {
-                        (0 until it.numGeometries).map { n -> it.getGeometryN(n) as Polygon }
+                (0 until fixedGeometry.numGeometries).map { fixedGeometry.getGeometryN(it) }.flatMap {
+                    when (it.geometryType) {
+                        Geometry.TYPENAME_POLYGON -> listOf(it as Polygon)
+                        Geometry.TYPENAME_MULTIPOLYGON -> {
+                            (0 until it.numGeometries).map { n -> it.getGeometryN(n) as Polygon }
+                        }
+
+                        else -> {
+                            log.warn("Ignorerer ${it.geometryType} i (justert) bopliktområdegeometri for $kommunenummer $kommunenavn: ${it.toText()}")
+                            emptyList()
+                        }
                     }
-                    else -> {
-                        log.warn("Ignorerer ${it.geometryType} i (justert) bopliktområdegeometri for $kommunenummer $kommunenavn: ${it.toText()}")
-                        emptyList()
-                    }
-                }
                 }.toTypedArray().let {
                     check(it.isNotEmpty()) {
                         "Ingen polygoner i (justert) bopliktområdegeometri for $kommunenummer $kommunenavn"
@@ -181,33 +225,7 @@ class BopliktImportService(
             log.warn("Bopliktområde for $kommunenummer $kommunenavn måtte justeres med ${area.round(3)}m2 før import")
         }
 
-        return BopliktOmraadeRow(
-            objid = objid,
-            lokalid = lokalid,
-            navn = navn,
-            nummer = nummerStr,
-            gyldigfra = parseDate(gyldigFraDate),
-            gyldigtil = gyldigtil,
-            datafangstdato = datafangstdato,
-            foerstedigitaliseringsdato = foerstedigitaliseringsdato,
-            opphav = opphav,
-            endretdato = endretdato,
-            endretav = endretav,
-            typeendring = typeendring,
-            omraadeGeo = bopliktomraade,
-            kommunelokalid = kommunelokalid,
-            delvisBoplikt = delvisBoplikt,
-            bebygdEiendom = bebygdEiendom,
-            ikkeHelaarsboligUnderOppforing = ikkeHelaarsboligUnderOppforing,
-            ubebygdTomt = ubebygdTomt,
-            unntakFraSlektskapsunntak = unntakFraSlektskapsunntak,
-            andreAvgrensninger = andreAvgrensninger,
-            version = 1,
-            slettet = false,
-            forskriftsreferanse = forskriftsreferanse,
-            informasjon = informasjon,
-            url = url
-        )
+        return bopliktomraade
     }
 
     private fun parseDate(value: Any?): OffsetDateTime {

@@ -5,6 +5,7 @@ import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Bopliktomraade
+import no.kartverket.nibas.domain.BopliktomraadeGrenser
 import no.kartverket.nibas.sporing.Gyldighet
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
@@ -20,7 +21,6 @@ class BopliktomraadeBuilder(
     private var bopliktomraadenummer: String = "01",
     private var forskriftsreferanse: String? = "Forskrift om nedsatt konsesjonsgrense etter konsesjonsloven § 7",
     private var url: String? = "https://frogn.kommunegis.no/publikum",
-    private var delvisBoplikt: Boolean = false,
     private var bebygdEiendom: Boolean = false,
     private var ikkeHelaarsboligUnderOppforing: Boolean = false,
     private var ubebygdTomt: Boolean = false,
@@ -62,7 +62,7 @@ class BopliktomraadeBuilder(
         bopliktomraade.nummer = bopliktomraadenummer
         bopliktomraade.forskriftsreferanse = forskriftsreferanse
         bopliktomraade.url = url
-        bopliktomraade.delvisBoplikt = delvisBoplikt
+        bopliktomraade.bopliktomraadeGrenser = BopliktomraadeGrenser.DelvisBoplikt()
         bopliktomraade.bebygdEiendom = bebygdEiendom
         bopliktomraade.ikkeHelaarsBoligUnderOppforing = ikkeHelaarsboligUnderOppforing
         bopliktomraade.ubebygdTomt = ubebygdTomt
@@ -109,11 +109,6 @@ class BopliktomraadeBuilder(
 
     fun withGrenser(grenser: List<Grense>): BopliktomraadeBuilder {
         this.grenser = this.grenser + grenser
-        return this
-    }
-
-    fun withDelvisBoplikt(delvisBoplikt: Boolean): BopliktomraadeBuilder {
-        this.delvisBoplikt = delvisBoplikt
         return this
     }
 

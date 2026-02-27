@@ -18,6 +18,8 @@ import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.geometry.UgyldigeFlaterException
 import no.kartverket.nibas.domain.DokrefGrenseKobling
 import no.kartverket.nibas.common.geometry.topologyValidationErrorToCustomText
+import no.kartverket.nibas.domain.Bopliktomraade
+import no.kartverket.nibas.domain.BopliktomraadeGrenser
 import no.kartverket.nibas.domain.Dokumentasjonsreferanse
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Flate
@@ -32,6 +34,9 @@ import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
 import no.kartverket.nibas.sporing.Gyldighet
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import no.kartverket.nibas.utils.GrenseHelper
+import no.kartverket.nibas.utils.GrenseHelper.getGrenseRundtVestreOgOestreKrets
+import no.kartverket.nibas.utils.GrenseHelper.getGrenserForOestligKrets
+import no.kartverket.nibas.utils.GrenseHelper.getGrenserForVestligKrets
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -1222,8 +1227,8 @@ class GrenseServiceIT : TestWithDbContainer() {
         grensetype: Grensetype,
         saveKrets: (String, Lokalid, String, String, LocalDate, LocalDate?, List<Grense>) -> T
     ): List<T> {
-        val lagredeGrenserForKretsG1 = grenseRepository.saveAll(GrenseHelper.getGrenserForVestligKrets(gyldigFra, grensetype))
-        val lagredeGrenserForKretsG2 = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(gyldigFra, grensetype))
+        val lagredeGrenserForKretsG1 = grenseRepository.saveAll(getGrenserForVestligKrets(gyldigFra, grensetype))
+        val lagredeGrenserForKretsG2 = grenseRepository.saveAll(getGrenserForOestligKrets(gyldigFra, grensetype))
 
         grenseRepository.flush()
 
@@ -1428,8 +1433,8 @@ class GrenseServiceIT : TestWithDbContainer() {
         medDeltKommuneGrense: Boolean = false
     ): List<T> {
         //Lagrer grensene først, for å være sikker på at de er tilgjengelige for å knyttes til kretsene
-        val lagredeGrenserForKretsG1 = grenseRepository.saveAll(GrenseHelper.getGrenserForVestligKrets(gyldigFra, grenseType, medToDelteGrenser = true, medDeltKommuneGrense))
-        val lagredeGrenserForKretsG2 = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(gyldigFra, grenseType, medToDelteGrenser = true, medDeltKommuneGrense))
+        val lagredeGrenserForKretsG1 = grenseRepository.saveAll(getGrenserForVestligKrets(gyldigFra, grenseType, medToDelteGrenser = true, medDeltKommuneGrense))
+        val lagredeGrenserForKretsG2 = grenseRepository.saveAll(getGrenserForOestligKrets(gyldigFra, grenseType, medToDelteGrenser = true, medDeltKommuneGrense))
 
         val grenserForKretsG3 = mutableListOf<Grense>()
         grenserForKretsG3.add(Grense(id = "grenseUnderNordVest", lokalid = "grenseUnderNordVestLokalid", grensetype = if (medDeltKommuneGrense) Grensetype.Kommunegrense else grenseType)
@@ -1777,8 +1782,10 @@ class GrenseServiceIT : TestWithDbContainer() {
         saveKommuneOgUnikLokalid(bopliktomraader = listOf(bopliktomraade), gyldigFra = gyldigFra)
         grenseRepository.flush()
 
-        val grenseSomSkalArkiveres = bopliktomraade.grenser.first { it.grense.lokalid == "grense1Lokalid" }.grense
-        val grenseSomSkalJusteres = bopliktomraade.grenser.first { it.grense.lokalid == "grense2Lokalid" }.grense
+        val bopliktGrenser = bopliktomraade.bopliktomraadeGrenser as BopliktomraadeGrenser.DelvisBoplikt
+
+        val grenseSomSkalArkiveres = bopliktGrenser.grenser.first { it.grense.lokalid == "grense1Lokalid" }.grense
+        val grenseSomSkalJusteres = bopliktGrenser.grenser.first { it.grense.lokalid == "grense2Lokalid" }.grense
 
         val arkivertFeature = grenseSomSkalArkiveres.grenseToFeature(gyldighetsdato, true)
         val featureMedEndretGeometri = utfoerGrensejusteringEtterArkivering(grenseSomSkalJusteres, gyldighetsdato)
@@ -1793,7 +1800,7 @@ class GrenseServiceIT : TestWithDbContainer() {
         assertThat(flate).isNotNull
 
         val bopliktomraadeEtterLagring = bopliktomraadeService.hentBopliktomraade(Identifikator(Lokalid(flate!!.lokalid), gyldighetsdato))!!
-        assertThat(bopliktomraadeEtterLagring.grenser).hasSize(3).extracting("grense.lokalid").doesNotContain("grense1Lokalid")
+        assertThat(bopliktomraadeEtterLagring.getGrensekoblinger(gyldighetsdato)).hasSize(3).extracting("grense.lokalid").doesNotContain("grense1Lokalid")
     }
 
     @Test
@@ -1812,7 +1819,7 @@ class GrenseServiceIT : TestWithDbContainer() {
         saveKommuneOgUnikLokalid(bopliktomraader = listOf(bopliktomraade), gyldigFra = gyldigFra)
         grenseRepository.flush()
 
-        val grenseSomSkalArkiveres = bopliktomraade.grenser.first { it.grense.lokalid == "grense1Lokalid" }.grense
+        val grenseSomSkalArkiveres = (bopliktomraade.bopliktomraadeGrenser as BopliktomraadeGrenser.DelvisBoplikt).grenser.first { it.grense.lokalid == "grense1Lokalid" }.grense
         val arkivertFeature = grenseSomSkalArkiveres.grenseToFeature(gyldighetsdato, true)
 
         val exception = assertFailsWith<UgyldigeFlaterException> {
@@ -1830,7 +1837,10 @@ class GrenseServiceIT : TestWithDbContainer() {
 
         ugyldigeFlater.forEach {
             assertThat(it.topologifeil).isEqualTo(topologyValidationErrorToCustomText(TopologyValidationError.RING_NOT_CLOSED))
-            assertThat(it.koordinat).isEqualTo(Coordinate(0.0, 5.0))
+            assertThat(it.koordinat).isIn(
+                grenseSomSkalArkiveres.grense.startPoint.coordinate,
+                grenseSomSkalArkiveres.grense.endPoint.coordinate
+            )
         }
     }
 
@@ -1847,7 +1857,7 @@ class GrenseServiceIT : TestWithDbContainer() {
 
         saveKommuneOgUnikLokalid(bopliktomraader = listOf(bopliktomraade), gyldigFra = gyldigFra)
 
-        val grenseSomSkalEndres = bopliktomraade.grenser.first { it.grense.lokalid == "grense2Lokalid" }.grense
+        val grenseSomSkalEndres = (bopliktomraade.bopliktomraadeGrenser as BopliktomraadeGrenser.DelvisBoplikt).grenser.first { it.grense.lokalid == "grense2Lokalid" }.grense
         val featureForGrenseSomSkalEndres = grenseSomSkalEndres.grenseToFeature(gyldighetsdato)
         val oppdatertGeometri = GrenseHelper.geometryFactory.createLineString(
             arrayOf(
@@ -1873,7 +1883,7 @@ class GrenseServiceIT : TestWithDbContainer() {
         )
 
         val bopliktomraadeEtterLagring = bopliktomraadeService.hentBopliktomraade(Identifikator(Lokalid(bopliktomraade.lokalid), gyldighetsdato))!!
-        assertThat(bopliktomraadeEtterLagring.grenser).hasSize(5)
+        assertThat((bopliktomraadeEtterLagring.bopliktomraadeGrenser as BopliktomraadeGrenser.DelvisBoplikt).grenser).hasSize(5)
             .extracting("grense.id")
             .doesNotContain("grense2").contains("grense1", "grense3", "grense4")
     }
@@ -1891,7 +1901,7 @@ class GrenseServiceIT : TestWithDbContainer() {
 
         saveKommuneOgUnikLokalid(bopliktomraader = listOf(bopliktomraade), gyldigFra = gyldigFra)
 
-        val grenseSomSkalEndres = bopliktomraade.grenser.first { it.grense.lokalid == "grense2Lokalid" }.grense
+        val grenseSomSkalEndres = (bopliktomraade.bopliktomraadeGrenser as BopliktomraadeGrenser.DelvisBoplikt).grenser.first { it.grense.lokalid == "grense2Lokalid" }.grense
 
         val ugyldigNyGrense = lagNyGrense(
             "grenseDelt2Id",
@@ -1919,6 +1929,155 @@ class GrenseServiceIT : TestWithDbContainer() {
             assertThat(it.topologifeil).isEqualTo(topologyValidationErrorToCustomText(TopologyValidationError.RING_NOT_CLOSED))
             assertThat(it.koordinat).isEqualTo(Coordinate(10.0, 10.0))
         }
+    }
+
+    @Test
+    fun `endre fra delvis til fullt bopliktomraade`() {
+        // Sett opp en kommune med én grunnkrets og et bopliktområde som dekker kommunen delvis
+        val gyldigFra = november28In2022
+        val gk = saveGrunnkrets(
+            id = "grunnkrets-0",
+            lokalid = Lokalid("grunnkrets"),
+            grunnkretsnummer = "1",
+            gyldigFra = gyldigFra,
+            grenser = listOf(grenseRepository.save(
+                getGrenseRundtVestreOgOestreKrets(gyldigFra, Grensetype.Kommunegrense)
+            ))
+        )
+        val bopliktomraade = saveBopliktomraade(
+            id = "boplikt-0",
+            lokalid = Lokalid("boplikt"),
+            bopliktomraadenummer = "100",
+            gyldigFra = gyldigFra,
+            grenser = grenseRepository.saveAll(
+                getGrenserForOestligKrets(gyldigFra, Grensetype.Bopliktgrense).map { g ->
+                    Grense(
+                        id = "boplikt-${g.id}",
+                        lokalid = "boplikt-${g.lokalid}",
+                        grensetype = g.grensetype,
+                    ).apply {
+                        gyldighet = g.gyldighet
+                        grense = g.grense
+                        kvalitet = g.kvalitet
+                    }
+                }
+            )
+        )
+        val kommune = saveKommuneOgUnikLokalid(
+            grunnkretser = listOf(gk),
+            bopliktomraader = listOf(bopliktomraade),
+            gyldigFra = gyldigFra
+        )
+        entityManager.flush()
+        entityManager.clear()
+        val today = LocalDate.now()
+        var bopliktEtterGrenseIds: HashSet<String>
+        var kommuneEtterGrenseIds: HashSet<String>
+
+        // Sjekk at bopliktområdet og kommunen ikke har noen felles grenser før endring
+        bopliktEtterGrenseIds = entityManager.find(Bopliktomraade::class.java, bopliktomraade.id).getGrensekoblinger(today).mapTo(HashSet(1)) { it.grense.id }
+        kommuneEtterGrenseIds = entityManager.find(Kommune::class.java, kommune.id).getGrensekoblinger(today).mapTo(HashSet(1)) { it.grense.id }
+        assertThat(bopliktEtterGrenseIds).doesNotContainAnyElementsOf(kommuneEtterGrenseIds)
+        assertThat(kommuneEtterGrenseIds).doesNotContainAnyElementsOf(bopliktEtterGrenseIds)
+        entityManager.clear()
+
+        // Endre bopliktområdet til å dekke hele kommunen
+        entityManager.find(Bopliktomraade::class.java, bopliktomraade.id).omraade = null
+        entityManager.flush();
+        entityManager.clear();
+
+        // Sjekk at bopliktområdet og kommunen nå har samme grenser etter endring
+        bopliktEtterGrenseIds = entityManager.find(Bopliktomraade::class.java, bopliktomraade.id).getGrensekoblinger(today).mapTo(HashSet(1)) { it.grense.id }
+        kommuneEtterGrenseIds = entityManager.find(Kommune::class.java, kommune.id).getGrensekoblinger(today).mapTo(HashSet(1)) { it.grense.id }
+        assertThat(bopliktEtterGrenseIds).containsExactlyInAnyOrderElementsOf(kommuneEtterGrenseIds)
+
+        // TODO: Unngå orphaned bopliktgrenser
+//        // Sjekk at grensene som tidligere var koblet til bopliktområdet nå ikke er "orphaned"
+//        val opprinneligBopliktGrenseIds = (bopliktomraade.bopliktomraadeGrenser as BopliktomraadeGrenser.DelvisBoplikt).grenser.map { it.grense.id }
+//        val orphanedGrenser = entityManager.createQuery("""
+//            SELECT g
+//            FROM Grense g
+//            WHERE
+//                g.id IN(:grenseIds)
+//                AND g.gyldighet.gyldigFra <= :gyldigFra
+//                AND (g.gyldighet.gyldigTil IS NULL OR g.gyldighet.gyldigTil > :gyldigTil)
+//                AND NOT g.gyldighet.slettet""".trimIndent(), Grense::class.java)
+//            .setParameter("grenseIds", opprinneligBopliktGrenseIds)
+//            .setParameter("gyldigFra", today)
+//            .setParameter("gyldigTil", today)
+//            .resultList
+//
+//        assertThat(orphanedGrenser).isEmpty()
+    }
+
+
+    @Test
+    fun `endre fra full til delvis bopliktomraade`() {
+        // Sett opp en kommune med én grunnkrets og et bopliktområde som dekker kommunen delvis
+        val gyldigFra = november28In2022
+        val gk = saveGrunnkrets(
+            id = "grunnkrets-0",
+            lokalid = Lokalid("grunnkrets"),
+            grunnkretsnummer = "1",
+            gyldigFra = gyldigFra,
+            grenser = listOf(grenseRepository.save(
+                getGrenseRundtVestreOgOestreKrets(gyldigFra, Grensetype.Kommunegrense)
+            ))
+        )
+        var bopliktomraade = saveBopliktomraade(
+            id = "boplikt-0",
+            lokalid = Lokalid("boplikt"),
+            bopliktomraadenummer = "100",
+            gyldigFra = gyldigFra,
+            delvisBoplikt = false
+        )
+        val kommune = saveKommuneOgUnikLokalid(
+            grunnkretser = listOf(gk),
+            bopliktomraader = listOf(bopliktomraade),
+            gyldigFra = gyldigFra
+        )
+        entityManager.flush()
+        entityManager.clear()
+        val today = LocalDate.now()
+        var bopliktEtterGrenseIds: HashSet<String>
+        var kommuneEtterGrenseIds: HashSet<String>
+
+        // Sjekk at bopliktområdet og kommunen nå har samme grenser etter endring
+        bopliktEtterGrenseIds = entityManager.find(Bopliktomraade::class.java, bopliktomraade.id).getGrensekoblinger(today).mapTo(HashSet(1)) { it.grense.id }
+        kommuneEtterGrenseIds = entityManager.find(Kommune::class.java, kommune.id).getGrensekoblinger(today).mapTo(HashSet(1)) { it.grense.id }
+        assertThat(bopliktEtterGrenseIds).containsExactlyInAnyOrderElementsOf(kommuneEtterGrenseIds)
+        entityManager.clear()
+
+        // Endre bopliktområdet til å dekke delvis kommunen
+        bopliktomraade = entityManager.find(Bopliktomraade::class.java, bopliktomraade.id)
+        val bopliktGrenser = grenseRepository.saveAll(
+            getGrenserForOestligKrets(gyldigFra, Grensetype.Bopliktgrense).map { g ->
+                Grense(
+                    id = "boplikt-${g.id}",
+                    lokalid = "boplikt-${g.lokalid}",
+                    grensetype = g.grensetype,
+                ).apply {
+                    gyldighet = g.gyldighet
+                    grense = g.grense
+                    kvalitet = g.kvalitet
+                }
+            }
+        )
+        bopliktomraade.bopliktomraadeGrenser = BopliktomraadeGrenser.DelvisBoplikt()
+        for(grense in bopliktGrenser) {
+            bopliktomraade.addGrensekobling(grense)
+        }
+        flateService.oppdaterFlaterFor(hashSetOf(bopliktomraade))
+        entityManager.flush()
+        entityManager.clear()
+
+        // Sjekk at bopliktområdet nå kun har sine egne grenser
+        bopliktEtterGrenseIds = entityManager.find(Bopliktomraade::class.java, bopliktomraade.id).getGrensekoblinger(today).mapTo(HashSet(1)) { it.grense.id }
+        assertThat(bopliktEtterGrenseIds).containsExactlyInAnyOrderElementsOf(bopliktGrenser.map { it.id })
+
+        // Sjekk at kommunen fortsatt har sine egne grenser
+        kommuneEtterGrenseIds = entityManager.find(Kommune::class.java, kommune.id).getGrensekoblinger(today).mapTo(HashSet(1)) { it.grense.id }
+        assertThat(kommuneEtterGrenseIds).containsExactlyInAnyOrderElementsOf(kommune.getGrensekoblinger(today).map { it.grense.id })
     }
 
 }

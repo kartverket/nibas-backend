@@ -6,6 +6,7 @@ import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.common.UgyldigTilstandException
 import no.kartverket.nibas.domain.Bopliktomraade
+import no.kartverket.nibas.domain.BopliktomraadeGrenser
 import no.kartverket.nibas.domain.BopliktomraadeGrenseKobling
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.repository.BopliktomraadeRepository
@@ -107,15 +108,20 @@ class BopliktomraadeService(
 
 }
 
-fun Bopliktomraade.applyChangesFromRequest(request: BopliktomraadeRequest): Bopliktomraade =
-    this.apply {
+fun Bopliktomraade.applyChangesFromRequest(request: BopliktomraadeRequest): Bopliktomraade {
+    return this.apply {
         this.navn = request.navn
         this.nummer = request.nummer
-        this.delvisBoplikt = request.delvisBoplikt
         this.forskriftsreferanse = request.forskriftsreferanse
         this.setMaterielleVilkaar(request.materielleVilkaar)
         this.andreAvgrensninger = request.andreAvgrensninger
         this.url = request.url
         informasjon = request.informasjon
+        if (delvisBoplikt != request.delvisBoplikt) {
+            this.bopliktomraadeGrenser =
+                if (request.delvisBoplikt) BopliktomraadeGrenser.DelvisBoplikt()
+                else BopliktomraadeGrenser.FullBoplikt()
+        }
     }
+}
 

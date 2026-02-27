@@ -25,7 +25,7 @@ class BopliktRepository(
             datafangstdato, foerstedigitaliseringsdato,
             opphav, endretdato, endretav, typeendring,
             omraade, posisjon,
-            kommunelokalid, delvis_boplikt, version, slettet,
+            kommunelokalid, version, slettet,
             forskriftsreferanse, informasjon, url,
             bebygd_eiendom,
             ikke_helaarsbolig_under_oppforing,
@@ -36,9 +36,9 @@ class BopliktRepository(
             :objid, :lokalid, :navn, :nummer, :gyldigfra, :gyldigtil,
             :datafangstdato, :foerstedigitaliseringsdato,
             :opphav, :endretdato, :endretav, :typeendring,
-            st_geomfromewkb(:omraade_geojson),
-            st_pointonsurface(st_geomfromewkb(:omraade_geojson)),
-            :kommunelokalid, :delvisBoplikt, :version, :slettet,
+            st_geomfromewkb(:omraade_wkb),
+            st_geomfromewkb(:omraade_posisjon),
+            :kommunelokalid, :version, :slettet,
             :forskriftsreferanse, :informasjon, :url,
             :bebygdEiendom,
             :ikkeHelaarsboligUnderOppforing,
@@ -48,6 +48,7 @@ class BopliktRepository(
         )
     """.trimIndent()
 
+        val wkbWriter = WKBWriter(2, true)
         val params = mapOf(
             "objid" to row.objid,
             "lokalid" to row.lokalid,
@@ -61,9 +62,11 @@ class BopliktRepository(
             "endretdato" to row.endretdato,
             "endretav" to row.endretav,
             "typeendring" to row.typeendring,
-            "omraade_geojson" to WKBWriter(2, true).write(row.omraadeGeo),
+            "omraade_wkb" to row.omraadeGeo
+                ?.let { wkbWriter.write(it) },
+            "omraade_posisjon" to row.posisjonGeo
+                .let { wkbWriter.write(it) },
             "kommunelokalid" to row.kommunelokalid,
-            "delvisBoplikt" to row.delvisBoplikt,
             "version" to row.version,
             "slettet" to row.slettet,
             "forskriftsreferanse" to row.forskriftsreferanse,

@@ -142,4 +142,11 @@ class Grense(
             }
         }
     }
+
+    override fun toString(): String =
+        "Grense(" +
+            "id='$id', lokalid='$lokalid', grensetype=$grensetype, " +
+            "auditInfo=$auditInfo, gyldighet=$gyldighet, kvalitet=$kvalitet, " +
+            "version=$version, datafangstdato=$datafangstdato, foerstedigitaliseringsdato=$foerstedigitaliseringsdato, " +
+            "opphav=$opphav, informasjon=$informasjon)"
 }
