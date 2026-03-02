@@ -1,4 +1,4 @@
-FROM gcr.io/distroless/java25-debian13:nonroot@sha256:2c8630c32f7b79b3c43917d261c3f9a7123ce9ec4653eefc175e26f65fb0b7c3
+FROM gcr.io/distroless/java25-debian13:nonroot@sha256:4eadd00d3bff73e6a7491dd36653c1d318ac93fb1fb2cd5eef768fd2b4238408
 ARG project_version_arg
 
 ENV PROJECT_VERSION=$project_version_arg
