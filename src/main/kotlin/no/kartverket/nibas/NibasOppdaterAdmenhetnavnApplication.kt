@@ -1,25 +1,24 @@
 package no.kartverket.nibas
 
+import no.kartverket.nibas.config.DummyAuthenticationToken
 import no.kartverket.nibas.service.administrativenhetnavn.OppdaterAdmenhetnavnService
-import org.springframework.boot.CommandLineRunner
-import org.springframework.boot.SpringApplication
-import org.springframework.boot.autoconfigure.SpringBootApplication
-import org.springframework.context.annotation.Profile
-import kotlin.system.exitProcess
+import org.springframework.security.core.authority.SimpleGrantedAuthority
+import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.stereotype.Component
 
-@SpringBootApplication
-@Profile("oppdaterAdmenhetnavn")
-class NibasOppdaterAdmenhetnavnApplication(val oppdaterAdmenhetnavnService: OppdaterAdmenhetnavnService) : CommandLineRunner {
+@Component
+class NibasOppdaterAdmenhetnavnApplication(
+    val oppdaterAdmenhetnavnService: OppdaterAdmenhetnavnService
+) {
 
-    override fun run(vararg args: String?) {
+    fun run() {
+        // Ingen SecurityContext settes automatisk, så vi setter en dummy-bruker.
+        SecurityContextHolder.getContext().authentication = DummyAuthenticationToken(
+            user = "oppdaterAdmenhetnavnApplication",
+            credentials = "oppdaterAdmenhetnavnApplication",
+            authorities = listOf(SimpleGrantedAuthority("NIBAS"))
+        )
+
         oppdaterAdmenhetnavnService.oppdaterAdministrativenhetnavn()
-        exitProcess(0)
-    }
-
-    companion object {
-        @JvmStatic fun main(args: Array<String>) {
-            SpringApplication.run(NibasOppdaterAdmenhetnavnApplication::class.java, *args)
-        }
     }
 }
-

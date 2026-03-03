@@ -50,6 +50,16 @@ class NibasBackendApplication {
         }
     }
 
+    @Bean
+    @Profile("oppdaterAdmenhetnavn")
+    fun runOppdaterAdmenhetnavnApp(
+        admenhetnavnApplication: NibasOppdaterAdmenhetnavnApplication,
+    ): CommandLineRunner {
+        return CommandLineRunner {
+            admenhetnavnApplication.run()
+        }
+    }
+
     companion object {
         @JvmStatic
         fun main(args: Array<String>) {
