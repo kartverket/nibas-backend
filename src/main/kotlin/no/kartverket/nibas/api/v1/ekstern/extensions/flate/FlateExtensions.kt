@@ -24,6 +24,8 @@ import no.kartverket.nibas.domain.Grunnkrets
 import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.extensions.geometry.flateToFeature
+import no.kartverket.nibas.extensions.geometry.multiPolygonToDto
+import no.kartverket.nibas.api.v1.common.geojson.MultiPolygon as MultiPolygonDto
 import no.kartverket.nibas.extensions.geometry.posisjonToFeature
 import no.kartverket.nibas.service.FylkeService
 import no.kartverket.nibas.service.KommuneService
@@ -169,9 +171,12 @@ fun Bopliktomraade.toEksternBopliktomraadeResponse(gyldighetsdato: LocalDate): E
         materielleVilkaar = materielleVilkaar,
         andreAvgrensninger = andreAvgrensninger,
         url = url,
+        // Hvis bopliktområdet har boplikt i hele kommunen brukes kommunens område.
         features = FeatureCollection(features = listOf(
             posisjon.posisjonToFeature(version),
-            flateToFeature(version)
+            flateToFeature(version).apply {
+                if (!delvisBoplikt) { geometry = kommune.omraade?.multiPolygonToDto() ?: MultiPolygonDto(coordinates = emptyList()) }
+            }
         )),
         version = version
     )

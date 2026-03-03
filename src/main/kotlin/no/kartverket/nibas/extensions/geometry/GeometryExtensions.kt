@@ -146,7 +146,7 @@ fun Flate.flateToFeature(version: Int): Feature {
         // Feature må ha en id, men denne må være objektets lokalid
         id = lokalid,
         properties = featureProperties,
-        geometry = omraade?.multiPolygonToDto() ?: no.kartverket.nibas.api.v1.common.geojson.MultiPolygon(coordinates = emptyList()),
+        geometry = omraade?.multiPolygonToDto() ?: MultiPolygonDto(coordinates = emptyList()),
     )
 }
 
