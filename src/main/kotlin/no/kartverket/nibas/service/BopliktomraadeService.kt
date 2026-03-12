@@ -112,6 +112,7 @@ fun Bopliktomraade.applyChangesFromRequest(request: BopliktomraadeRequest): Bopl
     return this.apply {
         this.navn = request.navn
         this.nummer = request.nummer
+        this.usikkerAvgrensning = request.usikkerAvgrensning
         this.forskriftsreferanse = request.forskriftsreferanse
         this.setMaterielleVilkaar(request.materielleVilkaar)
         this.andreAvgrensninger = request.andreAvgrensninger

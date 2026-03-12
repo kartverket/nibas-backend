@@ -1,5 +1,6 @@
 package no.kartverket.nibas.api.v1.klient.response
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Schema
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
@@ -227,6 +228,10 @@ data class BopliktomraadeResponse(
 
     @Schema(description = "Om boplikten gjelder delvis innenfor området")
     val delvisBoplikt: Boolean? = null,
+
+    @Schema(description = "Usikker avgrensning")
+    @field:JsonProperty("usikkerAvgrensning")
+    val usikkerAvgrensning: Boolean = false,
 
     @Schema(description = "Forskriftsreferansen for bopliktområdet")
     val forskriftsreferanse: String? = null,

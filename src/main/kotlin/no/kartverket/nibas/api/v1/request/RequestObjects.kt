@@ -1,5 +1,6 @@
 package no.kartverket.nibas.api.v1.request
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Schema
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
@@ -138,6 +139,10 @@ data class BopliktomraadeRequest(
 
     @Schema(description = "Indikerer om bopliktomraadet dekker deler av kommunen eller ikke")
     val delvisBoplikt: Boolean,
+
+    @Schema(description = "Usikker avgrensning")
+    @field:JsonProperty("usikkerAvgrensning")
+    val usikkerAvgrensning: Boolean = false,
 
     @ArraySchema(
         arraySchema = Schema(description = "Materielle vilkår for bopliktområdet"),

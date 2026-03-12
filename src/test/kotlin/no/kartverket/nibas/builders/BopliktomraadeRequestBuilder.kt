@@ -10,6 +10,7 @@ class BopliktomraadeRequestBuilder(
     private var bopliktomraadenummer: String = "138",
     private var bopliktomraadenavn: String = "Mosekollen øst 2",
     private var delvisBoplikt: Boolean = true,
+    private var usikkerAvgrensning: Boolean = true,
     private var bebygdEiendom: Boolean = false,
     private var ikkeHelaarsboligUnderOppforing: Boolean = false,
     private var ubebygdTomt: Boolean = false,
@@ -45,6 +46,11 @@ class BopliktomraadeRequestBuilder(
 
     fun withDelvisBoplikt(delvisBoplikt: Boolean): BopliktomraadeRequestBuilder {
         this.delvisBoplikt = delvisBoplikt
+        return this
+    }
+
+    fun withUsikkerAvgrensning(usikkerAvgrensning: Boolean): BopliktomraadeRequestBuilder {
+        this.usikkerAvgrensning = usikkerAvgrensning
         return this
     }
 
@@ -88,6 +94,7 @@ class BopliktomraadeRequestBuilder(
             nummer = bopliktomraadenummer,
             navn = bopliktomraadenavn,
             delvisBoplikt = delvisBoplikt,
+            usikkerAvgrensning = usikkerAvgrensning,
             forskriftsreferanse = forskriftsreferanse,
             materielleVilkaar = materielleVilkaar,
             andreAvgrensninger = andreAvgrensninger,

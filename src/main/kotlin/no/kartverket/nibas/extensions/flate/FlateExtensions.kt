@@ -108,7 +108,7 @@ fun Nasjon.toNasjonResponse(): NasjonResponse {
 }
 
 fun Bopliktomraade.toBopliktomraadeResponse(): BopliktomraadeResponse {
-    val kommune = this.getKommune(gyldighet.gyldigFra) ?: throw RuntimeException("Fant ikke kommune for bopliktområde")
+    val kommune = this.getKommune() ?: throw RuntimeException("Fant ikke kommune for bopliktområde")
 
     return BopliktomraadeResponse(
         id = ObjektIdentifikator(Lokalid(lokalid), gyldighet.gyldigFra),
@@ -124,6 +124,7 @@ fun Bopliktomraade.toBopliktomraadeResponse(): BopliktomraadeResponse {
         version = version,
         informasjon = informasjon,
         delvisBoplikt = delvisBoplikt,
+        usikkerAvgrensning = usikkerAvgrensning,
         forskriftsreferanse = forskriftsreferanse,
         materielleVilkaar = materielleVilkaar,
         andreAvgrensninger = andreAvgrensninger,

@@ -19,6 +19,7 @@ data class BopliktOmraadeRow(
     val omraadeGeo: MultiPolygon?,
     val posisjonGeo: Point,
     val kommunelokalid: String?,
+    val usikkerAvgrensning: Boolean = false,
     val bebygdEiendom: Boolean = false,
     val ikkeHelaarsboligUnderOppforing: Boolean = false,
     val ubebygdTomt: Boolean = false,

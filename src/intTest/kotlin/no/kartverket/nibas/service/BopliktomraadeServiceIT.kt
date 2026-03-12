@@ -164,6 +164,7 @@ class BopliktomraadeServiceIT : TestWithDbContainer() {
         assertThat(bopliktomraadeEtter.forskriftsreferanse).isNotNull().isNotEqualTo(opprinneligBopliktomraade.forskriftsreferanse)
             .isEqualTo(bopliktomraadeRequest.forskriftsreferanse)
         assertThat(bopliktomraadeEtter.delvisBoplikt).isEqualTo(opprinneligBopliktomraade.delvisBoplikt)
+        assertThat(bopliktomraadeEtter.usikkerAvgrensning).isTrue()
 
         assertThat(opprinneligBopliktomraade.gyldighet.gyldigFra).isEqualTo(october1In2022)
         assertThat(opprinneligBopliktomraade.gyldighet.gyldigTil).isEqualTo(now)

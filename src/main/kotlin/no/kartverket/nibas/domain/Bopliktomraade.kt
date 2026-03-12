@@ -48,6 +48,9 @@ class Bopliktomraade(
     @Column(name = "informasjon")
     override var informasjon: String? = null
 
+    @Column(name = "usikker_avgrensning", nullable = false)
+    var usikkerAvgrensning: Boolean = false
+
     @Column(name = "forskriftsreferanse")
     var forskriftsreferanse: String? = null
 
@@ -207,6 +210,7 @@ class Bopliktomraade(
             nummer = gammeltBopliktomraade.nummer
             navn = gammeltBopliktomraade.navn
             omraade = gammeltBopliktomraade.omraade
+            usikkerAvgrensning = gammeltBopliktomraade.usikkerAvgrensning
             bopliktomraadeGrenser = when (gammeltBopliktomraade.bopliktomraadeGrenser) {
                 is BopliktomraadeGrenser.DelvisBoplikt -> BopliktomraadeGrenser.DelvisBoplikt()
                 is BopliktomraadeGrenser.FullBoplikt -> BopliktomraadeGrenser.FullBoplikt()

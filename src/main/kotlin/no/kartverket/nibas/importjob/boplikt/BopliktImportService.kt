@@ -97,6 +97,7 @@ class BopliktImportService(
         val typeendring = "import"
 
         val delvisBoplikt = propIntToBoolean("delvis_boplikt")
+        val usikkerAvgrensning = propIntToBoolean("usikker")
 
         val forskriftsreferanse = prop("forskriftsreferanse")?.toString()
         val informasjon = prop("utfyllendeBeskrivelse")?.toString()
@@ -154,6 +155,7 @@ class BopliktImportService(
             omraadeGeo = bopliktomraade,
             posisjonGeo = posisjon,
             kommunelokalid = kommunelokalid,
+            usikkerAvgrensning = usikkerAvgrensning,
             bebygdEiendom = bebygdEiendom,
             ikkeHelaarsboligUnderOppforing = ikkeHelaarsboligUnderOppforing,
             ubebygdTomt = ubebygdTomt,
