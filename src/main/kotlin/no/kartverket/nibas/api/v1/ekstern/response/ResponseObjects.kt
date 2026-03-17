@@ -215,6 +215,9 @@ data class EksternBopliktomraadeRespons(
     @Schema(description = "Andre avgrensninger")
     val andreAvgrensninger: String? = null,
 
+    @Schema(description = "Usikker avgrensning")
+    val usikkerAvgrensning: Boolean = false,
+
     @Schema(description = "URL til informasjon om boplikten")
     val url: String?,
 
