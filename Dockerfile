@@ -5,7 +5,7 @@ ENV PROJECT_VERSION=$project_version_arg
 
 EXPOSE 8080
 
-COPY opentelemetry-javaagent-2.17.0.jar /agent.jar
+COPY opentelemetry-javaagent-2.26.1.jar /agent.jar
 COPY build/libs/*.jar /app.jar
 
 # OpenTelemetry instrumentering
