@@ -77,7 +77,7 @@ configurations["intTestRuntimeOnly"].extendsFrom(configurations.runtimeOnly.get(
 buildscript {
     configurations.classpath {
         resolutionStrategy {
-            // TODO: Fjern tvungen jackson-versjon når flyway ikke lenger bruker en sårbar versjon av jackson
+            // TODO: Fjern tvungen jackson-versjon når spring ikke lenger bruker en sårbar versjon av jackson
             force("tools.jackson.core:jackson-core:${libs.versions.jacksonVersion.get()}")
         }
     }
