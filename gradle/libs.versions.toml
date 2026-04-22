@@ -18,6 +18,7 @@ springmockkVersion = "5.0.1"
 testContainerVersion = "1.21.4"
 proj4jVersion = "1.4.1"
 proj4jEPSGVersion = "1.4.1"
+jacksonVersion = "3.1.0"
 
 [libraries]
 flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flywayVersion" }
