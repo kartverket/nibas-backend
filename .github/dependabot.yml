@@ -5,6 +5,11 @@ registries:
     url: https://maven.pkg.github.com/kartverket/matrikkelapi-v1-wsclient
     username: x-access-token
     password: ${{ secrets.GH_PACKAGES_PAT }}
+  docker-hardened-images:
+    type: docker-registry
+    url: dhi.io
+    username: ${{ secrets.DOCKERHUB_USERNAME }}
+    password: ${{ secrets.DOCKERHUB_TOKEN }}
 
 updates:
   # Sjekker også oppdateringer på GitHub Maven Package aut-lib
@@ -35,6 +40,8 @@ updates:
 
   - package-ecosystem: "docker"
     directory: "/"
+    registries:
+      - "docker-hardened-images"
     schedule:
       interval: weekly
       day: monday
