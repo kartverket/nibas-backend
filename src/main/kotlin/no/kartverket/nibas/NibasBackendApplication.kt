@@ -81,7 +81,7 @@ fun asciiArt(appCtx: ConfigurableApplicationContext) {
     val asciiArtTemplate = """
 ----------------------------------------------------------
 	
-    Application '{}' is running!
+    application '{}' is running!
 	Profiles: 	{}
 	TLS-version:   {}
 	Configuration: {}
