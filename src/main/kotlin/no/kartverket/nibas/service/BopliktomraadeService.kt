@@ -70,8 +70,9 @@ class BopliktomraadeService(
 
     @Transactional(readOnly = false)
     fun createNyVersjonAvBopliktomraade(bopliktomraade: Bopliktomraade, gyldigFra: LocalDate, endringstype: Endringstype): Bopliktomraade {
-        return createNyVersjonAvBopliktomraadeUtenGrenser(bopliktomraade, gyldigFra, endringstype)
-            .copyGrenserFromExistingBopliktomraade(bopliktomraade, gyldigFra)
+        return createNyVersjonAvBopliktomraadeUtenGrenser(bopliktomraade, gyldigFra, endringstype).let{
+            if(bopliktomraade.delvisBoplikt) it.copyGrenserFromExistingBopliktomraade(bopliktomraade, gyldigFra) else it
+        }
     }
 
     @Transactional(readOnly = false)
