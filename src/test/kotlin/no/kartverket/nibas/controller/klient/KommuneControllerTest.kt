@@ -1,6 +1,5 @@
 package no.kartverket.nibas.controller.klient
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import no.kartverket.nibas.MockResponseAsserts
@@ -24,8 +23,9 @@ import no.kartverket.nibas.sporing.Gyldighet
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest
+import tools.jackson.databind.ObjectMapper
 import java.time.LocalDate
 import java.time.Month
 
@@ -194,8 +194,8 @@ class KommuneControllerTest : NibasMvcTest() {
         val responsTidligereDato = mapper.readTree(get("/v1/kommuner/1?gyldighetsdato=${formattedDateString(jan1In2023)}").response.contentAsString)
         val opprinneligNavn = responsTidligereDato.get("navn")
         assertThat(opprinneligNavn).hasSize(1)
-        assertThat(opprinneligNavn[0].get("spraak").asText()).isEqualTo("sme")
-        assertThat(opprinneligNavn[0].get("navn").asText()).isEqualTo("Gáivuotna")
+        assertThat(opprinneligNavn[0].get("spraak").asString()).isEqualTo("sme")
+        assertThat(opprinneligNavn[0].get("navn").asString()).isEqualTo("Gáivuotna")
         assertThat(opprinneligNavn[0].get("rekkefoelge").asInt()).isEqualTo(1)
 
         val responsDagensDato = mapper.readTree(get("/v1/kommuner/1").response.contentAsString)
@@ -203,18 +203,18 @@ class KommuneControllerTest : NibasMvcTest() {
         assertThat(dagensNavn).hasSize(3)
 
         val foersteNavn = dagensNavn[0]
-        assertThat(foersteNavn.get("spraak").asText()).isEqualTo("sme")
-        assertThat(foersteNavn.get("navn").asText()).isEqualTo("Gáivuotna")
+        assertThat(foersteNavn.get("spraak").asString()).isEqualTo("sme")
+        assertThat(foersteNavn.get("navn").asString()).isEqualTo("Gáivuotna")
         assertThat(foersteNavn.get("rekkefoelge").asInt()).isEqualTo(1)
 
         val andreNavn = dagensNavn[1]
-        assertThat(andreNavn.get("spraak").asText()).isEqualTo("nor")
-        assertThat(andreNavn.get("navn").asText()).isEqualTo("Kåfjord")
+        assertThat(andreNavn.get("spraak").asString()).isEqualTo("nor")
+        assertThat(andreNavn.get("navn").asString()).isEqualTo("Kåfjord")
         assertThat(andreNavn.get("rekkefoelge").asInt()).isEqualTo(2)
 
         val tredjeNavn = dagensNavn[2]
-        assertThat(tredjeNavn.get("spraak").asText()).isEqualTo("fkv")
-        assertThat(tredjeNavn.get("navn").asText()).isEqualTo("Kaivuono")
+        assertThat(tredjeNavn.get("spraak").asString()).isEqualTo("fkv")
+        assertThat(tredjeNavn.get("navn").asString()).isEqualTo("Kaivuono")
         assertThat(tredjeNavn.get("rekkefoelge").asInt()).isEqualTo(3)
     }
 

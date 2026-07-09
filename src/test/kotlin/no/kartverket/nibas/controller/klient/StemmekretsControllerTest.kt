@@ -6,7 +6,7 @@ import no.kartverket.nibas.NibasMvcTest
 import no.kartverket.nibas.builders.StemmekretsBuilder
 import no.kartverket.nibas.service.StemmekretsService
 import org.junit.jupiter.api.Test
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @WebMvcTest(StemmekretsController::class)

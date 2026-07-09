@@ -1,6 +1,5 @@
 package no.kartverket.nibas
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.ninjasquad.springmockk.MockkBean
 import no.kartverket.nibas.config.WebSecurityConfig
 import no.kartverket.nibas.kodelister.KodelisteService
@@ -10,7 +9,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest
 import org.springframework.core.io.DefaultResourceLoader
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
@@ -19,6 +18,7 @@ import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.ResultMatcher
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+import tools.jackson.databind.ObjectMapper
 import java.nio.charset.Charset
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -50,9 +50,6 @@ open class NibasMvcTest {
         val mvcResult = perform(MockMvcRequestBuilders.get(url), matchers = responseAsserts.resultMatchers)
         assertResponseObject(mvcResult, responseAsserts)
     }
-
-    fun put(url: String, expected: ResultMatcher) =
-        perform(MockMvcRequestBuilders.put(url), expected)
 
     fun put(url: String, request: Any, expected: ResultMatcher) =
         perform(MockMvcRequestBuilders.put(url).content(asJson(request)), expected)

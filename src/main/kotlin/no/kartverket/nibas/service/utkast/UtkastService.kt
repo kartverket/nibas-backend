@@ -76,7 +76,7 @@ class UtkastService(
 
     @Transactional(readOnly = true)
     fun hentUtkast(utkastStatus: List<UtkastStatus>, gyldigFra: LocalDate?): List<Utkast> {
-        return utkastRepository.findByStatusAndGyldigFra(statuses = utkastStatus.map { it.dbKey }, gyldigFra = gyldigFra)
+        return utkastRepository.findByStatusAndGyldigFra(statuses = utkastStatus, gyldigFra = gyldigFra)
     }
 
     @Transactional(readOnly = true)

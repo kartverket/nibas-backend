@@ -37,7 +37,7 @@ class CustomRestExceptionHandler {
     val logger = LoggerFactory.getLogger(javaClass)
 
     @ExceptionHandler(value = [MissingKodelisteItemException::class])
-    fun handleManglendeKodelisteInnslag(missingKodelisteEx: MissingKodelisteItemException, request: WebRequest): ResponseEntity<Any>? {
+    fun handleManglendeKodelisteInnslag(missingKodelisteEx: MissingKodelisteItemException): ResponseEntity<Any>? {
         val errorResponse = ErrorDescription(
             description = "Fant ikke ${missingKodelisteEx.kodelisteType} for ${missingKodelisteEx.id}"
         )
@@ -45,7 +45,7 @@ class CustomRestExceptionHandler {
     }
 
     @ExceptionHandler(value = [UgyldigGeometriException::class])
-    fun handleUgyldigGeometriException(ugyldigGEx: UgyldigGeometriException, request: WebRequest): ResponseEntity<Any>? {
+    fun handleUgyldigGeometriException(ugyldigGEx: UgyldigGeometriException): ResponseEntity<Any>? {
         val errorDescription = ErrorDescription(
             title = "Feil med geometri",
             description = "Det er ble oppdaget feil med geometrien i utkastet: ${ugyldigGEx.topologyValidationError.toCustomText()}"
@@ -54,7 +54,7 @@ class CustomRestExceptionHandler {
     }
 
     @ExceptionHandler(value = [IkkeSammenhengendePolygonException::class])
-    fun handleIkkeSammenhengendePolygonException(ex: IkkeSammenhengendePolygonException, request: WebRequest): ResponseEntity<Any>? {
+    fun handleIkkeSammenhengendePolygonException(ex: IkkeSammenhengendePolygonException): ResponseEntity<Any>? {
         val errorDescription = ErrorDescription(
             title = "Feil med geometri",
             description = "Geometrien i utkastet er ikke sammenhengende - og danner derfor ikke fullstendige polygoner."
@@ -63,7 +63,7 @@ class CustomRestExceptionHandler {
     }
 
     @ExceptionHandler(value = [OptimistiskLaasException::class])
-    fun handleOptimisticLockException(ex: OptimistiskLaasException, request: WebRequest): ResponseEntity<Any>? {
+    fun handleOptimisticLockException(ex: OptimistiskLaasException): ResponseEntity<Any>? {
         // For grenser kan det være flere optimistiske låsekonflikter
         logger.warn("Feil med optimistisk lås", ex)
         return createResponse(OptimistiskLaasWrapper(
@@ -80,7 +80,7 @@ class CustomRestExceptionHandler {
 
     @ExceptionHandler(value = [FeilVedOppdatering.OppdateringException::class])
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    fun handleOppdateringException(ex: FeilVedOppdatering.OppdateringException, request: WebRequest): ResponseEntity<Any>? {
+    fun handleOppdateringException(ex: FeilVedOppdatering.OppdateringException): ResponseEntity<Any>? {
         logger.warn("Fremtidig versjons-konflikt", ex)
 
         // Dette er bare en veldig enkel feilmelding. Vi har en egen oppgave på en bedre MVP av konflikthåndtering.
@@ -93,7 +93,7 @@ class CustomRestExceptionHandler {
     }
 
     @ExceptionHandler(value = [ResponseException::class])
-    fun handleResponseExceptionException(ex: ResponseException, request: WebRequest): ResponseEntity<Any>? {
+    fun handleResponseExceptionException(ex: ResponseException): ResponseEntity<Any>? {
         val httpStatus = when (ex) {
             is ResponseException.NotFoundException -> HttpStatus.NOT_FOUND
             is ResponseException.BadRequestException -> HttpStatus.BAD_REQUEST
@@ -107,7 +107,7 @@ class CustomRestExceptionHandler {
     }
 
     @ExceptionHandler(value = [HttpMessageNotReadableException::class])
-    fun handleHttpMessageNotReadable(ex: HttpMessageNotReadableException, request: WebRequest): ResponseEntity<Any>? {
+    fun handleHttpMessageNotReadable(ex: HttpMessageNotReadableException): ResponseEntity<Any>? {
         val httpStatus = HttpStatus.BAD_REQUEST
         val errorDescription = ErrorDescription(
             description = "En ukjent feil har oppstått. Vennligst prøv igjen senere, eller kontakt Kartverket om feilen fortsetter."
@@ -116,7 +116,7 @@ class CustomRestExceptionHandler {
     }
 
     @ExceptionHandler(value = [ResponseStatusException::class])
-    fun handleResponseStatusExceptions(ex: ResponseStatusException, request: WebRequest): ResponseEntity<Any>? {
+    fun handleResponseStatusExceptions(ex: ResponseStatusException): ResponseEntity<Any>? {
         val httpStatus = ex.statusCode
         val errorDescription = ErrorDescription(
             description = ex.message
@@ -125,7 +125,7 @@ class CustomRestExceptionHandler {
     }
 
     @ExceptionHandler(value = [UgyldigeFlaterException::class])
-    fun handleUgydligFlateExceptions(ex: UgyldigeFlaterException, request: WebRequest) : ResponseEntity<Any>? {
+    fun handleUgydligFlateExceptions(ex: UgyldigeFlaterException) : ResponseEntity<Any>? {
 
         val gruppertPaaKoordinat: Map<Coordinate, List<UgyldigFlateInformasjon>> = ex.ugyldigeFlater.groupBy { it.koordinat }
         val antallGrupper = gruppertPaaKoordinat.size
@@ -136,7 +136,7 @@ class CustomRestExceptionHandler {
             entry.value.forEach{
                 stringBuilder.appendLine("${index + 1}. ${it.flateInformasjon.flatetype} ${it.flateInformasjon.lesbartNavn}: ")
             }
-            stringBuilder.append("${entry.value[0].topologifeil}")
+            stringBuilder.append(entry.value[0].topologifeil)
             stringBuilder.appendLine()
 
             stringBuilder.appendLine("Feilen ble først oppdaget på ${entry.key.y.round(2)}N ${entry.key.x.round(2)}Ø")
@@ -159,7 +159,7 @@ class CustomRestExceptionHandler {
     }
 
     @ExceptionHandler(value = [Exception::class])
-    fun handleAllOtherExceptions(ex: Exception, request: WebRequest): ResponseEntity<Any>? {
+    fun handleAllOtherExceptions(ex: Exception): ResponseEntity<Any>? {
         val httpStatus = HttpStatus.INTERNAL_SERVER_ERROR
         val errorDescription = ErrorDescription(
             description = ex.message ?: "Ukjent server-feil"
@@ -181,7 +181,7 @@ class CustomRestExceptionHandler {
         return createResponse(body, headers, statusCode)
     }
 
-    private fun <T> createResponse(body: T, headers: HttpHeaders, statusCode: HttpStatusCode): ResponseEntity<T> {
+    private fun <T : Any> createResponse(body: T, headers: HttpHeaders, statusCode: HttpStatusCode): ResponseEntity<T> {
         return ResponseEntity(body, headers, statusCode)
     }
 }

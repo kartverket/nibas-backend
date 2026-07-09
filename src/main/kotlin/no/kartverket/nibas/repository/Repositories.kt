@@ -29,7 +29,7 @@ import org.springframework.data.repository.NoRepositoryBean
 import java.time.LocalDate
 
 @NoRepositoryBean
-interface CrudRepositoryWithLokalIdFinder<T, ID> : CrudRepository<T, ID> {
+interface CrudRepositoryWithLokalIdFinder<T : Any, ID : Any> : CrudRepository<T, ID> {
     fun findAllByLokalid(lokalid: String): List<T>
 
     fun findLastByLokalid(lokalid: String): T? =
@@ -37,7 +37,7 @@ interface CrudRepositoryWithLokalIdFinder<T, ID> : CrudRepository<T, ID> {
 }
 
 @NoRepositoryBean
-interface JpaRepositoryWithLokalIdFinder<T, ID> : JpaRepository<T, ID> {
+interface JpaRepositoryWithLokalIdFinder<T : Any, ID : Any> : JpaRepository<T, ID> {
     fun findAllByLokalid(lokalid: String): List<T>
 
     fun findLastByLokalid(lokalid: String): T? =
@@ -122,7 +122,7 @@ interface UtkastRepository : CrudRepository<Utkast, String>, JpaRepository<Utkas
     @Query("SELECT u FROM Utkast u WHERE u.status IN :statuses " +
         "AND (CAST(:gyldigFra as DATE) IS NULL OR u.gyldigFra >= :gyldigFra)")
     fun findByStatusAndGyldigFra(
-        statuses: List<String>,
+        statuses: List<UtkastStatus>,
         gyldigFra: LocalDate?
     ): List<Utkast>
 }

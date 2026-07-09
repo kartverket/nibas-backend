@@ -81,14 +81,16 @@ buildscript {
 }
 
 dependencies {
-    implementation(libs.spring.jpa)
-    implementation(libs.spring.security) // Web-security
-    implementation(libs.spring.web)
-    implementation(libs.spring.webflux)
+    implementation(libs.spring.starter)
+    implementation(libs.spring.starter.webmvc)
+    implementation(libs.spring.starter.jpa)
+    implementation(libs.spring.starter.jackson)
+    implementation(libs.spring.starter.security) // Web-security
+    implementation(libs.spring.starter.webflux)
     implementation(libs.jackson.module.kotlin)
     implementation(libs.kotlin.reflect)
-    implementation(libs.spring.actuator)
-    implementation(libs.spring.validator)
+    implementation(libs.spring.starter.actuator)
+    implementation(libs.spring.starter.validator)
     implementation(libs.springdoc.openapi.common)
     implementation(libs.springdoc.openapi.webmvc.api)
     implementation(libs.springdoc.openapi.webmvc.ui)
@@ -116,23 +118,30 @@ dependencies {
     implementation(libs.org.apache.cxf.frontend)
     implementation(libs.org.apache.cxf.transports)
 
-    runtimeOnly(libs.flyway.core)
+    runtimeOnly(libs.spring.starter.flyway)
     runtimeOnly(libs.flyway.postgres)
     runtimeOnly(libs.postgres)
 
     testImplementation(libs.kotlin.test)
+    testImplementation(libs.spring.starter.jackson.test)
+    testImplementation(libs.spring.starter.webmvc.test)
     testImplementation(libs.spring.starter.test)
     testImplementation(libs.spring.batch.test)
     testImplementation(libs.spring.mockk)
     testImplementation(libs.kotlin.mockito)
+    testImplementation(libs.spring.starter.thymeleaf.test)
+    testImplementation(libs.spring.starter.jackson.test)
+    testImplementation(libs.spring.starter.security.test)
 
     testRuntimeOnly(libs.h2.db)
 
     intTestImplementation(libs.kotlin.test)
+    intTestImplementation(libs.spring.starter.jackson.test)
     intTestImplementation(libs.spring.starter.test)
     intTestImplementation(libs.testcontainers.postgres)
     intTestImplementation(libs.testcontainers.junit)
     intTestImplementation(libs.spring.mockk)
+    intTestImplementation(libs.spring.starter.flyway.test)
 }
 
 allOpen {

@@ -15,7 +15,7 @@ enum class UtkastStatus(val value: String, val dbKey: String) {
     companion object {
         fun fromValue(valueIn: String): UtkastStatus {
             try {
-                return values().first { it.value == valueIn }
+                return entries.first { it.value == valueIn }
             } catch (e: NoSuchElementException) {
                 throw IllegalArgumentException("Invalid value: $valueIn", e)
             }
@@ -23,7 +23,7 @@ enum class UtkastStatus(val value: String, val dbKey: String) {
 
         fun fromDbKey(dbKeyIn: String): UtkastStatus {
             try {
-                return values().first { it.dbKey == dbKeyIn }
+                return entries.first { it.dbKey == dbKeyIn }
             } catch (e: NoSuchElementException) {
                 throw IllegalArgumentException("Invalid dbKey: $dbKeyIn", e)
             }

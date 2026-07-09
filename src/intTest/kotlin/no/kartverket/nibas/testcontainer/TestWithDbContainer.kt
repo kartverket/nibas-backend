@@ -67,7 +67,6 @@ import no.kartverket.nibas.service.InndelingerService
 import no.kartverket.nibas.service.KommuneService
 import no.kartverket.nibas.service.NasjonService
 import no.kartverket.nibas.service.StemmekretsService
-import no.kartverket.nibas.service.deltgeometri.DeltGeometriAdministrativeGrenserService
 import no.kartverket.nibas.service.utkast.UtkastService
 import no.kartverket.nibas.sporing.Gyldighet
 import no.kartverket.nibas.sporing.Laasbar
@@ -159,9 +158,6 @@ class TestWithDbContainer {
 
     @Autowired
     lateinit var inndelingerService: InndelingerService
-
-    @Autowired
-    lateinit var deltGeometriAdministrativeGrenserService: DeltGeometriAdministrativeGrenserService
 
     @Autowired
     lateinit var dokumentasjonsreferanseRepository: DokumentasjonsreferanseRepository

@@ -12,8 +12,8 @@ import no.kartverket.nibas.service.FylkeService
 import no.kartverket.nibas.utils.IdType
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest
 
 
 @WebMvcTest(FylkeController::class)

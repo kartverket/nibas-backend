@@ -252,7 +252,7 @@ class UtkastValidatorService(
                     errorMessages.add("\t- Grensen har ${tilhorighetstyper.size} tilhørighetstyper satt, men må ha $krevdAntallTilhorighetstyper.")
                 }
                 if (duplisertKontekstEgenskaper != null) {
-                    errorMessages.add("\t- Grensen har flere tilhørigheter til samme krets. Gjelder kretsnr ${duplisertKontekstEgenskaper?.kretsNummer} med lokalid ${duplisertKontekstEgenskaper?.id?.lokalid?.value}.")
+                    errorMessages.add("\t- Grensen har flere tilhørigheter til samme krets. Gjelder kretsnr ${duplisertKontekstEgenskaper.kretsNummer} med lokalid ${duplisertKontekstEgenskaper.id?.lokalid?.value}.")
                 }
                 if (kommuneGrenseHarTilhorigheterISammeKommune) {
                     errorMessages.add("\t- Grensen er kommune-/fylkesgrense og har tilhørighet til to kretser i samme kommune.")
@@ -292,8 +292,6 @@ class UtkastValidatorService(
                                             errorMessages.add("\t- Grunnkrets 2: $grunnkrets2, Delområde: $delomrade2")
                                         }
                                     }
-
-                                    else -> {}
                                 }
                             }
                         }

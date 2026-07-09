@@ -20,7 +20,12 @@ class PostgisDbTransformasjon
         val wktReader = createWktReader(tilSrid)
 
         val fraSrid = geometri.srid
-        val transformermertWkt = jdbcTemplate.queryForObject<String>(transformQuery, arrayOf(geometri.toText(), fraSrid, tilSrid))
+        val transformermertWkt = jdbcTemplate.queryForObject<String>(
+            transformQuery,
+            geometri.toText(),
+            fraSrid,
+            tilSrid
+        )
         val transformertGeometri = wktReader.read(transformermertWkt)
 
         return transformertGeometri

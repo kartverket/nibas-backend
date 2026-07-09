@@ -1,10 +1,10 @@
 package no.kartverket.nibas.config
 
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.databind.DeserializationContext
-import com.fasterxml.jackson.databind.deser.std.StdScalarDeserializer
-import com.fasterxml.jackson.databind.module.SimpleModule
 import org.springframework.stereotype.Component
+import tools.jackson.core.JsonParser
+import tools.jackson.databind.DeserializationContext
+import tools.jackson.databind.deser.std.StdScalarDeserializer
+import tools.jackson.databind.module.SimpleModule
 
 @Component
 class StringTrimModule : SimpleModule() {

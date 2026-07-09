@@ -1702,6 +1702,9 @@ class GrenseServiceIT : TestWithDbContainer() {
             .addGyldighet(Gyldighet(gyldigFra = gyldighetsdato))
             .build()
 
+        entityManager.persist(dokumentasjonsreferanse)
+        entityManager.flush()
+
         val grenseA = grunnkretser.flatMap { it.grenser }.find { it.grense.lokalid == "grenseDeltLokalid" }!!.grense
 
         val grensekobling = DokrefGrenseKobling().apply {
@@ -1983,8 +1986,8 @@ class GrenseServiceIT : TestWithDbContainer() {
 
         // Endre bopliktområdet til å dekke hele kommunen
         entityManager.find(Bopliktomraade::class.java, bopliktomraade.id).omraade = null
-        entityManager.flush();
-        entityManager.clear();
+        entityManager.flush()
+        entityManager.clear()
 
         // Sjekk at bopliktområdet og kommunen nå har samme grenser etter endring
         bopliktEtterGrenseIds = entityManager.find(Bopliktomraade::class.java, bopliktomraade.id).getGrensekoblinger(today).mapTo(HashSet(1)) { it.grense.id }

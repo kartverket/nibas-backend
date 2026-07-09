@@ -34,9 +34,6 @@ import java.time.Month
 @Transactional
 class BopliktomraadeServiceIT : TestWithDbContainer() {
 
-    @MockkBean
-    private lateinit var kodelisteServiceMock: KodelisteService
-
     private val october1In2022 = LocalDate.of(2022, Month.OCTOBER, 1)
     private val november28In2022 = LocalDate.of(2022, Month.NOVEMBER, 28)
     private val december1In2022 = LocalDate.of(2022, Month.DECEMBER, 1)
@@ -458,6 +455,9 @@ class BopliktomraadeServiceIT : TestWithDbContainer() {
                 gyldighet = kretsgrense.gyldighet
             }
         }
+
+        grenseRepository.saveAll(bopliktgrenser)
+
         val bopliktomraade = saveBopliktomraade(
             id = "2",
             lokalid = Lokalid("22"),
@@ -480,6 +480,9 @@ class BopliktomraadeServiceIT : TestWithDbContainer() {
                 gyldighet = kretsgrense.gyldighet
             }
         }
+
+        grenseRepository.saveAll(bopliktgrenser)
+
         val bopliktomraade = saveBopliktomraade(
             id = "2",
             lokalid = Lokalid("22"),
