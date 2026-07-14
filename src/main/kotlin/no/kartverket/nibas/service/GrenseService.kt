@@ -581,6 +581,6 @@ class GrenseService(
     }
 
     private fun updateWithGrenseMetadata(grense: Grense, commonGrenseMetadata: CommonGrenseMetadata) {
-        grense.kvalitet = commonGrenseMetadata.posisjonskvalitet?.toEmbeddable()
+        grense.kvalitet = commonGrenseMetadata.posisjonskvalitet.toEmbeddable()
     }
 }

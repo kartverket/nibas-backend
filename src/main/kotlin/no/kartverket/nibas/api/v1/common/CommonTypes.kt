@@ -1,5 +1,6 @@
 package no.kartverket.nibas.api.v1.common
 
+import com.fasterxml.jackson.annotation.JsonInclude
 import io.swagger.v3.oas.annotations.media.Schema
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.request.BopliktomraadeRequest
@@ -129,7 +130,6 @@ data class GyldighetResponse(
 )
 
 
-// TODO: Utvide med felter for sammenslåing og oppsplitting
 // Typen (og undertyper) er Serializable for persistering i jsonb-kolonne
 // Typene under operasjoner er påkrevet, men har defaults.
 @Schema(description = "Representasjon av operasjoner/handlinger som er utført i klienten.")
@@ -138,9 +138,15 @@ data class Operasjoner(
     val metadataendringer: Metadataendringer = Metadataendringer(),
     @Schema(description = "Endringer på grenser.")
     val grenseendringer: Grenseendringer = Grenseendringer(),
-    @Schema(description = "Sammenslåing av stemmekretser i samme kommune.")
+    @Schema(
+        description = "Sammenslåing av stemmekretser i samme kommune.",
+        requiredMode = Schema.RequiredMode.REQUIRED,
+    )
     val stemmekretsSammenslaaingsendring: StemmekretsSammenslaaingsendringRequest? = null,
-    @Schema(description = "Sammenslåing av stemmekretser i samme kommune.")
+    @Schema(
+        description = "Sammenslåing av stemmekretser i samme kommune.",
+        requiredMode = Schema.RequiredMode.REQUIRED,
+    )
     val grunnkretsSammenslaaingsendring: GrunnkretsSammenslaaingsendringRequest? = null,
     @Schema(description = "Deling av en stemmekrets eller grunnkrets")
     val kretsDelingEndringer: List<KretsDelingEndringRequest> = listOf(),

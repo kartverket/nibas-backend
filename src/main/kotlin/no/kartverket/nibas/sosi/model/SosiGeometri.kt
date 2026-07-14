@@ -60,7 +60,7 @@ open class SosiGeometri(type: String, niva: Int, verdier: MutableList<SosiVerdi>
     fun getKommunenummer(): String = getVerdiAvBarn(SosiKoder.KOMMUNENUMMER)!!
     fun getStemmekretsId(): SosiStemmekretsId? = barn.find { it is SosiStemmekretsId } as? SosiStemmekretsId
 
-    fun getPosisjonskvalitet(kodelisteService: KodelisteService, sosiVersjon: String): PosisjonskvalitetEmbeddable? {
+    fun getPosisjonskvalitet(kodelisteService: KodelisteService, sosiVersjon: String): PosisjonskvalitetEmbeddable {
         val sosiKvalitet = this.getKvalitet()
         var maalemetode: String? = null
         var noyaktighet: Int? = null
@@ -82,7 +82,7 @@ open class SosiGeometri(type: String, niva: Int, verdier: MutableList<SosiVerdi>
                 noeyaktighet = noyaktighet
             )
         }
-        return null
+        return PosisjonskvalitetEmbeddable()
     }
 
     fun startKoordinat(erRetningMedKlokken: Boolean): Coordinate {

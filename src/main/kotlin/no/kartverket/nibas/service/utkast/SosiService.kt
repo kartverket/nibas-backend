@@ -81,7 +81,7 @@ class SosiGeometryService(
                 throw IllegalArgumentException("Filen inneholder en eller flere grenser med grensetype som ikke støttes: '$formattedGrenseTypeString'")
             }
             val id = kurve.getIdent()?.getVerdiAvBarn("LOKALID") ?: kurve.getId()
-            val posisjonskvalitet = kurve.getPosisjonskvalitet(kodelisteService = kodelisteService, sosiVersjon = sosiVersjon)?.toKvalitet()
+            val posisjonskvalitet = kurve.getPosisjonskvalitet(kodelisteService = kodelisteService, sosiVersjon = sosiVersjon).toKvalitet()
 
             if (lineString != null && id != null) {
                 val feature = Feature(

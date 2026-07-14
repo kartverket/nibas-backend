@@ -44,7 +44,7 @@ class Grense(
     override var gyldighet: Gyldighet = Gyldighet()
 
     @Embedded
-    var kvalitet: PosisjonskvalitetEmbeddable? = PosisjonskvalitetEmbeddable()
+    var kvalitet: PosisjonskvalitetEmbeddable = PosisjonskvalitetEmbeddable()
 
     @Version
     override var version: Int = 1

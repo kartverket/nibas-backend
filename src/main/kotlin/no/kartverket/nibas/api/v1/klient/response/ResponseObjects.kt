@@ -223,7 +223,10 @@ data class BopliktomraadeResponse(
     @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
     val version: Int,
 
-    @Schema(description = "Tilleggsinformasjon om bopliktområdet")
+    @Schema(
+        description = "Tilleggsinformasjon om bopliktområdet",
+        requiredMode = Schema.RequiredMode.REQUIRED,
+    )
     val informasjon: String? = null,
 
     @Schema(description = "Om boplikten gjelder delvis innenfor området")
@@ -348,7 +351,10 @@ data class ErrorDescription(
     @Schema(description = "En beskrivende forklaring av feilen som oppstod.")
     val description: String,
 
-    @Schema(description = "Litt tilleggsinfo relatert til feilen om man vil gi noe mer forklaring av konteksten. Ikke obligatorisk.")
+    @Schema(
+        description = "Litt tilleggsinfo relatert til feilen om man vil gi noe mer forklaring av konteksten. Ikke obligatorisk.",
+        requiredMode = Schema.RequiredMode.REQUIRED,
+    )
     val additionalInfo: String? = null,
 )
 

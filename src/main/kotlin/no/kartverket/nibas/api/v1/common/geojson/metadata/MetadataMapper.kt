@@ -69,7 +69,7 @@ class MetadataMapper(private val kodelisteHrefProvider: KodelisteHrefProviderI =
     )
 
     private fun getCommonGrenseMetadata(grense: Grense): CommonGrenseMetadata = CommonGrenseMetadata(
-        posisjonskvalitet = grense.kvalitet?.toKvalitet(kodelisteHrefProvider),
+        posisjonskvalitet = grense.kvalitet.toKvalitet(kodelisteHrefProvider),
     )
 
     private fun CommonMetadataProperties.getCommonMetadata(): CommonMetadata = CommonMetadata(

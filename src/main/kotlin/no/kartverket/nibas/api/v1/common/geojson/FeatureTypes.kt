@@ -119,7 +119,10 @@ data class KontekstEgenskaper(
     @Schema(description = "Id til kommunen som konteksten ligger i")
     val kommuneId: ObjektIdentifikator? = null,
 
-    @Schema(description = "kretsnummeret til konteksten")
+    @Schema(
+        description = "kretsnummeret til konteksten",
+        requiredMode = Schema.RequiredMode.REQUIRED,
+    )
     val kretsNummer: String? = null,
 
     @Schema(description = "Hvilken kontekst geometrien skal sees i")

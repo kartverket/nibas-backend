@@ -12,7 +12,6 @@ import no.kartverket.nibas.builders.REF_TEKST_2
 import no.kartverket.nibas.domain.DokumentasjonsreferanseDokumentlink
 import no.kartverket.nibas.domain.DokumentasjonsreferanseInternReferanseKartverket
 import no.kartverket.nibas.domain.Endringstype
-import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.Landkode
 import no.kartverket.nibas.repository.DokrefGrenseKoblingRepository
 import no.kartverket.nibas.repository.DokumentasjonsreferanseRepository
