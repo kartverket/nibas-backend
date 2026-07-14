@@ -34,7 +34,7 @@ class GrenseBuilder(private val id: String = "1",
                     private var grenseGeometri: LineString = GeometryFactory().createLineString(),
                     private var gyldigFra: LocalDate = LocalDate.now(),
                     private var gyldigTil: LocalDate? = null,
-                    private var kvalitet: PosisjonskvalitetEmbeddable? = null,
+                    private var kvalitet: PosisjonskvalitetEmbeddable = PosisjonskvalitetEmbeddable(),
                     private var opphav: String? = "Eidsvoll",
                     private var versjon: Int = 1,
                     private var grensetype: Grensetype = Grensetype.Grunnkretsgrense) {
@@ -45,10 +45,8 @@ class GrenseBuilder(private val id: String = "1",
         grense.gyldighet = Gyldighet(gyldigFra, gyldigTil)
         grense.opphav = opphav
         grense.version = versjon
+        grense.kvalitet = kvalitet
 
-        if (kvalitet != null) {
-            grense.kvalitet = kvalitet
-        }
         return grense
     }
 

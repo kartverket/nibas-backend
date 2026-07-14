@@ -354,7 +354,7 @@ class UtkastValidatorServiceTest {
                         endredeFeatures = listOf(
                             FeatureBuilder()
                                 .withGrensetype(Grensetype.Grunnkretsgrense)
-                                .withPosisjonskvalitet(null)
+                                .withPosisjonskvalitet(Posisjonskvalitet())
                                 .build()
                         )
                     )

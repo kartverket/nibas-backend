@@ -46,7 +46,7 @@ class FeatureBuilder(private var id: String? = "1") {
         GeometryFactory().createLineString(arrayOf(Coordinate(0.0, 0.0), Coordinate(1.0, 1.0)))
     private var shouldArchive: Boolean = false
     private val dokumentasjonsreferanser = mutableListOf<DokumentasjonsreferanseDTO>()
-    private var posisjonskvalitet: Posisjonskvalitet? = Posisjonskvalitet(
+    private var posisjonskvalitet: Posisjonskvalitet = Posisjonskvalitet(
         maalemetode = KodelisteEntry(id = MaalemetodeKodeEnum.TERRENGMAALT.uuid),
         noeyaktighet = null
     )
@@ -145,7 +145,7 @@ class FeatureBuilder(private var id: String? = "1") {
         return this
     }
 
-    fun withPosisjonskvalitet(posisjonskvalitet: Posisjonskvalitet?): FeatureBuilder {
+    fun withPosisjonskvalitet(posisjonskvalitet: Posisjonskvalitet): FeatureBuilder {
         this.posisjonskvalitet = posisjonskvalitet
         return this
     }
