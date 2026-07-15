@@ -69,6 +69,7 @@ info:
 springdoc:
   api-docs:
     path: /api-docs
+    version: openapi_3_0
 
 ---
 # Profile-specific: localhost

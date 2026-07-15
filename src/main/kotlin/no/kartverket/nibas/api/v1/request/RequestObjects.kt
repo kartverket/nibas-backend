@@ -88,10 +88,10 @@ data class GrunnkretsRequest(
 data class StemmekretsRequest(
 
     @Schema(description = "Stemmekretsnavnet til stemmekretsen")
-    var navn: String? = null,
+    var navn: String,
 
     @Schema(description = "Stemmekretsnummeret til stemmekretsen")
-    var nummer: String? = null,
+    var nummer: String,
 
     @Schema(description = "Identifikasjon av stemmekretsen")
     val identifikasjon: Identifikasjon,
