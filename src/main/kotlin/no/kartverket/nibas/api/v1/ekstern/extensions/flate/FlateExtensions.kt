@@ -169,8 +169,11 @@ fun Bopliktomraade.toEksternBopliktomraadeResponse(gyldighetsdato: LocalDate): E
         informasjon = informasjon,
         forskriftsreferanse = forskriftsreferanse,
         materielleVilkaar = materielleVilkaar,
+        gjeldendeMaterielleVilkaar = gjeldendeMaterielleVilkaar,
         andreAvgrensninger = andreAvgrensninger,
+        andreLokaleAvgrensninger = andreLokaleAvgrensninger,
         usikkerAvgrensning = usikkerAvgrensning,
+        harUsikkerAvgrensning = harUsikkerAvgrensning,
         url = url,
         // Hvis bopliktområdet har boplikt i hele kommunen brukes kommunens område.
         features = FeatureCollection(features = listOf(

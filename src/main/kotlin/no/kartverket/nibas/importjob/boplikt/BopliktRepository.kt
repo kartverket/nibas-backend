@@ -27,12 +27,18 @@ class BopliktRepository(
             omraade, posisjon,
             kommunelokalid, version, slettet,
             usikker_avgrensning,
+            har_usikker_avgrensning,
             forskriftsreferanse, informasjon, url,
             bebygd_eiendom,
+            gjelder_for_bolig_ikke_tatt_i_bruk,
             ikke_helaarsbolig_under_oppforing,
+            gjelder_for_brukt_som_helarsbolig,
             ubebygd_tomt,
+            gjelder_for_ubebygd_boligtomt,
             unntak_fra_slektskapsunntak,
-            andre_avgrensninger
+            har_unntak_fra_slektskapsunntak,
+            andre_avgrensninger,
+            andre_lokale_avgrensninger
         ) VALUES (
             :objid, :lokalid, :navn, :nummer, :gyldigfra, :gyldigtil,
             :datafangstdato, :foerstedigitaliseringsdato,
@@ -41,12 +47,18 @@ class BopliktRepository(
             st_geomfromewkb(:omraade_posisjon),
             :kommunelokalid, :version, :slettet,
             :usikkerAvgrensning,
+            :harUsikkerAvgrensning,
             :forskriftsreferanse, :informasjon, :url,
             :bebygdEiendom,
+            :gjelderForBoligIkkeTattIBruk,
             :ikkeHelaarsboligUnderOppforing,
+            :gjelderForBruktSomHelarsbolig,
             :ubebygdTomt,
+            :gjelderForUbebygdBoligtomt,
             :unntakFraSlektskapsunntak,
-            :andreAvgrensninger
+            :harUnntakFraSlektskapsunntak,
+            :andreAvgrensninger,
+            :andreLokaleAvgrensninger
         )
     """.trimIndent()
 
@@ -72,14 +84,20 @@ class BopliktRepository(
             "version" to row.version,
             "slettet" to row.slettet,
             "usikkerAvgrensning" to row.usikkerAvgrensning,
+            "harUsikkerAvgrensning" to row.harUsikkerAvgrensning,
             "forskriftsreferanse" to row.forskriftsreferanse,
             "informasjon" to row.informasjon,
             "url" to row.url,
             "bebygdEiendom" to row.bebygdEiendom,
+            "gjelderForBoligIkkeTattIBruk" to row.gjelderForBoligIkkeTattIBruk,
             "ikkeHelaarsboligUnderOppforing" to row.ikkeHelaarsboligUnderOppforing,
+            "gjelderForBruktSomHelarsbolig" to row.gjelderForBruktSomHelarsbolig,
             "ubebygdTomt" to row.ubebygdTomt,
+            "gjelderForUbebygdBoligtomt" to row.gjelderForUbebygdBoligtomt,
             "unntakFraSlektskapsunntak" to row.unntakFraSlektskapsunntak,
-            "andreAvgrensninger" to row.andreAvgrensninger
+            "harUnntakFraSlektskapsunntak" to row.harUnntakFraSlektskapsunntak,
+            "andreAvgrensninger" to row.andreAvgrensninger,
+            "andreLokaleAvgrensninger" to row.andreLokaleAvgrensninger
         )
 
         jdbc.update(sql, params)

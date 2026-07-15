@@ -12,6 +12,7 @@ import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.MultiPolygon
 import no.kartverket.nibas.common.Identifikator
+import no.kartverket.nibas.domain.GjeldendeMaterieltVilkaar
 import no.kartverket.nibas.domain.MaterieltVilkaar
 import no.kartverket.nibas.domain.utkast.EndredeInndelinger
 import no.kartverket.nibas.sporing.Gyldighet
@@ -233,6 +234,9 @@ data class BopliktomraadeResponse(
     @field:JsonProperty("usikkerAvgrensning")
     val usikkerAvgrensning: Boolean = false,
 
+    @Schema(description = "Har usikker avgrensning (nytt navn for usikkerAvgrensning)")
+    val harUsikkerAvgrensning: Boolean = false,
+
     @Schema(description = "Forskriftsreferansen for bopliktområdet")
     val forskriftsreferanse: String? = null,
 
@@ -245,8 +249,20 @@ data class BopliktomraadeResponse(
     )
     val materielleVilkaar: Set<MaterieltVilkaar> = emptySet(),
 
+    @ArraySchema(
+        arraySchema = Schema(description = "Materielle vilkår for bopliktområdet (nye enum-verdier, erstatter materielleVilkaar)"),
+        schema = Schema(
+            description = "Gjeldende materielt vilkår",
+            implementation = GjeldendeMaterieltVilkaar::class
+        )
+    )
+    val gjeldendeMaterielleVilkaar: Set<GjeldendeMaterieltVilkaar> = emptySet(),
+
     @Schema(description = "Andre avgrensninger")
     val andreAvgrensninger: String? = null,
+
+    @Schema(description = "Andre lokale avgrensninger (nytt navn for andreAvgrensninger)")
+    val andreLokaleAvgrensninger: String? = null,
 
     @Schema(description = "Lenke til mer informasjon")
     val url: String? = null,

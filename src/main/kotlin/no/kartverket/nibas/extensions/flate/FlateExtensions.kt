@@ -125,9 +125,12 @@ fun Bopliktomraade.toBopliktomraadeResponse(): BopliktomraadeResponse {
         informasjon = informasjon,
         delvisBoplikt = delvisBoplikt,
         usikkerAvgrensning = usikkerAvgrensning,
+        harUsikkerAvgrensning = harUsikkerAvgrensning,
         forskriftsreferanse = forskriftsreferanse,
         materielleVilkaar = materielleVilkaar,
+        gjeldendeMaterielleVilkaar = gjeldendeMaterielleVilkaar,
         andreAvgrensninger = andreAvgrensninger,
+        andreLokaleAvgrensninger = andreLokaleAvgrensninger,
         url = url,
     )
 }

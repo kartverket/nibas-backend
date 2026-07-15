@@ -10,6 +10,7 @@ import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
 import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
+import no.kartverket.nibas.domain.GjeldendeMaterieltVilkaar
 import no.kartverket.nibas.domain.MaterieltVilkaar
 import java.time.LocalDate
 import jakarta.validation.constraints.NotBlank
@@ -144,6 +145,9 @@ data class BopliktomraadeRequest(
     @field:JsonProperty("usikkerAvgrensning")
     val usikkerAvgrensning: Boolean = false,
 
+    @Schema(description = "Har usikker avgrensning (nytt navn for usikkerAvgrensning)")
+    val harUsikkerAvgrensning: Boolean? = null,
+
     @ArraySchema(
         arraySchema = Schema(description = "Materielle vilkår for bopliktområdet"),
         schema = Schema(
@@ -153,8 +157,20 @@ data class BopliktomraadeRequest(
     )
     val materielleVilkaar: Set<MaterieltVilkaar> = emptySet(),
 
+    @ArraySchema(
+        arraySchema = Schema(description = "Materielle vilkår for bopliktområdet (nye enum-verdier, erstatter materielleVilkaar)"),
+        schema = Schema(
+            description = "Gjeldende materielt vilkår",
+            implementation = GjeldendeMaterieltVilkaar::class
+        )
+    )
+    val gjeldendeMaterielleVilkaar: Set<GjeldendeMaterieltVilkaar>? = null,
+
     @Schema(description = "Andre avgrensninger")
     val andreAvgrensninger: String? = null,
+
+    @Schema(description = "Andre lokale avgrensninger (nytt navn for andreAvgrensninger)")
+    val andreLokaleAvgrensninger: String? = null,
 
     @Schema(description = "Referanse til forskriften for bopliktomraadet")
     var forskriftsreferanse: String? = null,

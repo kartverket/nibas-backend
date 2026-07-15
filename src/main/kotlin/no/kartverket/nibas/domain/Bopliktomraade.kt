@@ -32,6 +32,15 @@ enum class MaterieltVilkaar {
     UNNTAKFRASLEKTSKAPSUNNTAK
 }
 
+// Nye verdier for materielle vilkår, navngitt etter de nye db-feltene. Eksponeres via feltet
+// gjeldendeMaterielleVilkaar, mens MaterieltVilkaar beholdes uendret for bakoverkompatibilitet.
+enum class GjeldendeMaterieltVilkaar {
+    GJELDER_FOR_BOLIG_IKKE_TATT_I_BRUK,
+    GJELDER_FOR_BRUKT_SOM_HELARSBOLIG,
+    GJELDER_FOR_UBEBYGD_BOLIGTOMT,
+    HAR_UNNTAK_FRA_SLEKTSKAPSUNNTAK
+}
+
 @Table(name = "bopliktomraade")
 @Entity
 class Bopliktomraade(
@@ -51,6 +60,9 @@ class Bopliktomraade(
     @Column(name = "usikker_avgrensning", nullable = false)
     var usikkerAvgrensning: Boolean = false
 
+    @Column(name = "har_usikker_avgrensning", nullable = false)
+    var harUsikkerAvgrensning: Boolean = false
+
     @Column(name = "forskriftsreferanse")
     var forskriftsreferanse: String? = null
 
@@ -60,17 +72,32 @@ class Bopliktomraade(
     @Column(name = "bebygd_eiendom")
     var bebygdEiendom: Boolean = false
 
+    @Column(name = "gjelder_for_bolig_ikke_tatt_i_bruk")
+    var gjelderForBoligIkkeTattIBruk: Boolean = false
+
     @Column(name = "ikke_helaarsbolig_under_oppforing")
     var ikkeHelaarsBoligUnderOppforing: Boolean = false
+
+    @Column(name = "gjelder_for_brukt_som_helarsbolig")
+    var gjelderForBruktSomHelarsbolig: Boolean = false
 
     @Column(name = "ubebygd_tomt")
     var ubebygdTomt: Boolean = false
 
+    @Column(name = "gjelder_for_ubebygd_boligtomt")
+    var gjelderForUbebygdBoligtomt: Boolean = false
+
     @Column(name = "unntak_fra_slektskapsunntak")
     var unntakFraSlektskapsunntak: Boolean = false
 
+    @Column(name = "har_unntak_fra_slektskapsunntak")
+    var harUnntakFraSlektskapsunntak: Boolean = false
+
     @Column(name = "andre_avgrensninger")
     var andreAvgrensninger: String? = null
+
+    @Column(name = "andre_lokale_avgrensninger")
+    var andreLokaleAvgrensninger: String? = null
 
     val materielleVilkaar: Set<MaterieltVilkaar>
         get() = buildSet {
@@ -80,11 +107,42 @@ class Bopliktomraade(
             if (unntakFraSlektskapsunntak) add(MaterieltVilkaar.UNNTAKFRASLEKTSKAPSUNNTAK)
         }
 
+    val gjeldendeMaterielleVilkaar: Set<GjeldendeMaterieltVilkaar>
+        get() = buildSet {
+            if (gjelderForBoligIkkeTattIBruk) add(GjeldendeMaterieltVilkaar.GJELDER_FOR_BOLIG_IKKE_TATT_I_BRUK)
+            if (gjelderForBruktSomHelarsbolig) add(GjeldendeMaterieltVilkaar.GJELDER_FOR_BRUKT_SOM_HELARSBOLIG)
+            if (gjelderForUbebygdBoligtomt) add(GjeldendeMaterieltVilkaar.GJELDER_FOR_UBEBYGD_BOLIGTOMT)
+            if (harUnntakFraSlektskapsunntak) add(GjeldendeMaterieltVilkaar.HAR_UNNTAK_FRA_SLEKTSKAPSUNNTAK)
+        }
+
     fun setMaterielleVilkaar(vilkaar: Set<MaterieltVilkaar>) {
-        bebygdEiendom = MaterieltVilkaar.BEBYGDEIENDOM in vilkaar
-        ikkeHelaarsBoligUnderOppforing = MaterieltVilkaar.IKKEHELAARSBOLIGUNDEROPPFORING in vilkaar
-        ubebygdTomt = MaterieltVilkaar.UBEBYGDTOMT in vilkaar
-        unntakFraSlektskapsunntak = MaterieltVilkaar.UNNTAKFRASLEKTSKAPSUNNTAK in vilkaar
+        val bebygd = MaterieltVilkaar.BEBYGDEIENDOM in vilkaar
+        val ikkeHelaars = MaterieltVilkaar.IKKEHELAARSBOLIGUNDEROPPFORING in vilkaar
+        val ubebygd = MaterieltVilkaar.UBEBYGDTOMT in vilkaar
+        val unntak = MaterieltVilkaar.UNNTAKFRASLEKTSKAPSUNNTAK in vilkaar
+        bebygdEiendom = bebygd
+        gjelderForBoligIkkeTattIBruk = bebygd
+        ikkeHelaarsBoligUnderOppforing = ikkeHelaars
+        gjelderForBruktSomHelarsbolig = ikkeHelaars
+        ubebygdTomt = ubebygd
+        gjelderForUbebygdBoligtomt = ubebygd
+        unntakFraSlektskapsunntak = unntak
+        harUnntakFraSlektskapsunntak = unntak
+    }
+
+    fun setGjeldendeMaterielleVilkaar(vilkaar: Set<GjeldendeMaterieltVilkaar>) {
+        val boligIkkeTattIBruk = GjeldendeMaterieltVilkaar.GJELDER_FOR_BOLIG_IKKE_TATT_I_BRUK in vilkaar
+        val bruktSomHelarsbolig = GjeldendeMaterieltVilkaar.GJELDER_FOR_BRUKT_SOM_HELARSBOLIG in vilkaar
+        val ubebygdBoligtomt = GjeldendeMaterieltVilkaar.GJELDER_FOR_UBEBYGD_BOLIGTOMT in vilkaar
+        val unntak = GjeldendeMaterieltVilkaar.HAR_UNNTAK_FRA_SLEKTSKAPSUNNTAK in vilkaar
+        gjelderForBoligIkkeTattIBruk = boligIkkeTattIBruk
+        bebygdEiendom = boligIkkeTattIBruk
+        gjelderForBruktSomHelarsbolig = bruktSomHelarsbolig
+        ikkeHelaarsBoligUnderOppforing = bruktSomHelarsbolig
+        gjelderForUbebygdBoligtomt = ubebygdBoligtomt
+        ubebygdTomt = ubebygdBoligtomt
+        harUnntakFraSlektskapsunntak = unntak
+        unntakFraSlektskapsunntak = unntak
     }
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -211,15 +269,21 @@ class Bopliktomraade(
             navn = gammeltBopliktomraade.navn
             omraade = gammeltBopliktomraade.omraade
             usikkerAvgrensning = gammeltBopliktomraade.usikkerAvgrensning
+            harUsikkerAvgrensning = gammeltBopliktomraade.harUsikkerAvgrensning
             bopliktomraadeGrenser = when (gammeltBopliktomraade.bopliktomraadeGrenser) {
                 is BopliktomraadeGrenser.DelvisBoplikt -> BopliktomraadeGrenser.DelvisBoplikt()
                 is BopliktomraadeGrenser.FullBoplikt -> BopliktomraadeGrenser.FullBoplikt()
             }
             bebygdEiendom = gammeltBopliktomraade.bebygdEiendom
+            gjelderForBoligIkkeTattIBruk = gammeltBopliktomraade.gjelderForBoligIkkeTattIBruk
             ikkeHelaarsBoligUnderOppforing = gammeltBopliktomraade.ikkeHelaarsBoligUnderOppforing
+            gjelderForBruktSomHelarsbolig = gammeltBopliktomraade.gjelderForBruktSomHelarsbolig
             ubebygdTomt = gammeltBopliktomraade.ubebygdTomt
+            gjelderForUbebygdBoligtomt = gammeltBopliktomraade.gjelderForUbebygdBoligtomt
             unntakFraSlektskapsunntak = gammeltBopliktomraade.unntakFraSlektskapsunntak
+            harUnntakFraSlektskapsunntak = gammeltBopliktomraade.harUnntakFraSlektskapsunntak
             andreAvgrensninger = gammeltBopliktomraade.andreAvgrensninger
+            andreLokaleAvgrensninger = gammeltBopliktomraade.andreLokaleAvgrensninger
             forskriftsreferanse = gammeltBopliktomraade.forskriftsreferanse
             url = gammeltBopliktomraade.url
             datafangstdato = gammeltBopliktomraade.datafangstdato

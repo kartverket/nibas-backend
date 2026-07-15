@@ -8,6 +8,7 @@ import no.kartverket.nibas.api.v1.common.GyldighetResponse
 import no.kartverket.nibas.api.v1.common.Kommunenummer
 import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
+import no.kartverket.nibas.domain.GjeldendeMaterieltVilkaar
 import no.kartverket.nibas.domain.MaterieltVilkaar
 import java.time.ZonedDateTime
 
@@ -212,11 +213,26 @@ data class EksternBopliktomraadeRespons(
     )
     val materielleVilkaar: Set<MaterieltVilkaar> = emptySet(),
 
+    @ArraySchema(
+        arraySchema = Schema(description = "Materielle vilkår for bopliktområdet (nye enum-verdier, erstatter materielleVilkaar)"),
+        schema = Schema(
+            description = "Gjeldende materielt vilkår",
+            implementation = GjeldendeMaterieltVilkaar::class
+        )
+    )
+    val gjeldendeMaterielleVilkaar: Set<GjeldendeMaterieltVilkaar> = emptySet(),
+
     @Schema(description = "Andre avgrensninger")
     val andreAvgrensninger: String? = null,
 
+    @Schema(description = "Andre lokale avgrensninger (nytt navn for andreAvgrensninger)")
+    val andreLokaleAvgrensninger: String? = null,
+
     @Schema(description = "Usikker avgrensning")
     val usikkerAvgrensning: Boolean = false,
+
+    @Schema(description = "Har usikker avgrensning (nytt navn for usikkerAvgrensning)")
+    val harUsikkerAvgrensning: Boolean = false,
 
     @Schema(description = "URL til informasjon om boplikten")
     val url: String?,

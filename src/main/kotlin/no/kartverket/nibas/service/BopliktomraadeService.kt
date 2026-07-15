@@ -113,10 +113,19 @@ fun Bopliktomraade.applyChangesFromRequest(request: BopliktomraadeRequest): Bopl
     return this.apply {
         this.navn = request.navn
         this.nummer = request.nummer
-        this.usikkerAvgrensning = request.usikkerAvgrensning
+        val usikkerAvgrensningValue = request.harUsikkerAvgrensning ?: request.usikkerAvgrensning
+        this.usikkerAvgrensning = usikkerAvgrensningValue
+        this.harUsikkerAvgrensning = usikkerAvgrensningValue
         this.forskriftsreferanse = request.forskriftsreferanse
-        this.setMaterielleVilkaar(request.materielleVilkaar)
-        this.andreAvgrensninger = request.andreAvgrensninger
+        val gjeldendeMaterielleVilkaar = request.gjeldendeMaterielleVilkaar
+        if (gjeldendeMaterielleVilkaar != null) {
+            this.setGjeldendeMaterielleVilkaar(gjeldendeMaterielleVilkaar)
+        } else {
+            this.setMaterielleVilkaar(request.materielleVilkaar)
+        }
+        val andreAvgrensningerValue = request.andreLokaleAvgrensninger ?: request.andreAvgrensninger
+        this.andreAvgrensninger = andreAvgrensningerValue
+        this.andreLokaleAvgrensninger = andreAvgrensningerValue
         this.url = request.url
         informasjon = request.informasjon
         if (delvisBoplikt != request.delvisBoplikt) {
