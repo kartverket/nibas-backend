@@ -101,9 +101,7 @@ data class AdministrativGrenseMetadata(
     @Schema(description = "Felles metadata-egenskaper.")
     override val common: CommonMetadata,
     @Schema(description = "Felles metadata-egenskaper for grenser.")
-    override val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(
-        posisjonskvalitet = Posisjonskvalitet()
-    ),
+    override val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
     @Schema(description = "Henviser til fastsettings- eller lovinformasjon.")
     override var dokumentasjonsreferanser: List<DokumentasjonsreferanseDTO> = emptyList(),
 ) : Metadata, HarCommonMetadata, HarDokumentasjonsreferanse, HarCommonGrense
@@ -116,9 +114,7 @@ data class RiksgrenseMetadata(
     @Schema(description = "Felles metadata-egenskaper.")
     override val common: CommonMetadata,
     @Schema(description = "Felles metadata-egenskaper for grenser.")
-    override val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(
-        posisjonskvalitet = Posisjonskvalitet()
-    ),
+    override val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
     @Schema(description = "Henviser til fastsettings- eller lovinformasjon.")
     override var dokumentasjonsreferanser: List<DokumentasjonsreferanseDTO> = emptyList(),
 ) : Metadata, HarCommonMetadata, HarCommonGrense, HarDokumentasjonsreferanse
@@ -131,9 +127,8 @@ data class TerritorialgrenseMetadata(
     @Schema(description = "Felles metadata-egenskaper.")
     override val common: CommonMetadata,
     @Schema(description = "Felles metadata-egenskaper for grenser.")
-    override val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(
-        posisjonskvalitet = Posisjonskvalitet()
-    ),    @Schema(description = "Henviser til fastsettings- eller lovinformasjon.")
+    override val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
+    @Schema(description = "Henviser til fastsettings- eller lovinformasjon.")
     override var dokumentasjonsreferanser: List<DokumentasjonsreferanseDTO> = emptyList(),
 ) : Metadata, HarCommonMetadata, HarCommonGrense, HarDokumentasjonsreferanse
 
@@ -145,9 +140,7 @@ data class AvtaltAvgrensningslinjeMetadata(
     @Schema(description = "Felles metadata-egenskaper.")
     override val common: CommonMetadata,
     @Schema(description = "Felles metadata-egenskaper for grenser.")
-    override val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(
-        posisjonskvalitet = Posisjonskvalitet()
-    ),
+    override val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
     @Schema(description = "Henviser til fastsettings- eller lovinformasjon.")
     override var dokumentasjonsreferanser: List<DokumentasjonsreferanseDTO> = emptyList(),
 ) : Metadata, HarCommonMetadata, HarCommonGrense, HarDokumentasjonsreferanse
@@ -160,9 +153,7 @@ data class GrunnlinjeMetadata(
     @Schema(description = "Felles metadata-egenskaper.")
     override val common: CommonMetadata,
     @Schema(description = "Felles metadata-egenskaper for grenser.")
-    override val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(
-        posisjonskvalitet = Posisjonskvalitet()
-    ),
+    override val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(),
     @Schema(description = "Henviser til fastsettings- eller lovinformasjon.")
     override var dokumentasjonsreferanser: List<DokumentasjonsreferanseDTO> = emptyList(),
 ) : Metadata, HarCommonMetadata, HarCommonGrense, HarDokumentasjonsreferanse
@@ -175,9 +166,8 @@ data class StatistiskgrenseMetadata(
     @Schema(description = "Felles metadata-egenskaper.")
     override val common: CommonMetadata,
     @Schema(description = "Felles metadata-egenskaper for grenser.")
-    override val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(
-        posisjonskvalitet = Posisjonskvalitet()
-    )) : Metadata, HarCommonMetadata, HarCommonGrense
+    override val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata()
+) : Metadata, HarCommonMetadata, HarCommonGrense
 
 @Schema(
     name = KOMMUNAL_KRETSGRENSE_METADATA_SCHEMA,
@@ -187,9 +177,8 @@ data class KommunalKretsgrenseMetadata(
     @Schema(description = "Felles metadata-egenskaper.")
     override val common: CommonMetadata,
     @Schema(description = "Felles metadata-egenskaper for grenser.")
-    override val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata(
-        posisjonskvalitet = Posisjonskvalitet()
-    )) : Metadata, HarCommonMetadata, HarCommonGrense
+    override val commonGrense: CommonGrenseMetadata = CommonGrenseMetadata()
+) : Metadata, HarCommonMetadata, HarCommonGrense
 
 data class CommonMetadata(
     @Schema(description = "Unik identifikasjon av et objekt")
@@ -210,7 +199,7 @@ data class CommonMetadata(
 
 data class CommonGrenseMetadata(
     @Schema(description = "Beskrivelse av kvaliteten på stedfestingen")
-    var posisjonskvalitet: Posisjonskvalitet,
+    var posisjonskvalitet: Posisjonskvalitet = Posisjonskvalitet(),
 )
 
 data class KodelisteEntry(
