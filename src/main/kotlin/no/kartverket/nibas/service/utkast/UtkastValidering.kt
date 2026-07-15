@@ -63,7 +63,7 @@ class UtkastValidatorService(
         endredeFeatures.forEach { feature ->
             val metadata = feature.properties.metadata
             if (metadata is HarCommonGrense) {
-                val maalemetodeId = metadata.commonGrense.posisjonskvalitet?.maalemetode?.id
+                val maalemetodeId = metadata.commonGrense.posisjonskvalitet.maalemetode.id
                 val featureId = feature.id ?: "NY"
 
                 when {
@@ -172,7 +172,7 @@ class UtkastValidatorService(
 
         operasjoner.metadataendringer.stemmekretsendringer.values.forEach {
             val tellekretsnummer = it.tellekretsnummer
-            val stemmekretstekst = if (it.nummer.isNullOrBlank()) "" else " (stemmekrets ${it.nummer})"
+            val stemmekretstekst = if (it.nummer.isBlank()) "" else " (stemmekrets ${it.nummer})"
 
             if (!tellekretsnummer.isNullOrBlank()) {
                 val numeriskTellekretsnummer = tellekretsnummer.toIntOrNull()
