@@ -10,7 +10,9 @@ class BopliktomraadeRequestBuilder(
     private var bopliktomraadenummer: String = "138",
     private var bopliktomraadenavn: String = "Mosekollen øst 2",
     private var delvisBoplikt: Boolean = true,
+    private var gjelderKunDelAvKommunen: Boolean = true,
     private var usikkerAvgrensning: Boolean = true,
+    private var harUsikkerAvgrensning: Boolean = true,
     private var bebygdEiendom: Boolean = false,
     private var ikkeHelaarsboligUnderOppforing: Boolean = false,
     private var ubebygdTomt: Boolean = false,
@@ -100,7 +102,9 @@ class BopliktomraadeRequestBuilder(
             andreAvgrensninger = andreAvgrensninger,
             url = url,
             kommunenummer = kommunenummer,
-            version = version
+            version = version,
+            gjelderKunDelAvKommunen = gjelderKunDelAvKommunen,
+            harUsikkerAvgrensning = harUsikkerAvgrensning,
         )
     }
 }

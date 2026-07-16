@@ -190,6 +190,11 @@ class Bopliktomraade(
         is BopliktomraadeGrenser.FullBoplikt -> false
     }
 
+    val gjelderKunDelAvKommunen: Boolean get() = when (bopliktomraadeGrenser) {
+        is BopliktomraadeGrenser.DelvisBoplikt -> true
+        is BopliktomraadeGrenser.FullBoplikt -> false
+    }
+
     override fun getGrensekoblinger(gyldighetsdato: LocalDate): Set<BopliktomraadeGrenseKobling> {
         return when(val geometry = bopliktomraadeGrenser) {
             is BopliktomraadeGrenser.DelvisBoplikt -> geometry.getGrensekoblinger(gyldighetsdato)

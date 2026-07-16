@@ -139,14 +139,17 @@ data class BopliktomraadeRequest(
     val informasjon: String? = null,
 
     @Schema(description = "Indikerer om bopliktomraadet dekker deler av kommunen eller ikke")
-    val delvisBoplikt: Boolean,
+    val delvisBoplikt: Boolean? = null,
+
+    @Schema(description = "Indikerer om bopliktomraadet dekker deler av kommunen eller ikke")
+    val gjelderKunDelAvKommunen: Boolean,
 
     @Schema(description = "Usikker avgrensning")
     @field:JsonProperty("usikkerAvgrensning")
-    val usikkerAvgrensning: Boolean = false,
+    val usikkerAvgrensning: Boolean? = false,
 
     @Schema(description = "Har usikker avgrensning (nytt navn for usikkerAvgrensning)")
-    val harUsikkerAvgrensning: Boolean? = null,
+    val harUsikkerAvgrensning: Boolean,
 
     @ArraySchema(
         arraySchema = Schema(description = "Materielle vilkår for bopliktområdet"),
@@ -155,7 +158,7 @@ data class BopliktomraadeRequest(
             implementation = MaterieltVilkaar::class
         )
     )
-    val materielleVilkaar: Set<MaterieltVilkaar> = emptySet(),
+    val materielleVilkaar: Set<MaterieltVilkaar>? = emptySet(),
 
     @ArraySchema(
         arraySchema = Schema(description = "Materielle vilkår for bopliktområdet (nye enum-verdier, erstatter materielleVilkaar)"),
@@ -164,7 +167,7 @@ data class BopliktomraadeRequest(
             implementation = GjeldendeMaterieltVilkaar::class
         )
     )
-    val gjeldendeMaterielleVilkaar: Set<GjeldendeMaterieltVilkaar>? = null,
+    val gjeldendeMaterielleVilkaar: Set<GjeldendeMaterieltVilkaar> = emptySet(),
 
     @Schema(description = "Andre avgrensninger")
     val andreAvgrensninger: String? = null,

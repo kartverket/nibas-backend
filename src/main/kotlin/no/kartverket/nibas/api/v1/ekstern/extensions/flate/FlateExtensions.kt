@@ -166,6 +166,7 @@ fun Bopliktomraade.toEksternBopliktomraadeResponse(gyldighetsdato: LocalDate): E
         datafangstdato = datafangstdato,
         kommunenummer = Kommunenummer(kommune.kommunenummerUuid, kommune.kommunenummer),
         delvisBoplikt = delvisBoplikt,
+        gjelderKunDelAvKommunen = gjelderKunDelAvKommunen,
         informasjon = informasjon,
         forskriftsreferanse = forskriftsreferanse,
         materielleVilkaar = materielleVilkaar,

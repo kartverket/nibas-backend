@@ -129,6 +129,7 @@ fun Bopliktomraade.toBopliktomraadeResponse(): BopliktomraadeResponse {
         forskriftsreferanse = forskriftsreferanse,
         materielleVilkaar = materielleVilkaar,
         gjeldendeMaterielleVilkaar = gjeldendeMaterielleVilkaar,
+        gjelderKunDelAvKommunen = gjelderKunDelAvKommunen,
         andreAvgrensninger = andreAvgrensninger,
         andreLokaleAvgrensninger = andreLokaleAvgrensninger,
         url = url,

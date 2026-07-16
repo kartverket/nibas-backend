@@ -159,7 +159,10 @@ class UtkastValidatorServiceTest {
                     kommunenummer = Kommunenummer(
                         "1",
                         "1"
-                    )
+                    ),
+                    gjelderKunDelAvKommunen = false,
+                    andreLokaleAvgrensninger = "test",
+                    harUsikkerAvgrensning = true,
                 )
             ))
             .build()

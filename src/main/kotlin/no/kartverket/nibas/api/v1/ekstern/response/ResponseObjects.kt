@@ -198,6 +198,9 @@ data class EksternBopliktomraadeRespons(
     @Schema(description = "Om boplikten gjelder delvis for området")
     val delvisBoplikt: Boolean,
 
+    @Schema(description = "Indikerer om bopliktomraadet dekker deler av kommunen eller ikke")
+    val gjelderKunDelAvKommunen: Boolean,
+
     @Schema(description = "Tilleggsinformasjon om bopliktområdet")
     val informasjon: String?,
 
@@ -232,7 +235,7 @@ data class EksternBopliktomraadeRespons(
     val usikkerAvgrensning: Boolean = false,
 
     @Schema(description = "Har usikker avgrensning (nytt navn for usikkerAvgrensning)")
-    val harUsikkerAvgrensning: Boolean = false,
+    val harUsikkerAvgrensning: Boolean,
 
     @Schema(description = "URL til informasjon om boplikten")
     val url: String?,

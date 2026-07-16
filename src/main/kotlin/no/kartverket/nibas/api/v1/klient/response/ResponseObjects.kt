@@ -230,12 +230,15 @@ data class BopliktomraadeResponse(
     @Schema(description = "Om boplikten gjelder delvis innenfor området")
     val delvisBoplikt: Boolean? = null,
 
+    @Schema(description = "Indikerer om bopliktomraadet dekker deler av kommunen eller ikke")
+    val gjelderKunDelAvKommunen: Boolean,
+
     @Schema(description = "Usikker avgrensning")
     @field:JsonProperty("usikkerAvgrensning")
     val usikkerAvgrensning: Boolean = false,
 
     @Schema(description = "Har usikker avgrensning (nytt navn for usikkerAvgrensning)")
-    val harUsikkerAvgrensning: Boolean = false,
+    val harUsikkerAvgrensning: Boolean,
 
     @Schema(description = "Forskriftsreferansen for bopliktområdet")
     val forskriftsreferanse: String? = null,

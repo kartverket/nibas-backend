@@ -113,16 +113,12 @@ fun Bopliktomraade.applyChangesFromRequest(request: BopliktomraadeRequest): Bopl
     return this.apply {
         this.navn = request.navn
         this.nummer = request.nummer
-        val usikkerAvgrensningValue = request.harUsikkerAvgrensning ?: request.usikkerAvgrensning
+        val usikkerAvgrensningValue = request.harUsikkerAvgrensning
         this.usikkerAvgrensning = usikkerAvgrensningValue
-        this.harUsikkerAvgrensning = usikkerAvgrensningValue
+        this.harUsikkerAvgrensning = harUsikkerAvgrensning
         this.forskriftsreferanse = request.forskriftsreferanse
         val gjeldendeMaterielleVilkaar = request.gjeldendeMaterielleVilkaar
-        if (gjeldendeMaterielleVilkaar != null) {
-            this.setGjeldendeMaterielleVilkaar(gjeldendeMaterielleVilkaar)
-        } else {
-            this.setMaterielleVilkaar(request.materielleVilkaar)
-        }
+        this.setGjeldendeMaterielleVilkaar(gjeldendeMaterielleVilkaar)
         val andreAvgrensningerValue = request.andreLokaleAvgrensninger ?: request.andreAvgrensninger
         this.andreAvgrensninger = andreAvgrensningerValue
         this.andreLokaleAvgrensninger = andreAvgrensningerValue
@@ -130,7 +126,12 @@ fun Bopliktomraade.applyChangesFromRequest(request: BopliktomraadeRequest): Bopl
         informasjon = request.informasjon
         if (delvisBoplikt != request.delvisBoplikt) {
             this.bopliktomraadeGrenser =
-                if (request.delvisBoplikt) BopliktomraadeGrenser.DelvisBoplikt()
+                if (request.delvisBoplikt != null && delvisBoplikt) BopliktomraadeGrenser.DelvisBoplikt()
+                else BopliktomraadeGrenser.FullBoplikt()
+        }
+        if (gjelderKunDelAvKommunen != request.gjelderKunDelAvKommunen) {
+            this.bopliktomraadeGrenser =
+                if (request.gjelderKunDelAvKommunen) BopliktomraadeGrenser.DelvisBoplikt()
                 else BopliktomraadeGrenser.FullBoplikt()
         }
     }
