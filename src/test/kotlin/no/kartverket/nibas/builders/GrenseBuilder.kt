@@ -18,17 +18,6 @@ enum class MaalemetodeKodeEnum(val uuid: String) {
     TERRENGMAALT("7f48625b-e46f-413e-ae4d-0381ac64264b")
 }
 
-enum class NoeyaktighetsklasseEnum(val code: String) {
-    NK1("LiteNøyaktigeGrenserOgGrenserFraN50")
-}
-
-enum class TerrengdetaljEnum(val code: String) {
-    AnnetGjerde("AGJ")
-}
-
-enum class FastsettingstypeEnum { BestemteKoordinater }
-enum class GrensestatusEnum { Traktat }
-
 class GrenseBuilder(private val id: String = "1",
                     private var lokalId: Lokalid = Lokalid("123"),
                     private var grenseGeometri: LineString = GeometryFactory().createLineString(),
