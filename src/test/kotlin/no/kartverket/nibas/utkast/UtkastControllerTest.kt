@@ -77,9 +77,10 @@ internal class UtkastControllerTest : NibasMvcTest() {
         every { utkastServiceMock.opprettUtkast(any()) } returns id
         val opprettUtkastRequest = OpprettUtkastRequest(
             navn = "Mitt utkast",
-            endringstype = Endringstype.KVALITETSHEVING.value,
+            endringstype = Endringstype.KVALITETSHEVING,
             gyldigFra = LocalDate.of(2021, 1, 1),
         )
+        println(mapper.writeValueAsString(Endringstype.KVALITETSHEVING))
         post(
             url = "/v1/utkast",
             requestObject = opprettUtkastRequest,
@@ -109,7 +110,7 @@ internal class UtkastControllerTest : NibasMvcTest() {
         val expectedUtkastResponse = UtkastResponse(
             id = utkastId,
             navn = navn,
-            endringstype = Endringstype.KVALITETSHEVING.value,
+            endringstype = Endringstype.KVALITETSHEVING,
             status = UtkastStatus.OPPRETTET.value,
             auditInfoResponse = AuditInfoResponse(oppdateringsdato = syvendeJuli),
             opprettetDato = opprettetTidspunkt,
@@ -158,7 +159,7 @@ internal class UtkastControllerTest : NibasMvcTest() {
         val expectedUtkastResponse = UtkastResponse(
             id = utkastId,
             navn = utkastNavn,
-            endringstype = Endringstype.KVALITETSHEVING.value,
+            endringstype = Endringstype.KVALITETSHEVING,
             status = UtkastStatus.OPPRETTET.value,
             auditInfoResponse = AuditInfoResponse(oppdateringsdato = oppdateringsdato),
             opprettetDato = opprettetDato,

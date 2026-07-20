@@ -12,6 +12,7 @@ import no.kartverket.nibas.builders.GrunnkretsBuilder
 import no.kartverket.nibas.builders.INFORMASJONTEKST
 import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.extensions.geometry.posisjonToFeature
 import no.kartverket.nibas.kodelister.KodelisteType
 import no.kartverket.nibas.kodelister.MissingKodelisteItemException
@@ -88,7 +89,7 @@ internal class GrunnkretsControllerTest : NibasMvcTest() {
                     gyldigFra = jan1In2023,
                     gyldigTil = jan1In2024),
                 oppdateringsdato = oppdateringstidspunkt,
-                endringstype = "Kvalitetsheving",
+                endringstype = Endringstype.KVALITETSHEVING,
                 kommunenummer = Kommunenummer(id = "UUID-1", kodeverdi = "0301"),
                 datafangstdato = oppdateringstidspunkt,
                 version = 1,
@@ -104,7 +105,7 @@ internal class GrunnkretsControllerTest : NibasMvcTest() {
                     gyldigFra = jan1In2024,
                     gyldigTil = null),
                 oppdateringsdato = oppdateringstidspunkt,
-                endringstype = "Kvalitetsheving",
+                endringstype = Endringstype.KVALITETSHEVING,
                 kommunenummer = Kommunenummer(id = "UUID-1", kodeverdi = "0301"),
                 representasjonspunkt = grunnkrets2.posisjon.posisjonToFeature(1),
                 datafangstdato = oppdateringstidspunkt,

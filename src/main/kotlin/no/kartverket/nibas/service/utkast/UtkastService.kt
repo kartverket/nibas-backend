@@ -16,7 +16,6 @@ import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
 import no.kartverket.nibas.common.toNorskFormat
-import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.utkast.Utkast
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
@@ -66,7 +65,7 @@ class UtkastService(
     private val logger: Logger = LoggerFactory.getLogger(UtkastService::class.java)
 
     fun opprettUtkast(opprettUtkastRequest: OpprettUtkastRequest): String {
-        utkastValidatorService.validateUtkastAttributter(opprettUtkastRequest.navn, opprettUtkastRequest.endringstype, opprettUtkastRequest.gyldigFra)
+        utkastValidatorService.validateUtkastAttributter(opprettUtkastRequest.navn, opprettUtkastRequest.gyldigFra)
             ?.let { throw ResponseException.BadRequestException(title = "Kan ikke opprette utkastet", msg = it) }
         return utkastRepository.saveAndFlush(opprettUtkastRequest.createUtkast()).id
     }
@@ -94,12 +93,11 @@ class UtkastService(
     fun oppdaterUtkast(utkastId: String, request: OppdaterUtkastRequest): Utkast? {
         val (utkast, gyldigFra) = hentUtkastOppdaterEvtFraRequestValiderEndret(utkastId, request)
 
-        val utkastValideringResult = utkastValidatorService.validateUtkastMedOperasjoner(utkast, request.endringstype, gyldigFra)
+        val utkastValideringResult = utkastValidatorService.validateUtkastMedOperasjoner(utkast, gyldigFra)
 
         if (utkastValideringResult.isNotEmpty()) {
             throw ResponseException.BadRequestException(title = "Kan ikke lagre utkastet", msg = utkastValideringResult.joinToString("\n"))
         }
-        utkast.auditInfo.typeEndring = Endringstype.fromValue(request.endringstype)
         return utkastRepository.save(utkast)
     }
 
@@ -449,6 +447,6 @@ class UtkastService(
 }
 
 private fun OpprettUtkastRequest.createUtkast(): Utkast =
-    UtkastBuilder.builder(this.navn, Endringstype.fromValue(this.endringstype), gyldigFra)
+    UtkastBuilder.builder(this.navn, this.endringstype, gyldigFra)
         .withOperasjoner(Operasjoner())
         .build()

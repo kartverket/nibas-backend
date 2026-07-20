@@ -10,6 +10,7 @@ import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
 import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
+import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.GjeldendeMaterieltVilkaar
 import no.kartverket.nibas.domain.MaterieltVilkaar
 import java.time.LocalDate
@@ -187,7 +188,7 @@ data class OpprettUtkastRequest(
     @Schema(description = "Arbeidsnavnet til utkastet.")
     val navn: String,
     @Schema(description = "Typen endring utkastet representerer.")
-    val endringstype: String,
+    val endringstype: Endringstype,
     @Schema(description = "Gyldig fra-datoen til utkastet.")
     val gyldigFra: LocalDate,
 )
@@ -197,7 +198,7 @@ data class OppdaterUtkastRequest(
     @Schema(description = "Arbeidsnavnet til utkastet.")
     val navn: String,
     @Schema(description = "Typen endring utkastet representerer.")
-    val endringstype: String,
+    val endringstype: Endringstype,
     @Schema(description = "Representasjon av endringene som er utført i utkastet.")
     val operasjoner: Operasjoner = Operasjoner(),
     @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")

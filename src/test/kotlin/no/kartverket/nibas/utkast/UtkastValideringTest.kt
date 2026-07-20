@@ -1023,7 +1023,7 @@ class UtkastValideringTest {
             .build()
 
         val validateGyldigUtkastResult =
-            utkastValidatorService.validateUtkastMedOperasjoner(gyldigUtkast, gyldigUtkast.auditInfo.typeEndring.value, june2024)
+            utkastValidatorService.validateUtkastMedOperasjoner(gyldigUtkast, june2024)
         assertThat(validateGyldigUtkastResult).isEmpty()
     }
 
@@ -1033,7 +1033,7 @@ class UtkastValideringTest {
             .build()
 
         val validateGyldigUtkastResult =
-            utkastValidatorService.validateUtkastMedOperasjoner(utkastUtenOperasjoner, utkastUtenOperasjoner.auditInfo.typeEndring.value, june2024)
+            utkastValidatorService.validateUtkastMedOperasjoner(utkastUtenOperasjoner, june2024)
         assertThat(validateGyldigUtkastResult).isEmpty()
     }
 

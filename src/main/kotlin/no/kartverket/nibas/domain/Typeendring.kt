@@ -1,5 +1,7 @@
 package no.kartverket.nibas.domain
 
+import com.fasterxml.jackson.annotation.JsonCreator
+import com.fasterxml.jackson.annotation.JsonValue
 import jakarta.persistence.*
 
 @Table(name = "typeendring")
@@ -24,12 +26,21 @@ enum class Endringstype(val value: String, val dbKey: String) {
     FASTSETTING("Fastsetting", "fastsetting"),
     NAVNEENDRING("Navneendring", "navneendring"),
     NUMMERENDRING("Nummerendring", "nummerendring"),
+    NYFORSKRIFT("Ny forskrift", "nyforskrift"),
+    UTGATTFORSKRIFT("Utgått forskrift", "utgattForskrift"),
+    FORSKRIFTSENDRING("Forskriftsendring", "forskriftsendring"),
+    OPPDATERTGEOMETRI("Oppdatert geometri", "oppdatertGeometri"),
     IMPORT("Import", "import");
 
+    @JsonValue
+    fun serialize(): String = value
+
     companion object {
-        fun fromValue(valueIn: String): Endringstype {
+        @JsonCreator
+        @JvmStatic
+        fun deserialize(valueIn: String): Endringstype {
             try {
-                return values().first { it.value == valueIn }
+                return entries.first { it.value == valueIn }
             } catch (e: NoSuchElementException) {
                 throw IllegalArgumentException("Invalid value: $valueIn", e)
             }
@@ -37,7 +48,7 @@ enum class Endringstype(val value: String, val dbKey: String) {
 
         fun fromDbKey(dbKeyIn: String): Endringstype {
             try {
-                return values().first { it.dbKey == dbKeyIn }
+                return entries.first { it.dbKey == dbKeyIn }
             } catch (e: NoSuchElementException) {
                 throw IllegalArgumentException("Invalid dbKey: $dbKeyIn", e)
             }

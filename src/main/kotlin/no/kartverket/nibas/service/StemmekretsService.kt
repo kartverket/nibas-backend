@@ -293,8 +293,8 @@ class StemmekretsService(
 
 fun Stemmekrets.applyChangesFromRequest(stemmekretsRequest: StemmekretsRequest): Stemmekrets =
     this.apply {
-        stemmekretsRequest.navn?.let { this.stemmekretsnavn = it }
-        stemmekretsRequest.nummer?.let { this.stemmekretsnummer = it }
+        stemmekretsRequest.navn.let { this.stemmekretsnavn = it }
+        stemmekretsRequest.nummer.let { this.stemmekretsnummer = it }
         stemmekretsRequest.valgdistriktsnummer?.let { this.valgdistriktsnummer = it }
         //Tellekrets kan nullstilles, mens navn, nummer og valgdistrikt må være gitt
         tellekretsnummer = stemmekretsRequest.tellekretsnummer

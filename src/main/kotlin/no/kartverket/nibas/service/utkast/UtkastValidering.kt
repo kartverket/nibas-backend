@@ -103,13 +103,10 @@ class UtkastValidatorService(
         return errorMessages
     }
 
-    fun validateUtkastAttributter(navn: String, endringstype: String, gyldigFra: LocalDate): String? {
+    fun validateUtkastAttributter(navn: String, gyldigFra: LocalDate): String? {
         var errorMessage: String? = null
         if (navn.isBlank()) {
             errorMessage = "Utkastet mangler navn."
-        }
-        if (endringstype.isBlank()) {
-            errorMessage += " Utkastet mangler endringstype."
         }
         if (gyldigFra.isBefore(currentTime.asLocalDate())) {
             errorMessage += " Utkastet kan ikke være gyldig fra en tidligere dato."
@@ -117,10 +114,10 @@ class UtkastValidatorService(
         return errorMessage
     }
 
-    fun validateUtkastMedOperasjoner(utkast: Utkast, endringstype: String, gyldighetDato: LocalDate): List<String> {
+    fun validateUtkastMedOperasjoner(utkast: Utkast, gyldighetDato: LocalDate): List<String> {
         val errorMessages = mutableListOf<String>()
 
-        val utkastNavnOgEndringstypeMessage = validateUtkastAttributter(utkast.navn, endringstype, gyldighetDato)
+        val utkastNavnOgEndringstypeMessage = validateUtkastAttributter(utkast.navn, gyldighetDato)
         if (utkastNavnOgEndringstypeMessage != null) {
             errorMessages.add(utkastNavnOgEndringstypeMessage)
         }
@@ -144,7 +141,7 @@ class UtkastValidatorService(
 
     fun validateUtkastKlartForPublisering(utkast: Utkast, gyldighetDato: LocalDate): List<String> {
         val errorMessages = mutableListOf<String>()
-        errorMessages.addAll(validateUtkastMedOperasjoner(utkast, utkast.auditInfo.typeEndring.value, gyldighetDato))
+        errorMessages.addAll(validateUtkastMedOperasjoner(utkast, gyldighetDato))
         errorMessages.addAll(validateAvrundedeKoordinater(utkast.operasjoner!!))
 
         if (gyldighetDato.isBefore(currentTime.asLocalDate())) {
@@ -172,7 +169,7 @@ class UtkastValidatorService(
 
         operasjoner.metadataendringer.stemmekretsendringer.values.forEach {
             val tellekretsnummer = it.tellekretsnummer
-            val stemmekretstekst = if (it.nummer.isNullOrBlank()) "" else " (stemmekrets ${it.nummer})"
+            val stemmekretstekst = if (it.nummer.isBlank()) "" else " (stemmekrets ${it.nummer})"
 
             if (!tellekretsnummer.isNullOrBlank()) {
                 val numeriskTellekretsnummer = tellekretsnummer.toIntOrNull()

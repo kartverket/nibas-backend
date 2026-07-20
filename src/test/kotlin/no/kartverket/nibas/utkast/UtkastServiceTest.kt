@@ -123,20 +123,6 @@ internal class UtkastServiceTest {
     }
 
     @Test
-    fun `opprett utkast med tom endringstype gir bad request`() {
-        assertThatThrownBy { utkastService.opprettUtkast(OpprettUtkastRequestBuilder().withEndringstype("").build()) }
-            .isInstanceOf(BadRequestException::class.java)
-            .hasMessageContaining("Utkastet mangler endringstype")
-    }
-
-    @Test
-    fun `opprett utkast med tomt navn og tom endringstype gir bad request`() {
-        assertThatThrownBy { utkastService.opprettUtkast(OpprettUtkastRequestBuilder().withNavn("").withEndringstype("").build()) }
-            .isInstanceOf(BadRequestException::class.java)
-            .hasMessageContaining("Utkastet mangler navn. Utkastet mangler endringstype.")
-    }
-
-    @Test
     fun `oppdater-valider gyldig utkast`() {
         val feb3 = LocalDate.of(2025, Month.FEBRUARY, 3)
         val utkastBuilder = UtkastBuilder.builder("Utkast 3", gyldigFra = feb3)

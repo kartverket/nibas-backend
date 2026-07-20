@@ -59,7 +59,7 @@ fun Utkast.toUtkastResponse(): UtkastResponse =
     UtkastResponse(
         id = this.id,
         navn = this.navn,
-        endringstype = this.auditInfo.typeEndring.value,
+        endringstype = this.auditInfo.typeEndring,
         status = this.status.value,
         operasjoner = this.operasjoner ?: Operasjoner(),
         opprettetDato = this.opprettetDato,

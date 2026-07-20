@@ -8,6 +8,7 @@ import no.kartverket.nibas.api.v1.common.GyldighetResponse
 import no.kartverket.nibas.api.v1.common.Kommunenummer
 import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
+import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.GjeldendeMaterieltVilkaar
 import no.kartverket.nibas.domain.MaterieltVilkaar
 import java.time.ZonedDateTime
@@ -123,7 +124,7 @@ data class EksternGrunnkretsResponse(
     val kommunenummer: Kommunenummer,
 
     @Schema(description = "Typen endring som ble gjort på objektet")
-    val endringstype: String?,
+    val endringstype: Endringstype,
 
     @Schema(description = "Geometrien til grunnkretsen, dvs representasjonspunkt og flaten")
     val features: FeatureCollection,
@@ -141,7 +142,7 @@ data class EksternStemmekretsResponse(
     val gyldighet: GyldighetResponse,
 
     @Schema(description = "Typen endring som ble gjort på objektet")
-    val endringstype: String?,
+    val endringstype: Endringstype,
 
     @Schema(description = "Siste oppdateringstidspunkt for objektet")
     val oppdateringsdato: ZonedDateTime,
@@ -184,7 +185,7 @@ data class EksternBopliktomraadeRespons(
     val gyldighet: GyldighetResponse,
 
     @Schema(description = "Typen endring som ble gjort på objektet")
-    val endringstype: String?,
+    val endringstype: Endringstype,
 
     @Schema(description = "Siste oppdateringstidspunkt for objektet")
     val oppdateringsdato: ZonedDateTime,

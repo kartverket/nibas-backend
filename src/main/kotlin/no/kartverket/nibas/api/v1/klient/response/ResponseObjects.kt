@@ -12,6 +12,7 @@ import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.MultiPolygon
 import no.kartverket.nibas.common.Identifikator
+import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.GjeldendeMaterieltVilkaar
 import no.kartverket.nibas.domain.MaterieltVilkaar
 import no.kartverket.nibas.domain.utkast.EndredeInndelinger
@@ -129,7 +130,7 @@ data class GrunnkretsResponse(
     val kommuneIdentifikator: ObjektIdentifikator,
 
     @Schema(description = "Typen endring som ble gjort på objektet")
-    val endringstype: String?,
+    val endringstype: Endringstype,
 
     @Schema(description = "Representasjonspunktet for grunnkretsen")
     val representasjonspunkt: Feature,
@@ -156,7 +157,7 @@ data class StemmekretsResponse(
     val gyldighet: GyldighetResponse,
 
     @Schema(description = "Typen endring som ble gjort på objektet")
-    val endringstype: String?,
+    val endringstype: Endringstype,
 
     @Schema(description = "Siste oppdateringstidspunkt for objektet")
     val oppdateringsdato: ZonedDateTime,
@@ -216,7 +217,7 @@ data class BopliktomraadeResponse(
     val kommuneIdentifikator: ObjektIdentifikator,
 
     @Schema(description = "Typen endring som ble gjort på objektet")
-    val endringstype: String?,
+    val endringstype: Endringstype,
 
     @Schema(description = "Representasjonspunktet for bopliktområdet")
     val representasjonspunkt: Feature,
@@ -284,7 +285,7 @@ data class UtkastResponse(
     @Schema(description = "Arbeidsnavnet til utkastet.")
     val navn: String,
     @Schema(description = "Typen endring utkastet representerer.")
-    val endringstype: String,
+    val endringstype: Endringstype,
     @Schema(description = "Status for utkastet.")
     val status: String,
     @Schema(description = "Da utkastet ble opprettet.")

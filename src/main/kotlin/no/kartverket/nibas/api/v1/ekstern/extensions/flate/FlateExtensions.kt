@@ -53,7 +53,7 @@ fun Grunnkrets.toEksternGrunnkretsResponse(identifikator: Identifikator): Ekster
     datafangstdato = datafangstdato,
     kommunenummer = this.getKommune(gyldighet.gyldigFra)?.let { Kommunenummer(it.kommunenummerUuid, it.kommunenummer) }
         ?: Kommunenummer(id = "Ukjent", kodeverdi = "Ukjent"),
-    endringstype = auditInfo.typeEndring.value,
+    endringstype = auditInfo.typeEndring,
     oppdateringsdato = auditInfo.endretdato,
     features = FeatureCollection(features = listOf(
         posisjon.posisjonToFeature(version),
@@ -144,7 +144,7 @@ fun Stemmekrets.toEksternStemmekretsResponse(identifikator: Identifikator): Ekst
     valgdistriktsnummer = valgdistriktsnummer,
     tellekretsnavn = tellekretsnavn,
     gyldighet = gyldighet.toGyldighetResponse(),
-    endringstype = auditInfo.typeEndring.value,
+    endringstype = auditInfo.typeEndring,
     oppdateringsdato = auditInfo.endretdato,
     tellekretsnummer = tellekretsnummer,
     features = FeatureCollection(features = listOf(
@@ -161,7 +161,7 @@ fun Bopliktomraade.toEksternBopliktomraadeResponse(gyldighetsdato: LocalDate): E
     return EksternBopliktomraadeRespons(
         id = ObjektIdentifikator(Lokalid(lokalid), gyldighet.gyldigFra),
         gyldighet = gyldighet.toGyldighetResponse(),
-        endringstype = auditInfo.typeEndring.value,
+        endringstype = auditInfo.typeEndring,
         oppdateringsdato = auditInfo.endretdato,
         datafangstdato = datafangstdato,
         kommunenummer = Kommunenummer(kommune.kommunenummerUuid, kommune.kommunenummer),

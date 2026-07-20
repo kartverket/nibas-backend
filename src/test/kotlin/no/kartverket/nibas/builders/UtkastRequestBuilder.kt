@@ -27,7 +27,7 @@ class UtkastRequestBuilder {
     fun build(): OppdaterUtkastRequest {
         return OppdaterUtkastRequest(
             navn = this.navn,
-            endringstype = this.endringstype.value,
+            endringstype = this.endringstype,
             operasjoner = this.operasjoner,
             version = version
         )
@@ -62,7 +62,7 @@ class UtkastRequestBuilder {
 
 class OpprettUtkastRequestBuilder {
     private var navn = "Mitt nye utkast"
-    private var endringstype = Endringstype.VEDTATT_GRENSEJUSTERING.value
+    private var endringstype = Endringstype.VEDTATT_GRENSEJUSTERING
     private var gyldigFra: LocalDate = LocalDate.of(2023, Month.JANUARY, 1)
     companion object {
         val DEFAULT_REQUEST = OpprettUtkastRequestBuilder().build()
@@ -80,8 +80,8 @@ class OpprettUtkastRequestBuilder {
         this.navn = navn
         return this
     }
-    fun withEndringstype(endringstype: String): OpprettUtkastRequestBuilder {
-        this.endringstype= endringstype
+    fun withEndringstype(endringstype: Endringstype): OpprettUtkastRequestBuilder {
+        this.endringstype = endringstype
         return this
     }
 
