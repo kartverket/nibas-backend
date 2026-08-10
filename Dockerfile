@@ -1,4 +1,4 @@
-FROM dhi.io/eclipse-temurin:26-alpine3.23@sha256:fe31cc53e56ee9dd3ca1268fca813e4bdcad663f0b87a7ab31280f5b12b08e1e
+FROM dhi.io/eclipse-temurin:26-alpine3.23@sha256:135b10e246dc1939df08c1706a4def28a793c2bfa99311f747d00ab40b68426e
 
 ARG project_version_arg
 ENV PROJECT_VERSION=$project_version_arg
