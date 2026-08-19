@@ -1,5 +1,13 @@
 version: 2
 registries:
+  maven-central:
+    type: maven-repository
+    url: https://repo.maven.apache.org/maven2
+  maven-matrikkel:
+    type: maven-repository
+    url: https://maven.pkg.github.com/kartverket/matrikkelapi-v1-wsclient
+    username: x-access-token
+    password: ${{ secrets.SHARED_PACKAGES_READ_TOKEN }}
   docker-hardened-images:
     type: docker-registry
     url: dhi.io
@@ -9,6 +17,9 @@ registries:
 updates:
   - package-ecosystem: "gradle"
     directory: "/"
+    registries:
+      - maven-central
+      - maven-matrikkel
     groups:
       minor-and-patch:
         update-types:
