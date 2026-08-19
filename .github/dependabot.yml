@@ -7,11 +7,8 @@ registries:
     password: ${{ secrets.DOCKERHUB_TOKEN }}
 
 updates:
-  # Sjekker også oppdateringer på GitHub Maven Package aut-lib
   - package-ecosystem: "gradle"
     directory: "/"
-    registries:
-      - maven-matrikkel
     groups:
       minor-and-patch:
         update-types:
@@ -42,4 +39,3 @@ updates:
       day: monday
       time: "02:23"
       timezone: "Europe/Oslo"
-
