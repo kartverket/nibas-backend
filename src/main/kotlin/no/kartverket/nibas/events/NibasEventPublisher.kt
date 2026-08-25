@@ -1,5 +1,6 @@
 package no.kartverket.nibas.events
 
+import no.kartverket.nibas.api.v1.common.isExhaustive
 import no.kartverket.nibas.events.EventType.*
 import java.time.LocalDate
 import org.slf4j.LoggerFactory
@@ -35,9 +36,10 @@ class NibasEventPublisher(
 
     private fun validate(rader: List<EventRad>) {
         if (rader.isEmpty()) throw PublishEventException.EventFormatException("Event må inneholde minst 1 EventRad")
-        // en flate kan ikke oppstå eller fjernes uten en endret flate
+        // en heldekkende (exhaustive) flate kan ikke oppstå eller fjernes uten en endret flate
         if (rader.size == 1) {
-            if (rader[0].eventType == ADDED || rader[0].eventType == EXPIRED)
+            val singleRow = rader[0]
+            if ((singleRow.eventType == ADDED || singleRow.eventType == EXPIRED) && singleRow.flateType.isExhaustive)
                 throw PublishEventException.EventFormatException("EventRad med type ${rader[0].eventType} kan ikke oppstå alene")
         }
     }

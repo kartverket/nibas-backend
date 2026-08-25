@@ -336,7 +336,13 @@ class GrenseService(
     }
 
     private fun hentBopliktomraaderForTilhorigheterIFeature(feature: Feature, bopliktomraader: Collection<Bopliktomraade>): List<Bopliktomraade> {
-        //Har ikke med tilhørighet for deling
+        val tilhorigheterTilNyeKretser = feature.properties.kontekstEgenskaper
+            .filter { it.type == KontekstEnhetType.BOPLIKTOMRAADE && it.id == null }
+            .map { kontekstEgenskap ->
+                bopliktomraader.firstOrNull { it.nummer == kontekstEgenskap.kretsNummer }
+                    ?: throw RuntimeException("Kunne ikke sette tilhørighet på grensen. Fant ikke bopliktområde med nummer: ${kontekstEgenskap.kretsNummer}")
+            }
+
         val tilhorigheterTilEksisterendeKretser = feature.properties.kontekstEgenskaper
             .filter { it.type == KontekstEnhetType.BOPLIKTOMRAADE && it.id != null }
             .map { kontekstEgenskap ->
@@ -344,7 +350,7 @@ class GrenseService(
                     ?: throw BadRequestException("Kunne ikke sette tilhørighet på grensen. Fant ikke bopliktområde med lokalid: ${kontekstEgenskap.id?.lokalid?.value}")
             }
 
-        return tilhorigheterTilEksisterendeKretser
+        return tilhorigheterTilNyeKretser + tilhorigheterTilEksisterendeKretser
     }
 
     fun createNyeVersjonerAvFlaterHoyereIHierakietForGrenser(
@@ -389,8 +395,7 @@ class GrenseService(
     }
 
     private fun createBopliktomraadeVersjonerForTilhorigheterIFeatures(features: List<Feature>, gyldighetsdato: LocalDate, endringstype: Endringstype): Set<Bopliktomraade> {
-        //Har ikke med nyopprettede bopliktmråder oppstått ved deling
-        return getNyeVersjonerAvEksisterendeBopliktomraaderForFeatures(features, gyldighetsdato, endringstype)
+        return getNyopprettedeBopliktomraaderForFeatures(features, gyldighetsdato) + getNyeVersjonerAvEksisterendeBopliktomraaderForFeatures(features, gyldighetsdato, endringstype)
     }
 
     private fun getNyopprettedeStemmekretserForFeatures(features: List<Feature>, gyldighetsdato: LocalDate): Set<Stemmekrets> {
@@ -474,6 +479,23 @@ class GrenseService(
                     ?: throw RuntimeException("Fant ikke bopliktomraåde med id ${it.lokalid.value} på gyldighetsdato ${gyldighetsdato.toNorskFormat()}")
                 bopliktomraadeService.createNyVersjonAvBopliktomraadeUtenGrenser(gammelVersjon, gyldighetsdato, endringstype)
                     .kopierTilhorigheterSomIkkeErMedIUtkastet(gammelVersjon, features, gyldighetsdato) as Bopliktomraade
+            }.toSet()
+    }
+
+    private fun getNyopprettedeBopliktomraaderForFeatures(features: List<Feature>, gyldighetsdato: LocalDate): Set<Bopliktomraade> {
+        val kontekstEgenskaper = features
+            .flatMap { it.properties.kontekstEgenskaper }
+            .filter { it.type == KontekstEnhetType.BOPLIKTOMRAADE }
+
+        return kontekstEgenskaper
+            .filter { it.id == null }
+            .distinctBy { it.kretsNummer + it.kommuneId }
+            .map {
+                if (it.kretsNummer == null || it.kommuneId == null) {
+                    throw BadRequestException("Nummer og kommune-id må være satt når man setter tilhørighet til et nytt bopliktområde.")
+                }
+                bopliktomraadeService.hentBopliktomraadeForNummerIKommune(it.kommuneId, it.kretsNummer, gyldighetsdato)
+                    ?: throw RuntimeException("Feil ved tilhørighet for grense. Fant ikke det nye bopliktområdet med nummer ${it.kretsNummer} i kommune med id ${it.kommuneId} på gyldighetsdato ${gyldighetsdato.toNorskFormat()}.")
             }.toSet()
     }
 

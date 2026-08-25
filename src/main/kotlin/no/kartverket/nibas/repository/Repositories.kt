@@ -77,7 +77,9 @@ interface StemmekretsRepository : CrudRepositoryWithLokalIdFinder<Stemmekrets, S
 
     fun findAllByStemmekretsnummerAndKommuneLokalid(stemmekretsnummer: String, kommuneLokalid: UnikLokalid): List<Stemmekrets>
 }
-interface BopliktomraadeRepository : CrudRepositoryWithLokalIdFinder<Bopliktomraade, String>
+interface BopliktomraadeRepository : CrudRepositoryWithLokalIdFinder<Bopliktomraade, String> {
+    fun findAllByNummerAndKommuneLokalid(nummer: String, kommuneLokalid: UnikLokalid): List<Bopliktomraade>
+}
 
 interface GrenseRepository : JpaRepositoryWithLokalIdFinder<Grense, String> {
 

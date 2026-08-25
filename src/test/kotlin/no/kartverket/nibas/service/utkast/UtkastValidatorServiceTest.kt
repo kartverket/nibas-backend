@@ -156,10 +156,7 @@ class UtkastValidatorServiceTest {
                     delvisBoplikt = false,
                     materielleVilkaar = emptySet(),
                     andreAvgrensninger = "test",
-                    kommunenummer = Kommunenummer(
-                        "1",
-                        "1"
-                    ),
+                    kommuneIdentifikasjon = Identifikasjon("lokalid"),
                     gjelderKunDelAvKommunen = false,
                     andreLokaleAvgrensninger = "test",
                     harUsikkerAvgrensning = true,

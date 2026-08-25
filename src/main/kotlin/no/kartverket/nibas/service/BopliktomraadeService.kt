@@ -1,6 +1,10 @@
 package no.kartverket.nibas.service
 
+import no.kartverket.nibas.api.v1.common.Flatetype
+import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.request.BopliktomraadeRequest
+import no.kartverket.nibas.api.v1.request.BopliktomraadeRequestFields
+import no.kartverket.nibas.api.v1.request.CreateBopliktomraadeRequest
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.common.Lokalid
 import no.kartverket.nibas.common.ResponseException
@@ -9,11 +13,16 @@ import no.kartverket.nibas.domain.Bopliktomraade
 import no.kartverket.nibas.domain.BopliktomraadeGrenser
 import no.kartverket.nibas.domain.BopliktomraadeGrenseKobling
 import no.kartverket.nibas.domain.Endringstype
+import no.kartverket.nibas.domain.UnikLokalid
 import no.kartverket.nibas.repository.BopliktomraadeRepository
+import no.kartverket.nibas.repository.KommuneRepository
 import no.kartverket.nibas.repository.findAllByLokalidSortedByGyldigFra
 import no.kartverket.nibas.repository.findAllGyldigPaaDato
 import no.kartverket.nibas.repository.findAntallFramtidigeVersjonerForIdentifikator
 import no.kartverket.nibas.repository.findGyldigObjektForIdentifikator
+import no.kartverket.nibas.repository.findGyldigObjektPaaGyldighetsdato
+import org.locationtech.jts.geom.GeometryFactory
+import org.locationtech.jts.geom.MultiPolygon
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -21,7 +30,8 @@ import java.time.LocalDate
 @Service
 @Transactional(readOnly = true)
 class BopliktomraadeService(
-    private val bopliktomraadeRepository: BopliktomraadeRepository
+    private val bopliktomraadeRepository: BopliktomraadeRepository,
+    private val kommuneRepository: KommuneRepository
 ) {
     fun hentAlleBopliktomraader(dato: LocalDate): List<Bopliktomraade> =
         bopliktomraadeRepository.findAllGyldigPaaDato(dato)
@@ -107,9 +117,31 @@ class BopliktomraadeService(
             .maxBy { it.version }
             .version + 1
 
+    fun createNyttBopliktomraade(request: CreateBopliktomraadeRequest, gyldigFra: LocalDate, endringstype: Endringstype): Bopliktomraade {
+        val lokalidForKommune = request.kommuneIdentifikasjon.lokalid
+        val kommune = kommuneRepository.findAllByLokalid(lokalidForKommune).maxBy { it.gyldighet.gyldigFra }
+
+        val geometryFactory = GeometryFactory()
+        return bopliktomraadeRepository.save(Bopliktomraade().applyChangesFromRequest(request)
+            .apply {
+                kommuneLokalid = kommune.kommuneLokalid
+                setGyldigFra(gyldigFra)
+                auditInfo.typeEndring = endringstype
+                omraade = if (request.gjelderKunDelAvKommunen) { MultiPolygon(arrayOfNulls(0), geometryFactory) } else { null }
+                posisjon = if (request.gjelderKunDelAvKommunen) { geometryFactory.createPoint() } else {
+                   geometryFactory.createPoint(kommune.posisjon?.coordinate)
+                }
+            }
+        )
+    }
+
+    @Transactional(readOnly = true)
+    fun hentBopliktomraadeForNummerIKommune(kommuneIdentifikator: ObjektIdentifikator, nummer: String, gyldighetsdato: LocalDate): Bopliktomraade? {
+        return findGyldigObjektPaaGyldighetsdato(bopliktomraadeRepository.findAllByNummerAndKommuneLokalid(nummer, UnikLokalid(kommuneIdentifikator.lokalid.value, Flatetype.KOMMUNE)), gyldighetsdato)
+    }
 }
 
-fun Bopliktomraade.applyChangesFromRequest(request: BopliktomraadeRequest): Bopliktomraade {
+fun Bopliktomraade.applyChangesFromRequest(request: BopliktomraadeRequestFields): Bopliktomraade {
     return this.apply {
         this.navn = request.navn
         this.nummer = request.nummer

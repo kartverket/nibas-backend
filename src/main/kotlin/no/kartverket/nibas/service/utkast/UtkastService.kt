@@ -6,8 +6,10 @@ import no.kartverket.nibas.api.v1.common.Metadataendringer
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.getUnikeKretsDelingEndringRequests
+import no.kartverket.nibas.api.v1.request.CreateBopliktomraadeRequest
 import no.kartverket.nibas.api.v1.request.GrunnkretsSammenslaaingsendringRequest
 import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
+import no.kartverket.nibas.api.v1.request.CreateInndelingRequest
 import no.kartverket.nibas.api.v1.request.OppdaterUtkastRequest
 import no.kartverket.nibas.api.v1.request.OpprettUtkastRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
@@ -205,6 +207,8 @@ class UtkastService(
     }
 
     internal fun publiserEndringerOgValiderUnikeKretsnumre(operasjoner: Operasjoner, utkast: Utkast, gyldigFra: LocalDate): List<EventRad> {
+        val nyInndelingEndringer = publiserNyInndelingEndringer(operasjoner.createInndelingEndringer ?: emptyList(), utkast, gyldigFra)
+
         val kretsDelingEndringer = publiserKretsDelingEndringer(operasjoner.kretsDelingEndringer, utkast, gyldigFra)
 
         val sammenslaaingsendringer =
@@ -221,7 +225,7 @@ class UtkastService(
         validerUnikeKretsnumre(kretsDelingEndringer + sammenslaaingsendringer + metadataendringer)
         val grenseendringer = publiserGrenseendringer(operasjoner.grenseendringer, utkast, gyldigFra)
 
-        return metadataendringer + sammenslaaingsendringer + grenseendringer + kretsDelingEndringer
+        return metadataendringer + sammenslaaingsendringer + grenseendringer + kretsDelingEndringer + nyInndelingEndringer
     }
 
     /**
@@ -443,6 +447,19 @@ class UtkastService(
                 nyKrets.toEventRad(EventType.ADDED)
             )
         }
+    }
+
+    private fun publiserNyInndelingEndringer(
+        createInndelingRequests: List<CreateInndelingRequest>,
+        utkast: Utkast,
+        gyldigFra: LocalDate
+    ): List<EventRad> {
+        val savedInndelinger = createInndelingRequests.map { createInndelingRequest ->
+           when(createInndelingRequest) {
+               is CreateBopliktomraadeRequest -> bopliktomraadeService.createNyttBopliktomraade(createInndelingRequest, gyldigFra, utkast.auditInfo.typeEndring)
+           }
+        }
+        return savedInndelinger.map { inndeling -> inndeling.toEventRad(EventType.ADDED) }
     }
 }
 

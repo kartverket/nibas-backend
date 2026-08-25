@@ -1,6 +1,5 @@
 package no.kartverket.nibas.builders
 
-import no.kartverket.nibas.api.v1.common.Kommunenummer
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.request.BopliktomraadeRequest
 import no.kartverket.nibas.domain.MaterieltVilkaar
@@ -20,8 +19,8 @@ class BopliktomraadeRequestBuilder(
     private var andreAvgrensninger: String? = null,
     private var forskriftsreferanse: String? = "Mosekollen minikrets 3",
     private var url: String? = "https://www.kartverket.no/",
-    private var kommunenummer: Kommunenummer = Kommunenummer("0301", "0301"),
-    private var version: Int = 1
+    private var version: Int = 1,
+    private var kommuneLokalid: Identifikasjon = Identifikasjon("lokalid"),
 ) {
     companion object {
         val DEFAULT_REQUEST = BopliktomraadeRequestBuilder().build()
@@ -101,7 +100,7 @@ class BopliktomraadeRequestBuilder(
             materielleVilkaar = materielleVilkaar,
             andreAvgrensninger = andreAvgrensninger,
             url = url,
-            kommunenummer = kommunenummer,
+            kommuneIdentifikasjon = kommuneLokalid,
             version = version,
             gjelderKunDelAvKommunen = gjelderKunDelAvKommunen,
             harUsikkerAvgrensning = harUsikkerAvgrensning,

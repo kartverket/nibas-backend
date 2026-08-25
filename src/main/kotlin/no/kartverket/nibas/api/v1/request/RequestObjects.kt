@@ -1,7 +1,11 @@
 package no.kartverket.nibas.api.v1.request
 
+import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonSubTypes
+import com.fasterxml.jackson.annotation.JsonTypeInfo
 import io.swagger.v3.oas.annotations.media.ArraySchema
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping
 import io.swagger.v3.oas.annotations.media.Schema
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.common.Flatetype
@@ -10,6 +14,7 @@ import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
 import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
+import no.kartverket.nibas.api.v1.common.geojson.metadata.DISCRIMINATOR_FIELD
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.GjeldendeMaterieltVilkaar
 import no.kartverket.nibas.domain.MaterieltVilkaar
@@ -121,36 +126,36 @@ data class StemmekretsRequest(
 @Schema(description = "Representasjon av et bopliktomraade")
 data class BopliktomraadeRequest(
     @Schema(description = "Identifikasjon av bopliktomraade")
-    val identifikasjon: Identifikasjon,
+    override val identifikasjon: Identifikasjon,
 
     @Schema(description = "Navnet til bopliktomraadet")
-    val navn: String,
+    override val navn: String,
 
     @Schema(description = "Nummeret til bopliktomraadet")
-    val nummer: String,
+    override val nummer: String,
 
     @Schema(description = "Kommunenummeret bopliktomraadet tilhører til")
-    var kommunenummer: Kommunenummer? = null,
+    override val kommuneIdentifikasjon: Identifikasjon,
 
     @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
     @NotNull
-    val version: Int,
+    override var version: Int,
 
     @Schema(description = "informasjon om bopliktomraade")
-    val informasjon: String? = null,
+    override val informasjon: String? = null,
 
     @Schema(description = "Indikerer om bopliktomraadet dekker deler av kommunen eller ikke")
-    val delvisBoplikt: Boolean? = null,
+    override val delvisBoplikt: Boolean? = null,
 
     @Schema(description = "Indikerer om bopliktomraadet dekker deler av kommunen eller ikke")
-    val gjelderKunDelAvKommunen: Boolean,
+    override val gjelderKunDelAvKommunen: Boolean,
 
     @Schema(description = "Usikker avgrensning")
     @field:JsonProperty("usikkerAvgrensning")
-    val usikkerAvgrensning: Boolean? = false,
+    override val usikkerAvgrensning: Boolean? = false,
 
     @Schema(description = "Har usikker avgrensning (nytt navn for usikkerAvgrensning)")
-    val harUsikkerAvgrensning: Boolean,
+    override val harUsikkerAvgrensning: Boolean,
 
     @ArraySchema(
         arraySchema = Schema(description = "Materielle vilkår for bopliktområdet"),
@@ -159,7 +164,7 @@ data class BopliktomraadeRequest(
             implementation = MaterieltVilkaar::class
         )
     )
-    val materielleVilkaar: Set<MaterieltVilkaar>? = emptySet(),
+    override val materielleVilkaar: Set<MaterieltVilkaar>? = emptySet(),
 
     @ArraySchema(
         arraySchema = Schema(description = "Materielle vilkår for bopliktområdet (nye enum-verdier, erstatter materielleVilkaar)"),
@@ -168,20 +173,20 @@ data class BopliktomraadeRequest(
             implementation = GjeldendeMaterieltVilkaar::class
         )
     )
-    val gjeldendeMaterielleVilkaar: Set<GjeldendeMaterieltVilkaar> = emptySet(),
+    override val gjeldendeMaterielleVilkaar: Set<GjeldendeMaterieltVilkaar> = emptySet(),
 
     @Schema(description = "Andre avgrensninger")
-    val andreAvgrensninger: String? = null,
+    override val andreAvgrensninger: String? = null,
 
     @Schema(description = "Andre lokale avgrensninger (nytt navn for andreAvgrensninger)")
-    val andreLokaleAvgrensninger: String? = null,
+    override val andreLokaleAvgrensninger: String? = null,
 
     @Schema(description = "Referanse til forskriften for bopliktomraadet")
-    var forskriftsreferanse: String? = null,
+    override var forskriftsreferanse: String? = null,
 
     @Schema(description = "URL til kommunen sin informasjonside")
-    var url: String? = null,
-)
+    override var url: String? = null,
+): BopliktomraadeRequestFields
 
 @Schema(description = "Representasjon for opprettelse av utkast")
 data class OpprettUtkastRequest(
@@ -253,3 +258,29 @@ data class GrunnkretsSammenslaaingsendringRequest (
     @Schema (description = "Informasjon om sammenslåingen som videreføres til den nye grunnkretsen og de gamle")
     val informasjon: String?
 )
+
+const val CREATE_BOPLIKTOMRAADE_SCHEMA: String = "CreateBopliktomraadeRequest"
+@Schema(
+    description = "Representasjon av en opprettelse av en ny inndeling for en non-exhaustive inndeling.",
+    subTypes = [
+        CreateBopliktomraadeRequest::class,
+    ],
+    discriminatorProperty = DISCRIMINATOR_FIELD,
+    discriminatorMapping = [
+        DiscriminatorMapping(value = CREATE_BOPLIKTOMRAADE_SCHEMA, schema = CreateBopliktomraadeRequest::class),
+    ]
+)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = DISCRIMINATOR_FIELD)
+@JsonSubTypes(
+    JsonSubTypes.Type(value = CreateBopliktomraadeRequest::class, name = CREATE_BOPLIKTOMRAADE_SCHEMA),
+)
+sealed interface CreateInndelingRequest
+
+@Schema(
+    name = CREATE_BOPLIKTOMRAADE_SCHEMA,
+    description = "Representasjon av opprettelsen av nytt bopliktområde"
+)
+data class CreateBopliktomraadeRequest @JsonCreator(mode = JsonCreator.Mode.DELEGATING) constructor(
+    @Schema(hidden = true)
+    private val request: BopliktomraadeRequest
+) : CreateInndelingRequest, BopliktomraadeRequestFields by request

@@ -3,6 +3,7 @@ package no.kartverket.nibas.api.v1.common
 import io.swagger.v3.oas.annotations.media.Schema
 import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.request.BopliktomraadeRequest
+import no.kartverket.nibas.api.v1.request.CreateInndelingRequest
 import no.kartverket.nibas.api.v1.request.FylkeRequest
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
 import no.kartverket.nibas.api.v1.request.KommuneRequest
@@ -23,6 +24,16 @@ import jakarta.validation.constraints.NotNull
 enum class Flatetype {
     FYLKE, KOMMUNE, NASJON, GRUNNKRETS, STEMMEKRETS, BOPLIKTOMRAADE
 }
+
+val Flatetype.isExhaustive: Boolean
+    get() = when (this) {
+        Flatetype.FYLKE -> true
+        Flatetype.KOMMUNE -> true
+        Flatetype.NASJON -> true
+        Flatetype.GRUNNKRETS -> true
+        Flatetype.STEMMEKRETS -> true
+        Flatetype.BOPLIKTOMRAADE -> false
+    }
 
 /**
  * Definerer hvilken kontekst en skal se grense/feature i.
@@ -129,7 +140,6 @@ data class GyldighetResponse(
 )
 
 
-// TODO: Utvide med felter for sammenslåing og oppsplitting
 // Typen (og undertyper) er Serializable for persistering i jsonb-kolonne
 // Typene under operasjoner er påkrevet, men har defaults.
 @Schema(description = "Representasjon av operasjoner/handlinger som er utført i klienten.")
@@ -144,6 +154,8 @@ data class Operasjoner(
     val grunnkretsSammenslaaingsendring: GrunnkretsSammenslaaingsendringRequest? = null,
     @Schema(description = "Deling av en stemmekrets eller grunnkrets")
     val kretsDelingEndringer: List<KretsDelingEndringRequest> = listOf(),
+    @Schema(description = "Opprettelse av nye inndelinger for en inndelingstype som ikke er heldekkende")
+    val createInndelingEndringer: List<CreateInndelingRequest>? = listOf(),
 )
 
 @Schema(description = "Representasjon av endringer på metadata.")

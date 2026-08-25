@@ -9,6 +9,8 @@ import no.kartverket.nibas.api.v1.common.geojson.Feature
 import no.kartverket.nibas.api.v1.common.geojson.KontekstEgenskaper
 import no.kartverket.nibas.api.v1.common.geojson.metadata.HarCommonGrense
 import no.kartverket.nibas.api.v1.common.getUnikeKretsDelingEndringRequests
+import no.kartverket.nibas.api.v1.request.CreateBopliktomraadeRequest
+import no.kartverket.nibas.api.v1.request.CreateInndelingRequest
 import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.common.CurrentTime
 import no.kartverket.nibas.common.FeilVedOppdatering
@@ -156,6 +158,12 @@ class UtkastValidatorService(
         if (ugyldigeNyeKretser.isNotEmpty()) {
             errorMessages.add("Krets(er) med navn: ${ugyldigeNyeKretser.joinToString(", ")} har ikke fått noen grenser tildelt. " +
                 "Dette er en feil, og den kan rettes opp ved å sette tilhørighet på de relevante grensene som skal høre til enten: ${ugyldigeNyeKretser.joinToString(", ")}")
+        }
+
+        val ugyldigeNyeInndelinger = validerNyeInndelingerVilBliForsoektFlatedannet(utkast)
+        if (ugyldigeNyeInndelinger.isNotEmpty()){
+            errorMessages.add("Inndeling${if(ugyldigeNyeInndelinger.size > 1) "er" else "" } med navn: ${ugyldigeNyeInndelinger.joinToString(", ")} har feil antall grenser tildelt. " +
+                "Husk at alle nye inndelinger som ikke dekker hele kommunen må få tilhørighet til egne grenser")
         }
 
         errorMessages.addAll(validerTilhorighetEndringer(utkast))
@@ -543,6 +551,56 @@ class UtkastValidatorService(
             .map { it.kretsNavn }
     }
 
+    private fun validerNyeInndelingerVilBliForsoektFlatedannet(utkast: Utkast): List<String> {
+        val nyeInndelingerRequests = utkast.operasjoner?.createInndelingEndringer ?: return emptyList()
+        return nyeInndelingerRequests.mapNotNull {
+            when(it){
+                is CreateBopliktomraadeRequest -> if(validerNyttBopliktomraadeErGyldig(utkast,it)) null else it.navn
+            }
+        }
+    }
+
+    private fun validerNyttBopliktomraadeErGyldig(utkast: Utkast, createBopliktomraadeRequest: CreateBopliktomraadeRequest): Boolean {
+        val isDelvisBoplikt = createBopliktomraadeRequest.gjelderKunDelAvKommunen
+        val grenser = utkast.operasjoner?.grenseendringer?.endredeFeatures ?: throw IllegalStateException("Utkastet mangler operasjoner og kan derfor ikke bli validert og publisert. Dette skal ikke skje, og det tyder på implementasjonsfeil. Ta kontakt med Kartverket.")
+        return when(isDelvisBoplikt){
+            // For områder med delvis boplikt må vi sjekke om det er minst én grense som har tilhørighet satt til dette området.
+            true -> finnGrenserForNyInndeling(grenser, createBopliktomraadeRequest).isNotEmpty()
+            // For områder med full boplikt må vi sjekke at det er ingen grenser som har tilhørighet satt til dette området.
+            false -> {
+               when(grenser.isEmpty()) {
+                   true -> true
+                   false -> finnGrenserForNyInndeling(grenser, createBopliktomraadeRequest).isEmpty()
+               }
+            }
+        }
+    }
+
+    private fun getKontekstEnhetTypeForCreateInndelingRequest(createInndelingRequest: CreateInndelingRequest): KontekstEnhetType {
+        return when(createInndelingRequest){
+            is CreateBopliktomraadeRequest -> KontekstEnhetType.BOPLIKTOMRAADE
+        }
+    }
+
+    private fun finnGrenserForNyInndeling(grenser: List<Feature>, createInndelingRequest: CreateInndelingRequest): List<Feature> {
+        return grenser
+            .asSequence()
+            .flatMap { it.properties.kontekstEgenskaper }
+            .filter { getKontekstEnhetTypeForCreateInndelingRequest(createInndelingRequest) === it.type }
+            .filter {
+                it.kommuneId?.lokalid?.value == when(createInndelingRequest) {
+                    is CreateBopliktomraadeRequest -> createInndelingRequest.kommuneIdentifikasjon.lokalid
+                }
+            }.filter {
+                it.kretsNummer == when(createInndelingRequest) {
+                    is CreateBopliktomraadeRequest -> createInndelingRequest.nummer
+                }
+            }.mapNotNull {
+                grenser.find { grense -> grense.id == it.id?.lokalid?.value }
+            }
+            .toList()
+    }
+
     /** Validerer om vi kan gå videre med å forsøke å publisere en kretsdeling ved å se på grensejusteringene i utkastet.
      * Hvis det ikke er noen grensejusteringer som peker på den nyopprettede kretsen vil nyopprettet krets få null grenser, som skal kaste feil.
      **/
@@ -634,7 +692,8 @@ private fun Operasjoner.harEndringer(): Boolean {
         this.grenseendringer.endredeFeatures.isNotEmpty() ||
         this.stemmekretsSammenslaaingsendring != null ||
         this.grunnkretsSammenslaaingsendring != null ||
-        this.kretsDelingEndringer.isNotEmpty()
+        this.kretsDelingEndringer.isNotEmpty() ||
+        this.createInndelingEndringer?.isNotEmpty() == true
 }
 
 private fun Operasjoner.harIkkeEndringer(): Boolean = !this.harEndringer()
