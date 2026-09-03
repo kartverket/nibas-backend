@@ -261,7 +261,7 @@ data class GrunnkretsSammenslaaingsendringRequest (
 
 const val CREATE_BOPLIKTOMRAADE_SCHEMA: String = "CreateBopliktomraadeRequest"
 @Schema(
-    description = "Representasjon av en opprettelse av en ny inndeling for en non-exhaustive inndeling.",
+    description = "Representasjon av en opprettelse av en ny inndeling for en ikke-heldekkende inndeling.",
     subTypes = [
         CreateBopliktomraadeRequest::class,
     ],

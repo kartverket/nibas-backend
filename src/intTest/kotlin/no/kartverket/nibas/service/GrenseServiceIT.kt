@@ -2083,4 +2083,207 @@ class GrenseServiceIT : TestWithDbContainer() {
         assertThat(kommuneEtterGrenseIds).containsExactlyInAnyOrderElementsOf(kommune.getGrensekoblinger(today).map { it.grense.id })
     }
 
+    /**
+     * Bygger 4 grenser som lukker et rektangel [(offsetX, 0), (offsetX+5, 5)]. IDene og lokalIDene får `idPrefix` som prefiks.
+     */
+    private fun rektangelBopliktgrenser(offsetX: Double, gyldigFra: LocalDate, idPrefix: String): List<Grense> {
+        fun mkGrense(suffix: String, coords: List<Coordinate>) = Grense(
+            id = "$idPrefix-$suffix",
+            lokalid = "$idPrefix-$suffix-lokalid",
+            grensetype = Grensetype.Bopliktgrense,
+        ).apply {
+            setGyldigFra(gyldigFra)
+            grense = GrenseHelper.geometryFactory.createLineString(coords.toTypedArray())
+        }
+        return listOf(
+            mkGrense("L", listOf(Coordinate(offsetX + 0.0, 5.0), Coordinate(offsetX + 0.0, 0.0))),
+            mkGrense("T", listOf(Coordinate(offsetX + 5.0, 5.0), Coordinate(offsetX + 0.0, 5.0))),
+            mkGrense("R", listOf(Coordinate(offsetX + 5.0, 0.0), Coordinate(offsetX + 5.0, 5.0))),
+            mkGrense("B", listOf(Coordinate(offsetX + 5.0, 0.0), Coordinate(offsetX + 0.0, 0.0))),
+        )
+    }
+
+    /**
+     * Endrer kun kontekstEgenskaper på en grense-feature, ingen geometri- eller metadata-endring. Brukes for å flytte
+     * en grense fra én ikke-heldekkende inndeling til en annen.
+     */
+    private fun featureMedByttetKontekst(grense: Grense, nyeKontekstEgenskaper: List<KontekstEgenskaper>, gyldighetsdato: LocalDate): Feature {
+        val feature = grense.grenseToFeature(gyldighetsdato)
+        feature.properties = feature.properties.copy(kontekstEgenskaper = nyeKontekstEgenskaper)
+        return feature
+    }
+
+    @Test
+    fun `bopliktomraade som mister en hel ring med grenser i utkastet får ny versjon uten grensene`() {
+        val gyldigFra = november28In2022
+        val gyldighetsdato = LocalDate.now()
+
+        // Bopliktområde A får to disjoint rektangler (L og R). Bopliktområde B får sitt eget rektangel.
+        val aLGrenser = grenseRepository.saveAll(rektangelBopliktgrenser(offsetX = 0.0, gyldigFra, idPrefix = "aL"))
+        val aRGrenser = grenseRepository.saveAll(rektangelBopliktgrenser(offsetX = 10.0, gyldigFra, idPrefix = "aR"))
+        val bGrenser = grenseRepository.saveAll(rektangelBopliktgrenser(offsetX = 20.0, gyldigFra, idPrefix = "b"))
+        grenseRepository.flush()
+
+        val bopliktomraadeA = saveBopliktomraade(
+            id = "A", lokalid = Lokalid("A"), bopliktomraadenummer = "01",
+            gyldigFra = gyldigFra, grenser = aLGrenser + aRGrenser,
+        )
+        val bopliktomraadeB = saveBopliktomraade(
+            id = "B", lokalid = Lokalid("B"), bopliktomraadenummer = "02",
+            gyldigFra = gyldigFra, grenser = bGrenser,
+        )
+        saveKommuneOgUnikLokalid(bopliktomraader = listOf(bopliktomraadeA, bopliktomraadeB), gyldigFra = gyldigFra)
+        grenseRepository.flush()
+
+        // Flytt alle 4 grenser i A sitt høyre rektangel over til B — kun ved å endre kontekstEgenskaper.
+        val kontekstForB = listOf(
+            KontekstEgenskaper(
+                id = ObjektIdentifikator(Lokalid("B"), gyldighetsdato),
+                type = KontekstEnhetType.BOPLIKTOMRAADE,
+                version = 1,
+            ),
+        )
+        val featuresForFlyttedeGrenser = aRGrenser.map { featureMedByttetKontekst(it, kontekstForB, gyldighetsdato) }
+
+        grenseService.lagreGrenser(
+            grenser = FeatureCollection(features = featuresForFlyttedeGrenser),
+            gyldighetsdato = gyldighetsdato,
+            endringstype = Endringstype.VEDTATT_GRENSEJUSTERING,
+        )
+
+        // A skal ha fått ny versjon uten de flyttede grensene — kun rektangel L igjen.
+        val aEtterLagring = bopliktomraadeService.hentBopliktomraade(Identifikator(Lokalid("A"), gyldighetsdato))!!
+        val aGrenserEtter = (aEtterLagring.bopliktomraadeGrenser as BopliktomraadeGrenser.DelvisBoplikt).grenser
+        assertThat(aEtterLagring.version).isGreaterThan(bopliktomraadeA.version)
+        assertThat(aGrenserEtter).hasSize(4)
+        assertThat(aGrenserEtter.map { it.grense.lokalid }).containsExactlyInAnyOrderElementsOf(aLGrenser.map { it.lokalid })
+        assertThat(aGrenserEtter.map { it.grense.lokalid }).doesNotContainAnyElementsOf(aRGrenser.map { it.lokalid })
+
+        // B skal ha fått ny versjon med sine originale grenser + de flyttede.
+        val bEtterLagring = bopliktomraadeService.hentBopliktomraade(Identifikator(Lokalid("B"), gyldighetsdato))!!
+        val bGrenserEtter = (bEtterLagring.bopliktomraadeGrenser as BopliktomraadeGrenser.DelvisBoplikt).grenser
+        assertThat(bEtterLagring.version).isGreaterThan(bopliktomraadeB.version)
+        assertThat(bGrenserEtter).hasSize(8)
+        assertThat(bGrenserEtter.map { it.grense.lokalid })
+            .containsAll(bGrenser.map { it.lokalid })
+            .containsAll(aRGrenser.map { it.lokalid })
+
+        // A sitt område skal nå kun bestå av 1 polygon (rektangel L), B sitt av 2 polygoner.
+        assertThat(aEtterLagring.omraade!!.numGeometries).isEqualTo(1)
+        assertThat(bEtterLagring.omraade!!.numGeometries).isEqualTo(2)
+    }
+
+    @Test
+    fun `bopliktomraade som mister flere grenser samtidig får kun én ny versjon`() {
+        // Verifiserer at én tapende bopliktomraade som mister flere grenser samtidig kun får ÉN ny versjon
+        // (distinctBy-lokalid i losing-side-håndteringen).
+        val gyldigFra = november28In2022
+        val gyldighetsdato = LocalDate.now()
+
+        val aLGrenser = grenseRepository.saveAll(rektangelBopliktgrenser(offsetX = 0.0, gyldigFra, idPrefix = "aL"))
+        val aRGrenser = grenseRepository.saveAll(rektangelBopliktgrenser(offsetX = 10.0, gyldigFra, idPrefix = "aR"))
+        val bGrenser = grenseRepository.saveAll(rektangelBopliktgrenser(offsetX = 20.0, gyldigFra, idPrefix = "b"))
+        grenseRepository.flush()
+
+        val bopliktomraadeA = saveBopliktomraade(
+            id = "A", lokalid = Lokalid("A"), bopliktomraadenummer = "01",
+            gyldigFra = gyldigFra, grenser = aLGrenser + aRGrenser,
+        )
+        val bopliktomraadeB = saveBopliktomraade(
+            id = "B", lokalid = Lokalid("B"), bopliktomraadenummer = "02",
+            gyldigFra = gyldigFra, grenser = bGrenser,
+        )
+        saveKommuneOgUnikLokalid(bopliktomraader = listOf(bopliktomraadeA, bopliktomraadeB), gyldigFra = gyldigFra)
+        grenseRepository.flush()
+
+        val kontekstForB = listOf(
+            KontekstEgenskaper(
+                id = ObjektIdentifikator(Lokalid("B"), gyldighetsdato),
+                type = KontekstEnhetType.BOPLIKTOMRAADE,
+                version = 1,
+            ),
+        )
+        val featuresForFlyttedeGrenser = aRGrenser.map { featureMedByttetKontekst(it, kontekstForB, gyldighetsdato) }
+
+        grenseService.lagreGrenser(
+            grenser = FeatureCollection(features = featuresForFlyttedeGrenser),
+            gyldighetsdato = gyldighetsdato,
+            endringstype = Endringstype.VEDTATT_GRENSEJUSTERING,
+        )
+
+        val alleVersjonerAvA = bopliktomraadeRepository.findAllByLokalid("A")
+        // v1 (opprinnelig) + v2 (tapende side). Aldri to nye versjoner for samme lokalid.
+        assertThat(alleVersjonerAvA).hasSize(2)
+    }
+
+    @Test
+    fun `bopliktomraade som mister grense via arkivering får ny versjon uten grensen`() {
+        // Verifiserer at losing-side-håndteringen også fanger opp arkiverte grenser (ikke bare flyttede).
+        val gyldigFra = november28In2022
+        val gyldighetsdato = LocalDate.now()
+
+        val aLGrenser = grenseRepository.saveAll(rektangelBopliktgrenser(offsetX = 0.0, gyldigFra, idPrefix = "aL"))
+        val aRGrenser = grenseRepository.saveAll(rektangelBopliktgrenser(offsetX = 10.0, gyldigFra, idPrefix = "aR"))
+        grenseRepository.flush()
+
+        val bopliktomraadeA = saveBopliktomraade(
+            id = "A", lokalid = Lokalid("A"), bopliktomraadenummer = "01",
+            gyldigFra = gyldigFra, grenser = aLGrenser + aRGrenser,
+        )
+        saveKommuneOgUnikLokalid(bopliktomraader = listOf(bopliktomraadeA), gyldigFra = gyldigFra)
+        grenseRepository.flush()
+
+        // Arkiver alle grenser i rektangel R. Ingen features med kontekstEgenskaper som peker på A.
+        val arkiverteFeatures = aRGrenser.map { it.grenseToFeature(gyldighetsdato, shouldArchive = true) }
+
+        grenseService.lagreGrenser(
+            grenser = FeatureCollection(features = arkiverteFeatures),
+            gyldighetsdato = gyldighetsdato,
+            endringstype = Endringstype.VEDTATT_GRENSEJUSTERING,
+        )
+
+        val aEtterLagring = bopliktomraadeService.hentBopliktomraade(Identifikator(Lokalid("A"), gyldighetsdato))!!
+        val aGrenserEtter = (aEtterLagring.bopliktomraadeGrenser as BopliktomraadeGrenser.DelvisBoplikt).grenser
+        assertThat(aEtterLagring.version).isGreaterThan(bopliktomraadeA.version)
+        assertThat(aGrenserEtter.map { it.grense.lokalid }).containsExactlyInAnyOrderElementsOf(aLGrenser.map { it.lokalid })
+        assertThat(aEtterLagring.omraade!!.numGeometries).isEqualTo(1)
+    }
+
+    @Test
+    fun `grunnkretsgrense-endring gir ikke dobbel versjon av grunnkretser (heldekkende typer skal være no-op for losing-side)`() {
+        // Verifiserer at losing-side-håndteringen er en no-op for heldekkende inndelinger — de skal kun få versjonering
+        // via den vanlige veien (kontekstEgenskaper). Dobbel versjonering ville vært en regresjon.
+        val gyldigFra = november28In2022
+        val gyldighetsdato = LocalDate.now()
+
+        val (kretsG1, kretsG2) = setupKretserForNyeGrenserTest(gyldigFra, Grensetype.Grunnkretsgrense, ::saveGrunnkrets)
+        saveKommuneOgUnikLokalid(grunnkretser = listOf(kretsG1, kretsG2), gyldigFra = gyldigFra)
+
+        val grenseSomSkalEndres = kretsG1.grenser.first { it.grense.lokalid == "grenseDeltLokalid" }.grense
+        val featureForGrenseSomSkalEndres = grenseSomSkalEndres.grenseToFeature(gyldighetsdato)
+        val oppdatertGeometri = GrenseHelper.geometryFactory.createLineString(
+            arrayOf(Coordinate(10.0, 0.0), Coordinate(10.0, 5.0))
+        )
+        oppdatertGeometri.geometryToDto().also { featureForGrenseSomSkalEndres.geometry = it }
+
+        val gyldigNyGrense = lagNyGrense(
+            "grenseDelt2Id", Grensetype.Grunnkretsgrense, "grenseDelt2Lokalid",
+            gyldigFra, listOf(Coordinate(10.0, 5.0), Coordinate(10.0, 10.0)),
+        )
+        gyldigNyGrense.grunnkretser = grenseSomSkalEndres.grunnkretser
+        val featureForNyGrense = gyldigNyGrense.grenseToFeature(gyldighetsdato, nyGrense = true)
+
+        grenseService.lagreGrenser(
+            grenser = FeatureCollection(features = listOf(featureForGrenseSomSkalEndres, featureForNyGrense)),
+            gyldighetsdato = gyldighetsdato,
+            endringstype = Endringstype.VEDTATT_GRENSEJUSTERING,
+        )
+
+        // Hver av grunnkretsene skal ha nøyaktig 2 versjoner (opprinnelig + 1 ny), ikke 3.
+        val versjonerG1 = grunnkretsRepository.findAllByLokalid(kretsG1.lokalid)
+        val versjonerG2 = grunnkretsRepository.findAllByLokalid(kretsG2.lokalid)
+        assertThat(versjonerG1).hasSize(2)
+        assertThat(versjonerG2).hasSize(2)
+    }
+
 }

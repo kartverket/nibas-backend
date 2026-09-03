@@ -29,6 +29,7 @@ import no.kartverket.nibas.domain.Kommune
 import no.kartverket.nibas.domain.Nasjon
 import no.kartverket.nibas.domain.Stemmekrets
 import no.kartverket.nibas.domain.StemmekretsGrenseKobling
+import no.kartverket.nibas.domain.asNonExhaustive
 import no.kartverket.nibas.extensions.geometry.toLineString
 import no.kartverket.nibas.repository.BopliktomraadeRepository
 import no.kartverket.nibas.repository.GrenseRepository
@@ -85,7 +86,13 @@ class GrenseService(
         val grunnkretserForTilhorigheter = createGrunnkretsVersjonerForTilhorigheterIFeatures(grenser.features, gyldighetsdato, endringstype)
         val bopliktomraaderForTilhorigheter = createBopliktomraadeVersjonerForTilhorigheterIFeatures(grenser.features, gyldighetsdato, endringstype)
 
-        featuresMedArkivering.map { arkiverGrense(it, gyldighetsdato) }
+        // Ikke-heldekkende inndelinger kan påvirkes av grenseendringer uten å være referert i kontekstEgenskaper
+        // Vi må finne alle ikke-heldekkende inndelinger som mister en grense og lage nye versjoner av disse.
+        val inndelingerIUtkast: Set<Flate> = stemmekretserForTilhorigheter + grunnkretserForTilhorigheter + bopliktomraaderForTilhorigheter
+        val inndelingerSomMisterGrense = createNyeVersjonerAvNonExhaustiveInndelingerSomMisterGrense(
+            grenser.features, inndelingerIUtkast, gyldighetsdato, endringstype)
+
+        featuresMedArkivering.forEach { arkiverGrense(it, gyldighetsdato) }
 
         val endredeGrenserMedTilhorigheter = featuresMedEndringer.map { feature ->
             val grenseUtenTilhorighet = createGrenseForFeatureUtenTilhorigheter(feature, gyldighetsdato, endringstype)
@@ -95,7 +102,7 @@ class GrenseService(
 
         val flaterSomSkalOppdatereHoyereIHierakiet = createNyeVersjonerAvFlaterHoyereIHierakietForGrenser(endredeGrenserMedTilhorigheter, gyldighetsdato, endringstype)
         val flaterSomSkalFlatedannes = (stemmekretserForTilhorigheter + grunnkretserForTilhorigheter + bopliktomraaderForTilhorigheter +
-            flaterSomSkalOppdatereHoyereIHierakiet)
+            inndelingerSomMisterGrense + flaterSomSkalOppdatereHoyereIHierakiet)
             .distinctBy { it.id }
             .toSet()
 
@@ -397,6 +404,50 @@ class GrenseService(
     private fun createBopliktomraadeVersjonerForTilhorigheterIFeatures(features: List<Feature>, gyldighetsdato: LocalDate, endringstype: Endringstype): Set<Bopliktomraade> {
         return getNyopprettedeBopliktomraaderForFeatures(features, gyldighetsdato) + getNyeVersjonerAvEksisterendeBopliktomraaderForFeatures(features, gyldighetsdato, endringstype)
     }
+
+    /**
+     * Finner ikke-heldekkende inndelinger (Flatetype.isExhaustive == false) som er koblet til en grense som endres/arkiveres i
+     * utkastet, men som IKKE er referert i noen features kontekstEgenskaper. Dette skjer f.eks. når en grense (som utgjør et helt
+     * polygon) flyttes fra et eksisterende område til et annet. For heldekkende inndelinger (grunnkrets/stemmekrets) er dette et
+     * no-op, siden begge sider av en endret grense alltid navngis i kontekstEgenskaper og dermed allerede finnes i [inndelingerIUtkast].
+     *
+     * For hver slik inndeling lages en ny versjon der alle gjenværende grenser kopieres, men grensene som endres i utkastet (og
+     * dermed også den flyttede grensen) utelates via [kopierTilhorigheterSomIkkeErMedIUtkastet].
+     *
+     * NB: Må kalles FØR grenseendringer/arkivering setter gyldigTil på de gamle grenseversjonene, ellers vil oppslaget returnere
+     * den nye (koblingsløse) grenseversjonen.
+     *
+     * @param inndelingerIUtkast inndelinger som allerede håndteres via kontekstEgenskaper, og som derfor skal ekskluderes her.
+     */
+    private fun createNyeVersjonerAvNonExhaustiveInndelingerSomMisterGrense(
+        features: List<Feature>,
+        inndelingerIUtkast: Set<Flate>,
+        gyldighetsdato: LocalDate,
+        endringstype: Endringstype
+    ): Set<Flate> {
+        val lokalIderForInndelingerIUtkast = inndelingerIUtkast.map { it.lokalid }.toSet()
+
+        return features
+            .asSequence()
+            .filter { it.id != null }
+            .mapNotNull { grenseRepository.findGyldigObjektForIdentifikator(Identifikator(Lokalid(it.id!!), gyldighetsdato)) }
+            .flatMap { it.gyldigeNonExhaustiveInndelinger(it.grensetype.asNonExhaustive() ?: return@flatMap emptySequence(), gyldighetsdato) }
+            .filter { it.lokalid !in lokalIderForInndelingerIUtkast }
+            .distinctBy { it.lokalid }
+            .map { gammelVersjon ->
+                createNyVersjonAvInndelingUtenGrenser(gammelVersjon, gyldighetsdato, endringstype)
+                    .kopierTilhorigheterSomIkkeErMedIUtkastet(gammelVersjon, features, gyldighetsdato) as Flate
+            }
+            .toSet()
+    }
+
+    private fun createNyVersjonAvInndelingUtenGrenser(inndeling: Flate, gyldighetsdato: LocalDate, endringstype: Endringstype): KobletTilGrense =
+        when (inndeling) {
+            is Grunnkrets -> grunnkretsService.createNyVersjonAvGrunnkretsUtenGrenser(inndeling, gyldighetsdato, endringstype)
+            is Stemmekrets -> stemmekretsService.createNyVersjonAvStemmekretsUtenGrenser(inndeling, gyldighetsdato, endringstype)
+            is Bopliktomraade -> bopliktomraadeService.createNyVersjonAvBopliktomraadeUtenGrenser(inndeling, gyldighetsdato, endringstype)
+            else -> throw IllegalStateException("Kan ikke lage ny versjon uten grenser for inndeling av type ${inndeling.type}")
+        }
 
     private fun getNyopprettedeStemmekretserForFeatures(features: List<Feature>, gyldighetsdato: LocalDate): Set<Stemmekrets> {
         val kontekstEgenskaper = features

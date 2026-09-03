@@ -36,7 +36,7 @@ class NibasEventPublisher(
 
     private fun validate(rader: List<EventRad>) {
         if (rader.isEmpty()) throw PublishEventException.EventFormatException("Event må inneholde minst 1 EventRad")
-        // en heldekkende (exhaustive) flate kan ikke oppstå eller fjernes uten en endret flate
+        // en heldekkende flate kan ikke oppstå eller fjernes uten en endret flate
         if (rader.size == 1) {
             val singleRow = rader[0]
             if ((singleRow.eventType == ADDED || singleRow.eventType == EXPIRED) && singleRow.flateType.isExhaustive)

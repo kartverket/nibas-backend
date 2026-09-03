@@ -154,7 +154,7 @@ data class Operasjoner(
     val grunnkretsSammenslaaingsendring: GrunnkretsSammenslaaingsendringRequest? = null,
     @Schema(description = "Deling av en stemmekrets eller grunnkrets")
     val kretsDelingEndringer: List<KretsDelingEndringRequest> = listOf(),
-    @Schema(description = "Opprettelse av nye inndelinger for en inndelingstype som ikke er heldekkende")
+    @Schema(description = "Opprettelse av nye inndelinger for en inndelingstype som er ikke-heldekkende")
     val createInndelingEndringer: List<CreateInndelingRequest>? = listOf(),
 )
 

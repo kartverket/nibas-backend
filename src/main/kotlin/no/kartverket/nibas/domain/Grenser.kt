@@ -92,6 +92,19 @@ class Grense(
     fun gyldigeBopliktomraadeGrenseKoblinger(gyldighetsdato: LocalDate = LocalDate.now()): Set<BopliktomraadeGrenseKobling> =
         bopliktomraader.filter { it.bopliktomraade.gyldigPaaDato(gyldighetsdato) }.toSet()
 
+    /**
+     * Returnerer flater fra ikke-heldekkende inndelinger som er koblet til denne grensen på gitt dato.
+     *
+     * Koden er skrevet per ikke-heldekkende grensetype slik at "hvordan finner jeg tilkoblede flater for en gitt
+     * ikke-heldekkende grensetype" er dokumentert i kode. Nye [NonExhaustiveGrensetype]-verdier tvinger
+     * en oppdatering av dette when-uttrykket i kompilatoren.
+     */
+    fun gyldigeNonExhaustiveInndelinger(type: NonExhaustiveGrensetype, gyldighetsdato: LocalDate = LocalDate.now()): Sequence<Flate> =
+        when (type) {
+            NonExhaustiveGrensetype.Bopliktgrense ->
+                gyldigeBopliktomraadeGrenseKoblinger(gyldighetsdato).asSequence().map { it.bopliktomraade }
+        }
+
     fun kommuner(gyldighetsdato: LocalDate = LocalDate.now()): Set<Kommune> =
         grunnkretser(gyldighetsdato).mapNotNull { it.getKommune(gyldighetsdato) }.toSet()
 
@@ -149,4 +162,32 @@ class Grense(
             "auditInfo=$auditInfo, gyldighet=$gyldighet, kvalitet=$kvalitet, " +
             "version=$version, datafangstdato=$datafangstdato, foerstedigitaliseringsdato=$foerstedigitaliseringsdato, " +
             "opphav=$opphav, informasjon=$informasjon)"
+}
+
+/**
+ * Undermengde av [Grensetype] for grenser som tilhører en inndeling som ikke er heldekkende
+ * (`Flatetype.isExhaustive == false`).
+ */
+enum class NonExhaustiveGrensetype {
+    Bopliktgrense
+}
+
+/**
+ * Klassifiserer en [Grensetype] som ikke-heldekkende (returnerer [NonExhaustiveGrensetype]) eller `null`
+ * for grenser som tilhører heldekkende inndelinger.
+ *
+ * Alle heldekkende grensetyper listes eksplisitt slik at kompilatoren tvinger klassifisering av nye
+ * grensetyper her.
+ */
+fun Grensetype.asNonExhaustive(): NonExhaustiveGrensetype? = when (this) {
+    Grensetype.Bopliktgrense -> NonExhaustiveGrensetype.Bopliktgrense
+    Grensetype.Kommunegrense,
+    Grensetype.Fylkesgrense,
+    Grensetype.Riksgrense,
+    Grensetype.AvtaltAvgrensningslinje,
+    Grensetype.Territorialgrense,
+    Grensetype.Grunnlinje,
+    Grensetype.Grunnkretsgrense,
+    Grensetype.Delomraadegrense,
+    Grensetype.Stemmekretsgrense -> null
 }

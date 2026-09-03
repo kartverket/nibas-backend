@@ -583,22 +583,19 @@ class UtkastValidatorService(
     }
 
     private fun finnGrenserForNyInndeling(grenser: List<Feature>, createInndelingRequest: CreateInndelingRequest): List<Feature> {
-        return grenser
-            .asSequence()
-            .flatMap { it.properties.kontekstEgenskaper }
-            .filter { getKontekstEnhetTypeForCreateInndelingRequest(createInndelingRequest) === it.type }
-            .filter {
-                it.kommuneId?.lokalid?.value == when(createInndelingRequest) {
-                    is CreateBopliktomraadeRequest -> createInndelingRequest.kommuneIdentifikasjon.lokalid
+        return grenser.filter { grense ->
+            grense.properties.kontekstEgenskaper.any { kontekstEgenskap ->
+                if (kontekstEgenskap.type != getKontekstEnhetTypeForCreateInndelingRequest(createInndelingRequest)) {
+                    return@any false
                 }
-            }.filter {
-                it.kretsNummer == when(createInndelingRequest) {
-                    is CreateBopliktomraadeRequest -> createInndelingRequest.nummer
+
+                when (createInndelingRequest) {
+                    is CreateBopliktomraadeRequest ->
+                        kontekstEgenskap.kommuneId?.lokalid?.value == createInndelingRequest.kommuneIdentifikasjon.lokalid &&
+                            kontekstEgenskap.kretsNummer == createInndelingRequest.nummer
                 }
-            }.mapNotNull {
-                grenser.find { grense -> grense.id == it.id?.lokalid?.value }
             }
-            .toList()
+        }
     }
 
     /** Validerer om vi kan gå videre med å forsøke å publisere en kretsdeling ved å se på grensejusteringene i utkastet.
