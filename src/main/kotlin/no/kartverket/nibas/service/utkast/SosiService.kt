@@ -73,10 +73,15 @@ class SosiGeometryService(
             val lineString = convertSosiKurveToLineString(
                 sosiKurve = kurve, geometryFactory = geometryFactory, sourceCRS = sourceCRS, targetCRS = targetCRS, transformer = transformer
             )
-            val grenseTypeString = getGrenseTypeForKurve(kurve = kurve, sosiVersjon = sosiVersjon) ?: throw IllegalArgumentException("Filen samsvarer ikke med oppgitt SOSI-versjon. Kontakt Kartverket hvis du mener dette er feil.")
+            val grenseTypeString = getGrenseTypeForKurve(kurve = kurve) ?: throw IllegalArgumentException("Filen samsvarer ikke med oppgitt SOSI-versjon. Kontakt Kartverket hvis du mener dette er feil.")
             val formattedGrenseTypeString = grenseTypeString.lowercase().replaceFirstChar { it.uppercase() }
             val grenseType = try {
+                // TODO: TS-3113
+                if (formattedGrenseTypeString == "Bopliktområdegrense") {
+                    Grensetype.Bopliktgrense
+                } else {
                     Grensetype.fromValue(formattedGrenseTypeString)
+                }
             } catch(e: IllegalArgumentException){
                 throw IllegalArgumentException("Filen inneholder en eller flere grenser med grensetype som ikke støttes: '$formattedGrenseTypeString'")
             }
@@ -110,13 +115,11 @@ class SosiGeometryService(
 
         return FeatureCollection(features = features)
     }
-    
-    fun getGrenseTypeForKurve(kurve: SosiKurve, sosiVersjon: String): String? {
-        return when (sosiVersjon) {
-            "4.5" -> kurve.getObjType()
-            "5.0" -> kurve.getAvgrensingstype()
-            else -> null
-        }
+
+    // Avgrensningstype er en egenskap for noen grenser som inneholder grensetypen.
+    // Hvis kuven ikke har egenskaper på grensen ligger grensetypen på OBJTYPE.
+    fun getGrenseTypeForKurve(kurve: SosiKurve): String? {
+            return kurve.getAvgrensingstype() ?: kurve.getObjType()
     }
 
     fun convertSosiKurveToLineString(
