@@ -58,6 +58,54 @@ class UtkastValidatorService(
         return errorMessages
     }
 
+    private fun validerCreateInndelingEndringer(utkast: Utkast, gyldighetDato: LocalDate): List<String> {
+        val createInndelingEndringer = utkast.operasjoner?.createInndelingEndringer ?: return emptyList()
+        val createBopliktomraadeEndringer = mutableListOf<CreateBopliktomraadeRequest>()
+
+        createInndelingEndringer.forEach { createInndelingEndring ->
+            when (createInndelingEndring) {
+                is CreateBopliktomraadeRequest -> createBopliktomraadeEndringer.add(createInndelingEndring)
+            }
+        }
+
+        if (createBopliktomraadeEndringer.isEmpty()) {
+            return emptyList()
+        }
+
+        return buildList {
+            addAll(validerCreateBopliktomraadeEndringer(createBopliktomraadeEndringer, gyldighetDato))
+        }
+    }
+
+    // Validerer at det ikke opprettes flere bopliktområder som dekker hele kommunen ved å sjekke eksisterende bopliktområder og nye som blir forsøkt opprettet.
+    private fun validerCreateBopliktomraadeEndringer(requests: List<CreateBopliktomraadeRequest>, gyldighetDato: LocalDate): List<String> {
+        if (requests.isEmpty()) {
+            return emptyList()
+        }
+
+        val relevanteKommuner = requests.map { it.kommuneIdentifikasjon.lokalid }.toSet()
+        val eksisterendeBopliktomraaderPerKommune = bopliktomraadeService.hentAlleBopliktomraader(gyldighetDato)
+            .filter { it.kommuneLokalid.lokalid in relevanteKommuner }
+            .groupBy { it.kommuneLokalid.lokalid }
+
+        return requests
+            .groupBy { it.kommuneIdentifikasjon.lokalid }
+            .filterValues { nyeBopliktomraaderPerKommune ->
+                val kommuneLokalid = nyeBopliktomraaderPerKommune.first().kommuneIdentifikasjon.lokalid
+                val alleBopliktomraader = eksisterendeBopliktomraaderPerKommune[kommuneLokalid].orEmpty().map {
+                    it.navn to it.gjelderKunDelAvKommunen
+                } + nyeBopliktomraaderPerKommune.map {
+                    it.navn to it.gjelderKunDelAvKommunen
+                }
+
+                alleBopliktomraader.size > 1 && alleBopliktomraader.any { !it.second }
+            }
+            .values.map { requestsPerKommune ->
+                "En kommune kan ikke ha flere bopliktområder med en utstrekning som dekker hele kommunen. " +
+                    "Dette gjelder bopliktområde: ${requestsPerKommune.joinToString(", ") { it.navn }}"
+            }
+    }
+
     private fun validerMaalemetode(endredeFeatures: List<Feature>): List<String> {
         val errorMessages = mutableListOf<String>()
         val gyldigeMaalemetoder = kodelisteService.getMaalemetodeKoder().items.map { it.id }.toSet()
@@ -125,6 +173,7 @@ class UtkastValidatorService(
         }
 
         errorMessages.addAll(validateGyldigeOperasjoner(utkast.operasjoner!!))
+        errorMessages.addAll(validerCreateInndelingEndringer(utkast, gyldighetDato))
 
         return errorMessages
     }

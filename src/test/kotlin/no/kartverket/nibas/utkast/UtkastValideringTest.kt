@@ -11,18 +11,24 @@ import no.kartverket.nibas.api.v1.common.Metadataendringer
 import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.KontekstEgenskaper
+import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
+import no.kartverket.nibas.api.v1.request.BopliktomraadeRequest
+import no.kartverket.nibas.api.v1.request.CreateBopliktomraadeRequest
 import no.kartverket.nibas.api.v1.request.GrunnkretsSammenslaaingsendringRequest
 import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.api.v1.request.KretsNavnOgNummer
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
+import no.kartverket.nibas.builders.BopliktomraadeBuilder
 import no.kartverket.nibas.builders.BopliktomraadeRequestBuilder
 import no.kartverket.nibas.builders.FeatureBuilder
 import no.kartverket.nibas.builders.GrunnkretsBuilder
+import no.kartverket.nibas.builders.KommuneBuilder
 import no.kartverket.nibas.builders.GrunnkretsRequestBuilder
 import no.kartverket.nibas.builders.StemmekretsRequestBuilder
 import no.kartverket.nibas.common.CurrentTime
 import no.kartverket.nibas.common.Lokalid
+import no.kartverket.nibas.domain.UnikLokalid
 import no.kartverket.nibas.domain.utkast.Utkast
 import no.kartverket.nibas.domain.utkast.UtkastBuilder
 import no.kartverket.nibas.domain.utkast.UtkastStatus
@@ -388,6 +394,52 @@ class UtkastValideringTest {
     }
 
     @Test
+    fun `valider at nytt bopliktomraade blir ugyldig naar samlet sett i kommunen blir ulovlig`() {
+        val eksisterendeBopliktomraade = BopliktomraadeBuilder(
+            kommune = KommuneBuilder(
+                unikLokalid = UnikLokalid("kommune-1", Flatetype.KOMMUNE)
+            ).build()
+        ).build()
+        every { bopliktomraadeServiceMock.hentAlleBopliktomraader(june2024) } returns listOf(eksisterendeBopliktomraade)
+
+        val utkast = Utkast(
+            navn = "test",
+            operasjoner = Operasjoner(
+                createInndelingEndringer = listOf(createBopliktomraadeRequest(gjelderKunDelAvKommunen = false))
+            ),
+            gyldigFra = june2024
+        )
+
+        val validationResult = utkastValidatorService.validateUtkastMedOperasjoner(utkast, june2024)
+
+        assertThat(validationResult).contains(
+            "En kommune kan ikke ha flere bopliktområder med en utstrekning som dekker hele kommunen. Dette gjelder bopliktområde: Nytt område"
+        )
+    }
+
+    @Test
+    fun `valider at nytt bopliktomraade er gyldig naar samlet sett i kommunen fortsatt er lovlig`() {
+        val eksisterendeBopliktomraade = BopliktomraadeBuilder(
+            kommune = KommuneBuilder(
+                unikLokalid = UnikLokalid("kommune-1", Flatetype.KOMMUNE)
+            ).build()
+        ).build()
+        every { bopliktomraadeServiceMock.hentAlleBopliktomraader(june2024) } returns listOf(eksisterendeBopliktomraade)
+
+        val utkast = Utkast(
+            navn = "test",
+            operasjoner = Operasjoner(
+                createInndelingEndringer = listOf(createBopliktomraadeRequest(gjelderKunDelAvKommunen = true))
+            ),
+            gyldigFra = june2024
+        )
+
+        val validationResult = utkastValidatorService.validateUtkastMedOperasjoner(utkast, june2024)
+
+        assertThat(validationResult).isEmpty()
+    }
+
+    @Test
     fun `valider at grunnkretsnummer som ikke matcher med kommunenummer gir ugyldige operasjoner`() {
         val operasjoner =
             Operasjoner(
@@ -445,6 +497,29 @@ class UtkastValideringTest {
 
         return Pair(utkast, utkastValidatorService.validateUtkastKlartForPublisering(utkast, june2024))
     }
+
+    private fun createBopliktomraadeRequest(
+        gjelderKunDelAvKommunen: Boolean,
+    ) = CreateBopliktomraadeRequest(
+        BopliktomraadeRequest(
+            identifikasjon = Identifikasjon(lokalid = "ny-1"),
+            navn = "Nytt område",
+            nummer = "02",
+            kommuneIdentifikasjon = Identifikasjon(lokalid = "kommune-1"),
+            version = 1,
+            informasjon = null,
+            delvisBoplikt = null,
+            gjelderKunDelAvKommunen = gjelderKunDelAvKommunen,
+            usikkerAvgrensning = false,
+            harUsikkerAvgrensning = false,
+            materielleVilkaar = emptySet(),
+            gjeldendeMaterielleVilkaar = emptySet(),
+            andreAvgrensninger = null,
+            andreLokaleAvgrensninger = null,
+            forskriftsreferanse = null,
+            url = null,
+        )
+    )
 
 
     @Test
