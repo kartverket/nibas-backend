@@ -2032,7 +2032,7 @@ class GrenseServiceIT : TestWithDbContainer() {
             lokalid = Lokalid("boplikt"),
             bopliktomraadenummer = "100",
             gyldigFra = gyldigFra,
-            delvisBoplikt = false
+            gjelderKunDelAvKommunen = false
         )
         val kommune = saveKommuneOgUnikLokalid(
             grunnkretser = listOf(gk),

@@ -81,7 +81,7 @@ class BopliktomraadeService(
     @Transactional(readOnly = false)
     fun createNyVersjonAvBopliktomraade(bopliktomraade: Bopliktomraade, gyldigFra: LocalDate, endringstype: Endringstype): Bopliktomraade {
         return createNyVersjonAvBopliktomraadeUtenGrenser(bopliktomraade, gyldigFra, endringstype).let{
-            if(bopliktomraade.delvisBoplikt) it.copyGrenserFromExistingBopliktomraade(bopliktomraade, gyldigFra) else it
+            if(bopliktomraade.gjelderKunDelAvKommunen) it.copyGrenserFromExistingBopliktomraade(bopliktomraade, gyldigFra) else it
         }
     }
 
@@ -145,22 +145,12 @@ fun Bopliktomraade.applyChangesFromRequest(request: BopliktomraadeRequestFields)
     return this.apply {
         this.navn = request.navn
         this.nummer = request.nummer
-        val usikkerAvgrensningValue = request.harUsikkerAvgrensning
-        this.usikkerAvgrensning = usikkerAvgrensningValue
-        this.harUsikkerAvgrensning = harUsikkerAvgrensning
+        this.harUsikkerAvgrensning = request.harUsikkerAvgrensning
         this.forskriftsreferanse = request.forskriftsreferanse
         val gjeldendeMaterielleVilkaar = request.gjeldendeMaterielleVilkaar
         this.setGjeldendeMaterielleVilkaar(gjeldendeMaterielleVilkaar)
-        val andreAvgrensningerValue = request.andreLokaleAvgrensninger ?: request.andreAvgrensninger
-        this.andreAvgrensninger = andreAvgrensningerValue
-        this.andreLokaleAvgrensninger = andreAvgrensningerValue
+        this.andreLokaleAvgrensninger = request.andreLokaleAvgrensninger
         this.url = request.url
-        informasjon = request.informasjon
-        if (delvisBoplikt != request.delvisBoplikt) {
-            this.bopliktomraadeGrenser =
-                if (request.delvisBoplikt != null && delvisBoplikt) BopliktomraadeGrenser.DelvisBoplikt()
-                else BopliktomraadeGrenser.FullBoplikt()
-        }
         if (gjelderKunDelAvKommunen != request.gjelderKunDelAvKommunen) {
             this.bopliktomraadeGrenser =
                 if (request.gjelderKunDelAvKommunen) BopliktomraadeGrenser.DelvisBoplikt()

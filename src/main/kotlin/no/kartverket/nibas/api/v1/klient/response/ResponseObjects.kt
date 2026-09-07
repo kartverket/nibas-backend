@@ -14,7 +14,6 @@ import no.kartverket.nibas.api.v1.common.geojson.MultiPolygon
 import no.kartverket.nibas.common.Identifikator
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.GjeldendeMaterieltVilkaar
-import no.kartverket.nibas.domain.MaterieltVilkaar
 import no.kartverket.nibas.domain.utkast.EndredeInndelinger
 import no.kartverket.nibas.sporing.Gyldighet
 import org.locationtech.jts.geom.Coordinate
@@ -225,33 +224,14 @@ data class BopliktomraadeResponse(
     @Schema(description = "Teknisk versjon for å støtte samhandling og redigering")
     val version: Int,
 
-    @Schema(description = "Tilleggsinformasjon om bopliktområdet")
-    val informasjon: String? = null,
-
-    @Schema(description = "Om boplikten gjelder delvis innenfor området")
-    val delvisBoplikt: Boolean? = null,
-
     @Schema(description = "Indikerer om bopliktomraadet dekker deler av kommunen eller ikke")
     val gjelderKunDelAvKommunen: Boolean,
-
-    @Schema(description = "Usikker avgrensning")
-    @field:JsonProperty("usikkerAvgrensning")
-    val usikkerAvgrensning: Boolean = false,
 
     @Schema(description = "Har usikker avgrensning (nytt navn for usikkerAvgrensning)")
     val harUsikkerAvgrensning: Boolean,
 
     @Schema(description = "Forskriftsreferansen for bopliktområdet")
     val forskriftsreferanse: String? = null,
-
-    @ArraySchema(
-        arraySchema = Schema(description = "Materielle vilkår for bopliktområdet"),
-        schema = Schema(
-            description = "Materielt vilkår",
-            implementation = MaterieltVilkaar::class
-        )
-    )
-    val materielleVilkaar: Set<MaterieltVilkaar> = emptySet(),
 
     @ArraySchema(
         arraySchema = Schema(description = "Materielle vilkår for bopliktområdet (nye enum-verdier, erstatter materielleVilkaar)"),
@@ -261,9 +241,6 @@ data class BopliktomraadeResponse(
         )
     )
     val gjeldendeMaterielleVilkaar: Set<GjeldendeMaterieltVilkaar> = emptySet(),
-
-    @Schema(description = "Andre avgrensninger")
-    val andreAvgrensninger: String? = null,
 
     @Schema(description = "Andre lokale avgrensninger (nytt navn for andreAvgrensninger)")
     val andreLokaleAvgrensninger: String? = null,

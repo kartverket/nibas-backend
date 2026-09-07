@@ -21,16 +21,16 @@ class BopliktomraadeBuilder(
     private var bopliktomraadenummer: String = "01",
     private var forskriftsreferanse: String? = "Forskrift om nedsatt konsesjonsgrense etter konsesjonsloven § 7",
     private var url: String? = "https://frogn.kommunegis.no/publikum",
-    private var bebygdEiendom: Boolean = false,
-    private var ikkeHelaarsboligUnderOppforing: Boolean = false,
-    private var ubebygdTomt: Boolean = false,
-    private var unntakFraSlektskapsunntak: Boolean = false,
-    private var andreAvgrensninger: String? = null,
+    private var gjelderForBoligIkkeTattIBruk: Boolean = false,
+    private var gjelderForBruktSomHelarsbolig: Boolean = false,
+    private var gjelderForUbebygdBoligtomt: Boolean = false,
+    private var harUnntakFraSlektskapsunntak: Boolean = false,
+    private var andreLokaleAvgrensninger: String? = null,
     private var endretdato: ZonedDateTime = ZonedDateTime.now(),
     private var datafangstdato: ZonedDateTime = ZonedDateTime.now(),
     private var gyldigFra: LocalDate = LocalDate.now(),
     private var gyldigTil: LocalDate? = null,
-    private var informasjonstekst: String = INFORMASJONTEKST,
+    private var harUsikkerAvgrensning: Boolean = true,
     private var opphav: String = OPPHAV,
     private var typeEndring: Endringstype = Endringstype.KVALITETSHEVING
 ) {
@@ -63,16 +63,16 @@ class BopliktomraadeBuilder(
         bopliktomraade.forskriftsreferanse = forskriftsreferanse
         bopliktomraade.url = url
         bopliktomraade.bopliktomraadeGrenser = BopliktomraadeGrenser.DelvisBoplikt()
-        bopliktomraade.bebygdEiendom = bebygdEiendom
-        bopliktomraade.ikkeHelaarsBoligUnderOppforing = ikkeHelaarsboligUnderOppforing
-        bopliktomraade.ubebygdTomt = ubebygdTomt
-        bopliktomraade.unntakFraSlektskapsunntak = unntakFraSlektskapsunntak
-        bopliktomraade.andreAvgrensninger = andreAvgrensninger
+        bopliktomraade.gjelderForBoligIkkeTattIBruk = gjelderForBoligIkkeTattIBruk
+        bopliktomraade.gjelderForBruktSomHelarsbolig = gjelderForBruktSomHelarsbolig
+        bopliktomraade.gjelderForUbebygdBoligtomt = gjelderForUbebygdBoligtomt
+        bopliktomraade.harUnntakFraSlektskapsunntak = harUnntakFraSlektskapsunntak
+        bopliktomraade.andreLokaleAvgrensninger = andreLokaleAvgrensninger
+        bopliktomraade.harUsikkerAvgrensning = harUsikkerAvgrensning
 
         bopliktomraade.auditInfo.endretdato = endretdato
         bopliktomraade.auditInfo.typeEndring = typeEndring
         bopliktomraade.gyldighet = Gyldighet(gyldigFra, gyldigTil)
-        bopliktomraade.informasjon = informasjonstekst
         bopliktomraade.opphav = opphav
         bopliktomraade.datafangstdato = datafangstdato
 
@@ -112,28 +112,28 @@ class BopliktomraadeBuilder(
         return this
     }
 
-    fun withBebygdEiendom(bebygdEiendom: Boolean): BopliktomraadeBuilder {
-        this.bebygdEiendom = bebygdEiendom
+    fun withGjelderForBoligIkkeTattIBruk(gjelderForBoligIkkeTattIBruk: Boolean): BopliktomraadeBuilder {
+        this.gjelderForBoligIkkeTattIBruk = gjelderForBoligIkkeTattIBruk
         return this
     }
 
-    fun withIkkeHelaarsboligUnderOppforing(ikkeHelaarsboligUnderOppforing: Boolean): BopliktomraadeBuilder {
-        this.ikkeHelaarsboligUnderOppforing = ikkeHelaarsboligUnderOppforing
+    fun withGjelderForBruktSomHelarsbolig(gjelderForBruktSomHelarsbolig: Boolean): BopliktomraadeBuilder {
+        this.gjelderForBruktSomHelarsbolig = gjelderForBruktSomHelarsbolig
         return this
     }
 
-    fun withUbebygdTomt(ubebygdTomt: Boolean): BopliktomraadeBuilder {
-        this.ubebygdTomt = ubebygdTomt
+    fun withGjelderForUbebygdBoligtomt(gjelderForUbebygdBoligtomt: Boolean): BopliktomraadeBuilder {
+        this.gjelderForUbebygdBoligtomt = gjelderForUbebygdBoligtomt
         return this
     }
 
-    fun withUnntakfraslektskapsunntak(unntakFraSlektskapsunntak: Boolean): BopliktomraadeBuilder {
-        this.unntakFraSlektskapsunntak = unntakFraSlektskapsunntak
+    fun withHarUnntakFraSlektskapsunntak(harUnntakFraSlektskapsunntak: Boolean): BopliktomraadeBuilder {
+        this.harUnntakFraSlektskapsunntak = harUnntakFraSlektskapsunntak
         return this
     }
 
-    fun withAndreAvgrensninger(andreAvgrensninger: String?): BopliktomraadeBuilder {
-        this.andreAvgrensninger = andreAvgrensninger
+    fun withAndreLokaleAvgrensninger(andreLokaleAvgrensninger: String?): BopliktomraadeBuilder {
+        this.andreLokaleAvgrensninger = andreLokaleAvgrensninger
         return this
     }
 }

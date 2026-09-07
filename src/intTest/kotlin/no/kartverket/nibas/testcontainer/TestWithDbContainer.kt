@@ -457,7 +457,7 @@ class TestWithDbContainer {
         gyldigTil: LocalDate? = null,
         grenser: List<Grense> = emptyList(),
         informasjon: String = "Opprinnelig informasjon",
-        delvisBoplikt: Boolean = true
+        gjelderKunDelAvKommunen: Boolean = true
     ): Bopliktomraade {
 
         val bopliktomraade = BopliktomraadeBuilder(
@@ -468,11 +468,12 @@ class TestWithDbContainer {
             bopliktomraadenummer = bopliktomraadenummer,
             bopliktomraadenavn = bopliktomraadenavn,
             kommune = null,
-            grenser = grenser,
-            informasjonstekst = informasjon
+            grenser = grenser
         ).buildUtenKommuneOgGrenser()
 
-        if (!delvisBoplikt) {
+        bopliktomraade.informasjon = informasjon
+        
+        if (!gjelderKunDelAvKommunen) {
             bopliktomraade.bopliktomraadeGrenser = BopliktomraadeGrenser.FullBoplikt()
         }
 

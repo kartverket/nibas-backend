@@ -153,13 +153,11 @@ class UtkastValidatorServiceTest {
                     version = 0,
                     forskriftsreferanse = "01",
                     url = "tellekrets",
-                    delvisBoplikt = false,
-                    materielleVilkaar = emptySet(),
-                    andreAvgrensninger = "test",
                     kommuneIdentifikasjon = Identifikasjon("lokalid"),
                     gjelderKunDelAvKommunen = false,
                     andreLokaleAvgrensninger = "test",
                     harUsikkerAvgrensning = true,
+                    gjeldendeMaterielleVilkaar = emptySet(),
                 )
             ))
             .build()

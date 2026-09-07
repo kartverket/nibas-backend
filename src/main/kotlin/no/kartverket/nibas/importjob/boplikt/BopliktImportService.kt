@@ -96,18 +96,18 @@ class BopliktImportService(
         val endretav = "boplikt-import"
         val typeendring = "import"
 
-        val delvisBoplikt = propIntToBoolean("delvis_boplikt")
-        val usikkerAvgrensning = propIntToBoolean("usikker")
+        val gjelderKunDelAvKommunen = propIntToBoolean("delvis_boplikt")
+        val harUsikkerAvgrensning = propIntToBoolean("usikker")
 
         val forskriftsreferanse = prop("forskriftsreferanse")?.toString()
         val informasjon = prop("utfyllendeBeskrivelse")?.toString()
         val url = prop("url")?.toString()
 
-        val bebygdEiendom = propGjelderToBoolean("bebygd_eiendom")
-        val ikkeHelaarsboligUnderOppforing = propGjelderToBoolean("helaarsbolig")
-        val ubebygdTomt = propGjelderToBoolean("ubebygd_tomt")
-        val unntakFraSlektskapsunntak = propGjelderToBoolean("slektskapsunntak")
-        val andreAvgrensninger = prop("andre_avgrensninger")?.toString()
+        val gjelderForBoligIkkeTattIBruk = propGjelderToBoolean("bebygd_eiendom")
+        val gjelderForBruktSomHelarsbolig = propGjelderToBoolean("helaarsbolig")
+        val gjelderForUbebygdBoligtomt = propGjelderToBoolean("ubebygd_tomt")
+        val harUnntakFraSlektskapsunntak = propGjelderToBoolean("slektskapsunntak")
+        val andreLokaleAvgrensninger = prop("andre_avgrensninger")?.toString()
 
         // Hvis gyldigFra < 2024-01-01, bruk 2024-01-01; ellers bruk gyldigFra
         val gyldigFraDefaultDate = LocalDate.of(2024, 1, 1)
@@ -133,7 +133,7 @@ class BopliktImportService(
             gyldigFraDate = kommune.gyldighet.gyldigFra
         }
 
-        val (bopliktomraade, posisjon: Point) = if (delvisBoplikt) {
+        val (bopliktomraade, posisjon: Point) = if (gjelderKunDelAvKommunen) {
             fixGeometryTo(feature.geometry.toJTS(UTM33_SRID), kommune).let { it to it.interiorPoint }
         } else {
             null to (kommune.omraade?.interiorPoint ?: throw IllegalStateException("Kommune $kommunenummer $kommunenavn har ikke geometri"))
@@ -155,12 +155,12 @@ class BopliktImportService(
             omraadeGeo = bopliktomraade,
             posisjonGeo = posisjon,
             kommunelokalid = kommunelokalid,
-            usikkerAvgrensning = usikkerAvgrensning,
-            bebygdEiendom = bebygdEiendom,
-            ikkeHelaarsboligUnderOppforing = ikkeHelaarsboligUnderOppforing,
-            ubebygdTomt = ubebygdTomt,
-            unntakFraSlektskapsunntak = unntakFraSlektskapsunntak,
-            andreAvgrensninger = andreAvgrensninger,
+            harUsikkerAvgrensning = harUsikkerAvgrensning,
+            gjelderForBoligIkkeTattIBruk = gjelderForBoligIkkeTattIBruk,
+            gjelderForBruktSomHelarsbolig = gjelderForBruktSomHelarsbolig,
+            gjelderForUbebygdBoligtomt = gjelderForUbebygdBoligtomt,
+            harUnntakFraSlektskapsunntak = harUnntakFraSlektskapsunntak,
+            andreLokaleAvgrensninger = andreLokaleAvgrensninger,
             version = 1,
             slettet = false,
             forskriftsreferanse = forskriftsreferanse,

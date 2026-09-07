@@ -10,7 +10,6 @@ import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.GjeldendeMaterieltVilkaar
-import no.kartverket.nibas.domain.MaterieltVilkaar
 import java.time.ZonedDateTime
 
 @Schema(description = "En referanse til et fylke")
@@ -196,26 +195,11 @@ data class EksternBopliktomraadeRespons(
     @Schema(description = "Kommunenummeret til bopliktområdet")
     val kommunenummer: Kommunenummer,
 
-    @Schema(description = "Om boplikten gjelder delvis for området")
-    val delvisBoplikt: Boolean,
-
     @Schema(description = "Indikerer om bopliktomraadet dekker deler av kommunen eller ikke")
     val gjelderKunDelAvKommunen: Boolean,
 
-    @Schema(description = "Tilleggsinformasjon om bopliktområdet")
-    val informasjon: String?,
-
     @Schema(description = "Forskriftsreferanse til boplikten")
     val forskriftsreferanse: String?,
-
-    @ArraySchema(
-        arraySchema = Schema(description = "Materielle vilkår for bopliktområdet"),
-        schema = Schema(
-            description = "Materielt vilkår",
-            implementation = MaterieltVilkaar::class
-        )
-    )
-    val materielleVilkaar: Set<MaterieltVilkaar> = emptySet(),
 
     @ArraySchema(
         arraySchema = Schema(description = "Materielle vilkår for bopliktområdet (nye enum-verdier, erstatter materielleVilkaar)"),
@@ -226,14 +210,8 @@ data class EksternBopliktomraadeRespons(
     )
     val gjeldendeMaterielleVilkaar: Set<GjeldendeMaterieltVilkaar> = emptySet(),
 
-    @Schema(description = "Andre avgrensninger")
-    val andreAvgrensninger: String? = null,
-
     @Schema(description = "Andre lokale avgrensninger (nytt navn for andreAvgrensninger)")
     val andreLokaleAvgrensninger: String? = null,
-
-    @Schema(description = "Usikker avgrensning")
-    val usikkerAvgrensning: Boolean = false,
 
     @Schema(description = "Har usikker avgrensning (nytt navn for usikkerAvgrensning)")
     val harUsikkerAvgrensning: Boolean,

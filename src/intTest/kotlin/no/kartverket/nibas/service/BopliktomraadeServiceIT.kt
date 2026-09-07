@@ -15,7 +15,7 @@ import no.kartverket.nibas.domain.Bopliktomraade
 import no.kartverket.nibas.domain.BopliktomraadeGrenser
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Grense
-import no.kartverket.nibas.domain.MaterieltVilkaar
+import no.kartverket.nibas.domain.GjeldendeMaterieltVilkaar
 import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import no.kartverket.nibas.testcontainer.assertGrenser
@@ -115,7 +115,7 @@ class BopliktomraadeServiceIT : TestWithDbContainer() {
         val bopliktomraadeRequest = BopliktomraadeRequestBuilder.DEFAULT_REQUEST
         assertThat(bopliktomraadeRequest.url).isNotNull()
         assertThat(bopliktomraadeRequest.forskriftsreferanse).isNotNull()
-        assertThat(bopliktomraadeRequest.delvisBoplikt).isTrue()
+        assertThat(bopliktomraadeRequest.gjelderKunDelAvKommunen).isTrue()
 
         val identifikator = Identifikator(Lokalid(bopliktomraadeRequest.identifikasjon.lokalid), october1In2022)
         val lagredeGrenserForKrets =
@@ -129,12 +129,9 @@ class BopliktomraadeServiceIT : TestWithDbContainer() {
             grenser = lagredeGrenserForKrets
         )
 
-        opprinneligBopliktomraade.bebygdEiendom = true
-        opprinneligBopliktomraade.ubebygdTomt = true
+        opprinneligBopliktomraade.gjelderForBoligIkkeTattIBruk = true
+        opprinneligBopliktomraade.gjelderForUbebygdBoligtomt = true
         bopliktomraadeRepository.save(opprinneligBopliktomraade)
-
-        val opprinneligeVilkaar = setOf(MaterieltVilkaar.BEBYGDEIENDOM, MaterieltVilkaar.UBEBYGDTOMT)
-        assertThat(opprinneligBopliktomraade.materielleVilkaar).containsExactlyInAnyOrderElementsOf(opprinneligeVilkaar)
 
         saveKommuneOgUnikLokalid(kommunenummerUuid = "4227", bopliktomraader = listOf(opprinneligBopliktomraade))
 
@@ -160,8 +157,7 @@ class BopliktomraadeServiceIT : TestWithDbContainer() {
         assertThat(bopliktomraadeEtter.url).isNotNull().isNotEqualTo(opprinneligBopliktomraade.url).isEqualTo(bopliktomraadeRequest.url)
         assertThat(bopliktomraadeEtter.forskriftsreferanse).isNotNull().isNotEqualTo(opprinneligBopliktomraade.forskriftsreferanse)
             .isEqualTo(bopliktomraadeRequest.forskriftsreferanse)
-        assertThat(bopliktomraadeEtter.delvisBoplikt).isEqualTo(opprinneligBopliktomraade.delvisBoplikt)
-        assertThat(bopliktomraadeEtter.usikkerAvgrensning).isTrue()
+        assertThat(bopliktomraadeEtter.gjelderKunDelAvKommunen).isEqualTo(opprinneligBopliktomraade.gjelderKunDelAvKommunen)
 
         assertThat(opprinneligBopliktomraade.gyldighet.gyldigFra).isEqualTo(october1In2022)
         assertThat(opprinneligBopliktomraade.gyldighet.gyldigTil).isEqualTo(now)
@@ -170,20 +166,17 @@ class BopliktomraadeServiceIT : TestWithDbContainer() {
             as? BopliktomraadeGrenser.DelvisBoplikt
             ?: throw IllegalStateException("Forventet delvis boplikt")
 
-        assertThat(opprinneligBopliktomraade.materielleVilkaar)
-            .containsExactlyInAnyOrderElementsOf(opprinneligeVilkaar)
+        assertThat(bopliktomraadeEtter.gjeldendeMaterielleVilkaar)
+            .allMatch { it in GjeldendeMaterieltVilkaar.entries }
 
-        assertThat(bopliktomraadeEtter.materielleVilkaar)
-            .allMatch { it in MaterieltVilkaar.entries }
-
-        assertThat(bopliktomraadeEtter.bebygdEiendom)
-            .isEqualTo(MaterieltVilkaar.BEBYGDEIENDOM in bopliktomraadeEtter.materielleVilkaar)
-        assertThat(bopliktomraadeEtter.ikkeHelaarsBoligUnderOppforing)
-            .isEqualTo(MaterieltVilkaar.IKKEHELAARSBOLIGUNDEROPPFORING in bopliktomraadeEtter.materielleVilkaar)
-        assertThat(bopliktomraadeEtter.ubebygdTomt)
-            .isEqualTo(MaterieltVilkaar.UBEBYGDTOMT in bopliktomraadeEtter.materielleVilkaar)
-        assertThat(bopliktomraadeEtter.unntakFraSlektskapsunntak)
-            .isEqualTo(MaterieltVilkaar.UNNTAKFRASLEKTSKAPSUNNTAK in bopliktomraadeEtter.materielleVilkaar)
+        assertThat(bopliktomraadeEtter.gjelderForBoligIkkeTattIBruk)
+            .isEqualTo(GjeldendeMaterieltVilkaar.GJELDER_FOR_BOLIG_IKKE_TATT_I_BRUK in bopliktomraadeEtter.gjeldendeMaterielleVilkaar)
+        assertThat(bopliktomraadeEtter.gjelderForBruktSomHelarsbolig)
+            .isEqualTo(GjeldendeMaterieltVilkaar.GJELDER_FOR_BRUKT_SOM_HELARSBOLIG in bopliktomraadeEtter.gjeldendeMaterielleVilkaar)
+        assertThat(bopliktomraadeEtter.gjelderForUbebygdBoligtomt)
+            .isEqualTo(GjeldendeMaterieltVilkaar.GJELDER_FOR_UBEBYGD_BOLIGTOMT in bopliktomraadeEtter.gjeldendeMaterielleVilkaar)
+        assertThat(bopliktomraadeEtter.harUnntakFraSlektskapsunntak)
+            .isEqualTo(GjeldendeMaterieltVilkaar.HAR_UNNTAK_FRA_SLEKTSKAPSUNNTAK in bopliktomraadeEtter.gjeldendeMaterielleVilkaar)
 
         val etterGrenser = bopliktomraadeEtter.bopliktomraadeGrenser
             as? BopliktomraadeGrenser.DelvisBoplikt
@@ -204,7 +197,7 @@ class BopliktomraadeServiceIT : TestWithDbContainer() {
 
     @Test
     fun `oppdaterBopliktomraade skal kunne blanke ut felt`() {
-        val bopliktomraadeRequest = BopliktomraadeRequestBuilder.DEFAULT_REQUEST.copy(url = null, forskriftsreferanse = null, informasjon = null)
+        val bopliktomraadeRequest = BopliktomraadeRequestBuilder.DEFAULT_REQUEST.copy(url = null, forskriftsreferanse = null)
 
         val identifikator = Identifikator(Lokalid(bopliktomraadeRequest.identifikasjon.lokalid), october1In2022)
         val lagredeGrenserForKrets = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(october1In2022, Grensetype.Bopliktgrense))
@@ -244,7 +237,7 @@ class BopliktomraadeServiceIT : TestWithDbContainer() {
         assertThat(bopliktomraadeEtter.gyldighet.gyldigFra).isEqualTo(now)
         assertThat(bopliktomraadeEtter.url).isNull()
         assertThat(bopliktomraadeEtter.forskriftsreferanse).isNull()
-        assertThat(bopliktomraadeEtter.informasjon).isNull()
+        assertThat(bopliktomraadeEtter.informasjon).isEqualTo(bopliktomraade.informasjon)
 
         assertThat(opprinneligBopliktomraadeEtter.gyldighet.gyldigFra).isEqualTo(october1In2022)
         assertThat(opprinneligBopliktomraadeEtter.gyldighet.gyldigTil).isEqualTo(now)

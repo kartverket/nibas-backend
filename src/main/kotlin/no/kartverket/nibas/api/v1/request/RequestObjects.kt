@@ -17,7 +17,6 @@ import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.common.geojson.metadata.DISCRIMINATOR_FIELD
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.GjeldendeMaterieltVilkaar
-import no.kartverket.nibas.domain.MaterieltVilkaar
 import java.time.LocalDate
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
@@ -141,30 +140,11 @@ data class BopliktomraadeRequest(
     @NotNull
     override var version: Int,
 
-    @Schema(description = "informasjon om bopliktomraade")
-    override val informasjon: String? = null,
-
-    @Schema(description = "Indikerer om bopliktomraadet dekker deler av kommunen eller ikke")
-    override val delvisBoplikt: Boolean? = null,
-
     @Schema(description = "Indikerer om bopliktomraadet dekker deler av kommunen eller ikke")
     override val gjelderKunDelAvKommunen: Boolean,
 
-    @Schema(description = "Usikker avgrensning")
-    @field:JsonProperty("usikkerAvgrensning")
-    override val usikkerAvgrensning: Boolean? = false,
-
     @Schema(description = "Har usikker avgrensning (nytt navn for usikkerAvgrensning)")
     override val harUsikkerAvgrensning: Boolean,
-
-    @ArraySchema(
-        arraySchema = Schema(description = "Materielle vilkår for bopliktområdet"),
-        schema = Schema(
-            description = "Materielt vilkår",
-            implementation = MaterieltVilkaar::class
-        )
-    )
-    override val materielleVilkaar: Set<MaterieltVilkaar>? = emptySet(),
 
     @ArraySchema(
         arraySchema = Schema(description = "Materielle vilkår for bopliktområdet (nye enum-verdier, erstatter materielleVilkaar)"),
@@ -174,9 +154,6 @@ data class BopliktomraadeRequest(
         )
     )
     override val gjeldendeMaterielleVilkaar: Set<GjeldendeMaterieltVilkaar> = emptySet(),
-
-    @Schema(description = "Andre avgrensninger")
-    override val andreAvgrensninger: String? = null,
 
     @Schema(description = "Andre lokale avgrensninger (nytt navn for andreAvgrensninger)")
     override val andreLokaleAvgrensninger: String? = null,

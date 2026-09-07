@@ -165,22 +165,17 @@ fun Bopliktomraade.toEksternBopliktomraadeResponse(gyldighetsdato: LocalDate): E
         oppdateringsdato = auditInfo.endretdato,
         datafangstdato = datafangstdato,
         kommunenummer = Kommunenummer(kommune.kommunenummerUuid, kommune.kommunenummer),
-        delvisBoplikt = delvisBoplikt,
         gjelderKunDelAvKommunen = gjelderKunDelAvKommunen,
-        informasjon = informasjon,
         forskriftsreferanse = forskriftsreferanse,
-        materielleVilkaar = materielleVilkaar,
         gjeldendeMaterielleVilkaar = gjeldendeMaterielleVilkaar,
-        andreAvgrensninger = andreAvgrensninger,
         andreLokaleAvgrensninger = andreLokaleAvgrensninger,
-        usikkerAvgrensning = usikkerAvgrensning,
         harUsikkerAvgrensning = harUsikkerAvgrensning,
         url = url,
         // Hvis bopliktområdet har boplikt i hele kommunen brukes kommunens område.
         features = FeatureCollection(features = listOf(
             posisjon.posisjonToFeature(version),
             flateToFeature(version).apply {
-                if (!delvisBoplikt) { geometry = kommune.omraade?.multiPolygonToDto() ?: MultiPolygonDto(coordinates = emptyList()) }
+                if (!gjelderKunDelAvKommunen) { geometry = kommune.omraade?.multiPolygonToDto() ?: MultiPolygonDto(coordinates = emptyList()) }
             }
         )),
         version = version
