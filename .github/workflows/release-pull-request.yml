@@ -1,18 +1,8 @@
 name: Release PR
 on:
-  workflow_dispatch:
-    inputs:
-      branch-name:
-        description: "Will be 'nibas-{branch-name}' in the environment. Must be a valid hostname label. If not provided, the current branch's name will be used."
-        required: false
-  pull_request:
-    types: [opened, ready_for_review, synchronize, reopened]
+  push:
     branches:
-      - main
-
-concurrency:
-  group: feature-env-${{ github.head_ref }}
-  cancel-in-progress: true
+      - '*'
 
 env:
   image_name: nibas-backend
@@ -20,85 +10,6 @@ env:
   registry_path: kartverket
 
 jobs:
-  should-create-feature-env:
-    if: ${{ github.event_name == 'pull_request' }}
-    uses: kartverket/nibas-backend/.github/workflows/check-changes.yml@main
-    with:
-      ignore-paths: "README.md,.github/,.vscode/,.security/,docs/"
-
-  determine-branch-name-pr:
-    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft == false && needs.should-create-feature-env.outputs.has-relevant-changes == 'true' }}
-    needs: should-create-feature-env
-    name: Determine Branch Name (PR)
-    runs-on: ubuntu-latest
-    outputs:
-      BRANCH_NAME: ${{ steps.determine-branch.outputs.branch_name_output }}
-    steps:
-      - name: Determine branch name
-        id: determine-branch
-        run: |
-          BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
-          BRANCH_NAME=$(echo "$BRANCH_NAME" | tr '[:upper:]' '[:lower:]')
-          echo "branch_name_output=$BRANCH_NAME" >> $GITHUB_OUTPUT
-
-  determine-branch-name-manual:
-    if: ${{ github.event_name == 'workflow_dispatch' }}
-    name: Determine Branch Name (Manual)
-    runs-on: ubuntu-latest
-    outputs:
-      BRANCH_NAME: ${{ steps.determine-branch.outputs.branch_name_output }}
-    steps:
-      - name: Determine branch name
-        id: determine-branch
-        run: |
-          if [ "${{ inputs.branch-name }}" != "" ]; then
-            BRANCH_NAME="${{ inputs.branch-name }}"
-          else
-            BRANCH_NAME="${{ github.ref_name }}"
-          fi
-          BRANCH_NAME=$(echo "$BRANCH_NAME" | tr '[:upper:]' '[:lower:]')
-          echo "branch_name_output=$BRANCH_NAME" >> $GITHUB_OUTPUT
-
-  validate-branch-name-pr:
-    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft == false && needs.should-create-feature-env.outputs.has-relevant-changes == 'true' }}
-    needs: [should-create-feature-env, determine-branch-name-pr]
-    runs-on: ubuntu-latest
-    name: Validate branch-name input (PR)
-    outputs:
-      valid: ${{ steps.validate.outputs.valid }}
-    steps:
-      - name: Validate branch-name is valid hostname label
-        id: validate
-        run: |
-          DETERMINED_BRANCH_NAME="${{ needs.determine-branch-name-pr.outputs.BRANCH_NAME }}"
-          if [[ ! "$DETERMINED_BRANCH_NAME" =~ ^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$ ]]; then
-            echo "Branchname is invalid as hostname label: $DETERMINED_BRANCH_NAME"
-            echo "valid=false" >> $GITHUB_OUTPUT
-          else
-            echo "Branchname is valid as hostname label: $DETERMINED_BRANCH_NAME"
-            echo "valid=true" >> $GITHUB_OUTPUT
-          fi
-
-  validate-branch-name-manual:
-    if: ${{ github.event_name == 'workflow_dispatch' }}
-    needs: determine-branch-name-manual
-    runs-on: ubuntu-latest
-    name: Validate branch-name input (Manual)
-    outputs:
-      valid: ${{ steps.validate.outputs.valid }}
-    steps:
-      - name: Validate branch-name is valid hostname label
-        id: validate
-        run: |
-          DETERMINED_BRANCH_NAME="${{ needs.determine-branch-name-manual.outputs.BRANCH_NAME }}"
-          if [[ ! "$DETERMINED_BRANCH_NAME" =~ ^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$ ]]; then
-            echo "Branchname is invalid as hostname label: $DETERMINED_BRANCH_NAME"
-            echo "valid=false" >> $GITHUB_OUTPUT
-          else
-            echo "Branchname is valid as hostname label: $DETERMINED_BRANCH_NAME"
-            echo "valid=true" >> $GITHUB_OUTPUT
-          fi
-
   build:
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.pull_request.draft == false }}
     permissions:
@@ -130,54 +41,3 @@ jobs:
         with:
           allow_severity_level: critical
           image_url: ${{ needs.build.outputs.image_url }}
-
-  deploy-pull-request-pr:
-    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft == false && needs.should-create-feature-env.outputs.has-relevant-changes == 'true' && needs.validate-branch-name-pr.outputs.valid == 'true' }}
-    needs: [should-create-feature-env, validate-branch-name-pr, determine-branch-name-pr, build, pharos]
-    name: Deploy Pull Request (PR)
-    permissions:
-      id-token: write
-      contents: read
-    uses: kartverket/smia-apps/.github/workflows/release-feature-branch.yml@main
-    secrets:
-      TS_OAUTH_CLIENT_ID: ${{ secrets.TS_OAUTH_CLIENT_ID }}
-      TS_OAUTH_SECRET: ${{ secrets.TS_OAUTH_SECRET }}
-    with:
-      branch-name: ${{ needs.determine-branch-name-pr.outputs.BRANCH_NAME }}
-      application: nibas-backend
-      version: ${{ needs.build.outputs.version }}
-      digest: ${{ needs.build.outputs.digest }}
-      identity: nibas
-
-  deploy-pull-request-manual:
-    if: ${{ github.event_name == 'workflow_dispatch' && needs.validate-branch-name-manual.outputs.valid == 'true' }}
-    needs: [validate-branch-name-manual, determine-branch-name-manual, build, pharos]
-    name: Deploy Pull Request (Manual)
-    permissions:
-      id-token: write
-      contents: read
-    uses: kartverket/smia-apps/.github/workflows/release-feature-branch.yml@main
-    secrets:
-      TS_OAUTH_CLIENT_ID: ${{ secrets.TS_OAUTH_CLIENT_ID }}
-      TS_OAUTH_SECRET: ${{ secrets.TS_OAUTH_SECRET }}
-    with:
-      branch-name: ${{ needs.determine-branch-name-manual.outputs.BRANCH_NAME }}
-      application: nibas-backend
-      version: ${{ needs.build.outputs.version }}
-      digest: ${{ needs.build.outputs.digest }}
-      identity: nibas
-
-  post-deployed-message-pr:
-    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft == false && needs.should-create-feature-env.outputs.has-relevant-changes == 'true' && needs.validate-branch-name-pr.outputs.valid == 'true' }}
-    needs: [should-create-feature-env, validate-branch-name-pr, determine-branch-name-pr, deploy-pull-request-pr]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Post deployment comment
-        uses: peter-evans/create-or-update-comment@v5
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          issue-number: ${{ github.event.pull_request.number }}
-          body: |
-            🚀 Feature branch was successfully deployed!
-
-            🌐 Preview it at: [https://nibas-${{ needs.determine-branch-name-pr.outputs.BRANCH_NAME }}.atkv3-dev.kartverket-intern.cloud](https://nibas-${{ needs.determine-branch-name-pr.outputs.BRANCH_NAME }}.atkv3-dev.kartverket-intern.cloud)
