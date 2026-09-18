@@ -2,7 +2,7 @@
 flywayVersion = "13.6.0"
 jtsVersion = "1.20.0"
 kotlinMockitoVersion = "6.3.0"
-kotlinPluginVersion = "2.4.10"
+kotlinPluginVersion = "2.4.20"
 kotlinxCoroutinesCoreVersion = "1.11.0"
 logstashVersion = "9.0"
 matrikkelVersion = "4.26.0.4"

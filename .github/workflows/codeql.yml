@@ -3,7 +3,7 @@ on:
   pull_request:
     branches: [ main ]
   push:
-    branches: [ main ]
+    branches: [ '*' ]
   schedule:
     - cron: '21 21 * * *'
 
@@ -38,6 +38,8 @@ jobs:
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
+        env:
+          CODEQL_EXTRACTOR_JAVA_AGENT_DISABLE_KOTLIN: 'true'
       - name: Setup Gradle Memory
         run: |
           mkdir -p ~/.gradle
