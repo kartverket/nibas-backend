@@ -1,7 +1,6 @@
 package no.kartverket.nibas.api.v1.request
 
 import com.fasterxml.jackson.annotation.JsonCreator
-import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import io.swagger.v3.oas.annotations.media.ArraySchema
@@ -10,6 +9,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import no.kartverket.nibas.api.v1.common.AdministrativEnhetNavn
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Kommunenummer
+import no.kartverket.nibas.api.v1.common.NonExhaustiveFlatetype
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
@@ -261,3 +261,13 @@ data class CreateBopliktomraadeRequest @JsonCreator(mode = JsonCreator.Mode.DELE
     @Schema(hidden = true)
     private val request: BopliktomraadeRequest
 ) : CreateInndelingRequest, BopliktomraadeRequestFields by request
+
+@Schema(description = "Representasjon av arkivering av en ikke-heldekkende inndeling.")
+data class ArchiveInndelingRequest(
+    @Schema(description = "Type inndeling som skal arkiveres")
+    val flatetype: NonExhaustiveFlatetype,
+
+    @Schema(description = "Identifikator og teknisk versjon for inndelingen som skal arkiveres")
+    val identifikator: IdentifikatorMedVersjon,
+)
+

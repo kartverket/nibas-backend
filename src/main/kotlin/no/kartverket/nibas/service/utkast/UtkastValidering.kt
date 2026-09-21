@@ -3,6 +3,7 @@ package no.kartverket.nibas.service.utkast
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.KontekstEnhetType
+import no.kartverket.nibas.api.v1.common.NonExhaustiveFlatetype
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.UnikKretsDelingEndring
 import no.kartverket.nibas.api.v1.common.geojson.Feature
@@ -174,6 +175,55 @@ class UtkastValidatorService(
 
         errorMessages.addAll(validateGyldigeOperasjoner(utkast.operasjoner!!))
         errorMessages.addAll(validerCreateInndelingEndringer(utkast, gyldighetDato))
+        errorMessages.addAll(validerArchiveInndelingEndringer(utkast, gyldighetDato))
+
+        return errorMessages
+    }
+
+    private fun validerArchiveInndelingEndringer(utkast: Utkast, gyldighetDato: LocalDate): List<String> {
+        val operasjoner = utkast.operasjoner ?: return emptyList()
+        val archiveRequests = operasjoner.archiveInndelingEndringer ?: emptyList()
+        if (archiveRequests.isEmpty()) return emptyList()
+
+        val errorMessages = mutableListOf<String>()
+        val duplikater = archiveRequests.groupBy { it.flatetype to it.identifikator.lokalId }.filterValues { it.size > 1 }.keys
+        if (duplikater.isNotEmpty()) {
+            errorMessages.add("Samme inndeling kan ikke arkiveres flere ganger: ${duplikater.joinToString { it.second }}.")
+        }
+
+        archiveRequests.filter { it.identifikator.lokalId.isBlank() }.forEach {
+            errorMessages.add("LokalId for en inndeling som skal arkiveres kan ikke være tom.")
+        }
+
+        archiveRequests.forEach { request ->
+            when (request.flatetype) {
+                NonExhaustiveFlatetype.BOPLIKTOMRAADE -> {
+                    val lokalId = request.identifikator.lokalId
+                    if (lokalId in operasjoner.metadataendringer.bopliktomraadeendringer.keys) {
+                        errorMessages.add("Bopliktområde $lokalId kan ikke både oppdateres og arkiveres i samme utkast.")
+                    }
+
+                    val erReferertINyKontekst = operasjoner.grenseendringer.endredeFeatures.any { feature ->
+                        feature.properties.kontekstEgenskaper.any { it.id?.lokalid?.value == lokalId }
+                    }
+                    if (erReferertINyKontekst) {
+                        errorMessages.add("Bopliktområde $lokalId kan ikke arkiveres samtidig som en grense knyttes til området.")
+                    }
+
+                    val bopliktomraade = bopliktomraadeService.hentBopliktomraade(Identifikator(Lokalid(lokalId), gyldighetDato))
+                    val grenseIder = bopliktomraade
+                        ?.takeIf { it.gjelderKunDelAvKommunen }
+                        ?.getGrensekoblinger(gyldighetDato)
+                        ?.map { it.grense.lokalid }
+                        .orEmpty()
+                        .toSet()
+                    val endredeGrenseIder = operasjoner.grenseendringer.endredeFeatures.mapNotNull { it.id }.toSet()
+                    if (grenseIder.any { it in endredeGrenseIder }) {
+                        errorMessages.add("Grenser som tilhører bopliktområde $lokalId skal ikke endres separat når området arkiveres.")
+                    }
+                }
+            }
+        }
 
         return errorMessages
     }
@@ -182,6 +232,7 @@ class UtkastValidatorService(
         validerGrunnkretsEndringerKonflikt(utkast, gyldighetDato)?.let { return it }
         validerStemmekretsEndringerKonflikt(utkast, gyldighetDato)?.let { return it }
         validerBopliktomraadeEndringerKonflikt(utkast, gyldighetDato)?.let { return it }
+        validerArchiveInndelingEndringerKonflikt(utkast, gyldighetDato)?.let { return it }
         validerGrenseEndringerKonflikt(utkast, gyldighetDato)?.let { return it }
         validerStemmekretsSammenslaaingerKonflikt(utkast, gyldighetDato)?.let { return it }
         validerStemmekretsDelingerKonflikt(utkast, gyldighetDato)?.let { return it }
@@ -189,6 +240,26 @@ class UtkastValidatorService(
 
         return null
     }
+
+    private fun validerArchiveInndelingEndringerKonflikt(utkast: Utkast, gyldighetDato: LocalDate): FeilVedOppdatering.OppdateringException? =
+        utkast.operasjoner?.archiveInndelingEndringer
+            ?.firstNotNullOfOrNull { request ->
+                when (request.flatetype) {
+                    NonExhaustiveFlatetype.BOPLIKTOMRAADE -> {
+                        val lokalId = request.identifikator.lokalId
+                        finnEventueltSenerePubliserteBopliktomraaderOgLagOppdateringException(lokalId, gyldighetDato)
+                            ?: bopliktomraadeService.hentBopliktomraade(Identifikator(Lokalid(lokalId), gyldighetDato))
+                                ?.takeIf { it.gjelderKunDelAvKommunen }
+                                ?.getGrensekoblinger(gyldighetDato)
+                                ?.firstNotNullOfOrNull { kobling ->
+                                    val senereGrenseversjoner = grenseService
+                                        .hentAlleVersjonerMedGyldigFraEtterGittDato(kobling.grense.lokalid, gyldighetDato)
+                                        .map { Identifikator(Lokalid(it.lokalid), it.gyldighet.gyldigFra) }
+                                    lagEventueltOppdateringException(senereGrenseversjoner, gyldighetDato, FeilVedOppdatering.Type.GRENSE)
+                                }
+                    }
+                }
+            }
 
     fun validateUtkastKlartForPublisering(utkast: Utkast, gyldighetDato: LocalDate): List<String> {
         val errorMessages = mutableListOf<String>()
@@ -739,7 +810,8 @@ private fun Operasjoner.harEndringer(): Boolean {
         this.stemmekretsSammenslaaingsendring != null ||
         this.grunnkretsSammenslaaingsendring != null ||
         this.kretsDelingEndringer.isNotEmpty() ||
-        this.createInndelingEndringer?.isNotEmpty() == true
+        this.createInndelingEndringer?.isNotEmpty() == true ||
+        this.archiveInndelingEndringer?.isNotEmpty() == true
 }
 
 private fun Operasjoner.harIkkeEndringer(): Boolean = !this.harEndringer()

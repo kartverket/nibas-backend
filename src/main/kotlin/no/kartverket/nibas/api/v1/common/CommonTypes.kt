@@ -2,6 +2,7 @@ package no.kartverket.nibas.api.v1.common
 
 import io.swagger.v3.oas.annotations.media.Schema
 import no.kartverket.nibas.api.v1.common.geojson.Feature
+import no.kartverket.nibas.api.v1.request.ArchiveInndelingRequest
 import no.kartverket.nibas.api.v1.request.BopliktomraadeRequest
 import no.kartverket.nibas.api.v1.request.CreateInndelingRequest
 import no.kartverket.nibas.api.v1.request.FylkeRequest
@@ -34,6 +35,10 @@ val Flatetype.isExhaustive: Boolean
         Flatetype.STEMMEKRETS -> true
         Flatetype.BOPLIKTOMRAADE -> false
     }
+
+enum class NonExhaustiveFlatetype(val flatetype: Flatetype) {
+    BOPLIKTOMRAADE(Flatetype.BOPLIKTOMRAADE)
+}
 
 /**
  * Definerer hvilken kontekst en skal se grense/feature i.
@@ -156,6 +161,8 @@ data class Operasjoner(
     val kretsDelingEndringer: List<KretsDelingEndringRequest> = listOf(),
     @Schema(description = "Opprettelse av nye inndelinger for en inndelingstype som er ikke-heldekkende")
     val createInndelingEndringer: List<CreateInndelingRequest>? = listOf(),
+    @Schema(description = "Arkivering av eksisterende inndelinger for en inndelingstype som er ikke-heldekkende")
+    val archiveInndelingEndringer: List<ArchiveInndelingRequest>? = emptyList(),
 )
 
 @Schema(description = "Representasjon av endringer på metadata.")

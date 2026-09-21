@@ -3,9 +3,11 @@ package no.kartverket.nibas.service.utkast
 import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grenseendringer
 import no.kartverket.nibas.api.v1.common.Metadataendringer
+import no.kartverket.nibas.api.v1.common.NonExhaustiveFlatetype
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.getUnikeKretsDelingEndringRequests
+import no.kartverket.nibas.api.v1.request.ArchiveInndelingRequest
 import no.kartverket.nibas.api.v1.request.CreateBopliktomraadeRequest
 import no.kartverket.nibas.api.v1.request.GrunnkretsSammenslaaingsendringRequest
 import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
@@ -224,8 +226,9 @@ class UtkastService(
 
         validerUnikeKretsnumre(kretsDelingEndringer + sammenslaaingsendringer + metadataendringer)
         val grenseendringer = publiserGrenseendringer(operasjoner.grenseendringer, utkast, gyldigFra)
+        val arkiverteInndelinger = publiserArchiveInndelingEndringer(operasjoner.archiveInndelingEndringer ?: emptyList(), gyldigFra)
 
-        return metadataendringer + sammenslaaingsendringer + grenseendringer + kretsDelingEndringer + nyInndelingEndringer
+        return metadataendringer + sammenslaaingsendringer + grenseendringer + kretsDelingEndringer + nyInndelingEndringer + arkiverteInndelinger
     }
 
     /**
@@ -245,6 +248,7 @@ class UtkastService(
             }
             laasbarMedOensketVersjonListe.addAll(grenseService.validerLaasbareForGrenseendringerFinnesOgLagListeMedLaasbarOgOensketVersjon(operasjoner.grenseendringer.endredeFeatures, gyldigFra))
             laasbarMedOensketVersjonListe.addAll(validerLaasbarForMetadataEndringerFinnesOgLagListeMedLaasbarOgOensketVersjon(operasjoner.metadataendringer, gyldigFra))
+            laasbarMedOensketVersjonListe.addAll(validerLaasbarForArchiveInndelingEndringer(operasjoner.archiveInndelingEndringer ?: emptyList(), gyldigFra))
 
             operasjoner.kretsDelingEndringer.forEach {
                 laasbarMedOensketVersjonListe.add(when (it.flatetype) {
@@ -257,6 +261,23 @@ class UtkastService(
 
         }
         return laasbarMedOensketVersjonListe
+    }
+
+    private fun validerLaasbarForArchiveInndelingEndringer(
+        archiveInndelingEndringer: List<ArchiveInndelingRequest>,
+        gyldigFra: LocalDate
+    ): List<Pair<Laasbar, Int>> = archiveInndelingEndringer.map { archiveRequest ->
+        when (archiveRequest.flatetype) {
+            NonExhaustiveFlatetype.BOPLIKTOMRAADE -> {
+                val identifikator = archiveRequest.identifikator
+                val bopliktomraade = bopliktomraadeService.hentBopliktomraade(Identifikator(Lokalid(identifikator.lokalId), gyldigFra))
+                    ?: throw ResponseException.NotFoundException(
+                        title = "Bopliktområde ikke funnet",
+                        msg = "Fant ikke bopliktområde med id ${identifikator.lokalId} som er gyldig ${gyldigFra.toNorskFormat()}"
+                    )
+                Pair(bopliktomraade, identifikator.version)
+            }
+        }
     }
 
     private fun validerLaasbarForMetadataEndringerFinnesOgLagListeMedLaasbarOgOensketVersjon(metadataendringer: Metadataendringer, gyldigFra: LocalDate)
@@ -460,6 +481,17 @@ class UtkastService(
            }
         }
         return savedInndelinger.map { inndeling -> inndeling.toEventRad(EventType.ADDED) }
+    }
+
+    private fun publiserArchiveInndelingEndringer(
+        archiveInndelingRequests: List<ArchiveInndelingRequest>,
+        gyldigFra: LocalDate
+    ): List<EventRad> = archiveInndelingRequests.map { archiveRequest ->
+        when (archiveRequest.flatetype) {
+            NonExhaustiveFlatetype.BOPLIKTOMRAADE -> bopliktomraadeService
+                .arkiverBopliktomraade(Lokalid(archiveRequest.identifikator.lokalId), gyldigFra)
+                .toEventRad(EventType.EXPIRED)
+        }
     }
 }
 

@@ -52,6 +52,25 @@ class BopliktomraadeService(
     fun hentAntallGyldigeVersjonerFramITidFor(identifikator: Identifikator): Int =
         bopliktomraadeRepository.findAntallFramtidigeVersjonerForIdentifikator(identifikator)
 
+    @Transactional(readOnly = false)
+    fun arkiverBopliktomraade(lokalId: Lokalid, gyldigTil: LocalDate): Bopliktomraade {
+        val identifikator = Identifikator(lokalId, gyldigTil)
+        val bopliktomraade = hentBopliktomraade(identifikator)
+            ?: throw ResponseException.NotFoundException(
+                title = "Bopliktområde ikke funnet",
+                msg = "Bopliktområde med $identifikator ble ikke funnet."
+            )
+
+        val egneGrenser = when (val grenser = bopliktomraade.bopliktomraadeGrenser) {
+            is BopliktomraadeGrenser.DelvisBoplikt -> grenser.getGrensekoblinger(gyldigTil).map { it.grense }
+            is BopliktomraadeGrenser.FullBoplikt -> emptyList()
+        }
+
+        bopliktomraade.setGyldigTil(gyldigTil)
+        egneGrenser.forEach { it.setGyldigTil(gyldigTil) }
+        return bopliktomraade
+    }
+
     fun hentFramtidigeVersjonerForBopliktomraade(lokalId: Lokalid, gyldighetsdato: LocalDate?): List<Bopliktomraade> {
         val identifikator = Identifikator(lokalId, gyldighetsdato ?: LocalDate.now())
         val gyldigBopliktomraadeForDagensDato = hentBopliktomraade(identifikator)
