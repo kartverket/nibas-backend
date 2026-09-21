@@ -6,8 +6,10 @@ import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.Metadataendringer
 import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.common.Operasjoner
+import no.kartverket.nibas.api.v1.common.NonExhaustiveFlatetype
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
+import no.kartverket.nibas.api.v1.request.ArchiveInndelingRequest
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
 import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.api.v1.request.KretsNavnOgNummer
@@ -43,6 +45,51 @@ class UtkastServiceIT : TestWithDbContainer() {
 
     @Autowired
     private lateinit var nibasEventPublisher: NibasEventPublisher
+
+    @Test
+    fun `publiser arkivering av bopliktomraade`() {
+        val gyldigFra = LocalDate.now()
+        val grenser = grenseRepository.saveAllAndFlush(
+            GrenseHelper.getGrenserForOestligKrets(gyldigFra.minusDays(1), Grensetype.Bopliktgrense)
+        )
+        val bopliktomraade = saveBopliktomraade(
+            id = "boplikt-arkiv",
+            lokalid = Lokalid("boplikt-arkiv"),
+            gyldigFra = gyldigFra.minusDays(1),
+            grenser = grenser
+        )
+        saveKommuneOgUnikLokalid(
+            bopliktomraader = listOf(bopliktomraade),
+            gyldigFra = gyldigFra.minusDays(1)
+        )
+
+        val operasjoner = Operasjoner(
+            archiveInndelingEndringer = listOf(
+                ArchiveInndelingRequest(
+                    flatetype = NonExhaustiveFlatetype.BOPLIKTOMRAADE,
+                    identifikator = IdentifikatorMedVersjon(bopliktomraade.lokalid, bopliktomraade.version)
+                )
+            )
+        )
+        val utkast = utkastRepository.save(
+            UtkastBuilder.builder("Arkiver bopliktområde", gyldigFra = gyldigFra)
+                .withOperasjoner(operasjoner)
+                .build()
+        )
+
+        val event = utkastService.publiserUtkast(utkast.id)
+
+        assertThat(event.eventRader).anySatisfy { eventRad ->
+            assertThat(eventRad.uuid).isEqualTo(bopliktomraade.id)
+            assertThat(eventRad.lokalid).isEqualTo(bopliktomraade.lokalid)
+            assertThat(eventRad.flateType).isEqualTo(Flatetype.BOPLIKTOMRAADE)
+            assertThat(eventRad.eventType).isEqualTo(EventType.EXPIRED)
+        }
+        assertThat(bopliktomraadeService.hentBopliktomraade(Identifikator(Lokalid(bopliktomraade.lokalid), gyldigFra))).isNull()
+        grenser.forEach {
+            assertThat(grenseService.hentGrense(Identifikator(Lokalid(it.lokalid), gyldigFra))).isNull()
+        }
+    }
 
     @Test
     fun opprettUtkast() {

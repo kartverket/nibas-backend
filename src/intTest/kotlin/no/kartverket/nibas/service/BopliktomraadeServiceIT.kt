@@ -1,6 +1,5 @@
 package no.kartverket.nibas.service
 
-import com.ninjasquad.springmockk.MockkBean
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.geojson.FeatureCollection
 import no.kartverket.nibas.api.v1.common.geojson.metadata.KodelisteEntry
@@ -16,7 +15,6 @@ import no.kartverket.nibas.domain.BopliktomraadeGrenser
 import no.kartverket.nibas.domain.Endringstype
 import no.kartverket.nibas.domain.Grense
 import no.kartverket.nibas.domain.GjeldendeMaterieltVilkaar
-import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.testcontainer.TestWithDbContainer
 import no.kartverket.nibas.testcontainer.assertGrenser
 import no.kartverket.nibas.utils.GrenseHelper
@@ -52,6 +50,59 @@ class BopliktomraadeServiceIT : TestWithDbContainer() {
 
         // Later som 28.11.22 er dagens dato. Det fungerer så lenge den er senere enn 1.10.22
         assertThat(bopliktomraadeService.hentBopliktomraade(Identifikator(bopliktomraadeLokalid, november28In2022))).isNotNull
+    }
+
+    @Test
+    fun `arkiver bopliktomraade arkiverer omraadet og egne grenser`() {
+        val grenser = grenseRepository.saveAll(
+            GrenseHelper.getGrenserForOestligKrets(october1In2022, Grensetype.Bopliktgrense)
+        )
+        val bopliktomraade = saveBopliktomraade(
+            lokalid = bopliktomraadeLokalid,
+            gyldigFra = october1In2022,
+            grenser = grenser
+        )
+        saveKommuneOgUnikLokalid(bopliktomraader = listOf(bopliktomraade), gyldigFra = october1In2022)
+
+        val arkivert = bopliktomraadeService.arkiverBopliktomraade(bopliktomraadeLokalid, november28In2022)
+
+        assertThat(arkivert.gyldighet.gyldigTil).isEqualTo(november28In2022)
+        assertThat(bopliktomraadeService.hentBopliktomraade(Identifikator(bopliktomraadeLokalid, november28In2022))).isNull()
+        grenser.forEach { grense ->
+            assertThat(grense.gyldighet.gyldigTil).isEqualTo(november28In2022)
+            assertThat(grenseService.hentGrense(Identifikator(Lokalid(grense.lokalid), november28In2022))).isNull()
+        }
+    }
+
+    @Test
+    fun `arkiver fullt bopliktomraade arkiverer ikke kommunegrenser`() {
+        val kommunegrense = saveGrense(
+            id = "kommunegrense-full-boplikt",
+            lokalid = Lokalid("kommunegrense-full-boplikt"),
+            gyldigFra = october1In2022,
+            grensetype = Grensetype.Kommunegrense
+        )
+        val grunnkrets = saveGrunnkrets(
+            id = "grunnkrets-full-boplikt",
+            lokalid = Lokalid("grunnkrets-full-boplikt"),
+            gyldigFra = october1In2022,
+            grenser = listOf(kommunegrense)
+        )
+        val bopliktomraade = saveBopliktomraade(
+            id = "full-boplikt",
+            lokalid = bopliktomraadeLokalid,
+            gyldigFra = october1In2022,
+            gjelderKunDelAvKommunen = false
+        )
+        saveKommuneOgUnikLokalid(
+            grunnkretser = listOf(grunnkrets),
+            bopliktomraader = listOf(bopliktomraade),
+            gyldigFra = october1In2022
+        )
+
+        bopliktomraadeService.arkiverBopliktomraade(bopliktomraadeLokalid, november28In2022)
+
+        assertThat(grenseService.hentGrense(Identifikator(Lokalid(kommunegrense.lokalid), november28In2022))).isNotNull
     }
 
     @Test

@@ -8,11 +8,13 @@ import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.Kommunenummer
 import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.common.Operasjoner
+import no.kartverket.nibas.api.v1.common.NonExhaustiveFlatetype
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.KodelisteEntry
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Posisjonskvalitet
 import no.kartverket.nibas.api.v1.request.BopliktomraadeRequest
+import no.kartverket.nibas.api.v1.request.ArchiveInndelingRequest
 import no.kartverket.nibas.api.v1.request.GrunnkretsRequest
 import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.api.v1.request.KretsNavnOgNummer
@@ -167,6 +169,28 @@ class UtkastValidatorServiceTest {
 
         val oppdateringFeil = result as FeilVedOppdatering.OppdateringException
         assertThat(oppdateringFeil.oppdateringInfo.type).isEqualTo(FeilVedOppdatering.Type.BOPLIKTOMRAADE)
+    }
+
+    @Test
+    fun `skal gi feil om inndeling som arkiveres har nyere endringer`() {
+        val utkast = UtkastBuilder.builder("test", gyldigFra = datoSomVilGiFremtidEndringKonflikt)
+            .withOperasjoner(
+                Operasjoner(
+                    archiveInndelingEndringer = listOf(
+                        ArchiveInndelingRequest(
+                            flatetype = NonExhaustiveFlatetype.BOPLIKTOMRAADE,
+                            identifikator = IdentifikatorMedVersjon("lokalid", version = 1)
+                        )
+                    )
+                )
+            )
+            .build()
+
+        val result = utkastValidatorService.validerFremtidigeEndringer(utkast, utkast.gyldigFra)
+
+        assertThat(result).isInstanceOf(FeilVedOppdatering.OppdateringException::class.java)
+        assertThat((result as FeilVedOppdatering.OppdateringException).oppdateringInfo.type)
+            .isEqualTo(FeilVedOppdatering.Type.BOPLIKTOMRAADE)
     }
 
     @Test

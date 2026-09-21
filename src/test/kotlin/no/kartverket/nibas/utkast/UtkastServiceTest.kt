@@ -7,11 +7,13 @@ import no.kartverket.nibas.api.v1.common.Flatetype
 import no.kartverket.nibas.api.v1.common.Grenseendringer
 import no.kartverket.nibas.api.v1.common.Grensetype
 import no.kartverket.nibas.api.v1.common.Metadataendringer
+import no.kartverket.nibas.api.v1.common.NonExhaustiveFlatetype
 import no.kartverket.nibas.api.v1.common.ObjektIdentifikator
 import no.kartverket.nibas.api.v1.common.Operasjoner
 import no.kartverket.nibas.api.v1.common.geojson.metadata.IdentifikatorMedVersjon
 import no.kartverket.nibas.api.v1.request.KretsDelingEndringRequest
 import no.kartverket.nibas.api.v1.request.KretsNavnOgNummer
+import no.kartverket.nibas.api.v1.request.ArchiveInndelingRequest
 import no.kartverket.nibas.api.v1.request.StemmekretsSammenslaaingsendringRequest
 import no.kartverket.nibas.builders.BopliktomraadeBuilder
 import no.kartverket.nibas.builders.BopliktomraadeRequestBuilder
@@ -49,6 +51,7 @@ import no.kartverket.nibas.kodelister.KodelisteService
 import no.kartverket.nibas.kodelister.KodelisteType
 import no.kartverket.nibas.repository.BopliktomraadeRepository
 import no.kartverket.nibas.repository.GrunnkretsRepository
+import no.kartverket.nibas.repository.OptimistiskLaasException
 import no.kartverket.nibas.repository.StemmekretsRepository
 import no.kartverket.nibas.repository.UtkastRepository
 import no.kartverket.nibas.service.BopliktomraadeService
@@ -120,6 +123,31 @@ internal class UtkastServiceTest {
         assertThatThrownBy { utkastService.opprettUtkast(OpprettUtkastRequestBuilder().withNavn("     ").build()) }
             .isInstanceOf(BadRequestException::class.java)
             .hasMessageContaining("Utkastet mangler navn")
+    }
+
+    @Test
+    fun `arkivering av bopliktomraade bruker optimistisk laas`() {
+        val gyldigFra = LocalDate.of(2025, Month.FEBRUARY, 3)
+        val archiveRequest = ArchiveInndelingRequest(
+            flatetype = NonExhaustiveFlatetype.BOPLIKTOMRAADE,
+            identifikator = IdentifikatorMedVersjon("bopliktomraade", version = 0)
+        )
+        val operasjoner = Operasjoner(archiveInndelingEndringer = listOf(archiveRequest))
+        val utkast = UtkastBuilder.builder("Arkivering", gyldigFra = gyldigFra)
+            .withOperasjoner(operasjoner)
+            .build()
+
+        every { utkastRepositoryMock.findById(utkast.id) } returns Optional.of(utkast)
+        every { bopliktomraadeServiceMock.hentBopliktomraade(any()) } returns BopliktomraadeBuilder.DEFAULT_BOPLIKTOMRAADE
+
+        assertThatThrownBy {
+            utkastService.oppdaterUtkast(
+                utkast.id,
+                UtkastRequestBuilder().withOperasjoner(operasjoner).build()
+            )
+        }
+            .isInstanceOf(OptimistiskLaasException::class.java)
+            .hasMessageContaining("Det er ikke samsvar med versjon")
     }
 
     @Test
