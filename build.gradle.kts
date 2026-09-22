@@ -139,7 +139,6 @@ dependencies {
     intTestImplementation(libs.spring.starter.jackson.test)
     intTestImplementation(libs.spring.starter.test)
     intTestImplementation(libs.testcontainers.postgres)
-    intTestImplementation(libs.testcontainers.junit)
     intTestImplementation(libs.spring.mockk)
     intTestImplementation(libs.spring.starter.flyway.test)
 }

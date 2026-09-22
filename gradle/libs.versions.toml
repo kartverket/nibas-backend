@@ -15,7 +15,7 @@ springDependencyManagementVersion = "1.1.7"
 springFrameworkVersion = "4.1.0"
 springdocOpenapiVersion2 = "3.1.1"
 springmockkVersion = "5.0.1"
-testContainerVersion = "1.21.4"
+testContainerVersion = "2.0.5"
 proj4jVersion = "1.4.3"
 proj4jEPSGVersion = "1.4.3"
 postgresVersion = "42.7.13"
@@ -67,8 +67,7 @@ spring-starter-thymeleaf-test = { module = "org.springframework.boot:spring-boot
 springdoc-openapi-common = { module = "org.springdoc:springdoc-openapi-starter-common", version.ref = "springdocOpenapiVersion2" }
 springdoc-openapi-webmvc-api = { module = "org.springdoc:springdoc-openapi-starter-webmvc-api", version.ref = "springdocOpenapiVersion2" }
 springdoc-openapi-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdocOpenapiVersion2" }
-testcontainers-junit = { module = "org.testcontainers:junit-jupiter", version.ref = "testContainerVersion" }
-testcontainers-postgres = { module = "org.testcontainers:postgresql", version.ref = "testContainerVersion" }
+testcontainers-postgres = { module = "org.testcontainers:testcontainers-postgresql", version.ref = "testContainerVersion" }
 
 [plugins]
 flyway = { id = "org.flywaydb.flyway", version.ref = "flywayVersion" }
