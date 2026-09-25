@@ -1,3 +1,5 @@
+FROM dhi.io/opentelemetry-autoinstrumentation-java:2.31@sha256:a80f6055e9346bcb58d53fd19f0879c947123c1993b70957430464ccbb03c867 AS otel
+
 FROM dhi.io/eclipse-temurin:26-alpine3.23@sha256:5d6b41e324f47216ab8fd6074e567ccb6ff7711998a3c99cc0d22bc3b0ff62a2
 
 ARG project_version_arg
@@ -6,7 +8,7 @@ ENV PROJECT_VERSION=$project_version_arg
 EXPOSE 8080
 
 USER nonroot
-COPY --chown=nonroot:nonroot opentelemetry-javaagent-2.26.1.jar /agent.jar
+COPY --chown=nonroot:nonroot --from=otel /javaagent.jar /agent.jar
 COPY --chown=nonroot:nonroot build/libs/*.jar /app.jar
 
 # OpenTelemetry instrumentering
