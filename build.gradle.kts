@@ -155,10 +155,7 @@ tasks.named<BootJar>("bootJar") {
 
 tasks.getByName<BootRun>("bootRun") {
     findProperty("TLSversion")?.let { systemProperty("jdk.tls.client.protocols", it) }
-    when (findProperty("Import")) {
-        null -> mainClass.set("no.kartverket.nibas.NibasBackendApplication")
-        else -> mainClass.set("no.kartverket.nibas.NibasImportApplication")
-    }
+    mainClass.set("no.kartverket.nibas.NibasBackendApplication")
 }
 
 tasks.withType<KotlinCompile> {

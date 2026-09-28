@@ -125,7 +125,6 @@ fun List<List<LineString>>.toMultiPolygon(): MultiPolygon {
 
 /**
  * Transformerer et multipolygon til en liste med linestrings. En linestring for hver ytre ring, og en for hvert hull.
- * Er brukt av bopliktimport.
  */
 fun MultiPolygon.toLineStrings() : List<LineString>{
     val rings = mutableListOf<LineString>()
