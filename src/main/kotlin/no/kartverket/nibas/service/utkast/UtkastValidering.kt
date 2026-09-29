@@ -339,7 +339,7 @@ class UtkastValidatorService(
 
             val krevdAntallKontekstEgenskaper = when (grensetype) {
                 Grensetype.Kommunegrense, Grensetype.Fylkesgrense -> 4
-                Grensetype.Bopliktgrense -> 1
+                Grensetype.Bopliktomraadegrense -> 1
                 else -> 2
             }
             val krevdAntallTilhorighetstyper = if (Grensetype.erAdministrativGrense(grensetype)) 2 else 1

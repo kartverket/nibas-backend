@@ -665,7 +665,7 @@ class UtkastValideringTest {
     fun `utkast med bopliktomraadegrensefeature med kun en tilhoerighet er gyldig`() {
         val gyldighetsdato = LocalDate.now()
         val feature = FeatureBuilder("1")
-            .withGrensetype(Grensetype.Bopliktgrense)
+            .withGrensetype(Grensetype.Bopliktomraadegrense)
             .withKontekstEgenskaper(listOf(KontekstEgenskaper(
                 id = ObjektIdentifikator(Lokalid("G3"), gyldighetsdato),
                 type = KontekstEnhetType.BOPLIKTOMRAADE,
@@ -682,7 +682,7 @@ class UtkastValideringTest {
     fun `utkast med bopliktomraadegrensefeature med to tilhoerigheter er ugyldig`() {
         val gyldighetsdato = LocalDate.now()
         val feature = FeatureBuilder("1")
-            .withGrensetype(Grensetype.Bopliktgrense)
+            .withGrensetype(Grensetype.Bopliktomraadegrense)
             .withKontekstEgenskaper(listOf(KontekstEgenskaper(
                 id = ObjektIdentifikator(Lokalid("G3"), gyldighetsdato),
                 kommuneId = ObjektIdentifikator(Lokalid("1"), gyldighetsdato),

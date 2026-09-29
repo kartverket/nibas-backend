@@ -50,7 +50,7 @@ class UtkastServiceIT : TestWithDbContainer() {
     fun `publiser arkivering av bopliktomraade`() {
         val gyldigFra = LocalDate.now()
         val grenser = grenseRepository.saveAllAndFlush(
-            GrenseHelper.getGrenserForOestligKrets(gyldigFra.minusDays(1), Grensetype.Bopliktgrense)
+            GrenseHelper.getGrenserForOestligKrets(gyldigFra.minusDays(1), Grensetype.Bopliktomraadegrense)
         )
         val bopliktomraade = saveBopliktomraade(
             id = "boplikt-arkiv",
@@ -361,7 +361,7 @@ class UtkastServiceIT : TestWithDbContainer() {
 
     @Test
     fun `skal gi optimistisklaasexception om man har en grenseendring paa utdatert versjon av grense og bopliktomraade`() {
-        val grenser = grenseRepository.saveAllAndFlush(GrenseHelper.getGrenserForVestligKrets(grensetype = Grensetype.Bopliktgrense))
+        val grenser = grenseRepository.saveAllAndFlush(GrenseHelper.getGrenserForVestligKrets(grensetype = Grensetype.Bopliktomraadegrense))
         val kommune = saveKommune()
         val bopliktomraade = saveBopliktomraade(lokalid = Lokalid("test1"), bopliktomraadenavn = "Gammelt navn")
 

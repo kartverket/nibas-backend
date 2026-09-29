@@ -120,9 +120,9 @@ fun Grense.grenseToFeature(gyldighetsdato: LocalDate = LocalDate.now(), shouldAr
             metadata = metadataMapper.toMetadataForKommunalKretsgrense(this),
             kontekstEgenskaper = featureMapper.toKontekstEgenskaperForStemmekretsGrense(grense = this, gyldighetsdato = gyldighetsdato))
 
-        Grensetype.Bopliktgrense -> featureProperties.copy(
+        Grensetype.Bopliktomraadegrense -> featureProperties.copy(
             metadata = metadataMapper.toMetadataForBopliktGrense(this),
-            kontekstEgenskaper = featureMapper.toKontekstEgenskaperForBopliktGrense(grense = this, gyldighetsdato = gyldighetsdato))
+            kontekstEgenskaper = featureMapper.toKontekstEgenskaperForBopliktomraadeGrense(grense = this, gyldighetsdato = gyldighetsdato))
     }
     return Feature(
         // Dersom feature har en id (nye grenser har ingen id før de opprettes i databasen) må denne være objektets lokalid

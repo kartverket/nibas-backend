@@ -296,7 +296,7 @@ class Bopliktomraade(
         const val KOMMUNE_BOUNDARY_BUFFER_METER = 1.0 / 1_000_000.0
         private val log = LoggerFactory.getLogger(Bopliktomraade::class.java)
         fun tillatteGrensetyper(): Set<Grensetype> = setOf(
-            Grensetype.Bopliktgrense
+            Grensetype.Bopliktomraadegrense
         )
     }
 }

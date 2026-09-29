@@ -1777,7 +1777,7 @@ class GrenseServiceIT : TestWithDbContainer() {
         val gyldighetsdato = LocalDate.now()
         val lokalid1 = Lokalid("1")
 
-        val lagredeGrenser = grenseRepository.saveAll(getGrenserForEnkelKrets(gyldigFra, Grensetype.Bopliktgrense))
+        val lagredeGrenser = grenseRepository.saveAll(getGrenserForEnkelKrets(gyldigFra, Grensetype.Bopliktomraadegrense))
         grenseRepository.flush()
 
         val bopliktomraade = saveBopliktomraade(id = "1", lokalid = lokalid1, bopliktomraadenummer = "20", gyldigFra = gyldigFra, grenser = lagredeGrenser)
@@ -1813,7 +1813,7 @@ class GrenseServiceIT : TestWithDbContainer() {
 
         val bopliktomraadeRequest = BopliktomraadeRequestBuilder.DEFAULT_REQUEST
         val identifikator = Identifikator(Lokalid(bopliktomraadeRequest.identifikasjon.lokalid), gyldigFra)
-        val lagredeGrenser = grenseRepository.saveAll(getGrenserForEnkelKrets(gyldigFra, Grensetype.Bopliktgrense))
+        val lagredeGrenser = grenseRepository.saveAll(getGrenserForEnkelKrets(gyldigFra, Grensetype.Bopliktomraadegrense))
         grenseRepository.flush()
 
         val bopliktomraade = saveBopliktomraade(id = "1", lokalid = identifikator.lokalid, bopliktomraadenummer = "20",
@@ -1852,7 +1852,7 @@ class GrenseServiceIT : TestWithDbContainer() {
         val gyldigFra = november28In2022
         val gyldighetsdato = LocalDate.now()
 
-        val lagredeGrenser = grenseRepository.saveAll(getGrenserForEnkelKrets(gyldigFra, Grensetype.Bopliktgrense))
+        val lagredeGrenser = grenseRepository.saveAll(getGrenserForEnkelKrets(gyldigFra, Grensetype.Bopliktomraadegrense))
         grenseRepository.flush()
 
         val bopliktomraade = saveBopliktomraade(id = "1", lokalid = Lokalid("2"), bopliktomraadenummer = "20",
@@ -1872,7 +1872,7 @@ class GrenseServiceIT : TestWithDbContainer() {
 
         val gyldigNyGrense = lagNyGrense(
             "grense5Id",
-            Grensetype.Bopliktgrense,
+            Grensetype.Bopliktomraadegrense,
             "grense5Lokalid",
             gyldigFra,
             listOf(Coordinate(5.0, 5.0), Coordinate(5.0, 10.0)))
@@ -1896,7 +1896,7 @@ class GrenseServiceIT : TestWithDbContainer() {
         val gyldigFra = november28In2022
         val gyldighetsdato = LocalDate.now()
 
-        val lagredeGrenser = grenseRepository.saveAll(getGrenserForEnkelKrets(gyldigFra, Grensetype.Bopliktgrense))
+        val lagredeGrenser = grenseRepository.saveAll(getGrenserForEnkelKrets(gyldigFra, Grensetype.Bopliktomraadegrense))
         grenseRepository.flush()
 
         val bopliktomraade = saveBopliktomraade(id = "1", lokalid = Lokalid("2"), bopliktomraadenummer = "20",
@@ -1908,7 +1908,7 @@ class GrenseServiceIT : TestWithDbContainer() {
 
         val ugyldigNyGrense = lagNyGrense(
             "grenseDelt2Id",
-            Grensetype.Bopliktgrense,
+            Grensetype.Bopliktomraadegrense,
             "grenseDelt2Lokalid",
             gyldigFra,
             listOf(Coordinate(10.0, 8.0), Coordinate(10.0, 10.0)))
@@ -1953,7 +1953,7 @@ class GrenseServiceIT : TestWithDbContainer() {
             bopliktomraadenummer = "100",
             gyldigFra = gyldigFra,
             grenser = grenseRepository.saveAll(
-                getGrenserForOestligKrets(gyldigFra, Grensetype.Bopliktgrense).map { g ->
+                getGrenserForOestligKrets(gyldigFra, Grensetype.Bopliktomraadegrense).map { g ->
                     Grense(
                         id = "boplikt-${g.id}",
                         lokalid = "boplikt-${g.lokalid}",
@@ -1994,7 +1994,7 @@ class GrenseServiceIT : TestWithDbContainer() {
         kommuneEtterGrenseIds = entityManager.find(Kommune::class.java, kommune.id).getGrensekoblinger(today).mapTo(HashSet(1)) { it.grense.id }
         assertThat(bopliktEtterGrenseIds).containsExactlyInAnyOrderElementsOf(kommuneEtterGrenseIds)
 
-        // TODO: Unngå orphaned bopliktgrenser
+        // TODO: Unngå orphaned bopliktomraadegrenser
 //        // Sjekk at grensene som tidligere var koblet til bopliktområdet nå ikke er "orphaned"
 //        val opprinneligBopliktGrenseIds = (bopliktomraade.bopliktomraadeGrenser as BopliktomraadeGrenser.DelvisBoplikt).grenser.map { it.grense.id }
 //        val orphanedGrenser = entityManager.createQuery("""
@@ -2054,7 +2054,7 @@ class GrenseServiceIT : TestWithDbContainer() {
         // Endre bopliktområdet til å dekke delvis kommunen
         bopliktomraade = entityManager.find(Bopliktomraade::class.java, bopliktomraade.id)
         val bopliktGrenser = grenseRepository.saveAll(
-            getGrenserForOestligKrets(gyldigFra, Grensetype.Bopliktgrense).map { g ->
+            getGrenserForOestligKrets(gyldigFra, Grensetype.Bopliktomraadegrense).map { g ->
                 Grense(
                     id = "boplikt-${g.id}",
                     lokalid = "boplikt-${g.lokalid}",
@@ -2086,11 +2086,11 @@ class GrenseServiceIT : TestWithDbContainer() {
     /**
      * Bygger 4 grenser som lukker et rektangel [(offsetX, 0), (offsetX+5, 5)]. IDene og lokalIDene får `idPrefix` som prefiks.
      */
-    private fun rektangelBopliktgrenser(offsetX: Double, gyldigFra: LocalDate, idPrefix: String): List<Grense> {
+    private fun rektangelBopliktomraadegrenser(offsetX: Double, gyldigFra: LocalDate, idPrefix: String): List<Grense> {
         fun mkGrense(suffix: String, coords: List<Coordinate>) = Grense(
             id = "$idPrefix-$suffix",
             lokalid = "$idPrefix-$suffix-lokalid",
-            grensetype = Grensetype.Bopliktgrense,
+            grensetype = Grensetype.Bopliktomraadegrense,
         ).apply {
             setGyldigFra(gyldigFra)
             grense = GrenseHelper.geometryFactory.createLineString(coords.toTypedArray())
@@ -2119,9 +2119,9 @@ class GrenseServiceIT : TestWithDbContainer() {
         val gyldighetsdato = LocalDate.now()
 
         // Bopliktområde A får to disjoint rektangler (L og R). Bopliktområde B får sitt eget rektangel.
-        val aLGrenser = grenseRepository.saveAll(rektangelBopliktgrenser(offsetX = 0.0, gyldigFra, idPrefix = "aL"))
-        val aRGrenser = grenseRepository.saveAll(rektangelBopliktgrenser(offsetX = 10.0, gyldigFra, idPrefix = "aR"))
-        val bGrenser = grenseRepository.saveAll(rektangelBopliktgrenser(offsetX = 20.0, gyldigFra, idPrefix = "b"))
+        val aLGrenser = grenseRepository.saveAll(rektangelBopliktomraadegrenser(offsetX = 0.0, gyldigFra, idPrefix = "aL"))
+        val aRGrenser = grenseRepository.saveAll(rektangelBopliktomraadegrenser(offsetX = 10.0, gyldigFra, idPrefix = "aR"))
+        val bGrenser = grenseRepository.saveAll(rektangelBopliktomraadegrenser(offsetX = 20.0, gyldigFra, idPrefix = "b"))
         grenseRepository.flush()
 
         val bopliktomraadeA = saveBopliktomraade(
@@ -2180,9 +2180,9 @@ class GrenseServiceIT : TestWithDbContainer() {
         val gyldigFra = november28In2022
         val gyldighetsdato = LocalDate.now()
 
-        val aLGrenser = grenseRepository.saveAll(rektangelBopliktgrenser(offsetX = 0.0, gyldigFra, idPrefix = "aL"))
-        val aRGrenser = grenseRepository.saveAll(rektangelBopliktgrenser(offsetX = 10.0, gyldigFra, idPrefix = "aR"))
-        val bGrenser = grenseRepository.saveAll(rektangelBopliktgrenser(offsetX = 20.0, gyldigFra, idPrefix = "b"))
+        val aLGrenser = grenseRepository.saveAll(rektangelBopliktomraadegrenser(offsetX = 0.0, gyldigFra, idPrefix = "aL"))
+        val aRGrenser = grenseRepository.saveAll(rektangelBopliktomraadegrenser(offsetX = 10.0, gyldigFra, idPrefix = "aR"))
+        val bGrenser = grenseRepository.saveAll(rektangelBopliktomraadegrenser(offsetX = 20.0, gyldigFra, idPrefix = "b"))
         grenseRepository.flush()
 
         val bopliktomraadeA = saveBopliktomraade(
@@ -2222,8 +2222,8 @@ class GrenseServiceIT : TestWithDbContainer() {
         val gyldigFra = november28In2022
         val gyldighetsdato = LocalDate.now()
 
-        val aLGrenser = grenseRepository.saveAll(rektangelBopliktgrenser(offsetX = 0.0, gyldigFra, idPrefix = "aL"))
-        val aRGrenser = grenseRepository.saveAll(rektangelBopliktgrenser(offsetX = 10.0, gyldigFra, idPrefix = "aR"))
+        val aLGrenser = grenseRepository.saveAll(rektangelBopliktomraadegrenser(offsetX = 0.0, gyldigFra, idPrefix = "aL"))
+        val aRGrenser = grenseRepository.saveAll(rektangelBopliktomraadegrenser(offsetX = 10.0, gyldigFra, idPrefix = "aR"))
         grenseRepository.flush()
 
         val bopliktomraadeA = saveBopliktomraade(

@@ -61,7 +61,7 @@ enum class Grensetype(val value: String, val dbKey: String, val editerbar: Boole
     Grunnkretsgrense(value = "Grunnkretsgrense", dbKey = "Grunnkretsgrense", editerbar = true),
     Delomraadegrense(value = "Delområdegrense", dbKey = "Delområdegrense", editerbar = true),
     Stemmekretsgrense(value = "Stemmekretsgrense", dbKey = "Stemmekretsgrense", editerbar = true),
-    Bopliktgrense(value = "Bopliktgrense", dbKey = "Bopliktgrense", editerbar = true);
+    Bopliktomraadegrense(value = "Bopliktområdegrense", dbKey = "Bopliktområdegrense", editerbar = true);
 
     companion object {
         fun fromValue(valueIn: String): Grensetype {

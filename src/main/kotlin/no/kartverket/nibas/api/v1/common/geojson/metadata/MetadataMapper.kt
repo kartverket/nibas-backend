@@ -94,7 +94,7 @@ fun getMetadataForGrensetype(grensetype: Grensetype, commonMetadata: CommonMetad
         Grensetype.Grunnkretsgrense -> StatistiskgrenseMetadata(commonMetadata, commonGrenseMetadata)
         Grensetype.Delomraadegrense -> StatistiskgrenseMetadata(commonMetadata, commonGrenseMetadata)
         Grensetype.Stemmekretsgrense -> KommunalKretsgrenseMetadata(commonMetadata, commonGrenseMetadata)
-        Grensetype.Bopliktgrense -> KommunalKretsgrenseMetadata(commonMetadata, commonGrenseMetadata)
+        Grensetype.Bopliktomraadegrense -> KommunalKretsgrenseMetadata(commonMetadata, commonGrenseMetadata)
     }
 }
 

@@ -180,7 +180,7 @@ enum class NonExhaustiveGrensetype {
  * grensetyper her.
  */
 fun Grensetype.asNonExhaustive(): NonExhaustiveGrensetype? = when (this) {
-    Grensetype.Bopliktgrense -> NonExhaustiveGrensetype.Bopliktgrense
+    Grensetype.Bopliktomraadegrense -> NonExhaustiveGrensetype.Bopliktgrense
     Grensetype.Kommunegrense,
     Grensetype.Fylkesgrense,
     Grensetype.Riksgrense,

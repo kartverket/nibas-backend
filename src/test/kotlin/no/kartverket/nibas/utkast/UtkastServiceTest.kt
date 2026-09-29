@@ -687,7 +687,7 @@ internal class UtkastServiceTest {
                     FeatureBuilder("6").withGrensetype(Grensetype.AvtaltAvgrensningslinje).build(),
                     FeatureBuilder("7").withGrensetype(Grensetype.Riksgrense).build(),
                     FeatureBuilder("8").withGrensetype(Grensetype.Territorialgrense).build(),
-                    FeatureBuilder("9").withGrensetype(Grensetype.Bopliktgrense).build()
+                    FeatureBuilder("9").withGrensetype(Grensetype.Bopliktomraadegrense).build()
                 )
             )
         )

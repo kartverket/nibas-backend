@@ -55,7 +55,7 @@ class BopliktomraadeServiceIT : TestWithDbContainer() {
     @Test
     fun `arkiver bopliktomraade arkiverer omraadet og egne grenser`() {
         val grenser = grenseRepository.saveAll(
-            GrenseHelper.getGrenserForOestligKrets(october1In2022, Grensetype.Bopliktgrense)
+            GrenseHelper.getGrenserForOestligKrets(october1In2022, Grensetype.Bopliktomraadegrense)
         )
         val bopliktomraade = saveBopliktomraade(
             lokalid = bopliktomraadeLokalid,
@@ -124,9 +124,9 @@ class BopliktomraadeServiceIT : TestWithDbContainer() {
     fun `hent grenser for bopliktomraade fram i tid`() {
         val identifikatorFor1Jan23 = Identifikator(bopliktomraadeLokalid, jan1In2023)
 
-        val grense3 = saveGrense(id = "4002", lokalid = grenseLokallid, gyldigFra = jan1In2024, grensetype = Grensetype.Bopliktgrense)
-        val grense2 = saveGrense(id = "4001", lokalid = grenseLokallid, gyldigFra = jan1In2023, gyldigTil = jan1In2024, grensetype = Grensetype.Bopliktgrense)
-        val grense1 = saveGrense(id = "4000", lokalid = grenseLokallid, gyldigFra = october1In2022, gyldigTil = jan1In2023, grensetype = Grensetype.Bopliktgrense)
+        val grense3 = saveGrense(id = "4002", lokalid = grenseLokallid, gyldigFra = jan1In2024, grensetype = Grensetype.Bopliktomraadegrense)
+        val grense2 = saveGrense(id = "4001", lokalid = grenseLokallid, gyldigFra = jan1In2023, gyldigTil = jan1In2024, grensetype = Grensetype.Bopliktomraadegrense)
+        val grense1 = saveGrense(id = "4000", lokalid = grenseLokallid, gyldigFra = october1In2022, gyldigTil = jan1In2023, grensetype = Grensetype.Bopliktomraadegrense)
 
         val bopliktomraade1 = saveBopliktomraade(id = "301", lokalid = bopliktomraadeLokalid, gyldigFra = october1In2022, gyldigTil = december1In2022,
             grenser = listOf(grense1))
@@ -170,7 +170,7 @@ class BopliktomraadeServiceIT : TestWithDbContainer() {
 
         val identifikator = Identifikator(Lokalid(bopliktomraadeRequest.identifikasjon.lokalid), october1In2022)
         val lagredeGrenserForKrets =
-            grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(october1In2022, Grensetype.Bopliktgrense))
+            grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(october1In2022, Grensetype.Bopliktomraadegrense))
         grenseRepository.flush()
 
         val opprinneligBopliktomraade = saveBopliktomraade(
@@ -251,7 +251,7 @@ class BopliktomraadeServiceIT : TestWithDbContainer() {
         val bopliktomraadeRequest = BopliktomraadeRequestBuilder.DEFAULT_REQUEST.copy(url = null, forskriftsreferanse = null)
 
         val identifikator = Identifikator(Lokalid(bopliktomraadeRequest.identifikasjon.lokalid), october1In2022)
-        val lagredeGrenserForKrets = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(october1In2022, Grensetype.Bopliktgrense))
+        val lagredeGrenserForKrets = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(october1In2022, Grensetype.Bopliktomraadegrense))
         grenseRepository.flush()
 
         val bopliktomraade = saveBopliktomraade(
@@ -325,7 +325,7 @@ class BopliktomraadeServiceIT : TestWithDbContainer() {
         val bopliktomraadeRequest = BopliktomraadeRequestBuilder.DEFAULT_REQUEST
 
         val identifikator = Identifikator(Lokalid(bopliktomraadeRequest.identifikasjon.lokalid), october1In2022)
-        val lagredeGrenserForKrets = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(october1In2022, Grensetype.Bopliktgrense))
+        val lagredeGrenserForKrets = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(october1In2022, Grensetype.Bopliktomraadegrense))
         grenseRepository.flush()
 
         val bopliktomraade = saveBopliktomraade(
@@ -361,7 +361,7 @@ class BopliktomraadeServiceIT : TestWithDbContainer() {
         val opprinneligDato = LocalDate.parse("2022-01-01")
         val endringsdato = LocalDate.parse("2022-02-01")
 
-        val lagredeGrenserForKrets = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(opprinneligDato, Grensetype.Bopliktgrense))
+        val lagredeGrenserForKrets = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(opprinneligDato, Grensetype.Bopliktomraadegrense))
         grenseRepository.flush()
 
         val bopliktomraade = saveBopliktomraade(
@@ -408,7 +408,7 @@ class BopliktomraadeServiceIT : TestWithDbContainer() {
         val endringsdato = LocalDate.parse("2022-02-01")
         val grenseLokalid = "grenseDeltLokalid"
 
-        val lagredeGrenserForKrets = grenseRepository.saveAll(GrenseHelper.getGrenserForVestligKrets(opprinneligDato, Grensetype.Bopliktgrense))
+        val lagredeGrenserForKrets = grenseRepository.saveAll(GrenseHelper.getGrenserForVestligKrets(opprinneligDato, Grensetype.Bopliktomraadegrense))
         grenseRepository.flush()
 
         val bopliktomraade = saveBopliktomraade(
@@ -452,7 +452,7 @@ class BopliktomraadeServiceIT : TestWithDbContainer() {
         val datoForGrenseendring = LocalDate.parse("2023-02-01")
         val grenseLokalid = "grenseDeltLokalid"
 
-        val lagredeGrenserForKrets = grenseRepository.saveAll(GrenseHelper.getGrenserForVestligKrets(opprinneligDato, Grensetype.Bopliktgrense))
+        val lagredeGrenserForKrets = grenseRepository.saveAll(GrenseHelper.getGrenserForVestligKrets(opprinneligDato, Grensetype.Bopliktomraadegrense))
         grenseRepository.flush()
 
         val bopliktomraade = saveBopliktomraade(
@@ -493,20 +493,20 @@ class BopliktomraadeServiceIT : TestWithDbContainer() {
     fun `ikke tillat bopliktomraade utenfor kommune`() {
         val opprinneligDato = LocalDate.parse("2022-01-01")
         val kretsgrenser = grenseRepository.saveAll(GrenseHelper.getGrenserForVestligKrets(opprinneligDato, Grensetype.Kommunegrense))
-        val bopliktgrenser = kretsgrenser.map { kretsgrense ->
-            Grense(grensetype = Grensetype.Bopliktgrense).apply {
+        val bopliktomraadegrenser = kretsgrenser.map { kretsgrense ->
+            Grense(grensetype = Grensetype.Bopliktomraadegrense).apply {
                 grense = AffineTransformation.translationInstance(10.0, 0.0).transform(kretsgrense.grense) as org.locationtech.jts.geom.LineString
                 gyldighet = kretsgrense.gyldighet
             }
         }
 
-        grenseRepository.saveAll(bopliktgrenser)
+        grenseRepository.saveAll(bopliktomraadegrenser)
 
         val bopliktomraade = saveBopliktomraade(
             id = "2",
             lokalid = Lokalid("22"),
             gyldigFra = opprinneligDato,
-            grenser = bopliktgrenser
+            grenser = bopliktomraadegrenser
         )
         val kommune = saveKommuneOgUnikLokalid(kommunenummerUuid = "4227", gyldigFra = opprinneligDato, bopliktomraader = listOf(bopliktomraade))
         assertThatThrownBy { kommune.oppdaterOmraadeOgPosisjon(kretsgrenser); entityManager.flush() }
@@ -518,20 +518,20 @@ class BopliktomraadeServiceIT : TestWithDbContainer() {
     fun `tillat bopliktomraade i kommune`() {
         val opprinneligDato = LocalDate.parse("2022-01-01")
         val kretsgrenser = grenseRepository.saveAll(GrenseHelper.getGrenserForVestligKrets(opprinneligDato, Grensetype.Kommunegrense))
-        val bopliktgrenser = kretsgrenser.map { kretsgrense ->
-            Grense(grensetype = Grensetype.Bopliktgrense).apply {
+        val bopliktomraadegrenser = kretsgrenser.map { kretsgrense ->
+            Grense(grensetype = Grensetype.Bopliktomraadegrense).apply {
                 grense = kretsgrense.grense.factory.createLineString(kretsgrense.grense.coordinates.copyOf())
                 gyldighet = kretsgrense.gyldighet
             }
         }
 
-        grenseRepository.saveAll(bopliktgrenser)
+        grenseRepository.saveAll(bopliktomraadegrenser)
 
         val bopliktomraade = saveBopliktomraade(
             id = "2",
             lokalid = Lokalid("22"),
             gyldigFra = opprinneligDato,
-            grenser = bopliktgrenser
+            grenser = bopliktomraadegrenser
         )
         val kommune = saveKommuneOgUnikLokalid(kommunenummerUuid = "4227", gyldigFra = opprinneligDato, bopliktomraader = listOf(bopliktomraade))
         assertDoesNotThrow { kommune.oppdaterOmraadeOgPosisjon(kretsgrenser); entityManager.flush() }

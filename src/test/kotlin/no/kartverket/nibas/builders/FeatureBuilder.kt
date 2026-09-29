@@ -74,7 +74,7 @@ class FeatureBuilder(private var id: String? = "1") {
                 Grensetype.Territorialgrense -> TerritorialgrenseMetadata(common = commonMetadata, commonGrense = commonGrense, dokumentasjonsreferanser = dokumentasjonsreferanser)
                 Grensetype.AvtaltAvgrensningslinje -> AvtaltAvgrensningslinjeMetadata(common = commonMetadata, commonGrense = commonGrense)
                 Grensetype.Stemmekretsgrense -> KommunalKretsgrenseMetadata(common = commonMetadata, commonGrense = commonGrense)
-                Grensetype.Bopliktgrense -> KommunalKretsgrenseMetadata(common = commonMetadata, commonGrense = commonGrense)
+                Grensetype.Bopliktomraadegrense -> KommunalKretsgrenseMetadata(common = commonMetadata, commonGrense = commonGrense)
                 Grensetype.Grunnkretsgrense -> StatistiskgrenseMetadata(common = commonMetadata, commonGrense = commonGrense)
                 Grensetype.Delomraadegrense -> StatistiskgrenseMetadata(common = commonMetadata, commonGrense = commonGrense)
                 Grensetype.Grunnlinje -> GrunnlinjeMetadata(common = commonMetadata, commonGrense = commonGrense)

@@ -76,12 +76,7 @@ class SosiGeometryService(
             val grenseTypeString = getGrenseTypeForKurve(kurve = kurve) ?: throw IllegalArgumentException("Filen samsvarer ikke med oppgitt SOSI-versjon. Kontakt Kartverket hvis du mener dette er feil.")
             val formattedGrenseTypeString = grenseTypeString.lowercase().replaceFirstChar { it.uppercase() }
             val grenseType = try {
-                // TODO: TS-3113
-                if (formattedGrenseTypeString == "Bopliktområdegrense") {
-                    Grensetype.Bopliktgrense
-                } else {
-                    Grensetype.fromValue(formattedGrenseTypeString)
-                }
+                Grensetype.fromValue(formattedGrenseTypeString)
             } catch(e: IllegalArgumentException){
                 throw IllegalArgumentException("Filen inneholder en eller flere grenser med grensetype som ikke støttes: '$formattedGrenseTypeString'")
             }
@@ -92,7 +87,7 @@ class SosiGeometryService(
                 val feature = Feature(
                     id = id,
                     properties = FeatureProperties(
-                        type = grenseType.toString(),
+                        type = grenseType.value,
                         srid = lineString.srid,
                         version = 1,
                         metadata = getMetadataForGrensetype(grensetype = grenseType, CommonMetadata(
