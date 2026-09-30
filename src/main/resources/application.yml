@@ -1,10 +1,17 @@
 spring:
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 55MB
   profiles:
     group:
       localhost:
         - "humanReadableLog"
         - "eventsDisabled"
-
+server:
+  tomcat:
+    max-http-form-post-size: 55MB
+    max-swallow-size: 60MB
   main:
     banner-mode: "OFF"
 
