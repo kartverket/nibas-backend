@@ -74,19 +74,25 @@ class UtkastValidatorService(
         }
 
         return buildList {
-            addAll(validerCreateBopliktomraadeEndringer(createBopliktomraadeEndringer, gyldighetDato))
+            addAll(validerCreateBopliktomraadeEndringer(createBopliktomraadeEndringer, gyldighetDato, utkast))
         }
     }
 
     // Validerer at det ikke opprettes flere bopliktområder som dekker hele kommunen ved å sjekke eksisterende bopliktområder og nye som blir forsøkt opprettet.
-    private fun validerCreateBopliktomraadeEndringer(requests: List<CreateBopliktomraadeRequest>, gyldighetDato: LocalDate): List<String> {
+    private fun validerCreateBopliktomraadeEndringer(requests: List<CreateBopliktomraadeRequest>, gyldighetDato: LocalDate, utkast: Utkast): List<String> {
         if (requests.isEmpty()) {
             return emptyList()
         }
 
+        val arkiverteBopliktomraaderIUtkast = utkast.operasjoner?.archiveInndelingEndringer
+            ?.filter { it.flatetype == NonExhaustiveFlatetype.BOPLIKTOMRAADE }
+            ?.map { it.identifikator.lokalId }
+            .orEmpty()
+            .toSet()
+
         val relevanteKommuner = requests.map { it.kommuneIdentifikasjon.lokalid }.toSet()
         val eksisterendeBopliktomraaderPerKommune = bopliktomraadeService.hentAlleBopliktomraader(gyldighetDato)
-            .filter { it.kommuneLokalid.lokalid in relevanteKommuner }
+            .filter { it.kommuneLokalid.lokalid in relevanteKommuner && it.lokalid !in arkiverteBopliktomraaderIUtkast }
             .groupBy { it.kommuneLokalid.lokalid }
 
         return requests
