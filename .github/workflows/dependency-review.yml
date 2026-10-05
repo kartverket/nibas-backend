@@ -24,7 +24,7 @@ jobs:
           java-version: 21
 
       - name: Generate and submit dependency graph
-        uses: gradle/actions/dependency-submission@v6.3.0
+        uses: gradle/actions/dependency-submission@v6.4.0
         continue-on-error: true
         env:
           GH_PACKAGES_PAT: ${{ secrets.SHARED_PACKAGES_READ_TOKEN }}
