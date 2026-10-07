@@ -8,56 +8,55 @@ on:
       deploy_ghcr:
         description: "Deploy to ghcr?"
         default: false
-        type: string
+        type: boolean
+    secrets:
+      SHARED_PACKAGES_READ_TOKEN:
+        description: "Read token for the private Maven package"
+        required: true
     outputs:
       version:
         description: "The version of the docker-image created"
-        value: ${{ jobs.build.outputs.new_tag }}
+        value: ${{ jobs.publish.outputs.new_tag }}
       image_url:
         description: "The full URL to the docker-image created"
-        value: ${{ jobs.build.outputs.image_url }}
+        value: ${{ jobs.publish.outputs.image_url }}
+      digest:
+        description: "The digest of the docker-image created"
+        value: ${{ jobs.publish.outputs.digest }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
-env:
-  image_name: nibas-backend
-  registry: ghcr.io
-  registry_path: kartverket
+permissions:
+  contents: read
 
 jobs:
   build:
-    if: github.event.pull_request.head.repo.fork == false
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      packages: write
-      security-events: write
-      actions: read
-      issues: read
+      contents: read
       checks: write
       pull-requests: write
-
-    outputs:
-      new_tag: ${{ steps.tag_version.outputs.new_tag }}
-      image_url: ${{ steps.setOutput.outputs.image_url }}
 
     steps:
       - name: Set local timezone
         run: sudo timedatectl set-timezone "Europe/Oslo"
 
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Set up JDK
-        uses: actions/setup-java@v6
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           java-version: "21"
           distribution: "temurin"
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v6.4.0
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -69,38 +68,74 @@ jobs:
           GH_PACKAGES_PAT: ${{ secrets.SHARED_PACKAGES_READ_TOKEN }}
 
       - name: Publish Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v2
+        uses: EnricoMi/publish-unit-test-result-action@d0a4676d0e0b938bc201470d88276b7c74c712b3 # v2.24.0
         if: always()
         with:
           files: |
             build/test-results/test/TEST-*.xml
             build/test-results/integrationTest/TEST-*.xml
 
+  publish:
+    if: inputs.deploy_ghcr
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    outputs:
+      new_tag: ${{ steps.tag_version.outputs.new_tag }}
+      image_url: ${{ steps.set-output.outputs.image_url }}
+      digest: ${{ steps.build-image.outputs.digest }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up JDK
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          java-version: "21"
+          distribution: "temurin"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          cache-disabled: true
+
+      - name: Build application artifact
+        run: ./gradlew assemble
+        env:
+          JAVA_TOOL_OPTIONS: "-Duser.timezone=Europe/Oslo"
+          GH_PACKAGES_PAT: ${{ secrets.SHARED_PACKAGES_READ_TOKEN }}
+
       - name: Bump version and push tag
         id: tag_version
-        uses: mathieudutour/github-tag-action@v7
+        uses: mathieudutour/github-tag-action@af99e60ce8132224b8e6ebab5023449fe256ed46 # v7.0.0
         with:
           github_token: ${{ github.token }}
           release_branches: .*
 
       - name: Login to Github Container Registry
-        uses: docker/login-action@v4
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
-          registry: ${{ env.registry }}
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
       - name: Build docker and push
-        id: build
-        uses: docker/build-push-action@v7
+        id: build-image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
-          push: ${{ inputs.deploy_ghcr == 'true' }}
-          tags: ${{ env.registry }}/${{ github.repository }}:${{ steps.tag_version.outputs.new_tag }} , ${{ env.registry }}/${{ github.repository }}:latest
+          push: true
+          tags: ghcr.io/${{ github.repository }}:${{ steps.tag_version.outputs.new_tag }},ghcr.io/${{ github.repository }}:latest
           build-args: |
             project_version_arg=${{ steps.tag_version.outputs.new_tag }}
 
       - name: Set output with build values
-        id: setOutput
-        run: |
-          echo "image_url=${{ env.registry }}/${{ github.repository }}@${{ steps.build.outputs.digest }}" >> $GITHUB_OUTPUT
+        id: set-output
+        env:
+          IMAGE_URL: ghcr.io/${{ github.repository }}@${{ steps.build-image.outputs.digest }}
+        run: echo "image_url=$IMAGE_URL" >> "$GITHUB_OUTPUT"

@@ -5,6 +5,8 @@ metadata:
   name: "nibas-backend"
   tags:
   - "internal"
+  - "geospatial"
+  - "administrative-boundaries"
 spec:
   type: "service"
   lifecycle: "production"
@@ -19,12 +21,16 @@ metadata:
   name: "nibas-backend-api"
   tags:
   - "internal"
+  - "geospatial"
+  - "administrative-boundaries"
 spec:
   type: "openapi"
   lifecycle: "production"
   owner: "smia"
+  system: "nibas"
   definition: |
     openapi: "3.0.0"
     info:
-        title: nibas-backend API
-    paths:
+      title: nibas-backend API
+      version: "1.0.0"
+    paths: {}

@@ -9,20 +9,21 @@ env:
   registry: ghcr.io
   registry_path: kartverket
 
+permissions:
+  contents: read
+
 jobs:
   build:
     permissions:
       contents: write
       packages: write
-      security-events: write
-      actions: read
-      issues: read
       checks: write
       pull-requests: write
-    uses: kartverket/nibas-backend/.github/workflows/build-app.yml@main
+    uses: ./.github/workflows/build-app.yml
     with:
       deploy_ghcr: true
-    secrets: inherit
+    secrets:
+      SHARED_PACKAGES_READ_TOKEN: ${{ secrets.SHARED_PACKAGES_READ_TOKEN }}
 
   pharos:
     name: Run Pharos security scan
@@ -35,7 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "Run Pharos"
-        uses: kartverket/pharos@v0.7.0
+        uses: kartverket/pharos@446d11f033ffe30b4c91f885c3ad34ea3d8c6af7 # v0.7.0
         with:
           allow_severity_level: critical
           image_url: ${{ needs.build.outputs.image_url }}
@@ -43,8 +44,9 @@ jobs:
   deploy-argo:
     permissions:
       id-token: write
+      contents: read
     needs: [pharos, build]
-    uses: kartverket/smia-apps/.github/workflows/release-app-octo-sts.yml@main
+    uses: kartverket/smia-apps/.github/workflows/release-app-octo-sts.yml@be0f98aa389ba65196fc838e34b8eba98fd36f8f # main
     with:
       application: nibas-backend
       version: ${{ needs.build.outputs.version }}
@@ -58,4 +60,4 @@ jobs:
       id-token: write
       contents: read
     needs: [deploy-argo]
-    uses: kartverket/smia-apps/.github/workflows/run-nibas-cypress-job.yml@main
+    uses: kartverket/smia-apps/.github/workflows/run-nibas-cypress-job.yml@be0f98aa389ba65196fc838e34b8eba98fd36f8f # main

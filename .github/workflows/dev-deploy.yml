@@ -6,26 +6,28 @@ env:
   registry: ghcr.io
   registry_path: kartverket
 
+permissions:
+  contents: read
+
 jobs:
   build:
     permissions:
       contents: write
       packages: write
-      security-events: write
-      actions: read
-      issues: read
       checks: write
       pull-requests: write
-    uses: kartverket/nibas-backend/.github/workflows/build-app.yml@main
+    uses: ./.github/workflows/build-app.yml
     with:
       deploy_ghcr: true
-    secrets: inherit
+    secrets:
+      SHARED_PACKAGES_READ_TOKEN: ${{ secrets.SHARED_PACKAGES_READ_TOKEN }}
 
   deploy-argo:
     permissions:
       id-token: write
+      contents: read
     needs: build
-    uses: kartverket/smia-apps/.github/workflows/release-app-octo-sts.yml@main
+    uses: kartverket/smia-apps/.github/workflows/release-app-octo-sts.yml@be0f98aa389ba65196fc838e34b8eba98fd36f8f # main
     with:
       application: nibas-backend
       version: ${{ needs.build.outputs.version }}

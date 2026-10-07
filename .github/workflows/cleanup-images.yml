@@ -4,13 +4,16 @@ on:
   schedule:
     - cron: '00 1 * * 1'  # 01:00 on Mondays.
 
+permissions:
+  contents: read
+
 jobs:
   clean:
     runs-on: ubuntu-latest
     permissions:
       packages: write
     steps:
-      - uses: actions/delete-package-versions@v5
+      - uses: actions/delete-package-versions@e5bc658cc4c965c472efe991f8beea3981499c55 # v5.0.0
         with:
           package-name: 'nibas-backend'
           package-type: 'container'

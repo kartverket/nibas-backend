@@ -17,7 +17,7 @@ server:
 
   autoconfigure:
     exclude:
-      # Disables the default in-memory-user-authentication. Se Jira: https://kartverket.atlassian.net/browse/TS-535
+      # Disables Spring Boot's default in-memory user authentication.
       - org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
 
   application:
@@ -89,10 +89,6 @@ spring:
     username: nibas
     password: nibas
 
-nibas:
-  arbeidsliste:
-    host: http://localhost:8082
-    api-key: 'super-secret-api-key'
 
 ---
 # Custom cron jobs
