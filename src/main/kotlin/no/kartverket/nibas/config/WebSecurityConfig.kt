@@ -91,10 +91,10 @@ class ForwardedAuthenticationFilter : OncePerRequestFilter() {
         val username = request.getHeader("X-Auth-Name")
         if (username != null) {
             val authorities: List<GrantedAuthority> = listOf(SimpleGrantedAuthority("NIBAS"))
-            // Vi lagrer ikke bearer token fra ztoperator i credentials da det er tryggere å ignorere den
+            // Vi lagrer ikke bearer-tokenet fra autentiseringsproxyen i credentials.
             val authentication = PreAuthenticatedAuthenticationToken(username, null, authorities)
             SecurityContextHolder.getContext().authentication = authentication
-            LOGGER.debug("Authenticated forwarded username=$username")
+            LOGGER.debug("Authenticated forwarded user")
         }
         filterChain.doFilter(request, response)
     }
@@ -134,7 +134,7 @@ class SecurityOffAuthenticationFilter : OncePerRequestFilter() {
         logger.debug("Traff filter $this for request: ${request.servletPath}")
         SecurityContextHolder.getContext().authentication = DummyAuthenticationToken(
             user = "DUMMY",
-            credentials = "DUMMY",
+            credentials = Unit,
             authorities = listOf(SimpleGrantedAuthority("NIBAS"))
         )
         filterChain.doFilter(request, response)

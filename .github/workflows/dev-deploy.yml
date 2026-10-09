@@ -1,33 +1,32 @@
 name: Deploy branch to dev
 on: workflow_dispatch
 
-env:
-  image_name: nibas-backend
-  registry: ghcr.io
-  registry_path: kartverket
+permissions:
+  contents: read
 
 jobs:
   build:
     permissions:
       contents: write
       packages: write
-      security-events: write
-      actions: read
-      issues: read
       checks: write
       pull-requests: write
-    uses: kartverket/nibas-backend/.github/workflows/build-app.yml@main
+    uses: $/.github/workflows/build-app.yml
     with:
       deploy_ghcr: true
-    secrets: inherit
+    secrets:
+      SHARED_PACKAGES_READ_TOKEN: ${{ secrets.SHARED_PACKAGES_READ_TOKEN }}
 
-  deploy-argo:
+  deploy-dev:
     permissions:
       id-token: write
+      contents: read
     needs: build
-    uses: kartverket/smia-apps/.github/workflows/release-app-octo-sts.yml@main
+    uses: kartverket/smia-workflows/.github/workflows/deploy-app.yml@main
     with:
       application: nibas-backend
       version: ${{ needs.build.outputs.version }}
-      deploy_dev: true
+      digest: ${{ needs.build.outputs.digest }}
+      environment: dev
+      namespace: nibas-main
       identity: nibas

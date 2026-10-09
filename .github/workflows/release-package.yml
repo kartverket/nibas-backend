@@ -4,25 +4,21 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
-env:
-  image_name: nibas-backend
-  registry: ghcr.io
-  registry_path: kartverket
+permissions:
+  contents: read
 
 jobs:
   build:
     permissions:
       contents: write
       packages: write
-      security-events: write
-      actions: read
-      issues: read
       checks: write
       pull-requests: write
-    uses: kartverket/nibas-backend/.github/workflows/build-app.yml@main
+    uses: $/.github/workflows/build-app.yml
     with:
       deploy_ghcr: true
-    secrets: inherit
+    secrets:
+      SHARED_PACKAGES_READ_TOKEN: ${{ secrets.SHARED_PACKAGES_READ_TOKEN }}
 
   pharos:
     name: Run Pharos security scan
@@ -35,27 +31,39 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "Run Pharos"
-        uses: kartverket/pharos@v0.7.0
+        uses: kartverket/pharos@446d11f033ffe30b4c91f885c3ad34ea3d8c6af7 # v0.7.0
         with:
           allow_severity_level: critical
           image_url: ${{ needs.build.outputs.image_url }}
 
-  deploy-argo:
-    permissions:
-      id-token: write
-    needs: [pharos, build]
-    uses: kartverket/smia-apps/.github/workflows/release-app-octo-sts.yml@main
-    with:
-      application: nibas-backend
-      version: ${{ needs.build.outputs.version }}
-      deploy_dev: true
-      deploy_prod: true
-      extra_namespace: nibas-e2e
-      identity: nibas
-      
-  run-cypress:
+  deploy-dev:
     permissions:
       id-token: write
       contents: read
-    needs: [deploy-argo]
-    uses: kartverket/smia-apps/.github/workflows/run-nibas-cypress-job.yml@main
+    needs: [pharos, build]
+    strategy:
+      fail-fast: false
+      matrix:
+        namespace: [nibas-main, nibas-e2e]
+    uses: kartverket/smia-workflows/.github/workflows/deploy-app.yml@main
+    with:
+      application: nibas-backend
+      version: ${{ needs.build.outputs.version }}
+      digest: ${{ needs.build.outputs.digest }}
+      environment: dev
+      namespace: ${{ matrix.namespace }}
+      identity: nibas
+
+  deploy-prod:
+    permissions:
+      id-token: write
+      contents: read
+    needs: [build, deploy-dev]
+    uses: kartverket/smia-workflows/.github/workflows/deploy-app.yml@main
+    with:
+      application: nibas-backend
+      version: ${{ needs.build.outputs.version }}
+      digest: ${{ needs.build.outputs.digest }}
+      environment: prod
+      namespace: nibas-main
+      identity: nibas
