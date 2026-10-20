@@ -52,7 +52,7 @@ jobs:
       - name: Build
         run: ./gradlew clean build -x test -x intTest --no-build-cache --no-configuration-cache
         env:
-          GH_PACKAGES_PAT: ${{ secrets.SHARED_PACKAGES_READ_TOKEN }}
+          GH_PACKAGES_PAT: ${{ secrets.GH_PACKAGES_PAT }}
 
 
       - name: Perform CodeQL Analysis

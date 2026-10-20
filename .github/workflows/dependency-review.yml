@@ -30,7 +30,7 @@ jobs:
       - name: Generate and submit dependency graph
         uses: gradle/actions/dependency-submission@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
         env:
-          GH_PACKAGES_PAT: ${{ secrets.SHARED_PACKAGES_READ_TOKEN }}
+          GH_PACKAGES_PAT: ${{ secrets.GH_PACKAGES_PAT }}
 
   dependency-review:
     if: github.event_name == 'pull_request'
