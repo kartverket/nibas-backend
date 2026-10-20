@@ -15,7 +15,7 @@ jobs:
     with:
       deploy_ghcr: true
     secrets:
-      SHARED_PACKAGES_READ_TOKEN: ${{ secrets.SHARED_PACKAGES_READ_TOKEN }}
+      GH_PACKAGES_PAT: ${{ secrets.GH_PACKAGES_PAT }}
 
   deploy-dev:
     permissions:
