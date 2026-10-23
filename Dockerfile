@@ -1,6 +1,6 @@
 FROM dhi.io/opentelemetry-autoinstrumentation-java:2.32@sha256:407448870e88ce19f390c7b80be441661d1dd951c248d3b947e21399e95ac991 AS otel
 
-FROM dhi.io/eclipse-temurin:26-alpine3.23@sha256:d4bb66dd634d393064fdc5f6c4a290f0107c457106cae8b57f99b1aa7c8228f5 AS java-runtime
+FROM dhi.io/eclipse-temurin:26-alpine3.23@sha256:d654bbb79f61c6dab7dbf92d0af62535ff9fad2393f9d90a14f77a164ac4797c AS java-runtime
 
 FROM alpine:3.23@sha256:21f3e19bafab57a9ff7aa9dd571dac72f868370472c10f450cc0416cc1aca553 AS cert-builder
 
