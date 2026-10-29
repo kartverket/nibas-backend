@@ -35,6 +35,8 @@ object SosiKoder {
     const val OPPDATERINGSDATO = "OPPDATERINGSDATO"
     const val INFORMASJON = "INFORMASJON"
     const val KVALITET = "KVALITET"
+    const val MAALEMETODE = "MÅLEMETODE"
+    const val NOYAKTIGHET = "NØYAKTIGHET"
     const val NOYAKTIGHETSKLASSE = "NØYAKTIGHETSKLASSE"
     const val NOH = "NØH"
     const val NO = "NØ"
