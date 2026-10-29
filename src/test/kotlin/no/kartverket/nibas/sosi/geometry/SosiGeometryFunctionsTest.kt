@@ -36,4 +36,17 @@ class SosiGeometryFunctionsTest {
 
         assertThat(punkter).hasSize(3)
     }
+
+    @Test
+    fun `liten bue paa UTM-koordinater holder seg paa sirkelen`() {
+        val senter = Coordinate(372300.12, 6460050.34)
+        val radius = 0.1
+        val punkter = bueTilKoordinater(
+            Coordinate(senter.x - radius, senter.y),
+            Coordinate(senter.x, senter.y + radius),
+            Coordinate(senter.x + radius, senter.y),
+        )
+
+        punkter.forEach { assertThat(it.distance(senter)).isCloseTo(radius, Offset.offset(1e-6)) }
+    }
 }

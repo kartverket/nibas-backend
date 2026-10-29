@@ -26,9 +26,9 @@ object BopliktSosiTestdata {
 
     /**
      * OBJTYPE kan byttes ut for å teste andre grensetyper. SOSI 4.5 har kvaliteten på samme linje, mens 5.0 har
-     * målemetode og nøyaktighet som egne linjer under KVALITET, slik filene fra kommunene gjør.
+     * målemetode og nøyaktighet som egne linjer under KVALITET, slik filene fra kommunene gjør. [kvalitet] overstyrer dette.
      */
-    private fun tekst(objtype: String = "Bopliktområdegrense", sosiVersjon: String = "4.5"): String = buildString {
+    private fun tekst(objtype: String, sosiVersjon: String, kvalitet: List<String>?): String = buildString {
         appendLine(
             """
             .HODE
@@ -50,7 +50,9 @@ object BopliktSosiTestdata {
             appendLine("..IDENT")
             appendLine("...NAVNEROM http://data.geonorge.no/test")
             appendLine("...LOKALID ${linje.lokalid}")
-            if (sosiVersjon == "5.0") {
+            if (kvalitet != null) {
+                kvalitet.forEach { appendLine(it) }
+            } else if (sosiVersjon == "5.0") {
                 appendLine("..KVALITET")
                 appendLine("...MÅLEMETODE 82")
                 appendLine("...NØYAKTIGHET 50")
@@ -64,9 +66,9 @@ object BopliktSosiTestdata {
         appendLine(".SLUTT")
     }
 
-    fun inputStream(objtype: String = "Bopliktområdegrense", sosiVersjon: String = "4.5"): InputStream =
-        tekst(objtype, sosiVersjon).byteInputStream()
+    fun inputStream(objtype: String = "Bopliktområdegrense", sosiVersjon: String = "4.5", kvalitet: List<String>? = null): InputStream =
+        tekst(objtype, sosiVersjon, kvalitet).byteInputStream()
 
-    fun les(objtype: String = "Bopliktområdegrense", sosiVersjon: String = "4.5") =
-        NibasSosiDeserializer().deserialize(inputStream(objtype, sosiVersjon), FILNAVN)
+    fun les(objtype: String = "Bopliktområdegrense", sosiVersjon: String = "4.5", kvalitet: List<String>? = null) =
+        NibasSosiDeserializer().deserialize(inputStream(objtype, sosiVersjon, kvalitet), FILNAVN)
 }

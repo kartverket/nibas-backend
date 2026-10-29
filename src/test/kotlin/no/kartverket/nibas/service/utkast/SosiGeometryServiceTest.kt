@@ -10,6 +10,7 @@ import no.kartverket.nibas.common.geometry.getGrenserIRiktigRekkefoelge
 import no.kartverket.nibas.common.geometry.toMultiPolygon
 import no.kartverket.nibas.extensions.geometry.toLineString
 import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.sosi.model.SosiObjekt
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.AfterEach
@@ -91,10 +92,19 @@ class SosiGeometryServiceTest {
 
     @Test
     fun `SOSI 5_0 med maalemetode og noeyaktighet som egne linjer under KVALITET`() {
+        assertKvalitet82Med50(BopliktSosiTestdata.les(sosiVersjon = "5.0"))
+    }
+
+    @Test
+    fun `SOSI 5_0 med maalemetode og noeyaktighet i hermetegn paa KVALITET-linjen`() {
+        assertKvalitet82Med50(BopliktSosiTestdata.les(sosiVersjon = "5.0", kvalitet = listOf("..KVALITET \"82 50\"")))
+    }
+
+    private fun assertKvalitet82Med50(sosiObjekt: SosiObjekt) {
         val kodelisteService = mockk<KodelisteService> { every { getMalemetodeIdByCodeValue("82") } returns "maalemetode-82" }
 
         val features = SosiGeometryService(kodelisteService = kodelisteService)
-            .getGeoJsonForSosiObjekt(BopliktSosiTestdata.les(sosiVersjon = "5.0"), "EPSG:25833")
+            .getGeoJsonForSosiObjekt(sosiObjekt, "EPSG:25833")
             .features
 
         val kvaliteter = features.map { (it.properties.metadata as KommunalKretsgrenseMetadata).commonGrense.posisjonskvalitet }
