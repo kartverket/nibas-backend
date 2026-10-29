@@ -10,6 +10,7 @@ import no.kartverket.nibas.common.geometry.getGrenserIRiktigRekkefoelge
 import no.kartverket.nibas.common.geometry.toMultiPolygon
 import no.kartverket.nibas.extensions.geometry.toLineString
 import no.kartverket.nibas.kodelister.KodelisteService
+import no.kartverket.nibas.sosi.deserializer.NibasSosiDeserializer
 import no.kartverket.nibas.sosi.model.SosiObjekt
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -60,6 +61,38 @@ class SosiGeometryServiceTest {
             val koordinater = feature.geometry.toLineString(feature.properties.srid).coordinates
             assertThat(avrundLineString(koordinater)).isEqualTo(koordinater)
         }
+    }
+
+    @Test
+    fun `grunn bue i mm beholder buen naar den rundes til halve cm`() {
+        // 10 m lang bue med 4 mm pilhøyde. Runder vi til hele cm før buen deles opp, blir den en rett linje.
+        val sosi = """
+            .HODE
+            ..TEGNSETT UTF-8
+            ..TRANSPAR
+            ...ENHET 0.001
+            ...KOORDSYS 22
+            ...ORIGO-NØ 0 0
+            ..SOSI-VERSJON 4.5
+            ..SOSI-NIVÅ 4
+            .BUEP 1:
+            ..OBJTYPE Bopliktområdegrense
+            ..IDENT
+            ...NAVNEROM http://data.geonorge.no/test
+            ...LOKALID grunn-bue
+            ..KVALITET 82
+            ..NØ
+            6460000000 372000000
+            6460005000 372000004
+            6460010000 372000000
+            .SLUTT
+        """.trimIndent()
+        val sosiObjekt = NibasSosiDeserializer().deserialize(sosi.byteInputStream(), "grunn-bue.sos")
+
+        val feature = sosiGeometryService.getGeoJsonForSosiObjekt(sosiObjekt, "EPSG:25832").features.single()
+
+        val oest = feature.geometry.toLineString(feature.properties.srid).coordinates.map { it.x }
+        assertThat(oest.max()).isEqualTo(372000.005)
     }
 
     @Test
