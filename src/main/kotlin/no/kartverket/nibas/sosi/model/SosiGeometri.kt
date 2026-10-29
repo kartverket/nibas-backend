@@ -8,7 +8,6 @@ import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.LineString
 import java.time.LocalDate
 import java.time.ZonedDateTime
-import kotlin.collections.find
 
 open class SosiGeometri(type: String, niva: Int, verdier: MutableList<SosiVerdi>) :
     SosiObjekt(type = type, niva, verdier = verdier) {
@@ -23,6 +22,7 @@ open class SosiGeometri(type: String, niva: Int, verdier: MutableList<SosiVerdi>
         "JA" -> true
         else -> false
     }
+
     fun getAvgrensingstype(): String? = getVerdiAvBarn(SosiKoder.AVGRENSNINGSTYPE)
 
     fun getOpphav(): String? = getVerdiAvBarn(SosiKoder.OPPHAV)
@@ -47,9 +47,9 @@ open class SosiGeometri(type: String, niva: Int, verdier: MutableList<SosiVerdi>
     fun getGrensestatus(): String? = getVerdiAvBarn(SosiKoder.GRENSESTATUS)
     fun getFolgerTerrengdetalj(): String? = getVerdiAvBarn(SosiKoder.FOLGERTERRENGDETALJ)
     fun getKvalitet(): SosiKvalitet? = barn.find { it is SosiKvalitet } as? SosiKvalitet
-    fun getGrunnkretsId(): SosiGrunnkretsId? = barn.find {it is SosiGrunnkretsId} as? SosiGrunnkretsId
+    fun getGrunnkretsId(): SosiGrunnkretsId? = barn.find { it is SosiGrunnkretsId } as? SosiGrunnkretsId
 
-    fun getRegistreringsversjon(): SosiRegistreringsversjon? = barn.find {it is SosiRegistreringsversjon} as? SosiRegistreringsversjon
+    fun getRegistreringsversjon(): SosiRegistreringsversjon? = barn.find { it is SosiRegistreringsversjon } as? SosiRegistreringsversjon
     fun getLandkode(): String? = getVerdiAvBarn(SosiKoder.LANDKODE)
     fun getLandkoder(): List<String> = getVerdierAvBarn(SosiKoder.LANDKODE)
     fun getDokumentasjonsReferanse(): List<SosiDokumentasjonsReferanse> =
@@ -60,47 +60,36 @@ open class SosiGeometri(type: String, niva: Int, verdier: MutableList<SosiVerdi>
     fun getKommunenummer(): String = getVerdiAvBarn(SosiKoder.KOMMUNENUMMER)!!
     fun getStemmekretsId(): SosiStemmekretsId? = barn.find { it is SosiStemmekretsId } as? SosiStemmekretsId
 
-    fun getPosisjonskvalitet(kodelisteService: KodelisteService, sosiVersjon: String): PosisjonskvalitetEmbeddable? {
-        val sosiKvalitet = this.getKvalitet()
-        var maalemetode: String? = null
-        var noyaktighet: Int? = null
-        if(sosiVersjon == "5.0"){
-            val data = sosiKvalitet?.getMalemetode()?.split(" ")
-            maalemetode = data?.get(0)
-            noyaktighet = data?.get(1)?.toInt()
-        } else{
-            maalemetode = sosiKvalitet?.getMalemetode()
-            noyaktighet = sosiKvalitet?.getNoyaktighet()
-        }
-        if (sosiKvalitet != null) {
-            return PosisjonskvalitetEmbeddable(
-                //Hvis kvalitet er satt må målemetode være angitt
-                maalemetode = when (maalemetode) {
-                    null -> throw RuntimeException("Maalemetode er påkrevd")
-                    else -> kodelisteService.getMalemetodeIdByCodeValue(maalemetode)
-                },
-                noeyaktighet = noyaktighet
-            )
-        }
-        return null
+    fun getPosisjonskvalitet(kodelisteService: KodelisteService): PosisjonskvalitetEmbeddable? {
+        val sosiKvalitet = this.getKvalitet() ?: return null
+        return PosisjonskvalitetEmbeddable(
+            //Hvis kvalitet er satt må målemetode være angitt
+            maalemetode = when (val maalemetode = sosiKvalitet.getMalemetode()) {
+                null -> throw RuntimeException("Maalemetode er påkrevd")
+                else -> kodelisteService.getMalemetodeIdByCodeValue(maalemetode)
+            },
+            noeyaktighet = sosiKvalitet.getNoyaktighet()
+        )
     }
 
     fun startKoordinat(erRetningMedKlokken: Boolean): Coordinate {
-        return when(erRetningMedKlokken) {
+        return when (erRetningMedKlokken) {
             true -> {
                 val forsteKoordinat = getAlleSosiNordOest().first()
                 return forsteKoordinat.getKoordinater().first().toCoordinate(forsteKoordinat.enhet)
             }
+
             false -> sluttKoordinat(true)
         }
     }
 
     fun sluttKoordinat(retningMedKlokken: Boolean): Coordinate {
-        return when(retningMedKlokken) {
+        return when (retningMedKlokken) {
             true -> {
                 val sisteKoordinat = getAlleSosiNordOest().last()
                 return sisteKoordinat.getKoordinater().last().toCoordinate(sisteKoordinat.enhet)
             }
+
             false -> startKoordinat(true)
         }
     }

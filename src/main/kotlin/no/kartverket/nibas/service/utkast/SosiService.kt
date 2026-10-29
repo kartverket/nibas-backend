@@ -9,10 +9,13 @@ import no.kartverket.nibas.api.v1.common.geojson.metadata.CommonMetadata
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Identifikasjon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.Sporingsinformasjon
 import no.kartverket.nibas.api.v1.common.geojson.metadata.getMetadataForGrensetype
+import no.kartverket.nibas.common.geometry.avrundLineString
 import no.kartverket.nibas.common.geometry.getGeometryFactory
 import no.kartverket.nibas.extensions.geometry.geometryToDto
 import no.kartverket.nibas.kodelister.KodelisteService
-import no.kartverket.nibas.sosi.model.SosiKurve
+import no.kartverket.nibas.sosi.geometry.bueTilKoordinater
+import no.kartverket.nibas.sosi.model.SosiBuep
+import no.kartverket.nibas.sosi.model.SosiGeometri
 import no.kartverket.nibas.sosi.model.SosiObjekt
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
@@ -51,16 +54,17 @@ class SosiGeometryService(
         return sosiString.take(3)
     }
 
-    // OBS! Støtter kun å hente ut linestrings (kurver) fra sosiobjektet. (TS-2004)
+    // OBS! Støtter kun å hente ut linestrings (kurver og buer) fra sosiobjektet. (TS-2004)
     fun getGeoJsonForSosiObjekt(sosiObjekt: SosiObjekt, inProjection: String): FeatureCollection {
         val sosiVersjonString = sosiObjekt.getHode()?.getSosiVersjon() ?: throw RuntimeException("SosiVersjon ble ikke funnet i filen")
         val sosiVersjon = parseSosiVersjon(sosiVersjonString)
         val illegalSOSIversionMessage = "Du kan kun laste opp sosifiler med versjon 4.5 eller 5.0, ikke $sosiVersjon"
         val isSupportedSOSIVersjon = listOf("4.5", "5.0").contains(sosiVersjon)
-        if(!isSupportedSOSIVersjon) throw IllegalArgumentException(illegalSOSIversionMessage)
+        if (!isSupportedSOSIVersjon) throw IllegalArgumentException(illegalSOSIversionMessage)
         val features = mutableListOf<Feature>()
 
-        val koordsys = getEPSGCodeForSosiKode(sosiObjekt.getKurver()[0].koordsys)
+        val linjer: List<SosiGeometri> = sosiObjekt.getKurver() + sosiObjekt.getBuep()
+        val koordsys = getEPSGCodeForSosiKode(linjer.first().koordsys)
         val geometryFactory = getGeometryFactory(koordsys = koordsys)
         val crsFactory = CRSFactory()
         val transformFactory = CoordinateTransformFactory()
@@ -69,19 +73,24 @@ class SosiGeometryService(
         val targetCRS = crsFactory.createFromName(inProjection)
         val transformer = transformFactory.createTransform(sourceCRS, targetCRS)
 
-        for (kurve in sosiObjekt.getKurver()) {
+        for (kurve in linjer) {
+            // Utkast godtar bare koordinater avrundet til nærmeste halve cm, og reprojisering gir lange desimaler.
+            // Avrundingen kan slå sammen nabopunkter på korte buer, så like punkter etter hverandre fjernes.
             val lineString = convertSosiKurveToLineString(
                 sosiKurve = kurve, geometryFactory = geometryFactory, sourceCRS = sourceCRS, targetCRS = targetCRS, transformer = transformer
-            )
-            val grenseTypeString = getGrenseTypeForKurve(kurve = kurve) ?: throw IllegalArgumentException("Filen samsvarer ikke med oppgitt SOSI-versjon. Kontakt Kartverket hvis du mener dette er feil.")
+            )?.let { avrundLineString(it.coordinates).fjernLikeNabopunkter() }
+                ?.takeIf { it.size >= 2 }
+                ?.let { geometryFactory.createLineString(it) }
+            val grenseTypeString = getGrenseTypeForKurve(kurve = kurve)
+                ?: throw IllegalArgumentException("Filen samsvarer ikke med oppgitt SOSI-versjon. Kontakt Kartverket hvis du mener dette er feil.")
             val formattedGrenseTypeString = grenseTypeString.lowercase().replaceFirstChar { it.uppercase() }
             val grenseType = try {
                 Grensetype.fromValue(formattedGrenseTypeString)
-            } catch(e: IllegalArgumentException){
+            } catch (_: IllegalArgumentException) {
                 throw IllegalArgumentException("Filen inneholder en eller flere grenser med grensetype som ikke støttes: '$formattedGrenseTypeString'")
             }
             val id = kurve.getIdent()?.getVerdiAvBarn("LOKALID") ?: kurve.getId()
-            val posisjonskvalitet = kurve.getPosisjonskvalitet(kodelisteService = kodelisteService, sosiVersjon = sosiVersjon)?.toKvalitet()
+            val posisjonskvalitet = kurve.getPosisjonskvalitet(kodelisteService = kodelisteService)?.toKvalitet()
 
             if (lineString != null && id != null) {
                 val feature = Feature(
@@ -113,29 +122,34 @@ class SosiGeometryService(
 
     // Avgrensningstype er en egenskap for noen grenser som inneholder grensetypen.
     // Hvis kuven ikke har egenskaper på grensen ligger grensetypen på OBJTYPE.
-    fun getGrenseTypeForKurve(kurve: SosiKurve): String? {
-            return kurve.getAvgrensingstype() ?: kurve.getObjType()
+    fun getGrenseTypeForKurve(kurve: SosiGeometri): String? {
+        return kurve.getAvgrensingstype() ?: kurve.getObjType()
     }
 
     fun convertSosiKurveToLineString(
-        sosiKurve: SosiKurve,
+        sosiKurve: SosiGeometri,
         geometryFactory: GeometryFactory,
         sourceCRS: CoordinateReferenceSystem,
         targetCRS: CoordinateReferenceSystem,
         transformer: CoordinateTransform,
     ): LineString? {
-        val coordinates = sosiKurve.getAlleSosiNordOest().flatMap { nordOest ->
-            nordOest.getKoordinater().map { koordinat ->
-                if (sourceCRS == targetCRS) {
-                    koordinat.toCoordinate(nordOest.enhet)
-                } else {
-                    val original = koordinat.toCoordinate(nordOest.enhet)
-                    val src = ProjCoordinate(original.x, original.y)
-                    val transformedCoord = ProjCoordinate()
-                    transformer.transform(src, transformedCoord)
-                    Coordinate(transformedCoord.x, transformedCoord.y)
-                }
-
+        val originale = sosiKurve.getAlleSosiNordOest().flatMap { nordOest ->
+            nordOest.getKoordinater().map { koordinat -> koordinat.toCoordinate(nordOest.enhet) }
+        }
+        // Buen deles opp før reprojisering, siden den er en sirkelbue i filas koordinatsystem
+        val koordinater = if (sosiKurve is SosiBuep && originale.size == 3) {
+            bueTilKoordinater(originale[0], originale[1], originale[2])
+        } else {
+            originale
+        }
+        val coordinates = koordinater.map { original ->
+            if (sourceCRS == targetCRS) {
+                original
+            } else {
+                val src = ProjCoordinate(original.x, original.y)
+                val transformedCoord = ProjCoordinate()
+                transformer.transform(src, transformedCoord)
+                Coordinate(transformedCoord.x, transformedCoord.y)
             }
         }
 
@@ -146,3 +160,6 @@ class SosiGeometryService(
         }
     }
 }
+
+private fun Array<Coordinate>.fjernLikeNabopunkter(): Array<Coordinate> =
+    filterIndexed { index, koordinat -> index == 0 || !koordinat.equals2D(this[index - 1]) }.toTypedArray()
