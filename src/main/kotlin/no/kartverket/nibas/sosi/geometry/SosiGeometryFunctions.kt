@@ -24,15 +24,19 @@ fun sosiKoordinatToCoordinate(sosiKoordinat: SosiKoordinat, enhet: Double): Coor
  * Start og slutt beholdes eksakt, så buen henger sammen med nabolinjene.
  */
 fun bueTilKoordinater(start: Coordinate, midt: Coordinate, slutt: Coordinate, maksVinkel: Double = PI / 64): List<Coordinate> {
-    val d = 2 * (start.x * (midt.y - slutt.y) + midt.x * (slutt.y - start.y) + slutt.x * (start.y - midt.y))
+    // Regner relativt til startpunktet, ellers spiser kvadrerte UTM-koordinater opp presisjonen på små buer
+    val mx = midt.x - start.x
+    val my = midt.y - start.y
+    val ex = slutt.x - start.x
+    val ey = slutt.y - start.y
+    val d = 2 * (mx * ey - my * ex)
     // Tre punkter på linje er ingen bue
     if (abs(d) < 1e-9) return listOf(start, midt, slutt)
 
-    val s2 = start.x * start.x + start.y * start.y
-    val m2 = midt.x * midt.x + midt.y * midt.y
-    val e2 = slutt.x * slutt.x + slutt.y * slutt.y
-    val cx = (s2 * (midt.y - slutt.y) + m2 * (slutt.y - start.y) + e2 * (start.y - midt.y)) / d
-    val cy = (s2 * (slutt.x - midt.x) + m2 * (start.x - slutt.x) + e2 * (midt.x - start.x)) / d
+    val m2 = mx * mx + my * my
+    val e2 = ex * ex + ey * ey
+    val cx = start.x + (ey * m2 - my * e2) / d
+    val cy = start.y + (mx * e2 - ex * m2) / d
     val radius = hypot(start.x - cx, start.y - cy)
 
     val startvinkel = atan2(start.y - cy, start.x - cx)
