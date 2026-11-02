@@ -76,7 +76,7 @@ configurations["intTestRuntimeOnly"].extendsFrom(configurations.runtimeOnly.get(
 
 buildscript {
     dependencies {
-        classpath(libs.flyway.postgres)
+        classpath(libs.flyway.postgres.plugin)
     }
 }
 

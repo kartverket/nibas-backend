@@ -21,7 +21,8 @@ proj4jEPSGVersion = "1.4.3"
 postgresVersion = "42.7.14"
 
 [libraries]
-flyway-postgres = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flywayVersion" }
+flyway-postgres = { module = "org.flywaydb:flyway-database-postgresql" }
+flyway-postgres-plugin = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flywayVersion" }
 h2-db = { module = "com.h2database:h2" }
 hibernate-spatial = { module = "org.hibernate.orm:hibernate-spatial" }
 jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin" }
@@ -35,7 +36,7 @@ locationtech-jts-io = { module = "org.locationtech.jts:jts-io", version.ref = "j
 locationtech-jts-io-common = { module = "org.locationtech.jts.io:jts-io-common", version.ref = "jtsVersion" }
 locationtech-jts-modules = { module = "org.locationtech.jts:jts-modules", version.ref = "jtsVersion" }
 locationtech-spatial4j = { module = "org.locationtech.spatial4j:spatial4j", version.ref = "spatial4jVersion" }
-locationtech-proj4j = {module = "org.locationtech.proj4j:proj4j", version.ref = "proj4jVersion"}
+locationtech-proj4j = { module = "org.locationtech.proj4j:proj4j", version.ref = "proj4jVersion" }
 locationtech-proj4j-epsg = { module = "org.locationtech.proj4j:proj4j-epsg", version.ref = "proj4jEPSGVersion" }
 logstash-logback-encoder = { module = "net.logstash.logback:logstash-logback-encoder", version.ref = "logstashVersion" }
 matrikkelapi-wsclient = { module = "no.kartverket.matrikkelapi-v1:matrikkelapi-v1-wsclient", version.ref = "matrikkelVersion" }
@@ -43,17 +44,17 @@ micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-p
 nimbus-jose-jwt = { module = "com.nimbusds:nimbus-jose-jwt", version.ref = "nimbusJwtVersion" }
 opentelemetry-api = { module = "io.opentelemetry:opentelemetry-api", version.ref = "openTelemetryVersion" }
 opentelemetry-bom = { module = "io.opentelemetry:opentelemetry-bom", version.ref = "openTelemetryVersion" }
-org-apache-cxf-frontend ={ module = "org.apache.cxf:cxf-rt-frontend-jaxws", version.ref = "orgApacheCfxVersion" }
-org-apache-cxf-transports ={ module = "org.apache.cxf:cxf-rt-transports-http", version.ref = "orgApacheCfxVersion" }
+org-apache-cxf-frontend = { module = "org.apache.cxf:cxf-rt-frontend-jaxws", version.ref = "orgApacheCfxVersion" }
+org-apache-cxf-transports = { module = "org.apache.cxf:cxf-rt-transports-http", version.ref = "orgApacheCfxVersion" }
 postgres = { module = "org.postgresql:postgresql", version.ref = "postgresVersion" }
 spring-batch-test = { module = "org.springframework.batch:spring-batch-test" }
 spring-integration-core = { module = "org.springframework.integration:spring-integration-core" }
 spring-mockk = { module = "com.ninja-squad:springmockk", version.ref = "springmockkVersion" }
 spring-starter = { module = "org.springframework.boot:spring-boot-starter" }
-spring-starter-flyway = {module = "org.springframework.boot:spring-boot-starter-flyway"}
-spring-starter-flyway-test = {module = "org.springframework.boot:spring-boot-starter-flyway-test"}
+spring-starter-flyway = { module = "org.springframework.boot:spring-boot-starter-flyway" }
+spring-starter-flyway-test = { module = "org.springframework.boot:spring-boot-starter-flyway-test" }
 spring-starter-jackson = { module = "org.springframework.boot:spring-boot-starter-jackson" }
-spring-starter-jackson-test = { module = "org.springframework.boot:spring-boot-starter-jackson-test"}
+spring-starter-jackson-test = { module = "org.springframework.boot:spring-boot-starter-jackson-test" }
 spring-starter-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator" }
 spring-starter-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa" }
 spring-starter-security = { module = "org.springframework.boot:spring-boot-starter-security" }
