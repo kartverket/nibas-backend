@@ -375,6 +375,23 @@ class StemmekretsServiceIT : TestWithDbContainer() {
     }
 
     @Test
+    fun `createNyVersjonAvStemmekretsIAnnenKommune kopierer grensene som gjelder paa gyldigFra, ikke i dag`() {
+        // Som når en grenseendring er publisert med en dato mellom i dag og flyttingen
+        val grenserGjelderFra = LocalDate.now().plusMonths(1)
+        val flyttes = LocalDate.now().plusMonths(2)
+        val grenser = grenseRepository.saveAll(GrenseHelper.getGrenserForOestligKrets(grenserGjelderFra, Grensetype.Stemmekretsgrense))
+        grenseRepository.flush()
+        val stemmekrets = saveStemmekrets(id = "2", lokalid = Lokalid("stemmekretsSomSkalFlyttes"), gyldigFra = grenserGjelderFra, grenser = grenser)
+        val haram = saveKommuneOgUnikLokalid(id = "idHaram", lokalid = "1580Haram", kommunenummerUuid = "687f3337-899f-42f8-849d-6f2d5b603dd3",
+            kommunenummer = "1580")
+
+        val flyttet = stemmekretsService.createNyVersjonAvStemmekretsIAnnenKommune(stemmekrets, haram, flyttes, Endringstype.IMPORT)
+
+        assertThat(flyttet.getGrensekoblinger(flyttes).map { it.grense.id })
+            .containsExactlyInAnyOrderElementsOf(grenser.map { it.id })
+    }
+
+    @Test
     fun `slaaSammenStemmekretser ny krets skal bruke viderefoert navn, nummer, og satt informasjon`() {
         val utgaattKretsGyldigFra = LocalDate.parse("2022-01-01")
         val (vestreKrets, oestreKrets) = saveNaboStemmekretser(gyldigFra = utgaattKretsGyldigFra)

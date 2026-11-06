@@ -204,6 +204,10 @@ class StemmekretsService(
         return stemmekretsRepository.save(nyStemmekrets)
     }
 
+    /**
+     * Oppretter en ny versjon av stemmekretsen i samme kommune og kopierer grensetilkoblingene
+     * som er gyldige på [gyldigFra].
+     */
     fun createNyVersjonAvStemmekrets(stemmekrets: Stemmekrets, gyldigFra: LocalDate, endringstype: Endringstype): Stemmekrets {
         return createNyVersjonAvStemmekretsUtenGrenser(stemmekrets, gyldigFra, endringstype)
             .copyGrenserFromExistingStemmekrets(stemmekrets, gyldigFra)
@@ -218,6 +222,10 @@ class StemmekretsService(
         return nyStemmekrets
     }
 
+    /**
+     * Kopierer og lagrer en ny versjon med samme `lokalid`, og setter den gamle versjonens
+     * `gyldigTil` til [gyldigFra].
+     */
     private fun kopierOgSaveStemmekrets(stemmekrets: Stemmekrets, gyldigFra: LocalDate, endringstype: Endringstype): Stemmekrets {
         val nyStemmekrets = stemmekretsRepository.save(
             Stemmekrets(lokalid = stemmekrets.lokalid)
@@ -234,9 +242,13 @@ class StemmekretsService(
             .also { stemmekrets.setGyldigTil(gyldigFra) }
     }
 
+    /**
+     * Oppretter en ny versjon av stemmekretsen med samme grenser og kobler den til [kommune].
+     * Den gamle versjonens `gyldigTil` settes til [gyldigFra].
+     */
     fun createNyVersjonAvStemmekretsIAnnenKommune(stemmekrets: Stemmekrets, kommune: Kommune, gyldigFra: LocalDate, endringstype: Endringstype): Stemmekrets {
         val nyStemmekrets = kopierOgSaveStemmekrets(stemmekrets, gyldigFra, endringstype)
-            .copyGrenserFromExistingStemmekrets(stemmekrets)
+            .copyGrenserFromExistingStemmekrets(stemmekrets, gyldigFra)
 
         kommune.addStemmekrets(nyStemmekrets)
         return nyStemmekrets
@@ -273,6 +285,11 @@ class StemmekretsService(
         stemmekretsRepository.findAllByLokalidSortedByGyldigFra(lokalId)
             .filter { it.gyldighet.gyldigFra.isAfter(dato) }
 
+    /**
+     * Sjekker om en annen stemmekrets (med annen `lokalid`) i samme kommune har samme stemmekretsnummer og en
+     * gyldighetsperiode som overlapper med [stemmekrets]. Ledende nuller teller ikke, så "3" og "0003" er samme nummer.
+     * Gir `false` hvis [stemmekrets] ikke har stemmekretsnummer.
+     */
     fun finnesAnnenStemmekretsMedSammeKommuneOgStemmekretsnummer(stemmekrets: Stemmekrets): Boolean {
         //Returnerer false hvis stemmekretsnummer ikke er gitt, isåfall vil det komme valideringsfeil fra et annet sted
         val muligeStemmekretsnumre = stemmekrets.stemmekretsnummer?.let { lagMuligeStemmekretsnumre(it) } ?: return false

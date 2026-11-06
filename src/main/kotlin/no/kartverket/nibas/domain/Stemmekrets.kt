@@ -143,6 +143,9 @@ class Stemmekrets(
             informasjon = gammelStemmekrets.informasjon
         }
 
+    /**
+     * Kopierer grensetilkoblingene som er gyldige på [gyldigFra] fra [gammelStemmekrets] til denne stemmekretsen.
+     */
     fun copyGrenserFromExistingStemmekrets(gammelStemmekrets: Stemmekrets, gyldigFra: LocalDate = LocalDate.now()): Stemmekrets {
         gammelStemmekrets.getGrensekoblinger(gyldigFra).forEach { gammelGrenseKobling ->
             addGrensekobling(grense = gammelGrenseKobling.grense)
