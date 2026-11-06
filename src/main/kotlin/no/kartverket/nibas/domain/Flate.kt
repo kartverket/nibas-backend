@@ -23,8 +23,14 @@ interface KobletTilGrense {
     val lokalid: String
     val version: Int
 
+    /** Kobler grensen til denne flaten, og flaten til grensen. Gir feil hvis flaten ikke kan ha grensetypen. */
     fun addGrensekobling(grense: Grense)
     fun removeGrensekobling(gammelGrense: Grense)
+
+    /**
+     * Bytter koblingen til [gammelGrense] med en kobling til [grense], og fjerner flaten fra [gammelGrense].
+     * Gjør ingenting hvis flaten ikke er koblet til [gammelGrense]. Med `null` fjernes bare den gamle koblingen.
+     */
     fun replaceGrensekobling(gammelGrense: Grense, grense: Grense?)
     fun oppdaterOmraadeOgPosisjon()
 }
