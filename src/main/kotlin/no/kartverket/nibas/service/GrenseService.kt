@@ -123,6 +123,10 @@ class GrenseService(
         )
     }
 
+    /**
+     * Oppretter og lagrer en ny versjon av grensen med samme `lokalid`, grensetype og geometri, og kopierer
+     * dokumentasjonsreferansene. Koblingene til kretser kopieres ikke. Den gamle versjonens `gyldigTil` settes til [gyldigFra].
+     */
     fun createNyVersjonAvGrense(grense: Grense, gyldigFra: LocalDate, endringstype: Endringstype): Grense {
         val nyGrense = grenseRepository.saveAndFlush(
             Grense(lokalid = grense.lokalid, grensetype = grense.grensetype)

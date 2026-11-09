@@ -145,6 +145,10 @@ class KommuneService(
 //            }
     }
 
+    /**
+     * Oppretter og lagrer en ny versjon med samme `lokalid`, kopierer kommunedata og kobler den til
+     * samme fylke. Den gamle versjonens `gyldigTil` settes til [gyldigFra].
+     */
     fun createNyVersjonAvKommune(kommune: Kommune, gyldigFra: LocalDate, endringstype: Endringstype): Kommune {
         val nyKommune = kommuneRepository.save(
             Kommune(lokalid = kommune.lokalid)

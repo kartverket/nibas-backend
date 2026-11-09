@@ -60,6 +60,10 @@ class GrunnkretsService(
         grunnkretsRepository.findAllByLokalidSortedByGyldigFra(lokalId)
             .filter { it.gyldighet.gyldigFra.isAfter(dato) }
 
+    /**
+     * Sjekker om en annen grunnkrets (med annen `lokalid`) har samme grunnkretsnummer og en gyldighetsperiode
+     * som overlapper med [grunnkrets]. Gir `false` hvis [grunnkrets] ikke har grunnkretsnummer.
+     */
     fun finnesAnnenGrunnkretsMedSammeGrunnkretsnummer(grunnkrets: Grunnkrets): Boolean {
         //Returnerer false hvis grunnkretsnummer ikke er gitt, isåfall vil det komme valideringsfeil fra et annet sted
         grunnkrets.grunnkretsnummer ?: return false
@@ -255,9 +259,14 @@ class GrunnkretsService(
         return grunnkretsRepository.save(nyGrunnkrets)
     }
 
+    /**
+     * Oppretter en ny versjon av grunnkretsen med kopierte grenser, setter [nyttGrunnkretsNummer]
+     * og kobler den til [kommune]. Den gamle versjonens `gyldigTil` settes til [gyldigFra].
+     * Forutsetter at kommunenummeret til [kommune] stemmer med kommunenummeret i
+     * [nyttGrunnkretsNummer].
+     */
     fun createNyVersjonAvGrunnkretsIAnnenKommune(grunnkrets: Grunnkrets, kommune: Kommune, nyttGrunnkretsNummer: String,
                                                  gyldigFra: LocalDate, endringstype: Endringstype): Grunnkrets {
-        //Antar at kommune sitt kommunenummer stemmer med angitt nytt grunnkretsnummer, for å slippe å søke opp kommunen for hver grunnkrets som skal flyttes
         val nyGrunnkrets = kopierOgSaveGrunnkrets(grunnkrets, gyldigFra, endringstype)
             .copyGrenserFromExistingGrunnkrets(grunnkrets, gyldigFra)
         nyGrunnkrets.grunnkretsnummer = nyttGrunnkretsNummer
