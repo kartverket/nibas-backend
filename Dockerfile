@@ -2,7 +2,7 @@ FROM dhi.io/opentelemetry-autoinstrumentation-java:2.33@sha256:3379aac66a42b5e16
 
 FROM dhi.io/eclipse-temurin:25-alpine3.24@sha256:8da329a70f7794dd59467841e7476fd96a22fa5d3146c36811d3589b5205a5d0 AS java-runtime
 
-FROM alpine:3.24@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a AS cert-builder
+FROM alpine:3.24@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf AS cert-builder
 
 COPY --from=java-runtime /usr/lib/jvm/temurin-25/lib/security/blocked.certs /blocked.certs
 
