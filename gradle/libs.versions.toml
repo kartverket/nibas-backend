@@ -25,6 +25,7 @@ flyway-postgres = { module = "org.flywaydb:flyway-database-postgresql" }
 flyway-postgres-plugin = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flywayVersion" }
 h2-db = { module = "com.h2database:h2" }
 hibernate-spatial = { module = "org.hibernate.orm:hibernate-spatial" }
+jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" }
 jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin" }
 kotlin-mockito = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "kotlinMockitoVersion" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect" }
