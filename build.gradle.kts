@@ -88,6 +88,7 @@ dependencies {
     implementation(libs.spring.starter.security) // Web-security
     implementation(libs.spring.starter.webflux)
     implementation(libs.jackson.module.kotlin)
+    implementation(libs.jackson.datatype.jsr310)
     implementation(libs.kotlin.reflect)
     implementation(libs.spring.starter.actuator)
     implementation(libs.spring.starter.validator)

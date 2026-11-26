@@ -1,5 +1,5 @@
 [versions]
-flywayVersion = "13.12.1"
+flywayVersion = "13.13.0"
 jtsVersion = "1.20.0"
 kotlinMockitoVersion = "6.4.0"
 kotlinPluginVersion = "2.4.21"
@@ -9,15 +9,15 @@ matrikkelVersion = "4.26.0.4"
 nimbusJwtVersion = "10.10"
 openTelemetryVersion = "1.68.0"
 orgApacheCfxVersion = "4.2.4"
-prometheusVersion = "1.17.2"
+prometheusVersion = "1.18.0"
 spatial4jVersion = "0.8"
 springDependencyManagementVersion = "1.1.7"
 springFrameworkVersion = "4.1.2"
-springdocOpenapiVersion2 = "3.2.0"
+springdocOpenapiVersion2 = "3.2.1"
 springmockkVersion = "5.0.1"
 testContainerVersion = "2.0.5"
-proj4jVersion = "1.4.3"
-proj4jEPSGVersion = "1.4.3"
+proj4jVersion = "1.5.0"
+proj4jEPSGVersion = "1.5.0"
 postgresVersion = "42.7.14"
 
 [libraries]
@@ -25,6 +25,7 @@ flyway-postgres = { module = "org.flywaydb:flyway-database-postgresql" }
 flyway-postgres-plugin = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flywayVersion" }
 h2-db = { module = "com.h2database:h2" }
 hibernate-spatial = { module = "org.hibernate.orm:hibernate-spatial" }
+jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" }
 jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin" }
 kotlin-mockito = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "kotlinMockitoVersion" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect" }
